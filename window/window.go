@@ -15,7 +15,7 @@ func init() {
 	runtime.LockOSThread()
 }
 
-type UpdateCallback func(*Window, float32)
+type UpdateCallback func(float32)
 type RenderCallback func(*Window, float32)
 
 type Window struct {
@@ -42,6 +42,7 @@ func Create(title string, width int, height int) *Window {
 		panic(err)
 	}
 	window.MakeContextCurrent()
+    glfw.SwapInterval(1);
 
 	/* Initialize OpenGL */
 	if err := gl.Init(); err != nil {
@@ -88,7 +89,7 @@ func (wnd *Window) Loop() {
 
 
         if wnd.updateCb != nil {
-            wnd.updateCb(wnd, dt)
+            wnd.updateCb(dt)
         }
 
         if wnd.renderCb != nil {
@@ -98,7 +99,8 @@ func (wnd *Window) Loop() {
         wnd.EndFrame()
         if wnd.maxFrameTime > 0 {
             elapsed := glfw.GetTime() - t
-            time.Sleep(time.Duration(wnd.maxFrameTime - elapsed) * time.Second)
+            dur := wnd.maxFrameTime - elapsed
+            time.Sleep(time.Duration(dur) * time.Second)
         }
     }
 }

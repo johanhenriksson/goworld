@@ -37,8 +37,6 @@ func (mat *Material) AddDescriptor(attrName string, dataType uint32, count, stri
         return
     }
 
-    fmt.Printf("Adding descriptor %s at offset %d, stride: %d\n", attrName, offset, stride)
-
     mat.Buffers = append(mat.Buffers, BufferDescriptor {
         Buffer: loc,
         DataType: dataType,
@@ -67,8 +65,4 @@ func (mat *Material) Setup() {
         gl.EnableVertexAttribArray(desc.Buffer)
         gl.VertexAttribPointer(desc.Buffer, desc.Count, desc.DataType, desc.Normalize, desc.Stride, gl.PtrOffset(int(desc.Offset)))
     }
-    /*
-	gl.EnableVertexAttribArray(uint32(mat.vertices))
-	gl.VertexAttribPointer(uint32(mat.vertices), int32(mat.VertexCount), mat.VertexType, false, int32(size), gl.PtrOffset(offset))
-    */
 }

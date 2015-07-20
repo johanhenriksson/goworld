@@ -1,27 +1,36 @@
 package engine
 
+import (
+    "github.com/johanhenriksson/goworld/render"
+)
+
 const TileSize = 16
 const TilesetTexWidth = 4096
 const TilesetTexHeight = 4096
 
+type TileId uint16
+type TileCoord uint8
+
 type Tileset struct {
-    Width   int
-    Height  int
-    Size    int
-    Tiles   []Tile
+    Width       int
+    Height      int
+    Size        int
+    Tiles       []Tile
+    Material    *render.Material
 }
 
 type Tile struct {
-    Id           uint16
-    X            uint8
-    Y            uint8
+    Id  TileId
+    X   TileCoord
+    Y   TileCoord
 }
 
-func CreateTileset() *Tileset {
+func CreateTileset(mat *render.Material) *Tileset {
     ts := &Tileset {
-        Size:   TileSize,
-        Width:  TilesetTexWidth / TileSize,
-        Height: TilesetTexHeight / TileSize,
+        Size:       TileSize,
+        Width:      TilesetTexWidth / TileSize,
+        Height:     TilesetTexHeight / TileSize,
+        Material:   mat,
     }
     ts.Generate()
     return ts
@@ -33,18 +42,18 @@ func (ts *Tileset) Generate() {
         for x := 0; x < ts.Width; x++ {
             id := y * ts.Width + x
             ts.Tiles[id] = Tile {
-                Id: uint16(id),
-                X:  uint8(x),
-                Y:  uint8(y),
+                Id: TileId(id),
+                X:  TileCoord(x),
+                Y:  TileCoord(y),
             }
         }
     }
 }
 
-func (ts *Tileset) GetId(x, y int) uint16 {
-    return uint16(y * ts.Width + x)
+func (ts *Tileset) GetId(x, y int) TileId {
+    return TileId(y * ts.Width + x)
 }
 
-func (ts *Tileset) Get(id uint16) *Tile {
+func (ts *Tileset) Get(id TileId) *Tile {
     return &ts.Tiles[int(id)]
 }
