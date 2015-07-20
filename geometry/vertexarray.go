@@ -6,6 +6,7 @@ import (
 
 type VertexArray struct {
     Id      uint32
+    Length  int32
 }
 
 func CreateVertexArray() *VertexArray {
@@ -18,4 +19,8 @@ func CreateVertexArray() *VertexArray {
 
 func (vao *VertexArray) Bind() {
     gl.BindVertexArray(vao.Id)
+}
+
+func (vao *VertexArray) Draw() {
+    gl.DrawArrays(gl.TRIANGLES, 0, vao.Length)
 }

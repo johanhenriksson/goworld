@@ -1,4 +1,4 @@
-package shaders
+package render
 
 import (
     "fmt"
@@ -37,6 +37,10 @@ func (program *ShaderProgram) Use() {
         panic("Shader program is not yet linked")
     }
 	gl.UseProgram(program.Id)
+}
+
+func (program *ShaderProgram) SetFragmentData(fragVariable string) {
+	gl.BindFragDataLocation(program.Id, 0, util.GLString(fragVariable))
 }
 
 func (program *ShaderProgram) Attach(shader *Shader) {
@@ -90,4 +94,9 @@ func (program *ShaderProgram) GetAttributeLocation(attr string) uint32 {
 func (program *ShaderProgram) Matrix4f(name string, ptr *float32) {
     loc := program.GetUniformLocation(name)
 	gl.UniformMatrix4fv(loc, 1, false, ptr)
+}
+
+func (program *ShaderProgram) Int32(name string, val int32) {
+    loc := program.GetUniformLocation(name)
+    gl.Uniform1i(loc, val)
 }

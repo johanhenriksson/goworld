@@ -1,4 +1,4 @@
-package shaders
+package render
 
 import (
     "fmt"

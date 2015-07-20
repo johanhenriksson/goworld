@@ -12,6 +12,12 @@ type VertexBuffer struct {
     Size        int
 }
 
+type VertexData interface {
+    Elements() int
+    Size() int
+    GLPtr() unsafe.Pointer
+}
+
 func CreateVertexBuffer() *VertexBuffer {
 	var vbo uint32
 	gl.GenBuffers(1, &vbo)
@@ -24,10 +30,14 @@ func (vbo *VertexBuffer) Bind() {
 	gl.BindBuffer(gl.ARRAY_BUFFER, vbo.Id)
 }
 
-func (vbo *VertexBuffer) Buffer(vertices []Vertex) {
-    vbo.Elements = len(vertices)
-    vbo.Size     = int(unsafe.Sizeof(vertices[0]))
+
+func (vbo *VertexBuffer) Buffer(vertices VertexData) {
+    vbo.Bind()
+    vbo.Elements = vertices.Elements()
+    vbo.Size     = vertices.Size()
     size := vbo.Size * vbo.Elements
-    fmt.Println("Buffering", vbo.Elements, ", el size:", vbo.Size, "total:", size)
-	gl.BufferData(gl.ARRAY_BUFFER, size, gl.Ptr(vertices), gl.STATIC_DRAW)
+    fmt.Println("Buffering", vbo.Elements, "elements to buffer", vbo.Id)
+    fmt.Println("Element size:", vbo.Size, "bytes.")
+    fmt.Println("Total size:", size, "bytes.")
+	gl.BufferData(gl.ARRAY_BUFFER, size, vertices.GLPtr(), gl.STATIC_DRAW)
 }
