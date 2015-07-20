@@ -24,7 +24,7 @@ func CreateTexture() *Texture {
 
     /* Texture parameters */
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
 
@@ -32,7 +32,7 @@ func CreateTexture() *Texture {
 }
 
 func (tx *Texture) Bind(slot uint32) {
-	gl.ActiveTexture(slot)
+	gl.ActiveTexture(gl.TEXTURE0 + slot)
 	gl.BindTexture(gl.TEXTURE_2D, tx.Id)
 }
 

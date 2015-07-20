@@ -34,6 +34,16 @@ func CreateProgram() *ShaderProgram {
     }
 }
 
+func CompileVFShader(shaderFileName string) *ShaderProgram {
+    program := CreateProgram()
+    program.Attach(VertexShader(fmt.Sprintf("%s.vs.glsl", shaderFileName)))
+    program.Attach(FragmentShader(fmt.Sprintf("%s.fs.glsl", shaderFileName)))
+    if err := program.Link(); err != nil {
+        panic(err)
+    }
+    return program
+}
+
 func (program *ShaderProgram) Use() {
     if !program.linked {
         panic("Shader program is not yet linked")

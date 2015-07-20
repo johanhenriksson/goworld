@@ -1,6 +1,7 @@
 package main
 
 import (
+    "fmt"
     "github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/mathgl/mgl32"
 
@@ -19,25 +20,40 @@ func main() {
 	model  := mgl32.Ident4()
 
     /* Shader setup */
-    program := render.CreateProgram()
-    program.Attach(render.VertexShader("assets/shaders/3d_textured.vs.glsl"))
-    program.Attach(render.FragmentShader("assets/shaders/3d_textured.fs.glsl"))
-    program.Link()
+    program := render.CompileVFShader("assets/shaders/3d_voxel")
     program.Use()
 
     program.Matrix4f("projection", &proj[0])
     program.Matrix4f("camera", &camera[0])
     program.Matrix4f("model", &model[0])
 
-    /* Mesh */
-    tx, _ := render.LoadTexture("assets/square.png")
+    ttx, _ := render.LoadTexture("assets/tileset.png")
+    tilesetMat := render.CreateMaterial(program) 
+    tilesetMat.AddDescriptor("vertex", gl.UNSIGNED_BYTE, 3, 8, 0, false)
+    tilesetMat.AddDescriptor("normal", gl.BYTE, 3, 8, 3, false)
+    tilesetMat.AddDescriptor("tile", gl.UNSIGNED_BYTE, 2, 8, 6, false)
+    tilesetMat.AddTexture(0, ttx)
 
-    mat := render.CreateMaterial(program, "vertex", "normal", "texCoord")
-    mat.AddTexture(gl.TEXTURE0, tx)
+    tileset := engine.CreateTileset()
+    fmt.Println("Tileset", tileset.Width, "x", tileset.Height)
 
-    /* Set up cube */
-    cube := geometry.Cube()
-    mesh := engine.CreateMesh(cube, mat)
+    /* Voxel mesh */
+    voxel := engine.GenerateVoxel(0, 0, 0, &engine.Voxel {
+        Xp: tileset.GetId(4, 0),
+        Xn: tileset.GetId(4, 0),
+        Yp: tileset.GetId(3, 0),
+        Yn: tileset.GetId(2, 0),
+        Zp: tileset.GetId(4, 0),
+        Zn: tileset.GetId(4, 0),
+    }, tileset)
+    vao := geometry.CreateVertexArray()
+    vao.Length = int32(len(voxel))
+    vao.Bind()
+    vbo := geometry.CreateVertexBuffer()
+    vbo.Buffer(voxel)
+    vmesh := engine.CreateMesh(vao, tilesetMat)
+
+    gl.ClearColor(1,1,1,0)
 
     /* Render loop */
     angle := float32(0.0)
@@ -50,7 +66,7 @@ func main() {
 		model = mgl32.HomogRotate3D(angle, mgl32.Vec3{0, 1, 0})
         program.Matrix4f("model", &model[0])
 
-        mesh.Render()
+        vmesh.Render()
     })
 
     wnd.Loop()

@@ -6,25 +6,47 @@ import (
 )
 
 type MaterialTextureMap map[uint32]*Texture
+type BufferDescriptors []BufferDescriptor
+
+type BufferDescriptor struct {
+    Buffer      uint32
+    DataType    uint32
+    Count       int32
+    Stride      int32
+    Offset      int32
+    Normalize   bool
+}
 
 type Material struct {
     Shader      *ShaderProgram
     Textures    MaterialTextureMap
-
-    vertices    AttributeLocation
-    normals     AttributeLocation
-    texCoords   AttributeLocation
+    Buffers     []BufferDescriptor
 }
 
-func CreateMaterial(shader *ShaderProgram, vertexAttr, normalsAttr, texAttr string) *Material {
+func CreateMaterial(shader *ShaderProgram) *Material {
     return &Material {
         Shader: shader,
         Textures:  make(MaterialTextureMap),
-
-        vertices:  shader.GetAttrLoc(vertexAttr),
-        normals:   shader.GetAttrLoc(normalsAttr),
-        texCoords: shader.GetAttrLoc(texAttr),
+        Buffers: make(BufferDescriptors,0,3),
     }
+}
+
+func (mat *Material) AddDescriptor(attrName string, dataType uint32, count, stride, offset int, normalize bool) {
+    loc := uint32(mat.Shader.GetAttrLoc(attrName))
+    if loc < 0 {
+        return
+    }
+
+    fmt.Printf("Adding descriptor %s at offset %d, stride: %d\n", attrName, offset, stride)
+
+    mat.Buffers = append(mat.Buffers, BufferDescriptor {
+        Buffer: loc,
+        DataType: dataType,
+        Count: int32(count),
+        Stride: int32(stride),
+        Normalize: normalize,
+        Offset: int32(offset),
+    })
 }
 
 func (mat *Material) AddTexture(slot uint32, tex *Texture) {
@@ -41,25 +63,12 @@ func (mat *Material) Use() {
 }
 
 func (mat *Material) Setup() {
-    size := 3 * 4
-    offset := 0
-
-    if mat.normals >= 0 { size += 3 * 4 }
-    if mat.texCoords >= 0 { size += 2 * 4 }
-
+    for _, desc := range mat.Buffers {
+        gl.EnableVertexAttribArray(desc.Buffer)
+        gl.VertexAttribPointer(desc.Buffer, desc.Count, desc.DataType, desc.Normalize, desc.Stride, gl.PtrOffset(int(desc.Offset)))
+    }
+    /*
 	gl.EnableVertexAttribArray(uint32(mat.vertices))
-	gl.VertexAttribPointer(uint32(mat.vertices), 3, gl.FLOAT, false, int32(size), gl.PtrOffset(offset))
-    offset += 3 *  4
-
-    if mat.normals >= 0 {
-        gl.EnableVertexAttribArray(uint32(mat.normals))
-        gl.VertexAttribPointer(uint32(mat.normals), 3, gl.FLOAT, false, int32(size), gl.PtrOffset(offset))
-        offset += 3 *  4
-    }
-
-    if mat.texCoords >= 0 {
-        gl.EnableVertexAttribArray(uint32(mat.texCoords))
-        gl.VertexAttribPointer(uint32(mat.texCoords), 2, gl.FLOAT, false, int32(size), gl.PtrOffset(offset))
-        offset += 2 *  4
-    }
+	gl.VertexAttribPointer(uint32(mat.vertices), int32(mat.VertexCount), mat.VertexType, false, int32(size), gl.PtrOffset(offset))
+    */
 }
