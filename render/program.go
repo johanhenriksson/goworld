@@ -10,8 +10,10 @@ import (
     "github.com/johanhenriksson/goworld/util"
 )
 
-type UniformMap map[string]int32
-type AttributeMap map[string]uint32
+type AttributeLocation int32
+type UniformLocation int32
+type UniformMap map[string]UniformLocation
+type AttributeMap map[string]AttributeLocation
 
 type ShaderProgram struct {
     Id          uint32
@@ -67,10 +69,10 @@ func (program *ShaderProgram) Link() error {
     return nil
 }
 
-func (program *ShaderProgram) GetUniformLocation(uniform string) int32 {
+func (program *ShaderProgram) GetUniformLoc(uniform string) UniformLocation {
     loc, ok := program.uniforms[uniform]
     if !ok {
-        loc = gl.GetUniformLocation(program.Id, util.GLString(uniform))
+        loc = UniformLocation(gl.GetUniformLocation(program.Id, util.GLString(uniform)))
         if loc < 0 {
             panic("Uniform doesnt exist: " + uniform)
         }
@@ -79,12 +81,12 @@ func (program *ShaderProgram) GetUniformLocation(uniform string) int32 {
     return loc
 }
 
-func (program *ShaderProgram) GetAttributeLocation(attr string) uint32 {
+func (program *ShaderProgram) GetAttrLoc(attr string) AttributeLocation {
     loc, ok := program.attributes[attr]
     if !ok {
-        loc = uint32(gl.GetAttribLocation(program.Id, util.GLString(attr)))
+        loc = AttributeLocation(gl.GetAttribLocation(program.Id, util.GLString(attr)))
         if loc < 0 {
-            panic("Attribute doesnt exist: " + attr)
+            return -1
         }
         program.attributes[attr] = loc
     }
@@ -92,11 +94,16 @@ func (program *ShaderProgram) GetAttributeLocation(attr string) uint32 {
 }
 
 func (program *ShaderProgram) Matrix4f(name string, ptr *float32) {
-    loc := program.GetUniformLocation(name)
-	gl.UniformMatrix4fv(loc, 1, false, ptr)
+    loc := program.GetUniformLoc(name)
+	gl.UniformMatrix4fv(int32(loc), 1, false, ptr)
 }
 
 func (program *ShaderProgram) Int32(name string, val int32) {
-    loc := program.GetUniformLocation(name)
-    gl.Uniform1i(loc, val)
+    loc := program.GetUniformLoc(name)
+    gl.Uniform1i(int32(loc), val)
+}
+
+func (program *ShaderProgram) UInt32(name string, val uint32) {
+    loc := program.GetUniformLoc(name)
+    gl.Uniform1ui(int32(loc), val)
 }
