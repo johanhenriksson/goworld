@@ -1,4 +1,4 @@
-package window
+package engine
 
 import (
     "log"
@@ -7,8 +7,6 @@ import (
 
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/glfw/v3.1/glfw"
-
-    "github.com/johanhenriksson/goworld/engine"
 )
 
 /* GLFW event handling must run on the main OS thread */
@@ -27,7 +25,7 @@ type Window struct {
     lastFrameTime   float64
 }
 
-func Create(title string, width int, height int) *Window {
+func CreateWindow(title string, width int, height int) *Window {
 	if err := glfw.Init(); err != nil {
 		log.Fatalln("Failed to initialize glfw:", err)
 	}
@@ -54,9 +52,9 @@ func Create(title string, width int, height int) *Window {
 	gl.DepthFunc(gl.LESS)
 
     window.SetInputMode(glfw.CursorMode, glfw.CursorDisabled)
-    window.SetKeyCallback(engine.KeyCallback)
-    window.SetCursorPosCallback(engine.MouseMoveCallback)
-    window.SetMouseButtonCallback(engine.MouseButtonCallback)
+    window.SetKeyCallback(KeyCallback)
+    window.SetCursorPosCallback(MouseMoveCallback)
+    window.SetMouseButtonCallback(MouseButtonCallback)
 
     w := &Window {
         Wnd:            window,
@@ -97,8 +95,8 @@ func (wnd *Window) Loop() {
         dt := float32(t - wnd.lastFrameTime)
         wnd.lastFrameTime = t
 
-        engine.UpdateMouse(dt)
-        if engine.MouseDown(engine.MouseButton1) {
+        UpdateMouse(dt)
+        if MouseDown(MouseButton1) {
             wnd.LockCursor()
         } else {
             wnd.ReleaseCursor()

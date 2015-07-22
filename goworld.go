@@ -1,25 +1,24 @@
 package main
 
 import (
-    "fmt"
     "github.com/go-gl/gl/v4.1-core/gl"
 
-    "github.com/johanhenriksson/goworld/window"
     "github.com/johanhenriksson/goworld/engine"
     "github.com/johanhenriksson/goworld/render"
 )
 
 func main() {
-    wnd := window.Create("voxels", 1280, 800)
+    wnd := engine.CreateWindow("voxels", 1280, 800)
+
+    cam := engine.CreateCamera(5,2,5, 1280,800, 65.0, 0.1, 100.0)
 
     /* Shader setup */
     program := render.CompileVFShader("assets/shaders/3d_voxel")
     program.Use()
-
-    cam := engine.CreateCamera(5,2,5, 1280,800, 65.0, 0.1, 100.0)
     program.Matrix4f("projection", &cam.Projection[0])
     program.Matrix4f("camera", &cam.View[0])
 
+    /* Tileset Material */
     ttx, _ := render.LoadTexture("assets/tileset.png")
     tilesetMat := render.CreateMaterial(program)
     tilesetMat.AddDescriptor("vertex", gl.UNSIGNED_BYTE, 3, 8, 0, false)
@@ -28,10 +27,6 @@ func main() {
     tilesetMat.AddTexture(0, ttx)
 
     tileset := engine.CreateTileset(tilesetMat)
-    fmt.Println("Tileset", tileset.Width, "x", tileset.Height)
-
-
-    /* Voxel mesh */
 
     /* Define a gress tile */
     grass := &engine.Voxel {
@@ -53,26 +48,20 @@ func main() {
     /* Compute mesh */
     vmesh := chk.Compute()
     transf := engine.CreateTransform(0,0,0)
+    program.Matrix4f("model", &transf.Matrix[0])
 
     gl.ClearColor(1,1,1,0)
 
     /* Render loop */
-    wnd.SetRenderCallback(func(wnd *window.Window, dt float32) {
+    wnd.SetRenderCallback(func(wnd *engine.Window, dt float32) {
         gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
-        program.Use()
-
-        //transf.Rotation[1] += dt
-        transf.Update(dt)
         program.Matrix4f("camera", &cam.View[0])
-        program.Matrix4f("model", &transf.Matrix[0])
 
         vmesh.Render()
     })
 
-    wnd.SetUpdateCallback(func(dt float32) {
-        cam.Update(dt)
-    })
+    wnd.SetUpdateCallback(cam.Update)
 
     wnd.Loop()
 }

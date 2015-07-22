@@ -3,7 +3,6 @@ package engine
 import (
     "math"
     mgl "github.com/go-gl/mathgl/mgl32"
-    //"github.com/johanhenriksson/goworld/util"
 )
 
 type Transform struct {
@@ -52,4 +51,14 @@ func (t *Transform) Update(dt float32) {
 
 func (t *Transform) Translate(offset mgl.Vec3) {
     t.Position = t.Position.Add(offset)
+}
+
+func (t *Transform) TransformPoint(point mgl.Vec3) mgl.Vec3 {
+    p4 := mgl.Vec4 { point[0], point[1], point[2], 1 }
+    return t.Matrix.Mul4x1(p4).Vec3()
+}
+
+func (t *Transform) TransformDir(dir mgl.Vec3) mgl.Vec3 {
+    d4 := mgl.Vec4 { dir[0], dir[1], dir[2], 0 }
+    return t.Matrix.Mul4x1(d4).Vec3()
 }
