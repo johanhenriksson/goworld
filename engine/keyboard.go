@@ -5,38 +5,20 @@ import (
 )
 
 type KeyCode glfw.Key
-type KeyState int
-type KeyMap map[KeyCode]*Key
+type KeyMap map[KeyCode]bool
 
-type Key struct {
-    Code    KeyCode
-    Pressed bool
-}
-
-func KeyDown(key KeyCode) bool {
-    state, ok := keyState[key]
-    return ok && state.Pressed
-}
-
+/* Global key state */
 var keyState KeyMap = KeyMap { }
 
+/* Returns true if the given key is being held */
+func KeyDown(key KeyCode) bool {
+    return keyState[key]
+}
+
+/* GLFW Callback - Updates key state map */
 func KeyCallback(w *glfw.Window, key glfw.Key, scancode int, action glfw.Action, mods glfw.ModifierKey) {
     code := KeyCode(key)
-    state, ok := keyState[code]
-
-    if !ok {
-        state = &Key {
-            Code: code,
-        }
-        keyState[code] = state
-    }
-
-    switch action {
-    case glfw.Press:
-        state.Pressed = true
-    case glfw.Release:
-        state.Pressed = false
-    }
+    keyState[code] = action != glfw.Release
 }
 
 /* GLFW Keycodes */
