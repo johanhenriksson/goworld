@@ -3,7 +3,6 @@ package main
 import (
     "fmt"
     "github.com/go-gl/gl/v4.1-core/gl"
-	"github.com/go-gl/mathgl/mgl32"
 
     "github.com/johanhenriksson/goworld/window"
     "github.com/johanhenriksson/goworld/engine"
@@ -11,24 +10,15 @@ import (
 )
 
 func main() {
-    wnd := window.Create("voxels", 800, 600)
-
-    /* Perspective & camera */
-    /*
-	proj   := mgl32.Perspective(mgl32.DegToRad(45.0), float32(800.0/600.0), 0.01, 100.0)
-	camera := mgl32.LookAtV(mgl32.Vec3{3, 3, 3}, mgl32.Vec3{0, 0, 0}, mgl32.Vec3{0, 1, 0})
-    */
-	model  := mgl32.Ident4()
+    wnd := window.Create("voxels", 1280, 800)
 
     /* Shader setup */
     program := render.CompileVFShader("assets/shaders/3d_voxel")
     program.Use()
 
-    cam := engine.CreateCamera(0,3,5, 800,600, 45.0, 0.1, 100.0)
+    cam := engine.CreateCamera(5,2,5, 1280,800, 65.0, 0.1, 100.0)
     program.Matrix4f("projection", &cam.Projection[0])
     program.Matrix4f("camera", &cam.View[0])
-
-    program.Matrix4f("model", &model[0])
 
     ttx, _ := render.LoadTexture("assets/tileset.png")
     tilesetMat := render.CreateMaterial(program)
@@ -55,26 +45,27 @@ func main() {
 
     /* Fill chunk with voxels */
     chk := engine.CreateChunk(32, tileset)
-    for i := 0; i < 32*32*8; i++ {
+    for i := 0; i < 2*8; i++ {
         chk.Data[i] = grass
     }
+    chk.Set(4,1,0, grass)
 
     /* Compute mesh */
     vmesh := chk.Compute()
+    transf := engine.CreateTransform(0,0,0)
 
     gl.ClearColor(1,1,1,0)
 
     /* Render loop */
-    angle := float32(0.0)
     wnd.SetRenderCallback(func(wnd *window.Window, dt float32) {
         gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
         program.Use()
 
-		angle += dt
-		model = mgl32.HomogRotate3D(angle, mgl32.Vec3{0, 1, 0})
+        //transf.Rotation[1] += dt
+        transf.Update(dt)
         program.Matrix4f("camera", &cam.View[0])
-        program.Matrix4f("model", &model[0])
+        program.Matrix4f("model", &transf.Matrix[0])
 
         vmesh.Render()
     })

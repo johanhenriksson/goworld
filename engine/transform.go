@@ -1,7 +1,9 @@
 package engine
 
 import (
+    "math"
     mgl "github.com/go-gl/mathgl/mgl32"
+    //"github.com/johanhenriksson/goworld/util"
 )
 
 type Transform struct {
@@ -12,18 +14,6 @@ type Transform struct {
     Forward     mgl.Vec3
     Right       mgl.Vec3
     Up          mgl.Vec3
-}
-
-type Camera struct {
-    *Transform
-    Width       float32
-    Height      float32
-    Fov         float32
-    Ratio       float32
-    Near        float32
-    Far         float32
-    Projection  mgl.Mat4
-    View        mgl.Mat4
 }
 
 func CreateTransform(x, y, z float32) *Transform {
@@ -37,39 +27,29 @@ func CreateTransform(x, y, z float32) *Transform {
     return t
 }
 
-func CreateCamera(x, y, z, width, height, fov, near, far float32) *Camera {
-    cam := &Camera {
-        Transform: CreateTransform(x, y, z),
-        Width: width,
-        Height: height,
-        Ratio: float32(width) / float32(height),
-        Fov: fov,
-        Near: near,
-        Far: far,
-        Projection: mgl.Perspective(mgl.DegToRad(fov), width/height, near, far),
-    }
-    cam.Update(0.0)
-    return cam
-}
-
 func (t *Transform) Update(dt float32) {
-    t.Position[1] += 0.5 * dt
-    t.Matrix     = mgl.Translate3D(t.Position.X(), t.Position.Y(), t.Position.Z())
+    /* Update transform */
+    rad         := t.Rotation.Mul(math.Pi / 180.0)
+    rotation    := mgl.AnglesToQuat(rad[0], rad[1], rad[2], mgl.XYZ).Mat4()
+    scaling     := mgl.Scale3D(t.Scale[0], t.Scale[1], t.Scale[2])
+    translation := mgl.Translate3D(t.Position[0], t.Position[1], t.Position[2])
 
-    t.Right[0]   = t.Matrix[4*0+0]
-    t.Right[1]   = t.Matrix[4*1+0]
-    t.Right[2]   = t.Matrix[4*2+0]
-    t.Up[0]      = t.Matrix[4*0+1]
-    t.Up[1]      = t.Matrix[4*1+1]
-    t.Up[2]      = t.Matrix[4*2+1]
-    t.Forward[0] = -t.Matrix[4*0+2]
-    t.Forward[1] = -t.Matrix[4*1+2]
-    t.Forward[2] = -t.Matrix[4*2+2]
+    m := scaling.Mul4(rotation.Mul4(translation))
+
+    /* Grab axis vectors */
+    t.Right[0]   =  m[4*0+0]
+    t.Right[1]   =  m[4*1+0]
+    t.Right[2]   =  m[4*2+0]
+    t.Up[0]      =  m[4*0+1]
+    t.Up[1]      =  m[4*1+1]
+    t.Up[2]      =  m[4*2+1]
+    t.Forward[0] = -m[4*0+2]
+    t.Forward[1] = -m[4*1+2]
+    t.Forward[2] = -m[4*2+2]
+
+    t.Matrix = m
 }
 
-func (c *Camera) Update(dt float32) {
-    c.Transform.Update(dt)
-
-    lookAt := c.Transform.Position.Add(c.Transform.Forward);
-	c.View = mgl.LookAtV(c.Transform.Position, lookAt, mgl.Vec3{0, 1, 0})
+func (t *Transform) Translate(offset mgl.Vec3) {
+    t.Position = t.Position.Add(offset)
 }

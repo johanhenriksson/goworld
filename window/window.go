@@ -1,13 +1,14 @@
 package window
 
 import (
-    "fmt"
     "log"
     "time"
     "runtime"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/glfw/v3.1/glfw"
+
+    "github.com/johanhenriksson/goworld/engine"
 )
 
 /* GLFW event handling must run on the main OS thread */
@@ -52,9 +53,10 @@ func Create(title string, width int, height int) *Window {
 	gl.Enable(gl.DEPTH_TEST)
 	gl.DepthFunc(gl.LESS)
 
-    window.SetCharCallback(func(w *glfw.Window, char rune) {
-        fmt.Printf("Input: %q\n", char)
-    })
+    window.SetInputMode(glfw.CursorMode, glfw.CursorDisabled)
+    window.SetKeyCallback(engine.KeyCallback)
+    window.SetCursorPosCallback(engine.MouseMoveCallback)
+    window.SetMouseButtonCallback(engine.MouseButtonCallback)
 
     w := &Window {
         Wnd:            window,
@@ -73,6 +75,14 @@ func (wnd *Window) SetMaxFps(fps int) {
     wnd.maxFrameTime = 1.0 / float64(fps)
 }
 
+func (wnd *Window) LockCursor() {
+    wnd.Wnd.SetInputMode(glfw.CursorMode, glfw.CursorDisabled)
+}
+
+func (wnd *Window) ReleaseCursor() {
+    wnd.Wnd.SetInputMode(glfw.CursorMode, glfw.CursorNormal)
+}
+
 func (wnd *Window) SetRenderCallback(cb RenderCallback) {
     wnd.renderCb = cb
 }
@@ -87,6 +97,12 @@ func (wnd *Window) Loop() {
         dt := float32(t - wnd.lastFrameTime)
         wnd.lastFrameTime = t
 
+        engine.UpdateMouse(dt)
+        if engine.MouseDown(engine.MouseButton1) {
+            wnd.LockCursor()
+        } else {
+            wnd.ReleaseCursor()
+        }
 
         if wnd.updateCb != nil {
             wnd.updateCb(dt)
