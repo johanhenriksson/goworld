@@ -5,7 +5,9 @@ import (
     "image"
     "image/draw"
 	_ "image/png"
+
 	"github.com/go-gl/gl/v4.1-core/gl"
+    "github.com/johanhenriksson/goworld/util"
 )
 
 type Texture struct {
@@ -61,7 +63,7 @@ func LoadTexture(file string) (*Texture, error) {
 }
 
 func LoadImage(file string) (*image.RGBA, error) {
-	imgFile, err := os.Open(file)
+	imgFile, err := os.Open(util.ExePath + file)
 	if err != nil {
 		return nil, err
 	}

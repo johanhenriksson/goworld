@@ -16,7 +16,9 @@ out vec2 texcoord;
 out vec3 frag_normal;
 
 void main() {
-    frag_normal = normal;
+    /* Transform normal */
+    mat3 normalMatrix = mat3(model);
+    frag_normal = normalMatrix * normal;
 
     /* Convert tile coordinate to texture coord */
     texcoord = vec2(tile.x, 1.0 - tile.y) * TileSize / TilesetTexHeight;

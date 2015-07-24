@@ -50,7 +50,7 @@ func FragmentShader(path string) *Shader {
 
 
 func (shader *Shader) CompileFile(path string) error {
-    source, err := ioutil.ReadFile(path)
+    source, err := ioutil.ReadFile(util.ExePath + path)
     if err != nil {
         return err
     }

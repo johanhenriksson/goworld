@@ -13,13 +13,13 @@ func main() {
     cam := engine.CreateCamera(5,2,5, 1280,800, 65.0, 0.1, 100.0)
 
     /* Shader setup */
-    program := render.CompileVFShader("assets/shaders/3d_voxel")
+    program := render.CompileVFShader("/assets/shaders/3d_voxel")
     program.Use()
     program.Matrix4f("projection", &cam.Projection[0])
     program.Matrix4f("camera", &cam.View[0])
 
     /* Tileset Material */
-    ttx, _ := render.LoadTexture("assets/tileset.png")
+    ttx, _ := render.LoadTexture("/assets/tileset.png")
     tilesetMat := render.CreateMaterial(program)
     tilesetMat.AddDescriptor("vertex", gl.UNSIGNED_BYTE, 3, 8, 0, false)
     tilesetMat.AddDescriptor("normal", gl.BYTE, 3, 8, 3, false)
