@@ -2,8 +2,6 @@ package network
 
 import (
     "net"
-    "fmt"
-    "time"
 )
 
 const (
@@ -56,22 +54,5 @@ func (c *Client) Worker() {
 
         /* TODO: Check protocol id */
         c.Recv(c.buffer)
-    }
-}
-
-func (c *Client) Update(dt float64) {
-    now := time.Now()
-    lost := make([]uint16, 0, 4)
-    for sq, msg := range c.outbox {
-        age := now.Sub(msg.Sent)
-        if age > c.Timeout {
-            /* Packet lost */
-            lost = append(lost, sq)
-            fmt.Println("Lost packet", sq, string(msg.Data))
-        }
-    }
-
-    for _, sq := range lost {
-        delete(c.outbox, sq)
     }
 }

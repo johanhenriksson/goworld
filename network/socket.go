@@ -81,11 +81,10 @@ func (s *Socket) Recv(buffer []byte) {
     packet := buffer[HeaderLength:]
 
     seq   := binary.BigEndian.Uint16(header[0:2])
-    ack   := binary.BigEndian.Uint16(header[2:4])
-    acked := binary.BigEndian.Uint32(header[4:8])
 
-    fmt.Println("Recieved", string(packet), "from", s.Address)
+    fmt.Println("Recieved", seq, "<-", string(packet), "from", s.Address)
 
+    /* Update ack local fields with the incoming sequence number */
     if seq < s.ack {
         i := s.ack - seq
         if i >= 32 {
@@ -104,18 +103,20 @@ func (s *Socket) Recv(buffer []byte) {
     }
     if seq > s.ack {
         i := seq - s.ack
-        s.acked = s.acked << 1
-        s.acked = s.acked << i - 1
+        s.acked = (s.acked << i) | 1
         s.ack = seq
         fmt.Println("Ack new packet", seq)
     }
 
+    /* Mark outgoing messages as delivered */
+    ack   := binary.BigEndian.Uint16(header[2:4])
+    acked := binary.BigEndian.Uint32(header[4:8])
     if _, ok := s.outbox[ack]; ok {
         delete(s.outbox, ack)
     }
     for i := 0; i < 32; i++ {
-        x := 1 << uint(i)
-        if acked & uint32(x) > 0 {
+        x := uint32(1 << uint32(i))
+        if acked & x > 0 {
             p_ack := ack - uint16(i)
             delete(s.outbox, p_ack)
         }
@@ -123,4 +124,21 @@ func (s *Socket) Recv(buffer []byte) {
 }
 
 func (s *Socket) Close() {
+}
+
+func (s *Socket) Update(dt float64) {
+    now := time.Now()
+    lost := make([]uint16, 0, 4)
+    for sq, msg := range s.outbox {
+        age := now.Sub(msg.Sent)
+        if age > s.Timeout {
+            /* Packet lost */
+            lost = append(lost, sq)
+            fmt.Println("Lost packet", sq, string(msg.Data))
+        }
+    }
+
+    for _, sq := range lost {
+        delete(s.outbox, sq)
+    }
 }

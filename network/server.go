@@ -45,15 +45,17 @@ func (s *Server) Worker() {
 
         /* TODO: Check protocol id */
 
-        if client, ok := s.clients[str_addr]; ok {
-            client.Recv(s.buffer)
-            client.Send([]byte("REPLY!"))
+        var client *Client
+        if c, ok := s.clients[str_addr]; ok {
+            client = c
         } else {
-            client := NewServerClient(s.conn, in_addr)
+            client = NewServerClient(s.conn, in_addr)
             s.clients[str_addr] = client
             fmt.Println("Client from", in_addr)
-            client.Send([]byte("REPLY!"))
         }
+
+        client.Recv(s.buffer)
+        client.Send([]byte("REPLY!"))
     }
 }
 
