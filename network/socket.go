@@ -7,21 +7,25 @@ import (
     "encoding/binary"
 )
 
+const ProtocolId uint32 = 0xBADA5535
+
+/* Used to keep track of outgoing messages that have not yet been ACK'ed */
 type OutMessage struct {
-    Data    []byte
-    Sent    time.Time
+    Data        []byte
+    Sent        time.Time
+    Attempts    uint16      /* 0 = don't resend */
 }
 
 type Socket struct {
-    Timeout     time.Duration
-    Address     *net.UDPAddr /* remote address */
-    outbox      map[uint16]OutMessage /* outgoing packets not yet ack'd */
-    buffer      []byte /* receieve buffer */
-    acked       uint32 /* previous ack bitfield */
-    ack         uint16 /* latest ack sent */
-    seqnum      uint16 /* next sequence number */
-    conn        *net.UDPConn
-    server      bool
+    Timeout     time.Duration               /* Timeout setting */
+    Address     *net.UDPAddr                /* Remote address */
+    conn        *net.UDPConn                /* Connection handle */
+    outbox      map[uint16]OutMessage       /* Outgoing packets not yet ack'd */
+    buffer      []byte                      /* receieve buffer */
+    acked       uint32                      /* previous ack bitfield */
+    ack         uint16                      /* latest ack sent */
+    seqnum      uint16                      /* next sequence number */
+    server      bool                        /* set to true if socket was created by a listening server */
 }
 
 func NewSocket(connection *net.UDPConn, addr *net.UDPAddr, buffSize int, server bool) *Socket {
@@ -31,9 +35,9 @@ func NewSocket(connection *net.UDPConn, addr *net.UDPAddr, buffSize int, server 
 
         outbox: make(map[uint16]OutMessage),
         buffer: make([]byte, buffSize),
-        seqnum: 1,
         conn: connection,
         server: server,
+        seqnum: 1,
     }
 }
 
@@ -59,6 +63,7 @@ func (s *Socket) Send(buffer []byte) {
     s.Write(packet)
 }
 
+/* Listening sockets and clients needs to handle writes slightly differently */
 func (s *Socket) Write(buffer []byte) {
     if s.server {
         s.conn.WriteToUDP(buffer, s.Address)
@@ -67,6 +72,7 @@ func (s *Socket) Write(buffer []byte) {
     }
 }
 
+/* Listening sockets and clients needs to handle reads slightly differently */
 func (s *Socket) Read(buffer []byte) (int, *net.UDPAddr, error) {
     if s.server {
         return s.conn.ReadFromUDP(s.buffer)
@@ -76,6 +82,7 @@ func (s *Socket) Read(buffer []byte) (int, *net.UDPAddr, error) {
     }
 }
 
+/* Handle an incomming packet */
 func (s *Socket) Recv(buffer []byte) {
     header := buffer[0:HeaderLength]
     packet := buffer[HeaderLength:]
@@ -105,19 +112,16 @@ func (s *Socket) Recv(buffer []byte) {
         i := seq - s.ack
         s.acked = (s.acked << i) | 1
         s.ack = seq
-        fmt.Println("Ack new packet", seq)
     }
 
     /* Mark outgoing messages as delivered */
     ack   := binary.BigEndian.Uint16(header[2:4])
     acked := binary.BigEndian.Uint32(header[4:8])
-    if _, ok := s.outbox[ack]; ok {
-        delete(s.outbox, ack)
-    }
-    for i := 0; i < 32; i++ {
-        x := uint32(1 << uint32(i))
+    delete(s.outbox, ack)
+    for i := uint16(0); i < 32; i++ {
+        x := uint32(1 << i)
         if acked & x > 0 {
-            p_ack := ack - uint16(i)
+            p_ack := ack - i
             delete(s.outbox, p_ack)
         }
     }

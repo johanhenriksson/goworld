@@ -2,6 +2,7 @@ package main
 
 import (
     "github.com/go-gl/gl/v4.1-core/gl"
+    mgl "github.com/go-gl/mathgl/mgl32"
 
     "github.com/johanhenriksson/goworld/engine"
     "github.com/johanhenriksson/goworld/render"
@@ -49,6 +50,7 @@ func main() {
     vmesh := chk.Compute()
     transf := engine.CreateTransform(0,0,0)
     program.Matrix4f("model", &transf.Matrix[0])
+    program.Vec3("lightPos", &mgl.Vec3{ 5,5,5 })
 
     gl.ClearColor(1,1,1,0)
 
@@ -57,6 +59,8 @@ func main() {
         gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
         program.Matrix4f("camera", &cam.View[0])
+        program.Vec3("cameraPos", &cam.Transform.Position)
+        program.Vec3("lightPos", &cam.Transform.Position)
 
         vmesh.Render()
     })

@@ -6,6 +6,7 @@ import (
     "strings"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
+    mgl "github.com/go-gl/mathgl/mgl32"
 
     "github.com/johanhenriksson/goworld/util"
 )
@@ -106,6 +107,11 @@ func (program *ShaderProgram) GetAttrLoc(attr string) AttributeLocation {
 func (program *ShaderProgram) Matrix4f(name string, ptr *float32) {
     loc := program.GetUniformLoc(name)
 	gl.UniformMatrix4fv(int32(loc), 1, false, ptr)
+}
+
+func (program *ShaderProgram) Vec3(name string, vec *mgl.Vec3) {
+    loc := program.GetUniformLoc(name)
+	gl.Uniform3f(int32(loc), vec[0], vec[1], vec[2])
 }
 
 func (program *ShaderProgram) Int32(name string, val int32) {

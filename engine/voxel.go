@@ -34,12 +34,12 @@ func (voxel *Voxel) Compute(x, y, z uint8, data VoxelVertices, ts *Tileset) Voxe
                                           ts.Get(voxel.Yp), ts.Get(voxel.Yn),
                                           ts.Get(voxel.Zp), ts.Get(voxel.Zn)
 
-    ux, uy := uint8(up.X),    uint8(up.Y)
-    dx, dy := uint8(down.X),  uint8(down.Y)
-    fx, fy := uint8(front.X), uint8(front.Y)
-    bx, by := uint8(back.X),  uint8(back.Y)
-    lx, ly := uint8(left.X),  uint8(left.Y)
-    rx, ry := uint8(right.X), uint8(right.Y)
+    ux, uy := uint8(up.X),    uint8(up.Y)       // top tile coords
+    dx, dy := uint8(down.X),  uint8(down.Y)     // bottom tile coords
+    fx, fy := uint8(front.X), uint8(front.Y)    // front
+    bx, by := uint8(back.X),  uint8(back.Y)     // back
+    lx, ly := uint8(left.X),  uint8(left.Y)     // left
+    rx, ry := uint8(right.X), uint8(right.Y)    // right
 
     return append(data,
         // Top 
