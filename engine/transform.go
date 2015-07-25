@@ -5,6 +5,7 @@ import (
     mgl "github.com/go-gl/mathgl/mgl32"
 )
 
+/* Represents a 3D transform. */
 type Transform struct {
     Matrix      mgl.Mat4
     Position    mgl.Vec3
@@ -13,8 +14,10 @@ type Transform struct {
     Forward     mgl.Vec3
     Right       mgl.Vec3
     Up          mgl.Vec3
+    /* Probably needs a changed flag */
 }
 
+/* Creates a new 3D transform */
 func CreateTransform(x, y, z float32) *Transform {
     t := &Transform {
         Matrix:   mgl.Ident4(),
@@ -26,6 +29,7 @@ func CreateTransform(x, y, z float32) *Transform {
     return t
 }
 
+/* Update transform matrix and right/up/forward vectors */
 func (t *Transform) Update(dt float32) {
     /* Update transform */
     rad         := t.Rotation.Mul(math.Pi / 180.0)
@@ -33,6 +37,7 @@ func (t *Transform) Update(dt float32) {
     scaling     := mgl.Scale3D(t.Scale[0], t.Scale[1], t.Scale[2])
     translation := mgl.Translate3D(t.Position[0], t.Position[1], t.Position[2])
 
+    /* New transform matrix: S * R * T */
     m := scaling.Mul4(rotation.Mul4(translation))
 
     /* Grab axis vectors */
@@ -53,11 +58,13 @@ func (t *Transform) Translate(offset mgl.Vec3) {
     t.Position = t.Position.Add(offset)
 }
 
+/* Transforms a point into this coordinate system */
 func (t *Transform) TransformPoint(point mgl.Vec3) mgl.Vec3 {
     p4 := mgl.Vec4 { point[0], point[1], point[2], 1 }
     return t.Matrix.Mul4x1(p4).Vec3()
 }
 
+/* Transforms a direction into this coordinate system */
 func (t *Transform) TransformDir(dir mgl.Vec3) mgl.Vec3 {
     d4 := mgl.Vec4 { dir[0], dir[1], dir[2], 0 }
     return t.Matrix.Mul4x1(d4).Vec3()

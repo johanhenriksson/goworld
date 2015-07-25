@@ -2,7 +2,9 @@ package engine
 
 import (
     "math"
+    "unsafe"
     mgl "github.com/go-gl/mathgl/mgl32"
+    "github.com/go-gl/gl/v4.1-core/gl"
 )
 
 type Camera struct {
@@ -31,12 +33,31 @@ func CreateCamera(x, y, z, width, height, fov, near, far float32) *Camera {
     cam.Update(0.0)
     return cam
 }
+func (cam *Camera) Unproject(x, y float32) mgl.Vec3 {
+    var depth float32 = 0.0;
+    gl.ReadPixels(int32(x), int32(cam.Height - y - 1), 1, 1, gl.DEPTH_COMPONENT, gl.FLOAT, unsafe.Pointer(&depth));
+    /* Clip space coord */
+    point := mgl.Vec4 {
+        (x / cam.Width) * 2 - 1,
+        (1 - y / cam.Height) * 2 - 1,
+        depth * 2 - 1,
+        1,
+    }
+
+    pvi := cam.Projection.Mul4(cam.View)
+    pvi = pvi.Inv()
+    world := pvi.Mul4x1(point);
+
+    /* World space coord */
+    return mgl.Vec3 {
+        world.X() / world.W(),
+        world.Y() / world.W(),
+        world.Z() / world.W(),
+    }
+}
 
 func (c *Camera) Update(dt float32) {
-    c.Transform.Update(dt)
-
-    dv := 5.0 * dt
-
+    /* Handle keyboard input */
     move := false
     dir := mgl.Vec3 { }
     if KeyDown(KeyW) && !KeyDown(KeyS) {
@@ -65,31 +86,42 @@ func (c *Camera) Update(dt float32) {
     }
 
     if move {
+        /* Calculate normalized movement vector */
+        dv := 5.0 * dt /* magic number: movement speed */
         dir = dir.Normalize().Mul(dv)
-        right := c.Transform.Right.Mul(dir[0])
-        up := mgl.Vec3{0, dir[1], 0}
+
+        right   := c.Transform.Right.Mul(dir[0])
+        up      := mgl.Vec3{0, dir[1], 0}
         forward := c.Transform.Forward.Mul(dir[2])
+
+        /* Translate camera */
         c.Transform.Translate(right.Add(up.Add(forward)))
     }
 
-    rx := c.Transform.Rotation[0] - Mouse.DY * 0.08
-    ry := c.Transform.Rotation[1] - Mouse.DX * 0.09
-
-    /* -90 < rx < 90 */
-    /* -180 < ry < 180 */
-    rx = float32(math.Max(-90.0, math.Min(90.0, float64(rx))))
-    if ry > 180.0 {
-        ry -= 360.0
-    }
-    if ry < -180.0 {
-        ry += 360.0
-    }
-
+    /* Mouse look */
     if MouseDown(MouseButton1) {
+        rx := c.Transform.Rotation[0] - Mouse.DY * 0.08
+        ry := c.Transform.Rotation[1] - Mouse.DX * 0.09
+
+        /* Camera angle limits */
+        /* -90 < rx < 90 */
+        rx = float32(math.Max(-90.0, math.Min(90.0, float64(rx))))
+
+        /* -180 < ry < 180 */
+        if ry > 180.0 {
+            ry -= 360.0
+        }
+        if ry < -180.0 {
+            ry += 360.0
+        }
         c.Transform.Rotation[0] = rx
         c.Transform.Rotation[1] = ry
     }
 
+    /* Update transform with new position & rotation */
+    c.Transform.Update(dt)
+
+    /* Calculate new view matrix based on forward vector */
     lookAt := c.Transform.Position.Add(c.Transform.Forward);
 	c.View = mgl.LookAtV(c.Transform.Position, lookAt, mgl.Vec3{0,1,0})
 }

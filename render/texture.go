@@ -12,8 +12,11 @@ import (
 
 type Texture struct {
     Id      uint32
+    Width   int32
+    Height  int32
 }
 
+/* Creates a new GL texture and sets basic options */
 func CreateTexture() *Texture {
 	var id uint32
 	gl.GenTextures(1, &id)
@@ -21,7 +24,6 @@ func CreateTexture() *Texture {
     tx := &Texture {
         Id: id,
     }
-
     tx.Bind(gl.TEXTURE0)
 
     /* Texture parameters */
@@ -33,24 +35,29 @@ func CreateTexture() *Texture {
     return tx
 }
 
+/* Binds this texture to the given slot and activates it */
 func (tx *Texture) Bind(slot uint32) {
 	gl.ActiveTexture(gl.TEXTURE0 + slot)
 	gl.BindTexture(gl.TEXTURE_2D, tx.Id)
 }
 
+/* Buffers texture data to GPU memory */
 func (tx *Texture) Buffer(img *image.RGBA) {
+	tx.Width  = int32(img.Rect.Size().X)
+    tx.Height = int32(img.Rect.Size().Y)
+
+    /* Buffer image data */
 	gl.TexImage2D(
 		gl.TEXTURE_2D,
 		0,
 		gl.RGBA,
-		int32(img.Rect.Size().X),
-		int32(img.Rect.Size().Y),
+        tx.Width, tx.Height,
 		0,
-		gl.RGBA,
-		gl.UNSIGNED_BYTE,
+		gl.RGBA, gl.UNSIGNED_BYTE,
 		gl.Ptr(img.Pix))
 }
 
+/* Loads a texture from file */
 func LoadTexture(file string) (*Texture, error) {
     img, err := LoadImage(file)
     if err != nil {
@@ -62,6 +69,7 @@ func LoadTexture(file string) (*Texture, error) {
     return tx, nil
 }
 
+/* Loads an image from file. Returns an RGBA image object */
 func LoadImage(file string) (*image.RGBA, error) {
 	imgFile, err := os.Open(util.ExePath + file)
 	if err != nil {

@@ -1,5 +1,7 @@
 #version 330
 
+uniform float ambient;
+uniform float lightIntensity;
 uniform sampler2D tex0;
 
 in vec2 texcoord;
@@ -11,11 +13,8 @@ in float lightDistance;
 out vec4 outputColor;
 
 void main() {
-    float ambient = 0.25;
-    float intensity = 15.0;
-
     vec4 diffuse = texture(tex0, texcoord);
-    float i = intensity / pow(lightDistance, 2);
+    float i = lightIntensity / pow(lightDistance, 2);
     float light = max(0, dot(L, worldNormal)) * i;
 
     light = max(ambient, light);

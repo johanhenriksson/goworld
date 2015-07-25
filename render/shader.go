@@ -15,13 +15,14 @@ type ShaderType uint32
 const VertexShaderType   ShaderType = gl.VERTEX_SHADER
 const FragmentShaderType ShaderType = gl.FRAGMENT_SHADER
 
+/* Represents a shader part of a GLSL program. */
 type Shader struct {
     Id          uint32
     stype       ShaderType
     compiled    bool
 }
 
-func Create(shaderType ShaderType) *Shader {
+func CreateShader(shaderType ShaderType) *Shader {
     id := gl.CreateShader(uint32(shaderType))
     return &Shader {
         Id:         id,
@@ -30,8 +31,10 @@ func Create(shaderType ShaderType) *Shader {
     }
 }
 
+/* Compiles and returns a vertex shader from the given source file
+   Panics on compilation errors */
 func VertexShader(path string) *Shader {
-    s := Create(VertexShaderType)
+    s := CreateShader(VertexShaderType)
     err := s.CompileFile(path)
     if err != nil {
         panic(err)
@@ -39,8 +42,10 @@ func VertexShader(path string) *Shader {
     return s
 }
 
+/* Compiles and returns a fragment shader from the given source file. 
+   Panics on compilation errors */
 func FragmentShader(path string) *Shader {
-    s := Create(FragmentShaderType)
+    s := CreateShader(FragmentShaderType)
     err := s.CompileFile(path)
     if err != nil {
         panic(err)
@@ -48,7 +53,7 @@ func FragmentShader(path string) *Shader {
     return s
 }
 
-
+/* Loads and compiles source code from the given file path */
 func (shader *Shader) CompileFile(path string) error {
     source, err := ioutil.ReadFile(util.ExePath + path)
     if err != nil {
@@ -57,11 +62,13 @@ func (shader *Shader) CompileFile(path string) error {
     return shader.Compile(string(source))
 }
 
+/* Compiles a shader from a source string */
 func (shader *Shader) Compile(source string) error {
 	csource := util.GLString(source)
 	gl.ShaderSource(shader.Id, 1, &csource, nil)
 	gl.CompileShader(shader.Id)
 
+    /* Check compilation status */
 	var status int32
 	gl.GetShaderiv(shader.Id, gl.COMPILE_STATUS, &status)
 	if status == gl.FALSE {

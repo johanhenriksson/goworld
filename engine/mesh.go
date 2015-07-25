@@ -5,6 +5,7 @@ import (
     "github.com/johanhenriksson/goworld/geometry"
 )
 
+/* Meshes connect vertex data to shaders through the use of Materials */
 type Mesh struct {
     Geometry    *geometry.VertexArray
     Material    *render.Material
