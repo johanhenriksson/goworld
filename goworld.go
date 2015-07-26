@@ -8,31 +8,39 @@ import (
     mgl "github.com/go-gl/mathgl/mgl32"
 
     "github.com/johanhenriksson/goworld/engine"
+    "github.com/johanhenriksson/goworld/geometry"
     "github.com/johanhenriksson/goworld/render"
 )
 
 func main() {
     wnd := engine.CreateWindow("voxels", 1280, 800)
 
-    cam := engine.CreateCamera(5,2,5, 1280,800, 65.0, 0.1, 100.0)
+    cam := engine.CreateCamera(5,2,5, 1280,800, 65.0, 0.1, 1000.0)
 
-    /* Shader setup */
+    /* Line material */
+    lineProgram := render.CompileVFShader("/assets/shaders/3d_line")
+    lineProgram.Use()
+    lineProgram.Matrix4f("projection", &cam.Projection[0])
+    lineMat := render.CreateMaterial(lineProgram)
+    lineMat.AddDescriptor("vertex", gl.FLOAT, 3, 28,  0, false)
+    lineMat.AddDescriptor("color",  gl.FLOAT, 4, 28, 12, false)
+
+    /* Tileset Material */
     program := render.CompileVFShader("/assets/shaders/3d_voxel")
     program.Use()
     program.Matrix4f("projection", &cam.Projection[0])
-    program.Matrix4f("camera", &cam.View[0])
-
-    /* Tileset Material */
     ttx, _ := render.LoadTexture("/assets/tileset.png")
     tilesetMat := render.CreateMaterial(program)
     tilesetMat.AddDescriptor("vertex", gl.UNSIGNED_BYTE, 3, 8, 0, false)
-    tilesetMat.AddDescriptor("normal", gl.BYTE, 3, 8, 3, false)
-    tilesetMat.AddDescriptor("tile", gl.UNSIGNED_BYTE, 2, 8, 6, false)
+    tilesetMat.AddDescriptor("normal", gl.BYTE,          3, 8, 3, false)
+    tilesetMat.AddDescriptor("tile",   gl.UNSIGNED_BYTE, 2, 8, 6, false)
     tilesetMat.AddTexture(0, ttx)
 
     tileset := engine.CreateTileset(tilesetMat)
 
-    /* Define a gress tile */
+    //gl.PolygonMode(gl.FRONT_AND_BACK, gl.LINE)
+
+    /* Define a voxels */
     grass := &engine.Voxel {
         Xp: tileset.GetId(4, 0),
         Xn: tileset.GetId(4, 0),
@@ -51,7 +59,7 @@ func main() {
     }
 
     /* Fill chunk with voxels */
-    size := 8
+    size := 64
     chk := engine.CreateChunk(size, tileset)
     for z := 0; z < size; z++ {
         for x := 0; x < size; x++ {
@@ -67,24 +75,51 @@ func main() {
         }
     }
 
+    transf := engine.CreateTransform(0,0,0)
+
+    /* Lines */
+    lines := geometry.CreateLines(lineMat)
+    /*
+    lines.Line(0,3,0, 3,3,0, 1,0,0,1)
+    lines.Line(0,3,0, 0,6,0, 0,1,0,1)
+    lines.Line(0,3,0, 0,3,3, 0,0,1,1)
+    */
+    lines.Box(0,0,0,256,256,256,0,1,0,1)
+    lines.Box(0,0,0,128,128,128,0,0,1,1)
+    lines.Box(0,0,0,64,64,64,1,0,0,1)
+    lines.Box(0,0,0,32,32,32,1,1,0,1)
+    lines.Box(0,0,0,16,16,16,1,0,1,1)
+    lines.Box(0,0,0,8,8,8,0,1,1,1)
+    lines.Box(0,0,0,4,4,4,1,0,1,1)
+    lines.Box(0,0,0,2,2,2,1,1,1,1)
+
+    lines.Compute()
+    lineProgram.Use()
+    lineProgram.Matrix4f("model", &transf.Matrix[0])
+
     /* Compute mesh */
     vmesh := chk.Compute()
-    transf := engine.CreateTransform(0,0,0)
+    program.Use()
     program.Matrix4f("model", &transf.Matrix[0])
     program.Vec3("lightPos", &mgl.Vec3{ 5,15,-8 })
     program.Float("lightIntensity", 250.0)
     program.Float("ambient", 0.6)
 
-    gl.ClearColor(1,1,1,1)
+    gl.ClearColor(0,0,0,1)
 
     /* Render loop */
     wnd.SetRenderCallback(func(wnd *engine.Window, dt float32) {
         gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
+        program.Use()
         program.Matrix4f("camera", &cam.View[0])
         program.Vec3("cameraPos", &cam.Transform.Position)
 
         vmesh.Render()
+
+        lineProgram.Use()
+        lineProgram.Matrix4f("view", &cam.View[0])
+        lines.Render()
     })
 
     shoot := false
@@ -129,17 +164,21 @@ func VoxelCoord(forward mgl.Vec3, coord mgl.Vec3) (int, int, int) {
             /* x is closer */
             if forward[0] > 0 {
                 /* we are looking to the right */
-                nx--;
+                fmt.Println("X closest, looking along X+")
+                //nx--;
             } else {
                 nx++;
+                fmt.Println("X closest, looking along X-")
             }
         } else {
             /* z is closer */
             if forward[2] > 0 {
                 /* we are looking along z+ */
-                nz--
+                fmt.Println("1 Z closest, looking along Z+")
+                //nz--
             } else {
-                nz++
+                //nz++
+                fmt.Println("1 Z closest, looking along Z-")
             }
         }
     } else {
@@ -149,17 +188,18 @@ func VoxelCoord(forward mgl.Vec3, coord mgl.Vec3) (int, int, int) {
             /* y is closer! */
             if forward[1] > 0 {
                 /* we are looking up */
+                fmt.Println("Y closest, looking up")
                 ny--
-            } else {
-                ny++
             }
         } else {
             /* z is closer! */
             if forward[2] > 0 {
                 /* looking along z+ */
-                nz--
+                fmt.Println("1 Z closest, looking along Z+")
+                //nz--
             } else {
-                nz++
+                //nz++
+                fmt.Println("1 Z closest, looking along Z-")
             }
         }
     }

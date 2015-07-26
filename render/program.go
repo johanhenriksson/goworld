@@ -107,7 +107,7 @@ func (program *ShaderProgram) GetUniformLoc(uniform string) UniformLocation {
     if !ok {
         loc = UniformLocation(gl.GetUniformLocation(program.Id, util.GLString(uniform)))
         if loc < 0 {
-            return UnknownUniform
+            panic("Unknown uniform: " + uniform)
         }
         program.uniforms[uniform] = loc
     }
@@ -120,7 +120,7 @@ func (program *ShaderProgram) GetAttrLoc(attr string) AttributeLocation {
     if !ok {
         loc = AttributeLocation(gl.GetAttribLocation(program.Id, util.GLString(attr)))
         if loc < 0 {
-            return UnknownAttribute
+            panic("Unknown attribute: " + attr)
         }
         program.attributes[attr] = loc
     }
