@@ -1,17 +1,11 @@
 package geometry
 
 import (
-    "fmt"
     "unsafe"
     "github.com/go-gl/gl/v4.1-core/gl"
     mgl "github.com/go-gl/mathgl/mgl32"
     "github.com/johanhenriksson/goworld/render"
 )
-
-func init() {
-    fmt.Println("Sizeof linevertex:", unsafe.Sizeof(LineVertex{}))
-    fmt.Println("Sizeof line:", unsafe.Sizeof(Line{}))
-}
 
 type LineVertex struct {
     X, Y, Z float32
@@ -76,9 +70,6 @@ func (lines *Lines) Compute() {
         b.X, b.Y, b.Z      = line.End[0],   line.End[1],   line.End[2]
         a.R, a.G, a.B, a.A = line.Color[0], line.Color[1], line.Color[2], line.Color[3]
         b.R, b.G, b.B, b.A = line.Color[0], line.Color[1], line.Color[2], line.Color[3]
-        fmt.Println("Line:")
-        fmt.Println(data[2*i+0])
-        fmt.Println(data[2*i+1])
     }
     lines.vao.Length = int32(2 * count)
     lines.vao.Type   = gl.LINES

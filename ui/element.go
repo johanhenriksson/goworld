@@ -2,14 +2,16 @@ package ui;
 
 import (
     "github.com/johanhenriksson/goworld/engine"
+    "github.com/johanhenriksson/goworld/render"
 )
 
 type Element struct {
     Width       float64
     Height      float64
-    Transform   *engine.Transform
     Parent      *Element
     Children    []*Element
+    Transform   *engine.Transform
+    Material    *render.Material
 }
 
 func (e *Element) AddChild(child *Element) {
