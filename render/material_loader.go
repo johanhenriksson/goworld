@@ -7,6 +7,7 @@ import (
 	"github.com/go-gl/gl/v4.1-core/gl"
 )
 
+/** Material file JSON representation */
 type f_material struct {
     Shader   string
     Pointers []*f_pointer
@@ -30,6 +31,7 @@ type f_texture struct {
     File string
 }
 
+/** Loads a material from a json definition file */
 func LoadMaterial(file string) *Material {
     json_bytes, err := ioutil.ReadFile(file)
     if err != nil {
