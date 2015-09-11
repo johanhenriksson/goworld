@@ -2,14 +2,15 @@ package ui;
 
 import (
     "github.com/johanhenriksson/goworld/engine"
+    mgl "github.com/go-gl/mathgl/mgl32"
 )
 
 /** Main UI manager. Handles routing of events and drawing the UI. */
 type Manager struct {
     Window      *engine.Window
+    Viewport    mgl.Mat4
 
-    /** A top level element that represents the screen area. */
-    Screen      Element
+    Children    []Drawable
 
     /** Projection matrix - orthographic */
     /* Shaders */
@@ -18,26 +19,23 @@ type Manager struct {
 func NewManager(wnd *engine.Window) *Manager {
     m := &Manager {
         Window: wnd,
+        Viewport: mgl.Ortho(0, float32(wnd.Width), float32(wnd.Height), 0, 1000, -1000),
+        Children: []Drawable{},
     }
     return m
 }
 
+func (m *Manager) Append(child Drawable) {
+    m.Children = append(m.Children, child)
+}
+
 func (m *Manager) Draw() {
+    args := DrawArgs {
+        Viewport: m.Viewport,
+        Transform: mgl.Ident4(),
+    }
+    for _, el := range m.Children {
+        el.Draw(args)
+    }
 }
 
-func (m *Manager) NewElement() *Element {
-    e := &Element {
-        Width: 0,
-        Height: 0,
-        Transform: engine.CreateTransform(0,0,0),
-        Children: []*Element{},
-    }
-    return e
-}
-
-func (m *Manager) NewRect() *Rect {
-    r := &Rect {
-        Element: m.NewElement(),
-    }
-    return r
-}

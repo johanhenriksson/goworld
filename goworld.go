@@ -21,42 +21,24 @@ const (
 
 func main() {
     wnd := engine.CreateWindow("voxels", WIDTH, HEIGHT)
-
     cam := engine.CreateCamera(5,2,5, WIDTH, HEIGHT, 65.0, 0.1, 1000.0)
-
-
-    /* Line material */
-    lineProgram := render.CompileVFShader("/assets/shaders/3d_line")
-    lineProgram.Use()
-    lineProgram.Matrix4f("projection", &cam.Projection[0])
-    lineMat := render.CreateMaterial(lineProgram)
-    lineMat.AddDescriptor("vertex", gl.FLOAT, 3, 28,  0, false)
-    lineMat.AddDescriptor("color",  gl.FLOAT, 4, 28, 12, false)
+    //gl.PolygonMode(gl.FRONT_AND_BACK, gl.LINE)
 
     uimgr := ui.NewManager(wnd)
+    rect := uimgr.NewRect(10,10,100,100)
+    uimgr.Append(rect)
     uimgr.Draw()
+
+    /* Line material */
+    lineMat := render.LoadMaterial("assets/materials/lines.json")
+    lineProgram := lineMat.Shader
 
     tilesetMat := render.LoadMaterial("assets/materials/tileset.json")
     program := tilesetMat.Shader
-
-    /* Tileset Material */
-    /*
-    program := render.CompileVFShader("/assets/shaders/3d_voxel")
-    program.Use()
-    tilesetMat := render.CreateMaterial(program)
-    tilesetMat.AddDescriptor("vertex", gl.UNSIGNED_BYTE, 3, 8, 0, false)
-    tilesetMat.AddDescriptor("normal", gl.BYTE,          3, 8, 3, false)
-    tilesetMat.AddDescriptor("tile",   gl.UNSIGNED_BYTE, 2, 8, 6, false)
-
-    ttx, _ := render.LoadTexture("/assets/tileset.png")
-    tilesetMat.AddTexture(0, ttx)
-    */
-
     program.Matrix4f("projection", &cam.Projection[0])
 
     tileset := engine.CreateTileset(tilesetMat)
 
-    //gl.PolygonMode(gl.FRONT_AND_BACK, gl.LINE)
 
     /* Define voxels */
     grass := &engine.Voxel {
@@ -78,7 +60,7 @@ func main() {
 
     /* Fill chunk with voxels */
     size := 16
-    f := 1.0 / 10
+    f := 1.0 / 5
     chk := engine.CreateChunk(size, tileset)
     simplex := opensimplex.NewWithSeed(1000)
     for z := 0; z < size; z++ {
@@ -102,16 +84,10 @@ func main() {
 
     /* Lines */
     lines := geometry.CreateLines(lineMat)
-    /*
+    /* Axis
     lines.Line(0,3,0, 3,3,0, 1,0,0,1)
     lines.Line(0,3,0, 0,6,0, 0,1,0,1)
     lines.Line(0,3,0, 0,3,3, 0,0,1,1)
-    */
-    /*
-    lines.Box(0,0,0,256,256,256,0,1,0,1)
-    lines.Box(0,0,0,128,128,128,0,0,1,1)
-    lines.Box(0,0,0,64,64,64,1,0,0,1)
-    lines.Box(0,0,0,32,32,32,1,1,0,1)
     */
     lines.Box(0,0,0,16,16,16,1,0,1,1)
     lines.Box(0,0,0,8,8,8,0,1,1,1)
@@ -120,6 +96,7 @@ func main() {
 
     lines.Compute()
     lineProgram.Use()
+    lineProgram.Matrix4f("projection", &cam.Projection[0])
     lineProgram.Matrix4f("model", &transf.Matrix[0])
 
     /* Compute mesh */
