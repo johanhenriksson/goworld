@@ -1,0 +1,15 @@
+{
+    "shader": "/assets/shaders/ui_color",
+    "pointers": [
+        {
+            "name": "vertex",
+            "type": "float",
+            "count": 3
+        },
+        {
+            "name": "color",
+            "type": "float",
+            "count": 4
+        }
+    ]
+}

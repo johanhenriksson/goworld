@@ -1,0 +1,29 @@
+{
+    "shader": "/assets/shaders/3d_voxel",
+    "pointers": [
+        {
+            "name": "vertex",
+            "type": "unsigned byte",
+            "count": 3,
+            "normalize": false
+        },
+        {
+            "name": "normal",
+            "type": "byte",
+            "count": 3,
+            "normalize": false
+        },
+        {
+            "name": "tile",
+            "type": "unsigned byte",
+            "count": 2,
+            "normalize": false
+        }
+    ],
+    "textures": [
+        {
+            "slot": 0,
+            "file": "/assets/tileset.png"
+        }
+    ]
+}

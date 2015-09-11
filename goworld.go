@@ -3,44 +3,44 @@ package main
 import (
     "fmt"
     "math"
-    "math/rand"
     "github.com/go-gl/gl/v4.1-core/gl"
     mgl "github.com/go-gl/mathgl/mgl32"
 
     "github.com/johanhenriksson/goworld/engine"
     "github.com/johanhenriksson/goworld/geometry"
     "github.com/johanhenriksson/goworld/render"
+    "github.com/johanhenriksson/goworld/ui"
+
+    opensimplex "github.com/ojrac/opensimplex-go"
+)
+
+const (
+    WIDTH = 1280
+    HEIGHT = 800
 )
 
 func main() {
-    wnd := engine.CreateWindow("voxels", 1280, 800)
+    wnd := engine.CreateWindow("voxels", WIDTH, HEIGHT)
+    cam := engine.CreateCamera(5,2,5, WIDTH, HEIGHT, 65.0, 0.1, 1000.0)
+    //gl.PolygonMode(gl.FRONT_AND_BACK, gl.LINE)
 
-    cam := engine.CreateCamera(5,2,5, 1280,800, 65.0, 0.1, 1000.0)
+    uimgr := ui.NewManager(wnd)
+    rect := uimgr.NewRect(10,10,100,100)
+    uimgr.Append(rect)
+    uimgr.Draw()
 
     /* Line material */
-    lineProgram := render.CompileVFShader("/assets/shaders/3d_line")
-    lineProgram.Use()
-    lineProgram.Matrix4f("projection", &cam.Projection[0])
-    lineMat := render.CreateMaterial(lineProgram)
-    lineMat.AddDescriptor("vertex", gl.FLOAT, 3, 28,  0, false)
-    lineMat.AddDescriptor("color",  gl.FLOAT, 4, 28, 12, false)
+    lineMat := render.LoadMaterial("assets/materials/lines.json")
+    lineProgram := lineMat.Shader
 
-    /* Tileset Material */
-    program := render.CompileVFShader("/assets/shaders/3d_voxel")
-    program.Use()
+    tilesetMat := render.LoadMaterial("assets/materials/tileset.json")
+    program := tilesetMat.Shader
     program.Matrix4f("projection", &cam.Projection[0])
-    ttx, _ := render.LoadTexture("/assets/tileset.png")
-    tilesetMat := render.CreateMaterial(program)
-    tilesetMat.AddDescriptor("vertex", gl.UNSIGNED_BYTE, 3, 8, 0, false)
-    tilesetMat.AddDescriptor("normal", gl.BYTE,          3, 8, 3, false)
-    tilesetMat.AddDescriptor("tile",   gl.UNSIGNED_BYTE, 2, 8, 6, false)
-    tilesetMat.AddTexture(0, ttx)
 
     tileset := engine.CreateTileset(tilesetMat)
 
-    //gl.PolygonMode(gl.FRONT_AND_BACK, gl.LINE)
 
-    /* Define a voxels */
+    /* Define voxels */
     grass := &engine.Voxel {
         Xp: tileset.GetId(4, 0),
         Xn: tileset.GetId(4, 0),
@@ -59,19 +59,24 @@ func main() {
     }
 
     /* Fill chunk with voxels */
-    size := 64
+    size := 16
+    f := 1.0 / 5
     chk := engine.CreateChunk(size, tileset)
+    simplex := opensimplex.NewWithSeed(1000)
     for z := 0; z < size; z++ {
-        for x := 0; x < size; x++ {
-            v := rand.Intn(2)
-            var vtype *engine.Voxel = nil
-            switch v {
-            case 0:
-                vtype = grass
-            case 1:
-                vtype = rock
+        for y := 0; y < size; y++ {
+            for x := 0; x < size; x++ {
+                fx, fy, fz := float64(x) * f, float64(y) * f, float64(z) * f
+                v := simplex.Eval3(fx, fy, fz)
+                var vtype *engine.Voxel = nil
+                if y <= size/2 {
+                    vtype = grass
+                }
+                if v > 0.0 {
+                    vtype = rock
+                }
+                chk.Set(x,y,z, vtype)
             }
-            chk.Set(x,0,z, vtype)
         }
     }
 
@@ -79,15 +84,11 @@ func main() {
 
     /* Lines */
     lines := geometry.CreateLines(lineMat)
-    /*
+    /* Axis
     lines.Line(0,3,0, 3,3,0, 1,0,0,1)
     lines.Line(0,3,0, 0,6,0, 0,1,0,1)
     lines.Line(0,3,0, 0,3,3, 0,0,1,1)
     */
-    lines.Box(0,0,0,256,256,256,0,1,0,1)
-    lines.Box(0,0,0,128,128,128,0,0,1,1)
-    lines.Box(0,0,0,64,64,64,1,0,0,1)
-    lines.Box(0,0,0,32,32,32,1,1,0,1)
     lines.Box(0,0,0,16,16,16,1,0,1,1)
     lines.Box(0,0,0,8,8,8,0,1,1,1)
     lines.Box(0,0,0,4,4,4,1,0,1,1)
@@ -95,13 +96,14 @@ func main() {
 
     lines.Compute()
     lineProgram.Use()
+    lineProgram.Matrix4f("projection", &cam.Projection[0])
     lineProgram.Matrix4f("model", &transf.Matrix[0])
 
     /* Compute mesh */
     vmesh := chk.Compute()
     program.Use()
     program.Matrix4f("model", &transf.Matrix[0])
-    program.Vec3("lightPos", &mgl.Vec3{ 5,15,-8 })
+    program.Vec3("lightPos", &mgl.Vec3{ 8,15,8 })
     program.Float("lightIntensity", 250.0)
     program.Float("ambient", 0.6)
 

@@ -1,0 +1,15 @@
+{
+    "shader": "/assets/shaders/3d_line",
+    "pointers": [
+        {
+            "name": "vertex",
+            "type": "float",
+            "count": 3
+        },
+        {
+            "name": "color",
+            "type": "float",
+            "count": 4
+        }
+    ]
+}

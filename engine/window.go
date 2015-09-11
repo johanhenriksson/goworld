@@ -19,6 +19,8 @@ type RenderCallback func(*Window, float32)
 
 type Window struct {
     Wnd             *glfw.Window
+    Width           int
+    Height          int
     updateCb        UpdateCallback
     renderCb        RenderCallback
     maxFrameTime    float64
@@ -57,6 +59,8 @@ func CreateWindow(title string, width int, height int) *Window {
     window.SetMouseButtonCallback(MouseButtonCallback)
 
     w := &Window {
+        Width:          width,
+        Height:         height,
         Wnd:            window,
         maxFrameTime:   0.0,
         lastFrameTime:  glfw.GetTime(),
