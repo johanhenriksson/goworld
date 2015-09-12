@@ -24,10 +24,13 @@ func main() {
     cam := engine.CreateCamera(5,2,5, WIDTH, HEIGHT, 65.0, 0.1, 1000.0)
     //gl.PolygonMode(gl.FRONT_AND_BACK, gl.LINE)
 
+    /* Enable blending */
+    gl.Enable(gl.BLEND);
+    gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+
     uimgr := ui.NewManager(wnd)
-    rect := uimgr.NewRect(10,10,100,100)
+    rect := uimgr.NewRect(ui.Color { R: 0.5, G: 1, B: 0.7, A: 0.5 }, 10,10,100,100)
     uimgr.Append(rect)
-    uimgr.Draw()
 
     /* Line material */
     lineMat := render.LoadMaterial("assets/materials/lines.json")
@@ -57,6 +60,7 @@ func main() {
         Zp: tileset.GetId(2, 0),
         Zn: tileset.GetId(2, 0),
     }
+
 
     /* Fill chunk with voxels */
     size := 16
@@ -122,6 +126,8 @@ func main() {
         lineProgram.Use()
         lineProgram.Matrix4f("view", &cam.View[0])
         lines.Render()
+
+        uimgr.Draw()
     })
 
     shoot := false

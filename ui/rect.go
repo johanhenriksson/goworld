@@ -6,24 +6,23 @@ import (
 
 type Rect struct {
     *Element
+    Color   Color
+    quad    *Quad
 }
 
-func (m *Manager) NewRect(x, y, w, h float32) *Rect {
+func (m *Manager) NewRect(color Color, x, y, w, h float32) *Rect {
     el := m.NewElement(x,y,w,h)
+    mat := render.LoadMaterial("assets/materials/ui_color.json")
     r := &Rect {
         Element: el,
+        Color: color,
+        quad: NewQuad(mat, color, w, h, 0, 0,1,0,1),
     }
-    el.Material = render.LoadMaterial("assets/materials/ui_color.json")
-    /* TODO: set viewport matrix on material */
     return r
 }
 
 func (r *Rect) Draw(args DrawArgs) {
-    sh := r.Element.Material.Shader
-    r.Element.Material.Use()
-
-    sh.Matrix4f("viewport", &args.Viewport[0])
-    sh.Matrix4f("model", &r.Transform.Matrix[0])
-
+    args.Transform = args.Transform.Mul4(r.Element.Transform.Matrix)
+    r.quad.Draw(args)
     r.Element.Draw(args)
 }

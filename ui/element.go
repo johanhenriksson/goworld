@@ -2,7 +2,6 @@ package ui;
 
 import (
     "github.com/johanhenriksson/goworld/engine"
-    "github.com/johanhenriksson/goworld/render"
 )
 
 type element_f struct {
@@ -17,7 +16,6 @@ type Element struct {
     Parent      Drawable
     Children    []Drawable
     Transform   *engine.Transform
-    Material    *render.Material
 }
 
 func (m *Manager) NewElement(x, y, w, h float32) *Element {
