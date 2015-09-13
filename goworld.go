@@ -29,7 +29,7 @@ func main() {
     gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
     uimgr := ui.NewManager(wnd)
-    rect := uimgr.NewRect(ui.Color { R: 0.5, G: 1, B: 0.7, A: 0.5 }, 10,10,100,100)
+    rect := uimgr.NewRect(ui.NewColor(0.5, 1, 0.7, 0.5), 120, 80, 800, 600)
     uimgr.Append(rect)
 
     /* Line material */
@@ -88,16 +88,7 @@ func main() {
 
     /* Lines */
     lines := geometry.CreateLines(lineMat)
-    /* Axis
-    lines.Line(0,3,0, 3,3,0, 1,0,0,1)
-    lines.Line(0,3,0, 0,6,0, 0,1,0,1)
-    lines.Line(0,3,0, 0,3,3, 0,0,1,1)
-    */
-    lines.Box(0,0,0,16,16,16,1,0,1,1)
-    lines.Box(0,0,0,8,8,8,0,1,1,1)
-    lines.Box(0,0,0,4,4,4,1,0,1,1)
-    lines.Box(0,0,0,2,2,2,1,1,1,1)
-
+    lines.Box(0,0,0,16,16,16,0.5,1,0.5,1)
     lines.Compute()
     lineProgram.Use()
     lineProgram.Matrix4f("projection", &cam.Projection[0])
@@ -128,6 +119,7 @@ func main() {
         lines.Render()
 
         uimgr.Draw()
+
     })
 
     shoot := false

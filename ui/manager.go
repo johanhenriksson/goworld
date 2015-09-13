@@ -19,7 +19,7 @@ type Manager struct {
 func NewManager(wnd *engine.Window) *Manager {
     m := &Manager {
         Window: wnd,
-        Viewport: mgl.Ortho(0, float32(wnd.Width), float32(wnd.Height), 0, 1000, -1000),
+        Viewport: mgl.Ortho(0, float32(wnd.Width), 0, float32(wnd.Height), 1000, -1000),
         Children: []Drawable{},
     }
     return m
