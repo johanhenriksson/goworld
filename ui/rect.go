@@ -10,19 +10,22 @@ type Rect struct {
     quad    *Quad
 }
 
-func (m *Manager) NewRect(color Color, x, y, w, h float32) *Rect {
-    el := m.NewElement(x,y,w,h)
+func (m *Manager) NewRect(color Color, x, y, w, h, z float32) *Rect {
+    el := m.NewElement(x,y,w,h,z)
     mat := render.LoadMaterial("assets/materials/ui_color.json")
     r := &Rect {
         Element: el,
         Color: color,
-        quad: NewQuad(mat, color, w, h, 0, 0,1,0,1),
+        quad: NewQuad(mat, color, w, h, z, 0,1,0,1),
     }
+    r.quad.SetBorderWidth(10)
     return r
 }
 
 func (r *Rect) Draw(args DrawArgs) {
-    args.Transform = args.Transform.Mul4(r.Element.Transform.Matrix)
+    args.Transform = r.Element.Transform.Matrix.Mul4(args.Transform) //args.Transform.Mul4(r.Element.Transform.Matrix)
     r.quad.Draw(args)
-    r.Element.Draw(args)
+    for _, el := range r.Element.children {
+        el.Draw(args)
+    }
 }

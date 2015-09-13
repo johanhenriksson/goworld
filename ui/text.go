@@ -6,10 +6,10 @@ type Text struct {
     Color   Color
 }
 
-func (m *Manager) NewText(text string, color Color, x, y float32) *Text {
+func (m *Manager) NewText(text string, color Color, x, y, z float32) *Text {
     /* TODO: calculate size of text */
     w, h := float32(0.0), float32(0.0)
-    el := m.NewElement(x,y,w,h)
+    el := m.NewElement(x,y,w,h,z)
     t := &Text {
         Element: el,
         Text: text,

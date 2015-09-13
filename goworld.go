@@ -29,7 +29,9 @@ func main() {
     gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
     uimgr := ui.NewManager(wnd)
-    rect := uimgr.NewRect(ui.NewColor(0.5, 1, 0.7, 0.5), 120, 80, 800, 600)
+    rect := uimgr.NewRect(ui.NewColor(0.5, 1, 0.7, 0.5), 120, 80, 800, 500, -10)
+    rect2 := uimgr.NewRect(ui.NewColor(0.3, 0.3, 0.9, 0.5), 10, 20, 400, 300, -20)
+    rect.Append(rect2)
     uimgr.Append(rect)
 
     /* Line material */
