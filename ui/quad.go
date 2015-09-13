@@ -1,6 +1,5 @@
 package ui
 import (
-    "fmt"
     "math"
     "github.com/johanhenriksson/goworld/render"
     "github.com/johanhenriksson/goworld/geometry"
@@ -50,36 +49,37 @@ func NewQuad(mat *render.Material, color Color, w,h,z,r,g,b,a float32) *Quad {
     return q
 }
 
+func (q *Quad) appendCorner(vtx *ColorVertices, origin ColorVertex, n int, r, offset float64) {
+    v := (math.Pi / 2.0) / float64(n)
+    var prev ColorVertex
+    for i := 0; i <= n; i++ {
+        p := ColorVertex {
+            X: origin.X + float32(r * math.Cos(offset + float64(i)*v)),
+            Y: origin.Y + float32(r * math.Sin(offset + float64(i)*v)),
+            Z: origin.Z,
+            Color: origin.Color,
+        }
+
+        if i > 0 {
+            *vtx = append(*vtx, origin, prev, p)
+        }
+
+        prev = p
+    }
+}
+
 func (q *Quad) compute() {
     vtx := ColorVertices {
         q.BottomLeft, q.TopRight, q.TopLeft,
         q.BottomLeft, q.BottomRight, q.TopRight,
     }
 
-    n := 5
-    v := (math.Pi / 2.0) / float64(n)
+    n := 8
     b := float32(50.0)
-    origin := q.TopRight
-    prev := ColorVertex {
-        X: origin.X, Y: origin.Y + b, Z: origin.Z,
-        Color: origin.Color,
-    }
-    fmt.Println("Vtx:", len(vtx))
-    for i := 1; i <= n; i++ {
-        p := ColorVertex {
-            X: origin.X + b * float32(math.Cos((math.Pi/2.0) - float64(i)*v)),
-            Y: origin.Y + b * float32(math.Sin((math.Pi/2.0) - float64(i)*v)),
-            Z: origin.Z,
-            Color: origin.Color,
-        }
-        fmt.Println("---- Triangle", i, "----")
-        fmt.Println(origin)
-        fmt.Println(p)
-        fmt.Println(prev)
-        vtx = append(vtx, origin, p, prev)
-        prev = p
-    }
-    fmt.Println("Vtx:", len(vtx))
+    q.appendCorner(&vtx, q.TopRight, n, float64(b), 0.0)
+    q.appendCorner(&vtx, q.TopLeft, n, float64(b), math.Pi/2.0)
+    q.appendCorner(&vtx, q.BottomLeft, n, float64(b), math.Pi)
+    q.appendCorner(&vtx, q.BottomRight, n, float64(b), 3.0*math.Pi/2.0)
 
     /* Top Border Box */
     topTopLeft := q.TopLeft
