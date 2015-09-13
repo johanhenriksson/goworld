@@ -1,36 +1,36 @@
-package ui
+package geometry
+
 import (
     "github.com/johanhenriksson/goworld/render"
-    "github.com/johanhenriksson/goworld/geometry"
 )
 
 /** Not exactly a quad anymore is it? */
-type QuadImg struct {
+type ImageQuad struct {
+    Material    *render.Material
     TopLeft     ImageVertex
     TopRight    ImageVertex
     BottomLeft  ImageVertex
     BottomRight ImageVertex
-    Material    *render.Material
-    vao         *geometry.VertexArray
-    vbo         *geometry.VertexBuffer
+    vao         *VertexArray
+    vbo         *VertexBuffer
 }
 
-func NewQuadImg(mat *render.Material, w,h,z float32) *QuadImg {
-    q := &QuadImg {
+func NewImageQuad(mat *render.Material, w,h,z float32) *ImageQuad {
+    q := &ImageQuad {
         Material:    mat,
         TopLeft:     ImageVertex { X: 0, Y: h, Z: z, Tx: 0, Ty: 0, },
         TopRight:    ImageVertex { X: w, Y: h, Z: z, Tx: 1, Ty: 0, },
         BottomLeft:  ImageVertex { X: 0, Y: 0, Z: z, Tx: 0, Ty: 1, },
         BottomRight: ImageVertex { X: w, Y: 0, Z: z, Tx: 1, Ty: 1, },
-        vao: geometry.CreateVertexArray(),
-        vbo: geometry.CreateVertexBuffer(),
+        vao: CreateVertexArray(),
+        vbo: CreateVertexBuffer(),
     }
     q.compute()
     return q
 }
 
 
-func (q *QuadImg) compute() {
+func (q *ImageQuad) compute() {
     vtx := ImageVertices {
         q.BottomLeft, q.TopRight, q.TopLeft,
         q.BottomLeft, q.BottomRight, q.TopRight,
@@ -43,7 +43,7 @@ func (q *QuadImg) compute() {
     q.Material.Setup()
 }
 
-func (q *QuadImg) Draw(args DrawArgs) {
+func (q *ImageQuad) Draw(args render.DrawArgs) {
     q.Material.Use()
     q.Material.Shader.Matrix4f("model", &args.Transform[0])
     q.Material.Shader.Matrix4f("viewport", &args.Viewport[0])

@@ -1,22 +1,10 @@
 package geometry
 
 import (
-    "unsafe"
     "github.com/go-gl/gl/v4.1-core/gl"
     mgl "github.com/go-gl/mathgl/mgl32"
     "github.com/johanhenriksson/goworld/render"
 )
-
-type LineVertex struct {
-    X, Y, Z float32
-    R, G, B, A float32
-}
-
-type LineVertices []LineVertex
-
-func (buffer LineVertices) Elements() int { return len(buffer) }
-func (buffer LineVertices) Size()     int { return 28 }
-func (buffer LineVertices) GLPtr()    unsafe.Pointer { return gl.Ptr(buffer) }
 
 type Lines struct {
     Lines       []Line
@@ -61,7 +49,7 @@ func (lines *Lines) Box(x,y,z,w,h,d,r,g,b,a float32) {
 
 func (lines *Lines) Compute() {
     count := len(lines.Lines)
-    data := make(LineVertices, 2 * count)
+    data := make(ColorVertices, 2 * count)
     for i := 0; i < count; i++ {
         line := lines.Lines[i]
         a := &data[2*i+0]
@@ -96,8 +84,4 @@ func (lines *Lines) Line(start_x, start_y, start_z, end_x, end_y, end_z, r, g, b
         End:   mgl.Vec3 { end_x, end_y, end_z },
         Color: mgl.Vec4 { r, g, b, a },
     })
-}
-
-type Vec3 struct {
-    X, Y, Z float32
 }

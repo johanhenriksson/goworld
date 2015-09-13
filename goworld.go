@@ -28,13 +28,18 @@ func main() {
     gl.Enable(gl.BLEND);
     gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
+    gbuffer := render.CreateGeometryBuffer(WIDTH, HEIGHT)
+    gbuffer.Unbind()
+
     uimgr := ui.NewManager(wnd)
-    rect := uimgr.NewRect(ui.NewColor(0.5, 1, 0.7, 0.5), 120, 80, 800, 500, -10)
+    rect := uimgr.NewRect(render.Color{0.5, 1, 0.7, 0.5}, 120, 80, 800, 500, -10)
+    /*
     kitten, err := render.LoadTexture("/assets/kitten.png")
     if err != nil {
         panic(err)
     }
-    img := uimgr.NewImage(kitten, 10, 20, 400, 300, -20)
+    */
+    img := uimgr.NewImage(gbuffer.Diffuse, 10, 20, 400, 300, -20)
     rect.Append(img)
     uimgr.Append(rect)
 
@@ -118,11 +123,16 @@ func main() {
         program.Matrix4f("camera", &cam.View[0])
         program.Vec3("cameraPos", &cam.Transform.Position)
 
-        vmesh.Render()
-
         lineProgram.Use()
         lineProgram.Matrix4f("view", &cam.View[0])
         lines.Render()
+
+        vmesh.Render()
+
+        gbuffer.Bind()
+        gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+        vmesh.Render()
+        gbuffer.Unbind()
 
         uimgr.Draw()
 

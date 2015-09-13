@@ -2,6 +2,7 @@ package ui;
 
 import (
     "github.com/johanhenriksson/goworld/engine"
+    "github.com/johanhenriksson/goworld/render"
     mgl "github.com/go-gl/mathgl/mgl32"
 )
 
@@ -10,7 +11,7 @@ type Manager struct {
     Window      *engine.Window
     Viewport    mgl.Mat4
 
-    Children    []Drawable
+    Children    []render.Drawable
 
     /** Projection matrix - orthographic */
     /* Shaders */
@@ -20,17 +21,17 @@ func NewManager(wnd *engine.Window) *Manager {
     m := &Manager {
         Window: wnd,
         Viewport: mgl.Ortho(0, float32(wnd.Width), 0, float32(wnd.Height), 1000, -1000),
-        Children: []Drawable{},
+        Children: []render.Drawable{},
     }
     return m
 }
 
-func (m *Manager) Append(child Drawable) {
+func (m *Manager) Append(child render.Drawable) {
     m.Children = append(m.Children, child)
 }
 
 func (m *Manager) Draw() {
-    args := DrawArgs {
+    args := render.DrawArgs {
         Viewport: m.Viewport,
         Transform: mgl.Ident4(),
     }

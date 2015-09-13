@@ -55,7 +55,7 @@ func (mat *Material) Use() {
     mat.Shader.Use()
     i := 0
     for slot, tex := range mat.Textures {
-        tex.Bind(slot)
+        tex.Use(slot)
         mat.Shader.UInt32(fmt.Sprintf("tex%d", i), slot)
         i++
     }

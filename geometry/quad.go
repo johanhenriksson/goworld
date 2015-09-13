@@ -1,24 +1,24 @@
-package ui
+package geometry
+
 import (
     "math"
     "github.com/johanhenriksson/goworld/render"
-    "github.com/johanhenriksson/goworld/geometry"
 )
 
-/** Not exactly a quad anymore is it? */
 type Quad struct {
     TopLeft     ColorVertex
     TopRight    ColorVertex
     BottomLeft  ColorVertex
     BottomRight ColorVertex
     Material    *render.Material
+
     segments    int
     border      float64
-    vao         *geometry.VertexArray
-    vbo         *geometry.VertexBuffer
+    vao         *VertexArray
+    vbo         *VertexBuffer
 }
 
-func NewQuad(mat *render.Material, color Color, w,h,z,r,g,b,a float32) *Quad {
+func NewQuad(mat *render.Material, color render.Color, w,h,z float32) *Quad {
     q := &Quad {
         Material:    mat,
         TopLeft:     ColorVertex { X: 0, Y: h, Z: z, Color: color, },
@@ -28,8 +28,8 @@ func NewQuad(mat *render.Material, color Color, w,h,z,r,g,b,a float32) *Quad {
         segments:    5,
         border:      0,
 
-        vao: geometry.CreateVertexArray(),
-        vbo: geometry.CreateVertexBuffer(),
+        vao: CreateVertexArray(),
+        vbo: CreateVertexBuffer(),
     }
     q.compute()
     return q
@@ -119,7 +119,7 @@ func (q *Quad) compute() {
     q.Material.Setup()
 }
 
-func (q *Quad) Draw(args DrawArgs) {
+func (q *Quad) Draw(args render.DrawArgs) {
     q.Material.Use()
     q.Material.Shader.Matrix4f("model", &args.Transform[0])
     q.Material.Shader.Matrix4f("viewport", &args.Viewport[0])
