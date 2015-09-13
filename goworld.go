@@ -30,8 +30,12 @@ func main() {
 
     uimgr := ui.NewManager(wnd)
     rect := uimgr.NewRect(ui.NewColor(0.5, 1, 0.7, 0.5), 120, 80, 800, 500, -10)
-    rect2 := uimgr.NewRect(ui.NewColor(0.3, 0.3, 0.9, 0.5), 10, 20, 400, 300, -20)
-    rect.Append(rect2)
+    kitten, err := render.LoadTexture("/assets/kitten.png")
+    if err != nil {
+        panic(err)
+    }
+    img := uimgr.NewImage(kitten, 10, 20, 400, 300, -20)
+    rect.Append(img)
     uimgr.Append(rect)
 
     /* Line material */
