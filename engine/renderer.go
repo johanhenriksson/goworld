@@ -42,6 +42,7 @@ func NewRenderer(width, height int32) *Renderer {
 func (r *Renderer) Draw() {
     r.Geometry.Bind()
     gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+    gl.PolygonMode(gl.FRONT_AND_BACK, gl.LINE)
     cam := r.Scene.Camera
     r.gs.Use()
     r.gs.Matrix4f("projection", &cam.Projection[0])

@@ -6,6 +6,7 @@ import (
     "github.com/go-gl/gl/v4.1-core/gl"
     mgl "github.com/go-gl/mathgl/mgl32"
 
+    "github.com/johanhenriksson/goworld/game"
     "github.com/johanhenriksson/goworld/engine"
     "github.com/johanhenriksson/goworld/geometry"
     "github.com/johanhenriksson/goworld/render"
@@ -42,11 +43,10 @@ func main() {
     program := tilesetMat.Shader
     program.Matrix4f("projection", &cam.Projection[0])
 
-    tileset := engine.CreateTileset(tilesetMat)
-
+    tileset := game.CreateTileset(tilesetMat)
 
     /* Define voxels */
-    grass := &engine.Voxel {
+    grass := &game.Voxel {
         Xp: tileset.GetId(4, 0),
         Xn: tileset.GetId(4, 0),
         Yp: tileset.GetId(3, 0),
@@ -54,7 +54,7 @@ func main() {
         Zp: tileset.GetId(4, 0),
         Zn: tileset.GetId(4, 0),
     }
-    rock := &engine.Voxel {
+    rock := &game.Voxel {
         Xp: tileset.GetId(2, 0),
         Xn: tileset.GetId(2, 0),
         Yp: tileset.GetId(2, 0),
@@ -66,14 +66,14 @@ func main() {
     /* Fill chunk with voxels */
     size := 16
     f := 1.0 / 5
-    chk := engine.CreateChunk(size, tileset)
+    chk := game.CreateChunk(size, tileset)
     simplex := opensimplex.NewWithSeed(1000)
     for z := 0; z < size; z++ {
         for y := 0; y < size; y++ {
             for x := 0; x < size; x++ {
                 fx, fy, fz := float64(x) * f, float64(y) * f, float64(z) * f
                 v := simplex.Eval3(fx, fy, fz)
-                var vtype *engine.Voxel = nil
+                var vtype *game.Voxel = nil
                 if y <= size/2 {
                     vtype = grass
                 }
@@ -111,11 +111,11 @@ func main() {
     rnd.Scene.Add(obj)
 
     uimgr := ui.NewManager(wnd)
-    rect := uimgr.NewRect(render.Color{0.5, 1, 0.7, 0.5}, 30, 30, 200, 300, -10)
-    //img := uimgr.NewImage(rnd.Geometry.Diffuse, 25, 25, 150, 250, -20)
-    //img.Quad.FlipY()
-    //rect.Append(img)
-    label := uimgr.NewText("Hello", render.Color{}, 10, 10, -20)
+    rect := uimgr.NewRect(render.Color{0, 0, 0, 0.7}, 30, 30, 150, 120, -10)
+    img := uimgr.NewImage(rnd.Geometry.Diffuse, 0, 0, 150, 120, -20)
+    img.Quad.FlipY()
+    label := uimgr.NewText("Hello", render.Color{0,1,0,1}, 10, 10, -21)
+    rect.Append(img)
     rect.Append(label)
     uimgr.Append(rect)
 
@@ -134,14 +134,9 @@ func main() {
         lineProgram.Matrix4f("view", &cam.View[0])
         lines.Render()
 
+        /* temporary */
+        gl.PolygonMode(gl.FRONT_AND_BACK, gl.FILL)
         vmesh.Render()
-
-        /*
-        gbuffer.Bind()
-        gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-        vmesh.Render()
-        gbuffer.Unbind()
-        */
 
         uimgr.Draw()
 

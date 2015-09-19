@@ -16,15 +16,14 @@ type Font struct {
     Size float64
     DPI float64
     Spacing float64
+    Color   Color
 
-    src *image.Uniform
     fnt *truetype.Font
     drawer *font.Drawer
 }
 
 func (f *Font) setup() {
     f.drawer = &font.Drawer {
-        Src: f.src,
         Face: truetype.NewFace(f.fnt, &truetype.Options {
             Size:    f.Size,
             DPI:     f.DPI,
@@ -33,7 +32,10 @@ func (f *Font) setup() {
     }
 }
 
-func (f *Font) Render(text string, width, height float32) *Texture {
+func (f *Font) Render(text string, width, height float32, color Color) *Texture {
+    /* Set color */
+    f.drawer.Src = image.NewUniform(color.RGBA())
+
 	line := math.Ceil(f.Size * f.DPI / 72)
     //height := int(f.Spacing * line)
     //width := int(float64(f.drawer.MeasureString(text)) / f.Size)
@@ -67,9 +69,7 @@ func LoadFont(filename string, size, dpi, spacing float64) *Font {
         Size: size,
         DPI: dpi,
         Spacing: spacing,
-
         fnt: f,
-        src: image.Black,
     }
     fnt.setup()
     return fnt
