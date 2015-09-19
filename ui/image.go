@@ -8,7 +8,7 @@ import (
 type Image struct {
     *Element
     Image   *render.Texture
-    quad    *geometry.ImageQuad
+    Quad    *geometry.ImageQuad
 }
 
 func (m *Manager) NewImage(image *render.Texture, x, y, w, h, z float32) *Image {
@@ -18,14 +18,14 @@ func (m *Manager) NewImage(image *render.Texture, x, y, w, h, z float32) *Image 
     img := &Image {
         Element: el,
         Image: image,
-        quad: geometry.NewImageQuad(mat, w, h, z),
+        Quad: geometry.NewImageQuad(mat, w, h, z),
     }
     return img
 }
 
 func (r *Image) Draw(args render.DrawArgs) {
     args.Transform = r.Element.Transform.Matrix.Mul4(args.Transform) //args.Transform.Mul4(r.Element.Transform.Matrix)
-    r.quad.Draw(args)
+    r.Quad.Draw(args)
     for _, el := range r.Element.children {
         el.Draw(args)
     }

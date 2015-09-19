@@ -83,18 +83,21 @@ func (tx *Texture) Buffer(img *image.RGBA) {
 		gl.Ptr(img.Pix))
 }
 
+func TextureFromImage(img *image.RGBA) *Texture {
+    width  := int32(img.Rect.Size().X)
+    height := int32(img.Rect.Size().Y)
+    tx := CreateTexture(width, height)
+    tx.Buffer(img)
+    return tx
+}
+
 /* Loads a texture from file */
 func LoadTexture(file string) (*Texture, error) {
     img, err := LoadImage(file)
     if err != nil {
         return nil, err
     }
-
-    width  := int32(img.Rect.Size().X)
-    height := int32(img.Rect.Size().Y)
-    tx := CreateTexture(width, height)
-    tx.Buffer(img)
-    return tx, nil
+    return TextureFromImage(img), nil
 }
 
 /* Loads an image from file. Returns an RGBA image object */

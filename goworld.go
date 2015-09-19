@@ -17,31 +17,22 @@ import (
 const (
     WIDTH = 1280
     HEIGHT = 800
+    WIREFRAME = false
 )
 
 func main() {
     wnd := engine.CreateWindow("voxels", WIDTH, HEIGHT)
     cam := engine.CreateCamera(5,2,5, WIDTH, HEIGHT, 65.0, 0.1, 1000.0)
-    //gl.PolygonMode(gl.FRONT_AND_BACK, gl.LINE)
 
-    /* Enable blending */
-    gl.Enable(gl.BLEND);
-    gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-
-    gbuffer := render.CreateGeometryBuffer(WIDTH, HEIGHT)
-    gbuffer.Unbind()
-
-    uimgr := ui.NewManager(wnd)
-    rect := uimgr.NewRect(render.Color{0.5, 1, 0.7, 0.5}, 120, 80, 800, 500, -10)
-    /*
-    kitten, err := render.LoadTexture("/assets/kitten.png")
-    if err != nil {
-        panic(err)
+    if (WIREFRAME) {
+        gl.PolygonMode(gl.FRONT_AND_BACK, gl.LINE)
+        gl.ClearColor(0.5,0.5,0.5,1)
+    } else {
+        /* Enable blending */
+        gl.Enable(gl.BLEND);
+        gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+        gl.ClearColor(0,0,0,1)
     }
-    */
-    img := uimgr.NewImage(gbuffer.Diffuse, 10, 20, 400, 300, -20)
-    rect.Append(img)
-    uimgr.Append(rect)
 
     /* Line material */
     lineMat := render.LoadMaterial("assets/materials/lines.json")
@@ -71,7 +62,6 @@ func main() {
         Zp: tileset.GetId(2, 0),
         Zn: tileset.GetId(2, 0),
     }
-
 
     /* Fill chunk with voxels */
     size := 16
@@ -113,7 +103,22 @@ func main() {
     program.Float("lightIntensity", 250.0)
     program.Float("ambient", 0.6)
 
-    gl.ClearColor(0,0,0,1)
+    /* Scene */
+    rnd := engine.NewRenderer(WIDTH, HEIGHT)
+    rnd.Scene.Camera = cam
+    obj := engine.NewObject(-5,-5,0)
+    obj.Attach(chk)
+    rnd.Scene.Add(obj)
+
+    uimgr := ui.NewManager(wnd)
+    rect := uimgr.NewRect(render.Color{0.5, 1, 0.7, 0.5}, 30, 30, 200, 300, -10)
+    //img := uimgr.NewImage(rnd.Geometry.Diffuse, 25, 25, 150, 250, -20)
+    //img.Quad.FlipY()
+    //rect.Append(img)
+    label := uimgr.NewText("Hello", render.Color{}, 10, 10, -20)
+    rect.Append(label)
+    uimgr.Append(rect)
+
 
     /* Render loop */
     wnd.SetRenderCallback(func(wnd *engine.Window, dt float32) {
@@ -123,16 +128,20 @@ func main() {
         program.Matrix4f("camera", &cam.View[0])
         program.Vec3("cameraPos", &cam.Transform.Position)
 
+        rnd.Draw()
+
         lineProgram.Use()
         lineProgram.Matrix4f("view", &cam.View[0])
         lines.Render()
 
         vmesh.Render()
 
+        /*
         gbuffer.Bind()
         gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
         vmesh.Render()
         gbuffer.Unbind()
+        */
 
         uimgr.Draw()
 

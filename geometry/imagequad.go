@@ -29,7 +29,6 @@ func NewImageQuad(mat *render.Material, w,h,z float32) *ImageQuad {
     return q
 }
 
-
 func (q *ImageQuad) compute() {
     vtx := ImageVertices {
         q.BottomLeft, q.TopRight, q.TopLeft,
@@ -41,6 +40,14 @@ func (q *ImageQuad) compute() {
     q.vao.Bind()
     q.vbo.Buffer(vtx)
     q.Material.Setup()
+}
+
+func (q *ImageQuad) FlipY() {
+    q.TopLeft.Ty = 1.0 - q.TopLeft.Ty
+    q.TopRight.Ty = 1.0 - q.TopRight.Ty
+    q.BottomLeft.Ty = 1.0 - q.BottomLeft.Ty
+    q.BottomRight.Ty = 1.0 - q.BottomRight.Ty
+    q.compute()
 }
 
 func (q *ImageQuad) Draw(args render.DrawArgs) {

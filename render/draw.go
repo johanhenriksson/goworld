@@ -20,5 +20,5 @@ type Drawable interface {
 type DrawArgs struct {
     Viewport    mgl.Mat4
     Transform   mgl.Mat4
-    Z           float32
+    Shader      *ShaderProgram
 }

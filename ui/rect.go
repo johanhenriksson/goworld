@@ -19,7 +19,7 @@ func (m *Manager) NewRect(color render.Color, x, y, w, h, z float32) *Rect {
         Color: color,
         quad: geometry.NewQuad(mat, color, w, h, z),
     }
-    r.quad.SetBorderWidth(10)
+    r.quad.SetBorderWidth(5)
     return r
 }
 

@@ -1,6 +1,7 @@
 package engine
 
 import (
+    "github.com/johanhenriksson/goworld/render"
     "github.com/johanhenriksson/goworld/geometry"
 )
 
@@ -64,6 +65,13 @@ func (chk *Chunk) Set(x, y, z int, voxel *Voxel) {
         return
     }
     chk.Data[pos] = voxel
+}
+
+func (chk *Chunk) Update(dt float32) {
+}
+
+func (chk *Chunk) Draw(args render.DrawArgs) {
+    chk.mesh.Render()
 }
 
 /* Recomputes the chunk mesh and returns a pointer to it. */
