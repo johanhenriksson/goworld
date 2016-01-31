@@ -16,12 +16,16 @@ type ImageQuad struct {
 }
 
 func NewImageQuad(mat *render.Material, w,h,z float32) *ImageQuad {
+    return NewImageQuadAt(mat, 0,0, w,h,z)
+}
+
+func NewImageQuadAt(mat *render.Material, x,y, w,h,z float32) *ImageQuad {
     q := &ImageQuad {
         Material:    mat,
-        TopLeft:     ImageVertex { X: 0, Y: h, Z: z, Tx: 0, Ty: 0, },
-        TopRight:    ImageVertex { X: w, Y: h, Z: z, Tx: 1, Ty: 0, },
-        BottomLeft:  ImageVertex { X: 0, Y: 0, Z: z, Tx: 0, Ty: 1, },
-        BottomRight: ImageVertex { X: w, Y: 0, Z: z, Tx: 1, Ty: 1, },
+        TopLeft:     ImageVertex { X: x, Y: y+h, Z: z, Tx: 0, Ty: 0, },
+        TopRight:    ImageVertex { X: x+w, Y: y+h, Z: z, Tx: 1, Ty: 0, },
+        BottomLeft:  ImageVertex { X: x, Y: y, Z: z, Tx: 0, Ty: 1, },
+        BottomRight: ImageVertex { X: x+w, Y: y, Z: z, Tx: 1, Ty: 1, },
         vao: CreateVertexArray(),
         vbo: CreateVertexBuffer(),
     }
@@ -39,7 +43,9 @@ func (q *ImageQuad) compute() {
     q.vao.Length = int32(len(vtx))
     q.vao.Bind()
     q.vbo.Buffer(vtx)
-    q.Material.Setup()
+    if q.Material != nil {
+        q.Material.Setup()
+    }
 }
 
 func (q *ImageQuad) FlipY() {
@@ -51,8 +57,10 @@ func (q *ImageQuad) FlipY() {
 }
 
 func (q *ImageQuad) Draw(args render.DrawArgs) {
-    q.Material.Use()
-    q.Material.Shader.Matrix4f("model", &args.Transform[0])
-    q.Material.Shader.Matrix4f("viewport", &args.Viewport[0])
+    if q.Material != nil {
+        q.Material.Use()
+        q.Material.Shader.Matrix4f("model", &args.Transform[0])
+        q.Material.Shader.Matrix4f("viewport", &args.Viewport[0])
+    }
     q.vao.Draw()
 }

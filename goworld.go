@@ -99,9 +99,6 @@ func main() {
     vmesh := chk.Compute()
     program.Use()
     program.Matrix4f("model", &transf.Matrix[0])
-    program.Vec3("lightPos", &mgl.Vec3{ 8,15,8 })
-    program.Float("lightIntensity", 250.0)
-    program.Float("ambient", 0.6)
 
     /* Scene */
     rnd := engine.NewRenderer(WIDTH, HEIGHT)
@@ -111,32 +108,79 @@ func main() {
     rnd.Scene.Add(obj)
 
     uimgr := ui.NewManager(wnd)
-    rect := uimgr.NewRect(render.Color{0, 0, 0, 0.7}, 30, 30, 150, 120, -10)
-    img := uimgr.NewImage(rnd.Geometry.Diffuse, 0, 0, 150, 120, -20)
-    img.Quad.FlipY()
-    label := uimgr.NewText("Hello", render.Color{0,1,0,1}, 10, 10, -21)
-    rect.Append(img)
-    rect.Append(label)
-    uimgr.Append(rect)
 
+    win_color := render.Color{0.15, 0.15, 0.15, 0.8}
+    text_color := render.Color{1,1,1,1}
+
+    // diffuse buffer display window
+    win_dif := uimgr.NewRect(win_color, 30, 30, 250, 280, -10)
+    {
+        label := uimgr.NewText("Diffuse", text_color, 0, 0, -21)
+        win_dif.Append(label)
+        img := uimgr.NewImage(rnd.Geometry.Diffuse, 0, 30, 250, 250, -20)
+        img.Quad.FlipY()
+        win_dif.Append(img)
+        uimgr.Append(win_dif)
+    }
+
+    // normal buffer display window
+    win_nrm := uimgr.NewRect(win_color, 30, 340, 250, 280, -10)
+    {
+        label := uimgr.NewText("Normal", text_color, 0, 0, -21)
+        win_nrm.Append(label)
+        img := uimgr.NewImage(rnd.Geometry.Normal, 0, 30, 250, 250, -20)
+        img.Quad.FlipY()
+        win_nrm.Append(img)
+        uimgr.Append(win_nrm)
+    }
+
+    {
+        win := uimgr.NewRect(win_color, 300, 30, 250, 280, -10)
+        label := uimgr.NewText("Depth", text_color, 0, 0, -21)
+        win.Append(label)
+        img := uimgr.NewImage(rnd.Geometry.Depth, 0, 30, 250, 250, -20)
+        img.Quad.FlipY()
+        win.Append(img)
+        uimgr.Append(win)
+    }
+
+    lps := render.CompileVFShader("/assets/shaders/voxel_light_pass")
+    lps.Vec3("l_position", &mgl.Vec3{0,15,0});
+    lps.Vec3("l_intensity", &mgl.Vec3{0,1,0});
+    lps.Float("l_attenuation_const", 0.1);
+    lps.Float("l_attenuation_linear", 0.1);
+    lps.Float("l_attenuation_quadratic", 0.1);
+    lps.Float("l_range", 5);
+
+    lpm := render.CreateMaterial(lps)
+    lpm.AddDescriptor("position", gl.FLOAT, 3, 20, 0, false)
+    lpm.AddDescriptor("texcoord", gl.FLOAT, 2, 20, 12, false)
+    lpm.AddTexture("tex_diffuse", rnd.Geometry.Diffuse)
+    lpm.AddTexture("tex_normal", rnd.Geometry.Normal)
+    lpm.AddTexture("tex_depth", rnd.Geometry.Depth)
+    lpq := geometry.NewImageQuadAt(lpm, -1,-1, 2,2,0)
+    lpq.FlipY()
 
     /* Render loop */
     wnd.SetRenderCallback(func(wnd *engine.Window, dt float32) {
         gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
+        gl.PolygonMode(gl.FRONT, gl.FILL)
+
         program.Use()
         program.Matrix4f("camera", &cam.View[0])
-        program.Vec3("cameraPos", &cam.Transform.Position)
 
         rnd.Draw()
+
+        /* temporary */
+        inv := cam.Projection.Inv()
+        lpm.Use()
+        lps.Matrix4f("cameraInverse",&inv[0])
+        lpq.Draw(render.DrawArgs{})
 
         lineProgram.Use()
         lineProgram.Matrix4f("view", &cam.View[0])
         lines.Render()
-
-        /* temporary */
-        gl.PolygonMode(gl.FRONT_AND_BACK, gl.FILL)
-        vmesh.Render()
 
         uimgr.Draw()
 

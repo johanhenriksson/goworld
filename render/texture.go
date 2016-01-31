@@ -10,6 +10,9 @@ import (
     "github.com/johanhenriksson/goworld/util"
 )
 
+/**
+ * OpenGL Texture
+ */
 type Texture struct {
     Id       uint32
     Width    int32
@@ -44,18 +47,20 @@ func CreateTexture(width, height int32) *Texture {
     return tx
 }
 
-/* Binds this texture to the given slot and activates it */
+/** Binds this texture to the given texture slot */
 func (tx *Texture) Use(slot uint32) {
 	gl.ActiveTexture(gl.TEXTURE0 + slot)
     tx.Bind()
 }
 
+/** Bind texture to the currently active texture slot */
 func (tx *Texture) Bind() {
 	gl.BindTexture(gl.TEXTURE_2D, tx.Id)
 }
 
+/** Attach this texture to the current frame buffer object */
 func (tx *Texture) FrameBufferTarget(attachment uint32) {
-    gl.FramebufferTexture(gl.FRAMEBUFFER, attachment, tx.Id, tx.MipLevel)
+    gl.FramebufferTexture(gl.DRAW_FRAMEBUFFER, attachment, tx.Id, tx.MipLevel)
 }
 
 func (tx *Texture) Clear() {
@@ -70,7 +75,7 @@ func (tx *Texture) Clear() {
         nil) // null ptr
 }
 
-/* Buffers texture data to GPU memory */
+/** Buffers texture data to GPU memory */
 func (tx *Texture) Buffer(img *image.RGBA) {
     /* Buffer image data */
 	gl.TexImage2D(
@@ -83,6 +88,7 @@ func (tx *Texture) Buffer(img *image.RGBA) {
 		gl.Ptr(img.Pix))
 }
 
+/** Helper method to create an OpenGL texture from an image object */
 func TextureFromImage(img *image.RGBA) *Texture {
     width  := int32(img.Rect.Size().X)
     height := int32(img.Rect.Size().Y)
@@ -91,7 +97,8 @@ func TextureFromImage(img *image.RGBA) *Texture {
     return tx
 }
 
-/* Loads a texture from file */
+/* TODO: Rename to TextureFromFile */
+/** Loads a texture from file */
 func LoadTexture(file string) (*Texture, error) {
     img, err := LoadImage(file)
     if err != nil {
@@ -100,6 +107,7 @@ func LoadTexture(file string) (*Texture, error) {
     return TextureFromImage(img), nil
 }
 
+/* TODO: Rename to ImageFromFile */
 /* Loads an image from file. Returns an RGBA image object */
 func LoadImage(file string) (*image.RGBA, error) {
 	imgFile, err := os.Open(util.ExePath + file)

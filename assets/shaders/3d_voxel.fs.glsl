@@ -10,7 +10,9 @@ in vec3 L;
 in vec3 V;
 in float lightDistance;
 
-out vec4 outputColor;
+layout(location=1) out vec4 outputColor;
+layout(location=0) out vec4 outputSpecular;
+layout(location=2) out vec4 outputNormal;
 
 void main() {
     vec4 diffuse = texture(tex0, texcoord);
@@ -22,4 +24,6 @@ void main() {
     color.w = 1.0;
 
     outputColor = color;
+    outputNormal = vec4((worldNormal + 1) / 2, 1);
+    outputSpecular = vec4(0,1,0,1);
 }

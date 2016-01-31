@@ -1,23 +1,18 @@
 {
-    "shader": "/assets/shaders/ui_texture",
+    "shader": "/assets/shaders/voxel_light_pass",
     "pointers": [
         {
-            "name": "vertex",
+            "name": "position",
             "type": "float",
             "count": 3,
             "normalize": false
         },
         {
-            "name": "uv",
+            "name": "texcoord",
             "type": "float",
             "count": 2,
             "normalize": false
         }
     ],
-    "textures": [
-        {
-            "name": "image",
-            "file": "/assets/tileset.png"
-        }
-    ]
+    "textures": [ ]
 }

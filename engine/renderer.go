@@ -17,7 +17,8 @@ type Renderer struct {
     Geometry    *render.GeometryBuffer
     Scene       *Scene
     /* TODO output quad */
-    gs          *render.ShaderProgram
+    geometryPassShader *render.ShaderProgram
+    lightPassShader *render.ShaderProgram
 }
 
 func NewRenderer(width, height int32) *Renderer {
@@ -26,29 +27,28 @@ func NewRenderer(width, height int32) *Renderer {
         Height: height,
         Geometry: render.CreateGeometryBuffer(width, height),
         Scene: NewScene(),
-        gs: render.CompileVFShader("/assets/shaders/voxel_geom"),
+        geometryPassShader: render.CompileVFShader("/assets/shaders/voxel_geom_pass"),
+        lightPassShader: render.CompileVFShader("/assets/shaders/voxel_light_pass"),
     }
     r.Geometry.Unbind()
-    program := r.gs
-    program.Use()
-    program.Vec3("lightPos", &mgl.Vec3{ 8,15,8 })
-    program.Float("lightIntensity", 250.0)
-    program.Float("ambient", 0.6)
-    m := mgl.Ident4()
-    program.Matrix4f("model", &m[0])
     return r
 }
 
 func (r *Renderer) Draw() {
     r.Geometry.Bind()
     gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-    gl.PolygonMode(gl.FRONT_AND_BACK, gl.LINE)
     cam := r.Scene.Camera
-    r.gs.Use()
-    r.gs.Matrix4f("projection", &cam.Projection[0])
-    r.gs.Matrix4f("camera", &cam.View[0])
-    r.gs.Vec3("cameraPos", &cam.Transform.Position)
-    r.Scene.Draw(r.gs)
+
+    // geometry pass
+    gs := r.geometryPassShader
+    gs.Use()
+    m := mgl.Ident4()
+    gs.Matrix4f("model", &m[0])
+    gs.Matrix4f("camera", &cam.View[0])
+    gs.Matrix4f("projection", &cam.Projection[0])
+
+    r.Scene.Draw(gs)
+
     r.Geometry.Unbind()
 }
 

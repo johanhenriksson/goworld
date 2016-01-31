@@ -18,47 +18,31 @@ type FrameBuffer struct {
     mipLvl  int32
 }
 
-type GeometryBuffer struct {
-    *FrameBuffer
-    Diffuse     *Texture
-    Specular    *Texture
-    Normal      *Texture
-    Depth       *Texture
-}
-
+/* TODO: Rename to CreateBuffer */
+/** 
+ * Create a new frame buffer texture and attach it to the given target.
+ * Returns a pointer to the created texture object 
+ */
 func (f *FrameBuffer) AddBuffer(target, internal_fmt, format, datatype uint32) *Texture {
-    if target == gl.DEPTH_ATTACHMENT {
-        /* Set up a depth render buffer? */
-    }
+    // Create texture object 
     texture := CreateTexture(f.Width, f.Height)
     texture.Format = format
     texture.InternalFormat = internal_fmt
     texture.DataType = datatype
     texture.Clear()
-    texture.FrameBufferTarget(target)
-    f.Buffers = append(f.Buffers, DrawBuffer {
-        Target: target,
-        Texture: texture,
-    })
-    return texture
-}
 
-/** Sets up a geometry buffer for defered shading */
-func CreateGeometryBuffer(width, height int32) *GeometryBuffer {
-    f := CreateFrameBuffer(width, height)
-    g := &GeometryBuffer {
-        FrameBuffer: f,
-        Diffuse: f.AddBuffer(gl.COLOR_ATTACHMENT0, gl.RGB,  gl.RGB,  gl.UNSIGNED_BYTE), // diffuse (rgb)
-        Specular: f.AddBuffer(gl.COLOR_ATTACHMENT1, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE), // specular (rgb) + smoothness (a)
-        Normal: f.AddBuffer(gl.COLOR_ATTACHMENT2, gl.RGB,  gl.RGB,  gl.UNSIGNED_BYTE), // world normal (rgb)
-        Depth: f.AddBuffer(gl.DEPTH_ATTACHMENT, gl.DEPTH_COMPONENT24, gl.DEPTH_COMPONENT, gl.FLOAT),
+    // Set texture as frame buffer target
+    texture.FrameBufferTarget(target)
+
+    if target != gl.DEPTH_ATTACHMENT {
+        // Attach to frame buffer
+        f.Buffers = append(f.Buffers, DrawBuffer {
+            Target: target,
+            Texture: texture,
+        })
     }
-    buff := []uint32 { }
-    for _, buffer := range f.Buffers {
-        buff = append(buff, buffer.Target)
-    }
-    gl.DrawBuffers(int32(len(buff)), &buff[0])
-    return g
+
+    return texture
 }
 
 func CreateFrameBuffer(width, height int32) *FrameBuffer {
@@ -79,13 +63,20 @@ func CreateRenderTexture() *FrameBuffer {
 }
 
 func (f *FrameBuffer) Bind() {
-    gl.BindTexture(gl.TEXTURE_2D, 0)
+    gl.BindTexture(gl.TEXTURE_2D, 0) // why?
+
+    // bind this frame buffer
     gl.BindFramebuffer(gl.FRAMEBUFFER, f.id)
+
+    // set viewport size equal to buffer size
     gl.Viewport(0, 0, f.Width, f.Height)
 }
 
 func (f *FrameBuffer) Unbind() {
+    // finish drawing
     gl.Flush()
+
+    // unbind
     gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
 }
 

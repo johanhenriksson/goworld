@@ -1,4 +1,4 @@
-package game
+package engine
 
 import (
     "github.com/johanhenriksson/goworld/render"

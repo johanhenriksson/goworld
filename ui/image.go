@@ -14,7 +14,7 @@ type Image struct {
 func (m *Manager) NewImage(image *render.Texture, x, y, w, h, z float32) *Image {
     el := m.NewElement(x,y,w,h,z)
     mat := render.LoadMaterial("assets/materials/ui_texture.json")
-    mat.AddTexture(0, image)
+    mat.AddTexture("image", image)
     img := &Image {
         Element: el,
         Image: image,

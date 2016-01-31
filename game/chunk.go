@@ -1,6 +1,7 @@
 package game
 
 import (
+    "github.com/johanhenriksson/goworld/engine"
     "github.com/johanhenriksson/goworld/render"
     "github.com/johanhenriksson/goworld/geometry"
 )
@@ -13,7 +14,7 @@ type Chunk struct {
 
     vao     *geometry.VertexArray
     vbo     *geometry.VertexBuffer
-    mesh    *Mesh
+    mesh    *engine.Mesh
 }
 
 func CreateChunk(size int, ts *Tileset) *Chunk {
@@ -75,7 +76,7 @@ func (chk *Chunk) Draw(args render.DrawArgs) {
 }
 
 /* Recomputes the chunk mesh and returns a pointer to it. */
-func (chk *Chunk) Compute() *Mesh {
+func (chk *Chunk) Compute() *engine.Mesh {
     s := chk.Size
     data := make(VoxelVertices, 0, 1)
 
@@ -108,7 +109,7 @@ func (chk *Chunk) Compute() *Mesh {
     chk.vbo.Buffer(data)
 
     if chk.mesh == nil {
-        chk.mesh = CreateMesh(chk.vao, chk.Tileset.Material)
+        chk.mesh = engine.CreateMesh(chk.vao, chk.Tileset.Material)
     }
 
     return chk.mesh

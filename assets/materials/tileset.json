@@ -1,8 +1,8 @@
 {
-    "shader": "/assets/shaders/3d_voxel",
+    "shader": "/assets/shaders/voxel_geom_pass",
     "pointers": [
         {
-            "name": "vertex",
+            "name": "position",
             "type": "unsigned byte",
             "count": 3,
             "normalize": false
@@ -22,7 +22,7 @@
     ],
     "textures": [
         {
-            "slot": 0,
+            "name": "tileset",
             "file": "/assets/tileset.png"
         }
     ]

@@ -14,5 +14,5 @@ type ImageVertex struct {
 type ImageVertices []ImageVertex
 
 func (buffer ImageVertices) Elements() int { return len(buffer) }
-func (buffer ImageVertices) Size()     int { return 28 }
+func (buffer ImageVertices) Size()     int { return 20 }
 func (buffer ImageVertices) GLPtr()    unsafe.Pointer { return gl.Ptr(buffer) }

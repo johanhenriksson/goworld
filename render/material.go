@@ -1,11 +1,10 @@
 package render
 
 import (
-    "fmt"
 	"github.com/go-gl/gl/v4.1-core/gl"
 )
 
-type MaterialTextureMap map[uint32]*Texture
+type MaterialTextureMap map[string]*Texture
 type BufferDescriptors []BufferDescriptor
 
 type BufferDescriptor struct {
@@ -47,16 +46,16 @@ func (mat *Material) AddDescriptor(attrName string, dataType uint32, count, stri
     })
 }
 
-func (mat *Material) AddTexture(slot uint32, tex *Texture) {
-    mat.Textures[slot] = tex
+func (mat *Material) AddTexture(name string, tex *Texture) {
+    mat.Textures[name] = tex
 }
 
 func (mat *Material) Use() {
     mat.Shader.Use()
-    i := 0
-    for slot, tex := range mat.Textures {
-        tex.Use(slot)
-        mat.Shader.UInt32(fmt.Sprintf("tex%d", i), slot)
+    var i uint32 = 0
+    for name, tex := range mat.Textures {
+        tex.Use(i)
+        mat.Shader.UInt32(name, i)
         i++
     }
 }

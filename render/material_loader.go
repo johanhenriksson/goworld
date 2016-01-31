@@ -27,7 +27,7 @@ type f_pointer struct {
 
 /** Texture definition */
 type f_texture struct {
-    Slot uint32
+    Name string
     File string
 }
 
@@ -55,6 +55,10 @@ func LoadMaterial(file string) *Material {
     /* Load vertex pointers */
     stride := 0
     for _, ptr := range matf.Pointers {
+        if ptr.Name == "skip" {
+            stride += ptr.Count
+            continue
+        }
         ptr.GlType, ptr.Size = getGlType(ptr.Type)
         ptr.Size *= ptr.Count
         ptr.Offset = stride
@@ -67,7 +71,7 @@ func LoadMaterial(file string) *Material {
     /* Load textures */
     for _, txtf := range matf.Textures {
         texture, _ := LoadTexture(txtf.File)
-        mat.AddTexture(txtf.Slot, texture)
+        mat.AddTexture(txtf.Name, texture)
     }
 
     return mat
