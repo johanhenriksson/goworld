@@ -50,6 +50,7 @@ func CreateTexture(width, height int32) *Texture {
 /** Binds this texture to the given texture slot */
 func (tx *Texture) Use(slot uint32) {
 	gl.ActiveTexture(gl.TEXTURE0 + slot)
+    gl.Enable(gl.TEXTURE_2D)
     tx.Bind()
 }
 
@@ -60,7 +61,7 @@ func (tx *Texture) Bind() {
 
 /** Attach this texture to the current frame buffer object */
 func (tx *Texture) FrameBufferTarget(attachment uint32) {
-    gl.FramebufferTexture(gl.DRAW_FRAMEBUFFER, attachment, tx.Id, tx.MipLevel)
+    gl.FramebufferTexture(gl.FRAMEBUFFER, attachment, tx.Id, tx.MipLevel)
 }
 
 func (tx *Texture) Clear() {

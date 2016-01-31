@@ -23,10 +23,10 @@ vec3 positionFromDepth(float depth) {
     float yhs = 2 * texcoord0.y - 1;
     float zhs = 2 * depth - 1;
 
-    vec4 pos_hs = vec4(xhs, yhs, zhs, 1);
+    vec4 pos_hs = vec4(xhs, yhs, zhs, 1) / gl_FragCoord.w;
     vec4 pos_ws = cameraInverse * pos_hs;
 
-    return pos_ws.xyz / pos_ws.z;
+    return pos_ws.xyz / pos_ws.w;
 }
 
 vec4 calculatePointLight(vec3 surfaceToLight, float distanceToLight, vec3 normal) {
@@ -34,11 +34,11 @@ vec4 calculatePointLight(vec3 surfaceToLight, float distanceToLight, vec3 normal
     float attenuation = l_attenuation_const +
                         l_attenuation_linear * distanceToLight +
                         l_attenuation_quadratic * distanceToLight * distanceToLight;
-    attenuation = 1.0 / attenuation;
+    attenuation = l_range / (0.1* attenuation);
     attenuation *= clamp(pow(1.0 - pow(distanceToLight / l_range, 4), 2), 0, 1);
 
     vec4 diffuse = vec4(0.0);
-    diffuse.rgb = diffuseCoefficient * l_intensity * attenuation;
+    diffuse.rgb = l_intensity * diffuseCoefficient * attenuation;
     diffuse.a = 1.0;
 
     return diffuse;
@@ -61,5 +61,8 @@ void main() {
 
     vec4 phat = vec4(diffuseColor + normalEncoded, depth);
 
-    color = 0.00001 * phat + vec4(normalEncoded,1);
+    color = 
+            lightColor * vec4(pow(diffuseColor, gamma),1)
+            //vec4(distanceToLight * 0.1 * position, 1)
+            + 0.001 * phat;
 }

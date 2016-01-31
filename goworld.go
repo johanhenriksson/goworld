@@ -109,55 +109,49 @@ func main() {
 
     uimgr := ui.NewManager(wnd)
 
-    win_color := render.Color{0.15, 0.15, 0.15, 0.8}
-    text_color := render.Color{1,1,1,1}
+    // buffer display window
+    bufferWindow := func(title string, texture *render.Texture, x, y float32) {
+        win_color := render.Color{0.15, 0.15, 0.15, 0.8}
+        text_color := render.Color{1,1,1,1}
 
-    // diffuse buffer display window
-    win_dif := uimgr.NewRect(win_color, 30, 30, 250, 280, -10)
-    {
-        label := uimgr.NewText("Diffuse", text_color, 0, 0, -21)
-        win_dif.Append(label)
-        img := uimgr.NewImage(rnd.Geometry.Diffuse, 0, 30, 250, 250, -20)
-        img.Quad.FlipY()
-        win_dif.Append(img)
-        uimgr.Append(win_dif)
-    }
-
-    // normal buffer display window
-    win_nrm := uimgr.NewRect(win_color, 30, 340, 250, 280, -10)
-    {
-        label := uimgr.NewText("Normal", text_color, 0, 0, -21)
-        win_nrm.Append(label)
-        img := uimgr.NewImage(rnd.Geometry.Normal, 0, 30, 250, 250, -20)
-        img.Quad.FlipY()
-        win_nrm.Append(img)
-        uimgr.Append(win_nrm)
-    }
-
-    {
-        win := uimgr.NewRect(win_color, 300, 30, 250, 280, -10)
-        label := uimgr.NewText("Depth", text_color, 0, 0, -21)
+        win := uimgr.NewRect(win_color, x, y, 250, 280, -10)
+        label := uimgr.NewText(title, text_color, 0, 0, -21)
         win.Append(label)
-        img := uimgr.NewImage(rnd.Geometry.Depth, 0, 30, 250, 250, -20)
+        img := uimgr.NewImage(texture, 0, 30, 250, 250, -20)
         img.Quad.FlipY()
         win.Append(img)
         uimgr.Append(win)
     }
 
+    bufferWindow("Diffuse", rnd.Geometry.Diffuse, 30, 30)
+    bufferWindow("Normal", rnd.Geometry.Normal, 30, 340)
+
+    /* lighting pass shader.
+     * attempt to render 1 point light */
     lps := render.CompileVFShader("/assets/shaders/voxel_light_pass")
-    lps.Vec3("l_position", &mgl.Vec3{0,15,0});
-    lps.Vec3("l_intensity", &mgl.Vec3{0,1,0});
+    /* light source attributes */
+    lps.Use()
+    lps.Vec3("l_position", &mgl.Vec3{-1,1,-1});
+    lps.Vec3("l_intensity", &mgl.Vec3{0.5,0.5,0.5});
     lps.Float("l_attenuation_const", 0.1);
     lps.Float("l_attenuation_linear", 0.1);
     lps.Float("l_attenuation_quadratic", 0.1);
     lps.Float("l_range", 5);
 
+    /* light pass shader material */
     lpm := render.CreateMaterial(lps)
+
+    /* we're going to render a simple quad, so we input
+     * position and texture coordinates */
     lpm.AddDescriptor("position", gl.FLOAT, 3, 20, 0, false)
     lpm.AddDescriptor("texcoord", gl.FLOAT, 2, 20, 12, false)
+    /* the shader uses 3 textures - the geometry frame buffer
+     * textures previously rendered in the geometry pass. */
     lpm.AddTexture("tex_diffuse", rnd.Geometry.Diffuse)
     lpm.AddTexture("tex_normal", rnd.Geometry.Normal)
     lpm.AddTexture("tex_depth", rnd.Geometry.Depth)
+    /* create a quad covering the screen in clip coordinates 
+     * or (-1,-1) to (1,1) */
     lpq := geometry.NewImageQuadAt(lpm, -1,-1, 2,2,0)
     lpq.FlipY()
 
@@ -165,25 +159,29 @@ func main() {
     wnd.SetRenderCallback(func(wnd *engine.Window, dt float32) {
         gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
-        gl.PolygonMode(gl.FRONT, gl.FILL)
-
+        /* TODO move this into renderer */
         program.Use()
         program.Matrix4f("camera", &cam.View[0])
 
+        /* geometry pass */
         rnd.Draw()
 
-        /* temporary */
-        inv := cam.Projection.Inv()
+        /* lighting pass test */
         lpm.Use()
-        lps.Matrix4f("cameraInverse",&inv[0])
+        /* sets the camera inverse view projection matrix
+         * required to compute world coordinates */
+        inv := cam.Projection.Mul4(cam.View).Inv()
+        lps.Matrix4f("cameraInverse", &inv[0])
+        /* draw light pass quad */
         lpq.Draw(render.DrawArgs{})
 
+        /* draw test bounding box */
         lineProgram.Use()
         lineProgram.Matrix4f("view", &cam.View[0])
         lines.Render()
 
+        /* draw user interface */
         uimgr.Draw()
-
     })
 
     shoot := false
