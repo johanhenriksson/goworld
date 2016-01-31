@@ -131,12 +131,11 @@ func main() {
     lps := render.CompileVFShader("/assets/shaders/voxel_light_pass")
     /* light source attributes */
     lps.Use()
-    lps.Vec3("l_position", &mgl.Vec3{-1,1,-1});
     lps.Vec3("l_intensity", &mgl.Vec3{0.5,0.5,0.5});
     lps.Float("l_attenuation_const", 0.1);
     lps.Float("l_attenuation_linear", 0.1);
-    lps.Float("l_attenuation_quadratic", 0.1);
-    lps.Float("l_range", 5);
+    lps.Float("l_attenuation_quadratic", 0.5);
+    lps.Float("l_range", 1);
 
     /* light pass shader material */
     lpm := render.CreateMaterial(lps)
@@ -166,19 +165,33 @@ func main() {
         /* geometry pass */
         rnd.Draw()
 
+        /* draw test bounding box */
+        /*
+        lineProgram.Use()
+        lineProgram.Matrix4f("view", &cam.View[0])
+        lines.Render()
+        */
+
         /* lighting pass test */
+
+        gl.DepthMask(false)
+        gl.BlendFunc(gl.ONE, gl.ONE)
         lpm.Use()
         /* sets the camera inverse view projection matrix
          * required to compute world coordinates */
         inv := cam.Projection.Mul4(cam.View).Inv()
         lps.Matrix4f("cameraInverse", &inv[0])
+
         /* draw light pass quad */
+        lps.Vec3("l_position", &mgl.Vec3{3,12,3});
         lpq.Draw(render.DrawArgs{})
 
-        /* draw test bounding box */
-        lineProgram.Use()
-        lineProgram.Matrix4f("view", &cam.View[0])
-        lines.Render()
+        lps.Vec3("l_position", &mgl.Vec3{13,13,13});
+        lpq.Draw(render.DrawArgs{})
+
+        gl.DepthMask(true)
+        gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+
 
         /* draw user interface */
         uimgr.Draw()
