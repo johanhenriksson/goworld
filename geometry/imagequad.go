@@ -11,8 +11,8 @@ type ImageQuad struct {
     TopRight    ImageVertex
     BottomLeft  ImageVertex
     BottomRight ImageVertex
-    vao         *VertexArray
-    vbo         *VertexBuffer
+    vao         *render.VertexArray
+    vbo         *render.VertexBuffer
 }
 
 func NewImageQuad(mat *render.Material, w,h,z float32) *ImageQuad {
@@ -26,8 +26,8 @@ func NewImageQuadAt(mat *render.Material, x,y, w,h,z float32) *ImageQuad {
         TopRight:    ImageVertex { X: x+w, Y: y+h, Z: z, Tx: 1, Ty: 0, },
         BottomLeft:  ImageVertex { X: x, Y: y, Z: z, Tx: 0, Ty: 1, },
         BottomRight: ImageVertex { X: x+w, Y: y, Z: z, Tx: 1, Ty: 1, },
-        vao: CreateVertexArray(),
-        vbo: CreateVertexBuffer(),
+        vao: render.CreateVertexArray(),
+        vbo: render.CreateVertexBuffer(),
     }
     q.compute()
     return q

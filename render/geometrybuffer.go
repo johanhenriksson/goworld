@@ -29,7 +29,7 @@ func CreateGeometryBuffer(width, height int32) *GeometryBuffer {
         Diffuse: f.AddBuffer(gl.COLOR_ATTACHMENT0, gl.RGB,  gl.RGB,  gl.UNSIGNED_BYTE), // diffuse (rgb)
 
         // normal - create and attach a texture to color buffer 2
-        Normal: f.AddBuffer(gl.COLOR_ATTACHMENT1, gl.RGB,  gl.RGB,  gl.UNSIGNED_BYTE), // world normal (rgb)
+        Normal: f.AddBuffer(gl.COLOR_ATTACHMENT1, gl.RGBA,  gl.RGBA,  gl.UNSIGNED_BYTE), // world normal (rgb)
 
         // add a depth buffer
         Depth: f.AddBuffer(gl.DEPTH_ATTACHMENT, gl.DEPTH_COMPONENT24, gl.DEPTH_COMPONENT, gl.FLOAT),

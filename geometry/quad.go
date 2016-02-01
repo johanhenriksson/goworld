@@ -14,8 +14,8 @@ type Quad struct {
 
     segments    int
     border      float64
-    vao         *VertexArray
-    vbo         *VertexBuffer
+    vao         *render.VertexArray
+    vbo         *render.VertexBuffer
 }
 
 func NewQuad(mat *render.Material, color render.Color, w,h,z float32) *Quad {
@@ -28,8 +28,8 @@ func NewQuad(mat *render.Material, color render.Color, w,h,z float32) *Quad {
         segments:    5,
         border:      0,
 
-        vao: CreateVertexArray(),
-        vbo: CreateVertexBuffer(),
+        vao: render.CreateVertexArray(),
+        vbo: render.CreateVertexBuffer(),
     }
     q.compute()
     return q

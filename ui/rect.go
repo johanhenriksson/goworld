@@ -12,8 +12,11 @@ type Rect struct {
 }
 
 func (m *Manager) NewRect(color render.Color, x, y, w, h, z float32) *Rect {
-    el := m.NewElement(x,y,w,h,z)
+    // UI Manager should provide access to some resource manager thingy
+    // mat := m.Resources.GetMaterial("assets/materials/ui_color.json")
     mat := render.LoadMaterial("assets/materials/ui_color.json")
+
+    el := m.NewElement(x,y,w,h,z)
     r := &Rect {
         Element: el,
         Color: color,
@@ -24,9 +27,18 @@ func (m *Manager) NewRect(color render.Color, x, y, w, h, z float32) *Rect {
 }
 
 func (r *Rect) Draw(args render.DrawArgs) {
-    args.Transform = r.Element.Transform.Matrix.Mul4(args.Transform) //args.Transform.Mul4(r.Element.Transform.Matrix)
-    r.quad.Draw(args)
-    for _, el := range r.Element.children {
-        el.Draw(args)
-    }
+    // this is sort of ugly. we dont really want to duplicate the transform
+    // multiplication to every element. on the other hand, most elements
+    // will need to apply the transform before they draw themselves
+
+    /* compute local transform */
+    local := args
+    local.Transform = r.Element.Transform.Matrix.Mul4(args.Transform)
+
+    /* draw rect */
+    // TODO set color
+    r.quad.Draw(local)
+
+    /* call parent - draw children etc */
+    r.Element.Draw(args)
 }

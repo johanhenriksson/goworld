@@ -25,29 +25,49 @@ func (m *Manager) NewElement(x, y, w, h, z float32) *Element {
     return e
 }
 
-func (e *Element) ZIndex() float32 { return e.z }
-func (e *Element) Parent() render.Drawable { return e.parent }
+func (e *Element) ZIndex() float32 {
+    // not sure how this is going to work yet
+    // parents must be drawn underneath children (?)
+    return e.z
+}
+
+/* Returns the parent element */
+func (e *Element) Parent() render.Drawable {
+    return e.parent
+}
+
 func (e *Element) SetParent(parent render.Drawable) {
+    // TODO detach from current parent?
     e.parent = parent
 }
-func (e *Element) Children() []render.Drawable { return e.children }
+
+func (e *Element) Children() []render.Drawable {
+    return e.children
+}
+
+func (e *Element) Width() float32 {
+    return e.width;
+}
+
+func (e *Element) Height() float32 {
+    return e.height;
+}
 
 func (e *Element) Append(child render.Drawable) {
     e.children = append(e.children, child)
+    // set parent?
 }
 
 func (e *Element) Remove(child render.Drawable) {
-    /* TODO: Implement */
+    // TODO Implement
     //child.Parent = nil
 }
 
 func (e *Element) Draw(args render.DrawArgs) {
     /* Multiply transform to args */
-    args.Transform = e.Transform.Matrix.Mul4(args.Transform) //args.Transform.Mul4(e.Transform.Matrix)
+    args.Transform = e.Transform.Matrix.Mul4(args.Transform)
     for _, el := range e.children {
         el.Draw(args)
     }
 }
 
-func (e *Element) Width() float32 { return e.width; }
-func (e *Element) Height() float32 { return e.height; }

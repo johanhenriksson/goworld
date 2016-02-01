@@ -3,7 +3,6 @@ package game
 import (
     "github.com/johanhenriksson/goworld/engine"
     "github.com/johanhenriksson/goworld/render"
-    "github.com/johanhenriksson/goworld/geometry"
 )
 
 /* Chunks are smallest renderable units of voxel geometry */
@@ -12,8 +11,8 @@ type Chunk struct {
     Tileset *Tileset
     Data    []*Voxel
 
-    vao     *geometry.VertexArray
-    vbo     *geometry.VertexBuffer
+    vao     *render.VertexArray
+    vbo     *render.VertexBuffer
     mesh    *engine.Mesh
 }
 
@@ -23,8 +22,8 @@ func CreateChunk(size int, ts *Tileset) *Chunk {
         Tileset: ts,
         Data: make([]*Voxel, size * size * size),
 
-        vao: geometry.CreateVertexArray(),
-        vbo: geometry.CreateVertexBuffer(),
+        vao: render.CreateVertexArray(),
+        vbo: render.CreateVertexBuffer(),
     }
     return chk
 }

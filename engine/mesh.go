@@ -2,18 +2,17 @@ package engine
 
 import (
     "github.com/johanhenriksson/goworld/render"
-    "github.com/johanhenriksson/goworld/geometry"
 )
 
 /* Meshes connect vertex data to shaders through the use of Materials */
 type Mesh struct {
-    Geometry    *geometry.VertexArray
+    VertexData    *render.VertexArray
     Material    *render.Material
 }
 
-func CreateMesh(data *geometry.VertexArray, mat *render.Material) *Mesh {
+func CreateMesh(data *render.VertexArray, mat *render.Material) *Mesh {
     mesh := &Mesh {
-        Geometry: data,
+        VertexData: data,
         Material: mat,
     }
     data.Bind()
@@ -23,6 +22,6 @@ func CreateMesh(data *geometry.VertexArray, mat *render.Material) *Mesh {
 
 func (mesh *Mesh) Render() {
     mesh.Material.Use()
-    mesh.Geometry.Bind()
-    mesh.Geometry.Draw()
+    mesh.VertexData.Bind()
+    mesh.VertexData.Draw()
 }

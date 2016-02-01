@@ -10,8 +10,8 @@ type Lines struct {
     Lines       []Line
     Material    *render.Material
     Width       float32
-    vao         *VertexArray
-    vbo         *VertexBuffer
+    vao         *render.VertexArray
+    vbo         *render.VertexBuffer
 }
 
 func CreateLines(mat *render.Material) *Lines {
@@ -19,8 +19,8 @@ func CreateLines(mat *render.Material) *Lines {
         Lines:      make([]Line, 0),
         Material:   mat,
         Width:      10.0,
-        vao:        CreateVertexArray(),
-        vbo:        CreateVertexBuffer(),
+        vao:        render.CreateVertexArray(),
+        vbo:        render.CreateVertexBuffer(),
     }
 }
 

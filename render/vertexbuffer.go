@@ -1,4 +1,4 @@
-package geometry
+package render
 
 import (
     "fmt"
@@ -40,4 +40,18 @@ func (vbo *VertexBuffer) Buffer(vertices VertexData) {
     fmt.Println("Element size:", vbo.Size, "bytes.")
     fmt.Println("Total size:", size, "bytes.")
 	gl.BufferData(gl.ARRAY_BUFFER, size, vertices.GLPtr(), gl.STATIC_DRAW)
+}
+
+type FloatBuffer []float32
+
+func (vtx FloatBuffer) Elements() int {
+    return len(vtx)
+}
+
+func (vtx FloatBuffer) Size() int {
+    return 4
+}
+
+func (vtx FloatBuffer) GLPtr() unsafe.Pointer {
+    return gl.Ptr(&vtx[0])
 }
