@@ -1,4 +1,4 @@
-package render
+package engine
 
 import (
     mgl "github.com/go-gl/mathgl/mgl32"
@@ -10,8 +10,10 @@ type Attenuation struct {
     Quadratic   float32
 }
 
-type PointLight struct {
-    Range       float32
+type Light struct {
+    Attenuation Attenuation
     Position    mgl.Vec3
     Color       mgl.Vec3
+    Range       float32
 }
+

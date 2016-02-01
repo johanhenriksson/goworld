@@ -26,13 +26,29 @@ func (o *Object) Attach(component Component) {
 func (o *Object) Draw(args render.DrawArgs) {
     /* Apply transform */
     args.Transform = o.Transform.Matrix.Mul4(args.Transform)
+
+    /* Draw components */
     args.Shader.Matrix4f("model", &args.Transform[0])
-    for _, comp := range o.Components { comp.Draw(args) }
-    for _, child := range o.Children { child.Draw(args) }
+    for _, comp := range o.Components {
+        comp.Draw(args)
+    }
+
+    /* Draw children */
+    for _, child := range o.Children {
+        child.Draw(args)
+    }
 }
 
 func (o *Object) Update(dt float32) {
     o.Transform.Update(dt)
-    for _, comp := range o.Components { comp.Update(dt) }
-    for _, child := range o.Children { child.Update(dt) }
+
+    /* Update components */
+    for _, comp := range o.Components {
+        comp.Update(dt)
+    }
+
+    /* Update children */
+    for _, child := range o.Children {
+        child.Update(dt)
+    }
 }

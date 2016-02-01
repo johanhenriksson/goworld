@@ -1,7 +1,6 @@
 package ui;
 
 import (
-    "github.com/johanhenriksson/goworld/engine"
     "github.com/johanhenriksson/goworld/render"
 )
 
@@ -11,7 +10,7 @@ type Element struct {
     z           float32
     parent      render.Drawable
     children    []render.Drawable
-    Transform   *engine.Transform
+    Transform   *Transform2D
 }
 
 func (m *Manager) NewElement(x, y, w, h, z float32) *Element {
@@ -20,7 +19,7 @@ func (m *Manager) NewElement(x, y, w, h, z float32) *Element {
         height: h,
         children: []render.Drawable{},
 
-        Transform: engine.CreateTransform(x,y,z),
+        Transform: CreateTransform2D(x,y,z),
     }
     return e
 }

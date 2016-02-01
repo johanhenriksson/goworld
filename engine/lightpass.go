@@ -7,32 +7,26 @@ import (
 )
 
 type LightPass struct {
-    Input   *render.GeometryBuffer
     Shader  *render.ShaderProgram
-    Lights  []Light
 
     mat     *render.Material
     quad    *render.RenderQuad
 }
 
-func NewLightPass(geomPass *GeometryPass, shader *render.ShaderProgram) *LightPass {
-    /* set up some shader defaults */
-    shader.Use()
-    shader.Float("light.attenuation.Constant", 0.02);
-    shader.Float("light.attenuation.Linear", 0.0);
-    shader.Float("light.attenuation.Quadratic", 1.0);
-
+func NewLightPass(input *render.GeometryBuffer, shader *render.ShaderProgram) *LightPass {
+    /* use a virtual material to help with vertex attributes and textures */
     mat := render.CreateMaterial(shader)
+
     /* we're going to render a simple quad, so we input
      * position and texture coordinates */
     mat.AddDescriptor("position", gl.FLOAT, 3, 20, 0, false)
     mat.AddDescriptor("texcoord", gl.FLOAT, 2, 20, 12, false)
 
-    /* the shader uses 3 textures - the geometry frame buffer
-     * textures previously rendered in the geometry pass. */
-    mat.AddTexture("tex_diffuse", geomPass.Buffer.Diffuse)
-    mat.AddTexture("tex_normal", geomPass.Buffer.Normal)
-    mat.AddTexture("tex_depth", geomPass.Buffer.Depth)
+    /* the shader uses 3 textures from the geometry frame buffer.
+     * they are previously rendered in the geometry pass. */
+    mat.AddTexture("tex_diffuse", input.Diffuse)
+    mat.AddTexture("tex_normal",  input.Normal)
+    mat.AddTexture("tex_depth",   input.Depth)
 
     /* create a render quad */
     quad := render.NewRenderQuad()
@@ -40,7 +34,6 @@ func NewLightPass(geomPass *GeometryPass, shader *render.ShaderProgram) *LightPa
     mat.SetupVertexPointers()
 
     p := &LightPass {
-        Input: geomPass.Buffer,
         Shader: shader,
         quad: quad,
         mat: mat,
@@ -69,10 +62,15 @@ func (p *LightPass) Draw(scene *Scene) {
     /* draw lights */
     lights := scene.FindLights()
     for _, light := range lights {
+        /* shadow pass */
+
         /* set light uniform attributes */
         p.Shader.Vec3("light.Position", &light.Position)
-        p.Shader.Vec3("light.Color", &light.Color)
-        p.Shader.Float("light.Range", light.Range)
+        p.Shader.Vec3("light.Color",    &light.Color)
+        p.Shader.Float("light.Range",    light.Range)
+        p.Shader.Float("light.attenuation.Constant",  light.Attenuation.Constant)
+        p.Shader.Float("light.attenuation.Linear",    light.Attenuation.Linear)
+        p.Shader.Float("light.attenuation.Quadratic", light.Attenuation.Quadratic)
 
         /* render light */
         p.quad.Draw()

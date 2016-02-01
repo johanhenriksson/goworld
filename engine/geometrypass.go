@@ -1,8 +1,6 @@
 package engine
 
 import (
-    //"github.com/go-gl/gl/v4.1-core/gl"
-    //mgl "github.com/go-gl/mathgl/mgl32"
     "github.com/johanhenriksson/goworld/render"
 )
 
@@ -11,6 +9,8 @@ type GeometryPass struct {
     Shader *render.ShaderProgram
 }
 
+/* Sets up a geometry pass.
+ * A geometry buffer of the given bufferWidth x bufferHeight will be created automatically */
 func NewGeometryPass(bufferWidth, bufferHeight int32, shader *render.ShaderProgram) *GeometryPass {
     p := &GeometryPass {
         Buffer: render.CreateGeometryBuffer(bufferWidth, bufferHeight),
@@ -27,6 +27,7 @@ func (p *GeometryPass) Draw(scene *Scene) {
     p.Shader.Matrix4f("camera", &scene.Camera.View[0])
     p.Shader.Matrix4f("projection", &scene.Camera.Projection[0])
 
+    /* Draw scene */
     scene.Draw(p.Shader)
 
     p.Buffer.Unbind()
