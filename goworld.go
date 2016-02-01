@@ -3,6 +3,7 @@ package main
 import (
     "fmt"
     "math"
+    "time"
     "github.com/go-gl/gl/v4.1-core/gl"
     mgl "github.com/go-gl/mathgl/mgl32"
 
@@ -129,17 +130,15 @@ func main() {
     /* lighting pass shader.
      * attempt to render 1 point light */
     lps := render.CompileVFShader("/assets/shaders/voxel_light_pass")
-    /* light source attributes */
     lps.Use()
-    lps.Vec3("l_intensity", &mgl.Vec3{0.5,0.5,0.5});
-    lps.Float("l_attenuation_const", 0.1);
-    lps.Float("l_attenuation_linear", 0.1);
-    lps.Float("l_attenuation_quadratic", 0.5);
+    /* light source attributes */
+    lps.Float("l_attenuation_const", 0.02);
+    lps.Float("l_attenuation_linear", 0.0);
+    lps.Float("l_attenuation_quadratic", 1.0);
     lps.Float("l_range", 1);
 
     /* light pass shader material */
     lpm := render.CreateMaterial(lps)
-
     /* we're going to render a simple quad, so we input
      * position and texture coordinates */
     lpm.AddDescriptor("position", gl.FLOAT, 3, 20, 0, false)
@@ -149,6 +148,7 @@ func main() {
     lpm.AddTexture("tex_diffuse", rnd.Geometry.Diffuse)
     lpm.AddTexture("tex_normal", rnd.Geometry.Normal)
     lpm.AddTexture("tex_depth", rnd.Geometry.Depth)
+
     /* create a quad covering the screen in clip coordinates 
      * or (-1,-1) to (1,1) */
     lpq := geometry.NewImageQuadAt(lpm, -1,-1, 2,2,0)
@@ -174,8 +174,12 @@ func main() {
 
         /* lighting pass test */
 
+        // modify GL state
+        // disable depth masking so that multiple lights can be drawn
         gl.DepthMask(false)
+        // set blending mode to 1 + 1
         gl.BlendFunc(gl.ONE, gl.ONE)
+
         lpm.Use()
         /* sets the camera inverse view projection matrix
          * required to compute world coordinates */
@@ -183,18 +187,24 @@ func main() {
         lps.Matrix4f("cameraInverse", &inv[0])
 
         /* draw light pass quad */
-        lps.Vec3("l_position", &mgl.Vec3{3,12,3});
+        lps.Vec3("l_position", &cam.Position)//&mgl.Vec3{3,10,3})
+        lps.Vec3("l_intensity", &mgl.Vec3{0.8,0.5,0.5})
+        lps.Float("l_range", 3)
         lpq.Draw(render.DrawArgs{})
 
-        lps.Vec3("l_position", &mgl.Vec3{13,13,13});
+        lps.Vec3("l_position", &mgl.Vec3{13,13,13})
+        lps.Vec3("l_intensity", &mgl.Vec3{0.3,0.5,0.9})
+        lps.Float("l_range", 1)
         lpq.Draw(render.DrawArgs{})
 
+        // reset GL state
         gl.DepthMask(true)
-        gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-
+        gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 
         /* draw user interface */
         uimgr.Draw()
+
+        time.Sleep(2 * time.Millisecond)
     })
 
     shoot := false

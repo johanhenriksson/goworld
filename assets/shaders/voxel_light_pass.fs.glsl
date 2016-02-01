@@ -6,6 +6,21 @@ uniform sampler2D tex_depth; // depth
 
 uniform mat4 cameraInverse;
 
+struct Attenuation {
+    float Constant;
+    float Linear;
+    float Quadratic;
+};
+
+struct PointLight {
+    Attenuation attenuation;
+    vec3 Color;
+    vec3 Position;
+    float Range;
+};
+
+uniform PointLight light;
+
 // light data
 uniform vec3 l_position;
 uniform vec3 l_intensity;
@@ -13,6 +28,7 @@ uniform float l_attenuation_const;
 uniform float l_attenuation_linear;
 uniform float l_attenuation_quadratic;
 uniform float l_range;
+
 
 in vec2 texcoord0;
 
@@ -37,8 +53,8 @@ vec4 calculatePointLight(vec3 surfaceToLight, float distanceToLight, vec3 normal
     float attenuation = l_attenuation_const +
                         l_attenuation_linear * distanceToLight +
                         l_attenuation_quadratic * distanceToLight * distanceToLight;
-    attenuation = 1 / attenuation;
-    attenuation *= clamp(pow(1.0 - pow(distanceToLight / l_range, 4), 2), 0, 1);
+    attenuation = l_range / attenuation;
+    //attenuation *= clamp(pow(2.0 - pow(distanceToLight / l_range, 4), 2), 0, 1);
 
     vec4 diffuse = vec4(0.0);
     diffuse.rgb = l_intensity * diffuseCoefficient * attenuation;
@@ -64,8 +80,7 @@ void main() {
 
     vec4 phat = vec4(diffuseColor + normalEncoded, depth);
 
-    color = (0.1 + 
-            lightColor) * vec4(pow(diffuseColor, gamma),1)
+    color = lightColor * vec4(pow(diffuseColor, gamma),1)
             //vec4(distanceToLight * 0.1 * position, 1)
             + 0.001 * phat;
 }
