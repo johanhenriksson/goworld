@@ -11,12 +11,13 @@ type Scene struct {
     lights      []Light
 }
 
-func NewScene() *Scene {
+func NewScene(camera *Camera) *Scene {
     s := &Scene {
+        Camera: camera,
         Objects: []*Object { },
         lights: []Light {
             Light {
-                Color: mgl.Vec3 { 1,0,0 },
+                Color: mgl.Vec3 { 1,1,1 },
                 Range: 1,
             },
         },
@@ -55,6 +56,7 @@ func (s *Scene) Update(dt float32) {
     for _, obj := range s.Objects {
         obj.Update(dt)
     }
+    s.Camera.Update(dt)
 }
 
 func (s *Scene) FindLights() []Light {

@@ -18,7 +18,7 @@ out vec3 normal0;
 void main() {
 
     /* Transform normal */
-    normal0 = normalize((model * vec4(normal,1)).xyz);
+    normal0 = normalize((model * vec4(normal,0)).xyz);
 
     /* Convert tile coordinate to texture coord */
     texcoord0 = vec2(tile.x, 1.0 - tile.y) * TileSize / TilesetTexHeight;

@@ -16,7 +16,7 @@ func CreateMesh(data *render.VertexArray, mat *render.Material) *Mesh {
         Material: mat,
     }
     data.Bind()
-    mat.Setup()
+    mat.SetupVertexPointers()
     return mesh
 }
 

@@ -32,6 +32,7 @@ func (o *Object) Draw(args render.DrawArgs) {
 }
 
 func (o *Object) Update(dt float32) {
+    o.Transform.Update(dt)
     for _, comp := range o.Components { comp.Update(dt) }
     for _, child := range o.Children { child.Update(dt) }
 }

@@ -69,7 +69,7 @@ func (mat *Material) Use() {
     gl.ActiveTexture(gl.TEXTURE0)
 }
 
-func (mat *Material) Setup() {
+func (mat *Material) SetupVertexPointers() {
     /* Enable vertex array attributes and set up vertex attribute pointers */
     for _, desc := range mat.Buffers {
         gl.EnableVertexAttribArray(desc.Buffer)

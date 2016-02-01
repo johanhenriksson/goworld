@@ -56,12 +56,6 @@ func CreateFrameBuffer(width, height int32) *FrameBuffer {
     return f
 }
 
-func CreateRenderTexture() *FrameBuffer {
-    f := &FrameBuffer { }
-    /* TODO */
-    return f
-}
-
 func (f *FrameBuffer) Bind() {
     gl.BindTexture(gl.TEXTURE_2D, 0) // why?
 
@@ -80,6 +74,12 @@ func (f *FrameBuffer) Unbind() {
     gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
 }
 
+/* Clear the frame buffer. Make sure its bound first */
+func (f *FrameBuffer) Clear() {
+    gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+}
+
+/* Delete frame buffer object */
 func (f *FrameBuffer) Delete() {
     gl.DeleteFramebuffers(1, &f.id)
     f.id = 0

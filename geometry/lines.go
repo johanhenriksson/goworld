@@ -63,7 +63,7 @@ func (lines *Lines) Compute() {
     lines.vao.Type   = gl.LINES
     lines.vao.Bind()
     lines.vbo.Buffer(data)
-    lines.Material.Setup()
+    lines.Material.SetupVertexPointers()
 }
 
 func (lines *Lines) Render() {

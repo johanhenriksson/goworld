@@ -14,7 +14,7 @@ type Rect struct {
 func (m *Manager) NewRect(color render.Color, x, y, w, h, z float32) *Rect {
     // UI Manager should provide access to some resource manager thingy
     // mat := m.Resources.GetMaterial("assets/materials/ui_color.json")
-    mat := render.LoadMaterial("assets/materials/ui_color.json")
+    mat := render.LoadMaterial(nil, "assets/materials/ui_color.json")
 
     el := m.NewElement(x,y,w,h,z)
     r := &Rect {

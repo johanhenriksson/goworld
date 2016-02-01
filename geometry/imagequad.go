@@ -44,7 +44,7 @@ func (q *ImageQuad) compute() {
     q.vao.Bind()
     q.vbo.Buffer(vtx)
     if q.Material != nil {
-        q.Material.Setup()
+        q.Material.SetupVertexPointers()
     }
 }
 

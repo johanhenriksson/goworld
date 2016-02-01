@@ -32,7 +32,7 @@ type f_texture struct {
 }
 
 /** Loads a material from a json definition file */
-func LoadMaterial(file string) *Material {
+func LoadMaterial(shader *ShaderProgram, file string) *Material {
     json_bytes, err := ioutil.ReadFile(file)
     if err != nil {
         panic(err)
@@ -47,7 +47,10 @@ func LoadMaterial(file string) *Material {
     fmt.Println(matf)
 
     /* Create & compile GL shader program */
-    shader := CompileVFShader(matf.Shader)
+    if (shader == nil) {
+        fmt.Println("compiling", matf.Shader)
+        shader = CompileVFShader(matf.Shader)
+    }
     shader.Use()
 
     mat := CreateMaterial(shader)

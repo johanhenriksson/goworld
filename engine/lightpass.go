@@ -37,7 +37,7 @@ func NewLightPass(geomPass *GeometryPass, shader *render.ShaderProgram) *LightPa
     /* create a render quad */
     quad := render.NewRenderQuad()
     /* set up vertex attribute pointers */
-    mat.Setup()
+    mat.SetupVertexPointers()
 
     p := &LightPass {
         Input: geomPass.Buffer,
@@ -60,21 +60,21 @@ func (p *LightPass) Draw(scene *Scene) {
     vp_inv := vp.Inv()
     p.Shader.Matrix4f("cameraInverse", &vp_inv[0])
 
+    /* clear */
+    gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+
+    /* set blending mode to additive */
+    gl.BlendFunc(gl.ONE, gl.ONE)
+
     /* draw lights */
     lights := scene.FindLights()
-    for i, light := range lights {
-        /* change blending mode on the second element.
-           we want the first one to clear */
-        if i == 1 {
-            // set blending mode to 1 + 1
-            gl.BlendFunc(gl.ONE, gl.ONE)
-        }
-
+    for _, light := range lights {
         /* set light uniform attributes */
         p.Shader.Vec3("light.Position", &light.Position)
         p.Shader.Vec3("light.Color", &light.Color)
         p.Shader.Float("light.Range", light.Range)
 
+        /* render light */
         p.quad.Draw()
     }
 

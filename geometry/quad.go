@@ -116,7 +116,7 @@ func (q *Quad) compute() {
     q.vao.Length = int32(len(vtx))
     q.vao.Bind()
     q.vbo.Buffer(vtx)
-    q.Material.Setup()
+    q.Material.SetupVertexPointers()
 }
 
 func (q *Quad) Draw(args render.DrawArgs) {
