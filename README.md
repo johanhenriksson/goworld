@@ -1,8 +1,16 @@
-Another basic opengl thing. Bonus voxels!
+Another OpenGL thing. Bonus voxels!
 
-Todo
+**Todo**
+
  * Basic resource management
- * User interface basics
- * Scene graph
- * More GL wrappers. Framebuffers & management
- * Defered rendering pipeline
+ * Keyboard events
+ * Mouse events
+ * Basic User Interface elements:
+ * * Textbox
+ * * Button
+ * ~~Scene graph~~ Improved scene graph
+ * ~~Defered rendering pipeline~~
+ * Directional lights
+ * Shadow Mapping
+ * Bloom Effect
+ * Scene save/load
