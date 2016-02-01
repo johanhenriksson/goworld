@@ -1,11 +1,5 @@
 #version 330
 
-uniform sampler2D tex_diffuse; // diffuse
-uniform sampler2D tex_normal; // normal
-uniform sampler2D tex_depth; // depth
-
-uniform mat4 cameraInverse;
-
 struct Attenuation {
     float Constant;
     float Linear;
@@ -19,28 +13,24 @@ struct PointLight {
     float Range;
 };
 
-uniform PointLight light;
-
-// light data
-uniform vec3 l_position;
-uniform vec3 l_intensity;
-uniform float l_attenuation_const;
-uniform float l_attenuation_linear;
-uniform float l_attenuation_quadratic;
-uniform float l_range;
-
+uniform sampler2D tex_diffuse; // diffuse
+uniform sampler2D tex_normal; // normal
+uniform sampler2D tex_depth; // depth
+uniform mat4 cameraInverse; // inverse view projection matrix
+uniform PointLight light;  // uniform light data
 
 in vec2 texcoord0;
 
 out vec4 color;
 
+/* dark mathemagic - Translates from clip space back into world space */
 vec3 positionFromDepth(float depth) {
-    /* homogenous coords */
+    /* clip coords */
     float xhs = 2 * texcoord0.x - 1;
     float yhs = 2 * texcoord0.y - 1;
     float zhs = 2 * depth - 1;
 
-    /* homogenous vector */
+    /* homogenous clip vector */
     vec4 pos_hs = vec4(xhs, yhs, zhs, 1) / gl_FragCoord.w;
 
     /* world position */
@@ -48,39 +38,44 @@ vec3 positionFromDepth(float depth) {
     return pos_ws.xyz / pos_ws.w;
 }
 
-vec4 calculatePointLight(vec3 surfaceToLight, float distanceToLight, vec3 normal) {
-    float diffuseCoefficient = max(0.0, dot(normal, surfaceToLight));
-    float attenuation = l_attenuation_const +
-                        l_attenuation_linear * distanceToLight +
-                        l_attenuation_quadratic * distanceToLight * distanceToLight;
-    attenuation = l_range / attenuation;
-    //attenuation *= clamp(pow(2.0 - pow(distanceToLight / l_range, 4), 2), 0, 1);
+/* calculates lighting contribution from a point light source */
+vec3 calculatePointLight(vec3 surfaceToLight, float distanceToLight, vec3 normal) {
+    /* calculate normal coefficient */
+    float normalCoef = max(0.0, dot(normal, surfaceToLight));
 
-    vec4 diffuse = vec4(0.0);
-    diffuse.rgb = l_intensity * diffuseCoefficient * attenuation;
-    diffuse.a = 1.0;
+    /* light attenuation as a function of range and distance */
+    float attenuation = light.attenuation.Constant +
+                        light.attenuation.Linear * distanceToLight +
+                        light.attenuation.Quadratic * pow(distanceToLight, 2);
+    attenuation = light.Range / attenuation;
 
-    return diffuse;
+    /* multiply and return light contribution */
+    return light.Color * normalCoef * attenuation;
 }
 
 void main() {
+    /* sample geometry buffer */
     vec3 diffuseColor = texture(tex_diffuse, texcoord0).rgb;
     vec3 normalEncoded = texture(tex_normal, texcoord0).xyz;
     float depth = texture(tex_depth, texcoord0).r;
 
+    /* calculate position from depth map */
     vec3 position = positionFromDepth(depth);
+
+    /* unpack normal */
     vec3 normal = normalize(2.0 * normalEncoded - 1);
 
-    vec3 surfaceToLight = normalize(l_position - position);
-    float distanceToLight = length(l_position - position);
+    /* calculate light vector & distance */
+    vec3 surfaceToLight = light.Position - position;
+    float distanceToLight = length(surfaceToLight);
+    surfaceToLight = normalize(surfaceToLight);
     
-    vec4 lightColor = calculatePointLight(surfaceToLight, distanceToLight, normal);
+    /* calculate lighting contribution from the point light */
+    vec3 lightColor = calculatePointLight(surfaceToLight, distanceToLight, normal);
 
-    vec3 gamma = vec3(1.0 / 2.2);
+    /* apply gamma correction */
+    const vec3 gamma = vec3(1.0 / 2.2);
+    vec3 corrected = pow(lightColor * diffuseColor, gamma);
 
-    vec4 phat = vec4(diffuseColor + normalEncoded, depth);
-
-    color = lightColor * vec4(pow(diffuseColor, gamma),1)
-            //vec4(distanceToLight * 0.1 * position, 1)
-            + 0.001 * phat;
+    color = vec4(corrected, 1.0);
 }

@@ -132,10 +132,9 @@ func main() {
     lps := render.CompileVFShader("/assets/shaders/voxel_light_pass")
     lps.Use()
     /* light source attributes */
-    lps.Float("l_attenuation_const", 0.02);
-    lps.Float("l_attenuation_linear", 0.0);
-    lps.Float("l_attenuation_quadratic", 1.0);
-    lps.Float("l_range", 1);
+    lps.Float("light.attenuation.Constant", 0.02);
+    lps.Float("light.attenuation.Linear", 0.0);
+    lps.Float("light.attenuation.Quadratic", 1.0);
 
     /* light pass shader material */
     lpm := render.CreateMaterial(lps)
@@ -187,14 +186,14 @@ func main() {
         lps.Matrix4f("cameraInverse", &inv[0])
 
         /* draw light pass quad */
-        lps.Vec3("l_position", &cam.Position)//&mgl.Vec3{3,10,3})
-        lps.Vec3("l_intensity", &mgl.Vec3{0.8,0.5,0.5})
-        lps.Float("l_range", 3)
+        lps.Vec3("light.Position", &cam.Position)//&mgl.Vec3{3,10,3})
+        lps.Vec3("light.Color", &mgl.Vec3{0.8,0.5,0.5})
+        lps.Float("light.Range", 3)
         lpq.Draw(render.DrawArgs{})
 
-        lps.Vec3("l_position", &mgl.Vec3{13,13,13})
-        lps.Vec3("l_intensity", &mgl.Vec3{0.3,0.5,0.9})
-        lps.Float("l_range", 1)
+        lps.Vec3("light.Position", &mgl.Vec3{13,13,13})
+        lps.Vec3("light.Color", &mgl.Vec3{0.3,0.5,0.9})
+        lps.Float("light.Range", 1)
         lpq.Draw(render.DrawArgs{})
 
         // reset GL state
