@@ -40,10 +40,10 @@ func NewScene() *Scene {
         s.lights = append(s.lights, Light {
             Attenuation: Attenuation {
                 Constant: 0.01,
-                Linear: 0,
-                Quadratic: 1.0,
+                Linear: 0.5,
+                Quadratic: 1.5,
             },
-            Position: mgl.Vec3 { float32(2*i), 17, 0 },
+            Position: mgl.Vec3 { 0, float32(4*i), 0 },
             Color: mgl.Vec3 { 0.3, 0.3, 1.0 },
             Range: 0.1,
         })

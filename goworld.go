@@ -36,7 +36,12 @@ func toOdeVec3(vec mgl.Vec3) ode.Vector3 {
 func main() {
     app := engine.NewApplication("voxels", WIDTH, HEIGHT)
 
-    geomPass := app.Render.Passes[0].(*engine.GeometryPass)
+    /* Setup deferred rendering */
+    geom_pass := engine.NewGeometryPass(WIDTH, HEIGHT)
+    light_pass := engine.NewLightPass(geom_pass.Buffer)
+    app.Render.Append("geometry", geom_pass)
+    app.Render.Append("light", light_pass)
+    // UI as a render pass?
 
     /* create a camera */
     app.Scene.Camera = engine.CreateCamera(-3,10,-3, WIDTH, HEIGHT, 65.0, 0.1, 500.0)
@@ -46,17 +51,19 @@ func main() {
     tileset := game.CreateTileset()
     chk := generateChunk(1, tileset)
     chk.Compute()
-    geomPass.Material.SetupVertexPointers()
+    geom_pass.Material.SetupVertexPointers()
 
     obj := engine.NewObject(0,0,0)
     obj.Attach(chk)
-
-    /* attach to scene */
     app.Scene.Add(obj)
+
+    obj2 := engine.NewObject(2,0,0)
+    obj2.Attach(chk)
+    app.Scene.Add(obj2)
 
     // physics
     ode.Init(0, ode.AllAFlag)
-    side := 0.5
+    side := 1.0
     world := ode.NewWorld()
     space := ode.NilSpace().NewHashSpace()
     box1 := world.NewBody()
@@ -92,8 +99,8 @@ func main() {
         app.UI.Append(win)
     }
 
-    bufferWindow("Diffuse", geomPass.Buffer.Diffuse, 30, 30)
-    bufferWindow("Normal", geomPass.Buffer.Normal, 30, 340)
+    bufferWindow("Diffuse", geom_pass.Buffer.Diffuse, 30, 30)
+    bufferWindow("Normal", geom_pass.Buffer.Normal, 30, 340)
 
     /* Render loop */
     app.Window.SetRenderCallback(func(wnd *engine.Window, dt float32) {
@@ -104,8 +111,9 @@ func main() {
         app.UI.Draw()
 
         // update position
-        fmt.Println(box1.Position())
-        obj.Transform.Position = fromOdeVec3(box1.Position())
+        //fmt.Println(box1.Position())
+        fmt.Println(app.Scene.Camera.Forward)
+        obj.Transform.Position = fromOdeVec3(box1.Position()).Sub(mgl.Vec3{0.5,0.5,0.5})
 
         cam_ray.SetPosDir(toOdeVec3(app.Scene.Camera.Position), toOdeVec3(app.Scene.Camera.Forward))
 
@@ -120,8 +128,9 @@ func main() {
             contact.Surface.Mu2 = 0
             cts := obj1.Collide(obj2, 1, 0)
             if len(cts) > 0 {
-                if obj1 == cam_ray || obj2 == cam_ray {
-                    fmt.Println("ray collision")
+                if (obj1 == cam_ray && obj2 == box1_col) ||
+                   (obj1 == box1_col && obj2 == cam_ray) {
+                    fmt.Println("ray collision", cts[0].Normal)
                     return // dont attach anything
                 }
 
