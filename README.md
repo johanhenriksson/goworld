@@ -20,9 +20,9 @@ Only tested on OSX 10.10
  * Embedded scripting language
  * Console
  * Basic resource management:
- ** Shaders
- ** Textures
- ** Materials
+  * Shaders
+  * Textures
+  * Materials
  * Keyboard events
  * Mouse events
  * Basic User Interface elements:
@@ -31,12 +31,12 @@ Only tested on OSX 10.10
  * Heightmap support
  * Improved scene graph
  * Simple Physics:
- ** ODE Integration
- ** Box collider
- ** Sphere collider
- ** Raycast
- ** Spherecast
- ** Heightmap
+  * ODE Integration
+  * Box collider
+  * Sphere collider
+  * Raycast
+  * Spherecast
+  * Heightmap
  * Shadow Mapping
  * Bloom Effect
  * Scene save/load
