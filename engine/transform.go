@@ -5,7 +5,7 @@ import (
     mgl "github.com/go-gl/mathgl/mgl32"
 )
 
-/* Represents a 3D transform. */
+/* Represents a 3D transformation */
 type Transform struct {
     Matrix      mgl.Mat4
     Position    mgl.Vec3
@@ -31,8 +31,10 @@ func CreateTransform(x, y, z float32) *Transform {
 
 /* Update transform matrix and right/up/forward vectors */
 func (t *Transform) Update(dt float32) {
+    // todo: avoid recalculating unless something has changed
+
     /* Update transform */
-    rad         := t.Rotation.Mul(math.Pi / 180.0)
+    rad         := t.Rotation.Mul(math.Pi / 180.0) // translate rotaiton to radians
     rotation    := mgl.AnglesToQuat(rad[0], rad[1], rad[2], mgl.XYZ).Mat4()
     scaling     := mgl.Scale3D(t.Scale[0], t.Scale[1], t.Scale[2])
     translation := mgl.Translate3D(t.Position[0], t.Position[1], t.Position[2])
@@ -40,17 +42,18 @@ func (t *Transform) Update(dt float32) {
     /* New transform matrix: S * R * T */
     m := scaling.Mul4(rotation.Mul4(translation))
 
-    /* Grab axis vectors */
-    t.Right[0]   =  m[4*0+0]
+    /* Grab axis vectors from transformation matrix */
+    t.Right[0]   =  m[4*0+0] // first column
     t.Right[1]   =  m[4*1+0]
     t.Right[2]   =  m[4*2+0]
-    t.Up[0]      =  m[4*0+1]
+    t.Up[0]      =  m[4*0+1] // second column
     t.Up[1]      =  m[4*1+1]
     t.Up[2]      =  m[4*2+1]
-    t.Forward[0] = -m[4*0+2]
+    t.Forward[0] = -m[4*0+2] // third column
     t.Forward[1] = -m[4*1+2]
     t.Forward[2] = -m[4*2+2]
 
+    /* Update transformation matrix */
     t.Matrix = m
 }
 
@@ -69,3 +72,6 @@ func (t *Transform) TransformDir(dir mgl.Vec3) mgl.Vec3 {
     d4 := mgl.Vec4 { dir[0], dir[1], dir[2], 0 }
     return t.Matrix.Mul4x1(d4).Vec3()
 }
+
+// todo: InverseTransformPoint
+// todo: InverseTransformDir

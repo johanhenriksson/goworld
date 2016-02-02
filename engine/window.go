@@ -9,8 +9,8 @@ import (
 	"github.com/go-gl/glfw/v3.1/glfw"
 )
 
-/* GLFW event handling must run on the main OS thread */
 func init() {
+    /* GLFW event handling must run on the main OS thread */
 	runtime.LockOSThread()
 }
 
@@ -49,9 +49,6 @@ func CreateWindow(title string, width int, height int) *Window {
 	if err := gl.Init(); err != nil {
 		panic(err)
 	}
-
-	gl.Enable(gl.DEPTH_TEST)
-	gl.DepthFunc(gl.LESS)
 
     window.SetInputMode(glfw.CursorMode, glfw.CursorDisabled)
     window.SetKeyCallback(KeyCallback)

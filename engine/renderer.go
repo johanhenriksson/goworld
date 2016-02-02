@@ -27,15 +27,23 @@ func NewRenderer(width, height int32, scene *Scene) *Renderer {
         Scene: scene,
     }
 
+    gl.ClearColor(0.0, 0.0, 0.0, 1.0)
+
     /* Enable blending */
     gl.Enable(gl.BLEND);
     gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-    gl.ClearColor(0.0, 0.0, 0.0, 1.0)
+
+    /* Depth test */
+	gl.Enable(gl.DEPTH_TEST)
+	gl.DepthFunc(gl.LESS)
 
     return r
 }
 
 func (r *Renderer) Draw() {
+    /* Clear screen */
+    gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+
     /* Geometry Pass */
     r.Geometry.Draw(r.Scene)
 

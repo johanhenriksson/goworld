@@ -1,8 +1,6 @@
 package engine
 
 import (
-    "time"
-    "github.com/go-gl/gl/v4.1-core/gl"
     "github.com/johanhenriksson/goworld/ui"
 )
 
@@ -37,20 +35,17 @@ func NewApplication(title string, width, height int) *Application {
 
     /* Render loop */
     app.Window.SetRenderCallback(func(wnd *Window, dt float32) {
-        gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-
-        /* render scene */
+        /* Render scene */
         app.Render.Draw()
 
-        /* draw user interface */
+        /* Draw user interface */
         app.UI.Draw()
-
-        time.Sleep(time.Millisecond)
     })
 
     return app
 }
 
+/* Hands over control to the application. Will loop until the main window is closed */
 func (app *Application) Run() {
     app.Window.Loop()
 }
