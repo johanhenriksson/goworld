@@ -7,6 +7,10 @@ import (
     "github.com/go-gl/gl/v4.1-core/gl"
 )
 
+// not sure if this camera should also support orthographic projection
+// or if it's better to create a separate one
+
+/* Perspective Camera. */
 type Camera struct {
     *Transform
     Width       float32
@@ -30,12 +34,23 @@ func CreateCamera(x, y, z, width, height, fov, near, far float32) *Camera {
         Far: far,
         Projection: mgl.Perspective(mgl.DegToRad(fov), width/height, near, far),
     }
+
+    /* do an initial update at t=0 to initialize vectors */
     cam.Update(0.0)
+
     return cam
 }
+
+// todo
+/* Project world space coordinates to screen space */
+// func (cam *Camera) Project(mgl.Vec3) mgl.Vec2 { }
+
+/* Unproject screen space coordinates into world space */
 func (cam *Camera) Unproject(x, y float32) mgl.Vec3 {
+    /* Sample depth buffer at x,y */
     var depth float32 = 0.0;
     gl.ReadPixels(int32(x), int32(cam.Height - y - 1), 1, 1, gl.DEPTH_COMPONENT, gl.FLOAT, unsafe.Pointer(&depth));
+
     /* Clip space coord */
     point := mgl.Vec4 {
         (x / cam.Width) * 2 - 1,
@@ -44,6 +59,7 @@ func (cam *Camera) Unproject(x, y float32) mgl.Vec3 {
         1,
     }
 
+    /* Multiply by inverse view-projection matrix */
     pvi := cam.Projection.Mul4(cam.View)
     pvi = pvi.Inv()
     world := pvi.Mul4x1(point);

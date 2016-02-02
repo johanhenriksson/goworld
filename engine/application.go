@@ -33,10 +33,10 @@ func NewApplication(title string, width, height int) *Application {
     /* Update callback */
     app.Window.SetUpdateCallback(app.Render.Update)
 
-
     return app
 }
 
+/* Hands over control to the application. Will loop until the main window is closed */
 func (app *Application) Run() {
     app.Window.Loop()
 }

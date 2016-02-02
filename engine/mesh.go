@@ -4,6 +4,9 @@ import (
     "github.com/johanhenriksson/goworld/render"
 )
 
+// pretty much deprecated. needs to be updated to work with the
+// deferred lighting pipeline
+
 /* Meshes connect vertex data to shaders through the use of Materials */
 type Mesh struct {
     VertexData    *render.VertexArray
