@@ -1,8 +1,6 @@
 package engine
 
 import (
-    "time"
-    "github.com/go-gl/gl/v4.1-core/gl"
     "github.com/johanhenriksson/goworld/ui"
 )
 
@@ -35,18 +33,6 @@ func NewApplication(title string, width, height int) *Application {
     /* Update callback */
     app.Window.SetUpdateCallback(app.Render.Update)
 
-    /* Render loop */
-    app.Window.SetRenderCallback(func(wnd *Window, dt float32) {
-        gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-
-        /* render scene */
-        app.Render.Draw()
-
-        /* draw user interface */
-        app.UI.Draw()
-
-        time.Sleep(time.Millisecond)
-    })
 
     return app
 }

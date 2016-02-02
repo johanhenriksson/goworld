@@ -71,11 +71,11 @@ func (chk *Chunk) Update(dt float32) {
 }
 
 func (chk *Chunk) Draw(args render.DrawArgs) {
-    chk.mesh.Render()
+    chk.vao.Draw()
 }
 
 /* Recomputes the chunk mesh and returns a pointer to it. */
-func (chk *Chunk) Compute() *engine.Mesh {
+func (chk *Chunk) Compute() {
     s := chk.Size
     data := make(VoxelVertices, 0, 1)
 
@@ -106,10 +106,4 @@ func (chk *Chunk) Compute() *engine.Mesh {
     chk.vao.Length = int32(len(data))
     chk.vao.Bind()
     chk.vbo.Buffer(data)
-
-    if chk.mesh == nil {
-        chk.mesh = engine.CreateMesh(chk.vao, chk.Tileset.Material)
-    }
-
-    return chk.mesh
 }

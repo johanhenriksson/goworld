@@ -33,7 +33,7 @@ type f_texture struct {
 
 /** Loads a material from a json definition file */
 func LoadMaterial(shader *ShaderProgram, file string) *Material {
-    json_bytes, err := ioutil.ReadFile(file)
+    json_bytes, err := ioutil.ReadFile(fmt.Sprintf("./%s.json", file))
     if err != nil {
         panic(err)
     }

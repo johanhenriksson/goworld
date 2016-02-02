@@ -2,7 +2,6 @@ package render
 
 import (
     "fmt"
-    "errors"
     "strings"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
@@ -49,9 +48,7 @@ func CompileVFShader(shaderFileName string) *ShaderProgram {
     program := CreateProgram()
     program.Attach(VertexShader(fmt.Sprintf("%s.vs.glsl", shaderFileName)))
     program.Attach(FragmentShader(fmt.Sprintf("%s.fs.glsl", shaderFileName)))
-    if err := program.Link(); err != nil {
-        panic(err)
-    }
+    program.Link()
     return program
 }
 
@@ -77,9 +74,9 @@ func (program *ShaderProgram) Attach(shader *Shader) {
     program.shaders = append(program.shaders, shader)
 }
 
-func (program *ShaderProgram) Link() error {
+func (program *ShaderProgram) Link() {
     if program.linked {
-        return nil
+        return
     }
 
 	gl.LinkProgram(program.Id)
@@ -94,11 +91,10 @@ func (program *ShaderProgram) Link() error {
 		log := strings.Repeat("\x00", int(logLength+1))
 		gl.GetProgramInfoLog(program.Id, logLength, nil, gl.Str(log))
 
-		return errors.New(fmt.Sprintf("Failed to link program: %v", log))
+		panic(fmt.Sprintf("Failed to link program: %v", log))
 	}
 
     program.linked = true
-    return nil
 }
 
 /* Returns a GLSL uniform location. If it doesnt exist, UnknownUniform is returned */
@@ -106,7 +102,7 @@ func (program *ShaderProgram) GetUniformLoc(uniform string) UniformLocation {
     loc, ok := program.uniforms[uniform]
     if !ok {
         loc = UniformLocation(gl.GetUniformLocation(program.Id, util.GLString(uniform)))
-        if loc < 0 {
+        if loc == UnknownUniform {
             panic("Unknown uniform: " + uniform)
         }
         program.uniforms[uniform] = loc
@@ -119,7 +115,7 @@ func (program *ShaderProgram) GetAttrLoc(attr string) AttributeLocation {
     loc, ok := program.attributes[attr]
     if !ok {
         loc = AttributeLocation(gl.GetAttribLocation(program.Id, util.GLString(attr)))
-        if loc < 0 {
+        if loc == UnknownAttribute {
             panic("Unknown attribute: " + attr)
         }
         program.attributes[attr] = loc
@@ -127,16 +123,34 @@ func (program *ShaderProgram) GetAttrLoc(attr string) AttributeLocation {
     return loc
 }
 
+/* Sets a 3x3 matrix uniform */
+func (program *ShaderProgram) Matrix3f(name string, ptr *float32) {
+    loc := program.GetUniformLoc(name)
+    gl.UniformMatrix3fv(int32(loc), 1, false, ptr)
+}
+
 /* Sets a 4 by 4 matrix uniform */
 func (program *ShaderProgram) Matrix4f(name string, ptr *float32) {
     loc := program.GetUniformLoc(name)
-	gl.UniformMatrix4fv(int32(loc), 1, false, ptr)
+    gl.UniformMatrix4fv(int32(loc), 1, false, ptr)
+}
+
+/* Sets a Vec2 uniform */
+func (program *ShaderProgram) Vec2(name string, vec *mgl.Vec2) {
+    loc := program.GetUniformLoc(name)
+    gl.Uniform2f(int32(loc), vec[0], vec[1])
 }
 
 /* Sets a Vec3 uniform */
 func (program *ShaderProgram) Vec3(name string, vec *mgl.Vec3) {
     loc := program.GetUniformLoc(name)
-	gl.Uniform3f(int32(loc), vec[0], vec[1], vec[2])
+    gl.Uniform3f(int32(loc), vec[0], vec[1], vec[2])
+}
+
+/* Sets a Vec4 uniform */
+func (program *ShaderProgram) Vec4(name string, vec *mgl.Vec4) {
+    loc := program.GetUniformLoc(name)
+    gl.Uniform4f(int32(loc), vec[0], vec[1], vec[2], vec[3])
 }
 
 /* Sets an integer 32 uniform */

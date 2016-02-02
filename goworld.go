@@ -1,9 +1,13 @@
 package main
 
 import (
+    "fmt"
     "github.com/johanhenriksson/goworld/game"
     "github.com/johanhenriksson/goworld/engine"
     "github.com/johanhenriksson/goworld/render"
+
+    "github.com/ianremmler/ode"
+    mgl "github.com/go-gl/mathgl/mgl32"
 
     opensimplex "github.com/ojrac/opensimplex-go"
 )
@@ -11,28 +15,65 @@ import (
 const (
     WIDTH = 1280
     HEIGHT = 800
-    WIREFRAME = true
 )
+
+func fromOdeVec3(vec ode.Vector3) mgl.Vec3 {
+    return mgl.Vec3 {
+        float32(vec[0]),
+        float32(vec[1]),
+        float32(vec[2]),
+    }
+}
+
+func toOdeVec3(vec mgl.Vec3) ode.Vector3 {
+    return ode.Vector3 {
+        float64(vec[0]),
+        float64(vec[1]),
+        float64(vec[2]),
+    }
+}
 
 func main() {
     app := engine.NewApplication("voxels", WIDTH, HEIGHT)
+
+    geomPass := app.Render.Passes[0].(*engine.GeometryPass)
 
     /* create a camera */
     app.Scene.Camera = engine.CreateCamera(-3,10,-3, WIDTH, HEIGHT, 65.0, 0.1, 500.0)
     app.Scene.Camera.Transform.Rotation[1] = 130.0
 
     /* test voxel chunk */
-    tilesetMat := render.LoadMaterial(app.Render.Geometry.Shader, "assets/materials/tileset.json")
-    tileset := game.CreateTileset(tilesetMat)
-
-    chk := generateChunk(16, tileset)
+    tileset := game.CreateTileset()
+    chk := generateChunk(1, tileset)
     chk.Compute()
+    geomPass.Material.SetupVertexPointers()
 
     obj := engine.NewObject(0,0,0)
     obj.Attach(chk)
 
     /* attach to scene */
     app.Scene.Add(obj)
+
+    // physics
+    ode.Init(0, ode.AllAFlag)
+    side := 0.5
+    world := ode.NewWorld()
+    space := ode.NilSpace().NewHashSpace()
+    box1 := world.NewBody()
+    box1.SetPosition(ode.V3(0, 20, 0))
+    mass := ode.NewMass()
+    mass.SetBox(1, ode.V3(side, side, side))
+    mass.Adjust(1)
+    box1.SetMass(mass)
+    box1_col := space.NewBox(ode.V3(side, side, side))
+    box1_col.SetBody(box1)
+    ctGrp := ode.NewJointGroup(1000)
+
+    world.SetGravity(ode.V3(0,-0.1,0))
+    space.NewPlane(ode.V4(0,1,0,0))
+
+    cam_ray := space.NewRay(10)
+
 
     // buffer display window
     bufferWindow := func(title string, texture *render.Texture, x, y float32) {
@@ -51,8 +92,47 @@ func main() {
         app.UI.Append(win)
     }
 
-    bufferWindow("Diffuse", app.Render.Geometry.Buffer.Diffuse, 30, 30)
-    bufferWindow("Normal", app.Render.Geometry.Buffer.Normal, 30, 340)
+    bufferWindow("Diffuse", geomPass.Buffer.Diffuse, 30, 30)
+    bufferWindow("Normal", geomPass.Buffer.Normal, 30, 340)
+
+    /* Render loop */
+    app.Window.SetRenderCallback(func(wnd *engine.Window, dt float32) {
+        /* render scene */
+        app.Render.Draw()
+
+        /* draw user interface */
+        app.UI.Draw()
+
+        // update position
+        fmt.Println(box1.Position())
+        obj.Transform.Position = fromOdeVec3(box1.Position())
+
+        cam_ray.SetPosDir(toOdeVec3(app.Scene.Camera.Position), toOdeVec3(app.Scene.Camera.Forward))
+
+        space.Collide(0, func(data interface{}, obj1, obj2 ode.Geom) {
+            contact := ode.NewContact()
+            body1, body2 := obj1.Body(), obj2.Body()
+            if body1 != 0 && body2 != 0 && body1.Connected(body2) {
+                return
+            }
+            contact.Surface.Mode = 0
+            contact.Surface.Mu = 0.1
+            contact.Surface.Mu2 = 0
+            cts := obj1.Collide(obj2, 1, 0)
+            if len(cts) > 0 {
+                if obj1 == cam_ray || obj2 == cam_ray {
+                    fmt.Println("ray collision")
+                    return // dont attach anything
+                }
+
+                contact.Geom = cts[0]
+                ct := world.NewContactJoint(ctGrp, contact)
+                ct.Attach(body1, body2)
+            }
+        })
+        world.QuickStep(0.05)
+        ctGrp.Empty()
+    })
 
     app.Run()
 }

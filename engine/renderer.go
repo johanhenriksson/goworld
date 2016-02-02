@@ -3,28 +3,30 @@ package engine
 import (
     "github.com/go-gl/gl/v4.1-core/gl"
     //mgl "github.com/go-gl/mathgl/mgl32"
-    "github.com/johanhenriksson/goworld/render"
 )
 
 type Renderer struct {
+    Passes      []RenderPass
+    Scene       *Scene
     Width       int32
     Height      int32
-    Geometry    *GeometryPass
-    Lights      *LightPass
-    Scene       *Scene
-    time        float32
 }
 
 func NewRenderer(width, height int32, scene *Scene) *Renderer {
-    gpass := NewGeometryPass(width, height, render.CompileVFShader("/assets/shaders/voxel_geom_pass"))
-    lpass := NewLightPass(gpass.Buffer, render.CompileVFShader("/assets/shaders/voxel_light_pass"))
+
+    gpass := NewGeometryPass(width, height)
+    lpass := NewLightPass(gpass.Buffer)
+
+
 
     r := &Renderer {
         Width: width,
         Height: height,
-        Geometry: gpass,
-        Lights: lpass,
         Scene: scene,
+        Passes: []RenderPass {
+            gpass,
+            lpass,
+        },
     }
 
     /* Enable blending */
@@ -36,14 +38,13 @@ func NewRenderer(width, height int32, scene *Scene) *Renderer {
 }
 
 func (r *Renderer) Draw() {
-    /* Geometry Pass */
-    r.Geometry.Draw(r.Scene)
+    gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
-    /* Lighting Pass */
-    r.Lights.Draw(r.Scene)
+    for _, pass := range r.Passes {
+        pass.DrawPass(r.Scene)
+    }
 }
 
 func (r *Renderer) Update(dt float32) {
-    r.time += dt
     r.Scene.Update(dt)
 }

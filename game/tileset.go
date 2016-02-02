@@ -1,7 +1,6 @@
 package game
 
 import (
-    "github.com/johanhenriksson/goworld/render"
 )
 
 const TileSize = 16
@@ -16,7 +15,6 @@ type Tileset struct {
     Height      int
     Size        int
     Tiles       []Tile
-    Material    *render.Material
 }
 
 type Tile struct {
@@ -25,12 +23,11 @@ type Tile struct {
     Y   TileCoord
 }
 
-func CreateTileset(mat *render.Material) *Tileset {
+func CreateTileset() *Tileset {
     ts := &Tileset {
         Size:       TileSize,
         Width:      TilesetTexWidth / TileSize,
         Height:     TilesetTexHeight / TileSize,
-        Material:   mat,
     }
     ts.Generate()
     return ts

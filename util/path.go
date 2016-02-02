@@ -3,7 +3,7 @@ package util
 import (
 )
 
-var ExePath string = "."
+var ExePath string = "./"
 
 func init() {
 }
