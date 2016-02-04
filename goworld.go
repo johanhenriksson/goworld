@@ -2,6 +2,7 @@ package main
 
 import (
     "fmt"
+    "math"
     "github.com/johanhenriksson/goworld/game"
     "github.com/johanhenriksson/goworld/engine"
     "github.com/johanhenriksson/goworld/render"
@@ -10,28 +11,14 @@ import (
     mgl "github.com/go-gl/mathgl/mgl32"
 
     opensimplex "github.com/ojrac/opensimplex-go"
+//    "github.com/johanhenriksson/goworld/physics"
+    "github.com/johanhenriksson/goworld/physics"
 )
 
 const (
     WIDTH = 1280
     HEIGHT = 800
 )
-
-func fromOdeVec3(vec ode.Vector3) mgl.Vec3 {
-    return mgl.Vec3 {
-        float32(vec[0]),
-        float32(vec[1]),
-        float32(vec[2]),
-    }
-}
-
-func toOdeVec3(vec mgl.Vec3) ode.Vector3 {
-    return ode.Vector3 {
-        float64(vec[0]),
-        float64(vec[1]),
-        float64(vec[2]),
-    }
-}
 
 func main() {
     app := engine.NewApplication("voxels", WIDTH, HEIGHT)
@@ -44,7 +31,7 @@ func main() {
     // UI as a render pass?
 
     /* create a camera */
-    app.Scene.Camera = engine.CreateCamera(-3,10,-3, WIDTH, HEIGHT, 65.0, 0.1, 500.0)
+    app.Scene.Camera = engine.CreateCamera(-3,2,-3, WIDTH, HEIGHT, 65.0, 0.1, 500.0)
     app.Scene.Camera.Transform.Rotation[1] = 130.0
 
     /* test voxel chunk */
@@ -65,21 +52,41 @@ func main() {
     ode.Init(0, ode.AllAFlag)
     side := 1.0
     world := ode.NewWorld()
-    space := ode.NilSpace().NewHashSpace()
+    space := ode.NilSpace().NewSimpleSpace()
+
     box1 := world.NewBody()
-    box1.SetPosition(ode.V3(0, 20, 0))
+    box1.SetPosition(ode.V3(0, 1.5, 0))
     mass := ode.NewMass()
     mass.SetBox(1, ode.V3(side, side, side))
     mass.Adjust(1)
     box1.SetMass(mass)
     box1_col := space.NewBox(ode.V3(side, side, side))
     box1_col.SetBody(box1)
-    ctGrp := ode.NewJointGroup(1000)
 
-    world.SetGravity(ode.V3(0,-0.1,0))
+    box2 := world.NewBody()
+    box2.SetPosition(ode.V3(0, 0.2, 0))
+    mass2 := ode.NewMass()
+    mass2.SetBox(1, ode.V3(side, side, side))
+    mass2.Adjust(1)
+    box2.SetMass(mass2)
+    box2_col := space.NewBox(ode.V3(side, side, side))
+    box2_col.SetBody(box2)
+
+    ctGrp := ode.NewJointGroup(1000000)
+
+    world.SetGravity(ode.V3(0,-1,0))
+    world.SetCFM(1.0e-5)
+    world.SetERP(0.2)
+    world.SetContactSurfaceLayer(0.001)
+    world.SetContactMaxCorrectingVelocity(0.9)
+    world.SetAutoDisable(true)
     space.NewPlane(ode.V4(0,1,0,0))
 
-    cam_ray := space.NewRay(10)
+    //cam_ray := space.NewRay(10)
+
+    fmt.Println("goworld")
+    //rb := physics.NewRigidBody(5)
+    //fmt.Println(rb)
 
 
     // buffer display window
@@ -112,34 +119,31 @@ func main() {
 
         // update position
         //fmt.Println(box1.Position())
-        fmt.Println(app.Scene.Camera.Forward)
-        obj.Transform.Position = fromOdeVec3(box1.Position()).Sub(mgl.Vec3{0.5,0.5,0.5})
+        //fmt.Println(app.Scene.Camera.Forward)
+        obj.Transform.Position = physics.FromOdeVec3(box1.Position()).Sub(mgl.Vec3{0.5,0.5,0.5})
+        obj.Transform.Rotation = physics.FromOdeRotation(box1.Rotation())
+        obj2.Transform.Position = physics.FromOdeVec3(box2.Position()).Sub(mgl.Vec3{0.5,0.5,0.5})
+        obj2.Transform.Rotation = physics.FromOdeRotation(box2.Rotation())
 
-        cam_ray.SetPosDir(toOdeVec3(app.Scene.Camera.Position), toOdeVec3(app.Scene.Camera.Forward))
+        //cam_ray.SetPosDir(toOdeVec3(app.Scene.Camera.Position), toOdeVec3(app.Scene.Camera.Forward))
 
         space.Collide(0, func(data interface{}, obj1, obj2 ode.Geom) {
-            contact := ode.NewContact()
             body1, body2 := obj1.Body(), obj2.Body()
-            if body1 != 0 && body2 != 0 && body1.Connected(body2) {
-                return
-            }
-            contact.Surface.Mode = 0
-            contact.Surface.Mu = 0.1
-            contact.Surface.Mu2 = 0
             cts := obj1.Collide(obj2, 1, 0)
-            if len(cts) > 0 {
-                if (obj1 == cam_ray && obj2 == box1_col) ||
-                   (obj1 == box1_col && obj2 == cam_ray) {
-                    fmt.Println("ray collision", cts[0].Normal)
-                    return // dont attach anything
-                }
+            for _, ct := range cts {
+                contact := ode.NewContact()
+                contact.Surface.Mode = ode.BounceCtParam | ode.SoftCFMCtParam;
+                contact.Surface.Mu = math.Inf(1)
+                contact.Surface.Mu2 = 0;
+                contact.Surface.Bounce = 0.01;
+                contact.Surface.BounceVel = 0.1;
 
-                contact.Geom = cts[0]
+                contact.Geom = ct
                 ct := world.NewContactJoint(ctGrp, contact)
                 ct.Attach(body1, body2)
             }
         })
-        world.QuickStep(0.05)
+        world.QuickStep(0.01)
         ctGrp.Empty()
     })
 

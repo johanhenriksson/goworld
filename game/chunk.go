@@ -96,8 +96,8 @@ func (chk *Chunk) Compute() {
                 zp := chk.At(x,y,z+1) == nil
                 zn := chk.At(x,y,z-1) == nil
 
-                /* Compute vertex data */
-                data = v.Compute(uint8(x), uint8(y), uint8(z), xp, xn, yp, yn, zp, zn, data, chk.Tileset)
+                /* Compute & append vertex data */
+                data = v.Compute(data, uint8(x), uint8(y), uint8(z), xp, xn, yp, yn, zp, zn, chk.Tileset)
             }
         }
     }

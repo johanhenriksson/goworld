@@ -4,8 +4,9 @@ import (
 	"github.com/go-gl/gl/v4.1-core/gl"
 )
 
+/* Rename to something that reflects that it's an attachment to a frame buffer */
 type DrawBuffer struct {
-    Target uint32 // GL attachment
+    Target uint32 // GL attachment enum (DEPTH_ATTACHMENT, COLOR_ATTACHMENT etc)
     Texture *Texture
 }
 
@@ -18,7 +19,7 @@ type FrameBuffer struct {
     mipLvl  int32
 }
 
-/* TODO: Rename to CreateBuffer */
+/* TODO: Rename to AttachBuffer */
 /** 
  * Create a new frame buffer texture and attach it to the given target.
  * Returns a pointer to the created texture object 

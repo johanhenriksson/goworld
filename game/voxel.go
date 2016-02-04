@@ -34,7 +34,7 @@ type Voxel struct {
                xp, xn, yp, yn, zp, zn - draw face flags (right, left, up, down, front, back)
                data - output slice
                ts   - chunk tileset pointer */
-func (voxel *Voxel) Compute(x, y, z uint8, xp, xn, yp, yn, zp, zn bool, data VoxelVertices, ts *Tileset) VoxelVertices {
+func (voxel *Voxel) Compute(data VoxelVertices, x, y, z uint8, xp, xn, yp, yn, zp, zn bool, ts *Tileset) VoxelVertices {
 
     // Right (X+)
     if xp {

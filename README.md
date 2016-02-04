@@ -26,8 +26,8 @@ Only tested on OSX 10.10
  * Keyboard events
  * Mouse events
  * Basic User Interface elements:
- ** Textbox
- ** Button
+  * Textbox
+  * Button
  * Heightmap support
  * Improved scene graph
  * Simple Physics:

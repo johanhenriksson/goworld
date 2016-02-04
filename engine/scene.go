@@ -30,7 +30,7 @@ func NewScene() *Scene {
                     Quadratic: 1.0,
                 },
                 Color: mgl.Vec3 { 1,1,1 },
-                Range: 1,
+                Range: 4,
             },
         },
     }
