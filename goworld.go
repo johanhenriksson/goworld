@@ -40,7 +40,7 @@ func main() {
     obj.Attach(chk)
     app.Scene.Add(obj)
 
-    obj2 := engine.NewObject(0.55,3,0)
+    obj2 := engine.NewObject(0.35,3,0)
     obj2.Attach(chk)
     app.Scene.Add(obj2)
 

@@ -71,6 +71,6 @@ func (w *World) NewRigidBox(mass, x, y, z float32) *RigidBox {
 }
 
 func (rb *RigidBox) Position() mgl.Vec3 {
-    return rb.RigidBody.Position().Add(rb.center)
+    return rb.RigidBody.Position()
 }
 

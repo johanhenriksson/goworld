@@ -40,7 +40,8 @@ func (t *Transform) Update(dt float32) {
     translation := mgl.Translate3D(t.Position[0], t.Position[1], t.Position[2])
 
     /* New transform matrix: S * R * T */
-    m := scaling.Mul4(rotation.Mul4(translation))
+    //m := scaling.Mul4(rotation.Mul4(translation))
+    m := translation.Mul4(rotation.Mul4(scaling))
 
     /* Grab axis vectors from transformation matrix */
     t.Right[0]   =  m[4*0+0] // first column
