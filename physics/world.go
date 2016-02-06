@@ -3,6 +3,7 @@ package physics
 import (
     "math"
     "github.com/ianremmler/ode"
+    mgl "github.com/go-gl/mathgl/mgl32"
 )
 
 type World struct {
@@ -52,19 +53,35 @@ func (w *World) nearCallback(data interface{}, obj1, obj2 ode.Geom) {
 
     cts := obj1.Collide(obj2, 1, 0)
     for _, ct := range cts {
+        /* contact info */
         contact := ode.NewContact()
         contact.Surface.Mode = ode.BounceCtParam | ode.SoftCFMCtParam;
         contact.Surface.Mu = math.Inf(1)
         contact.Surface.Mu2 = 0;
         contact.Surface.Bounce = 0.01;
         contact.Surface.BounceVel = 0.1;
-
         contact.Geom = ct
-        ct := w.world.NewContactJoint(w.contacts, contact)
-        ct.Attach(body1, body2)
+
+        /* add contact joint until next frame */
+        ctj := w.world.NewContactJoint(w.contacts, contact)
+        ctj.Attach(body1, body2)
+
+        /* collision events */
+        event_contact := Contact {
+            Position: FromOdeVec3(ct.Pos),
+            Normal: FromOdeVec3(ct.Normal),
+            Depth: float32(ct.Depth),
+        }
+
+        if obj1.Data() != nil && obj1.Data() != nil {
+            col1 := obj1.Data().(Collider)
+            col2 := obj2.Data().(Collider)
+            col1.OnCollision(col2, event_contact)
+            col2.OnCollision(col1, event_contact)
+        }
     }
 }
 
-func (w *World) NewPlane(x,y,z,c float32) {
-    w.space.NewPlane(ode.V4(float64(x), float64(y), float64(z), float64(c)))
+func (w *World) Raycast(origin, direction mgl.Vec3) {
+
 }

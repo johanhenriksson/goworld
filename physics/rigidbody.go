@@ -7,7 +7,7 @@ import (
 
 type RigidBox struct {
     *RigidBody
-    collider ode.Box
+    collider Collider
     center mgl.Vec3
 
     /* Size */
@@ -49,7 +49,7 @@ func (rb *RigidBody) Rotation() mgl.Vec3 {
 }
 
 func (rb *RigidBody) setBox(density, x, y, z float32) {
-    rb.mass.SetBox(float64(density), ode.V3(float64(x), float64(y), float64(z)))
+    rb.mass.SetBox(float64(density), odeV3(x, y, z))
     rb.mass.Adjust(float64(rb.Mass))
 }
 
@@ -57,8 +57,8 @@ func (w *World) NewRigidBox(mass, x, y, z float32) *RigidBox {
     rb := w.NewRigidBody(mass)
     rb.setBox(1, x, y, z)
 
-    col := w.space.NewBox(ode.V3(float64(x), float64(y), float64(z)))
-    col.SetBody(rb.body)
+    col := w.NewBox(x, y, z)
+    col.AttachToBody(rb)
 
     box := &RigidBox {
         RigidBody: rb,
@@ -69,6 +69,7 @@ func (w *World) NewRigidBox(mass, x, y, z float32) *RigidBox {
 
     return box
 }
+
 
 func (rb *RigidBox) Position() mgl.Vec3 {
     return rb.RigidBody.Position()

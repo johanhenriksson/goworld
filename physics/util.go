@@ -44,3 +44,11 @@ func FromOdeRotation(mat3 ode.Matrix3) mgl.Vec3 {
         float32(z * rad2deg),
     }
 }
+
+func odeV3(x, y, z float32) ode.Vector3 {
+    return ode.V3(float64(x), float64(y), float64(z))
+}
+
+func odeV4(x, y, z, w float32) ode.Vector4 {
+    return ode.V4(float64(x), float64(y), float64(z), float64(w))
+}

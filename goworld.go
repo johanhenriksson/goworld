@@ -42,7 +42,7 @@ func main() {
 
     obj2 := engine.NewObject(0.35,3,0)
     obj2.Attach(chk)
-    app.Scene.Add(obj2)
+    //app.Scene.Add(obj2)
 
     //cam_ray := space.NewRay(10)
 
@@ -54,6 +54,7 @@ func main() {
     rb2 := w.NewRigidBox(5, 1, 1, 1)
     rb2.SetPosition(obj2.Transform.Position)
     fmt.Println(rb1)
+
 
 
     // buffer display window
@@ -87,10 +88,12 @@ func main() {
         // update position
         //fmt.Println(box1.Position())
         //fmt.Println(app.Scene.Camera.Forward)
+        /*
         obj.Transform.Position = rb1.Position()
         obj.Transform.Rotation = rb1.Rotation()
         obj2.Transform.Position = rb2.Position()
         obj2.Transform.Rotation = rb2.Rotation()
+        */
 
         //cam_ray.SetPosDir(toOdeVec3(app.Scene.Camera.Position), toOdeVec3(app.Scene.Camera.Forward))
 
