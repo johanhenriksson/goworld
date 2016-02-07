@@ -1,6 +1,7 @@
 package physics
 
 import (
+    "fmt"
     "math"
     "github.com/ianremmler/ode"
     mgl "github.com/go-gl/mathgl/mgl32"
@@ -82,6 +83,50 @@ func (w *World) nearCallback(data interface{}, obj1, obj2 ode.Geom) {
     }
 }
 
-func (w *World) Raycast(origin, direction mgl.Vec3) {
+type RaycastHit struct {
+    Position mgl.Vec3
+    Normal   mgl.Vec3
+    Distance float32
+    Collider Collider
+}
 
+func (w *World) Raycast(length float32, origin, direction mgl.Vec3) []RaycastHit {
+    hits := make([]RaycastHit, 0, 2)
+
+    ray := w.space.NewRay(float64(length))
+    ray.SetPosDir(ToOdeVec3(origin), ToOdeVec3(direction))
+    ray.SetData("ray")
+
+    w.space.Collide(0, func(data interface{}, obj1, obj2 ode.Geom) {
+        var other Collider
+
+        if obj1 == ray {
+            other = obj2.Data().(Collider)
+        } else if obj2 == ray {
+            other = obj1.Data().(Collider)
+        } else {
+            return
+        }
+
+        cts := obj1.Collide(obj2, 1, 0)
+        if len(cts) > 0 {
+            ct := cts[0]
+
+            /* collision events */
+            hit := RaycastHit {
+                Position: FromOdeVec3(ct.Pos),
+                Normal: FromOdeVec3(ct.Normal),
+                Distance: float32(ct.Depth),
+                Collider: other,
+            }
+            hits = append(hits, hit)
+
+            fmt.Println("hit", other, fmt.Sprintf("at [%.1f,%.1f,%.1f] normal: [%.1f,%.1f,%.1f], depth: %.1f",
+                hit.Position[0], hit.Position[1], hit.Position[2],
+                hit.Normal[0], hit.Normal[1], hit.Normal[2],
+                hit.Distance))
+        }
+    })
+    ray.Destroy()
+    return hits
 }

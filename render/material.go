@@ -28,7 +28,7 @@ func CreateMaterial(shader *ShaderProgram) *Material {
     return &Material {
         Shader: shader,
         Textures: make(MaterialTextureMap),
-        Buffers: make(BufferDescriptors,0,3),
+        Buffers: make(BufferDescriptors,0,0),
     }
 }
 

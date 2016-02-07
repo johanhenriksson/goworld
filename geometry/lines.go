@@ -1,9 +1,11 @@
 package geometry
 
 import (
+    "github.com/johanhenriksson/goworld/render"
+    "github.com/johanhenriksson/goworld/assets"
+
     "github.com/go-gl/gl/v4.1-core/gl"
     mgl "github.com/go-gl/mathgl/mgl32"
-    "github.com/johanhenriksson/goworld/render"
 )
 
 type Lines struct {
@@ -14,18 +16,31 @@ type Lines struct {
     vbo         *render.VertexBuffer
 }
 
-func CreateLines(mat *render.Material) *Lines {
-    return &Lines {
-        Lines:      make([]Line, 0),
-        Material:   mat,
-        Width:      10.0,
-        vao:        render.CreateVertexArray(),
-        vbo:        render.CreateVertexBuffer(),
+type Line struct {
+    Start   mgl.Vec3
+    End     mgl.Vec3
+    Color   mgl.Vec4
+}
+
+func CreateLines() *Lines {
+    l := &Lines {
+        Lines:    make([]Line, 0, 0),
+        Material: assets.GetMaterialCached("lines"),
+        Width:    10.0,
+        vao:      render.CreateVertexArray(),
+        vbo:      render.CreateVertexBuffer(),
     }
+    l.Compute()
+    return l
 }
 
 func (lines *Lines) Add(line Line) {
     lines.Lines = append(lines.Lines, line)
+}
+
+func (lines *Lines) Clear() {
+    lines.Lines = make([]Line, 0, 0)
+    lines.Compute()
 }
 
 func (lines *Lines) Box(x,y,z,w,h,d,r,g,b,a float32) {
@@ -62,20 +77,19 @@ func (lines *Lines) Compute() {
     lines.vao.Length = int32(2 * count)
     lines.vao.Type   = gl.LINES
     lines.vao.Bind()
-    lines.vbo.Buffer(data)
+    lines.vbo.Bind()
+    if lines.vao.Length > 0 {
+        lines.vbo.Buffer(data)
+    }
     lines.Material.SetupVertexPointers()
 }
 
-func (lines *Lines) Render() {
-    gl.LineWidth(lines.Width)
-    lines.Material.Use()
-    lines.vao.Draw()
-}
-
-type Line struct {
-    Start   mgl.Vec3
-    End     mgl.Vec3
-    Color   mgl.Vec4
+func (lines *Lines) Draw(args render.DrawArgs) {
+    // setup line material
+    if len(lines.Lines) > 0 && args.Pass == "lines" {
+        lines.Material.Shader.Matrix4f("model", &args.Transform[0])
+        lines.vao.Draw()
+    }
 }
 
 func (lines *Lines) Line(start_x, start_y, start_z, end_x, end_y, end_z, r, g, b, a float32) {

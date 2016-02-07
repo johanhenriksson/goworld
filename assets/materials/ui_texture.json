@@ -1,5 +1,4 @@
 {
-    "shader": "/assets/shaders/ui_texture",
     "pointers": [
         {
             "name": "vertex",

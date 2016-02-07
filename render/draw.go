@@ -18,7 +18,9 @@ type Drawable interface {
 
 /** Passed to Drawables on render */
 type DrawArgs struct {
-    Viewport    mgl.Mat4
-    Transform   mgl.Mat4
-    Shader      *ShaderProgram
+    Projection mgl.Mat4
+    View       mgl.Mat4
+    Transform  mgl.Mat4
+    Shader     *ShaderProgram
+    Pass       string
 }

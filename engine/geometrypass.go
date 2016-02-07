@@ -31,7 +31,7 @@ func (p *GeometryPass) DrawPass(scene *Scene) {
     shader.Matrix4f("projection", &scene.Camera.Projection[0])
 
     /* Draw scene */
-    scene.Draw(shader)
+    scene.Draw("geometry", shader)
 
     p.Buffer.Unbind()
 }

@@ -122,6 +122,6 @@ func (q *Quad) compute() {
 func (q *Quad) Draw(args render.DrawArgs) {
     q.Material.Use()
     q.Material.Shader.Matrix4f("model", &args.Transform[0])
-    q.Material.Shader.Matrix4f("viewport", &args.Viewport[0])
+    q.Material.Shader.Matrix4f("viewport", &args.Projection[0])
     q.vao.Draw()
 }

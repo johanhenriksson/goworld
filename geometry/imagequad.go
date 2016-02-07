@@ -60,7 +60,7 @@ func (q *ImageQuad) Draw(args render.DrawArgs) {
     if q.Material != nil {
         q.Material.Use()
         q.Material.Shader.Matrix4f("model", &args.Transform[0])
-        q.Material.Shader.Matrix4f("viewport", &args.Viewport[0])
+        q.Material.Shader.Matrix4f("viewport", &args.Projection[0])
     }
     q.vao.Draw()
 }

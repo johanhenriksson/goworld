@@ -1,21 +1,24 @@
 package engine
 
 import (
+    "reflect"
     "github.com/johanhenriksson/goworld/render"
 )
 
 /** Game object */
 type Object struct {
     *Transform
+    Scene       *Scene
     Components  []Component
     Children    []*Object
 }
 
-func NewObject(x,y,z float32) *Object {
+func (s *Scene) NewObject(x,y,z float32) *Object {
     return &Object {
-        Transform: CreateTransform(x,y,z),
+        Transform:  CreateTransform(x,y,z),
+        Scene:      s,
         Components: []Component { },
-        Children: []*Object { },
+        Children:   []*Object { },
     }
 }
 
@@ -51,4 +54,14 @@ func (o *Object) Update(dt float32) {
     for _, child := range o.Children {
         child.Update(dt)
     }
+}
+
+func (o *Object) GetComponent(component Component) (Component, bool) {
+    t := reflect.TypeOf(component)
+    for _, c := range o.Components {
+        if c.Type() == t {
+            return c, true
+        }
+    }
+    return component, false
 }

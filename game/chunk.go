@@ -7,6 +7,8 @@ import (
 
 /* Chunks are smallest renderable units of voxel geometry */
 type Chunk struct {
+    *engine.ComponentBase
+
     Size    int
     Tileset *Tileset
     Data    []*Voxel
@@ -16,7 +18,7 @@ type Chunk struct {
     mesh    *engine.Mesh
 }
 
-func CreateChunk(size int, ts *Tileset) *Chunk {
+func NewChunk(parentObject *engine.Object, size int, ts *Tileset) *Chunk {
     chk := &Chunk {
         Size: size,
         Tileset: ts,
@@ -25,6 +27,8 @@ func CreateChunk(size int, ts *Tileset) *Chunk {
         vao: render.CreateVertexArray(),
         vbo: render.CreateVertexBuffer(),
     }
+
+    chk.ComponentBase = engine.NewComponent(parentObject, chk)
     return chk
 }
 
@@ -71,7 +75,9 @@ func (chk *Chunk) Update(dt float32) {
 }
 
 func (chk *Chunk) Draw(args render.DrawArgs) {
-    chk.vao.Draw()
+    if args.Pass == "geometry" {
+        chk.vao.Draw()
+    }
 }
 
 /* Recomputes the chunk mesh and returns a pointer to it. */
@@ -104,6 +110,8 @@ func (chk *Chunk) Compute() {
 
     /* Buffer to GPU */
     chk.vao.Length = int32(len(data))
-    chk.vao.Bind()
-    chk.vbo.Buffer(data)
+    if chk.vao.Length > 0 {
+        chk.vao.Bind()
+        chk.vbo.Buffer(data)
+    }
 }

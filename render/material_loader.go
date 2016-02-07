@@ -44,15 +44,7 @@ func LoadMaterial(shader *ShaderProgram, file string) *Material {
         panic(err)
     }
 
-    fmt.Println(matf)
-
-    /* Create & compile GL shader program */
-    if (shader == nil) {
-        fmt.Println("compiling", matf.Shader)
-        shader = CompileVFShader(matf.Shader)
-    }
     shader.Use()
-
     mat := CreateMaterial(shader)
 
     /* Load vertex pointers */

@@ -2,6 +2,8 @@ package engine
 
 import (
     "github.com/johanhenriksson/goworld/render"
+    "github.com/johanhenriksson/goworld/physics"
+
     mgl "github.com/go-gl/mathgl/mgl32"
 )
 
@@ -13,6 +15,8 @@ type Scene struct {
     /* Root Objects */
     Objects     []*Object
 
+    World       *physics.World
+
     /* temporary: list of all lights in the scene */
     lights      []Light
 }
@@ -21,6 +25,8 @@ func NewScene() *Scene {
     s := &Scene {
         Camera: nil,
         Objects: []*Object { },
+        World: physics.NewWorld(),
+
         lights: []Light {
             /* temporary: test light */
             Light {
@@ -56,7 +62,7 @@ func (s *Scene) Add(object *Object) {
     s.Objects = append(s.Objects, object)
 }
 
-func (s *Scene) Draw(shader *render.ShaderProgram) {
+func (s *Scene) Draw(pass string, shader *render.ShaderProgram) {
     if s.Camera == nil {
         return
     }
@@ -65,8 +71,11 @@ func (s *Scene) Draw(shader *render.ShaderProgram) {
      * Each object adds its transformation matrix before passing
      * it on to their children */
     args := render.DrawArgs {
-        Viewport: s.Camera.View,
+        Projection: s.Camera.Projection,
+        View: s.Camera.View,
         Transform: mgl.Ident4(),
+
+        Pass: pass,
         Shader: shader,
     }
 

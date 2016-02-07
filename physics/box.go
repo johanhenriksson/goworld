@@ -7,10 +7,12 @@ import (
 )
 
 type Box struct {
-    X   float32
-    Y   float32
-    Z   float32
-    box ode.Box
+    X        float32
+    Y        float32
+    Z        float32
+    Center   mgl.Vec3
+    box      ode.Box
+    Callback CollisionCallback
 }
 
 func (w *World) NewBox(width, height, depth float32) *Box {
@@ -20,6 +22,11 @@ func (w *World) NewBox(width, height, depth float32) *Box {
         X: width,
         Y: height,
         Z: depth,
+        Center: mgl.Vec3 {
+            width / 2,
+            height / 2,
+            depth / 2,
+        },
         box: col,
     }
 
@@ -31,7 +38,7 @@ func (w *World) NewBox(width, height, depth float32) *Box {
 }
 
 func (b *Box) String() string {
-    return fmt.Sprintf("Box [w=%f, h=%f, d=%f]", b.X, b.Y, b.Z)
+    return fmt.Sprintf("Box [w=%.1f, h=%.1f, d=%.1f]", b.X, b.Y, b.Z)
 }
 
 func (b *Box) SetPosition(position mgl.Vec3) {
@@ -40,8 +47,15 @@ func (b *Box) SetPosition(position mgl.Vec3) {
 
 func (b *Box) AttachToBody(body *RigidBody) {
     b.box.SetBody(body.body)
+    //b.box.SetOffsetPosition(ToOdeVec3(b.Center))
+}
+
+func (b *Box) Destroy(){
+    b.box.Destroy()
 }
 
 func (b *Box) OnCollision(other Collider, contact Contact) {
-    fmt.Println("Box Collision!", other)
+    if b.Callback != nil {
+        b.Callback(other, contact)
+    }
 }

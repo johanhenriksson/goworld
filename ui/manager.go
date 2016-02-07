@@ -26,10 +26,13 @@ func (m *Manager) Append(child render.Drawable) {
 }
 
 func (m *Manager) Draw() {
+    /* create draw event args */
     args := render.DrawArgs {
-        Viewport: m.Viewport,
+        Projection: m.Viewport,
+        View: mgl.Ident4(), // unused
         Transform: mgl.Ident4(),
     }
+
     for _, el := range m.Children {
         el.Draw(args)
     }

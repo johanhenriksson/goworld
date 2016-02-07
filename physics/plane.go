@@ -31,7 +31,7 @@ func (w *World) NewPlane(x, y, z, c float32) *Plane {
 }
 
 func (p *Plane) String() string {
-    return fmt.Sprintf("Plane [x=%f, y=%f, z=%f, c=%f]", p.X, p.Y, p.Z, p.C)
+    return fmt.Sprintf("Plane [x=%.1f, y=%.1f, z=%.1f, c=%.1f]", p.X, p.Y, p.Z, p.C)
 }
 
 func (p *Plane) AttachToBody(body *RigidBody) {
@@ -39,5 +39,5 @@ func (p *Plane) AttachToBody(body *RigidBody) {
 }
 
 func (p *Plane) OnCollision(other Collider, contact Contact) {
-    fmt.Println("Plane Collision!", other)
+    //fmt.Println("Plane Collision!", other)
 }

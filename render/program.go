@@ -15,6 +15,8 @@ const (
     UnknownUniform      UniformLocation   = -1
 )
 
+// TODO: return proper errors, dont just crash
+
 type AttributeLocation  int32
 type UniformLocation    int32
 type UniformMap         map[string]UniformLocation

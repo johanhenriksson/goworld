@@ -5,7 +5,7 @@ import (
     "github.com/johanhenriksson/goworld/game"
     "github.com/johanhenriksson/goworld/engine"
     "github.com/johanhenriksson/goworld/render"
-    "github.com/johanhenriksson/goworld/physics"
+    //"github.com/johanhenriksson/goworld/geometry"
 
     //mgl "github.com/go-gl/mathgl/mgl32"
     opensimplex "github.com/ojrac/opensimplex-go"
@@ -21,39 +21,43 @@ func main() {
 
     /* Setup deferred rendering */
     geom_pass := engine.NewGeometryPass(WIDTH, HEIGHT)
-    light_pass := engine.NewLightPass(geom_pass.Buffer)
     app.Render.Append("geometry", geom_pass)
-    app.Render.Append("light", light_pass)
+    app.Render.Append("light", engine.NewLightPass(geom_pass.Buffer))
+    app.Render.Append("lines", engine.NewLinePass())
     // UI as a render pass?
 
     /* create a camera */
     app.Scene.Camera = engine.CreateCamera(-3,2,-3, WIDTH, HEIGHT, 65.0, 0.1, 500.0)
     app.Scene.Camera.Transform.Rotation[1] = 130.0
 
+    obj := app.Scene.NewObject(3,0,3)
+
     /* test voxel chunk */
     tileset := game.CreateTileset()
-    chk := generateChunk(1, tileset)
+    chk := game.NewChunk(obj, 20, tileset)
+    generateChunk(chk) // populate with random data
     chk.Compute()
     geom_pass.Material.SetupVertexPointers()
 
-    obj := engine.NewObject(0,0,0)
-    obj.Attach(chk)
+    game.NewPlacementGrid(obj)
+
     app.Scene.Add(obj)
 
-    obj2 := engine.NewObject(0.35,3,0)
+    obj2 := app.Scene.NewObject(2,1,0)
     obj2.Attach(chk)
     //app.Scene.Add(obj2)
 
     //cam_ray := space.NewRay(10)
 
     fmt.Println("goworld")
-    w := physics.NewWorld()
+    w := app.Scene.World
     w.NewPlane(0,1,0,0)
     rb1 := w.NewRigidBox(5, 1, 1, 1)
     rb1.SetPosition(obj.Transform.Position)
     rb2 := w.NewRigidBox(5, 1, 1, 1)
     rb2.SetPosition(obj2.Transform.Position)
     fmt.Println(rb1)
+
 
 
 
@@ -78,6 +82,7 @@ func main() {
     bufferWindow("Normal", geom_pass.Buffer.Normal, 30, 340)
 
     /* Render loop */
+    ray_last := false
     app.Window.SetRenderCallback(func(wnd *engine.Window, dt float32) {
         /* render scene */
         app.Render.Draw()
@@ -88,9 +93,9 @@ func main() {
         // update position
         //fmt.Println(box1.Position())
         //fmt.Println(app.Scene.Camera.Forward)
-        /*
         obj.Transform.Position = rb1.Position()
         obj.Transform.Rotation = rb1.Rotation()
+        /*
         obj2.Transform.Position = rb2.Position()
         obj2.Transform.Rotation = rb2.Rotation()
         */
@@ -98,13 +103,23 @@ func main() {
         //cam_ray.SetPosDir(toOdeVec3(app.Scene.Camera.Position), toOdeVec3(app.Scene.Camera.Forward))
 
         w.Update()
+
+        if !ray_last && engine.KeyDown(engine.KeyF) {
+            fmt.Println("raycast")
+            w.Raycast(10, app.Scene.Camera.Position, app.Scene.Camera.Forward)
+            ray_last = true
+        }
+        if ray_last && engine.KeyUp(engine.KeyF) {
+            ray_last = false
+        }
     })
 
     app.Run()
 }
 
-func generateChunk(size int, tileset *game.Tileset) *game.Chunk {
+func generateChunk(chk *game.Chunk) {
     /* Define voxels */
+    tileset := chk.Tileset
     grass := &game.Voxel{
         Xp: tileset.GetId(4, 0),
         Xn: tileset.GetId(4, 0),
@@ -124,7 +139,7 @@ func generateChunk(size int, tileset *game.Tileset) *game.Chunk {
 
     /* Fill chunk with voxels */
     f := 1.0 / 5
-    chk := game.CreateChunk(size, tileset)
+    size := chk.Size
     simplex := opensimplex.NewWithSeed(1000)
     for z := 0; z < size; z++ {
         for y := 0; y < size; y++ {
@@ -142,6 +157,4 @@ func generateChunk(size int, tileset *game.Tileset) *game.Chunk {
             }
         }
     }
-
-    return chk
 }

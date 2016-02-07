@@ -1,5 +1,4 @@
 {
-    "shader": "/assets/shaders/3d_line",
     "pointers": [
         {
             "name": "vertex",

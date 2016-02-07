@@ -10,9 +10,14 @@ type KeyMap map[KeyCode]bool
 /* Global key state */
 var keyState KeyMap = KeyMap { }
 
-/* Returns true if the given key is being held */
+/* Returns true if the given key is currently being pressed */
 func KeyDown(key KeyCode) bool {
     return keyState[key]
+}
+
+/* Returns true if the given key is not currently being pressed */
+func KeyUp(key KeyCode) bool {
+    return !KeyDown(key)
 }
 
 /* GLFW Callback - Updates key state map */
