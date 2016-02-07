@@ -98,6 +98,9 @@ func (s *Scene) Update(dt float32) {
 
     /* test: position first light on camera */
     s.lights[0].Position = s.Camera.Position
+
+    /* physics step */
+    s.World.Update()
 }
 
 func (s *Scene) FindLights() []Light {

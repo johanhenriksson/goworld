@@ -9,21 +9,50 @@ type KeyMap map[KeyCode]bool
 
 /* Global key state */
 var keyState KeyMap = KeyMap { }
+var lastKeyState KeyMap = KeyMap { }
 
-/* Returns true if the given key is currently being pressed */
-func KeyDown(key KeyCode) bool {
-    return keyState[key]
+/* Returns true if the given key was pressed during the previous frame */
+func KeyPressed(key KeyCode) bool {
+    var current, last, ok bool
+    if current, ok = keyState[key]; !ok {
+        current = false
+    }
+    if last, ok = lastKeyState[key]; !ok {
+        last = false
+    }
+    return current && !last
 }
 
-/* Returns true if the given key is not currently being pressed */
-func KeyUp(key KeyCode) bool {
-    return !KeyDown(key)
+/* Returns true if the given key was released during the previous frame */
+func KeyReleased(key KeyCode) bool {
+    var current, last, ok bool
+    if current, ok = keyState[key]; !ok {
+        current = false
+    }
+    if last, ok = lastKeyState[key]; !ok {
+        last = false
+    }
+    return !current && last
+}
+
+func KeyDown(key KeyCode) bool {
+    if current, ok := keyState[key]; ok {
+        return current
+    }
+    return false
 }
 
 /* GLFW Callback - Updates key state map */
 func KeyCallback(w *glfw.Window, key glfw.Key, scancode int, action glfw.Action, mods glfw.ModifierKey) {
     code := KeyCode(key)
     keyState[code] = action != glfw.Release
+}
+
+/* Must be called at the end of every frame - will update last key state */
+func inputEndFrame() {
+    for k,v := range keyState {
+        lastKeyState[k] = v
+    }
 }
 
 /* GLFW Keycodes */

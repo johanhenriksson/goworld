@@ -78,4 +78,7 @@ void main() {
     vec3 corrected = pow(lightColor * diffuseColor, gamma);
 
     color = vec4(corrected, 1.0);
+
+    // restore depth buffer too
+    gl_FragDepth = depth;
 }

@@ -82,7 +82,6 @@ func main() {
     bufferWindow("Normal", geom_pass.Buffer.Normal, 30, 340)
 
     /* Render loop */
-    ray_last := false
     app.Window.SetRenderCallback(func(wnd *engine.Window, dt float32) {
         /* render scene */
         app.Render.Draw()
@@ -102,15 +101,9 @@ func main() {
 
         //cam_ray.SetPosDir(toOdeVec3(app.Scene.Camera.Position), toOdeVec3(app.Scene.Camera.Forward))
 
-        w.Update()
-
-        if !ray_last && engine.KeyDown(engine.KeyF) {
+        if engine.KeyReleased(engine.KeyF) {
             fmt.Println("raycast")
             w.Raycast(10, app.Scene.Camera.Position, app.Scene.Camera.Forward)
-            ray_last = true
-        }
-        if ray_last && engine.KeyUp(engine.KeyF) {
-            ray_last = false
         }
     })
 

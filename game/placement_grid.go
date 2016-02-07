@@ -1,6 +1,7 @@
 package game
 
 import (
+    "fmt"
     "github.com/johanhenriksson/goworld/engine"
     "github.com/johanhenriksson/goworld/render"
     "github.com/johanhenriksson/goworld/geometry"
@@ -40,19 +41,27 @@ func NewPlacementGrid(parentObject *engine.Object) *PlacementGrid {
 
 func (grid *PlacementGrid) Up() {
     if grid.Y < (grid.Chunk.Size - 1) {
+        fmt.Println("grid up")
         grid.Y += 1
         grid.Compute()
     }
 }
 
 func (grid *PlacementGrid) Down() {
-    if grid.Y < (grid.Chunk.Size - 1) {
-        grid.Y += 1
+    if grid.Y > 0 {
+        fmt.Println("grid down")
+        grid.Y -= 1
         grid.Compute()
     }
 }
 
 func (grid *PlacementGrid) Update(dt float32) {
+    if engine.KeyReleased(engine.KeyJ) {
+        grid.Down()
+    }
+    if engine.KeyReleased(engine.KeyK) {
+        grid.Up()
+    }
 }
 
 func (grid *PlacementGrid) Draw(args render.DrawArgs) {
@@ -62,13 +71,19 @@ func (grid *PlacementGrid) Draw(args render.DrawArgs) {
 /* Compute grid mesh - draw an empty box for every empty
  * voxel in the current layer */
 func (grid *PlacementGrid) Compute() {
+    grid.mesh.Clear()
+
     for x := 0; x < grid.Chunk.Size; x++ {
         for z := 0; z < grid.Chunk.Size; z++ {
             if grid.Chunk.At(x, grid.Y, z) == nil {
                 // place box
                 grid.mesh.Box(float32(x), float32(grid.Y), float32(z), // position
                     1, 1, 1, // size
-                    1, 1, 1, 1) // color (RGBA)
+                    1, 1, 1, 0.35) // color (RGBA)
+            } else {
+                grid.mesh.Box(float32(x), float32(grid.Y), float32(z), // position
+                    1, 1, 1, // size
+                    1, 0, 0, 0.3) // color (RGBA)
             }
         }
     }

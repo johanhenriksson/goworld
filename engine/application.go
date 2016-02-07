@@ -31,7 +31,10 @@ func NewApplication(title string, width, height int) *Application {
     }
 
     /* Update callback */
-    app.Window.SetUpdateCallback(app.Render.Update)
+    app.Window.SetUpdateCallback(func(dt float32) {
+        app.Render.Update(dt)
+        inputEndFrame()
+    })
 
     return app
 }

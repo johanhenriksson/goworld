@@ -3,7 +3,7 @@ package engine
 import (
     "github.com/johanhenriksson/goworld/assets"
     "github.com/johanhenriksson/goworld/render"
-    "github.com/go-gl/gl/v4.1-core/gl"
+    //"github.com/go-gl/gl/v4.1-core/gl"
 )
 
 type LinePass struct {
@@ -21,7 +21,7 @@ func NewLinePass() *LinePass {
 }
 
 func (p *LinePass) DrawPass(scene *Scene) {
-    gl.DepthMask(false)
+    //gl.DepthMask(false)
 
     p.Material.Use()
     shader := p.Material.Shader
@@ -31,5 +31,5 @@ func (p *LinePass) DrawPass(scene *Scene) {
     /* Draw scene */
     scene.Draw("lines", shader)
 
-    gl.DepthMask(true)
+    //gl.DepthMask(true)
 }

@@ -39,9 +39,6 @@ func NewLightPass(input *render.GeometryBuffer) *LightPass {
 }
 
 func (p *LightPass) DrawPass(scene *Scene) {
-    /* disable depth masking so that multiple lights can be drawn */
-    gl.DepthMask(false)
-
     /* use light pass shader */
     p.Material.Use()
     shader := p.Material.Shader
@@ -59,8 +56,13 @@ func (p *LightPass) DrawPass(scene *Scene) {
 
     /* draw lights */
     lights := scene.FindLights()
-    for _, light := range lights {
+    for i, light := range lights {
         /* shadow pass */
+        if i == 1 {
+            /* first pass we want the shader to restore the depth buffer */
+            /* 2nd, disable depth masking so that multiple lights can be drawn */
+            gl.DepthMask(false)
+        }
 
         /* set light uniform attributes */
         shader.Vec3("light.Position", &light.Position)
