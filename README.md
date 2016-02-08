@@ -1,5 +1,8 @@
 Another OpenGL thing. Bonus voxels!
 
+![Screenshot 1](http://i.imgur.com/6VFd4WJ.png)
+![Screenshot 2](http://i.imgur.com/z7PyEEI.png)
+
 Only tested on OSX 10.10
 
 **Requirements**
@@ -19,22 +22,23 @@ Only tested on OSX 10.10
  * Directional lights
  * Embedded scripting language
  * Console
- * Basic resource management:
-  * Shaders
-  * Textures
-  * Materials
- * Keyboard events
- * Mouse events
- * Basic User Interface elements:
+ * ~~Basic resource management:~~
+  * ~~Shaders~~
+  * ~~Textures~~
+  * ~~Materials~~
+ * User Interface elements:
   * Textbox
   * Button
+  * Keyboard events
+  * Mouse events
  * Heightmap support
- * Improved scene graph
+ * ~~Improved scene graph~~~
+ * ~~Components System~~
  * Simple Physics:
-  * ODE Integration
-  * Box collider
+  * ~~ODE Integration~~
+  * ~~Box collider~~
   * Sphere collider
-  * Raycast
+  * ~~Raycast~~
   * Spherecast
   * Heightmap
  * Shadow Mapping
