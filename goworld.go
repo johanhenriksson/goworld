@@ -43,7 +43,7 @@ func main() {
     //app.Scene.Add(obj)
 
     obj2 := app.Scene.NewObject(2,1,0)
-    chk2 := game.NewColorChunk(obj2, 16)
+    chk2 := game.NewColorChunk(obj2, 250)
     generateChunk(chk2) // populate with random data
     chk2.Set(0,0,0, &game.ColorVoxel{ R:255, G:0, B:0 })
     chk2.Set(1,0,0, &game.ColorVoxel{ R:0, G:255, B:0 })

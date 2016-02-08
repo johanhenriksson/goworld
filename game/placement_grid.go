@@ -79,7 +79,7 @@ func (grid *PlacementGrid) Compute() {
                 // place box
                 grid.mesh.Box(float32(x), float32(grid.Y), float32(z), // position
                     1, 1, 1, // size
-                    0, 140/255.0, 220/255.0, 1) // color (RGBA)
+                    0.3,0.3,0.3, 1) // color (RGBA)
             }
         }
     }

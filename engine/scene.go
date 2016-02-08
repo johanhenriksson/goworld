@@ -7,6 +7,7 @@ import (
     mgl "github.com/go-gl/mathgl/mgl32"
 )
 
+
 /* Scene Graph */
 type Scene struct {
     /* Active camera */
@@ -37,12 +38,13 @@ func NewScene() *Scene {
                 },
                 Color: mgl.Vec3 { 1,1,1 },
                 Range: 4,
+                Type: PointLight,
             },
         },
     }
 
     /* add a few more test lights */
-    for i := 0; i < 5; i++ {
+    for i := 0; i < 1; i++ {
         s.lights = append(s.lights, Light {
             Attenuation: Attenuation {
                 Constant: 0.01,
@@ -50,10 +52,16 @@ func NewScene() *Scene {
                 Quadratic: 1.5,
             },
             Position: mgl.Vec3 { 0, float32(4*i), 0 },
-            Color: mgl.Vec3 { 0.3, 0.3, 1.0 },
-            Range: 0.1,
+            Color: mgl.Vec3 { 1.0, 1.0, 1.0 },
+            Range: 4,
+            Type: PointLight,
         })
     }
+
+    s.lights[1].Position = mgl.Vec3 { 0.4, -1, 0.4}
+    s.lights[1].Color = mgl.Vec3 { 0.6, 0.6, 0.6 }
+    s.lights[1].Type = DirectionalLight
+    //s.lights[0].Type = 2
     return s
 }
 

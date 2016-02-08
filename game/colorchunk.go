@@ -115,25 +115,42 @@ func (chk *ColorChunk) Draw(args render.DrawArgs) {
     }
 }
 
-type OcclusionData []float32
-func (o OcclusionData) Get(x,y,z byte) byte {
-    offset := int(z) * 256 + int(y) * 16 + int(x)
-    if offset < 0 || offset >= (16*16*16) {
-        return 1.0
-    }
-    return byte(256 * o[offset])
-}
-func (o OcclusionData) Set(x,y,z int, value float32) {
-    o[z * 256 + y * 16 + x] = value
+type OcclusionData struct {
+    data   []float32
+    length int
+    Size   int
 }
 
+func NewOcclusionData(size int) *OcclusionData {
+    l := size * size * size
+    return &OcclusionData {
+        Size: size,
+        length: l,
+        data: make([]float32, l),
+    }
+}
+
+func (o *OcclusionData) Get(x,y,z byte) byte {
+    if x < 0 || y < 0 || z < 0 || int(x) >= o.Size || int(y) >= o.Size || int(z) >= o.Size {
+        return 255
+    }
+    offset := int(z) * o.Size * o.Size + int(y) * o.Size + int(x)
+    return byte(256 * o.data[offset])
+}
+func (o *OcclusionData) Set(x,y,z int, value float32) {
+    if x < 0 || y < 0 || z < 0 || int(x) >= o.Size || int(y) >= o.Size || int(z) >= o.Size {
+        return
+    }
+    offset := int(z) * o.Size * o.Size + int(y) * o.Size + int(x)
+    o.data[offset] = value
+}
 
 /* Recomputes the chunk mesh and returns a pointer to it. */
 func (chk *ColorChunk) Compute() {
     s := chk.Size
     data := make(ColorVoxelVertices, 0, 64)
 
-    occlusion := make(OcclusionData, chk.Size * chk.Size * chk.Size)
+    occlusion := NewOcclusionData(s)
     f := func(f bool) float32 {
         if f {
             return 1.0/6
@@ -159,12 +176,13 @@ func (chk *ColorChunk) Compute() {
                 zp := chk.At(x,y,z+1) == nil
                 zn := chk.At(x,y,z-1) == nil
 
-                o := 1.0 - f(xp) - f(xn) - f(yp) - f(yn) - f(zp) - f(zn)
+                o := f(xp) + f(xn) + f(yp) + f(yn) + f(zp) + f(zn)
                 occlusion.Set(x,y,z, o)
             }
         }
     }
 
+    /* geometry pass */
     for z := 0; z < s; z++ {
         for y := 0; y < s; y++ {
             for x := 0; x < s; x++ {
@@ -199,9 +217,8 @@ func (chk *ColorChunk) Compute() {
     }
 }
 
-func (v ColorVoxel) Compute(occlusion OcclusionData, x, y, z byte, xp, xn, yp, yn, zp, zn bool) ColorVoxelVertices {
+func (v ColorVoxel) Compute(occlusion *OcclusionData, x, y, z byte, xp, xn, yp, yn, zp, zn bool) ColorVoxelVertices {
     data := make(ColorVoxelVertices,0,36)
-
 
     // Right (X+) N=1
     if xp {

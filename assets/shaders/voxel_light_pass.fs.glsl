@@ -1,23 +1,27 @@
 #version 330
 
+#define POINT_LIGHT 1
+#define DIRECTIONAL_LIGHT 2
+
 struct Attenuation {
     float Constant;
     float Linear;
     float Quadratic;
 };
 
-struct PointLight {
+struct Light {
     Attenuation attenuation;
     vec3 Color;
     vec3 Position;
     float Range;
+    int Type;
 };
 
 uniform sampler2D tex_diffuse; // diffuse
 uniform sampler2D tex_normal; // normal
 uniform sampler2D tex_depth; // depth
 uniform mat4 cameraInverse; // inverse view projection matrix
-uniform PointLight light;  // uniform light data
+uniform Light light;  // uniform light data
 
 in vec2 texcoord0;
 
@@ -53,6 +57,11 @@ float calculatePointLightContrib(vec3 surfaceToLight, float distanceToLight, vec
     return normalCoef * attenuation;
 }
 
+vec3 gammaCorrect(vec3 color) {
+    const vec3 gamma = vec3(1.0 / 2.2);
+    return pow(color, gamma);
+}
+
 void main() {
     /* sample geometry buffer */
     vec4 t = texture(tex_diffuse, texcoord0);
@@ -67,23 +76,32 @@ void main() {
     /* unpack normal */
     vec3 normal = normalize(2.0 * normalEncoded - 1);
 
-    /* calculate light vector & distance */
-    vec3 surfaceToLight = light.Position - position;
-    float distanceToLight = length(surfaceToLight);
-    surfaceToLight = normalize(surfaceToLight);
-    
-    /* calculate lighting contribution from the point light */
-    vec3 lightColor = light.Color * (1.0 - occlusion) * calculatePointLightContrib(surfaceToLight, distanceToLight, normal);
+    /* calculate contribution from the light source */
+    float contrib = 0.0;
+    if (light.Type == DIRECTIONAL_LIGHT) {
+        // directional lights store the direction in the position uniform
+        vec3 dir = normalize(-light.Position);
+        contrib = max(dot(dir, normal), 0.0);
+    }
+    else if (light.Type == POINT_LIGHT) {
+        /* calculate light vector & distance */
+        vec3 surfaceToLight = light.Position - position;
+        float distanceToLight = length(surfaceToLight);
+        surfaceToLight = normalize(surfaceToLight);
+        contrib = calculatePointLightContrib(surfaceToLight, distanceToLight, normal);
+    }
 
-    vec3 ambientColor = vec3(0.95, 1.0, 0.91);
+    /* calculate light color */
+    vec3 lightColor = light.Color * occlusion * contrib;
+
+    /* add ambient light */
+    const vec3 ambientColor = vec3(0.95, 1.0, 0.91);
     lightColor += 0.1 * ambientColor;
 
-    /* apply gamma correction */
-    const vec3 gamma = vec3(1.0 / 2.2);
-    vec3 corrected = pow(lightColor * diffuseColor, gamma);
+    /* mix with diffuse */
+    lightColor *= diffuseColor;
 
-    color = vec4(corrected, 1.0);
-
-    // restore depth buffer too
+    /* write fragment color & restore depth buffer */
+    color = vec4(lightColor, 1.0);
     gl_FragDepth = depth;
 }

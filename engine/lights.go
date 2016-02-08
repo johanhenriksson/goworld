@@ -15,5 +15,9 @@ type Light struct {
     Position    mgl.Vec3
     Color       mgl.Vec3
     Range       float32
+    Type        LightType
 }
 
+type LightType int32
+const PointLight LightType = 1
+const DirectionalLight LightType = 2

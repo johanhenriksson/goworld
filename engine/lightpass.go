@@ -53,24 +53,27 @@ func (p *LightPass) DrawPass(scene *Scene) {
     gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
     /* set blending mode to additive */
-    gl.Disable(gl.BLEND)
 
+    gl.DepthMask(false)
     /* draw lights */
     lights := scene.FindLights()
+    last := len(lights) - 1
     for i, light := range lights {
         /* todo: shadow pass */
 
         if i == 1 {
             /* first light pass we want the shader to restore the depth buffer
              * then, disable depth masking so that multiple lights can be drawn */
-            gl.DepthMask(false)
-            gl.Enable(gl.BLEND)
             gl.BlendFunc(gl.ONE, gl.ONE)
+        }
+        if i == last {
+            gl.DepthMask(true)
         }
 
         /* set light uniform attributes */
         shader.Vec3("light.Position", &light.Position)
         shader.Vec3("light.Color",    &light.Color)
+        shader.Int32("light.Type",     int32(light.Type))
         shader.Float("light.Range",    light.Range)
         shader.Float("light.attenuation.Constant",  light.Attenuation.Constant)
         shader.Float("light.attenuation.Linear",    light.Attenuation.Linear)
@@ -81,6 +84,5 @@ func (p *LightPass) DrawPass(scene *Scene) {
     }
 
     /* reset GL state */
-    gl.DepthMask(true)
     gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 }
