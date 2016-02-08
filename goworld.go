@@ -9,6 +9,7 @@ import (
 
     //mgl "github.com/go-gl/mathgl/mgl32"
     opensimplex "github.com/ojrac/opensimplex-go"
+    //"github.com/go-gl/mathgl/mgl32"
 )
 
 const (
@@ -35,17 +36,23 @@ func main() {
     /* test voxel chunk */
     tileset := game.CreateTileset()
     chk := game.NewChunk(obj, 20, tileset)
-    generateChunk(chk) // populate with random data
     chk.Compute()
-    geom_pass.Material.SetupVertexPointers()
 
-    game.NewPlacementGrid(obj)
+    //game.NewPlacementGrid(obj)
 
-    app.Scene.Add(obj)
+    //app.Scene.Add(obj)
 
     obj2 := app.Scene.NewObject(2,1,0)
-    obj2.Attach(chk)
-    //app.Scene.Add(obj2)
+    chk2 := game.NewColorChunk(obj2, 16)
+    generateChunk(chk2) // populate with random data
+    chk2.Set(0,0,0, &game.ColorVoxel{ R:255, G:0, B:0 })
+    chk2.Set(1,0,0, &game.ColorVoxel{ R:0, G:255, B:0 })
+    chk2.Set(2,0,0, &game.ColorVoxel{ R:0, G:0, B:255 })
+    chk2.Compute()
+    geom_pass.Material.SetupVertexPointers()
+    app.Scene.Add(obj2)
+
+    game.NewPlacementGrid(obj2)
 
     //cam_ray := space.NewRay(10)
 
@@ -110,24 +117,22 @@ func main() {
     app.Run()
 }
 
-func generateChunk(chk *game.Chunk) {
+func generateChunk(chk *game.ColorChunk) {
     /* Define voxels */
-    tileset := chk.Tileset
-    grass := &game.Voxel{
-        Xp: tileset.GetId(4, 0),
-        Xn: tileset.GetId(4, 0),
-        Yp: tileset.GetId(3, 0),
-        Yn: tileset.GetId(2, 0),
-        Zp: tileset.GetId(4, 0),
-        Zn: tileset.GetId(4, 0),
+    rock2 := &game.ColorVoxel{
+        R: 200,
+        G: 179,
+        B: 112,
     }
-    rock := &game.Voxel{
-        Xp: tileset.GetId(2, 0),
-        Xn: tileset.GetId(2, 0),
-        Yp: tileset.GetId(2, 0),
-        Yn: tileset.GetId(2, 0),
-        Zp: tileset.GetId(2, 0),
-        Zn: tileset.GetId(2, 0),
+    rock := &game.ColorVoxel{
+        R: 141,
+        G: 119,
+        B: 72,
+    }
+    grass := &game.ColorVoxel{
+        R: 88,
+        G: 132,
+        B: 69,
     }
 
     /* Fill chunk with voxels */
@@ -139,8 +144,11 @@ func generateChunk(chk *game.Chunk) {
             for x := 0; x < size; x++ {
                 fx, fy, fz := float64(x) * f, float64(y) * f, float64(z) * f
                 v := simplex.Eval3(fx, fy, fz)
-                var vtype *game.Voxel = nil
-                if y <= size / 2 {
+                var vtype *game.ColorVoxel = nil
+                if y < size / 2 {
+                    vtype = rock2
+                }
+                if y == size / 2 {
                     vtype = grass
                 }
                 if v > 0.0 {

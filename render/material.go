@@ -14,6 +14,7 @@ type BufferDescriptor struct {
     Stride      int32
     Offset      int32
     Normalize   bool
+    Integer     bool
 }
 
 type Material struct {
@@ -33,7 +34,7 @@ func CreateMaterial(shader *ShaderProgram) *Material {
 }
 
 /* Add vertex attribute pointer */
-func (mat *Material) AddDescriptor(attrName string, dataType uint32, count, stride, offset int, normalize bool) {
+func (mat *Material) AddDescriptor(attrName string, dataType uint32, count, stride, offset int, normalize, integer bool) {
     loc := uint32(mat.Shader.GetAttrLoc(attrName))
     if loc < 0 {
         panic("No such attribute " + attrName)
@@ -46,6 +47,7 @@ func (mat *Material) AddDescriptor(attrName string, dataType uint32, count, stri
         Stride: int32(stride),
         Normalize: normalize,
         Offset: int32(offset),
+        Integer: integer,
     })
 }
 
@@ -73,12 +75,21 @@ func (mat *Material) SetupVertexPointers() {
     /* Enable vertex array attributes and set up vertex attribute pointers */
     for _, desc := range mat.Buffers {
         gl.EnableVertexAttribArray(desc.Buffer)
-        gl.VertexAttribPointer(
-            desc.Buffer,
-            desc.Count,
-            desc.DataType,
-            desc.Normalize,
-            desc.Stride,
-            gl.PtrOffset(int(desc.Offset)))
+        if desc.Integer {
+            gl.VertexAttribIPointer(
+                desc.Buffer,
+                desc.Count,
+                desc.DataType,
+                desc.Stride,
+                gl.PtrOffset(int(desc.Offset)))
+        } else {
+            gl.VertexAttribPointer(
+                desc.Buffer,
+                desc.Count,
+                desc.DataType,
+                desc.Normalize,
+                desc.Stride,
+                gl.PtrOffset(int(desc.Offset)))
+        }
     }
 }

@@ -87,7 +87,6 @@ func (lines *Lines) Compute() {
 func (lines *Lines) Draw(args render.DrawArgs) {
     // setup line material
     if len(lines.Lines) > 0 && args.Pass == "lines" {
-        lines.Material.Shader.Matrix4f("model", &args.Transform[0])
         lines.vao.Draw()
     }
 }

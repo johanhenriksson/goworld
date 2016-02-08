@@ -77,6 +77,7 @@ func (f *FrameBuffer) Unbind() {
 
 /* Clear the frame buffer. Make sure its bound first */
 func (f *FrameBuffer) Clear() {
+    gl.ClearColor(0.0,0.0,0.0,1.0)
     gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 }
 

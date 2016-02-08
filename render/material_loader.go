@@ -16,13 +16,14 @@ type f_material struct {
 
 /** Vertex pointer */
 type f_pointer struct {
-    Name string
-    Type string
-    GlType uint32
-    Size int
-    Offset int
-    Count int
+    Name      string
+    Type      string
+    GlType    uint32
+    Size      int
+    Offset    int
+    Count     int
     Normalize bool
+    Integer   bool
 }
 
 /** Texture definition */
@@ -60,7 +61,10 @@ func LoadMaterial(shader *ShaderProgram, file string) *Material {
         stride += ptr.Size
     }
     for _, ptr := range matf.Pointers {
-        mat.AddDescriptor(ptr.Name, ptr.GlType, ptr.Count, stride, ptr.Offset, ptr.Normalize)
+        if ptr.Name == "skip" {
+            continue
+        }
+        mat.AddDescriptor(ptr.Name, ptr.GlType, ptr.Count, stride, ptr.Offset, ptr.Normalize, ptr.Integer)
     }
 
     /* Load textures */

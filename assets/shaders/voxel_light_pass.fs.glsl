@@ -39,7 +39,7 @@ vec3 positionFromDepth(float depth) {
 }
 
 /* calculates lighting contribution from a point light source */
-vec3 calculatePointLight(vec3 surfaceToLight, float distanceToLight, vec3 normal) {
+float calculatePointLightContrib(vec3 surfaceToLight, float distanceToLight, vec3 normal) {
     /* calculate normal coefficient */
     float normalCoef = max(0.0, dot(normal, surfaceToLight));
 
@@ -50,12 +50,14 @@ vec3 calculatePointLight(vec3 surfaceToLight, float distanceToLight, vec3 normal
     attenuation = light.Range / attenuation;
 
     /* multiply and return light contribution */
-    return light.Color * normalCoef * attenuation;
+    return normalCoef * attenuation;
 }
 
 void main() {
     /* sample geometry buffer */
-    vec3 diffuseColor = texture(tex_diffuse, texcoord0).rgb;
+    vec4 t = texture(tex_diffuse, texcoord0);
+    vec3 diffuseColor = t.rgb;
+    float occlusion = t.a;
     vec3 normalEncoded = texture(tex_normal, texcoord0).xyz;
     float depth = texture(tex_depth, texcoord0).r;
 
@@ -71,7 +73,10 @@ void main() {
     surfaceToLight = normalize(surfaceToLight);
     
     /* calculate lighting contribution from the point light */
-    vec3 lightColor = calculatePointLight(surfaceToLight, distanceToLight, normal);
+    vec3 lightColor = light.Color * (1.0 - occlusion) * calculatePointLightContrib(surfaceToLight, distanceToLight, normal);
+
+    vec3 ambientColor = vec3(0.95, 1.0, 0.91);
+    lightColor += 0.1 * ambientColor;
 
     /* apply gamma correction */
     const vec3 gamma = vec3(1.0 / 2.2);

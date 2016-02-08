@@ -21,15 +21,7 @@ func NewLinePass() *LinePass {
 }
 
 func (p *LinePass) DrawPass(scene *Scene) {
-    //gl.DepthMask(false)
-
-    p.Material.Use()
-    shader := p.Material.Shader
-    shader.Matrix4f("view", &scene.Camera.View[0])
-    shader.Matrix4f("projection", &scene.Camera.Projection[0])
-
     /* Draw scene */
-    scene.Draw("lines", shader)
-
-    //gl.DepthMask(true)
+    p.Material.Use()
+    scene.Draw("lines", p.Material.Shader)
 }

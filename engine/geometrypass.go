@@ -2,6 +2,9 @@ package engine
 
 import (
     "github.com/johanhenriksson/goworld/render"
+    "github.com/johanhenriksson/goworld/assets"
+
+    "github.com/go-gl/gl/v4.1-core/gl"
 )
 
 type GeometryPass struct {
@@ -12,8 +15,7 @@ type GeometryPass struct {
 /* Sets up a geometry pass.
  * A geometry buffer of the given bufferWidth x bufferHeight will be created automatically */
 func NewGeometryPass(bufferWidth, bufferHeight int32) *GeometryPass {
-    shader := render.CompileVFShader("assets/shaders/voxel_geom_pass")
-    mat := render.LoadMaterial(shader, "assets/materials/tileset")
+    mat := assets.GetMaterial("color_geometry")
     p := &GeometryPass {
         Buffer: render.CreateGeometryBuffer(bufferWidth, bufferHeight),
         Material: mat,
@@ -26,12 +28,11 @@ func (p *GeometryPass) DrawPass(scene *Scene) {
     p.Buffer.Clear()
 
     p.Material.Use()
-    shader := p.Material.Shader
-    shader.Matrix4f("camera", &scene.Camera.View[0])
-    shader.Matrix4f("projection", &scene.Camera.Projection[0])
 
     /* Draw scene */
-    scene.Draw("geometry", shader)
+    gl.Disable(gl.BLEND)
+    scene.Draw("geometry", p.Material.Shader)
+    gl.Enable(gl.BLEND)
 
     p.Buffer.Unbind()
 }

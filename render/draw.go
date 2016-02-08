@@ -18,6 +18,8 @@ type Drawable interface {
 
 /** Passed to Drawables on render */
 type DrawArgs struct {
+    VP         mgl.Mat4
+    MVP        mgl.Mat4
     Projection mgl.Mat4
     View       mgl.Mat4
     Transform  mgl.Mat4

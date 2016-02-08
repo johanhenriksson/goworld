@@ -17,8 +17,8 @@ func NewLightPass(input *render.GeometryBuffer) *LightPass {
 
     /* we're going to render a simple quad, so we input
      * position and texture coordinates */
-    mat.AddDescriptor("position", gl.FLOAT, 3, 20, 0, false)
-    mat.AddDescriptor("texcoord", gl.FLOAT, 2, 20, 12, false)
+    mat.AddDescriptor("position", gl.FLOAT, 3, 20, 0, false, false)
+    mat.AddDescriptor("texcoord", gl.FLOAT, 2, 20, 12, false, false)
 
     /* the shader uses 3 textures from the geometry frame buffer.
      * they are previously rendered in the geometry pass. */
@@ -49,19 +49,23 @@ func (p *LightPass) DrawPass(scene *Scene) {
     shader.Matrix4f("cameraInverse", &vp_inv[0])
 
     /* clear */
+    gl.ClearColor(0.9,0.9,0.9,1.0)
     gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
     /* set blending mode to additive */
-    gl.BlendFunc(gl.ONE, gl.ONE)
+    gl.Disable(gl.BLEND)
 
     /* draw lights */
     lights := scene.FindLights()
     for i, light := range lights {
-        /* shadow pass */
+        /* todo: shadow pass */
+
         if i == 1 {
-            /* first pass we want the shader to restore the depth buffer */
-            /* 2nd, disable depth masking so that multiple lights can be drawn */
+            /* first light pass we want the shader to restore the depth buffer
+             * then, disable depth masking so that multiple lights can be drawn */
             gl.DepthMask(false)
+            gl.Enable(gl.BLEND)
+            gl.BlendFunc(gl.ONE, gl.ONE)
         }
 
         /* set light uniform attributes */

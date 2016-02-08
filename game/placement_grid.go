@@ -9,7 +9,7 @@ import (
 
 type PlacementGrid struct {
     *engine.ComponentBase
-    Chunk     *Chunk
+    Chunk     *ColorChunk
 
     mesh      *geometry.Lines
 
@@ -29,7 +29,7 @@ func NewPlacementGrid(parentObject *engine.Object) *PlacementGrid {
     if !exists {
         panic("no chunk component")
     }
-    chunk := obj.(*Chunk)
+    chunk := obj.(*ColorChunk)
 
     // compute grid mesh
     pg.Chunk = chunk
@@ -79,11 +79,7 @@ func (grid *PlacementGrid) Compute() {
                 // place box
                 grid.mesh.Box(float32(x), float32(grid.Y), float32(z), // position
                     1, 1, 1, // size
-                    1, 1, 1, 0.35) // color (RGBA)
-            } else {
-                grid.mesh.Box(float32(x), float32(grid.Y), float32(z), // position
-                    1, 1, 1, // size
-                    1, 0, 0, 0.3) // color (RGBA)
+                    0, 140/255.0, 220/255.0, 1) // color (RGBA)
             }
         }
     }

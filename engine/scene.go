@@ -67,13 +67,21 @@ func (s *Scene) Draw(pass string, shader *render.ShaderProgram) {
         return
     }
 
+    p := s.Camera.Projection
+    v := s.Camera.View
+    m := mgl.Ident4()
+    vp := p.Mul4(v)
+    // mvp := vp * m
+
     /* DrawArgs will be copied down recursively into the scene graph.
      * Each object adds its transformation matrix before passing
      * it on to their children */
     args := render.DrawArgs {
         Projection: s.Camera.Projection,
         View: s.Camera.View,
-        Transform: mgl.Ident4(),
+        VP: vp,
+        MVP: vp, // M = Ident4
+        Transform: m,
 
         Pass: pass,
         Shader: shader,

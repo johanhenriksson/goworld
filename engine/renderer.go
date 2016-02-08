@@ -32,7 +32,7 @@ func NewRenderer(width, height int32, scene *Scene) *Renderer {
         pass_map: make(PassMap),
     }
 
-    gl.ClearColor(0.0, 0.0, 0.0, 1.0)
+    gl.ClearColor(0.9, 0.9, 0.9, 1.0)
 
     /* Enable blending */
     gl.Enable(gl.BLEND);
@@ -66,6 +66,7 @@ func (r *Renderer) Reset() {
 
 func (r *Renderer) Draw() {
     /* Clear screen */
+    gl.ClearColor(0.9,0.9,0.9,1.0)
     gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
     for _, pass := range r.Passes {

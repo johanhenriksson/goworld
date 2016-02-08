@@ -31,7 +31,14 @@ func (o *Object) Draw(args render.DrawArgs) {
     args.Transform = o.Transform.Matrix.Mul4(args.Transform)
 
     /* Draw components */
-    args.Shader.Matrix4f("model", &args.Transform[0])
+    args.MVP = args.VP.Mul4(args.Transform)
+    args.Shader.Matrix4f("mvp", &args.MVP[0])
+
+    // model matrix is required to calculate vertex normals during the geometry pass
+    if args.Pass == "geometry" {
+        args.Shader.Matrix4f("model", &args.Transform[0])
+    }
+
     for _, comp := range o.Components {
         comp.Draw(args)
     }
