@@ -44,7 +44,7 @@ func NewScene() *Scene {
     }
 
     /* add a few more test lights */
-    for i := 0; i < 1; i++ {
+    for i := 0; i < 2; i++ {
         s.lights = append(s.lights, Light {
             Attenuation: Attenuation {
                 Constant: 0.01,
@@ -61,6 +61,8 @@ func NewScene() *Scene {
     s.lights[1].Position = mgl.Vec3 { 0.4, -1, 0.4}
     s.lights[1].Color = mgl.Vec3 { 0.6, 0.6, 0.6 }
     s.lights[1].Type = DirectionalLight
+    s.lights[2].Position = mgl.Vec3 { 10, 40, 10 }
+    s.lights[2].Range = 10
     //s.lights[0].Type = 2
     return s
 }

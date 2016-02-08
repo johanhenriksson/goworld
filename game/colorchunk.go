@@ -38,6 +38,7 @@ type ColorVoxelVertex struct {
     O       byte // occlusion
 }
 
+// todo: dont use pointers
 type ColorVoxels []*ColorVoxel
 
 // vertex array type
