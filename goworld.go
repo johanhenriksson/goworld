@@ -36,6 +36,7 @@ func main() {
 
     /* grab a reference to the geometry render pass */
     geom_pass := app.Render.Get("geometry").(*engine.GeometryPass)
+    light_pass := app.Render.Get("light").(*engine.LightPass)
 
     /* create a camera */
     app.Scene.Camera = engine.CreateCamera(-3,2,-3, WIDTH, HEIGHT, 65.0, 0.1, 500.0)
@@ -76,6 +77,7 @@ func main() {
 
     bufferWindow("Diffuse", geom_pass.Buffer.Diffuse, 30, 30)
     bufferWindow("Normal", geom_pass.Buffer.Normal, 30, 340)
+    bufferWindow("Shadowmap", light_pass.Shadows.Output, 30, 650)
 
     /* Render loop */
     app.UpdateFunc = func(dt float32) {

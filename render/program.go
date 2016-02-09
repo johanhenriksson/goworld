@@ -100,75 +100,83 @@ func (program *ShaderProgram) Link() {
 }
 
 /* Returns a GLSL uniform location. If it doesnt exist, UnknownUniform is returned */
-func (program *ShaderProgram) GetUniformLoc(uniform string) UniformLocation {
+func (program *ShaderProgram) GetUniformLoc(uniform string) (UniformLocation, bool) {
     loc, ok := program.uniforms[uniform]
     if !ok {
         loc = UniformLocation(gl.GetUniformLocation(program.Id, util.GLString(uniform)))
         if loc == UnknownUniform {
-            panic("Unknown uniform: " + uniform)
+            return loc, false
         }
         program.uniforms[uniform] = loc
     }
-    return loc
+    return loc, true
 }
 
 /* Returns a GLSL attribute location. If it doesnt exist, UnknownAttribute is returned */
-func (program *ShaderProgram) GetAttrLoc(attr string) AttributeLocation {
+func (program *ShaderProgram) GetAttrLoc(attr string) (AttributeLocation, bool) {
     loc, ok := program.attributes[attr]
     if !ok {
         loc = AttributeLocation(gl.GetAttribLocation(program.Id, util.GLString(attr)))
         if loc == UnknownAttribute {
-            panic("Unknown attribute: " + attr)
+            return loc, false
         }
         program.attributes[attr] = loc
     }
-    return loc
+    return loc, true
 }
 
 /* Sets a 3x3 matrix uniform */
 func (program *ShaderProgram) Matrix3f(name string, ptr *float32) {
-    loc := program.GetUniformLoc(name)
-    gl.UniformMatrix3fv(int32(loc), 1, false, ptr)
+    if loc, ok := program.GetUniformLoc(name); ok {
+        gl.UniformMatrix3fv(int32(loc), 1, false, ptr)
+    }
 }
 
 /* Sets a 4 by 4 matrix uniform */
 func (program *ShaderProgram) Matrix4f(name string, ptr *float32) {
-    loc := program.GetUniformLoc(name)
-    gl.UniformMatrix4fv(int32(loc), 1, false, ptr)
+    if loc, ok := program.GetUniformLoc(name); ok {
+        gl.UniformMatrix4fv(int32(loc), 1, false, ptr)
+    }
 }
 
 /* Sets a Vec2 uniform */
 func (program *ShaderProgram) Vec2(name string, vec *mgl.Vec2) {
-    loc := program.GetUniformLoc(name)
-    gl.Uniform2f(int32(loc), vec[0], vec[1])
+    if loc, ok := program.GetUniformLoc(name); ok {
+        gl.Uniform2f(int32(loc), vec[0], vec[1])
+    }
 }
 
 /* Sets a Vec3 uniform */
 func (program *ShaderProgram) Vec3(name string, vec *mgl.Vec3) {
-    loc := program.GetUniformLoc(name)
-    gl.Uniform3f(int32(loc), vec[0], vec[1], vec[2])
+    if loc, ok := program.GetUniformLoc(name); ok {
+        gl.Uniform3f(int32(loc), vec[0], vec[1], vec[2])
+    }
 }
 
 /* Sets a Vec4 uniform */
 func (program *ShaderProgram) Vec4(name string, vec *mgl.Vec4) {
-    loc := program.GetUniformLoc(name)
-    gl.Uniform4f(int32(loc), vec[0], vec[1], vec[2], vec[3])
+    if loc, ok := program.GetUniformLoc(name); ok {
+        gl.Uniform4f(int32(loc), vec[0], vec[1], vec[2], vec[3])
+    }
 }
 
 /* Sets an integer 32 uniform */
 func (program *ShaderProgram) Int32(name string, val int32) {
-    loc := program.GetUniformLoc(name)
-    gl.Uniform1i(int32(loc), val)
+    if loc, ok := program.GetUniformLoc(name); ok {
+        gl.Uniform1i(int32(loc), val)
+    }
 }
 
 /* Sets an unsigned integer 32 uniform */
 func (program *ShaderProgram) UInt32(name string, val uint32) {
-    loc := program.GetUniformLoc(name)
-    gl.Uniform1ui(int32(loc), val)
+    if loc, ok := program.GetUniformLoc(name); ok {
+        gl.Uniform1ui(int32(loc), val)
+    }
 }
 
 /* Sets a float uniform */
 func (program *ShaderProgram) Float(name string, val float32) {
-    loc := program.GetUniformLoc(name)
-    gl.Uniform1f(int32(loc), val)
+    if loc, ok := program.GetUniformLoc(name); ok {
+        gl.Uniform1f(int32(loc), val)
+    }
 }

@@ -17,11 +17,14 @@ struct Light {
     int Type;
 };
 
-uniform sampler2D tex_diffuse; // diffuse
+uniform sampler2D tex_diffuse;  // diffuse
+uniform sampler2D tex_shadow;  // shadow map
 uniform sampler2D tex_normal; // normal
 uniform sampler2D tex_depth; // depth
 uniform mat4 cameraInverse; // inverse view projection matrix
-uniform Light light;  // uniform light data
+uniform mat4 light_vp;     // world to light space
+
+uniform Light light;     // uniform light data
 
 in vec2 texcoord0;
 
@@ -62,19 +65,46 @@ vec3 gammaCorrect(vec3 color) {
     return pow(color, gamma);
 }
 
+/* samples the shadow map at the given world space coordinates */
+float sampleShadowmap(sampler2D shadowmap, vec3 position) {
+    /* world -> light clip coords */
+    vec4 light_clip_pos = light_vp * vec4(position,1);
+
+    /* convert light clip to light ndc by dividing by W, then map values to 0-1 */
+    vec3 light_ndc_pos = (light_clip_pos.xyz / light_clip_pos.w + vec3(1)) / 2;
+
+    /* depth of position in light space */
+    float z = light_ndc_pos.z;
+
+    /* sample shadow map depth */
+    float depth = texture(shadowmap, light_ndc_pos.xy).r;
+
+    /* shadow test */
+    if (depth < (z + 0.0001)) {
+        return 0.5;
+    }
+
+    return 1.0;
+}
+
 void main() {
-    /* sample geometry buffer */
+    /* unpack data from geometry buffer */
     vec4 t = texture(tex_diffuse, texcoord0);
     vec3 diffuseColor = t.rgb;
     float occlusion = t.a;
-    vec3 normalEncoded = texture(tex_normal, texcoord0).xyz;
+
+    vec3 normalEncoded = texture(tex_normal, texcoord0).xyz; // normals [0,1]
+    vec3 normal = normalize(2.0 * normalEncoded - 1); // normals [-1,1]
+
     float depth = texture(tex_depth, texcoord0).r;
 
-    /* calculate position from depth map */
+    /* calculate world position from depth map and the inverse camera view projection */
     vec3 position = positionFromDepth(depth);
 
-    /* unpack normal */
-    vec3 normal = normalize(2.0 * normalEncoded - 1);
+    // now we should be able to calculate the position in light space!
+    // since the directional light matrix is orthographic the z value will
+    // correspond to depth, so we can test Z against the shadow map depth buffer
+    // from the shadow pass! woop
 
     /* calculate contribution from the light source */
     float contrib = 0.0;
@@ -82,6 +112,11 @@ void main() {
         // directional lights store the direction in the position uniform
         vec3 dir = normalize(-light.Position);
         contrib = max(dot(dir, normal), 0.0);
+
+        // experimental shadows
+        float shadow = sampleShadowmap(tex_shadow, position);
+        occlusion = 1.0 - shadow;
+
     }
     else if (light.Type == POINT_LIGHT) {
         /* calculate light vector & distance */

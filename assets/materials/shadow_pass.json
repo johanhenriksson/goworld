@@ -1,0 +1,14 @@
+{
+  "pointers": [
+    {
+      "name": "position",
+      "type": "unsigned byte",
+      "count": 3,
+      "normalize": false
+    },
+    {
+      "name": "skip",
+      "count": 5
+    }
+  ]
+}

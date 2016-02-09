@@ -13,6 +13,7 @@ type DrawBuffer struct {
 /** Represents an OpenGL frame buffer object */
 type FrameBuffer struct {
     Buffers []DrawBuffer
+    ClearColor Color
     Width   int32
     Height  int32
     id      uint32
@@ -51,6 +52,7 @@ func CreateFrameBuffer(width, height int32) *FrameBuffer {
         Width: width,
         Height: height,
         Buffers: []DrawBuffer { },
+        ClearColor: Color4(0,0,0,1),
     }
     gl.GenFramebuffers(1, &f.id)
     gl.BindFramebuffer(gl.FRAMEBUFFER, f.id)
@@ -77,7 +79,7 @@ func (f *FrameBuffer) Unbind() {
 
 /* Clear the frame buffer. Make sure its bound first */
 func (f *FrameBuffer) Clear() {
-    gl.ClearColor(0.0,0.0,0.0,1.0)
+    gl.ClearColor(f.ClearColor.R, f.ClearColor.G, f.ClearColor.B, f.ClearColor.A)
     gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 }
 

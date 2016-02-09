@@ -1,6 +1,8 @@
 package engine
 
 import (
+    "github.com/johanhenriksson/goworld/render"
+
     mgl "github.com/go-gl/mathgl/mgl32"
 )
 
@@ -16,6 +18,9 @@ type Light struct {
     Color       mgl.Vec3
     Range       float32
     Type        LightType
+
+    Projection  mgl.Mat4    // Shadow projection matrix
+    ShadowMap   *render.Texture
 }
 
 type LightType int32

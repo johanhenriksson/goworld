@@ -31,17 +31,6 @@ func NewRenderer(width, height int32, scene *Scene) *Renderer {
         Passes:   []RenderPass { },
         pass_map: make(PassMap),
     }
-
-    gl.ClearColor(0.9, 0.9, 0.9, 1.0)
-
-    /* Enable blending */
-    gl.Enable(gl.BLEND);
-    gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-
-    /* Depth test */
-	gl.Enable(gl.DEPTH_TEST)
-	gl.DepthFunc(gl.LESS)
-
     return r
 }
 
@@ -68,6 +57,14 @@ func (r *Renderer) Draw() {
     /* Clear screen */
     gl.ClearColor(0.9,0.9,0.9,1.0)
     gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+
+    /* Enable blending */
+    gl.Enable(gl.BLEND);
+    gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+
+    /* Depth test */
+    gl.Enable(gl.DEPTH_TEST)
+    gl.DepthFunc(gl.LESS)
 
     for _, pass := range r.Passes {
         pass.DrawPass(r.Scene)

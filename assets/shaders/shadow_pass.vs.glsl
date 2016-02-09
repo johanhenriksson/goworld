@@ -1,22 +1,10 @@
 #version 330
 
-#define DIRECTIONAL_LIGHT 2
+uniform mat4 mvp;
 
-struct Light {
-    Attenuation attenuation;
-    vec3 Color;
-    vec3 Position;
-    float Range;
-    int Type;
-};
-
-uniform Light light;
-uniform mat4 projection; // orthographic for directional lights, otherwise its a perspective matrix
+/* input */
+in vec3 position;
 
 void main() {
-
-    if (light.Type == DIRECTIONAL_LIGHT) {
-
-    }
-
+    gl_Position = mvp * vec4(position,1);
 }

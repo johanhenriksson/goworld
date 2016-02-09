@@ -2,13 +2,14 @@ package engine
 
 import (
     "github.com/go-gl/gl/v4.1-core/gl"
-    //mgl "github.com/go-gl/mathgl/mgl32"
+    mgl "github.com/go-gl/mathgl/mgl32"
     "github.com/johanhenriksson/goworld/render"
 )
 
 type LightPass struct {
     Material *render.Material
     quad     *render.RenderQuad
+    Shadows  *ShadowPass
 }
 
 func NewLightPass(input *render.GeometryBuffer) *LightPass {
@@ -34,6 +35,7 @@ func NewLightPass(input *render.GeometryBuffer) *LightPass {
     p := &LightPass {
         Material: mat,
         quad: quad,
+        Shadows: NewShadowPass(input),
     }
     return p
 }
@@ -55,12 +57,12 @@ func (p *LightPass) DrawPass(scene *Scene) {
     /* set blending mode to additive */
 
     gl.DepthMask(false)
+
     /* draw lights */
     lights := scene.FindLights()
     last := len(lights) - 1
-    for i, light := range lights {
-        /* todo: shadow pass */
 
+    for i, light := range lights {
         if i == 1 {
             /* first light pass we want the shader to restore the depth buffer
              * then, disable depth masking so that multiple lights can be drawn */
@@ -69,6 +71,18 @@ func (p *LightPass) DrawPass(scene *Scene) {
         if i == last {
             gl.DepthMask(true)
         }
+
+        /* shadow pass */
+        p.Shadows.DrawPass(scene, &light)
+
+        /* use light shader */
+        p.Material.SetTexture("tex_shadow", p.Shadows.Output)
+        p.Material.Use()
+
+        lp := mgl.Ortho(-150,150, -150,150, -150,150)
+        lv := mgl.LookAtV(mgl.Vec3{0,0,0}, light.Position.Normalize(), mgl.Vec3{0,1,0}) // only for directional light
+        lvp := lp.Mul4(lv)
+        shader.Matrix4f("light_vp", &lvp[0])
 
         /* set light uniform attributes */
         shader.Vec3("light.Position", &light.Position)
@@ -80,6 +94,7 @@ func (p *LightPass) DrawPass(scene *Scene) {
         shader.Float("light.attenuation.Quadratic", light.Attenuation.Quadratic)
 
         /* render light */
+        gl.Viewport(0, 0, int32(scene.Camera.Width), int32(scene.Camera.Height))
         p.quad.Draw()
     }
 

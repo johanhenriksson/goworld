@@ -35,13 +35,13 @@ func CreateMaterial(shader *ShaderProgram) *Material {
 
 /* Add vertex attribute pointer */
 func (mat *Material) AddDescriptor(attrName string, dataType uint32, count, stride, offset int, normalize, integer bool) {
-    loc := uint32(mat.Shader.GetAttrLoc(attrName))
-    if loc < 0 {
+    loc, exists := mat.Shader.GetAttrLoc(attrName)
+    if !exists {
         panic("No such attribute " + attrName)
     }
 
     mat.Buffers = append(mat.Buffers, BufferDescriptor {
-        Buffer: loc,
+        Buffer: uint32(loc),
         DataType: dataType,
         Count: int32(count),
         Stride: int32(stride),
@@ -55,6 +55,10 @@ func (mat *Material) AddDescriptor(attrName string, dataType uint32, count, stri
 func (mat *Material) AddTexture(name string, tex *Texture) {
     mat.Textures[name] = tex
     mat.tex_slots = append(mat.tex_slots, name)
+}
+
+func (mat *Material) SetTexture(name string, tex *Texture) {
+    mat.Textures[name] = tex
 }
 
 /* Set current shader and activate textures */

@@ -9,6 +9,10 @@ type Color struct {
     R, G, B, A  float32
 }
 
+func Color4(r, g, b, a float32) Color {
+    return Color { r, g, b, a }
+}
+
 func (c Color) RGBA() color.RGBA {
     return color.RGBA {
         uint8(255.0 * c.R),

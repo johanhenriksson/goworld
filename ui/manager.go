@@ -2,19 +2,25 @@ package ui;
 
 import (
     "github.com/johanhenriksson/goworld/render"
+
     mgl "github.com/go-gl/mathgl/mgl32"
+    "github.com/go-gl/gl/v4.1-core/gl"
 )
 
 /** Main UI manager. Handles routing of events and drawing the UI. */
 type Manager struct {
     /** Projection matrix - orthographic */
     Viewport    mgl.Mat4
+    Width       float32
+    Height      float32
 
     Children    []render.Drawable
 }
 
 func NewManager(width, height float32) *Manager {
     m := &Manager {
+        Width: width,
+        Height: height,
         Viewport: mgl.Ortho(0, width, 0, height, 1000, -1000),
         Children: []render.Drawable{},
     }
@@ -27,11 +33,19 @@ func (m *Manager) Append(child render.Drawable) {
 
 func (m *Manager) Draw() {
     /* create draw event args */
+    p := m.Viewport
+    v := mgl.Ident4()
+    vp := p
+
     args := render.DrawArgs {
-        Projection: m.Viewport,
-        View: mgl.Ident4(), // unused
+        Projection: p,
+        View: v,
+        VP: vp,
+        MVP: vp,
         Transform: mgl.Ident4(),
     }
+
+    gl.Viewport(0, 0, int32(m.Width), int32(m.Height))
 
     for _, el := range m.Children {
         el.Draw(args)

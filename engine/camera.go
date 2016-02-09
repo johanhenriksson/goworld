@@ -33,6 +33,7 @@ func CreateCamera(x, y, z, width, height, fov, near, far float32) *Camera {
         Near: near,
         Far: far,
         Projection: mgl.Perspective(mgl.DegToRad(fov), width/height, near, far),
+        //Projection: mgl.Ortho(-width/2,width/2,-height/2,height/2,-100,100),
     }
 
     /* do an initial update at t=0 to initialize vectors */

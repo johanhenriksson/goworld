@@ -44,7 +44,7 @@ func NewScene() *Scene {
     }
 
     /* add a few more test lights */
-    for i := 0; i < 2; i++ {
+    for i := 0; i < 1; i++ {
         s.lights = append(s.lights, Light {
             Attenuation: Attenuation {
                 Constant: 0.01,
@@ -52,17 +52,17 @@ func NewScene() *Scene {
                 Quadratic: 1.5,
             },
             Position: mgl.Vec3 { 0, float32(4*i), 0 },
-            Color: mgl.Vec3 { 1.0, 1.0, 1.0 },
+            Color: mgl.Vec3 { 1.0, 1.0, 0.65 },
             Range: 4,
             Type: PointLight,
         })
     }
 
-    s.lights[1].Position = mgl.Vec3 { 0.4, -1, 0.4}
-    s.lights[1].Color = mgl.Vec3 { 0.6, 0.6, 0.6 }
+    s.lights[1].Position = mgl.Vec3 { 1, -0.5, 1 }
+    s.lights[1].Color = mgl.Vec3 { 0.75, 0.75, 0.76 }
     s.lights[1].Type = DirectionalLight
-    s.lights[2].Position = mgl.Vec3 { 10, 40, 10 }
-    s.lights[2].Range = 10
+    //s.lights[2].Position = mgl.Vec3 { 10, 40, 10 }
+    //s.lights[2].Range = 10
     //s.lights[0].Type = 2
     return s
 }
@@ -87,16 +87,20 @@ func (s *Scene) Draw(pass string, shader *render.ShaderProgram) {
      * Each object adds its transformation matrix before passing
      * it on to their children */
     args := render.DrawArgs {
-        Projection: s.Camera.Projection,
-        View: s.Camera.View,
+        Projection: p,
+        View: v,
         VP: vp,
-        MVP: vp, // M = Ident4
+        MVP: vp,
         Transform: m,
 
         Pass: pass,
         Shader: shader,
     }
 
+    s.DrawCall(args)
+}
+
+func (s *Scene) DrawCall(args render.DrawArgs) {
     /* draw root objects */
     for _, obj := range s.Objects {
         obj.Draw(args)
