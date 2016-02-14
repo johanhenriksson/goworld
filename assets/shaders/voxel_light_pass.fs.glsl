@@ -71,7 +71,7 @@ float sampleShadowmap(sampler2D shadowmap, vec3 position) {
     vec4 light_clip_pos = light_vp * vec4(position,1);
 
     /* convert light clip to light ndc by dividing by W, then map values to 0-1 */
-    vec3 light_ndc_pos = (light_clip_pos.xyz / light_clip_pos.w + vec3(1)) / 2;
+    vec3 light_ndc_pos = (light_clip_pos.xyz / light_clip_pos.w) * 0.5 + 0.5;
 
     /* depth of position in light space */
     float z = light_ndc_pos.z;
@@ -115,7 +115,7 @@ void main() {
 
         // experimental shadows
         float shadow = sampleShadowmap(tex_shadow, position);
-        occlusion = 1.0 - shadow;
+        occlusion *= shadow;
 
     }
     else if (light.Type == POINT_LIGHT) {

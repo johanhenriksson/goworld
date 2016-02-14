@@ -20,6 +20,8 @@ type Light struct {
     Type        LightType
 
     Projection  mgl.Mat4    // Shadow projection matrix
+    ProjWidth   float32
+    ProjHeight  float32
     ShadowMap   *render.Texture
 }
 

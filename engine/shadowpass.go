@@ -49,8 +49,8 @@ func (sp *ShadowPass) DrawPass(scene *Scene, light *Light) {
     /* clear */
 
 
-    p := mgl.Ortho(float32(-sp.Width / 2), float32(sp.Width / 2), float32(-sp.Height / 2), float32(sp.Height / 2), -150, 150)
-    v := mgl.LookAtV(mgl.Vec3{0,0,0}, light.Position.Normalize(), mgl.Vec3{0,1,0})
+    p := light.Projection
+    v := mgl.LookAtV(light.Position.Mul(-1), mgl.Vec3{}, mgl.Vec3{0,1,0})
     vp := p.Mul4(v)
 
     args := render.DrawArgs {

@@ -42,8 +42,8 @@ func main() {
     app.Scene.Camera = engine.CreateCamera(-3,2,-3, WIDTH, HEIGHT, 65.0, 0.1, 500.0)
     app.Scene.Camera.Transform.Rotation[1] = 130.0
 
-    obj2 := app.Scene.NewObject(2,1,0)
-    chk2 := game.NewColorChunk(obj2, 100)
+    obj2 := app.Scene.NewObject(5,0,5)
+    chk2 := game.NewColorChunk(obj2, 16)
     generateChunk(chk2) // populate with random data
     chk2.Set(0,0,0, &game.ColorVoxel{ R:255, G:0, B:0 })
     chk2.Set(1,0,0, &game.ColorVoxel{ R:0, G:255, B:0 })
@@ -54,30 +54,37 @@ func main() {
 
     game.NewPlacementGrid(obj2)
 
+
     fmt.Println("goworld")
     w := app.Scene.World
     w.NewPlane(0,1,0,0)
 
     // buffer display window
-    bufferWindow := func(title string, texture *render.Texture, x, y float32) {
+    bufferWindow := func(title string, texture *render.Texture, x, y float32, depth bool) {
         win_color := render.Color{0.15, 0.15, 0.15, 0.8}
         text_color := render.Color{1, 1, 1, 1}
 
         win   := app.UI.NewRect(win_color, x, y, 250, 280, -10)
         label := app.UI.NewText(title, text_color, 0, 0, -21)
-        img   := app.UI.NewImage(texture, 0, 30, 250, 250, -20)
-        img.Quad.FlipY()
-
-        win.Append(img)
         win.Append(label)
+
+        if depth {
+            img := app.UI.NewDepthImage(texture, 0, 30, 250, 250, -20)
+            img.Quad.FlipY()
+            win.Append(img)
+        } else {
+            img := app.UI.NewImage(texture, 0, 30, 250, 250, -20)
+            img.Quad.FlipY()
+            win.Append(img)
+        }
 
         /* attach UI element */
         app.UI.Append(win)
     }
 
-    bufferWindow("Diffuse", geom_pass.Buffer.Diffuse, 30, 30)
-    bufferWindow("Normal", geom_pass.Buffer.Normal, 30, 340)
-    bufferWindow("Shadowmap", light_pass.Shadows.Output, 30, 650)
+    bufferWindow("Diffuse", geom_pass.Buffer.Diffuse, 30, 30, false)
+    bufferWindow("Normal", geom_pass.Buffer.Normal, 30, 340, false)
+    bufferWindow("Shadowmap", light_pass.Shadows.Output, 30, 650, true)
 
     /* Render loop */
     app.UpdateFunc = func(dt float32) {
@@ -109,7 +116,7 @@ func generateChunk(chk *game.ColorChunk) {
     }
 
     /* Fill chunk with voxels */
-    f := 1.0 / 20
+    f := 1.0 / 4
     size := chk.Size
     simplex := opensimplex.NewWithSeed(1000)
     for z := 0; z < size; z++ {

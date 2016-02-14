@@ -58,9 +58,10 @@ func NewScene() *Scene {
         })
     }
 
-    s.lights[1].Position = mgl.Vec3 { 1, -0.5, 1 }
-    s.lights[1].Color = mgl.Vec3 { 0.75, 0.75, 0.76 }
+    s.lights[1].Position = mgl.Vec3 { 1, -1, 1 }
+    s.lights[1].Color = mgl.Vec3 { 0.95, 0.95, 0.96 }
     s.lights[1].Type = DirectionalLight
+    s.lights[1].Projection = mgl.Ortho(-25,25,0,30,0,20)
     //s.lights[2].Position = mgl.Vec3 { 10, 40, 10 }
     //s.lights[2].Range = 10
     //s.lights[0].Type = 2

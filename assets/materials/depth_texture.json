@@ -1,0 +1,16 @@
+{
+    "pointers": [
+        {
+            "name": "vertex",
+            "type": "float",
+            "count": 3,
+            "normalize": false
+        },
+        {
+            "name": "uv",
+            "type": "float",
+            "count": 2,
+            "normalize": false
+        }
+    ]
+}

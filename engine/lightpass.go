@@ -79,8 +79,8 @@ func (p *LightPass) DrawPass(scene *Scene) {
         p.Material.SetTexture("tex_shadow", p.Shadows.Output)
         p.Material.Use()
 
-        lp := mgl.Ortho(-150,150, -150,150, -150,150)
-        lv := mgl.LookAtV(mgl.Vec3{0,0,0}, light.Position.Normalize(), mgl.Vec3{0,1,0}) // only for directional light
+        lp := light.Projection
+        lv := mgl.LookAtV(light.Position.Mul(-1), mgl.Vec3{}, mgl.Vec3{0,1,0}) // only for directional light
         lvp := lp.Mul4(lv)
         shader.Matrix4f("light_vp", &lvp[0])
 
