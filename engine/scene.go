@@ -2,7 +2,7 @@ package engine
 
 import (
     "github.com/johanhenriksson/goworld/render"
-    "github.com/johanhenriksson/goworld/physics"
+    //"github.com/johanhenriksson/goworld/physics"
 
     mgl "github.com/go-gl/mathgl/mgl32"
 )
@@ -16,7 +16,7 @@ type Scene struct {
     /* Root Objects */
     Objects     []*Object
 
-    World       *physics.World
+    //World       *physics.World
 
     /* temporary: list of all lights in the scene */
     lights      []Light
@@ -26,7 +26,7 @@ func NewScene() *Scene {
     s := &Scene {
         Camera: nil,
         Objects: []*Object { },
-        World: physics.NewWorld(),
+        //World: physics.NewWorld(),
 
         lights: []Light {
             /* temporary: test light */
@@ -44,6 +44,7 @@ func NewScene() *Scene {
     }
 
     /* add a few more test lights */
+    /*
     for i := 0; i < 1; i++ {
         s.lights = append(s.lights, Light {
             Attenuation: Attenuation {
@@ -57,11 +58,12 @@ func NewScene() *Scene {
             Type: PointLight,
         })
     }
+    */
 
-    s.lights[1].Position = mgl.Vec3 { 1, -1, 1 }
-    s.lights[1].Color = mgl.Vec3 { 0.95, 0.95, 0.96 }
-    s.lights[1].Type = DirectionalLight
-    s.lights[1].Projection = mgl.Ortho(-25,25,0,30,0,20)
+    s.lights[0].Position = mgl.Vec3 { -11, 11, -11 }
+    s.lights[0].Color = mgl.Vec3 { 0.95, 0.95, 0.96 }
+    s.lights[0].Type = DirectionalLight
+    s.lights[0].Projection = mgl.Ortho(-32,32,0,64,-32,64)
     //s.lights[2].Position = mgl.Vec3 { 10, 40, 10 }
     //s.lights[2].Range = 10
     //s.lights[0].Type = 2
@@ -120,10 +122,10 @@ func (s *Scene) Update(dt float32) {
     }
 
     /* test: position first light on camera */
-    s.lights[0].Position = s.Camera.Position
+    //s.lights[0].Position = s.Camera.Position
 
     /* physics step */
-    s.World.Update()
+    //s.World.Update()
 }
 
 func (s *Scene) FindLights() []Light {

@@ -13,6 +13,9 @@ type LightPass struct {
 }
 
 func NewLightPass(input *render.GeometryBuffer) *LightPass {
+
+    shadowPass := NewShadowPass(input)
+
     /* use a virtual material to help with vertex attributes and textures */
     mat := render.CreateMaterial(render.CompileVFShader("/assets/shaders/voxel_light_pass"))
 
@@ -26,6 +29,7 @@ func NewLightPass(input *render.GeometryBuffer) *LightPass {
     mat.AddTexture("tex_diffuse", input.Diffuse)
     mat.AddTexture("tex_normal",  input.Normal)
     mat.AddTexture("tex_depth",   input.Depth)
+    mat.AddTexture("tex_shadow",  shadowPass.Output)
 
     /* create a render quad */
     quad := render.NewRenderQuad()
@@ -35,7 +39,7 @@ func NewLightPass(input *render.GeometryBuffer) *LightPass {
     p := &LightPass {
         Material: mat,
         quad: quad,
-        Shadows: NewShadowPass(input),
+        Shadows: shadowPass,
     }
     return p
 }
@@ -72,15 +76,15 @@ func (p *LightPass) DrawPass(scene *Scene) {
             gl.DepthMask(true)
         }
 
-        /* shadow pass */
+        /* draw shadow pass for this light into shadow map */
         p.Shadows.DrawPass(scene, &light)
 
-        /* use light shader */
-        p.Material.SetTexture("tex_shadow", p.Shadows.Output)
+        /* use light pass shader */
         p.Material.Use()
 
+        /* compute world to lightspace (light view projection) matrix */
         lp := light.Projection
-        lv := mgl.LookAtV(light.Position.Mul(-1), mgl.Vec3{}, mgl.Vec3{0,1,0}) // only for directional light
+        lv := mgl.LookAtV(light.Position, mgl.Vec3{}, mgl.Vec3{0,1,0}) // only for directional light
         lvp := lp.Mul4(lv)
         shader.Matrix4f("light_vp", &lvp[0])
 

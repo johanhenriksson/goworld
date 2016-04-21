@@ -68,7 +68,7 @@ vec3 gammaCorrect(vec3 color) {
 /* samples the shadow map at the given world space coordinates */
 float sampleShadowmap(sampler2D shadowmap, vec3 position) {
     /* world -> light clip coords */
-    vec4 light_clip_pos = light_vp * vec4(position,1);
+    vec4 light_clip_pos = light_vp * vec4(position, 1);
 
     /* convert light clip to light ndc by dividing by W, then map values to 0-1 */
     vec3 light_ndc_pos = (light_clip_pos.xyz / light_clip_pos.w) * 0.5 + 0.5;
@@ -80,7 +80,7 @@ float sampleShadowmap(sampler2D shadowmap, vec3 position) {
     float depth = texture(shadowmap, light_ndc_pos.xy).r;
 
     /* shadow test */
-    if (depth < (z + 0.0001)) {
+    if (depth < (z - 0.003)) {
         return 0.5;
     }
 
@@ -94,8 +94,7 @@ void main() {
     float occlusion = t.a;
 
     vec3 normalEncoded = texture(tex_normal, texcoord0).xyz; // normals [0,1]
-    vec3 normal = normalize(2.0 * normalEncoded - 1); // normals [-1,1]
-
+    vec3 normal = normalize(2.0 * normalEncoded - 1); // normals [-1,1] 
     float depth = texture(tex_depth, texcoord0).r;
 
     /* calculate world position from depth map and the inverse camera view projection */
@@ -108,14 +107,14 @@ void main() {
 
     /* calculate contribution from the light source */
     float contrib = 0.0;
+    float shadow = 0.0;
     if (light.Type == DIRECTIONAL_LIGHT) {
         // directional lights store the direction in the position uniform
-        vec3 dir = normalize(-light.Position);
+        vec3 dir = normalize(light.Position);
         contrib = max(dot(dir, normal), 0.0);
 
         // experimental shadows
-        float shadow = sampleShadowmap(tex_shadow, position);
-        occlusion *= shadow;
+        shadow = sampleShadowmap(tex_shadow, position);
 
     }
     else if (light.Type == POINT_LIGHT) {
@@ -125,6 +124,13 @@ void main() {
         surfaceToLight = normalize(surfaceToLight);
         contrib = calculatePointLightContrib(surfaceToLight, distanceToLight, normal);
     }
+    occlusion = shadow;
+
+    vec4 light_clip_pos = light_vp * vec4(position, 1);
+
+    /* convert light clip to light ndc by dividing by W, then map values to 0-1 */
+    vec3 light_ndc_pos = (light_clip_pos.xyz / light_clip_pos.w) * 0.5 + 0.5;
+
 
     /* calculate light color */
     vec3 lightColor = light.Color * occlusion * contrib;
@@ -137,6 +143,8 @@ void main() {
     lightColor *= diffuseColor;
 
     /* write fragment color & restore depth buffer */
-    color = vec4(lightColor, 1.0);
+    //color = vec4(texture(tex_shadow, texcoord0).r + 0.00001 * lightColor, 1.0);
+    //color = vec4(vec3(light_ndc_pos.xy,0) + 0.001 * lightColor,  1.0);
+    color = vec4(lightColor,  1.0);
     gl_FragDepth = depth;
 }

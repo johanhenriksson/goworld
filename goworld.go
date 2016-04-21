@@ -43,7 +43,7 @@ func main() {
     app.Scene.Camera.Transform.Rotation[1] = 130.0
 
     obj2 := app.Scene.NewObject(5,0,5)
-    chk2 := game.NewColorChunk(obj2, 16)
+    chk2 := game.NewColorChunk(obj2, 32)
     generateChunk(chk2) // populate with random data
     chk2.Set(0,0,0, &game.ColorVoxel{ R:255, G:0, B:0 })
     chk2.Set(1,0,0, &game.ColorVoxel{ R:0, G:255, B:0 })
@@ -56,8 +56,8 @@ func main() {
 
 
     fmt.Println("goworld")
-    w := app.Scene.World
-    w.NewPlane(0,1,0,0)
+    //w := app.Scene.World
+    //w.NewPlane(0,1,0,0)
 
     // buffer display window
     bufferWindow := func(title string, texture *render.Texture, x, y float32, depth bool) {
@@ -86,11 +86,14 @@ func main() {
     bufferWindow("Normal", geom_pass.Buffer.Normal, 30, 340, false)
     bufferWindow("Shadowmap", light_pass.Shadows.Output, 30, 650, true)
 
+    //lines := geom.CreateLines()
+    //lines.Box(
+
     /* Render loop */
     app.UpdateFunc = func(dt float32) {
         if engine.KeyReleased(engine.KeyF) {
             fmt.Println("raycast")
-            w.Raycast(10, app.Scene.Camera.Position, app.Scene.Camera.Forward)
+            //w.Raycast(10, app.Scene.Camera.Position, app.Scene.Camera.Forward)
         }
     }
 
@@ -99,26 +102,26 @@ func main() {
 
 func generateChunk(chk *game.ColorChunk) {
     /* Define voxels */
-    rock2 := &game.ColorVoxel{
+    rock2 := &game.ColorVoxel {
         R: 200,
         G: 179,
         B: 112,
     }
-    rock := &game.ColorVoxel{
+    rock := &game.ColorVoxel {
         R: 141,
         G: 119,
         B: 72,
     }
-    grass := &game.ColorVoxel{
+    grass := &game.ColorVoxel {
         R: 88,
         G: 132,
         B: 69,
     }
 
     /* Fill chunk with voxels */
-    f := 1.0 / 4
+    f := 1.0 / 20.0
     size := chk.Size
-    simplex := opensimplex.NewWithSeed(1000)
+    simplex := opensimplex.NewWithSeed(1001)
     for z := 0; z < size; z++ {
         for y := 0; y < size; y++ {
             for x := 0; x < size; x++ {
@@ -131,7 +134,7 @@ func generateChunk(chk *game.ColorChunk) {
                 if y == size / 4 {
                     vtype = grass
                 }
-                if v > 0.0 {
+                if v < -0.3 {
                     vtype = rock
                 }
                 chk.Set(x, y, z, vtype)

@@ -19,7 +19,7 @@ type ShadowPass struct {
 func NewShadowPass(input *render.GeometryBuffer) *ShadowPass {
     mat := assets.GetMaterial("color_geometry")
 
-    shadow_map := render.CreateFrameBuffer(500,500)
+    shadow_map := render.CreateFrameBuffer(1024, 1024)
     shadow_map.ClearColor = render.Color4(1,1,1,1)
     shadow_texture := shadow_map.AddBuffer(gl.DEPTH_ATTACHMENT, gl.DEPTH_COMPONENT24, gl.DEPTH_COMPONENT, gl.FLOAT)
 
@@ -27,8 +27,8 @@ func NewShadowPass(input *render.GeometryBuffer) *ShadowPass {
         Material: mat,
         shadowmap: shadow_map,
         Output: shadow_texture,
-        Width: 300,
-        Height: 300,
+        Width: 1024,
+        Height: 1024,
     }
     return p
 }
@@ -39,18 +39,18 @@ func (sp *ShadowPass) DrawPass(scene *Scene, light *Light) {
         return
     }
 
+    /* bind shadow map depth render target */
     sp.shadowmap.Bind()
     sp.shadowmap.Clear()
 
-    /* use light pass shader */
+    /* use shadow pass shader - usually the standard geometry shader */
     sp.Material.Use()
-    //shader := sp.Material.Shader
-
-    /* clear */
 
 
+    /* compute world to lightspace (light view projection) matrix */
+    // todo: move to light object
     p := light.Projection
-    v := mgl.LookAtV(light.Position.Mul(-1), mgl.Vec3{}, mgl.Vec3{0,1,0})
+    v := mgl.LookAtV(light.Position, mgl.Vec3{0,0,0}, mgl.Vec3{0,1,0})
     vp := p.Mul4(v)
 
     args := render.DrawArgs {
