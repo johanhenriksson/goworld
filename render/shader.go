@@ -64,9 +64,10 @@ func (shader *Shader) CompileFile(path string) error {
 
 /* Compiles a shader from a source string */
 func (shader *Shader) Compile(source string) error {
-	csource := util.GLString(source)
-	gl.ShaderSource(shader.Id, 1, &csource, nil)
+	csource, free := util.GLString(source)
+	gl.ShaderSource(shader.Id, 1, csource, nil)
 	gl.CompileShader(shader.Id)
+    free()
 
     /* Check compilation status */
 	var status int32
@@ -78,7 +79,7 @@ func (shader *Shader) Compile(source string) error {
 		log := strings.Repeat("\x00", int(logLength+1))
 		gl.GetShaderInfoLog(shader.Id, logLength, nil, gl.Str(log))
 
-		return fmt.Errorf("Failed to compile %v: %v", source, log)
+        return fmt.Errorf("Shader compilation failed.\n** Source: **\n%v\n** Log: **\n%v\n", source, log)
 	}
 
     return nil

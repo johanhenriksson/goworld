@@ -64,7 +64,9 @@ func (program *ShaderProgram) Use() {
 
 /* Sets the name of the fragment color output variable */
 func (program *ShaderProgram) SetFragmentData(fragVariable string) {
-	gl.BindFragDataLocation(program.Id, 0, util.GLString(fragVariable))
+    cstr, free := util.GLString(fragVariable)
+	gl.BindFragDataLocation(program.Id, 0, *cstr)
+    free()
 }
 
 /* Attach a shader to the program. Panics if the program is already linked */
@@ -103,7 +105,11 @@ func (program *ShaderProgram) Link() {
 func (program *ShaderProgram) GetUniformLoc(uniform string) (UniformLocation, bool) {
     loc, ok := program.uniforms[uniform]
     if !ok {
-        loc = UniformLocation(gl.GetUniformLocation(program.Id, util.GLString(uniform)))
+        // get C string
+        cstr, free := util.GLString(uniform)
+        defer free()
+
+        loc = UniformLocation(gl.GetUniformLocation(program.Id, *cstr))
         if loc == UnknownUniform {
             return loc, false
         }
@@ -116,7 +122,11 @@ func (program *ShaderProgram) GetUniformLoc(uniform string) (UniformLocation, bo
 func (program *ShaderProgram) GetAttrLoc(attr string) (AttributeLocation, bool) {
     loc, ok := program.attributes[attr]
     if !ok {
-        loc = AttributeLocation(gl.GetAttribLocation(program.Id, util.GLString(attr)))
+        // get c string
+        cstr, free := util.GLString(attr)
+        defer free()
+
+        loc = AttributeLocation(gl.GetAttribLocation(program.Id, *cstr))
         if loc == UnknownAttribute {
             return loc, false
         }
