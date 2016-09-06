@@ -82,3 +82,37 @@ func (ray Ray) IntersectBox(box *AABB) (bool, mgl.Vec3) {
 
     return true, hit
 }
+
+func (ray Ray) IntersectPlane(p *Plane) (bool, float32, mgl.Vec3) {
+    denom := ray.Dir.Dot(p.Normal)
+    if denom > 0 {
+        t := -(ray.Origin.Dot(p.Normal) + p.D) / denom
+        if t > 0 {
+            return true, t, mgl.Vec3 {
+                ray.Origin[0] + ray.Dir[0] * t,
+                ray.Origin[1] + ray.Dir[1] * t,
+                ray.Origin[2] + ray.Dir[2] * t,
+            }
+        }
+    }
+    return false, 0.0, mgl.Vec3 { }
+}
+
+func (ray Ray) IntersectSphere(s *Sphere) (bool, float32, mgl.Vec3) {
+    oc := ray.Origin.Sub(s.Center)
+    b := ray.Dir.Dot(oc)
+    c := oc.Dot(oc) - s.Radius * s.Radius
+
+    b2c := b * b - c
+    if b2c >= 0 {
+        // hit!
+        t1 := -b - Sqrt(b2c)
+        return true, t1, mgl.Vec3 {
+            ray.Origin[0] + ray.Dir[0] * t1,
+            ray.Origin[1] + ray.Dir[1] * t1,
+            ray.Origin[2] + ray.Dir[2] * t1,
+        }
+    }
+
+    return false, 0.0, mgl.Vec3 { }
+}
