@@ -2,11 +2,8 @@ package game
 
 import (
     "fmt"
-    "unsafe"
     "github.com/johanhenriksson/goworld/engine"
     "github.com/johanhenriksson/goworld/render"
-
-    "github.com/go-gl/gl/v4.1-core/gl"
 )
 
 /* Chunks are smallest renderable units of voxel geometry */
@@ -45,7 +42,6 @@ type ColorVoxels []*ColorVoxel
 type ColorVoxelVertices []ColorVoxelVertex
 func (buffer ColorVoxelVertices) Elements() int { return len(buffer) }
 func (buffer ColorVoxelVertices) Size()     int { return 8 }
-func (buffer ColorVoxelVertices) GLPtr()    unsafe.Pointer { return gl.Ptr(buffer) }
 
 func NewColorChunk(parentObject *engine.Object, size int) *ColorChunk {
     chk := &ColorChunk {

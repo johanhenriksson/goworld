@@ -2,7 +2,6 @@ package render
 
 import (
     "fmt"
-    "unsafe"
     "github.com/go-gl/gl/v4.1-core/gl"
 )
 
@@ -15,7 +14,6 @@ type VertexBuffer struct {
 type VertexData interface {
     Elements() int
     Size() int
-    GLPtr() unsafe.Pointer
 }
 
 func CreateVertexBuffer() *VertexBuffer {
@@ -36,10 +34,11 @@ func (vbo *VertexBuffer) Buffer(vertices VertexData) {
     vbo.Elements = vertices.Elements()
     vbo.Size     = vertices.Size()
     size := vbo.Size * vbo.Elements
+    ptr  := gl.Ptr(vertices)
     fmt.Println("Buffering", vbo.Elements, "elements to buffer", vbo.Id)
     fmt.Println("Element size:", vbo.Size, "bytes.")
     fmt.Println("Total size:", size, "bytes.")
-	gl.BufferData(gl.ARRAY_BUFFER, size, vertices.GLPtr(), gl.STATIC_DRAW)
+	gl.BufferData(gl.ARRAY_BUFFER, size, ptr, gl.STATIC_DRAW)
 }
 
 type FloatBuffer []float32
@@ -50,8 +49,4 @@ func (vtx FloatBuffer) Elements() int {
 
 func (vtx FloatBuffer) Size() int {
     return 4
-}
-
-func (vtx FloatBuffer) GLPtr() unsafe.Pointer {
-    return gl.Ptr(&vtx[0])
 }

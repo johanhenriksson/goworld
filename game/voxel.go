@@ -1,10 +1,5 @@
 package game
 
-import (
-    "unsafe"
-    "github.com/go-gl/gl/v4.1-core/gl"
-)
-
 type VoxelId uint16
 
 /* Voxel geometry vertex data type */
@@ -19,7 +14,6 @@ type VoxelVertices []VoxelVertex
 
 func (buffer VoxelVertices) Elements() int { return len(buffer) }
 func (buffer VoxelVertices) Size()     int { return 8 }
-func (buffer VoxelVertices) GLPtr()    unsafe.Pointer { return gl.Ptr(buffer) }
 
 /* Voxel preset data type */
 type Voxel struct {

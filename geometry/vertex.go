@@ -1,10 +1,5 @@
 package geometry
 
-import (
-    "unsafe"
-    "github.com/go-gl/gl/v4.1-core/gl"
-)
-
 type Vertices []Vertex
 
 type Vertex struct {
@@ -19,8 +14,4 @@ func (vtx Vertices) Elements() int {
 
 func (vtx Vertices) Size() int {
     return 24
-}
-
-func (vtx Vertices) GLPtr() unsafe.Pointer {
-    return gl.Ptr(vtx)
 }

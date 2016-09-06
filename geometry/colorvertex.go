@@ -1,8 +1,6 @@
 package geometry
 
 import (
-    "unsafe"
-    "github.com/go-gl/gl/v4.1-core/gl"
     "github.com/johanhenriksson/goworld/render"
 )
 
@@ -16,4 +14,3 @@ type ColorVertices []ColorVertex
 
 func (buffer ColorVertices) Elements() int { return len(buffer) }
 func (buffer ColorVertices) Size()     int { return 28 }
-func (buffer ColorVertices) GLPtr()    unsafe.Pointer { return gl.Ptr(buffer) }
