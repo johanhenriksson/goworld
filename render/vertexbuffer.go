@@ -5,63 +5,68 @@ import (
     "github.com/go-gl/gl/v4.1-core/gl"
 )
 
-/* Interface for data types that can be uploaded into a vertex buffer object */
-type VertexData interface {
-    Elements()  int     /* Number of items, usually len(slice) */
-    Size()      int     /* Size of each individual element */
-}
-
 /* Represents an OpenGL Vertex Buffer object */
 type VertexBuffer struct {
     Id          uint32  /* OpenGL Buffer Identifier */
-    Elements    int     /* Number of elements/primitives currently stored in the VBO */
-    Size        int     /* Element size */
-
-    usage       uint32  /* Buffer usage flag, defaults to GL_STATIC_DRAW */
+    Target      uint32  /* Target buffer type, defaults to GL_ARRAY_BUFFER */
+    Usage       uint32  /* Buffer usage flag, defaults to GL_STATIC_DRAW */
+    Elements    int     /* Number of verticies/elements currently stored in the VBO */
+    Size        int     /* Element size in bytes */
 }
 
+/* Create a new Vertex buffer object and allocate a matching OpenGL buffer */
 func CreateVertexBuffer() *VertexBuffer {
     vbo := &VertexBuffer {
-        usage: gl.STATIC_DRAW,
+        Target: gl.ARRAY_BUFFER,
+        Usage:  gl.STATIC_DRAW,
     }
     gl.GenBuffers(1, &vbo.Id)
     return vbo
 }
 
-func (vbo *VertexBuffer) Bind() {
-    gl.BindBuffer(gl.ARRAY_BUFFER, vbo.Id)
+/* Binds the vertex buffer object */
+func (vbo *VertexBuffer) Bind() error {
+    if vbo.Id == 0 {
+        return fmt.Errorf("Cannot bind buffer id 0")
+    }
+    gl.BindBuffer(vbo.Target, vbo.Id)
+    return nil
 }
 
 /* Frees the GPU memory allocated by this vertex buffer. Resets Id, Size and Elements to 0 */
 func (vbo *VertexBuffer) Delete() {
-    gl.DeleteBuffers(1, &vbo.Id)
-    *vbo = VertexBuffer { }
+    if vbo.Id != 0 {
+        gl.DeleteBuffers(1, &vbo.Id)
+        *vbo = VertexBuffer { }
+    }
 }
 
 /* Binds the VBO and buffers data to the GPU */
-func (vbo *VertexBuffer) Buffer(vertices VertexData) {
-    vbo.Bind()
-    vbo.Elements = vertices.Elements()
-    vbo.Size     = vertices.Size()
+func (vbo *VertexBuffer) Buffer(vertices VertexData) error {
+    // bind buffer
+    err := vbo.Bind()
+    if err != nil {
+        return err
+    }
 
-    size := vbo.Size * vbo.Elements
+    // buffer data to GPU
+    size := vertices.Size() * vertices.Elements()
     ptr  := gl.Ptr(vertices)
+    gl.BufferData(vbo.Target, size, ptr, vbo.Usage)
 
-    // upload got GPU
-    gl.BufferData(gl.ARRAY_BUFFER, size, ptr, vbo.usage)
+    // check actual size in GPU memory
+    var gpuSize int32 = 0
+    gl.GetBufferParameteriv(vbo.Target, gl.BUFFER_SIZE, &gpuSize)
+    if int(gpuSize) != size {
+        return fmt.Errorf("Failed buffering data to buffer #%d, expected size %d bytes, actual: %d bytes",
+            vbo.Id, size, gpuSize)
+    }
+
+    vbo.Size     = vertices.Size()
+    vbo.Elements = vertices.Elements()
 
     // debug logging
-    fmt.Println("Buffering", vbo.Elements, "elements to buffer", vbo.Id)
-    fmt.Println("Element size:", vbo.Size, "bytes")
-    fmt.Println("Total size:", size, "bytes")
-}
+    fmt.Printf("[VBO %d] Buffered %d x %d = %d bytes\n", vbo.Id, vbo.Size, vbo.Elements, size)
 
-type FloatBuffer []float32
-
-func (vtx FloatBuffer) Elements() int {
-    return len(vtx)
-}
-
-func (vtx FloatBuffer) Size() int {
-    return 4
+    return nil
 }

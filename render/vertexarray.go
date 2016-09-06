@@ -1,22 +1,22 @@
 package render
 
 import (
+    "fmt"
     "github.com/go-gl/gl/v4.1-core/gl"
 )
 
 type VertexArray struct {
-    Id      uint32
-    Length  int32
-    Type    uint32
+    Id      uint32  /* OpenGL Vertex Array identifier */
+    Type    uint32  /* Primitive type */
+    Length  int32   /* Number of primitives */
 }
 
 func CreateVertexArray() *VertexArray {
-    var vao uint32
-    gl.GenVertexArrays(1, &vao)
-    return &VertexArray {
-        Id: vao,
+    vao := &VertexArray {
         Type: gl.TRIANGLES,
     }
+    gl.GenVertexArrays(1, &vao.Id)
+    return vao
 }
 
 func (vao *VertexArray) Bind() {
@@ -24,6 +24,17 @@ func (vao *VertexArray) Bind() {
 }
 
 func (vao *VertexArray) Draw() {
-    vao.Bind()
+    vao.DrawElements(0, vao.Length)
+}
+
+func (vao VertexArray) DrawElements(start, count int32) error {
+    if start < 0 || start + count > vao.Length {
+        // todo: error
+        return fmt.Errorf("Draw index out of range")
+    }
+
+    err := vao.Bind()
+    if err != nil { return err }
+
     gl.DrawArrays(vao.Type, 0, vao.Length)
 }
