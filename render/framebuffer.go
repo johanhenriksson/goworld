@@ -1,7 +1,7 @@
 package render
 
 import (
-	"github.com/go-gl/gl/v4.1-core/gl"
+    "github.com/go-gl/gl/v4.1-core/gl"
 )
 
 /* Rename to something that reflects that it's an attachment to a frame buffer */

@@ -1,14 +1,14 @@
 package render
 
 import (
-	"image"
-	"io/ioutil"
-	"math"
+    "image"
+    "io/ioutil"
+    "math"
     "fmt"
 
-	"github.com/golang/freetype/truetype"
-	"golang.org/x/image/font"
-	"golang.org/x/image/math/fixed"
+    "github.com/golang/freetype/truetype"
+    "golang.org/x/image/font"
+    "golang.org/x/image/math/fixed"
 )
 
 type Font struct {
@@ -36,13 +36,13 @@ func (f *Font) Render(text string, width, height float32, color Color) *Texture 
     /* Set color */
     f.drawer.Src = image.NewUniform(color.RGBA())
 
-	line := math.Ceil(f.Size * f.DPI / 72)
+    line := math.Ceil(f.Size * f.DPI / 72)
     //height := int(f.Spacing * line)
     //width := int(float64(f.drawer.MeasureString(text)) / f.Size)
 
     /* Create and attach destination image */
-	rgba := image.NewRGBA(image.Rect(0, 0, int(width), int(height)))
-	f.drawer.Dst = rgba
+    rgba := image.NewRGBA(image.Rect(0, 0, int(width), int(height)))
+    f.drawer.Dst = rgba
 
     /* Draw text */
     f.drawer.Dot = fixed.P(0, int(line))
@@ -56,14 +56,14 @@ func (f *Font) Render(text string, width, height float32, color Color) *Texture 
 
 /** Load a truetype font */
 func LoadFont(filename string, size, dpi, spacing float64) *Font {
-	fontBytes, err := ioutil.ReadFile(filename)
-	if err != nil {
-		panic(err)
-	}
-	f, err := truetype.Parse(fontBytes)
-	if err != nil {
-		panic(err)
-	}
+    fontBytes, err := ioutil.ReadFile(filename)
+    if err != nil {
+        panic(err)
+    }
+    f, err := truetype.Parse(fontBytes)
+    if err != nil {
+        panic(err)
+    }
 
     fnt := &Font {
         Size: size,

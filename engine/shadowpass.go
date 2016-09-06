@@ -56,8 +56,8 @@ func (sp *ShadowPass) DrawPass(scene *Scene, light *Light) {
     args := render.DrawArgs {
         Projection: p,
         View: v,
-        VP: vp,
-        MVP: vp,
+        VP:   vp,
+        MVP:  vp,
         Transform: mgl.Ident4(),
 
         Pass: "geometry",

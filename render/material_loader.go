@@ -4,7 +4,7 @@ import (
     "fmt"
     "io/ioutil"
     "encoding/json"
-	"github.com/go-gl/gl/v4.1-core/gl"
+    "github.com/go-gl/gl/v4.1-core/gl"
 )
 
 /** Material file JSON representation */

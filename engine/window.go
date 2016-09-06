@@ -5,13 +5,13 @@ import (
     "time"
     "runtime"
 
-	"github.com/go-gl/gl/v4.1-core/gl"
-	"github.com/go-gl/glfw/v3.1/glfw"
+    "github.com/go-gl/gl/v4.1-core/gl"
+    "github.com/go-gl/glfw/v3.1/glfw"
 )
 
 func init() {
     /* GLFW event handling must run on the main OS thread */
-	runtime.LockOSThread()
+    runtime.LockOSThread()
 }
 
 type UpdateCallback func(float32)
@@ -28,27 +28,27 @@ type Window struct {
 }
 
 func CreateWindow(title string, width int, height int) *Window {
-	if err := glfw.Init(); err != nil {
-		log.Fatalln("Failed to initialize glfw:", err)
-	}
+    if err := glfw.Init(); err != nil {
+        log.Fatalln("Failed to initialize glfw:", err)
+    }
 
     /* GLFW Window settings */
-	glfw.WindowHint(glfw.ContextVersionMajor, 4)
-	glfw.WindowHint(glfw.ContextVersionMinor, 1)
-	glfw.WindowHint(glfw.OpenGLProfile, glfw.OpenGLCoreProfile)
-	glfw.WindowHint(glfw.OpenGLForwardCompatible, glfw.True)
+    glfw.WindowHint(glfw.ContextVersionMajor, 4)
+    glfw.WindowHint(glfw.ContextVersionMinor, 1)
+    glfw.WindowHint(glfw.OpenGLProfile, glfw.OpenGLCoreProfile)
+    glfw.WindowHint(glfw.OpenGLForwardCompatible, glfw.True)
 
-	window, err := glfw.CreateWindow(width, height, title, nil, nil)
-	if err != nil {
-		panic(err)
-	}
-	window.MakeContextCurrent()
+    window, err := glfw.CreateWindow(width, height, title, nil, nil)
+    if err != nil {
+        panic(err)
+    }
+    window.MakeContextCurrent()
     glfw.SwapInterval(2);
 
-	/* Initialize OpenGL */
-	if err := gl.Init(); err != nil {
-		panic(err)
-	}
+    /* Initialize OpenGL */
+    if err := gl.Init(); err != nil {
+        panic(err)
+    }
 
     window.SetInputMode(glfw.CursorMode, glfw.CursorDisabled)
     window.SetKeyCallback(KeyCallback)

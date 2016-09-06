@@ -140,5 +140,5 @@ func (c *Camera) Update(dt float32) {
 
     /* Calculate new view matrix based on forward vector */
     lookAt := c.Transform.Position.Add(c.Transform.Forward);
-	c.View = mgl.LookAtV(c.Transform.Position, lookAt, mgl.Vec3{0,1,0})
+    c.View = mgl.LookAtV(c.Transform.Position, lookAt, mgl.Vec3{0,1,0})
 }

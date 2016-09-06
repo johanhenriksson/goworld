@@ -4,7 +4,7 @@ import (
     "fmt"
     "strings"
 
-	"github.com/go-gl/gl/v4.1-core/gl"
+    "github.com/go-gl/gl/v4.1-core/gl"
     mgl "github.com/go-gl/mathgl/mgl32"
 
     "github.com/johanhenriksson/goworld/util"
@@ -59,13 +59,13 @@ func (program *ShaderProgram) Use() {
     if !program.linked {
         panic("Shader program is not yet linked")
     }
-	gl.UseProgram(program.Id)
+    gl.UseProgram(program.Id)
 }
 
 /* Sets the name of the fragment color output variable */
 func (program *ShaderProgram) SetFragmentData(fragVariable string) {
     cstr, free := util.GLString(fragVariable)
-	gl.BindFragDataLocation(program.Id, 0, *cstr)
+    gl.BindFragDataLocation(program.Id, 0, *cstr)
     free()
 }
 
@@ -83,20 +83,20 @@ func (program *ShaderProgram) Link() {
         return
     }
 
-	gl.LinkProgram(program.Id)
+    gl.LinkProgram(program.Id)
 
     /* Read status */
-	var status int32
-	gl.GetProgramiv(program.Id, gl.LINK_STATUS, &status)
-	if status == gl.FALSE {
-		var logLength int32
-		gl.GetProgramiv(program.Id, gl.INFO_LOG_LENGTH, &logLength)
+    var status int32
+    gl.GetProgramiv(program.Id, gl.LINK_STATUS, &status)
+    if status == gl.FALSE {
+        var logLength int32
+        gl.GetProgramiv(program.Id, gl.INFO_LOG_LENGTH, &logLength)
 
-		log := strings.Repeat("\x00", int(logLength+1))
-		gl.GetProgramInfoLog(program.Id, logLength, nil, gl.Str(log))
+        log := strings.Repeat("\x00", int(logLength+1))
+        gl.GetProgramInfoLog(program.Id, logLength, nil, gl.Str(log))
 
-		panic(fmt.Sprintf("Failed to link program: %v", log))
-	}
+        panic(fmt.Sprintf("Failed to link program: %v", log))
+    }
 
     program.linked = true
 }

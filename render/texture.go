@@ -4,9 +4,9 @@ import (
     "os"
     "image"
     "image/draw"
-	_ "image/png"
+    _ "image/png"
 
-	"github.com/go-gl/gl/v4.1-core/gl"
+    "github.com/go-gl/gl/v4.1-core/gl"
     "github.com/johanhenriksson/goworld/util"
 )
 
@@ -25,8 +25,8 @@ type Texture struct {
 
 /* Creates a new GL texture and sets basic options */
 func CreateTexture(width, height int32) *Texture {
-	var id uint32
-	gl.GenTextures(1, &id)
+    var id uint32
+    gl.GenTextures(1, &id)
 
     tx := &Texture {
         Id: id,
@@ -39,24 +39,24 @@ func CreateTexture(width, height int32) *Texture {
     tx.Bind()
 
     /* Texture parameters - pass as parameters? */
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+    gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+    gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
+    gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+    gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
 
     return tx
 }
 
 /** Binds this texture to the given texture slot */
 func (tx *Texture) Use(slot uint32) {
-	gl.ActiveTexture(gl.TEXTURE0 + slot)
+    gl.ActiveTexture(gl.TEXTURE0 + slot)
     gl.Enable(gl.TEXTURE_2D)
     tx.Bind()
 }
 
 /** Bind texture to the currently active texture slot */
 func (tx *Texture) Bind() {
-	gl.BindTexture(gl.TEXTURE_2D, tx.Id)
+    gl.BindTexture(gl.TEXTURE_2D, tx.Id)
 }
 
 /** Attach this texture to the current frame buffer object */
@@ -65,13 +65,13 @@ func (tx *Texture) FrameBufferTarget(attachment uint32) {
 }
 
 func (tx *Texture) Clear() {
-	gl.TexImage2D(
-		gl.TEXTURE_2D,
-		0,
-		int32(tx.InternalFormat), // gl.RGBA,
+    gl.TexImage2D(
+        gl.TEXTURE_2D,
+        0,
+        int32(tx.InternalFormat), // gl.RGBA,
         tx.Width, tx.Height,
-		0,
-		tx.Format, //gl.RGBA, 
+        0,
+        tx.Format, //gl.RGBA, 
         tx.DataType, // gl.UNSIGNED_BYTE,
         nil) // null ptr
 }
@@ -79,14 +79,14 @@ func (tx *Texture) Clear() {
 /** Buffers texture data to GPU memory */
 func (tx *Texture) Buffer(img *image.RGBA) {
     /* Buffer image data */
-	gl.TexImage2D(
-		gl.TEXTURE_2D,
-		0,
-		int32(tx.InternalFormat),
+    gl.TexImage2D(
+        gl.TEXTURE_2D,
+        0,
+        int32(tx.InternalFormat),
         tx.Width, tx.Height,
-		0,
-		tx.Format, tx.DataType,
-		gl.Ptr(img.Pix))
+        0,
+        tx.Format, tx.DataType,
+        gl.Ptr(img.Pix))
 }
 
 /** Helper method to create an OpenGL texture from an image object */
@@ -111,17 +111,17 @@ func LoadTexture(file string) (*Texture, error) {
 /* TODO: Rename to ImageFromFile */
 /* Loads an image from file. Returns an RGBA image object */
 func LoadImage(file string) (*image.RGBA, error) {
-	imgFile, err := os.Open(util.ExePath + file)
-	if err != nil {
-		return nil, err
-	}
-	img, _, err := image.Decode(imgFile)
-	if err != nil {
-		return nil, err
-	}
+    imgFile, err := os.Open(util.ExePath + file)
+    if err != nil {
+        return nil, err
+    }
+    img, _, err := image.Decode(imgFile)
+    if err != nil {
+        return nil, err
+    }
 
-	rgba := image.NewRGBA(img.Bounds())
-	draw.Draw(rgba, rgba.Bounds(), img, image.Point{0, 0}, draw.Src)
+    rgba := image.NewRGBA(img.Bounds())
+    draw.Draw(rgba, rgba.Bounds(), img, image.Point{0, 0}, draw.Src)
 
     return rgba, nil
 }

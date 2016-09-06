@@ -5,7 +5,7 @@ import (
     "strings"
     "io/ioutil"
 
-	"github.com/go-gl/gl/v4.1-core/gl"
+    "github.com/go-gl/gl/v4.1-core/gl"
 
     "github.com/johanhenriksson/goworld/util"
 )
@@ -64,23 +64,23 @@ func (shader *Shader) CompileFile(path string) error {
 
 /* Compiles a shader from a source string */
 func (shader *Shader) Compile(source string) error {
-	csource, free := util.GLString(source)
-	gl.ShaderSource(shader.Id, 1, csource, nil)
-	gl.CompileShader(shader.Id)
+    csource, free := util.GLString(source)
+    gl.ShaderSource(shader.Id, 1, csource, nil)
+    gl.CompileShader(shader.Id)
     free()
 
     /* Check compilation status */
-	var status int32
-	gl.GetShaderiv(shader.Id, gl.COMPILE_STATUS, &status)
-	if status == gl.FALSE {
-		var logLength int32
-		gl.GetShaderiv(shader.Id, gl.INFO_LOG_LENGTH, &logLength)
+    var status int32
+    gl.GetShaderiv(shader.Id, gl.COMPILE_STATUS, &status)
+    if status == gl.FALSE {
+        var logLength int32
+        gl.GetShaderiv(shader.Id, gl.INFO_LOG_LENGTH, &logLength)
 
-		log := strings.Repeat("\x00", int(logLength+1))
-		gl.GetShaderInfoLog(shader.Id, logLength, nil, gl.Str(log))
+        log := strings.Repeat("\x00", int(logLength+1))
+        gl.GetShaderInfoLog(shader.Id, logLength, nil, gl.Str(log))
 
         return fmt.Errorf("Shader compilation failed.\n** Source: **\n%v\n** Log: **\n%v\n", source, log)
-	}
+    }
 
     return nil
 }
