@@ -8,29 +8,29 @@ import (
 
 type Image struct {
 	*Element
-	Image *render.Texture
+	Texture *render.Texture
 	Quad  *geometry.ImageQuad
 }
 
-func (m *Manager) NewImage(image *render.Texture, x, y, w, h, z float32) *Image {
+func (m *Manager) NewImage(texture *render.Texture, x, y, w, h, z float32) *Image {
 	el := m.NewElement(x, y, w, h, z)
 	mat := assets.GetMaterial("ui_texture")
-	mat.AddTexture("image", image)
+	mat.AddTexture("image", texture)
 	img := &Image{
 		Element: el,
-		Image:   image,
+		Texture:   texture,
 		Quad:    geometry.NewImageQuad(mat, w, h, z),
 	}
 	return img
 }
 
-func (m *Manager) NewDepthImage(image *render.Texture, x, y, w, h, z float32) *Image {
+func (m *Manager) NewDepthImage(texture *render.Texture, x, y, w, h, z float32) *Image {
 	el := m.NewElement(x, y, w, h, z)
 	mat := assets.GetMaterial("depth_texture")
-	mat.AddTexture("image", image)
+	mat.AddTexture("image", texture)
 	img := &Image{
 		Element: el,
-		Image:   image,
+		Texture:   texture,
 		Quad:    geometry.NewImageQuad(mat, w, h, z),
 	}
 	return img

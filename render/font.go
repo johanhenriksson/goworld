@@ -33,6 +33,12 @@ func (f *Font) setup() {
 }
 
 func (f *Font) Render(text string, width, height float32, color Color) *Texture {
+	tx := CreateTexture(int32(width), int32(height))
+	f.RenderOn(tx, text, width, height, color)
+	return tx
+}
+
+func (f *Font) RenderOn(tx *Texture, text string, width, height float32, color Color) {
 	/* Set color */
 	f.drawer.Src = image.NewUniform(color.RGBA())
 
@@ -49,9 +55,7 @@ func (f *Font) Render(text string, width, height float32, color Color) *Texture 
 	f.drawer.DrawString(text)
 
 	fmt.Println("Font texture size W:", width, "H:", height)
-	tx := CreateTexture(int32(width), int32(height))
 	tx.Buffer(rgba)
-	return tx
 }
 
 /** Load a truetype font */

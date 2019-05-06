@@ -55,29 +55,26 @@ func (p *LightPass) DrawPass(scene *Scene) {
 	shader.Matrix4f("cameraInverse", &vp_inv[0])
 
 	/* clear */
-	gl.ClearColor(0.9, 0.9, 0.9, 1.0)
+	gl.ClearColor(0.12, 0.12, 0.12, 1.0)
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
 	/* set blending mode to additive */
 
-	gl.DepthMask(false)
-
 	/* draw lights */
-	lights := scene.FindLights()
-	last := len(lights) - 1
+	gl.BlendFunc(gl.ONE, gl.ONE)
 
-	for i, light := range lights {
+	for i, light := range scene.Lights {
+		/* draw shadow pass for this light into shadow map */
+		p.Shadows.DrawPass(scene, &light)
+
 		if i == 1 {
 			/* first light pass we want the shader to restore the depth buffer
 			 * then, disable depth masking so that multiple lights can be drawn */
-			gl.BlendFunc(gl.ONE, gl.ONE)
-		}
-		if i == last {
 			gl.DepthMask(true)
+		} else {
+			gl.DepthMask(false)
 		}
 
-		/* draw shadow pass for this light into shadow map */
-		p.Shadows.DrawPass(scene, &light)
 
 		/* use light pass shader */
 		p.Material.Use()

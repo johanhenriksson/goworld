@@ -123,6 +123,7 @@ void main() {
         float distanceToLight = length(surfaceToLight);
         surfaceToLight = normalize(surfaceToLight);
         contrib = calculatePointLightContrib(surfaceToLight, distanceToLight, normal);
+        shadow = 1.0;
     }
     occlusion = shadow;
 

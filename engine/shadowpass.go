@@ -46,6 +46,9 @@ func (sp *ShadowPass) DrawPass(scene *Scene, light *Light) {
 	/* use shadow pass shader - usually the standard geometry shader */
 	sp.Material.Use()
 
+	gl.DepthMask(true)
+	//gl.Clear(gl.DEPTH_BUFFER_BIT)
+
 	/* compute world to lightspace (light view projection) matrix */
 	// todo: move to light object
 	p := light.Projection

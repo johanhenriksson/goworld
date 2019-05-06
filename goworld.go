@@ -19,17 +19,19 @@ package main
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/game"
 	"github.com/johanhenriksson/goworld/render"
 
 	opensimplex "github.com/ojrac/opensimplex-go"
+	mgl "github.com/go-gl/mathgl/mgl32"
 )
 
 const (
-	WIDTH  = 800
-	HEIGHT = 600
+	WIDTH  = 1600
+	HEIGHT = 1000
 )
 
 func main() {
@@ -42,18 +44,40 @@ func main() {
 	/* create a camera */
 
 	width, height := app.Window.GetBufferSize()
-	app.Scene.Camera = engine.CreateCamera(-3, 2, -3, float32(width), float32(height), 65.0, 0.1, 500.0)
+	app.Scene.Camera = engine.CreateCamera(10, 20, 10, float32(width), float32(height), 65.0, 0.1, 500.0)
 	app.Scene.Camera.Transform.Rotation[1] = 130.0
+	app.Scene.Lights = []engine.Light{
+		{ // directional light
+			Attenuation: engine.Attenuation{
+				Constant:  0.01,
+				Linear:    0,
+				Quadratic: 1.0,
+			},
+			Color: mgl.Vec3{0.35, 0.35, 0.35},
+			Range: 4,
+			Type:  engine.DirectionalLight,
+			Projection: mgl.Ortho(-32, 32, 0, 64, -32, 64),
+			Position: mgl.Vec3{-11, 16, -11},
+		},
+		{ // centered point light
+			Attenuation: engine.Attenuation{
+				Constant:  1.00,
+				Linear:    0.09,
+				Quadratic: 0.32,
+			},
+			Color: mgl.Vec3{1, 1, 1},
+			Range: 20,
+			Type:  engine.PointLight,
+			Position: mgl.Vec3{ 32, 36, 32},
+		},
+	}
 
 	w := app.Scene.World
 	w.NewPlane(0, 1, 0, 0)
 
-	obj2 := app.Scene.NewObject(5, 0, 5)
-	chk2 := game.NewColorChunk(obj2, 32)
+	obj2 := app.Scene.NewObject(-2, 0, -2)
+	chk2 := game.NewColorChunk(obj2, 64)
 	generateChunk(chk2) // populate with random data
-	chk2.Set(0, 0, 0, &game.ColorVoxel{R: 255, G: 0, B: 0})
-	chk2.Set(1, 0, 0, &game.ColorVoxel{R: 0, G: 255, B: 0})
-	chk2.Set(2, 0, 0, &game.ColorVoxel{R: 0, G: 0, B: 255})
 	chk2.Compute()
 	geom_pass.Material.SetupVertexPointers()
 	app.Scene.Add(obj2)
@@ -89,6 +113,10 @@ func main() {
 	bufferWindow("Normal", geom_pass.Buffer.Normal, 30, 340, false)
 	bufferWindow("Shadowmap", light_pass.Shadows.Output, 30, 650, true)
 
+	versiontext := fmt.Sprintf("goworld | %s", time.Now())
+	watermark := app.UI.NewText(versiontext, render.Color{1,1,1,1}, WIDTH - 200, 0, 0)
+	app.UI.Append(watermark)
+
 	/* Render loop */
 	app.UpdateFunc = func(dt float32) {
 		if engine.KeyReleased(engine.KeyF) {
@@ -113,32 +141,61 @@ func generateChunk(chk *game.ColorChunk) {
 		B: 158,
 	}
 	grass := &game.ColorVoxel{
-		R: 122,
-		G: 189,
-		B: 64,
+		R: 72,
+		G: 140,
+		B: 54,
 	}
 
 	/* Fill chunk with voxels */
-	f := 1.0 / 30.0
 	size := chk.Size
-	simplex := opensimplex.New(3001)
+
+	rockNoise := NewNoise(3001, 1.0 / 19.0)
+	grassNoise := NewNoise(314159, 1.0 / 28.0)
+
+	grassHeight := size / 4
+
 	for z := 0; z < size; z++ {
 		for y := 0; y < size; y++ {
 			for x := 0; x < size; x++ {
-				fx, fy, fz := float64(x)*f, float64(y)*f, float64(z)*f
-				v := simplex.Eval3(fx, fy, fz)
+				vr := rockNoise.Sample(x, y, z)
+				vg := grassNoise.Sample(x, 0, z)
+				gh := int(vg * 9)
+
 				var vtype *game.ColorVoxel = nil
-				if y < size/4 {
+				if y < grassHeight {
 					vtype = rock2
 				}
-				if y == size/4 {
+
+				if y == grassHeight {
 					vtype = grass
 				}
-				if v < -0.3 {
+				if y < grassHeight + gh && y > grassHeight {
+					vtype = grass
+				}
+				if vr < -0.3 {
 					vtype = rock
 				}
 				chk.Set(x, y, z, vtype)
 			}
 		}
 	}
+}
+
+type Noise struct {
+	opensimplex.Noise
+	Seed int
+	Freq float64
+}
+
+func NewNoise(seed int, freq float64) *Noise {
+	return &Noise{
+		Noise: opensimplex.New(int64(seed)),
+		Seed: seed,
+		Freq: freq,
+	}
+}
+
+func (n *Noise) Sample(x, y, z int) float64 {
+	fx, fy, fz := float64(x) * n.Freq, float64(y) * n.Freq, float64(z) * n.Freq
+	return n.Eval3(fx, fy, fz)
 }

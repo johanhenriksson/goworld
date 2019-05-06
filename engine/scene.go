@@ -18,7 +18,7 @@ type Scene struct {
 	World *physics.World
 
 	/* temporary: list of all lights in the scene */
-	lights []Light
+	Lights []Light
 }
 
 func NewScene() *Scene {
@@ -26,46 +26,9 @@ func NewScene() *Scene {
 		Camera:  nil,
 		Objects: []*Object{},
 		World:   physics.NewWorld(),
-
-		lights: []Light{
-			/* temporary: test light */
-			{
-				Attenuation: Attenuation{
-					Constant:  0.01,
-					Linear:    0,
-					Quadratic: 1.0,
-				},
-				Color: mgl.Vec3{1, 1, 1},
-				Range: 4,
-				Type:  PointLight,
-			},
-		},
+		Lights: []Light{},
 	}
-
-	/* add a few more test lights */
-	/*
-	   for i := 0; i < 1; i++ {
-	       s.lights = append(s.lights, Light {
-	           Attenuation: Attenuation {
-	               Constant: 0.01,
-	               Linear: 0.5,
-	               Quadratic: 1.5,
-	           },
-	           Position: mgl.Vec3 { 0, float32(4*i), 0 },
-	           Color: mgl.Vec3 { 1.0, 1.0, 0.65 },
-	           Range: 4,
-	           Type: PointLight,
-	       })
-	   }
-	*/
-
-	s.lights[0].Position = mgl.Vec3{-11, 11, -11}
-	s.lights[0].Color = mgl.Vec3{0.75, 0.75, 0.76}
-	s.lights[0].Type = DirectionalLight
-	s.lights[0].Projection = mgl.Ortho(-32, 32, 0, 64, -32, 64)
-	//s.lights[2].Position = mgl.Vec3 { 10, 40, 10 }
-	//s.lights[2].Range = 10
-	//s.lights[0].Type = 2
+	
 	return s
 }
 
@@ -125,9 +88,4 @@ func (s *Scene) Update(dt float32) {
 
 	/* physics step */
 	s.World.Update()
-}
-
-func (s *Scene) FindLights() []Light {
-	// todo
-	return s.lights
 }
