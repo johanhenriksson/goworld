@@ -8,13 +8,13 @@ package main
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * Foobar is distributed in the hope that it will be useful,
+ * goworld is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Foobar. If not, see <http://www.gnu.org/licenses/>.
+ * along with goworld. If not, see <http://www.gnu.org/licenses/>.
  */
 
 import (
@@ -27,7 +27,7 @@ import (
 )
 
 const (
-    WIDTH = 1600
+    WIDTH  = 1600
     HEIGHT = 1000
 )
 
@@ -42,6 +42,9 @@ func main() {
     app.Scene.Camera = engine.CreateCamera(-3,2,-3, WIDTH, HEIGHT, 65.0, 0.1, 500.0)
     app.Scene.Camera.Transform.Rotation[1] = 130.0
 
+	w := app.Scene.World
+    w.NewPlane(0,1,0,0)
+
     obj2 := app.Scene.NewObject(5,0,5)
     chk2 := game.NewColorChunk(obj2, 32)
     generateChunk(chk2) // populate with random data
@@ -54,10 +57,7 @@ func main() {
 
     game.NewPlacementGrid(obj2)
 
-
     fmt.Println("goworld")
-    //w := app.Scene.World
-    //w.NewPlane(0,1,0,0)
 
     // buffer display window
     bufferWindow := func(title string, texture *render.Texture, x, y float32, depth bool) {
@@ -86,14 +86,11 @@ func main() {
     bufferWindow("Normal", geom_pass.Buffer.Normal, 30, 340, false)
     bufferWindow("Shadowmap", light_pass.Shadows.Output, 30, 650, true)
 
-    //lines := geom.CreateLines()
-    //lines.Box(
-
     /* Render loop */
     app.UpdateFunc = func(dt float32) {
         if engine.KeyReleased(engine.KeyF) {
             fmt.Println("raycast")
-            //w.Raycast(10, app.Scene.Camera.Position, app.Scene.Camera.Forward)
+			w.Raycast(10, app.Scene.Camera.Position, app.Scene.Camera.Forward)
         }
     }
 
@@ -119,9 +116,9 @@ func generateChunk(chk *game.ColorChunk) {
     }
 
     /* Fill chunk with voxels */
-    f := 1.0 / 20.0
+    f := 1.0 / 30.0
     size := chk.Size
-    simplex := opensimplex.NewWithSeed(1001)
+    simplex := opensimplex.New(3001)
     for z := 0; z < size; z++ {
         for y := 0; y < size; y++ {
             for x := 0; x < size; x++ {

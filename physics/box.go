@@ -2,7 +2,7 @@ package physics
 
 import (
     "fmt"
-    "github.com/ianremmler/ode"
+    "github.com/johanhenriksson/ode"
     mgl "github.com/go-gl/mathgl/mgl32"
 )
 

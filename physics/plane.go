@@ -1,7 +1,7 @@
 package physics
 import (
     "fmt"
-    "github.com/ianremmler/ode"
+    "github.com/johanhenriksson/ode"
 )
 
 type Plane struct {
@@ -39,5 +39,5 @@ func (p *Plane) AttachToBody(body *RigidBody) {
 }
 
 func (p *Plane) OnCollision(other Collider, contact Contact) {
-    //fmt.Println("Plane Collision!", other)
+    fmt.Println("Plane Collision!", other)
 }

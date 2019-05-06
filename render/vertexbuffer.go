@@ -67,6 +67,5 @@ func (vbo *VertexBuffer) Buffer(vertices VertexData) error {
 
     // debug logging
     fmt.Printf("[VBO %d] Buffered %d x %d = %d bytes\n", vbo.Id, vbo.Size, vbo.Elements, size)
-
     return nil
 }

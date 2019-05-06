@@ -2,7 +2,7 @@ package engine
 
 import (
     "github.com/johanhenriksson/goworld/render"
-    //"github.com/johanhenriksson/goworld/physics"
+    "github.com/johanhenriksson/goworld/physics"
 
     mgl "github.com/go-gl/mathgl/mgl32"
 )
@@ -16,7 +16,7 @@ type Scene struct {
     /* Root Objects */
     Objects     []*Object
 
-    //World       *physics.World
+    World       *physics.World
 
     /* temporary: list of all lights in the scene */
     lights      []Light
@@ -26,7 +26,7 @@ func NewScene() *Scene {
     s := &Scene {
         Camera: nil,
         Objects: []*Object { },
-        //World: physics.NewWorld(),
+        World: physics.NewWorld(),
 
         lights: []Light {
             /* temporary: test light */
@@ -125,7 +125,7 @@ func (s *Scene) Update(dt float32) {
     //s.lights[0].Position = s.Camera.Position
 
     /* physics step */
-    //s.World.Update()
+    s.World.Update()
 }
 
 func (s *Scene) FindLights() []Light {

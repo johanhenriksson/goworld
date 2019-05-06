@@ -3,7 +3,7 @@ package physics
 import (
     "fmt"
     "math"
-    "github.com/ianremmler/ode"
+    "github.com/johanhenriksson/ode"
     mgl "github.com/go-gl/mathgl/mgl32"
 )
 
@@ -43,7 +43,7 @@ func NewWorld() *World {
 }
 
 func (w *World) Update() {
-    w.space.Collide(0, w.nearCallback)
+	w.space.Collide(0, w.nearCallback)
     w.world.QuickStep(w.timestep)
     w.contacts.Empty()
 }
