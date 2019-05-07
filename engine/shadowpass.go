@@ -20,14 +20,14 @@ func NewShadowPass(input *render.GeometryBuffer) *ShadowPass {
 	mat := assets.GetMaterial("color_geometry")
 
 	size := 4096
-	shadow_map := render.CreateFrameBuffer(int32(size), int32(size))
-	shadow_map.ClearColor = render.Color4(1, 1, 1, 1)
-	shadow_texture := shadow_map.AddBuffer(gl.DEPTH_ATTACHMENT, gl.DEPTH_COMPONENT24, gl.DEPTH_COMPONENT, gl.FLOAT)
+	fbo := render.CreateFrameBuffer(int32(size), int32(size))
+	fbo.ClearColor = render.Color4(1, 1, 1, 1)
+	texture := fbo.AddBuffer(gl.DEPTH_ATTACHMENT, gl.DEPTH_COMPONENT24, gl.DEPTH_COMPONENT, gl.FLOAT)
 
 	p := &ShadowPass{
 		Material:  mat,
-		shadowmap: shadow_map,
-		Output:    shadow_texture,
+		shadowmap: fbo,
+		Output:    texture,
 		Width:     size,
 		Height:    size,
 	}

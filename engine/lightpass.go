@@ -11,11 +11,18 @@ type LightPass struct {
 	quad     *render.RenderQuad
 	SSAO     *SSAOPass
 	Shadows  *ShadowPass
+	Ambient  render.Color
 }
 
 func NewLightPass(input *render.GeometryBuffer) *LightPass {
+	ssao := SSAOSettings {
+		Samples: 64,
+		Radius: 0.4,
+		Bias: 0.02,
+		Power: 1.0,
+	}
 
-	ssaoPass := NewSSAOPass(input)
+	ssaoPass := NewSSAOPass(input, &ssao)
 	shadowPass := NewShadowPass(input)
 
 	/* use a virtual material to help with vertex attributes and textures */
@@ -31,7 +38,6 @@ func NewLightPass(input *render.GeometryBuffer) *LightPass {
 	mat.AddTexture("tex_diffuse", input.Diffuse)
 	mat.AddTexture("tex_normal", input.Normal)
 	mat.AddTexture("tex_depth", input.Depth)
-	mat.AddTexture("tex_position", input.Position)
 	mat.AddTexture("tex_shadow", shadowPass.Output)
 	mat.AddTexture("tex_occlusion", ssaoPass.Texture)
 
@@ -45,6 +51,7 @@ func NewLightPass(input *render.GeometryBuffer) *LightPass {
 		quad:     quad,
 		Shadows:  shadowPass,
 		SSAO:     ssaoPass,
+		Ambient:  render.Color4(1,1,1,1),
 	}
 	return p
 }
@@ -63,6 +70,7 @@ func (p *LightPass) DrawPass(scene *Scene) {
 	vInv := scene.Camera.View.Inv()
 	shader.Matrix4f("cameraInverse", &vpInv[0])
 	shader.Matrix4f("viewInverse", &vInv[0])
+	shader.RGB("ambient", p.Ambient)
 
 	/* clear */
 	clr := scene.Camera.Clear

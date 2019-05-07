@@ -20,7 +20,6 @@ struct Light {
 uniform sampler2D tex_diffuse;  // diffuse
 uniform sampler2D tex_shadow;  // shadow map
 uniform sampler2D tex_normal; // normal
-uniform sampler2D tex_position; // view space position
 uniform sampler2D tex_depth; // depth
 uniform sampler2D tex_occlusion; // ssao
 uniform mat4 cameraInverse; // inverse view projection matrix
@@ -28,6 +27,7 @@ uniform mat4 light_vp;     // world to light space
 uniform mat4 viewInverse;     // projection matrix
 
 uniform Light light;     // uniform light data
+uniform vec3 ambient; // ambient light
 
 in vec2 texcoord0;
 
@@ -96,14 +96,14 @@ void main() {
     vec3 diffuseColor = t.rgb;
     float occlusion = t.a;
 
+    // sample normal vector and transform it into world space
     vec3 normalEncoded = texture(tex_normal, texcoord0).xyz; // normals [0,1]
     vec3 viewNormal = normalize(2.0 * normalEncoded - 1); // normals [-1,1] 
     vec4 worldNormal = viewInverse * vec4(viewNormal, 0);
-    vec3 normal = worldNormal.xyz;
-
-    float depth = texture(tex_depth, texcoord0).r;
+    vec3 normal = normalize(worldNormal.xyz);
 
     /* calculate world position from depth map and the inverse camera view projection */
+    float depth = texture(tex_depth, texcoord0).r;
     vec3 position = positionFromDepth(depth);
 
     // apply ssao
@@ -145,8 +145,7 @@ void main() {
     vec3 lightColor = light.Color * occlusion * contrib;
 
     /* add ambient light */
-    const vec3 ambientColor = vec3(1,1,1);
-    lightColor += 0.20 * ambientColor;
+    lightColor += 0.08 * ambient;
 
     /* mix with diffuse */
     lightColor *= diffuseColor;

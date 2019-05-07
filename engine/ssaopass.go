@@ -8,18 +8,25 @@ import (
 	"github.com/johanhenriksson/goworld/render"
 )
 
+type SSAOSettings struct {
+	Samples int
+	Radius float32
+	Bias float32
+	Power float32
+}
+
 type SSAOPass struct {
+	SSAOSettings
+
 	Output *render.FrameBuffer
 	Texture *render.Texture
 	Material *render.Material
 	Quad *render.RenderQuad
 	Noise *render.Texture
 	Kernel []mgl.Vec3
-	Radius float32
-	Bias float32
 }
 
-func NewSSAOPass(gbuff *render.GeometryBuffer) *SSAOPass {
+func NewSSAOPass(gbuff *render.GeometryBuffer, settings *SSAOSettings) *SSAOPass {
 	ssaoFbo := render.CreateFrameBuffer(gbuff.Width, gbuff.Height)
 	ssaoFbo.ClearColor = render.Color4(0, 0, 0, 1)
 	ssaoBuffer := ssaoFbo.AddBuffer(gl.COLOR_ATTACHMENT0, gl.RGB, gl.RGB, gl.FLOAT) // diffuse (rgb)
@@ -38,7 +45,7 @@ func NewSSAOPass(gbuff *render.GeometryBuffer) *SSAOPass {
 	mat.AddTexture("tex_normal", gbuff.Normal)
 
 	// sample kernel
-	kernel := make([]mgl.Vec3, 64)
+	kernel := make([]mgl.Vec3, settings.Samples)
 	for i := 0; i < len(kernel); i++ {
 		sample := mgl.Vec3{
 			rand.Float32() * 2 - 1,
@@ -49,7 +56,7 @@ func NewSSAOPass(gbuff *render.GeometryBuffer) *SSAOPass {
 		sample.Mul(rand.Float32()) // random length
 
 		// scaling
-		scale := float32(i) / 64.0
+		scale := float32(i) / float32(settings.Samples)
 		scale = lerp(0.1, 1.0, scale * scale)
 		sample = sample.Mul(scale)
 		
@@ -78,14 +85,14 @@ func NewSSAOPass(gbuff *render.GeometryBuffer) *SSAOPass {
 	mat.SetupVertexPointers()
 
 	return &SSAOPass{
+		SSAOSettings: *settings,
+
 		Output: ssaoFbo,
 		Texture: ssaoBuffer,
 		Material: mat,
 		Quad: quad,
 		Noise: noise,
 		Kernel: kernel,
-		Radius: 3.0,
-		Bias: 0.03,
 	}
 }
 
@@ -100,8 +107,9 @@ func (p *SSAOPass) DrawPass(scene *Scene) {
 	shader.Int32("kernel_size", int32(len(p.Kernel)))
 	shader.Float("bias", p.Bias)
 	shader.Float("radius", p.Radius)
+	shader.Float("power", p.Power)
 
-	for i := 0; i < 64; i++ {
+	for i := 0; i < len(p.Kernel); i++ {
 		shader.Vec3(fmt.Sprintf("samples[%d]", i), &p.Kernel[i])
 	}
 

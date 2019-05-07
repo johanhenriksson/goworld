@@ -190,3 +190,15 @@ func (program *ShaderProgram) Float(name string, val float32) {
 		gl.Uniform1f(int32(loc), val)
 	}
 }
+
+func (program *ShaderProgram) RGB(name string, color Color) {
+	if loc, ok := program.GetUniformLoc(name); ok {
+		gl.Uniform3f(int32(loc), color.R, color.G, color.B)
+	}
+}
+
+func (program *ShaderProgram) RGBA(name string, color Color) {
+	if loc, ok := program.GetUniformLoc(name); ok {
+		gl.Uniform4f(int32(loc), color.R, color.G, color.B, color.A)
+	}
+}
