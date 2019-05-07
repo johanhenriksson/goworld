@@ -8,11 +8,12 @@ type MaterialTextureMap map[string]*Texture
 type BufferDescriptors []BufferDescriptor
 
 type BufferDescriptor struct {
-	Buffer    uint32
-	DataType  uint32
-	Count     int32
-	Stride    int32
-	Offset    int32
+	Name      string
+	Buffer    int
+	Type      int
+	Elements  int
+	Stride    int
+	Offset    int
 	Normalize bool
 	Integer   bool
 }
@@ -33,22 +34,19 @@ func CreateMaterial(shader *ShaderProgram) *Material {
 	}
 }
 
-/* Add vertex attribute pointer */
-func (mat *Material) AddDescriptor(attrName string, dataType uint32, count, stride, offset int, normalize, integer bool) {
-	loc, exists := mat.Shader.GetAttrLoc(attrName)
+func (mat *Material) AddDescriptor(desc BufferDescriptor) {
+	loc, exists := mat.Shader.GetAttrLoc(desc.Name)
 	if !exists {
-		panic("No such attribute " + attrName)
+		panic("No such attribute " + desc.Name)
 	}
+	desc.Buffer = int(loc)
+	mat.Buffers = append(mat.Buffers, desc)
+}
 
-	mat.Buffers = append(mat.Buffers, BufferDescriptor{
-		Buffer:    uint32(loc),
-		DataType:  dataType,
-		Count:     int32(count),
-		Stride:    int32(stride),
-		Normalize: normalize,
-		Offset:    int32(offset),
-		Integer:   integer,
-	})
+func (mat *Material) AddDescriptors(descriptors []BufferDescriptor) {
+	for _, desc := range descriptors {
+		mat.AddDescriptor(desc)
+	}
 }
 
 /* Attach a texture to this material */
@@ -75,24 +73,35 @@ func (mat *Material) Use() {
 	gl.ActiveTexture(gl.TEXTURE0)
 }
 
-func (mat *Material) SetupVertexPointers() {
-	/* Enable vertex array attributes and set up vertex attribute pointers */
+func (mat *Material) EnablePointers() {
 	for _, desc := range mat.Buffers {
-		gl.EnableVertexAttribArray(desc.Buffer)
+		gl.EnableVertexAttribArray(uint32(desc.Buffer))
+	}
+}
+
+func (mat *Material) DisablePointers() {
+	for _, desc := range mat.Buffers {
+		gl.DisableVertexAttribArray(uint32(desc.Buffer))
+	}
+}
+
+func (mat *Material) SetupVertexPointers() {
+	mat.EnablePointers()
+	for _, desc := range mat.Buffers {
 		if desc.Integer {
 			gl.VertexAttribIPointer(
-				desc.Buffer,
-				desc.Count,
-				desc.DataType,
-				desc.Stride,
+				uint32(desc.Buffer),
+				int32(desc.Elements),
+				uint32(desc.Type),
+				int32(desc.Stride),
 				gl.PtrOffset(int(desc.Offset)))
 		} else {
 			gl.VertexAttribPointer(
-				desc.Buffer,
-				desc.Count,
-				desc.DataType,
+				uint32(desc.Buffer),
+				int32(desc.Elements),
+				uint32(desc.Type),
 				desc.Normalize,
-				desc.Stride,
+				int32(desc.Stride),
 				gl.PtrOffset(int(desc.Offset)))
 		}
 	}

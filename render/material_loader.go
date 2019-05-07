@@ -3,8 +3,9 @@ package render
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/go-gl/gl/v4.1-core/gl"
 	"io/ioutil"
+
+	"github.com/go-gl/gl/v4.1-core/gl"
 )
 
 /** Material file JSON representation */
@@ -64,7 +65,15 @@ func LoadMaterial(shader *ShaderProgram, file string) *Material {
 		if ptr.Name == "skip" {
 			continue
 		}
-		mat.AddDescriptor(ptr.Name, ptr.GlType, ptr.Count, stride, ptr.Offset, ptr.Normalize, ptr.Integer)
+		mat.AddDescriptor(BufferDescriptor{
+			Name:      ptr.Name,
+			Type:      int(ptr.GlType),
+			Elements:  ptr.Count,
+			Stride:    stride,
+			Offset:    ptr.Offset,
+			Normalize: ptr.Normalize,
+			Integer:   ptr.Integer,
+		})
 	}
 
 	/* Load textures */

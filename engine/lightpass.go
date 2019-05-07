@@ -15,11 +15,11 @@ type LightPass struct {
 }
 
 func NewLightPass(input *render.GeometryBuffer) *LightPass {
-	ssao := SSAOSettings {
+	ssao := SSAOSettings{
 		Samples: 64,
-		Radius: 0.4,
-		Bias: 0.02,
-		Power: 1.0,
+		Radius:  1.5,
+		Bias:    0.1,
+		Power:   2.5,
 	}
 
 	ssaoPass := NewSSAOPass(input, &ssao)
@@ -30,8 +30,9 @@ func NewLightPass(input *render.GeometryBuffer) *LightPass {
 
 	/* we're going to render a simple quad, so we input
 	 * position and texture coordinates */
-	mat.AddDescriptor("position", gl.FLOAT, 3, 20, 0, false, false)
-	mat.AddDescriptor("texcoord", gl.FLOAT, 2, 20, 12, false, false)
+	//mat.AddDescriptor("position", gl.FLOAT, 3, 20, 0, false, false)
+	//mat.AddDescriptor("texcoord", gl.FLOAT, 2, 20, 12, false, false)
+	mat.AddDescriptors(render.F32_XYZUV)
 
 	/* the shader uses 3 textures from the geometry frame buffer.
 	 * they are previously rendered in the geometry pass. */
@@ -42,16 +43,14 @@ func NewLightPass(input *render.GeometryBuffer) *LightPass {
 	mat.AddTexture("tex_occlusion", ssaoPass.Output)
 
 	/* create a render quad */
-	quad := render.NewRenderQuad()
-	/* set up vertex attribute pointers */
-	mat.SetupVertexPointers()
+	quad := render.NewRenderQuad(mat)
 
 	p := &LightPass{
 		Material: mat,
 		quad:     quad,
 		Shadows:  shadowPass,
 		SSAO:     ssaoPass,
-		Ambient:  render.Color4(1,1,1,1),
+		Ambient:  render.Color4(1, 1, 1, 0.2),
 	}
 	return p
 }
@@ -61,16 +60,17 @@ func (p *LightPass) DrawPass(scene *Scene) {
 	p.SSAO.DrawPass(scene)
 
 	/* use light pass shader */
-	p.Material.Use()
 	shader := p.Material.Shader
 
 	/* compute camera view projection inverse */
 	vp := scene.Camera.Projection.Mul4(scene.Camera.View)
 	vpInv := vp.Inv()
 	vInv := scene.Camera.View.Inv()
+
+	shader.Use()
 	shader.Matrix4f("cameraInverse", &vpInv[0])
 	shader.Matrix4f("viewInverse", &vInv[0])
-	shader.RGB("ambient", p.Ambient)
+	shader.RGBA("ambient", p.Ambient)
 
 	/* clear */
 	clr := scene.Camera.Clear
@@ -81,6 +81,7 @@ func (p *LightPass) DrawPass(scene *Scene) {
 
 	/* draw lights */
 	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+	gl.Disable(gl.BLEND)
 
 	for i, light := range scene.Lights {
 		/* draw shadow pass for this light into shadow map */
@@ -89,6 +90,7 @@ func (p *LightPass) DrawPass(scene *Scene) {
 		if i == 1 {
 			/* first light pass we want the shader to restore the depth buffer
 			 * then, disable depth masking so that multiple lights can be drawn */
+			gl.Enable(gl.BLEND)
 			gl.BlendFunc(gl.ONE, gl.ONE)
 			gl.DepthMask(true)
 		} else {
@@ -96,7 +98,7 @@ func (p *LightPass) DrawPass(scene *Scene) {
 		}
 
 		/* use light pass shader */
-		p.Material.Use()
+		shader.Use()
 
 		/* compute world to lightspace (light view projection) matrix */
 		lp := light.Projection

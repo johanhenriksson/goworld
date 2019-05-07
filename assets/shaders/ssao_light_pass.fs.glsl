@@ -27,7 +27,7 @@ uniform mat4 light_vp;     // world to light space
 uniform mat4 viewInverse;     // projection matrix
 
 uniform Light light;     // uniform light data
-uniform vec3 ambient; // ambient light
+uniform vec4 ambient; // ambient light
 
 in vec2 texcoord0;
 
@@ -108,7 +108,7 @@ void main() {
 
     // apply ssao
     float ssao = texture(tex_occlusion, texcoord0).r;
-    occlusion = ssao;
+    occlusion = t.a;
 
     // now we should be able to calculate the position in light space!
     // since the directional light matrix is orthographic the z value will
@@ -142,10 +142,13 @@ void main() {
 
 
     /* calculate light color */
-    vec3 lightColor = light.Color * occlusion * contrib;
+    vec3 lightColor = light.Color * contrib * occlusion;
 
     /* add ambient light */
-    lightColor += 0.08 * ambient;
+    lightColor += ambient.a * ambient.rgb;
+
+    float ssao_blend = 0.5;
+    lightColor = (1-ssao_blend) * lightColor * ssao + ssao_blend * lightColor;
 
     /* mix with diffuse */
     lightColor *= diffuseColor;
