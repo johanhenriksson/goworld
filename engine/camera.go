@@ -1,10 +1,11 @@
 package engine
 
 import (
-	"github.com/go-gl/gl/v4.1-core/gl"
-	mgl "github.com/go-gl/mathgl/mgl32"
 	"math"
 	"unsafe"
+	"github.com/go-gl/gl/v4.1-core/gl"
+	mgl "github.com/go-gl/mathgl/mgl32"
+	"github.com/johanhenriksson/goworld/render"
 )
 
 // not sure if this camera should also support orthographic projection
@@ -21,6 +22,7 @@ type Camera struct {
 	Far        float32
 	Projection mgl.Mat4
 	View       mgl.Mat4
+	Clear      render.Color
 }
 
 func CreateCamera(x, y, z, width, height, fov, near, far float32) *Camera {
@@ -49,7 +51,7 @@ func CreateCamera(x, y, z, width, height, fov, near, far float32) *Camera {
 /* Unproject screen space coordinates into world space */
 func (cam *Camera) Unproject(x, y float32) mgl.Vec3 {
 	/* Sample depth buffer at x,y */
-	var depth float32 = 0.0
+	var depth float32
 	gl.ReadPixels(int32(x), int32(cam.Height-y-1), 1, 1, gl.DEPTH_COMPONENT, gl.FLOAT, unsafe.Pointer(&depth))
 
 	/* Clip space coord */
@@ -140,5 +142,9 @@ func (c *Camera) Update(dt float32) {
 
 	/* Calculate new view matrix based on forward vector */
 	lookAt := c.Transform.Position.Add(c.Transform.Forward)
-	c.View = mgl.LookAtV(c.Transform.Position, lookAt, mgl.Vec3{0, 1, 0})
+	c.LookAt(lookAt)
+}
+
+func (c *Camera) LookAt(target mgl.Vec3) {
+	c.View = mgl.LookAtV(c.Transform.Position, target, mgl.Vec3{0, 1, 0})
 }

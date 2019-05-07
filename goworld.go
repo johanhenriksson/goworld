@@ -38,26 +38,25 @@ func main() {
 	app := engine.NewApplication("voxels", WIDTH, HEIGHT)
 
 	/* grab a reference to the geometry render pass */
-	geom_pass := app.Render.Get("geometry").(*engine.GeometryPass)
-	light_pass := app.Render.Get("light").(*engine.LightPass)
+	geoPass := app.Render.Get("geometry").(*engine.GeometryPass)
+	lightPass := app.Render.Get("light").(*engine.LightPass)
 
 	/* create a camera */
 
 	width, height := app.Window.GetBufferSize()
-	app.Scene.Camera = engine.CreateCamera(10, 20, 10, float32(width), float32(height), 65.0, 0.1, 500.0)
-	app.Scene.Camera.Transform.Rotation[1] = 130.0
+	camera := engine.CreateCamera(100, 90, -20, float32(width), float32(height), 65.0, 0.1, 500.0)
+	camera.Rotation[0] = 38
+	camera.Rotation[1] = 230
+	camera.Clear = render.Color{0.141, 0.128, 0.118, 1.0}
+	//camera.Clear = render.Color{0.973, 0.945, 0.776, 1.0}
+
+	app.Scene.Camera = camera
 	app.Scene.Lights = []engine.Light{
 		{ // directional light
-			Attenuation: engine.Attenuation{
-				Constant:  0.01,
-				Linear:    0,
-				Quadratic: 1.0,
-			},
-			Color: mgl.Vec3{0.35, 0.35, 0.35},
-			Range: 4,
+			Color: mgl.Vec3{0.79 * 0.973, 0.79 * 0.945, 0.79 * 0.776},
 			Type:  engine.DirectionalLight,
-			Projection: mgl.Ortho(-32, 32, 0, 64, -32, 64),
-			Position: mgl.Vec3{-11, 16, -11},
+			Projection: mgl.Ortho(-32, 58, -3, 95, -32, 76),
+			Position: mgl.Vec3{-2, 1, -1},
 		},
 		{ // centered point light
 			Attenuation: engine.Attenuation{
@@ -65,10 +64,21 @@ func main() {
 				Linear:    0.09,
 				Quadratic: 0.32,
 			},
-			Color: mgl.Vec3{1, 1, 1},
-			Range: 20,
+			Color: mgl.Vec3{0.517, 0.506, 0.447},
+			Range: 80,
 			Type:  engine.PointLight,
-			Position: mgl.Vec3{ 32, 36, 32},
+			Position: mgl.Vec3{ 26, 36, 32},
+		},
+		{ // centered point light
+			Attenuation: engine.Attenuation{
+				Constant:  0.50,
+				Linear:    0.09,
+				Quadratic: 0.32,
+			},
+			Color: mgl.Vec3{0.517, 0.506, 0.447},
+			Range: 80,
+			Type:  engine.PointLight,
+			Position: mgl.Vec3{ -16, 36, 32},
 		},
 	}
 
@@ -79,7 +89,7 @@ func main() {
 	chk2 := game.NewColorChunk(obj2, 64)
 	generateChunk(chk2) // populate with random data
 	chk2.Compute()
-	geom_pass.Material.SetupVertexPointers()
+	geoPass.Material.SetupVertexPointers()
 	app.Scene.Add(obj2)
 
 	game.NewPlacementGrid(obj2)
@@ -88,11 +98,11 @@ func main() {
 
 	// buffer display window
 	bufferWindow := func(title string, texture *render.Texture, x, y float32, depth bool) {
-		win_color := render.Color{0.15, 0.15, 0.15, 0.8}
-		text_color := render.Color{1, 1, 1, 1}
+		winColor := render.Color{0.15, 0.15, 0.15, 0.8}
+		textColor := render.Color{1, 1, 1, 1}
 
-		win := app.UI.NewRect(win_color, x, y, 250, 280, -10)
-		label := app.UI.NewText(title, text_color, 0, 0, -21)
+		win := app.UI.NewRect(winColor, x, y, 250, 280, -10)
+		label := app.UI.NewText(title, textColor, 0, 0, -21)
 		win.Append(label)
 
 		if depth {
@@ -109,9 +119,9 @@ func main() {
 		app.UI.Append(win)
 	}
 
-	bufferWindow("Diffuse", geom_pass.Buffer.Diffuse, 30, 30, false)
-	bufferWindow("Normal", geom_pass.Buffer.Normal, 30, 340, false)
-	bufferWindow("Shadowmap", light_pass.Shadows.Output, 30, 650, true)
+	bufferWindow("Diffuse", geoPass.Buffer.Diffuse, 30, 30, false)
+	bufferWindow("Normal", geoPass.Buffer.Normal, 30, 340, false)
+	bufferWindow("Shadowmap", lightPass.Shadows.Output, 30, 650, true)
 
 	versiontext := fmt.Sprintf("goworld | %s", time.Now())
 	watermark := app.UI.NewText(versiontext, render.Color{1,1,1,1}, WIDTH - 200, 0, 0)
