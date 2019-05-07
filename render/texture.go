@@ -89,6 +89,19 @@ func (tx *Texture) Buffer(img *image.RGBA) {
 		gl.Ptr(img.Pix))
 }
 
+/** Buffers texture data to GPU memory */
+func (tx *Texture) BufferFloats(img []float32) {
+	/* Buffer image data */
+	gl.TexImage2D(
+		gl.TEXTURE_2D,
+		0,
+		int32(tx.InternalFormat),
+		tx.Width, tx.Height,
+		0,
+		tx.Format, tx.DataType,
+		gl.Ptr(&img[0]))
+}
+
 /** Helper method to create an OpenGL texture from an image object */
 func TextureFromImage(img *image.RGBA) *Texture {
 	width := int32(img.Rect.Size().X)

@@ -15,7 +15,7 @@ type GeometryPass struct {
 /* Sets up a geometry pass.
  * A geometry buffer of the given bufferWidth x bufferHeight will be created automatically */
 func NewGeometryPass(bufferWidth, bufferHeight int32) *GeometryPass {
-	mat := assets.GetMaterial("color_geometry")
+	mat := assets.GetMaterial("ssao_color_geometry")
 	p := &GeometryPass{
 		Buffer:   render.CreateGeometryBuffer(bufferWidth, bufferHeight),
 		Material: mat,

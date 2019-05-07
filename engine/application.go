@@ -14,15 +14,16 @@ type Application struct {
 
 func NewApplication(title string, width, height int) *Application {
 	wnd := CreateWindow(title, width, height)
+	buffw, buffh := wnd.GetBufferSize()
 
 	/* Scene */
 	scene := NewScene()
 
 	/* Renderer */
-	renderer := NewRenderer(int32(width), int32(height), scene)
-	geom_pass := NewGeometryPass(int32(width), int32(width))
-	renderer.Append("geometry", geom_pass)
-	renderer.Append("light", NewLightPass(geom_pass.Buffer))
+	renderer := NewRenderer(int32(buffw), int32(buffh), scene)
+	geoPass := NewGeometryPass(int32(buffw), int32(buffh))
+	renderer.Append("geometry", geoPass)
+	renderer.Append("light", NewLightPass(geoPass.Buffer))
 	renderer.Append("lines", NewLinePass())
 
 	/* UI Manager */

@@ -37,6 +37,8 @@ func (o *Object) Draw(args render.DrawArgs) {
 	// model matrix is required to calculate vertex normals during the geometry pass
 	if args.Pass == "geometry" {
 		args.Shader.Matrix4f("model", &args.Transform[0])
+		args.Shader.Matrix4f("view", &args.View[0])
+		args.Shader.Matrix4f("projection", &args.Projection[0])
 	}
 
 	for _, comp := range o.Components {

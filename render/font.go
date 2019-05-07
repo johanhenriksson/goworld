@@ -1,7 +1,6 @@
 package render
 
 import (
-	"fmt"
 	"image"
 	"io/ioutil"
 	"math"
@@ -54,7 +53,6 @@ func (f *Font) RenderOn(tx *Texture, text string, width, height float32, color C
 	f.drawer.Dot = fixed.P(0, int(line))
 	f.drawer.DrawString(text)
 
-	fmt.Println("Font texture size W:", width, "H:", height)
 	tx.Buffer(rgba)
 }
 

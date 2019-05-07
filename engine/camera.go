@@ -106,7 +106,7 @@ func (c *Camera) Update(dt float32) {
 
 	if move {
 		/* Calculate normalized movement vector */
-		dv := 5.0 * dt /* magic number: movement speed */
+		dv := 12.0 * dt /* magic number: movement speed */
 		dir = dir.Normalize().Mul(dv)
 
 		right := c.Transform.Right.Mul(dir[0])

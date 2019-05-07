@@ -44,7 +44,7 @@ func CreateWindow(title string, width int, height int) *Window {
 		panic(err)
 	}
 	window.MakeContextCurrent()
-	glfw.SwapInterval(2)
+	glfw.SwapInterval(10)
 
 	/* Initialize OpenGL */
 	if err := gl.Init(); err != nil {

@@ -35,6 +35,8 @@ const (
 )
 
 func main() {
+	fmt.Println("goworld")
+
 	app := engine.NewApplication("voxels", WIDTH, HEIGHT)
 
 	/* grab a reference to the geometry render pass */
@@ -44,16 +46,17 @@ func main() {
 	/* create a camera */
 
 	width, height := app.Window.GetBufferSize()
-	camera := engine.CreateCamera(100, 90, -20, float32(width), float32(height), 65.0, 0.1, 500.0)
+	camera := engine.CreateCamera(100, 90, -20, float32(width), float32(height), 65.0, 0.1, 1500.0)
 	camera.Rotation[0] = 38
 	camera.Rotation[1] = 230
 	camera.Clear = render.Color{0.141, 0.128, 0.118, 1.0}
+	//camera.Clear = render.Color{0.368, 0.611, 0.800, 1.0}
 	//camera.Clear = render.Color{0.973, 0.945, 0.776, 1.0}
 
 	app.Scene.Camera = camera
 	app.Scene.Lights = []engine.Light{
 		{ // directional light
-			Color: mgl.Vec3{0.79 * 0.973, 0.79 * 0.945, 0.79 * 0.776},
+			Color: mgl.Vec3{0.973, 0.945, 0.776},
 			Type:  engine.DirectionalLight,
 			Projection: mgl.Ortho(-32, 58, -3, 95, -32, 76),
 			Position: mgl.Vec3{-2, 1, -1},
@@ -85,16 +88,24 @@ func main() {
 	w := app.Scene.World
 	w.NewPlane(0, 1, 0, 0)
 
-	obj2 := app.Scene.NewObject(-2, 0, -2)
-	chk2 := game.NewColorChunk(obj2, 64)
-	generateChunk(chk2) // populate with random data
-	chk2.Compute()
-	geoPass.Material.SetupVertexPointers()
-	app.Scene.Add(obj2)
+	csize := 64
+	ccount := 1
 
-	game.NewPlacementGrid(obj2)
+	chunks := []*engine.Object{}
+	for cx := 0; cx < ccount; cx++ {
+		for cz := 0; cz < ccount; cz++ {
+			obj := app.Scene.NewObject(float32(cx * csize), 0, float32(cz * csize))
+			chk := game.NewColorChunk(obj, csize)
+			generateChunk(chk, cx * csize, 0, cz * csize) // populate with random data
+			chk.Compute()
+			geoPass.Material.SetupVertexPointers()
+			app.Scene.Add(obj)
+			chunks = append(chunks, obj)
+		}
+	}
 
-	fmt.Println("goworld")
+	game.NewPlacementGrid(chunks[0])
+
 
 	// buffer display window
 	bufferWindow := func(title string, texture *render.Texture, x, y float32, depth bool) {
@@ -120,25 +131,33 @@ func main() {
 	}
 
 	bufferWindow("Diffuse", geoPass.Buffer.Diffuse, 30, 30, false)
-	bufferWindow("Normal", geoPass.Buffer.Normal, 30, 340, false)
+	bufferWindow("Occlusion", lightPass.SSAO.Texture, 30, 340, true)
 	bufferWindow("Shadowmap", lightPass.Shadows.Output, 30, 650, true)
 
 	versiontext := fmt.Sprintf("goworld | %s", time.Now())
-	watermark := app.UI.NewText(versiontext, render.Color{1,1,1,1}, WIDTH - 200, 0, 0)
+	watermark := app.UI.NewText(versiontext, render.Color{1,1,1,1}, WIDTH - 300, 0, 0)
 	app.UI.Append(watermark)
 
 	/* Render loop */
 	app.UpdateFunc = func(dt float32) {
+		versiontext = fmt.Sprintf("goworld | %s", time.Now())
+		watermark.Set(versiontext)
+
 		if engine.KeyReleased(engine.KeyF) {
 			fmt.Println("raycast")
-			w.Raycast(10, app.Scene.Camera.Position, app.Scene.Camera.Forward)
+			w.Raycast(1000, app.Scene.Camera.Position, app.Scene.Camera.Forward)
+		}
+
+		if engine.MouseDown(0) {
+			world := camera.Unproject(engine.Mouse.X, engine.Mouse.Y)
+			fmt.Println("world:", world)
 		}
 	}
 
 	app.Run()
 }
 
-func generateChunk(chk *game.ColorChunk) {
+func generateChunk(chk *game.ColorChunk, ox int, oy int, oz int) {
 	/* Define voxels */
 	rock2 := &game.ColorVoxel{
 		R: 137,
@@ -160,15 +179,15 @@ func generateChunk(chk *game.ColorChunk) {
 	size := chk.Size
 
 	rockNoise := NewNoise(3001, 1.0 / 19.0)
-	grassNoise := NewNoise(314159, 1.0 / 28.0)
+	grassNoise := NewNoise(314158, 1.0 / 28.0)
 
-	grassHeight := size / 4
+	grassHeight := 8
 
 	for z := 0; z < size; z++ {
 		for y := 0; y < size; y++ {
 			for x := 0; x < size; x++ {
-				vr := rockNoise.Sample(x, y, z)
-				vg := grassNoise.Sample(x, 0, z)
+				vr := rockNoise.Sample(x + ox, y + oy, z + oz)
+				vg := grassNoise.Sample(x + ox, oy, z + oz)
 				gh := int(vg * 9)
 
 				var vtype *game.ColorVoxel = nil
@@ -182,7 +201,7 @@ func generateChunk(chk *game.ColorChunk) {
 				if y < grassHeight + gh && y > grassHeight {
 					vtype = grass
 				}
-				if vr < -0.3 {
+				if vr < -0.29 {
 					vtype = rock
 				}
 				chk.Set(x, y, z, vtype)

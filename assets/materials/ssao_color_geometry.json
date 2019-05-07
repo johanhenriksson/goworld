@@ -1,0 +1,28 @@
+{
+    "pointers": [
+        {
+            "name": "position",
+            "type": "unsigned byte",
+            "count": 3,
+            "normalize": false
+        },
+        {
+            "name": "normal_id",
+            "type": "unsigned byte",
+            "count": 1,
+            "integer": true
+        },
+        {
+            "name": "color",
+            "type": "unsigned byte",
+            "count": 3,
+            "normalize": true
+        },
+        {
+            "name": "occlusion",
+            "type": "unsigned byte",
+            "count": 1,
+            "normalize": true
+        }
+    ]
+}

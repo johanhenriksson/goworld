@@ -9,15 +9,17 @@ import (
 type LightPass struct {
 	Material *render.Material
 	quad     *render.RenderQuad
+	SSAO     *SSAOPass
 	Shadows  *ShadowPass
 }
 
 func NewLightPass(input *render.GeometryBuffer) *LightPass {
 
+	ssaoPass := NewSSAOPass(input)
 	shadowPass := NewShadowPass(input)
 
 	/* use a virtual material to help with vertex attributes and textures */
-	mat := render.CreateMaterial(render.CompileVFShader("/assets/shaders/voxel_light_pass"))
+	mat := render.CreateMaterial(render.CompileVFShader("/assets/shaders/ssao_light_pass"))
 
 	/* we're going to render a simple quad, so we input
 	 * position and texture coordinates */
@@ -29,7 +31,9 @@ func NewLightPass(input *render.GeometryBuffer) *LightPass {
 	mat.AddTexture("tex_diffuse", input.Diffuse)
 	mat.AddTexture("tex_normal", input.Normal)
 	mat.AddTexture("tex_depth", input.Depth)
+	mat.AddTexture("tex_position", input.Position)
 	mat.AddTexture("tex_shadow", shadowPass.Output)
+	mat.AddTexture("tex_occlusion", ssaoPass.Texture)
 
 	/* create a render quad */
 	quad := render.NewRenderQuad()
@@ -40,19 +44,25 @@ func NewLightPass(input *render.GeometryBuffer) *LightPass {
 		Material: mat,
 		quad:     quad,
 		Shadows:  shadowPass,
+		SSAO:     ssaoPass,
 	}
 	return p
 }
 
 func (p *LightPass) DrawPass(scene *Scene) {
+	// ssao pass
+	p.SSAO.DrawPass(scene)
+
 	/* use light pass shader */
 	p.Material.Use()
 	shader := p.Material.Shader
 
 	/* compute camera view projection inverse */
 	vp := scene.Camera.Projection.Mul4(scene.Camera.View)
-	vp_inv := vp.Inv()
-	shader.Matrix4f("cameraInverse", &vp_inv[0])
+	vpInv := vp.Inv()
+	vInv := scene.Camera.View.Inv()
+	shader.Matrix4f("cameraInverse", &vpInv[0])
+	shader.Matrix4f("viewInverse", &vInv[0])
 
 	/* clear */
 	clr := scene.Camera.Clear
@@ -76,7 +86,6 @@ func (p *LightPass) DrawPass(scene *Scene) {
 		} else {
 			gl.DepthMask(false)
 		}
-
 
 		/* use light pass shader */
 		p.Material.Use()

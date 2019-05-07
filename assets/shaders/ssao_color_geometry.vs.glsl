@@ -1,7 +1,8 @@
 #version 330
 
 uniform mat4 model;
-uniform mat4 mvp;
+uniform mat4 view;
+uniform mat4 projection;
 
 in vec3 position;
 in int normal_id;
@@ -24,13 +25,15 @@ const vec3 normals[7] = vec3[7] (
 );
 
 void main() {
+    mat4 mv = view * model;
+
     /* Transform normal */
     vec3 normal = normals[normal_id];
-    normal0 = normalize((model * vec4(normal,0)).xyz);
+    normal0 = normalize((mv * vec4(normal,0)).xyz);
 
     /* pass color */
     color0 = vec4(color, occlusion);
 
-    gl_Position = mvp * vec4(position,1);
-    position0 = (model * vec4(position, 1.0)).xyz;
+    position0 = (mv * vec4(position, 1.0)).xyz;
+    gl_Position = projection * vec4(position0,1);
 }

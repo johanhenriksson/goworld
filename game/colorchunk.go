@@ -1,7 +1,6 @@
 package game
 
 import (
-	"fmt"
 	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/render"
 )
@@ -204,12 +203,10 @@ func (chk *ColorChunk) Compute() {
 	}
 
 	/* Buffer to GPU */
-	fmt.Println("color chunk")
 	chk.vao.Length = int32(len(data))
 	if chk.vao.Length > 0 {
 		chk.vao.Bind()
 		chk.vbo.Buffer(data)
-		fmt.Println("color chunk done")
 	}
 }
 

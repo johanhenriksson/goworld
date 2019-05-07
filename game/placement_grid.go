@@ -33,7 +33,7 @@ func NewPlacementGrid(parentObject *engine.Object) *PlacementGrid {
 
 	// compute grid mesh
 	pg.Chunk = chunk
-	pg.Y = chunk.Size - 1
+	pg.Y = 8
 	pg.Compute()
 
 	return pg
@@ -75,11 +75,11 @@ func (grid *PlacementGrid) Compute() {
 
 	for x := 0; x < grid.Chunk.Size; x++ {
 		for z := 0; z < grid.Chunk.Size; z++ {
-			if grid.Chunk.At(x, grid.Y, z) == nil {
+			if true || grid.Chunk.At(x, grid.Y, z) == nil {
 				// place box
 				grid.mesh.Box(float32(x), float32(grid.Y), float32(z), // position
 					1, 1, 1, // size
-					0.3, 0.3, 0.3, 1) // color (RGBA)
+					0, 0, 0, 0.3) // color (RGBA)
 			}
 		}
 	}

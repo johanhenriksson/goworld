@@ -12,9 +12,10 @@ type GeometryBuffer struct {
 	*FrameBuffer
 
 	/* Pointers to frame buffer textures */
-	Diffuse *Texture
-	Normal  *Texture
-	Depth   *Texture
+	Diffuse  *Texture
+	Normal   *Texture
+	Position *Texture
+	Depth    *Texture
 }
 
 /** Geometry buffer constructor */
@@ -27,6 +28,7 @@ func CreateGeometryBuffer(width, height int32) *GeometryBuffer {
 
 		Diffuse: f.AddBuffer(gl.COLOR_ATTACHMENT0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE), // diffuse (rgb)
 		Normal:  f.AddBuffer(gl.COLOR_ATTACHMENT1, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE), // world normal (rgb)
+		Position:  f.AddBuffer(gl.COLOR_ATTACHMENT2, gl.RGB32F, gl.RGBA, gl.FLOAT), // world position (rgb)
 		// todo: specular & smoothness buffer
 
 		Depth: f.AddBuffer(gl.DEPTH_ATTACHMENT, gl.DEPTH_COMPONENT24, gl.DEPTH_COMPONENT, gl.FLOAT), // depth
