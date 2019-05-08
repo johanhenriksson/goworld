@@ -91,11 +91,12 @@ func main() {
 	w.NewPlane(0, 1, 0, 0)
 
 	csize := 32
-	ccount := 20
+	ccount := 10
 
 	fmt.Print("generating chunks... ")
-	chunks := []*game.ColorChunk{}
+	chunks := make([][]*game.ColorChunk, ccount)
 	for cx := 0; cx < ccount; cx++ {
+		chunks[cx] = make([]*game.ColorChunk, ccount)
 		for cz := 0; cz < ccount; cz++ {
 			obj := app.Scene.NewObject(float32(cx*csize), 0, float32(cz*csize))
 			chk := game.NewColorChunk(obj, csize)
@@ -103,7 +104,8 @@ func main() {
 			chk.Compute()
 			geoPass.Material.SetupVertexPointers() // wtfff
 			app.Scene.Add(obj)
-			chunks = append(chunks, chk)
+
+			chunks[cx][cz] = chk
 			fmt.Printf("(%d,%d) ", cx, cz)
 		}
 	}
@@ -165,6 +167,16 @@ func main() {
 		versiontext = fmt.Sprintf("goworld | %s", time.Now())
 		watermark.Set(versiontext)
 
+		geoPass.Buffer.Bind()
+		world := camera.Unproject(engine.Mouse.X, engine.Mouse.Y)
+		normal := sampleNormal(engine.Mouse.X, engine.Mouse.Y)
+		if normal[0] == 0 && normal[1] == 0 && normal[2] == 0 {
+			return
+		}
+
+		cx := int(world.X()) / csize
+		cz := int(world.Z()) / csize
+
 		if engine.KeyReleased(engine.KeyG) {
 			fmt.Println("raycast")
 			w.Raycast(1000, app.Scene.Camera.Position, app.Scene.Camera.Forward)
@@ -180,35 +192,24 @@ func main() {
 			selected = game.NewColorVoxel(render.DefaultPalette[paletteIdx%len(render.DefaultPalette)])
 		}
 
+		// place voxel
 		if engine.MouseDownPress(1) {
-			geoPass.Buffer.Bind()
-			world := camera.Unproject(engine.Mouse.X, engine.Mouse.Y)
-			normal := sampleNormal(engine.Mouse.X, engine.Mouse.Y)
 			target := world.Add(normal.Mul(0.5))
-
-			chunks[0].Set(int(target[0]), int(target[1]), int(target[2]), selected)
-			chunks[0].Compute()
+			chunks[cx][cz].Set(int(target[0])%csize, int(target[1])%csize, int(target[2])%csize, selected)
+			chunks[cx][cz].Compute()
 		}
 
-		if engine.KeyPressed(engine.KeyI) {
-			geoPass.Buffer.Bind()
-			world := camera.Unproject(engine.Mouse.X, engine.Mouse.Y)
-			normal := sampleNormal(engine.Mouse.X, engine.Mouse.Y)
-			target := world.Sub(normal.Mul(0.5))
-
-			// copy color
-			selected = chunks[0].At(int(target[0]), int(target[1]), int(target[2]))
-		}
-
+		// remove voxel
 		if engine.KeyPressed(engine.KeyC) {
-			geoPass.Buffer.Bind()
-			world := camera.Unproject(engine.Mouse.X, engine.Mouse.Y)
-			normal := sampleNormal(engine.Mouse.X, engine.Mouse.Y)
 			target := world.Sub(normal.Mul(0.5))
+			chunks[cx][cz].Set(int(target[0])%csize, int(target[1])%csize, int(target[2])%csize, nil)
+			chunks[cx][cz].Compute()
+		}
 
-			// remove
-			chunks[0].Set(int(target[0]), int(target[1]), int(target[2]), nil)
-			chunks[0].Compute()
+		// eyedropper
+		if engine.KeyPressed(engine.KeyI) {
+			target := world.Sub(normal.Mul(0.5))
+			selected = chunks[cx][cz].At(int(target[0])%csize, int(target[1])%csize, int(target[2])%csize)
 		}
 	}
 
