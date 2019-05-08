@@ -48,7 +48,11 @@ Only tested on OSX 10.10+. It should theoretically work on Windows/Linux.
    * ~~Directional light~~
    * ~~Directional light shadows~~
    * ~~Point light~~
-   * Point light shadows
+   * Point Light shadows
+   * Spot Light
+   * Spot Light shadows
    * ~~Screen-Space Ambient Occlusion~~
  * Bloom Effect
+ * ~~Color Correction Pass~~
+ * ~~Output Pass~~
  * Scene save/load

@@ -154,9 +154,5 @@ void main() {
     /* write fragment color & restore depth buffer */
     color = vec4(lightColor,  1.0);
 
-    // gamma correction
-    float gamma = 2.2;
-    color = pow(color, vec4(1.0/gamma));
-
     gl_FragDepth = depth;
 }

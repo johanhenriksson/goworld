@@ -9,9 +9,12 @@ import (
 type LightPass struct {
 	Material *render.Material
 	quad     *render.RenderQuad
+	Output   *render.Texture
 	SSAO     *SSAOPass
 	Shadows  *ShadowPass
 	Ambient  render.Color
+
+	fbo *render.FrameBuffer
 }
 
 func NewLightPass(input *render.GeometryBuffer) *LightPass {
@@ -24,6 +27,9 @@ func NewLightPass(input *render.GeometryBuffer) *LightPass {
 
 	ssaoPass := NewSSAOPass(input, &ssao)
 	shadowPass := NewShadowPass(input)
+
+	fbo := render.CreateFrameBuffer(input.Width, input.Height)
+	output := fbo.AddBuffer(gl.COLOR_ATTACHMENT0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE)
 
 	/* use a virtual material to help with vertex attributes and textures */
 	mat := render.CreateMaterial(render.CompileVFShader("/assets/shaders/ssao_light_pass"))
@@ -46,6 +52,8 @@ func NewLightPass(input *render.GeometryBuffer) *LightPass {
 	quad := render.NewRenderQuad(mat)
 
 	p := &LightPass{
+		fbo:      fbo,
+		Output:   output,
 		Material: mat,
 		quad:     quad,
 		Shadows:  shadowPass,
@@ -58,6 +66,8 @@ func NewLightPass(input *render.GeometryBuffer) *LightPass {
 func (p *LightPass) DrawPass(scene *Scene) {
 	// ssao pass
 	p.SSAO.DrawPass(scene)
+
+	p.fbo.Bind()
 
 	/* use light pass shader */
 	shader := p.Material.Shader
@@ -97,6 +107,8 @@ func (p *LightPass) DrawPass(scene *Scene) {
 			gl.DepthMask(false)
 		}
 
+		p.fbo.Bind()
+
 		/* use light pass shader */
 		shader.Use()
 
@@ -118,6 +130,8 @@ func (p *LightPass) DrawPass(scene *Scene) {
 		/* render light */
 		gl.Viewport(0, 0, int32(scene.Camera.Width), int32(scene.Camera.Height))
 		p.quad.Draw()
+
+		p.fbo.Unbind()
 	}
 
 	/* reset GL state */
