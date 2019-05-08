@@ -23,9 +23,11 @@ func NewApplication(title string, width, height int) *Application {
 	renderer := NewRenderer(int32(buffw), int32(buffh), scene)
 	geoPass := NewGeometryPass(int32(buffw), int32(buffh))
 	lightPass := NewLightPass(geoPass.Buffer)
+	colorPass := NewColorPass(lightPass.Output, "saturated")
 	renderer.Append("geometry", geoPass)
 	renderer.Append("light", lightPass)
-	renderer.Append("output", NewOutputPass(lightPass.Output))
+	renderer.Append("postprocess", colorPass)
+	renderer.Append("output", NewOutputPass(colorPass.Output))
 	renderer.Append("lines", NewLinePass())
 
 	/* UI Manager */

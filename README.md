@@ -53,6 +53,6 @@ Only tested on OSX 10.10+. It should theoretically work on Windows/Linux.
    * Spot Light shadows
    * ~~Screen-Space Ambient Occlusion~~
  * Bloom Effect
- * Color Correction Pass
+ * ~~Color Correction Pass~~
  * ~~Output Pass~~
  * Scene save/load
