@@ -107,7 +107,7 @@ void main() {
 
     /* calculate contribution from the light source */
     float contrib = 0.0;
-    float shadow = 0.0;
+    float shadow = 1.0;
     if (light.Type == DIRECTIONAL_LIGHT) {
         // directional lights store the direction in the position uniform
         vec3 dir = normalize(light.Position);
@@ -115,7 +115,6 @@ void main() {
 
         // experimental shadows
         shadow = sampleShadowmap(tex_shadow, position);
-
     }
     else if (light.Type == POINT_LIGHT) {
         /* calculate light vector & distance */
@@ -124,7 +123,7 @@ void main() {
         surfaceToLight = normalize(surfaceToLight);
         contrib = calculatePointLightContrib(surfaceToLight, distanceToLight, normal);
     }
-    occlusion = shadow;
+    occlusion = t.a * shadow;
 
     vec4 light_clip_pos = light_vp * vec4(position, 1);
 
@@ -136,8 +135,8 @@ void main() {
     vec3 lightColor = light.Color * occlusion * contrib;
 
     /* add ambient light */
-    const vec3 ambientColor = vec3(0.95, 1.0, 0.91);
-    lightColor += 0.1 * ambientColor;
+    const vec3 ambientColor = vec3(1,1,1);
+    lightColor += 0.17 * ambientColor;
 
     /* mix with diffuse */
     lightColor *= diffuseColor;

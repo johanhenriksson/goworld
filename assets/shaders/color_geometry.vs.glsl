@@ -10,6 +10,7 @@ in float occlusion;
 
 out vec4 color0;
 out vec3 normal0;
+out vec3 position0;
 
 /* In order to save vertex memory, normals are looked up in a table */
 const vec3 normals[7] = vec3[7] (
@@ -31,4 +32,5 @@ void main() {
     color0 = vec4(color, occlusion);
 
     gl_Position = mvp * vec4(position,1);
+    position0 = (model * vec4(position, 1.0)).xyz;
 }

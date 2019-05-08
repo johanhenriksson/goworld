@@ -13,14 +13,15 @@ in vec2 tile;
 
 out vec2 texcoord0;
 out vec3 normal0;
+out vec3 position0;
 
 void main() {
-
     /* Transform normal */
     normal0 = normalize((model * vec4(normal,0)).xyz);
 
     /* Convert tile coordinate to texture coord */
     texcoord0 = vec2(tile.x, 1.0 - tile.y) * TileSize / TilesetTexHeight;
 
-    gl_Position = mvp * vec4(position,1);
+    gl_Position = mvp * vec4(position, 1);
+    position0 = gl_Position;
 }

@@ -3,15 +3,14 @@ package geometry
 type Vertices []Vertex
 
 type Vertex struct {
-    X, Y, Z     float32
-    R, G, B     float32
+	X, Y, Z float32
+	R, G, B float32
 }
 
-
 func (vtx Vertices) Elements() int {
-    return len(vtx)
+	return len(vtx)
 }
 
 func (vtx Vertices) Size() int {
-    return 24
+	return 24
 }
