@@ -2,6 +2,7 @@ package game
 
 import (
 	"fmt"
+
 	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/geometry"
 	"github.com/johanhenriksson/goworld/render"
@@ -78,8 +79,8 @@ func (grid *PlacementGrid) Compute() {
 			if true || grid.Chunk.At(x, grid.Y, z) == nil {
 				// place box
 				grid.mesh.Box(float32(x), float32(grid.Y), float32(z), // position
-					1, 1, 1, // size
-					0, 0, 0, 0.3) // color (RGBA)
+					1, 0, 1, // size
+					0, 0, 0, 0.35) // color (RGBA)
 			}
 		}
 	}

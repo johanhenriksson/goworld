@@ -106,9 +106,7 @@ void main() {
     float depth = texture(tex_depth, texcoord0).r;
     vec3 position = positionFromDepth(depth);
 
-    // apply ssao
     float ssao = texture(tex_occlusion, texcoord0).r;
-    occlusion = t.a;
 
     // now we should be able to calculate the position in light space!
     // since the directional light matrix is orthographic the z value will
@@ -147,15 +145,18 @@ void main() {
     /* add ambient light */
     lightColor += ambient.a * ambient.rgb;
 
-    float ssao_blend = 0.5;
-    lightColor = (1-ssao_blend) * lightColor * ssao + ssao_blend * lightColor;
+    float ssao_blend = 0.5; // ssao amount
+    lightColor *= mix(1, ssao, ssao_blend);
 
     /* mix with diffuse */
     lightColor *= diffuseColor;
 
     /* write fragment color & restore depth buffer */
-    //color = vec4(texture(tex_shadow, texcoord0).r + 0.00001 * lightColor, 1.0);
-    //color = vec4(vec3(light_ndc_pos.xy,0) + 0.001 * lightColor,  1.0);
     color = vec4(lightColor,  1.0);
+
+    // gamma correction
+    float gamma = 2.2;
+    color = pow(color, vec4(1.0/gamma));
+
     gl_FragDepth = depth;
 }

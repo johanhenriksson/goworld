@@ -26,12 +26,13 @@ import (
 	"github.com/johanhenriksson/goworld/math"
 	"github.com/johanhenriksson/goworld/render"
 
+	"github.com/go-gl/gl/v2.1/gl"
 	mgl "github.com/go-gl/mathgl/mgl32"
 )
 
 const (
-	WIDTH  = 1600
-	HEIGHT = 1000
+	WIDTH  = 1200
+	HEIGHT = 800
 )
 
 func main() {
@@ -41,7 +42,7 @@ func main() {
 
 	/* grab a reference to the geometry render pass */
 	geoPass := app.Render.Get("geometry").(*engine.GeometryPass)
-	lightPass := app.Render.Get("light").(*engine.LightPass)
+	//lightPass := app.Render.Get("light").(*engine.LightPass)
 
 	/* create a camera */
 
@@ -51,13 +52,13 @@ func main() {
 	camera.Rotation[1] = 230
 	camera.Clear = render.Color4(0.141, 0.128, 0.118, 1.0)
 	camera.Clear = render.Color4(0, 0, 0, 1)
-	//camera.Clear = render.Color{0.368, 0.611, 0.800, 1.0}
+	camera.Clear = render.Color4(0.368, 0.611, 0.800, 1.0)
 	//camera.Clear = render.Color{0.973, 0.945, 0.776, 1.0}
 
 	app.Scene.Camera = camera
 	app.Scene.Lights = []engine.Light{
 		{ // directional light
-			Color:      mgl.Vec3{0.973, 0.945, 0.776},
+			Color:      mgl.Vec3{0.5 * 0.973, 0.5 * 0.945, 0.5 * 0.776},
 			Type:       engine.DirectionalLight,
 			Projection: mgl.Ortho(-320, 580, -30, 600, -320, 760),
 			Position:   mgl.Vec3{-2, 1, -1},
@@ -89,11 +90,11 @@ func main() {
 	w := app.Scene.World
 	w.NewPlane(0, 1, 0, 0)
 
-	csize := 64
-	ccount := 8
+	csize := 32
+	ccount := 20
 
 	fmt.Print("generating chunks... ")
-	chunks := []*engine.Object{}
+	chunks := []*game.ColorChunk{}
 	for cx := 0; cx < ccount; cx++ {
 		for cz := 0; cz < ccount; cz++ {
 			obj := app.Scene.NewObject(float32(cx*csize), 0, float32(cz*csize))
@@ -102,57 +103,112 @@ func main() {
 			chk.Compute()
 			geoPass.Material.SetupVertexPointers() // wtfff
 			app.Scene.Add(obj)
-			chunks = append(chunks, obj)
+			chunks = append(chunks, chk)
+			fmt.Printf("(%d,%d) ", cx, cz)
 		}
 	}
 	fmt.Println("done")
 
-	game.NewPlacementGrid(chunks[0])
+	// this composition system sucks
+	//game.NewPlacementGrid(chunks[0])
 
 	// buffer display window
-	bufferWindow := func(title string, texture *render.Texture, x, y float32, depth bool) {
-		winColor := render.Color{0.15, 0.15, 0.15, 0.8}
-		textColor := render.Color{1, 1, 1, 1}
+	/*
+		bufferWindow := func(title string, texture *render.Texture, x, y float32, depth bool) {
+			winColor := render.Color{0.15, 0.15, 0.15, 0.8}
+			textColor := render.Color{1, 1, 1, 1}
 
-		win := app.UI.NewRect(winColor, x, y, 250, 280, -10)
-		label := app.UI.NewText(title, textColor, 0, 0, -21)
-		win.Append(label)
+			win := app.UI.NewRect(winColor, x, y, 250, 280, -10)
+			label := app.UI.NewText(title, textColor, 0, 0, -21)
+			win.Append(label)
 
-		if depth {
-			img := app.UI.NewDepthImage(texture, 0, 30, 250, 250, -20)
-			img.Quad.FlipY()
-			win.Append(img)
-		} else {
-			img := app.UI.NewImage(texture, 0, 30, 250, 250, -20)
-			img.Quad.FlipY()
-			win.Append(img)
+			if depth {
+				img := app.UI.NewDepthImage(texture, 0, 30, 250, 250, -20)
+				img.Quad.FlipY()
+				win.Append(img)
+			} else {
+				img := app.UI.NewImage(texture, 0, 30, 250, 250, -20)
+				img.Quad.FlipY()
+				win.Append(img)
+			}
+
+			app.UI.Append(win)
 		}
 
-		/* attach UI element */
-		app.UI.Append(win)
-	}
-
-	bufferWindow("Diffuse", geoPass.Buffer.Diffuse, 30, 30, false)
-	bufferWindow("Occlusion", lightPass.SSAO.Gaussian.Output, 30, 340, false)
-	bufferWindow("Shadowmap", lightPass.Shadows.Output, 30, 650, true)
+		bufferWindow("Normal", geoPass.Buffer.Normal, 30, 30, false)
+			bufferWindow("Occlusion", lightPass.SSAO.Gaussian.Output, 30, 340, false)
+			bufferWindow("Shadowmap", lightPass.Shadows.Output, 30, 650, true)
+	*/
 
 	versiontext := fmt.Sprintf("goworld | %s", time.Now())
 	watermark := app.UI.NewText(versiontext, render.Color4(1, 1, 1, 1), WIDTH-300, 0, 0)
 	app.UI.Append(watermark)
+
+	paletteIdx := 5
+	selected := game.NewColorVoxel(render.DefaultPalette[paletteIdx])
+
+	sampleNormal := func(x, y float32) mgl.Vec3 {
+		geoPass.Buffer.Bind()
+		normalEncoded := geoPass.Buffer.Sample(gl.COLOR_ATTACHMENT1, int(x), int(HEIGHT-y))
+		if normalEncoded.R != 0 || normalEncoded.G != 0 || normalEncoded.B != 0 {
+			viewNormal := normalEncoded.Vec3().Mul(2).Sub(mgl.Vec3{1, 1, 1}).Normalize() // normals [-1,1]
+
+			viewInv := camera.View.Inv()
+			worldNormal := viewInv.Mul4x1(mgl.Vec4{viewNormal[0], viewNormal[1], viewNormal[2], 0}).Vec3()
+			return worldNormal
+		}
+		return normalEncoded.Vec3() // zero
+	}
 
 	/* Render loop */
 	app.UpdateFunc = func(dt float32) {
 		versiontext = fmt.Sprintf("goworld | %s", time.Now())
 		watermark.Set(versiontext)
 
-		if engine.KeyReleased(engine.KeyF) {
+		if engine.KeyReleased(engine.KeyG) {
 			fmt.Println("raycast")
 			w.Raycast(1000, app.Scene.Camera.Position, app.Scene.Camera.Forward)
 		}
 
-		if engine.MouseDown(1) {
+		if engine.KeyReleased(engine.KeyF) {
+			paletteIdx++
+			selected = game.NewColorVoxel(render.DefaultPalette[paletteIdx%len(render.DefaultPalette)])
+		}
+
+		if engine.KeyReleased(engine.KeyR) {
+			paletteIdx--
+			selected = game.NewColorVoxel(render.DefaultPalette[paletteIdx%len(render.DefaultPalette)])
+		}
+
+		if engine.MouseDownPress(1) {
+			geoPass.Buffer.Bind()
 			world := camera.Unproject(engine.Mouse.X, engine.Mouse.Y)
-			fmt.Println("click world:", world, "camera at:", camera.Position)
+			normal := sampleNormal(engine.Mouse.X, engine.Mouse.Y)
+			target := world.Add(normal.Mul(0.5))
+
+			chunks[0].Set(int(target[0]), int(target[1]), int(target[2]), selected)
+			chunks[0].Compute()
+		}
+
+		if engine.KeyPressed(engine.KeyI) {
+			geoPass.Buffer.Bind()
+			world := camera.Unproject(engine.Mouse.X, engine.Mouse.Y)
+			normal := sampleNormal(engine.Mouse.X, engine.Mouse.Y)
+			target := world.Sub(normal.Mul(0.5))
+
+			// copy color
+			selected = chunks[0].At(int(target[0]), int(target[1]), int(target[2]))
+		}
+
+		if engine.KeyPressed(engine.KeyC) {
+			geoPass.Buffer.Bind()
+			world := camera.Unproject(engine.Mouse.X, engine.Mouse.Y)
+			normal := sampleNormal(engine.Mouse.X, engine.Mouse.Y)
+			target := world.Sub(normal.Mul(0.5))
+
+			// remove
+			chunks[0].Set(int(target[0]), int(target[1]), int(target[2]), nil)
+			chunks[0].Compute()
 		}
 	}
 
@@ -180,21 +236,27 @@ func generateChunk(chk *game.ColorChunk, ox int, oy int, oz int) {
 		G: 140,
 		B: 54,
 	}
+	cloud := &game.ColorVoxel{
+		R: 255,
+		G: 255,
+		B: 255,
+	}
 
 	/* Fill chunk with voxels */
 	size := chk.Size
 
-	rockNoise := math.NewNoise(3001, 1.0/19.0)
-	grassNoise := math.NewNoise(314158, 1.0/28.0)
+	rockNoise := math.NewNoise(10000, 1.0/40.0)
+	grassNoise := math.NewNoise(10002, 1.0/28.0)
+	cloudNoise := math.NewNoise(24511626, 1/40.0)
 
 	grassHeight := 8
 
 	for z := 0; z < size; z++ {
 		for y := 0; y < size; y++ {
 			for x := 0; x < size; x++ {
-				vr := rockNoise.Sample(x+ox, y+oy, z+oz)
-				vg := grassNoise.Sample(x+ox, oy, z+oz)
-				gh := int(vg * 9)
+				gh := int(9 * grassNoise.Sample(x+ox, oy, z+oz))
+				rh := int(44 * rockNoise.Sample(x+ox, oy, z+oz))
+				ch := int(8*cloudNoise.Sample(x+ox, y+oy, z+oz)) + 8
 
 				var vtype *game.ColorVoxel = nil
 				if y < grassHeight {
@@ -207,9 +269,14 @@ func generateChunk(chk *game.ColorChunk, ox int, oy int, oz int) {
 				if y < grassHeight+gh && y > grassHeight {
 					vtype = grass
 				}
-				if vr < -0.29 {
+				if y < rh {
 					vtype = rock
 				}
+
+				if ch > 12 && y > 98-ch && y < 100+ch {
+					vtype = cloud
+				}
+
 				chk.Set(x, y, z, vtype)
 			}
 		}

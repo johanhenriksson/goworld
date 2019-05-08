@@ -25,6 +25,14 @@ type ColorVoxel struct {
 	R, G, B byte
 }
 
+func NewColorVoxel(color render.Color) *ColorVoxel {
+	return &ColorVoxel{
+		R: byte(255 * color.R),
+		G: byte(255 * color.G),
+		B: byte(255 * color.B),
+	}
+}
+
 type ColorVoxelVertex struct {
 	X, Y, Z byte // position
 	N       byte // normal index

@@ -97,7 +97,6 @@ func (wnd *Window) Loop() {
 		dt := float32(t - wnd.lastFrameTime)
 		wnd.lastFrameTime = t
 
-		UpdateMouse(dt)
 		if MouseDown(MouseButton1) {
 			wnd.LockCursor()
 		} else {
@@ -111,6 +110,8 @@ func (wnd *Window) Loop() {
 		if wnd.renderCb != nil {
 			wnd.renderCb(wnd, dt)
 		}
+
+		UpdateMouse(dt)
 
 		wnd.EndFrame()
 		if wnd.maxFrameTime > 0 {

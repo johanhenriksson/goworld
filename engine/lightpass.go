@@ -40,7 +40,7 @@ func NewLightPass(input *render.GeometryBuffer) *LightPass {
 	mat.AddTexture("tex_normal", input.Normal)
 	mat.AddTexture("tex_depth", input.Depth)
 	mat.AddTexture("tex_shadow", shadowPass.Output)
-	mat.AddTexture("tex_occlusion", ssaoPass.Output)
+	mat.AddTexture("tex_occlusion", ssaoPass.Gaussian.Output)
 
 	/* create a render quad */
 	quad := render.NewRenderQuad(mat)
@@ -50,7 +50,7 @@ func NewLightPass(input *render.GeometryBuffer) *LightPass {
 		quad:     quad,
 		Shadows:  shadowPass,
 		SSAO:     ssaoPass,
-		Ambient:  render.Color4(1, 1, 1, 0.2),
+		Ambient:  render.Color4(1, 1, 1, 0.1),
 	}
 	return p
 }

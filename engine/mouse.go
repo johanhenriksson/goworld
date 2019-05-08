@@ -9,18 +9,24 @@ type ButtonMap map[MouseButton]bool
 
 /* Mouse Global */
 var Mouse = MouseState{
-	buttons: ButtonMap{},
+	buttons:     make([]bool, 4),
+	lastbuttons: make([]bool, 4),
 }
 
 type MouseState struct {
-	X, Y    float32
-	DX, DY  float32 // frame delta x, y
-	lX, lY  float32 // last x, y
-	init    bool
-	buttons ButtonMap
+	X, Y        float32
+	DX, DY      float32 // frame delta x, y
+	lX, lY      float32 // last x, y
+	init        bool
+	buttons     []bool
+	lastbuttons []bool
 }
 
 /* Returns true if the given mouse button is held down */
+func MouseDownPress(button MouseButton) bool {
+	return Mouse.buttons[button] && !Mouse.lastbuttons[button]
+}
+
 func MouseDown(button MouseButton) bool {
 	return Mouse.buttons[button]
 }
@@ -47,6 +53,8 @@ func UpdateMouse(dt float32) {
 	}
 	Mouse.lX = Mouse.X
 	Mouse.lY = Mouse.Y
+
+	copy(Mouse.lastbuttons[:], Mouse.buttons[:])
 }
 
 const (

@@ -1,6 +1,8 @@
 package render
 
 import (
+	"unsafe"
+
 	"github.com/go-gl/gl/v4.1-core/gl"
 )
 
@@ -87,4 +89,11 @@ func (f *FrameBuffer) Clear() {
 func (f *FrameBuffer) Delete() {
 	gl.DeleteFramebuffers(1, &f.id)
 	f.id = 0
+}
+
+func (f *FrameBuffer) Sample(target uint32, x, y int) Color {
+	pixel := make([]float32, 4)
+	gl.ReadBuffer(target)
+	gl.ReadPixels(int32(x), int32(y), 1, 1, gl.RGBA, gl.FLOAT, unsafe.Pointer(&pixel[0]))
+	return Color4(pixel[0], pixel[1], pixel[2], pixel[3])
 }
