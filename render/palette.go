@@ -1,7 +1,9 @@
 package render
 
+// A Palette is a list of colors
 type Palette []Color
 
+// RawPalette creates a palette from a list of hex integers
 func RawPalette(colors ...int) Palette {
 	palette := make(Palette, len(colors))
 	for i, color := range colors {
@@ -14,7 +16,7 @@ func RawPalette(colors ...int) Palette {
 	return palette
 }
 
-// Default Palette https://lospec.com/palette-list/broken-facility
+// DefaultPalette https://lospec.com/palette-list/broken-facility
 var DefaultPalette = RawPalette(
 	0x24211e, 0x898377, 0xada99e, 0xcccac4, 0xf9f8f7,
 	0x563735, 0x835748, 0xa37254, 0xb59669, 0xcab880,

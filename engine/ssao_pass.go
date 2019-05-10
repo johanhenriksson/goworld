@@ -23,7 +23,7 @@ type SSAOPass struct {
 
 	Output   *render.Texture
 	Material *render.Material
-	Quad     *render.RenderQuad
+	Quad     *render.Quad
 	Noise    *render.Texture
 	Kernel   []mgl.Vec3
 
@@ -52,7 +52,7 @@ func NewSSAOPass(gbuff *render.GeometryBuffer, settings *SSAOSettings) *SSAOPass
 	mat.AddTexture("tex_noise", noise)
 
 	/* create a render quad */
-	quad := render.NewRenderQuad(mat)
+	quad := render.NewQuad(mat)
 
 	return &SSAOPass{
 		SSAOSettings: *settings,
@@ -76,7 +76,7 @@ func (p *SSAOPass) DrawPass(scene *Scene) {
 	shader := p.Material.Shader
 
 	shader.Use()
-	shader.Matrix4f("projection", &scene.Camera.Projection[0])
+	shader.Mat4f("projection", scene.Camera.Projection)
 	shader.Int32("kernel_size", int32(len(p.Kernel)))
 	shader.Float("bias", p.Bias)
 	shader.Float("radius", p.Radius)
@@ -91,7 +91,7 @@ func (p *SSAOPass) DrawPass(scene *Scene) {
 
 	p.fbo.Unbind()
 
-	p.Gaussian.DrawPass(scene)
+	//p.Gaussian.DrawPass(scene)
 }
 
 func createSSAOKernel(samples int) []mgl.Vec3 {
@@ -125,7 +125,7 @@ func createHemisphereNoiseTexture(size int) *render.Texture {
 	for i := 0; i < len(noiseData); i += 3 {
 		noiseData[i+0] = rand.Float32()*2 - 1
 		noiseData[i+1] = rand.Float32()*2 - 1
-		noiseData[i+2] = rand.Float32()
+		noiseData[i+2] = 0
 	}
 	noise.BufferFloats(noiseData)
 

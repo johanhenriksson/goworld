@@ -26,7 +26,7 @@ func (f *Font) setup() {
 		Face: truetype.NewFace(f.fnt, &truetype.Options{
 			Size:    f.Size,
 			DPI:     f.DPI,
-			Hinting: font.HintingNone,
+			Hinting: font.HintingFull,
 		}),
 	}
 }

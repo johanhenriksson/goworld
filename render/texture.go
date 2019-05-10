@@ -3,18 +3,16 @@ package render
 import (
 	"image"
 	"image/draw"
-	_ "image/png"
+	_ "image/png" // png support
 	"os"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/johanhenriksson/goworld/util"
 )
 
-/**
- * OpenGL Texture
- */
+// Texture represents an OpenGL 2D texture object
 type Texture struct {
-	Id             uint32
+	ID             uint32
 	Width          int32
 	Height         int32
 	Format         uint32
@@ -23,13 +21,13 @@ type Texture struct {
 	MipLevel       int32
 }
 
-/* Creates a new GL texture and sets basic options */
+// CreateTexture creates a new 2D texture and sets some sane defaults
 func CreateTexture(width, height int32) *Texture {
 	var id uint32
 	gl.GenTextures(1, &id)
 
 	tx := &Texture{
-		Id:             id,
+		ID:             id,
 		Width:          width,
 		Height:         height,
 		Format:         gl.RGBA,
@@ -47,23 +45,24 @@ func CreateTexture(width, height int32) *Texture {
 	return tx
 }
 
-/** Binds this texture to the given texture slot */
+// Use binds this texture to the given texture slot */
 func (tx *Texture) Use(slot uint32) {
 	gl.ActiveTexture(gl.TEXTURE0 + slot)
 	gl.Enable(gl.TEXTURE_2D)
 	tx.Bind()
 }
 
-/** Bind texture to the currently active texture slot */
+// Bind texture to the currently active texture slot
 func (tx *Texture) Bind() {
-	gl.BindTexture(gl.TEXTURE_2D, tx.Id)
+	gl.BindTexture(gl.TEXTURE_2D, tx.ID)
 }
 
-/** Attach this texture to the current frame buffer object */
+// FrameBufferTarget attaches this texture to the current frame buffer object
 func (tx *Texture) FrameBufferTarget(attachment uint32) {
-	gl.FramebufferTexture(gl.FRAMEBUFFER, attachment, tx.Id, tx.MipLevel)
+	gl.FramebufferTexture(gl.FRAMEBUFFER, attachment, tx.ID, tx.MipLevel)
 }
 
+// Clear the texture
 func (tx *Texture) Clear() {
 	gl.TexImage2D(
 		gl.TEXTURE_2D,
@@ -76,7 +75,7 @@ func (tx *Texture) Clear() {
 		nil)         // null ptr
 }
 
-/** Buffers texture data to GPU memory */
+// Buffer buffers texture data from an image object
 func (tx *Texture) Buffer(img *image.RGBA) {
 	/* Buffer image data */
 	gl.TexImage2D(
@@ -89,7 +88,7 @@ func (tx *Texture) Buffer(img *image.RGBA) {
 		gl.Ptr(img.Pix))
 }
 
-/** Buffers texture data to GPU memory */
+// BufferFloats buffers texture data from a float array
 func (tx *Texture) BufferFloats(img []float32) {
 	/* Buffer image data */
 	gl.TexImage2D(
@@ -102,7 +101,7 @@ func (tx *Texture) BufferFloats(img []float32) {
 		gl.Ptr(&img[0]))
 }
 
-/** Helper method to create an OpenGL texture from an image object */
+// TextureFromImage is a helper method to create an OpenGL texture from an image object */
 func TextureFromImage(img *image.RGBA) *Texture {
 	width := int32(img.Rect.Size().X)
 	height := int32(img.Rect.Size().Y)
@@ -111,19 +110,19 @@ func TextureFromImage(img *image.RGBA) *Texture {
 	return tx
 }
 
-/* TODO: Rename to TextureFromFile */
-/** Loads a texture from file */
-func LoadTexture(file string) (*Texture, error) {
-	img, err := LoadImage(file)
+// TextureFromFile loads a texture from file */
+func TextureFromFile(file string) (*Texture, error) {
+	img, err := ImageFromFile(file)
 	if err != nil {
 		return nil, err
 	}
 	return TextureFromImage(img), nil
 }
 
-/* TODO: Rename to ImageFromFile */
-/* Loads an image from file. Returns an RGBA image object */
-func LoadImage(file string) (*image.RGBA, error) {
+// ImageFromFile loads an image from a file. Returns an RGBA image object */
+func ImageFromFile(file string) (*image.RGBA, error) {
+	// todo: http support?
+
 	imgFile, err := os.Open(util.ExePath + file)
 	if err != nil {
 		return nil, err

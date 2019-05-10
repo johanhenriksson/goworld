@@ -7,7 +7,7 @@ import (
 
 type OutputPass struct {
 	Input *render.Texture
-	quad  *render.RenderQuad
+	quad  *render.Quad
 	mat   *render.Material
 }
 
@@ -17,7 +17,7 @@ func NewOutputPass(input *render.Texture) *OutputPass {
 	mat.AddTexture("tex_input", input)
 
 	/* create a render quad */
-	quad := render.NewRenderQuad(mat)
+	quad := render.NewQuad(mat)
 
 	return &OutputPass{
 		Input: input,
@@ -33,7 +33,7 @@ func (p *OutputPass) DrawPass(scene *Scene) {
 
 	// camera settings
 	gl.Viewport(0, 0, int32(camera.Width), int32(camera.Height))
-	gl.ClearColor(camera.Clear.R, camera.Clear.G, camera.Clear.B, camera.Clear.A)
+	gl.ClearColor(camera.Clear.R, camera.Clear.G, camera.Clear.B, 1)
 
 	// draw
 	gl.Clear(gl.DEPTH_BUFFER_BIT | gl.COLOR_BUFFER_BIT)

@@ -4,12 +4,13 @@ import (
 	"github.com/go-gl/gl/v4.1-core/gl"
 )
 
+// ShadowBuffer is a frame buffer containing only a depth texture
 type ShadowBuffer struct {
 	*FrameBuffer
 	Depth *Texture
 }
 
-/** Shadow buffer constructor */
+// NewShadowBuffer creates a new shadow buffer
 func NewShadowBuffer(width, height int32) *ShadowBuffer {
 	/* create frame buffer object */
 	f := CreateFrameBuffer(width, height)

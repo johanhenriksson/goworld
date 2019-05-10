@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/johanhenriksson/goworld/assets"
 	"github.com/johanhenriksson/goworld/geometry"
 	"github.com/johanhenriksson/goworld/render"
@@ -9,7 +10,7 @@ import (
 type Image struct {
 	*Element
 	Texture *render.Texture
-	Quad  *geometry.ImageQuad
+	Quad    *geometry.ImageQuad
 }
 
 func (m *Manager) NewImage(texture *render.Texture, x, y, w, h, z float32) *Image {
@@ -18,7 +19,7 @@ func (m *Manager) NewImage(texture *render.Texture, x, y, w, h, z float32) *Imag
 	mat.AddTexture("image", texture)
 	img := &Image{
 		Element: el,
-		Texture:   texture,
+		Texture: texture,
 		Quad:    geometry.NewImageQuad(mat, w, h, z),
 	}
 	return img
@@ -30,7 +31,7 @@ func (m *Manager) NewDepthImage(texture *render.Texture, x, y, w, h, z float32) 
 	mat.AddTexture("image", texture)
 	img := &Image{
 		Element: el,
-		Texture:   texture,
+		Texture: texture,
 		Quad:    geometry.NewImageQuad(mat, w, h, z),
 	}
 	return img
@@ -38,7 +39,12 @@ func (m *Manager) NewDepthImage(texture *render.Texture, x, y, w, h, z float32) 
 
 func (r *Image) Draw(args render.DrawArgs) {
 	args.Transform = r.Element.Transform.Matrix.Mul4(args.Transform) //args.Transform.Mul4(r.Element.Transform.Matrix)
+
+	gl.Enable(gl.BLEND)
+	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 	r.Quad.Draw(args)
+	gl.Disable(gl.BLEND)
+
 	for _, el := range r.Element.children {
 		el.Draw(args)
 	}

@@ -4,6 +4,10 @@ import (
 	"github.com/go-gl/gl/v4.1-core/gl"
 )
 
+// VertexFormat describes vertex buffer pointers
+type VertexFormat []BufferDescriptor
+
+// F32_XYZUV contains position & texture coords as 5 32-bit floats: X, Y, Z, U, V
 var F32_XYZUV = VertexFormat{
 	BufferDescriptor{
 		Name:      "position",
@@ -24,5 +28,3 @@ var F32_XYZUV = VertexFormat{
 		Normalize: false,
 	},
 }
-
-type VertexFormat []BufferDescriptor

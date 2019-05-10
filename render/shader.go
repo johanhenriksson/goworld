@@ -10,29 +10,34 @@ import (
 	"github.com/johanhenriksson/goworld/util"
 )
 
+// ShaderType indicates the type of shader program
 type ShaderType uint32
 
+// VertexShaderType is a Vertex Shader
 const VertexShaderType ShaderType = gl.VERTEX_SHADER
+
+// FragmentShaderType is a Fragment Shader
 const FragmentShaderType ShaderType = gl.FRAGMENT_SHADER
 
-/* Represents a shader part of a GLSL program. */
+// Shader represents a shader part of a GLSL program
 type Shader struct {
-	Id       uint32
+	ID       uint32
 	stype    ShaderType
 	compiled bool
 }
 
+// CreateShader creates a new empty shader
 func CreateShader(shaderType ShaderType) *Shader {
 	id := gl.CreateShader(uint32(shaderType))
 	return &Shader{
-		Id:       id,
+		ID:       id,
 		stype:    shaderType,
 		compiled: false,
 	}
 }
 
-/* Compiles and returns a vertex shader from the given source file
-   Panics on compilation errors */
+// VertexShader compiles and returns a vertex shader from the given source file
+// Panics on compilation errors
 func VertexShader(path string) *Shader {
 	s := CreateShader(VertexShaderType)
 	err := s.CompileFile(path)
@@ -42,8 +47,8 @@ func VertexShader(path string) *Shader {
 	return s
 }
 
-/* Compiles and returns a fragment shader from the given source file.
-   Panics on compilation errors */
+// FragmentShader compiles and returns a fragment shader from the given source file.
+// Panics on compilation errors
 func FragmentShader(path string) *Shader {
 	s := CreateShader(FragmentShaderType)
 	err := s.CompileFile(path)
@@ -53,7 +58,7 @@ func FragmentShader(path string) *Shader {
 	return s
 }
 
-/* Loads and compiles source code from the given file path */
+// CompileFile loads and compiles source code from the given file path
 func (shader *Shader) CompileFile(path string) error {
 	source, err := ioutil.ReadFile(util.ExePath + path)
 	if err != nil {
@@ -62,24 +67,24 @@ func (shader *Shader) CompileFile(path string) error {
 	return shader.Compile(string(source))
 }
 
-/* Compiles a shader from a source string */
+// Compile a shader from a source string
 func (shader *Shader) Compile(source string) error {
 	csource, free := util.GLString(source)
-	gl.ShaderSource(shader.Id, 1, csource, nil)
-	gl.CompileShader(shader.Id)
+	gl.ShaderSource(shader.ID, 1, csource, nil)
+	gl.CompileShader(shader.ID)
 	free()
 
 	/* Check compilation status */
 	var status int32
-	gl.GetShaderiv(shader.Id, gl.COMPILE_STATUS, &status)
+	gl.GetShaderiv(shader.ID, gl.COMPILE_STATUS, &status)
 	if status == gl.FALSE {
 		var logLength int32
-		gl.GetShaderiv(shader.Id, gl.INFO_LOG_LENGTH, &logLength)
+		gl.GetShaderiv(shader.ID, gl.INFO_LOG_LENGTH, &logLength)
 
 		log := strings.Repeat("\x00", int(logLength+1))
-		gl.GetShaderInfoLog(shader.Id, logLength, nil, gl.Str(log))
+		gl.GetShaderInfoLog(shader.ID, logLength, nil, gl.Str(log))
 
-		return fmt.Errorf("Shader compilation failed.\n** Source: **\n%v\n** Log: **\n%v\n", source, log)
+		return fmt.Errorf("shader compilation failed.\n** Source: **\n%v\n** Log: **\n%v", source, log)
 	}
 
 	return nil

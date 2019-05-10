@@ -8,15 +8,15 @@ import (
 	"github.com/go-gl/gl/v4.1-core/gl"
 )
 
-/** Material file JSON representation */
-type f_material struct {
+// Material file json representation
+type materialDef struct {
 	Shader   string
-	Pointers []*f_pointer
-	Textures []*f_texture
+	Pointers []*pointerDef
+	Textures []*textureDef
 }
 
-/** Vertex pointer */
-type f_pointer struct {
+// Vertex pointer json representation
+type pointerDef struct {
 	Name      string
 	Type      string
 	GlType    uint32
@@ -27,21 +27,21 @@ type f_pointer struct {
 	Integer   bool
 }
 
-/** Texture definition */
-type f_texture struct {
+// Texture definition json representation
+type textureDef struct {
 	Name string
 	File string
 }
 
-/** Loads a material from a json definition file */
+// LoadMaterial loads a material from a json definition file
 func LoadMaterial(shader *ShaderProgram, file string) *Material {
-	json_bytes, err := ioutil.ReadFile(fmt.Sprintf("./%s.json", file))
+	jsonBytes, err := ioutil.ReadFile(fmt.Sprintf("./%s.json", file))
 	if err != nil {
 		panic(err)
 	}
 
-	var matf f_material
-	err = json.Unmarshal(json_bytes, &matf)
+	matf := materialDef{}
+	err = json.Unmarshal(jsonBytes, &matf)
 	if err != nil {
 		panic(err)
 	}
@@ -78,14 +78,14 @@ func LoadMaterial(shader *ShaderProgram, file string) *Material {
 
 	/* Load textures */
 	for _, txtf := range matf.Textures {
-		texture, _ := LoadTexture(txtf.File)
+		texture, _ := TextureFromFile(txtf.File)
 		mat.AddTexture(txtf.Name, texture)
 	}
 
 	return mat
 }
 
-/** Returns the GL identifier & size of a data type name */
+// getGlType returns the GL identifier & size of a data type name
 func getGlType(name string) (uint32, int) {
 	switch name {
 	case "byte":

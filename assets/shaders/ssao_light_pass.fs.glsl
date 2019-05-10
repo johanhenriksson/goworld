@@ -14,6 +14,7 @@ struct Light {
     vec3 Color;
     vec3 Position;
     float Range;
+    float Intensity;
     int Type;
 };
 
@@ -131,16 +132,9 @@ void main() {
         surfaceToLight = normalize(surfaceToLight);
         contrib = calculatePointLightContrib(surfaceToLight, distanceToLight, normal);
     }
-    occlusion *= shadow;
-
-    vec4 light_clip_pos = light_vp * vec4(position, 1);
-
-    /* convert light clip to light ndc by dividing by W, then map values to 0-1 */
-    vec3 light_ndc_pos = (light_clip_pos.xyz / light_clip_pos.w) * 0.5 + 0.5;
-
 
     /* calculate light color */
-    vec3 lightColor = light.Color * contrib * occlusion;
+    vec3 lightColor = light.Color * light.Intensity * contrib * occlusion * shadow;
 
     /* add ambient light */
     lightColor += ambient.a * ambient.rgb;
