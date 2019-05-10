@@ -17,6 +17,7 @@ type Light struct {
 	Position    mgl.Vec3
 	Color       mgl.Vec3
 	Range       float32
+	Intensity   float32
 	Type        LightType
 
 	Projection mgl.Mat4 // Shadow projection matrix

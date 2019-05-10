@@ -59,8 +59,8 @@ func (q *ImageQuad) FlipY() {
 func (q *ImageQuad) Draw(args render.DrawArgs) {
 	if q.Material != nil {
 		q.Material.Use()
-		q.Material.Shader.Matrix4f("model", &args.Transform[0])
-		q.Material.Shader.Matrix4f("viewport", &args.Projection[0])
+		q.Material.Shader.Mat4f("model", args.Transform)
+		q.Material.Shader.Mat4f("viewport", args.Projection)
 	}
 	q.vao.Draw()
 }

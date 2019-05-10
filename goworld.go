@@ -26,7 +26,6 @@ import (
 	"github.com/johanhenriksson/goworld/math"
 	"github.com/johanhenriksson/goworld/render"
 
-	"github.com/go-gl/gl/v2.1/gl"
 	mgl "github.com/go-gl/mathgl/mgl32"
 )
 
@@ -42,7 +41,6 @@ func main() {
 
 	/* grab a reference to the geometry render pass */
 	geoPass := app.Render.Get("geometry").(*engine.GeometryPass)
-	//lightPass := app.Render.Get("light").(*engine.LightPass)
 
 	/* create a camera */
 
@@ -58,9 +56,10 @@ func main() {
 	app.Scene.Camera = camera
 	app.Scene.Lights = []engine.Light{
 		{ // directional light
-			Color:      mgl.Vec3{0.5 * 0.973, 0.5 * 0.945, 0.5 * 0.776},
+			Intensity:  0.8,
+			Color:      mgl.Vec3{0.9 * 0.973, 0.9 * 0.945, 0.9 * 0.776},
 			Type:       engine.DirectionalLight,
-			Projection: mgl.Ortho(-320, 580, -30, 600, -320, 760),
+			Projection: mgl.Ortho(-320, 580, -30, 300, -220, 760),
 			Position:   mgl.Vec3{-2, 1, -1},
 		},
 		{ // centered point light
@@ -69,21 +68,11 @@ func main() {
 				Linear:    0.09,
 				Quadratic: 0.32,
 			},
-			Color:    mgl.Vec3{0.517, 0.506, 0.447},
-			Range:    80,
-			Type:     engine.PointLight,
-			Position: mgl.Vec3{26, 36, 32},
-		},
-		{ // centered point light
-			Attenuation: engine.Attenuation{
-				Constant:  0.50,
-				Linear:    0.09,
-				Quadratic: 0.32,
-			},
-			Color:    mgl.Vec3{0.517, 0.506, 0.447},
-			Range:    80,
-			Type:     engine.PointLight,
-			Position: mgl.Vec3{-16, 36, 32},
+			Color:     mgl.Vec3{0.517, 0.506, 0.447},
+			Intensity: 1.0,
+			Range:     70,
+			Type:      engine.PointLight,
+			Position:  mgl.Vec3{65, 27, 65},
 		},
 	}
 
@@ -100,6 +89,8 @@ func main() {
 		for cz := 0; cz < ccount; cz++ {
 			obj := app.Scene.NewObject(float32(cx*csize), 0, float32(cz*csize))
 			chk := game.NewColorChunk(obj, csize)
+			chk.Seed = 31481234
+			chk.Ox, chk.Oy, chk.Oz = cx*csize, 0, cz*csize
 			generateChunk(chk, cx*csize, 0, cz*csize) // populate with random data
 			chk.Compute()
 			geoPass.Material.SetupVertexPointers() // wtfff
@@ -115,32 +106,52 @@ func main() {
 	//game.NewPlacementGrid(chunks[0])
 
 	// buffer display window
-	/*
-		bufferWindow := func(title string, texture *render.Texture, x, y float32, depth bool) {
-			winColor := render.Color{0.15, 0.15, 0.15, 0.8}
-			textColor := render.Color{1, 1, 1, 1}
+	winColor := render.Color{0.15, 0.15, 0.15, 0.8}
+	textColor := render.Color{1, 1, 1, 1}
 
-			win := app.UI.NewRect(winColor, x, y, 250, 280, -10)
-			label := app.UI.NewText(title, textColor, 0, 0, -21)
-			win.Append(label)
+	lightPass := app.Render.Get("light").(*engine.LightPass)
+	bufferWindow := func(title string, texture *render.Texture, x, y float32, depth bool) {
+		winColor := render.Color{0.15, 0.15, 0.15, 0.8}
+		textColor := render.Color{1, 1, 1, 1}
 
-			if depth {
-				img := app.UI.NewDepthImage(texture, 0, 30, 250, 250, -20)
-				img.Quad.FlipY()
-				win.Append(img)
-			} else {
-				img := app.UI.NewImage(texture, 0, 30, 250, 250, -20)
-				img.Quad.FlipY()
-				win.Append(img)
-			}
+		win := app.UI.NewRect(winColor, x, y, 250, 280, -10)
+		label := app.UI.NewText(title, textColor, 0, 0, -21)
+		win.Append(label)
 
-			app.UI.Append(win)
+		if depth {
+			img := app.UI.NewDepthImage(texture, 0, 30, 250, 250, -20)
+			img.Quad.FlipY()
+			win.Append(img)
+		} else {
+			img := app.UI.NewImage(texture, 0, 30, 250, 250, -20)
+			img.Quad.FlipY()
+			win.Append(img)
 		}
 
-		bufferWindow("Normal", geoPass.Buffer.Normal, 30, 30, false)
-			bufferWindow("Occlusion", lightPass.SSAO.Gaussian.Output, 30, 340, false)
-			bufferWindow("Shadowmap", lightPass.Shadows.Output, 30, 650, true)
-	*/
+		app.UI.Append(win)
+	}
+
+	bufferWindow("Diffuse", geoPass.Buffer.Diffuse, 30, 30, false)
+	bufferWindow("Occlusion", lightPass.SSAO.Output, 30, 340, true)
+	//bufferWindow("Shadowmap", lightPass.Output, 30, 650, false)
+
+	paletteWindow := func(x, y float32, palette render.Palette) {
+		win := app.UI.NewRect(winColor, x, y, 100, 180, -15)
+		label := app.UI.NewText("Palette", textColor, 4, 8*20-4, -16)
+		win.Append(label)
+
+		perRow := 5
+		for i, color := range palette {
+			row := i / perRow
+			col := i % perRow
+			c := app.UI.NewRect(color, float32(col*20), float32(row*20), 20, 20, -17)
+			win.Append(c)
+		}
+
+		app.UI.Append(win)
+	}
+
+	paletteWindow(20, 20, render.DefaultPalette)
 
 	versiontext := fmt.Sprintf("goworld | %s", time.Now())
 	watermark := app.UI.NewText(versiontext, render.Color4(1, 1, 1, 1), WIDTH-300, 0, 0)
@@ -149,17 +160,15 @@ func main() {
 	paletteIdx := 5
 	selected := game.NewColorVoxel(render.DefaultPalette[paletteIdx])
 
-	sampleNormal := func(x, y float32) mgl.Vec3 {
+	sampleNormal := func(x, y float32) (mgl.Vec3, bool) {
 		geoPass.Buffer.Bind()
-		normalEncoded := geoPass.Buffer.Sample(gl.COLOR_ATTACHMENT1, int(x), int(HEIGHT-y))
-		if normalEncoded.R != 0 || normalEncoded.G != 0 || normalEncoded.B != 0 {
-			viewNormal := normalEncoded.Vec3().Mul(2).Sub(mgl.Vec3{1, 1, 1}).Normalize() // normals [-1,1]
-
+		viewNormal, exists := geoPass.Buffer.SampleNormal(int(x), int(HEIGHT-y))
+		if exists {
 			viewInv := camera.View.Inv()
-			worldNormal := viewInv.Mul4x1(mgl.Vec4{viewNormal[0], viewNormal[1], viewNormal[2], 0}).Vec3()
-			return worldNormal
+			worldNormal := viewInv.Mul4x1(viewNormal.Vec4(0)).Vec3()
+			return worldNormal, true
 		}
-		return normalEncoded.Vec3() // zero
+		return viewNormal, false
 	}
 
 	/* Render loop */
@@ -169,8 +178,8 @@ func main() {
 
 		geoPass.Buffer.Bind()
 		world := camera.Unproject(engine.Mouse.X, engine.Mouse.Y)
-		normal := sampleNormal(engine.Mouse.X, engine.Mouse.Y)
-		if normal[0] == 0 && normal[1] == 0 && normal[2] == 0 {
+		normal, normalExists := sampleNormal(engine.Mouse.X, engine.Mouse.Y)
+		if !normalExists {
 			return
 		}
 
@@ -246,9 +255,9 @@ func generateChunk(chk *game.ColorChunk, ox int, oy int, oz int) {
 	/* Fill chunk with voxels */
 	size := chk.Size
 
-	rockNoise := math.NewNoise(10000, 1.0/40.0)
-	grassNoise := math.NewNoise(10002, 1.0/28.0)
-	cloudNoise := math.NewNoise(24511626, 1/40.0)
+	rockNoise := math.NewNoise(chk.Seed+10000, 1.0/40.0)
+	grassNoise := math.NewNoise(chk.Seed+10002, 1.0/28.0)
+	cloudNoise := math.NewNoise(chk.Seed+24511626, 1/40.0)
 
 	grassHeight := 8
 

@@ -15,7 +15,7 @@ type ColorPass struct {
 	Gamma  float32
 	fbo    *render.FrameBuffer
 	mat    *render.Material
-	quad   *render.RenderQuad
+	quad   *render.Quad
 }
 
 func NewColorPass(input *render.Texture, filter string) *ColorPass {
@@ -32,7 +32,7 @@ func NewColorPass(input *render.Texture, filter string) *ColorPass {
 	mat.AddTexture("tex_input", input)
 	mat.AddTexture("tex_lut", lut)
 
-	quad := render.NewRenderQuad(mat)
+	quad := render.NewQuad(mat)
 
 	return &ColorPass{
 		Input:  input,

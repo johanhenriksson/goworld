@@ -27,6 +27,14 @@ func (p *GeometryPass) DrawPass(scene *Scene) {
 	p.Buffer.Bind()
 	p.Buffer.Clear()
 
+	// kind-of hack to clear the diffuse buffer separately
+	camera := scene.Camera
+	gl.DrawBuffer(gl.COLOR_ATTACHMENT0)
+	gl.ClearColor(camera.Clear.R, camera.Clear.G, camera.Clear.B, 1)
+	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+
+	p.Buffer.DrawBuffers()
+
 	p.Material.Use()
 
 	/* Draw scene */

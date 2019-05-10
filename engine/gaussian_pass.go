@@ -8,7 +8,7 @@ import (
 type GaussianPass struct {
 	fbo      *render.FrameBuffer
 	material *render.Material
-	quad     *render.RenderQuad
+	quad     *render.Quad
 	Output   *render.Texture
 }
 
@@ -21,7 +21,7 @@ func NewGaussianPass(input *render.Texture) *GaussianPass {
 	mat.AddDescriptors(render.F32_XYZUV)
 	mat.AddTexture("tex_input", input)
 
-	quad := render.NewRenderQuad(mat)
+	quad := render.NewQuad(mat)
 
 	return &GaussianPass{
 		fbo:      fbo,

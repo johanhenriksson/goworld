@@ -4,9 +4,13 @@ import (
 	"github.com/go-gl/gl/v4.1-core/gl"
 )
 
+// MaterialTextureMap maps texture names to texture objects
 type MaterialTextureMap map[string]*Texture
+
+// BufferDescriptors is a list of vertex pointer descriptors
 type BufferDescriptors []BufferDescriptor
 
+// BufferDescriptor describes a vertex pointer into a buffer
 type BufferDescriptor struct {
 	Name      string
 	Buffer    int
@@ -18,14 +22,15 @@ type BufferDescriptor struct {
 	Integer   bool
 }
 
+// Material contains a shader reference and all resources required to draw a vertex buffer array
 type Material struct {
-	Shader    *ShaderProgram
-	Textures  MaterialTextureMap
-	Buffers   []BufferDescriptor
-	tex_slots []string // since map is unordered
+	Shader   *ShaderProgram
+	Textures MaterialTextureMap
+	Buffers  []BufferDescriptor
+	slots    []string // since map is unordered
 }
 
-/* Instantiate a new material */
+// CreateMaterial instantiates a new empty material
 func CreateMaterial(shader *ShaderProgram) *Material {
 	return &Material{
 		Shader:   shader,
@@ -34,6 +39,8 @@ func CreateMaterial(shader *ShaderProgram) *Material {
 	}
 }
 
+// AddDescriptor adds a vertex pointer configuration
+// Used to the describe the geometry format that will be drawn with this material
 func (mat *Material) AddDescriptor(desc BufferDescriptor) {
 	loc, exists := mat.Shader.GetAttrLoc(desc.Name)
 	if !exists {
@@ -43,48 +50,53 @@ func (mat *Material) AddDescriptor(desc BufferDescriptor) {
 	mat.Buffers = append(mat.Buffers, desc)
 }
 
+// AddDescriptors adds a list of vertex pointer configurations
+// Used to the describe the geometry format that will be drawn with this material
 func (mat *Material) AddDescriptors(descriptors []BufferDescriptor) {
 	for _, desc := range descriptors {
 		mat.AddDescriptor(desc)
 	}
 }
 
-/* Attach a texture to this material */
+// AddTexture attaches a new texture to this material, and assings it to the next available texture slot.
 func (mat *Material) AddTexture(name string, tex *Texture) {
 	mat.Textures[name] = tex
-	mat.tex_slots = append(mat.tex_slots, name)
+	mat.slots = append(mat.slots, name)
 }
 
+// SetTexture changes a bound texture
 func (mat *Material) SetTexture(name string, tex *Texture) {
 	mat.Textures[name] = tex
 }
 
-/* Set current shader and activate textures */
+// Use sets the current shader and activates textures
 func (mat *Material) Use() {
 	mat.Shader.Use()
-	var i uint32 = 0
-	//for name, tex := range mat.Textures {
-	for _, name := range mat.tex_slots {
+	i := uint32(0)
+	for _, name := range mat.slots {
 		tex := mat.Textures[name]
 		tex.Use(i)
 		mat.Shader.Int32(name, int32(i))
 		i++
 	}
-	gl.ActiveTexture(gl.TEXTURE0)
 }
 
+// EnablePointers enables vertex pointers used by this material
 func (mat *Material) EnablePointers() {
 	for _, desc := range mat.Buffers {
 		gl.EnableVertexAttribArray(uint32(desc.Buffer))
 	}
 }
 
+// DisablePointers disables vertex pointers used by this material
 func (mat *Material) DisablePointers() {
 	for _, desc := range mat.Buffers {
 		gl.DisableVertexAttribArray(uint32(desc.Buffer))
 	}
 }
 
+// SetupVertexPointers sets up vertex pointers used by this material.
+// Use after binding the target vertex array object you want to configure!
 func (mat *Material) SetupVertexPointers() {
 	mat.EnablePointers()
 	for _, desc := range mat.Buffers {

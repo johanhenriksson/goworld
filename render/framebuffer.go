@@ -97,3 +97,12 @@ func (f *FrameBuffer) Sample(target uint32, x, y int) Color {
 	gl.ReadPixels(int32(x), int32(y), 1, 1, gl.RGBA, gl.FLOAT, unsafe.Pointer(&pixel[0]))
 	return Color4(pixel[0], pixel[1], pixel[2], pixel[3])
 }
+
+// DrawBuffers sets up all the attached buffers for drawing
+func (f *FrameBuffer) DrawBuffers() {
+	buff := []uint32{}
+	for _, buffer := range f.Buffers {
+		buff = append(buff, buffer.Target)
+	}
+	gl.DrawBuffers(int32(len(buff)), &buff[0])
+}

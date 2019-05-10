@@ -1,8 +1,9 @@
 package geometry
 
 import (
-	"github.com/johanhenriksson/goworld/render"
 	"math"
+
+	"github.com/johanhenriksson/goworld/render"
 )
 
 type Quad struct {
@@ -31,6 +32,9 @@ func NewQuad(mat *render.Material, color render.Color, w, h, z float32) *Quad {
 		vao: render.CreateVertexArray(),
 		vbo: render.CreateVertexBuffer(),
 	}
+	q.vao.Bind()
+	q.vbo.Bind()
+	mat.SetupVertexPointers()
 	q.compute()
 	return q
 }
@@ -116,12 +120,18 @@ func (q *Quad) compute() {
 	q.vao.Length = int32(len(vtx))
 	q.vao.Bind()
 	q.vbo.Buffer(vtx)
-	q.Material.SetupVertexPointers()
 }
 
 func (q *Quad) Draw(args render.DrawArgs) {
 	q.Material.Use()
-	q.Material.Shader.Matrix4f("model", &args.Transform[0])
-	q.Material.Shader.Matrix4f("viewport", &args.Projection[0])
+	q.Material.Shader.Mat4f("model", args.Transform)
+	q.Material.Shader.Mat4f("viewport", args.Projection)
 	q.vao.Draw()
+}
+
+func (q *Quad) SetColor(color render.Color) {
+	q.TopLeft.Color = color
+	q.TopRight.Color = color
+	q.BottomLeft.Color = color
+	q.BottomRight.Color = color
 }

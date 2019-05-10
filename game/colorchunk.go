@@ -2,6 +2,7 @@ package game
 
 import (
 	"github.com/johanhenriksson/goworld/engine"
+	"github.com/johanhenriksson/goworld/math"
 	"github.com/johanhenriksson/goworld/render"
 )
 
@@ -10,6 +11,10 @@ type ColorChunk struct {
 	*engine.ComponentBase
 
 	Size int
+	Seed int
+	Ox   int
+	Oy   int
+	Oz   int
 	Data ColorVoxels
 
 	vao  *render.VertexArray
@@ -162,6 +167,7 @@ func (chk *ColorChunk) Compute() {
 	}
 
 	/* occlusion pass */
+	noise := math.NewNoise(chk.Seed, 1)
 	for z := 0; z < s; z++ {
 		for y := 0; y < s; y++ {
 			for x := 0; x < s; x++ {
@@ -171,6 +177,8 @@ func (chk *ColorChunk) Compute() {
 					continue
 				}
 
+				rnd := 0.14 * 0.5 * (noise.Sample(x+chk.Ox, y, z+chk.Oz) + 1)
+
 				/* Simple optimization - dont draw hidden faces */
 				xp := chk.At(x+1, y, z) == nil
 				xn := chk.At(x-1, y, z) == nil
@@ -179,7 +187,7 @@ func (chk *ColorChunk) Compute() {
 				zp := chk.At(x, y, z+1) == nil
 				zn := chk.At(x, y, z-1) == nil
 
-				o := f(xp) + f(xn) + f(yp) + f(yn) + f(zp) + f(zn)
+				o := f(xp) + f(xn) + f(yp) + f(yn) + f(zp) + f(zn) + rnd
 				occlusion.Set(x, y, z, o)
 			}
 		}

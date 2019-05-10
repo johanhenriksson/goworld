@@ -1,8 +1,7 @@
 package render
 
-/* Clip space quad vertex data
- * float32 X Y Z U V */
-var ScreenQuad FloatBuffer = FloatBuffer{
+// ScreenQuad is a clip space quad for full screen renders (F32_XYZUV)
+var ScreenQuad = FloatBuffer{
 	-1, -1, 0, 0, 0,
 	1, 1, 0, 1, 1,
 	-1, 1, 0, 0, 1,
@@ -12,14 +11,16 @@ var ScreenQuad FloatBuffer = FloatBuffer{
 	1, 1, 0, 1, 1,
 }
 
-type RenderQuad struct {
+// Quad is a drawable quad
+type Quad struct {
 	vao *VertexArray
 	vbo *VertexBuffer
 	mat *Material
 }
 
-func NewRenderQuad(mat *Material) *RenderQuad {
-	q := &RenderQuad{
+// NewQuad creates a new quad with a given material
+func NewQuad(mat *Material) *Quad {
+	q := &Quad{
 		vao: CreateVertexArray(),
 		vbo: CreateVertexBuffer(),
 		mat: mat,
@@ -33,7 +34,8 @@ func NewRenderQuad(mat *Material) *RenderQuad {
 	return q
 }
 
-func (q *RenderQuad) Draw() {
+// Draw the quad
+func (q *Quad) Draw() {
 	q.vao.Bind()
 	if q.mat != nil {
 		q.mat.Use()

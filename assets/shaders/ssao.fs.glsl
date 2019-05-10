@@ -33,7 +33,6 @@ void main()
     mat3 TBN = mat3(tangent, bitangent, normal);
     // iterate over the sample kernel and calculate occlusion factor
     float occlusion = 0.0;
-    vec4 color = vec4(0);
     for(int i = 0; i < kernel_size; ++i)
     {
         // get sample position
@@ -48,11 +47,10 @@ void main()
         
         // get sample depth
         float sampleDepth = texture(tex_position, offset.xy).z; // get depth value of kernel sample
-        
+
         // range check & accumulate
         float rangeCheck = smoothstep(0.0, 1.0, radius / abs(fragPos.z - sampleDepth));
         occlusion += (sampleDepth >= sample.z + bias ? 1.0 : 0.0) * rangeCheck;           
-        color += texture(tex_normal, offset.xy) / kernel_size;
     }
     occlusion = 1.0 - (occlusion / kernel_size);
     occlusion = pow(occlusion, power);

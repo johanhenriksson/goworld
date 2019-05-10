@@ -1,8 +1,9 @@
 package engine
 
 import (
-	"github.com/johanhenriksson/goworld/render"
 	"reflect"
+
+	"github.com/johanhenriksson/goworld/render"
 )
 
 /** Game object */
@@ -32,13 +33,13 @@ func (o *Object) Draw(args render.DrawArgs) {
 
 	/* Draw components */
 	args.MVP = args.VP.Mul4(args.Transform)
-	args.Shader.Matrix4f("mvp", &args.MVP[0])
+	args.Shader.Mat4f("mvp", args.MVP)
 
 	// model matrix is required to calculate vertex normals during the geometry pass
 	if args.Pass == "geometry" {
-		args.Shader.Matrix4f("model", &args.Transform[0])
-		args.Shader.Matrix4f("view", &args.View[0])
-		args.Shader.Matrix4f("projection", &args.Projection[0])
+		args.Shader.Mat4f("model", args.Transform)
+		args.Shader.Mat4f("view", args.View)
+		args.Shader.Mat4f("projection", args.Projection)
 	}
 
 	for _, comp := range o.Components {

@@ -2,6 +2,7 @@ package assets
 
 import (
 	"fmt"
+
 	"github.com/johanhenriksson/goworld/render"
 )
 
@@ -48,7 +49,7 @@ func GetTexture(name string) *render.Texture {
 
 	// attempt to load
 	fmt.Println("+ texture", name)
-	texture, error := render.LoadTexture("assets/" + name)
+	texture, error := render.TextureFromFile("assets/" + name)
 	if error != nil {
 		panic(fmt.Sprintf("Error loading texture %s: %s", name, error))
 	}

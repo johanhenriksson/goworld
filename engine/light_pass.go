@@ -8,7 +8,7 @@ import (
 
 type LightPass struct {
 	Material *render.Material
-	quad     *render.RenderQuad
+	quad     *render.Quad
 	Output   *render.Texture
 	SSAO     *SSAOPass
 	Shadows  *ShadowPass
@@ -21,7 +21,7 @@ func NewLightPass(input *render.GeometryBuffer) *LightPass {
 	ssao := SSAOSettings{
 		Samples: 64,
 		Radius:  1.5,
-		Bias:    0.1,
+		Bias:    0.02,
 		Power:   2.5,
 	}
 
@@ -29,7 +29,7 @@ func NewLightPass(input *render.GeometryBuffer) *LightPass {
 	shadowPass := NewShadowPass(input)
 
 	fbo := render.CreateFrameBuffer(input.Width, input.Height)
-	output := fbo.AddBuffer(gl.COLOR_ATTACHMENT0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE)
+	output := fbo.AddBuffer(gl.COLOR_ATTACHMENT0, gl.RGB, gl.RGB, gl.FLOAT)
 
 	/* use a virtual material to help with vertex attributes and textures */
 	mat := render.CreateMaterial(render.CompileVFShader("/assets/shaders/ssao_light_pass"))
@@ -46,10 +46,10 @@ func NewLightPass(input *render.GeometryBuffer) *LightPass {
 	mat.AddTexture("tex_normal", input.Normal)
 	mat.AddTexture("tex_depth", input.Depth)
 	mat.AddTexture("tex_shadow", shadowPass.Output)
-	mat.AddTexture("tex_occlusion", ssaoPass.Gaussian.Output)
+	mat.AddTexture("tex_occlusion", ssaoPass.Output)
 
 	/* create a render quad */
-	quad := render.NewRenderQuad(mat)
+	quad := render.NewQuad(mat)
 
 	p := &LightPass{
 		fbo:      fbo,
@@ -78,30 +78,26 @@ func (p *LightPass) DrawPass(scene *Scene) {
 	vInv := scene.Camera.View.Inv()
 
 	shader.Use()
-	shader.Matrix4f("cameraInverse", &vpInv[0])
-	shader.Matrix4f("viewInverse", &vInv[0])
+	shader.Mat4f("cameraInverse", vpInv)
+	shader.Mat4f("viewInverse", vInv)
 	shader.RGBA("ambient", p.Ambient)
 
-	/* clear */
-	clr := scene.Camera.Clear
-	gl.ClearColor(clr.R, clr.G, clr.B, clr.A)
+	// clear
+	gl.ClearColor(0, 0, 0, 1)
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
-	/* set blending mode to additive */
+	// set blending mode to additive
+	gl.Enable(gl.BLEND)
+	gl.BlendFunc(gl.ONE, gl.ONE)
 
-	/* draw lights */
-	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
-	gl.Disable(gl.BLEND)
-
+	// draw lights
 	for i, light := range scene.Lights {
 		/* draw shadow pass for this light into shadow map */
 		p.Shadows.DrawPass(scene, &light)
 
-		if i == 1 {
+		if i == 0 {
 			/* first light pass we want the shader to restore the depth buffer
 			 * then, disable depth masking so that multiple lights can be drawn */
-			gl.Enable(gl.BLEND)
-			gl.BlendFunc(gl.ONE, gl.ONE)
 			gl.DepthMask(true)
 		} else {
 			gl.DepthMask(false)
@@ -116,19 +112,22 @@ func (p *LightPass) DrawPass(scene *Scene) {
 		lp := light.Projection
 		lv := mgl.LookAtV(light.Position, mgl.Vec3{}, mgl.Vec3{0, 1, 0}) // only for directional light
 		lvp := lp.Mul4(lv)
-		shader.Matrix4f("light_vp", &lvp[0])
+		shader.Mat4f("light_vp", lvp)
 
 		/* set light uniform attributes */
 		shader.Vec3("light.Position", &light.Position)
 		shader.Vec3("light.Color", &light.Color)
 		shader.Int32("light.Type", int32(light.Type))
 		shader.Float("light.Range", light.Range)
+		shader.Float("light.Intensity", light.Intensity)
 		shader.Float("light.attenuation.Constant", light.Attenuation.Constant)
 		shader.Float("light.attenuation.Linear", light.Attenuation.Linear)
 		shader.Float("light.attenuation.Quadratic", light.Attenuation.Quadratic)
 
 		/* render light */
 		gl.Viewport(0, 0, int32(scene.Camera.Width), int32(scene.Camera.Height))
+
+		// todo: draw light volumes instead of a fullscreen quad
 		p.quad.Draw()
 
 		p.fbo.Unbind()

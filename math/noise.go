@@ -7,10 +7,10 @@ import (
 type Noise struct {
 	opensimplex.Noise
 	Seed int
-	Freq float64
+	Freq float32
 }
 
-func NewNoise(seed int, freq float64) *Noise {
+func NewNoise(seed int, freq float32) *Noise {
 	return &Noise{
 		Noise: opensimplex.New(int64(seed)),
 		Seed:  seed,
@@ -18,7 +18,8 @@ func NewNoise(seed int, freq float64) *Noise {
 	}
 }
 
-func (n *Noise) Sample(x, y, z int) float64 {
-	fx, fy, fz := float64(x)*n.Freq, float64(y)*n.Freq, float64(z)*n.Freq
-	return n.Eval3(fx, fy, fz)
+func (n *Noise) Sample(x, y, z int) float32 {
+	// jeez
+	fx, fy, fz := float64(float32(x)*n.Freq), float64(float32(y)*n.Freq), float64(float32(z)*n.Freq)
+	return float32(n.Eval3(fx, fy, fz))
 }
