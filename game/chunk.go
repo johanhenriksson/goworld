@@ -74,7 +74,7 @@ func (chk *Chunk) Update(dt float32) {
 }
 
 func (chk *Chunk) Draw(args render.DrawArgs) {
-	if args.Pass == "geometry" {
+	if args.Pass == render.GeometryPass {
 		chk.vao.Draw()
 	}
 }

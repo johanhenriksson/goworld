@@ -26,9 +26,9 @@ func NewScene() *Scene {
 		Camera:  nil,
 		Objects: []*Object{},
 		World:   physics.NewWorld(),
-		Lights: []Light{},
+		Lights:  []Light{},
 	}
-	
+
 	return s
 }
 
@@ -37,7 +37,7 @@ func (s *Scene) Add(object *Object) {
 	s.Objects = append(s.Objects, object)
 }
 
-func (s *Scene) Draw(pass string, shader *render.ShaderProgram) {
+func (s *Scene) Draw(pass render.DrawPass, shader *render.ShaderProgram) {
 	if s.Camera == nil {
 		return
 	}

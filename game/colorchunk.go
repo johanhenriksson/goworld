@@ -117,7 +117,7 @@ func (chk *ColorChunk) Update(dt float32) {
 }
 
 func (chk *ColorChunk) Draw(args render.DrawArgs) {
-	if args.Pass == "geometry" {
+	if args.Pass == render.GeometryPass {
 		chk.vao.Draw()
 	}
 }

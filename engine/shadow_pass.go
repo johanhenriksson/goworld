@@ -62,7 +62,7 @@ func (sp *ShadowPass) DrawPass(scene *Scene, light *Light) {
 		MVP:        vp,
 		Transform:  mgl.Ident4(),
 
-		Pass:   "geometry",
+		Pass:   render.GeometryPass,
 		Shader: sp.Material.Shader,
 	}
 	scene.DrawCall(args)

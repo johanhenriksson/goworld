@@ -39,7 +39,7 @@ func (p *GeometryPass) DrawPass(scene *Scene) {
 
 	/* Draw scene */
 	gl.Disable(gl.BLEND)
-	scene.Draw("geometry", p.Material.Shader)
+	scene.Draw(render.GeometryPass, p.Material.Shader)
 	gl.Enable(gl.BLEND)
 
 	p.Buffer.Unbind()

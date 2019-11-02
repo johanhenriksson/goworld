@@ -4,6 +4,14 @@ import (
 	mgl "github.com/go-gl/mathgl/mgl32"
 )
 
+type DrawPass int32
+
+const (
+	GeometryPass DrawPass = iota
+	LightPass
+	LinePass
+)
+
 /** UI Component render interface */
 type Drawable interface {
 	Draw(DrawArgs)
@@ -24,5 +32,5 @@ type DrawArgs struct {
 	View       mgl.Mat4
 	Transform  mgl.Mat4
 	Shader     *ShaderProgram
-	Pass       string
+	Pass       DrawPass
 }
