@@ -17,9 +17,8 @@ type ColorChunk struct {
 	Oz   int
 	Data ColorVoxels
 
-	vao  *render.VertexArray
-	vbo  *render.VertexBuffer
-	mesh *engine.Mesh
+	vao *render.VertexArray
+	vbo *render.VertexBuffer
 }
 
 type OcclusionSpace interface {

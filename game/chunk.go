@@ -13,9 +13,8 @@ type Chunk struct {
 	Tileset *Tileset
 	Data    []*Voxel
 
-	vao  *render.VertexArray
-	vbo  *render.VertexBuffer
-	mesh *engine.Mesh
+	vao *render.VertexArray
+	vbo *render.VertexBuffer
 }
 
 func NewChunk(parentObject *engine.Object, size int, ts *Tileset) *Chunk {
