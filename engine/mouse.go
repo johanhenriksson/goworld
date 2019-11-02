@@ -38,9 +38,9 @@ func MouseButtonCallback(w *glfw.Window, button glfw.MouseButton, action glfw.Ac
 }
 
 /* GLFW Callback - Update mouse coords */
-func MouseMoveCallback(w *glfw.Window, x float64, y float64) {
-	Mouse.X = float32(x)
-	Mouse.Y = float32(y)
+func MouseMoveCallback(w *glfw.Window, x, y float64, scale float32) {
+	Mouse.X = float32(x) * scale
+	Mouse.Y = float32(y) * scale
 }
 
 /* Updates mouse delta x/y every frame */

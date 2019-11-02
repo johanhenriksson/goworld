@@ -51,11 +51,6 @@ func CreateWindow(title string, width int, height int) *Window {
 		panic(err)
 	}
 
-	window.SetInputMode(glfw.CursorMode, glfw.CursorDisabled)
-	window.SetKeyCallback(KeyCallback)
-	window.SetCursorPosCallback(MouseMoveCallback)
-	window.SetMouseButtonCallback(MouseButtonCallback)
-
 	w := &Window{
 		Width:         width,
 		Height:        height,
@@ -64,6 +59,14 @@ func CreateWindow(title string, width int, height int) *Window {
 		lastFrameTime: glfw.GetTime(),
 	}
 	w.SetMaxFps(60)
+
+	window.SetInputMode(glfw.CursorMode, glfw.CursorDisabled)
+	window.SetKeyCallback(KeyCallback)
+	window.SetMouseButtonCallback(MouseButtonCallback)
+	window.SetCursorPosCallback(func(wnd *glfw.Window, x, y float64) {
+		MouseMoveCallback(wnd, x, y, w.Scale())
+	})
+
 	return w
 }
 
@@ -133,4 +136,9 @@ func (wnd *Window) Terminate() {
 
 func (wnd *Window) GetBufferSize() (int, int) {
 	return wnd.Wnd.GetFramebufferSize()
+}
+
+func (wnd *Window) Scale() float32 {
+	fw, _ := wnd.Wnd.GetFramebufferSize()
+	return float32(fw) / float32(wnd.Width)
 }
