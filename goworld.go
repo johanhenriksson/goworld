@@ -42,10 +42,7 @@ func main() {
 	/* grab a reference to the geometry render pass */
 	geoPass := app.Render.Get("geometry").(*engine.GeometryPass)
 
-	/* create a camera */
-
-	width, height := app.Window.GetBufferSize()
-	fmt.Printf("Window buffer size: %dx%d\n", width, height)
+	// create a camera
 	camera := engine.CreateCamera(&render.ScreenBuffer, 10, 10, 20, 65.0, 0.1, 1500.0)
 	camera.Rotation[0] = 38
 	camera.Rotation[1] = 230
@@ -60,7 +57,7 @@ func main() {
 			Intensity:  0.8,
 			Color:      mgl.Vec3{0.9 * 0.973, 0.9 * 0.945, 0.9 * 0.776},
 			Type:       engine.DirectionalLight,
-			Projection: mgl.Ortho(-320, 580, -30, 300, -220, 760),
+			Projection: mgl.Ortho(-200, 300, -30, 200, -200, 760),
 			Position:   mgl.Vec3{-2, 1, -1},
 		},
 		{ // centered point light
@@ -111,16 +108,16 @@ func main() {
 	textColor := render.Color4(1, 1, 1, 1)
 
 	bufferWindow := func(title string, texture *render.Texture, x, y float32, depth bool) {
-		win := app.UI.NewRect(winColor, x, y, 250, 280, -10)
+		win := app.UI.NewRect(winColor, x, y, 240, 190, -10)
 		label := app.UI.NewText(title, textColor, 0, 0, -21)
 		win.Append(label)
 
 		if depth {
-			img := app.UI.NewDepthImage(texture, 0, 30, 250, 250, -20)
+			img := app.UI.NewDepthImage(texture, 0, 30, 240, 160, -20)
 			img.Quad.FlipY()
 			win.Append(img)
 		} else {
-			img := app.UI.NewImage(texture, 0, 30, 250, 250, -20)
+			img := app.UI.NewImage(texture, 0, 30, 240, 160, -20)
 			img.Quad.FlipY()
 			win.Append(img)
 		}
@@ -128,11 +125,10 @@ func main() {
 		app.UI.Append(win)
 	}
 
-	bufferWindow("Diffuse", geoPass.Buffer.Depth, 30, 30, true)
-
-	//lightPass := app.Render.Get("light").(*engine.LightPass)
-	//bufferWindow("Occlusion", lightPass.SSAO.Output, 30, 340, true)
-	//bufferWindow("Shadowmap", lightPass.Output, 30, 650, false)
+	lightPass := app.Render.Get("light").(*engine.LightPass)
+	bufferWindow("Diffuse", geoPass.Buffer.Diffuse, 10, 10, false)
+	bufferWindow("Occlusion", lightPass.SSAO.Output, 10, 210, true)
+	bufferWindow("Shadowmap", lightPass.Shadows.Output, 10, 410, true)
 
 	paletteWindow := func(x, y float32, palette render.Palette) {
 		win := app.UI.NewRect(winColor, x, y, 100, 180, -15)
@@ -150,10 +146,10 @@ func main() {
 		app.UI.Append(win)
 	}
 
-	paletteWindow(20, 20, render.DefaultPalette)
+	paletteWindow(300, 20, render.DefaultPalette)
 
 	versiontext := fmt.Sprintf("goworld | %s", time.Now())
-	watermark := app.UI.NewText(versiontext, render.Color4(1, 1, 1, 1), WIDTH-400, 0, 0)
+	watermark := app.UI.NewText(versiontext, render.Color4(1, 1, 1, 1), 400, 400, 0)
 	app.UI.Append(watermark)
 
 	paletteIdx := 5
@@ -183,7 +179,7 @@ func main() {
 	/* Render loop */
 	app.UpdateFunc = func(dt float32) {
 		versiontext = fmt.Sprintf("goworld | %s", time.Now())
-		watermark.Set(versiontext)
+		//watermark.Set(versiontext)
 
 		world, worldExists := sampleWorld()
 		if !worldExists {
@@ -197,6 +193,10 @@ func main() {
 
 		cx := int(world.X()) / csize
 		cz := int(world.Z()) / csize
+		if cx < 0 || cz < 0 || cx >= ccount || cz >= ccount {
+			fmt.Println("target out of bounds")
+			return
+		}
 
 		if engine.KeyReleased(engine.KeyG) {
 			fmt.Println("raycast")

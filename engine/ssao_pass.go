@@ -91,7 +91,7 @@ func (p *SSAOPass) DrawPass(scene *Scene) {
 
 	p.fbo.Unbind()
 
-	//p.Gaussian.DrawPass(scene)
+	p.Gaussian.DrawPass(scene)
 }
 
 func createSSAOKernel(samples int) []mgl.Vec3 {

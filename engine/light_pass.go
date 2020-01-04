@@ -7,12 +7,14 @@ import (
 )
 
 type LightPass struct {
-	Material *render.Material
-	quad     *render.Quad
-	Output   *render.Texture
-	SSAO     *SSAOPass
-	Shadows  *ShadowPass
-	Ambient  render.Color
+	Material       *render.Material
+	quad           *render.Quad
+	Output         *render.Texture
+	SSAO           *SSAOPass
+	Shadows        *ShadowPass
+	Ambient        render.Color
+	ShadowStrength float32
+	ShadowBias     float32
 
 	fbo *render.FrameBuffer
 }
@@ -52,13 +54,15 @@ func NewLightPass(input *render.GeometryBuffer) *LightPass {
 	quad := render.NewQuad(mat)
 
 	p := &LightPass{
-		fbo:      fbo,
-		Output:   output,
-		Material: mat,
-		quad:     quad,
-		Shadows:  shadowPass,
-		SSAO:     ssaoPass,
-		Ambient:  render.Color4(1, 1, 1, 0.1),
+		fbo:            fbo,
+		Output:         output,
+		Material:       mat,
+		quad:           quad,
+		Shadows:        shadowPass,
+		SSAO:           ssaoPass,
+		Ambient:        render.Color4(1, 1, 1, 0.1),
+		ShadowStrength: 0.3,
+		ShadowBias:     0.0001,
 	}
 	return p
 }
@@ -81,6 +85,8 @@ func (p *LightPass) DrawPass(scene *Scene) {
 	shader.Mat4f("cameraInverse", vpInv)
 	shader.Mat4f("viewInverse", vInv)
 	shader.RGBA("ambient", p.Ambient)
+	shader.Float("shadow_bias", p.ShadowBias)
+	shader.Float("shadow_strength", p.ShadowStrength)
 
 	// clear
 	gl.ClearColor(0, 0, 0, 1)

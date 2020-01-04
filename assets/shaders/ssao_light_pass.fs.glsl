@@ -29,6 +29,8 @@ uniform mat4 viewInverse;     // projection matrix
 
 uniform Light light;     // uniform light data
 uniform vec4 ambient; // ambient light
+uniform float shadow_strength;
+uniform float shadow_bias;
 
 in vec2 texcoord0;
 
@@ -84,8 +86,8 @@ float sampleShadowmap(sampler2D shadowmap, vec3 position) {
     float depth = texture(shadowmap, light_ndc_pos.xy).r;
 
     /* shadow test */
-    if (depth < (z - 0.003)) {
-        return 0.5;
+    if (depth < (z - shadow_bias)) {
+        return 1.0 - shadow_strength;
     }
 
     return 1.0;
@@ -139,7 +141,8 @@ void main() {
     /* add ambient light */
     lightColor += ambient.a * ambient.rgb;
 
-    float ssao_blend = 0.5; // ssao amount
+    /* todo: this should be a uniform variable */
+    float ssao_blend = 0.4; // ssao amount
     lightColor *= mix(1, ssao, ssao_blend);
 
     /* mix with diffuse */

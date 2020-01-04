@@ -1,8 +1,6 @@
 package engine
 
 import (
-	"fmt"
-
 	"github.com/go-gl/glfw/v3.1/glfw"
 )
 
@@ -43,7 +41,6 @@ func MouseDown(button MouseButton) bool {
 // MouseButtonCallback updates the mouse button state map
 func MouseButtonCallback(w *glfw.Window, button glfw.MouseButton, action glfw.Action, mod glfw.ModifierKey) {
 	btn := MouseButton(button)
-	fmt.Println("press mouse", btn)
 	Mouse.nextbuttons[btn] = action != glfw.Release
 }
 

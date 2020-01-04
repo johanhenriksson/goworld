@@ -57,7 +57,6 @@ func (f *Font) RenderOn(tx *Texture, text string, width, height float32, color C
 	f.drawer.Dot = fixed.P(0, int(line))
 	f.drawer.DrawString(text)
 
-	tx.Bind()
 	tx.Buffer(rgba)
 }
 

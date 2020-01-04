@@ -19,7 +19,7 @@ type ShadowPass struct {
 func NewShadowPass(input *render.GeometryBuffer) *ShadowPass {
 	mat := assets.GetMaterial("color_geometry")
 
-	size := 2048
+	size := 4096
 	fbo := render.CreateFrameBuffer(int32(size), int32(size))
 	fbo.ClearColor = render.Color4(1, 1, 1, 1)
 	texture := fbo.AttachBuffer(gl.DEPTH_ATTACHMENT, gl.DEPTH_COMPONENT24, gl.DEPTH_COMPONENT, gl.FLOAT)
@@ -35,8 +35,8 @@ func NewShadowPass(input *render.GeometryBuffer) *ShadowPass {
 }
 
 func (sp *ShadowPass) DrawPass(scene *Scene, light *Light) {
-
 	if light.Type != DirectionalLight {
+		// only directional lights support shadows atm
 		return
 	}
 
