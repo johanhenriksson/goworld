@@ -1,7 +1,7 @@
 package main
 
 /*
- * Copyright (C) 2016 Johan Henriksson
+ * Copyright (C) 2016-2019 Johan Henriksson
  *
  * goworld is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -45,7 +45,8 @@ func main() {
 	/* create a camera */
 
 	width, height := app.Window.GetBufferSize()
-	camera := engine.CreateCamera(100, 90, -20, float32(width), float32(height), 65.0, 0.1, 1500.0)
+	fmt.Printf("Window buffer size: %dx%d\n", width, height)
+	camera := engine.CreateCamera(&render.ScreenBuffer, 10, 10, 20, 65.0, 0.1, 1500.0)
 	camera.Rotation[0] = 38
 	camera.Rotation[1] = 230
 	camera.Clear = render.Color4(0.141, 0.128, 0.118, 1.0)
@@ -106,14 +107,10 @@ func main() {
 	//game.NewPlacementGrid(chunks[0])
 
 	// buffer display window
-	winColor := render.Color{0.15, 0.15, 0.15, 0.8}
-	textColor := render.Color{1, 1, 1, 1}
+	winColor := render.Color4(0.15, 0.15, 0.15, 0.8)
+	textColor := render.Color4(1, 1, 1, 1)
 
-	lightPass := app.Render.Get("light").(*engine.LightPass)
 	bufferWindow := func(title string, texture *render.Texture, x, y float32, depth bool) {
-		winColor := render.Color{0.15, 0.15, 0.15, 0.8}
-		textColor := render.Color{1, 1, 1, 1}
-
 		win := app.UI.NewRect(winColor, x, y, 250, 280, -10)
 		label := app.UI.NewText(title, textColor, 0, 0, -21)
 		win.Append(label)
@@ -131,8 +128,10 @@ func main() {
 		app.UI.Append(win)
 	}
 
-	bufferWindow("Diffuse", geoPass.Buffer.Diffuse, 30, 30, false)
-	bufferWindow("Occlusion", lightPass.SSAO.Output, 30, 340, true)
+	bufferWindow("Diffuse", geoPass.Buffer.Depth, 30, 30, true)
+
+	//lightPass := app.Render.Get("light").(*engine.LightPass)
+	//bufferWindow("Occlusion", lightPass.SSAO.Output, 30, 340, true)
 	//bufferWindow("Shadowmap", lightPass.Output, 30, 650, false)
 
 	paletteWindow := func(x, y float32, palette render.Palette) {
@@ -154,15 +153,25 @@ func main() {
 	paletteWindow(20, 20, render.DefaultPalette)
 
 	versiontext := fmt.Sprintf("goworld | %s", time.Now())
-	watermark := app.UI.NewText(versiontext, render.Color4(1, 1, 1, 1), WIDTH-300, 0, 0)
+	watermark := app.UI.NewText(versiontext, render.Color4(1, 1, 1, 1), WIDTH-400, 0, 0)
 	app.UI.Append(watermark)
 
 	paletteIdx := 5
 	selected := game.NewColorVoxel(render.DefaultPalette[paletteIdx])
 
-	sampleNormal := func(x, y float32) (mgl.Vec3, bool) {
-		geoPass.Buffer.Bind()
-		viewNormal, exists := geoPass.Buffer.SampleNormal(int(x), int(HEIGHT-y))
+	sampleWorld := func() (mgl.Vec3, bool) {
+		depth, depthExists := geoPass.Buffer.SampleDepth(int(engine.Mouse.X), int(engine.Mouse.Y))
+		if !depthExists {
+			return mgl.Vec3{}, false
+		}
+		return camera.Unproject(mgl.Vec3{
+			engine.Mouse.X / float32(geoPass.Buffer.Depth.Width),
+			engine.Mouse.Y / float32(geoPass.Buffer.Depth.Height),
+			depth,
+		}), true
+	}
+	sampleNormal := func() (mgl.Vec3, bool) {
+		viewNormal, exists := geoPass.Buffer.SampleNormal(int(engine.Mouse.X), int(engine.Mouse.Y))
 		if exists {
 			viewInv := camera.View.Inv()
 			worldNormal := viewInv.Mul4x1(viewNormal.Vec4(0)).Vec3()
@@ -176,9 +185,12 @@ func main() {
 		versiontext = fmt.Sprintf("goworld | %s", time.Now())
 		watermark.Set(versiontext)
 
-		geoPass.Buffer.Bind()
-		world := camera.Unproject(engine.Mouse.X, engine.Mouse.Y)
-		normal, normalExists := sampleNormal(engine.Mouse.X, engine.Mouse.Y)
+		world, worldExists := sampleWorld()
+		if !worldExists {
+			return
+		}
+
+		normal, normalExists := sampleNormal()
 		if !normalExists {
 			return
 		}
@@ -202,7 +214,8 @@ func main() {
 		}
 
 		// place voxel
-		if engine.MouseDownPress(1) {
+		if engine.MouseDownPress(engine.MouseButton2) {
+			fmt.Println("place at", world)
 			target := world.Add(normal.Mul(0.5))
 			chunks[cx][cz].Set(int(target[0])%csize, int(target[1])%csize, int(target[2])%csize, selected)
 			chunks[cx][cz].Compute()
@@ -210,6 +223,7 @@ func main() {
 
 		// remove voxel
 		if engine.KeyPressed(engine.KeyC) {
+			fmt.Println("delete from", world)
 			target := world.Sub(normal.Mul(0.5))
 			chunks[cx][cz].Set(int(target[0])%csize, int(target[1])%csize, int(target[2])%csize, nil)
 			chunks[cx][cz].Compute()
@@ -268,7 +282,7 @@ func generateChunk(chk *game.ColorChunk, ox int, oy int, oz int) {
 				rh := int(44 * rockNoise.Sample(x+ox, oy, z+oz))
 				ch := int(8*cloudNoise.Sample(x+ox, y+oy, z+oz)) + 8
 
-				var vtype *game.ColorVoxel = nil
+				var vtype *game.ColorVoxel
 				if y < grassHeight {
 					vtype = rock2
 				}

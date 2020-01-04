@@ -20,7 +20,7 @@ type ColorPass struct {
 
 func NewColorPass(input *render.Texture, filter string) *ColorPass {
 	fbo := render.CreateFrameBuffer(input.Width, input.Height)
-	output := fbo.AddBuffer(gl.COLOR_ATTACHMENT0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE)
+	output := fbo.AttachBuffer(gl.COLOR_ATTACHMENT0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE)
 
 	// load lookup table
 	lutName := fmt.Sprintf("textures/color_grading/%s.png", filter)

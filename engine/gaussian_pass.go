@@ -15,7 +15,7 @@ type GaussianPass struct {
 func NewGaussianPass(input *render.Texture) *GaussianPass {
 	fbo := render.CreateFrameBuffer(input.Width, input.Height)
 	fbo.ClearColor = render.Color4(1, 1, 1, 1)
-	texture := fbo.AddBuffer(gl.COLOR_ATTACHMENT0, gl.RGB, gl.RGB, gl.FLOAT)
+	texture := fbo.AttachBuffer(gl.COLOR_ATTACHMENT0, gl.RGB, gl.RGB, gl.FLOAT)
 
 	mat := render.CreateMaterial(render.CompileVFShader("/assets/shaders/gaussian"))
 	mat.AddDescriptors(render.F32_XYZUV)

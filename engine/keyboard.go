@@ -9,6 +9,7 @@ type KeyMap map[KeyCode]bool
 
 /* Global key state */
 var keyState KeyMap = KeyMap{}
+var nextKeyState KeyMap = KeyMap{}
 var lastKeyState KeyMap = KeyMap{}
 
 /* Returns true if the given key was pressed during the previous frame */
@@ -45,13 +46,16 @@ func KeyDown(key KeyCode) bool {
 /* GLFW Callback - Updates key state map */
 func KeyCallback(w *glfw.Window, key glfw.Key, scancode int, action glfw.Action, mods glfw.ModifierKey) {
 	code := KeyCode(key)
-	keyState[code] = action != glfw.Release
+	nextKeyState[code] = action != glfw.Release
 }
 
 /* Must be called at the end of every frame - will update last key state */
-func inputEndFrame() {
+func updateKeyboard(dt float32) {
 	for k, v := range keyState {
 		lastKeyState[k] = v
+	}
+	for k, v := range nextKeyState {
+		keyState[k] = v
 	}
 }
 

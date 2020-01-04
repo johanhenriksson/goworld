@@ -25,11 +25,13 @@ func NewGeometryPass(bufferWidth, bufferHeight int32) *GeometryPass {
 
 func (p *GeometryPass) DrawPass(scene *Scene) {
 	p.Buffer.Bind()
+	//p.Buffer.ClearColor = scene.Camera.Clear
 	p.Buffer.Clear()
 
 	// kind-of hack to clear the diffuse buffer separately
+	// why???
 	camera := scene.Camera
-	gl.DrawBuffer(gl.COLOR_ATTACHMENT0)
+	gl.DrawBuffer(gl.COLOR_ATTACHMENT0) //
 	gl.ClearColor(camera.Clear.R, camera.Clear.G, camera.Clear.B, 1)
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 

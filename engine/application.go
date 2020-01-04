@@ -13,25 +13,32 @@ type Application struct {
 }
 
 func NewApplication(title string, width, height int) *Application {
-	wnd := CreateWindow(title, width, height)
-	buffw, buffh := wnd.GetBufferSize()
+	highDpiEnabled := false
+	wnd := CreateWindow(title, width, height, highDpiEnabled)
 
 	/* Scene */
 	scene := NewScene()
 
+	// figure out render resolution
+	scale := float32(1.0)
+	if highDpiEnabled {
+		scale = wnd.Scale()
+	}
+	renderWidth, renderHeight := int32(float32(width)*scale), int32(float32(height)*scale)
+
 	/* Renderer */
-	renderer := NewRenderer(int32(buffw), int32(buffh), scene)
-	geoPass := NewGeometryPass(int32(buffw), int32(buffh))
+	renderer := NewRenderer(renderWidth, renderHeight, scene)
+	geoPass := NewGeometryPass(renderWidth, renderHeight)
 	lightPass := NewLightPass(geoPass.Buffer)
 	colorPass := NewColorPass(lightPass.Output, "saturated")
 	renderer.Append("geometry", geoPass)
 	renderer.Append("light", lightPass)
 	renderer.Append("postprocess", colorPass)
 	renderer.Append("output", NewOutputPass(colorPass.Output))
-	renderer.Append("lines", NewLinePass())
+	//renderer.Append("lines", NewLinePass())
 
 	/* UI Manager */
-	uimgr := ui.NewManager(float32(buffw), float32(buffh))
+	uimgr := ui.NewManager(float32(width), float32(height))
 
 	app := &Application{
 		Window: wnd,
@@ -46,7 +53,6 @@ func NewApplication(title string, width, height int) *Application {
 		if app.UpdateFunc != nil {
 			app.UpdateFunc(dt)
 		}
-		inputEndFrame()
 	})
 
 	/* Draw callback */

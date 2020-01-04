@@ -31,6 +31,10 @@ func (f *Font) setup() {
 	}
 }
 
+func (f *Font) Measure(text string) {
+	f.drawer.MeasureString(text)
+}
+
 func (f *Font) Render(text string, width, height float32, color Color) *Texture {
 	tx := CreateTexture(int32(width), int32(height))
 	f.RenderOn(tx, text, width, height, color)
@@ -53,6 +57,7 @@ func (f *Font) RenderOn(tx *Texture, text string, width, height float32, color C
 	f.drawer.Dot = fixed.P(0, int(line))
 	f.drawer.DrawString(text)
 
+	tx.Bind()
 	tx.Buffer(rgba)
 }
 

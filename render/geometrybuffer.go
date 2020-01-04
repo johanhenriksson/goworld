@@ -21,10 +21,10 @@ func CreateGeometryBuffer(width, height int32) *GeometryBuffer {
 	g := &GeometryBuffer{
 		FrameBuffer: fbo,
 
-		Depth:    fbo.AddBuffer(gl.DEPTH_ATTACHMENT, gl.DEPTH_COMPONENT24, gl.DEPTH_COMPONENT, gl.FLOAT), // depth
-		Diffuse:  fbo.AddBuffer(gl.COLOR_ATTACHMENT0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE),                // diffuse (rgb)
-		Normal:   fbo.AddBuffer(gl.COLOR_ATTACHMENT1, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE),                // world normal (rgb)
-		Position: fbo.AddBuffer(gl.COLOR_ATTACHMENT2, gl.RGB32F, gl.RGBA, gl.FLOAT),                      // world position (rgb)
+		Depth:    fbo.AttachBuffer(gl.DEPTH_ATTACHMENT, gl.DEPTH_COMPONENT24, gl.DEPTH_COMPONENT, gl.FLOAT), // depth
+		Diffuse:  fbo.AttachBuffer(gl.COLOR_ATTACHMENT0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE),                // diffuse (rgb)
+		Normal:   fbo.AttachBuffer(gl.COLOR_ATTACHMENT1, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE),                // world normal (rgb)
+		Position: fbo.AttachBuffer(gl.COLOR_ATTACHMENT2, gl.RGB32F, gl.RGBA, gl.FLOAT),                      // world position (rgb)
 		// todo: specular & smoothness buffer maybe
 	}
 
@@ -38,9 +38,8 @@ func CreateGeometryBuffer(width, height int32) *GeometryBuffer {
 // SampleNormal samples the view space normal at the given pixel location
 func (g *GeometryBuffer) SampleNormal(x, y int) (mgl.Vec3, bool) {
 	g.Bind()
-
 	// sample normal buffer (COLOR_ATTACHMENT1)
-	normalEncoded := g.FrameBuffer.Sample(gl.COLOR_ATTACHMENT1, x, y)
+	normalEncoded := g.FrameBuffer.Sample(gl.COLOR_ATTACHMENT1, x, int(g.Normal.Height)-y-1)
 	if normalEncoded.R == 0 && normalEncoded.G == 0 && normalEncoded.B == 0 {
 		return mgl.Vec3{}, false // normal does not exist
 	}
@@ -48,4 +47,10 @@ func (g *GeometryBuffer) SampleNormal(x, y int) (mgl.Vec3, bool) {
 	// unpack view normal
 	viewNormal := normalEncoded.Vec3().Mul(2).Sub(mgl.Vec3{1, 1, 1}).Normalize()
 	return viewNormal, true
+}
+
+func (g *GeometryBuffer) SampleDepth(x, y int) (float32, bool) {
+	g.Bind()
+	depth := g.FrameBuffer.SampleDepth(x, int(g.Depth.Height)-y-1)
+	return depth, depth != 0.0
 }

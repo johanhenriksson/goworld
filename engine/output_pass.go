@@ -29,11 +29,8 @@ func NewOutputPass(input *render.Texture) *OutputPass {
 func (p *OutputPass) DrawPass(scene *Scene) {
 	camera := scene.Camera
 
-	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
-
 	// camera settings
-	gl.Viewport(0, 0, int32(camera.Width), int32(camera.Height))
-	gl.ClearColor(camera.Clear.R, camera.Clear.G, camera.Clear.B, 1)
+	camera.Use()
 
 	// draw
 	gl.Clear(gl.DEPTH_BUFFER_BIT | gl.COLOR_BUFFER_BIT)

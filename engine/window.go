@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/glfw/v3.1/glfw"
+	"github.com/johanhenriksson/goworld/render"
 )
 
 func init() {
@@ -25,6 +26,7 @@ type Window struct {
 	Wnd           *glfw.Window
 	Width         int
 	Height        int
+	HighDPI       bool
 	updateCb      UpdateCallback
 	renderCb      RenderCallback
 	maxFrameTime  float64
@@ -32,7 +34,7 @@ type Window struct {
 }
 
 // CreateWindow creates the main engine window, and the OpenGL
-func CreateWindow(title string, width int, height int) *Window {
+func CreateWindow(title string, width int, height int, highDPI bool) *Window {
 	if err := glfw.Init(); err != nil {
 		log.Fatalln("Failed to initialize glfw:", err)
 	}
@@ -57,13 +59,20 @@ func CreateWindow(title string, width int, height int) *Window {
 	}
 
 	w := &Window{
+		Wnd:           window,
 		Width:         width,
 		Height:        height,
-		Wnd:           window,
+		HighDPI:       highDPI,
 		maxFrameTime:  0.0,
 		lastFrameTime: glfw.GetTime(),
 	}
 	w.SetMaxFps(60)
+
+	buffw, buffh := w.GetBufferSize()
+	render.ScreenBuffer.Width = int32(buffw)
+	render.ScreenBuffer.Height = int32(buffh)
+
+	log.Println("Created window of size", width, "x", height, "scale:", w.Scale())
 
 	window.SetInputMode(glfw.CursorMode, glfw.CursorDisabled)
 	window.SetKeyCallback(KeyCallback)
@@ -126,6 +135,10 @@ func (wnd *Window) Loop() {
 			wnd.updateCb(dt)
 		}
 
+		buffw, buffh := wnd.GetBufferSize()
+		render.ScreenBuffer.Width = int32(buffw)
+		render.ScreenBuffer.Height = int32(buffh)
+
 		// render scene
 		if wnd.renderCb != nil {
 			wnd.renderCb(wnd, dt)
@@ -135,7 +148,8 @@ func (wnd *Window) Loop() {
 		wnd.Wnd.SwapBuffers()
 		glfw.PollEvents()
 
-		UpdateMouse(dt)
+		updateMouse(dt)
+		updateKeyboard(dt)
 
 		// wait a bit if we're running faster than the maximum fps
 		if wnd.maxFrameTime > 0 {
@@ -158,6 +172,9 @@ func (wnd *Window) GetBufferSize() (int, int) {
 
 // Scale returns the window DPI scale relative to the framebuffer.
 func (wnd *Window) Scale() float32 {
+	if !wnd.HighDPI {
+		return 1.0
+	}
 	fw, _ := wnd.Wnd.GetFramebufferSize()
 	return float32(fw) / float32(wnd.Width)
 }

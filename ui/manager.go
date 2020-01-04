@@ -3,7 +3,6 @@ package ui
 import (
 	"github.com/johanhenriksson/goworld/render"
 
-	"github.com/go-gl/gl/v4.1-core/gl"
 	mgl "github.com/go-gl/mathgl/mgl32"
 )
 
@@ -45,8 +44,7 @@ func (m *Manager) Draw() {
 		Transform:  mgl.Ident4(),
 	}
 
-	gl.Viewport(0, 0, int32(m.Width), int32(m.Height))
-
+	render.ScreenBuffer.Bind()
 	for _, el := range m.Children {
 		el.Draw(args)
 	}

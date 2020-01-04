@@ -2,8 +2,7 @@ package engine
 
 import (
 	"math"
-	"unsafe"
-	"github.com/go-gl/gl/v4.1-core/gl"
+
 	mgl "github.com/go-gl/mathgl/mgl32"
 	"github.com/johanhenriksson/goworld/render"
 )
@@ -14,27 +13,26 @@ import (
 /* Perspective Camera. */
 type Camera struct {
 	*Transform
-	Width      float32
-	Height     float32
 	Fov        float32
 	Ratio      float32
 	Near       float32
 	Far        float32
+	Buffer     *render.FrameBuffer
 	Projection mgl.Mat4
 	View       mgl.Mat4
 	Clear      render.Color
 }
 
-func CreateCamera(x, y, z, width, height, fov, near, far float32) *Camera {
+func CreateCamera(buffer *render.FrameBuffer, x, y, z, fov, near, far float32) *Camera {
+	ratio := float32(buffer.Width) / float32(buffer.Height)
 	cam := &Camera{
 		Transform:  CreateTransform(x, y, z),
-		Width:      width,
-		Height:     height,
-		Ratio:      float32(width) / float32(height),
+		Buffer:     buffer,
+		Ratio:      ratio,
 		Fov:        fov,
 		Near:       near,
 		Far:        far,
-		Projection: mgl.Perspective(mgl.DegToRad(fov), width/height, near, far),
+		Projection: mgl.Perspective(mgl.DegToRad(fov), ratio, near, far),
 		//Projection: mgl.Ortho(-width/2,width/2,-height/2,height/2,-100,100),
 	}
 
@@ -49,17 +47,13 @@ func CreateCamera(x, y, z, width, height, fov, near, far float32) *Camera {
 // func (cam *Camera) Project(mgl.Vec3) mgl.Vec2 { }
 
 /* Unproject screen space coordinates into world space */
-func (cam *Camera) Unproject(x, y float32) mgl.Vec3 {
-	/* Sample depth buffer at x,y */
-	var depth float32
-	gl.ReadPixels(int32(x), int32(cam.Height-y-1), 1, 1, gl.DEPTH_COMPONENT, gl.FLOAT, unsafe.Pointer(&depth))
-
-	/* Clip space coord */
+func (cam *Camera) Unproject(pos mgl.Vec3) mgl.Vec3 {
+	// screen space -> clip space
 	point := mgl.Vec4{
-		(x/cam.Width)*2 - 1,
-		(1-y/cam.Height)*2 - 1,
-		depth*2 - 1,
-		1,
+		pos.X()*2 - 1,
+		(1-pos.Y())*2 - 1,
+		pos.Z()*2 - 1,
+		1.0,
 	}
 
 	/* Multiply by inverse view-projection matrix */
@@ -147,4 +141,8 @@ func (c *Camera) Update(dt float32) {
 
 func (c *Camera) LookAt(target mgl.Vec3) {
 	c.View = mgl.LookAtV(c.Transform.Position, target, mgl.Vec3{0, 1, 0})
+}
+
+func (c *Camera) Use() {
+	c.Buffer.Bind()
 }

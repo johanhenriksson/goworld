@@ -158,11 +158,12 @@ func (chk *ColorChunk) Compute() {
 	data := make(ColorVoxelVertices, 0, 64)
 
 	occlusion := NewOcclusionData(s)
-	f := func(f bool) float32 {
-		if f {
-			return 1.0 / 6
+	occluded := func(x, y, z int) float32 {
+		if chk.At(x, y, z) != nil {
+			// occluded
+			return 0
 		}
-		return 0
+		return 1.0 / 6
 	}
 
 	/* occlusion pass */
@@ -172,21 +173,22 @@ func (chk *ColorChunk) Compute() {
 			for x := 0; x < s; x++ {
 				v := chk.At(x, y, z)
 				if v != nil {
-					/* Not empty space */
+					// occlusion is only calculated for empty voxels
 					continue
 				}
 
+				// random occlusion factor
 				rnd := 0.14 * 0.5 * (noise.Sample(x+chk.Ox, y, z+chk.Oz) + 1)
 
-				/* Simple optimization - dont draw hidden faces */
-				xp := chk.At(x+1, y, z) == nil
-				xn := chk.At(x-1, y, z) == nil
-				yp := chk.At(x, y+1, z) == nil
-				yn := chk.At(x, y-1, z) == nil
-				zp := chk.At(x, y, z+1) == nil
-				zn := chk.At(x, y, z-1) == nil
+				// sample neighbors
+				xp := occluded(x+1, y, z)
+				xn := occluded(x-1, y, z)
+				yp := occluded(x, y+1, z)
+				yn := occluded(x, y-1, z)
+				zp := occluded(x, y, z+1)
+				zn := occluded(x, y, z-1)
 
-				o := f(xp) + f(xn) + f(yp) + f(yn) + f(zp) + f(zn) + rnd
+				o := xp + xn + yp + yn + zp + zn + rnd
 				occlusion.Set(x, y, z, o)
 			}
 		}

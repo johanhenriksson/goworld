@@ -22,16 +22,24 @@ type FrameBuffer struct {
 	mipLvl     int32
 }
 
-/* TODO: Rename to AttachBuffer */
+var ScreenBuffer = FrameBuffer{
+	Buffers:    []DrawBuffer{},
+	ClearColor: Color{0, 0, 0, 1},
+	Width:      0,
+	Height:     0,
+	id:         0,
+	mipLvl:     0,
+}
+
 /**
  * Create a new frame buffer texture and attach it to the given target.
- * Returns a pointer to the created texture object
+ * Returns a pointer to the created texture object. FBO must be bound first.
  */
-func (f *FrameBuffer) AddBuffer(target, internal_fmt, format, datatype uint32) *Texture {
+func (f *FrameBuffer) AttachBuffer(target, internalFormat, format, datatype uint32) *Texture {
 	// Create texture object
 	texture := CreateTexture(f.Width, f.Height)
 	texture.Format = format
-	texture.InternalFormat = internal_fmt
+	texture.InternalFormat = internalFormat
 	texture.DataType = datatype
 	texture.Clear()
 
@@ -87,6 +95,9 @@ func (f *FrameBuffer) Clear() {
 
 /* Delete frame buffer object */
 func (f *FrameBuffer) Delete() {
+	if f.id == 0 {
+		panic("Cant delete framebuffer 0")
+	}
 	gl.DeleteFramebuffers(1, &f.id)
 	f.id = 0
 }
@@ -96,6 +107,12 @@ func (f *FrameBuffer) Sample(target uint32, x, y int) Color {
 	gl.ReadBuffer(target)
 	gl.ReadPixels(int32(x), int32(y), 1, 1, gl.RGBA, gl.FLOAT, unsafe.Pointer(&pixel[0]))
 	return Color4(pixel[0], pixel[1], pixel[2], pixel[3])
+}
+
+func (f *FrameBuffer) SampleDepth(x, y int) float32 {
+	float := float32(0)
+	gl.ReadPixels(int32(x), int32(y), 1, 1, gl.DEPTH_COMPONENT, gl.FLOAT, unsafe.Pointer(&float))
+	return float
 }
 
 // DrawBuffers sets up all the attached buffers for drawing

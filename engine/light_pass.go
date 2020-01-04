@@ -29,7 +29,7 @@ func NewLightPass(input *render.GeometryBuffer) *LightPass {
 	shadowPass := NewShadowPass(input)
 
 	fbo := render.CreateFrameBuffer(input.Width, input.Height)
-	output := fbo.AddBuffer(gl.COLOR_ATTACHMENT0, gl.RGB, gl.RGB, gl.FLOAT)
+	output := fbo.AttachBuffer(gl.COLOR_ATTACHMENT0, gl.RGB, gl.RGB, gl.FLOAT)
 
 	/* use a virtual material to help with vertex attributes and textures */
 	mat := render.CreateMaterial(render.CompileVFShader("/assets/shaders/ssao_light_pass"))
@@ -125,8 +125,6 @@ func (p *LightPass) DrawPass(scene *Scene) {
 		shader.Float("light.attenuation.Quadratic", light.Attenuation.Quadratic)
 
 		/* render light */
-		gl.Viewport(0, 0, int32(scene.Camera.Width), int32(scene.Camera.Height))
-
 		// todo: draw light volumes instead of a fullscreen quad
 		p.quad.Draw()
 

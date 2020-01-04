@@ -33,7 +33,7 @@ type SSAOPass struct {
 func NewSSAOPass(gbuff *render.GeometryBuffer, settings *SSAOSettings) *SSAOPass {
 	fbo := render.CreateFrameBuffer(gbuff.Width, gbuff.Height)
 	fbo.ClearColor = render.Color4(1, 1, 1, 1)
-	texture := fbo.AddBuffer(gl.COLOR_ATTACHMENT0, gl.RGB, gl.RGB, gl.FLOAT) // diffuse (rgb)
+	texture := fbo.AttachBuffer(gl.COLOR_ATTACHMENT0, gl.RGB, gl.RGB, gl.FLOAT) // diffuse (rgb)
 
 	// gaussian blur pass
 	gaussian := NewGaussianPass(texture)
