@@ -55,7 +55,7 @@ func main() {
 			Intensity:  0.8,
 			Color:      mgl.Vec3{0.9 * 0.973, 0.9 * 0.945, 0.9 * 0.776},
 			Type:       engine.DirectionalLight,
-			Projection: mgl.Ortho(-200, 300, -30, 200, -200, 760),
+			Projection: mgl.Ortho(-200, 300, -30, 250, -200, 760),
 			Position:   mgl.Vec3{-3, 2, -2},
 		},
 		{ // centered point light

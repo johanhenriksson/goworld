@@ -24,6 +24,13 @@ func NewShadowPass(input *render.GeometryBuffer) *ShadowPass {
 	fbo.ClearColor = render.Color4(1, 1, 1, 1)
 	texture := fbo.AttachBuffer(gl.DEPTH_ATTACHMENT, gl.DEPTH_COMPONENT24, gl.DEPTH_COMPONENT, gl.FLOAT)
 
+	// set the shadow buffer texture to clamp to a white border so that samples
+	// outside the map do not fall in shadow.
+	border := []float32{1, 1, 1, 1}
+	gl.TexParameterfv(gl.TEXTURE_2D, gl.TEXTURE_BORDER_COLOR, &border[0])
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_BORDER)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_BORDER)
+
 	p := &ShadowPass{
 		Material:  mat,
 		shadowmap: fbo,
