@@ -136,14 +136,10 @@ void main() {
     }
 
     /* calculate light color */
-    vec3 lightColor = light.Color * light.Intensity * contrib * occlusion * shadow;
+    vec3 lightColor = light.Color * light.Intensity * contrib * shadow * occlusion;
 
     /* add ambient light */
-    lightColor += ambient.a * ambient.rgb;
-
-    /* todo: this should be a uniform variable */
-    float ssao_blend = 0.6; // ssao amount
-    lightColor *= mix(1, ssao, ssao_blend);
+    lightColor += ambient.a * ambient.rgb * ssao;
 
     /* mix with diffuse */
     lightColor *= diffuseColor;
