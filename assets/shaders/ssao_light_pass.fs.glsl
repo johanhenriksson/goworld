@@ -142,7 +142,7 @@ void main() {
     lightColor += ambient.a * ambient.rgb;
 
     /* todo: this should be a uniform variable */
-    float ssao_blend = 0.4; // ssao amount
+    float ssao_blend = 0.6; // ssao amount
     lightColor *= mix(1, ssao, ssao_blend);
 
     /* mix with diffuse */

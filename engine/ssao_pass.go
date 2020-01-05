@@ -42,7 +42,7 @@ func NewSSAOPass(gbuff *render.GeometryBuffer, settings *SSAOSettings) *SSAOPass
 	kernel := createSSAOKernel(settings.Samples)
 
 	// generate noise texture
-	noise := createHemisphereNoiseTexture(8)
+	noise := createHemisphereNoiseTexture(4)
 
 	/* use a virtual material to help with vertex attributes and textures */
 	mat := render.CreateMaterial(render.CompileVFShader("/assets/shaders/ssao"))
@@ -117,9 +117,14 @@ func createSSAOKernel(samples int) []mgl.Vec3 {
 
 func createHemisphereNoiseTexture(size int) *render.Texture {
 	noise := render.CreateTexture(int32(size), int32(size))
-	noise.InternalFormat = gl.RGB32F
+	noise.InternalFormat = gl.RGB16F
 	noise.Format = gl.RGB
 	noise.DataType = gl.FLOAT
+
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT)
 
 	noiseData := make([]float32, 3*size*size)
 	for i := 0; i < len(noiseData); i += 3 {

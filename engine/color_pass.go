@@ -8,6 +8,7 @@ import (
 	"github.com/johanhenriksson/goworld/render"
 )
 
+// ColorPass represents a color correction pass and its settings.
 type ColorPass struct {
 	Input  *render.Texture
 	Output *render.Texture
@@ -18,6 +19,7 @@ type ColorPass struct {
 	quad   *render.Quad
 }
 
+// NewColorPass instantiates a new color correction pass.
 func NewColorPass(input *render.Texture, filter string) *ColorPass {
 	fbo := render.CreateFrameBuffer(input.Width, input.Height)
 	output := fbo.AttachBuffer(gl.COLOR_ATTACHMENT0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE)
@@ -45,6 +47,7 @@ func NewColorPass(input *render.Texture, filter string) *ColorPass {
 	}
 }
 
+// DrawPass applies color correction to the scene
 func (p *ColorPass) DrawPass(scene *Scene) {
 	p.fbo.Bind()
 	p.fbo.Clear()

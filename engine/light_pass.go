@@ -21,10 +21,10 @@ type LightPass struct {
 
 func NewLightPass(input *render.GeometryBuffer) *LightPass {
 	ssao := SSAOSettings{
-		Samples: 64,
-		Radius:  1.5,
-		Bias:    0.02,
-		Power:   2.5,
+		Samples: 32,
+		Radius:  0.8,
+		Bias:    0.025,
+		Power:   1.5,
 	}
 
 	ssaoPass := NewSSAOPass(input, &ssao)
@@ -48,7 +48,7 @@ func NewLightPass(input *render.GeometryBuffer) *LightPass {
 	mat.AddTexture("tex_normal", input.Normal)
 	mat.AddTexture("tex_depth", input.Depth)
 	mat.AddTexture("tex_shadow", shadowPass.Output)
-	mat.AddTexture("tex_occlusion", ssaoPass.Output)
+	mat.AddTexture("tex_occlusion", ssaoPass.Gaussian.Output)
 
 	/* create a render quad */
 	quad := render.NewQuad(mat)

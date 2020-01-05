@@ -4,6 +4,7 @@ import (
 	"github.com/johanhenriksson/goworld/ui"
 )
 
+// Application holds references to the basic engine components
 type Application struct {
 	Window     *Window
 	Scene      *Scene
@@ -12,21 +13,22 @@ type Application struct {
 	UpdateFunc UpdateCallback
 }
 
+// NewApplication instantiates a new engine application
 func NewApplication(title string, width, height int) *Application {
 	highDpiEnabled := false
 	wnd := CreateWindow(title, width, height, highDpiEnabled)
 
-	/* Scene */
+	// create a scene
 	scene := NewScene()
 
-	// figure out render resolution
+	// figure out render resolution if we're on a high dpi screen
 	scale := float32(1.0)
 	if highDpiEnabled {
 		scale = wnd.Scale()
 	}
 	renderWidth, renderHeight := int32(float32(width)*scale), int32(float32(height)*scale)
 
-	/* Renderer */
+	// set upp renderer
 	renderer := NewRenderer(renderWidth, renderHeight, scene)
 	geoPass := NewGeometryPass(renderWidth, renderHeight)
 	lightPass := NewLightPass(geoPass.Buffer)
@@ -35,10 +37,10 @@ func NewApplication(title string, width, height int) *Application {
 	renderer.Append("light", lightPass)
 	renderer.Append("postprocess", colorPass)
 	renderer.Append("output", NewOutputPass(colorPass.Output))
-	//renderer.Append("lines", NewLinePass())
+	renderer.Append("lines", NewLinePass())
 
-	/* UI Manager */
-	uimgr := ui.NewManager(float32(width), float32(height))
+	// ui manager
+	uimgr := ui.NewManager(float32(width)*scale, float32(height)*scale)
 
 	app := &Application{
 		Window: wnd,
@@ -47,7 +49,7 @@ func NewApplication(title string, width, height int) *Application {
 		UI:     uimgr,
 	}
 
-	/* Update callback */
+	// update callback
 	app.Window.SetUpdateCallback(func(dt float32) {
 		app.Render.Update(dt)
 		if app.UpdateFunc != nil {
@@ -55,18 +57,19 @@ func NewApplication(title string, width, height int) *Application {
 		}
 	})
 
-	/* Draw callback */
+	// draw callback
 	app.Window.SetRenderCallback(func(wnd *Window, dt float32) {
-		/* render scene */
+		// render 3D scene
 		app.Render.Draw()
-		/* draw user interface */
+
+		// draw user interface on top
 		app.UI.Draw()
 	})
 
 	return app
 }
 
-/* Hands over control to the application. Will loop until the main window is closed */
+// Run the application. Hands over control to the main window, looping until it is closed.
 func (app *Application) Run() {
 	app.Window.Loop()
 }

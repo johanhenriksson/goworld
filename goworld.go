@@ -58,7 +58,7 @@ func main() {
 			Color:      mgl.Vec3{0.9 * 0.973, 0.9 * 0.945, 0.9 * 0.776},
 			Type:       engine.DirectionalLight,
 			Projection: mgl.Ortho(-200, 300, -30, 200, -200, 760),
-			Position:   mgl.Vec3{-2, 1, -1},
+			Position:   mgl.Vec3{-3, 2, -2},
 		},
 		{ // centered point light
 			Attenuation: engine.Attenuation{
@@ -126,8 +126,8 @@ func main() {
 	}
 
 	lightPass := app.Render.Get("light").(*engine.LightPass)
-	bufferWindow("Diffuse", geoPass.Buffer.Diffuse, 10, 10, false)
-	bufferWindow("Occlusion", lightPass.SSAO.Output, 10, 210, true)
+	bufferWindow("Diffuse", geoPass.Buffer.Position, 10, 10, false)
+	bufferWindow("Occlusion", lightPass.SSAO.Gaussian.Output, 10, 210, true)
 	bufferWindow("Shadowmap", lightPass.Shadows.Output, 10, 410, true)
 
 	paletteWindow := func(x, y float32, palette render.Palette) {
@@ -149,7 +149,7 @@ func main() {
 	paletteWindow(300, 20, render.DefaultPalette)
 
 	versiontext := fmt.Sprintf("goworld | %s", time.Now())
-	watermark := app.UI.NewText(versiontext, render.Color4(1, 1, 1, 1), 400, 400, 0)
+	watermark := app.UI.NewText(versiontext, render.Color4(1, 1, 1, 1), 10, HEIGHT-30, -30)
 	app.UI.Append(watermark)
 
 	paletteIdx := 5
@@ -179,7 +179,7 @@ func main() {
 	/* Render loop */
 	app.UpdateFunc = func(dt float32) {
 		versiontext = fmt.Sprintf("goworld | %s", time.Now())
-		//watermark.Set(versiontext)
+		watermark.Set(versiontext)
 
 		world, worldExists := sampleWorld()
 		if !worldExists {
