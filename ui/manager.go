@@ -1,8 +1,10 @@
 package ui
 
 import (
+	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/render"
 
+	"github.com/go-gl/gl/v4.1-core/gl"
 	mgl "github.com/go-gl/mathgl/mgl32"
 )
 
@@ -16,23 +18,36 @@ type Manager struct {
 	Children []render.Drawable
 }
 
-func NewManager(width, height float32) *Manager {
+func NewManager(app *engine.Application) *Manager {
+
+	// ui manager
+	//uimgr := ui.NewManager(float32(width)*scale, float32(height)*scale)
+
+	width := float32(app.Window.Width) * app.Window.Scale()
+	height := float32(app.Window.Height) * app.Window.Scale()
+
 	m := &Manager{
 		Width:    width,
 		Height:   height,
-		Viewport: mgl.Ortho(0, width, 0, height, 1000, -1000),
+		Viewport: mgl.Ortho(0, width, height, 0, 1000, -1000),
 		Children: []render.Drawable{},
 	}
 	return m
 }
 
-func (m *Manager) Append(child render.Drawable) {
+func (m *Manager) Attach(child render.Drawable) {
 	m.Children = append(m.Children, child)
 }
 
-func (m *Manager) Draw() {
+func (m *Manager) DrawPass(scene *engine.Scene) {
 	/* create draw event args */
-	p := m.Viewport
+
+	scaling := mgl.Scale3D(1, 1, 1)
+	translation := mgl.Translate3D(0, 0, 0)
+	root := translation.Mul4(scaling)
+
+	p := m.Viewport // translation.Mul4(m.Viewport)
+
 	v := mgl.Ident4()
 	vp := p
 
@@ -41,11 +56,17 @@ func (m *Manager) Draw() {
 		View:       v,
 		VP:         vp,
 		MVP:        vp,
-		Transform:  mgl.Ident4(),
+		Transform:  root, // mgl.Ident4(),
 	}
+
+	gl.Disable(gl.CULL_FACE)
 
 	render.ScreenBuffer.Bind()
 	for _, el := range m.Children {
 		el.Draw(args)
 	}
+}
+
+func (m *Manager) HandleMouse(x, y float32, button engine.MouseButton) {
+
 }

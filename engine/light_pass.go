@@ -68,6 +68,10 @@ func NewLightPass(input *render.GeometryBuffer) *LightPass {
 }
 
 func (p *LightPass) DrawPass(scene *Scene) {
+	// enable back face culling
+	gl.Enable(gl.CULL_FACE)
+	gl.CullFace(gl.BACK)
+
 	// ssao pass
 	p.SSAO.DrawPass(scene)
 
@@ -140,4 +144,5 @@ func (p *LightPass) DrawPass(scene *Scene) {
 	/* reset GL state */
 	gl.DepthMask(true)
 	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+	gl.Disable(gl.CULL_FACE)
 }

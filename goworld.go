@@ -25,19 +25,17 @@ import (
 	"github.com/johanhenriksson/goworld/game"
 	"github.com/johanhenriksson/goworld/math"
 	"github.com/johanhenriksson/goworld/render"
+	"github.com/johanhenriksson/goworld/ui"
 
 	mgl "github.com/go-gl/mathgl/mgl32"
-)
-
-const (
-	WIDTH  = 1200
-	HEIGHT = 800
 )
 
 func main() {
 	fmt.Println("goworld")
 
-	app := engine.NewApplication("voxels", WIDTH, HEIGHT)
+	app := engine.NewApplication("voxels", 1200, 800)
+	ui := ui.NewManager(app)
+	app.Render.Append("ui", ui)
 
 	/* grab a reference to the geometry render pass */
 	geoPass := app.Render.Get("geometry").(*engine.GeometryPass)
@@ -108,49 +106,47 @@ func main() {
 	textColor := render.Color4(1, 1, 1, 1)
 
 	bufferWindow := func(title string, texture *render.Texture, x, y float32, depth bool) {
-		win := app.UI.NewRect(winColor, x, y, 240, 190, -10)
-		label := app.UI.NewText(title, textColor, 0, 0, -21)
-		win.Append(label)
+		win := ui.NewRect(winColor, x, y, 240, 185, -10)
+		label := ui.NewText(title, textColor, 0, 0, -21)
+		win.Attach(label)
 
 		if depth {
-			img := app.UI.NewDepthImage(texture, 0, 30, 240, 160, -20)
-			img.Quad.FlipY()
-			win.Append(img)
+			img := ui.NewDepthImage(texture, 0, 25, 240, 160, -20)
+			win.Attach(img)
 		} else {
-			img := app.UI.NewImage(texture, 0, 30, 240, 160, -20)
-			img.Quad.FlipY()
-			win.Append(img)
+			img := ui.NewImage(texture, 0, 25, 240, 160, -20)
+			win.Attach(img)
 		}
 
-		app.UI.Append(win)
+		ui.Attach(win)
 	}
 
 	lightPass := app.Render.Get("light").(*engine.LightPass)
-	bufferWindow("Diffuse", geoPass.Buffer.Position, 10, 10, false)
-	bufferWindow("Occlusion", lightPass.SSAO.Gaussian.Output, 10, 210, true)
-	bufferWindow("Shadowmap", lightPass.Shadows.Output, 10, 410, true)
+	bufferWindow("Diffuse", geoPass.Buffer.Diffuse, 10, 10, false)
+	bufferWindow("Occlusion", lightPass.SSAO.Gaussian.Output, 10, 205, true)
+	bufferWindow("Shadowmap", lightPass.Shadows.Output, 10, 400, true)
 
 	paletteWindow := func(x, y float32, palette render.Palette) {
-		win := app.UI.NewRect(winColor, x, y, 100, 180, -15)
-		label := app.UI.NewText("Palette", textColor, 4, 8*20-4, -16)
-		win.Append(label)
+		win := ui.NewRect(winColor, x, y, 100, 185, -40)
+		label := ui.NewText("Palette", textColor, 4, 0, -41)
+		win.Attach(label)
 
 		perRow := 5
 		for i, color := range palette {
 			row := i / perRow
 			col := i % perRow
-			c := app.UI.NewRect(color, float32(col*20), float32(row*20), 20, 20, -17)
-			win.Append(c)
+			c := ui.NewRect(color, float32(col*20), 25.0+float32(row*20), 20, 20, -42)
+			win.Attach(c)
 		}
 
-		app.UI.Append(win)
+		ui.Attach(win)
 	}
 
-	paletteWindow(300, 20, render.DefaultPalette)
+	paletteWindow(260, 10, render.DefaultPalette)
 
 	versiontext := fmt.Sprintf("goworld | %s", time.Now())
-	watermark := app.UI.NewText(versiontext, render.Color4(1, 1, 1, 1), 10, HEIGHT-30, -30)
-	app.UI.Append(watermark)
+	watermark := ui.NewText(versiontext, render.Color4(1, 1, 1, 1), 10, 10, 30)
+	ui.Attach(watermark)
 
 	paletteIdx := 5
 	selected := game.NewColorVoxel(render.DefaultPalette[paletteIdx])

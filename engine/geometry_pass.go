@@ -39,9 +39,16 @@ func (p *GeometryPass) DrawPass(scene *Scene) {
 
 	p.Material.Use()
 
-	/* Draw scene */
+	// setup rendering
 	gl.Disable(gl.BLEND)
+	gl.Enable(gl.CULL_FACE)
+	gl.CullFace(gl.BACK)
+
+	// draw scene
 	scene.Draw(render.GeometryPass, p.Material.Shader)
+
+	// reset
+	gl.Disable(gl.CULL_FACE)
 	gl.Enable(gl.BLEND)
 
 	p.Buffer.Unbind()

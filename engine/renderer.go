@@ -62,10 +62,6 @@ func (r *Renderer) Draw() {
 	gl.Enable(gl.BLEND)
 	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 
-	// back face culling
-	gl.Enable(gl.CULL_FACE)
-	gl.CullFace(gl.BACK)
-
 	/* Depth test */
 	gl.Enable(gl.DEPTH_TEST)
 	gl.DepthFunc(gl.LESS)

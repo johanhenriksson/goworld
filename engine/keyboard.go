@@ -4,15 +4,13 @@ import (
 	"github.com/go-gl/glfw/v3.1/glfw"
 )
 
+// KeyCode represents a keyboard key
 type KeyCode glfw.Key
+
+// KeyMap holds information about which keys are currently being held.
 type KeyMap map[KeyCode]bool
 
-/* Global key state */
-var keyState KeyMap = KeyMap{}
-var nextKeyState KeyMap = KeyMap{}
-var lastKeyState KeyMap = KeyMap{}
-
-/* Returns true if the given key was pressed during the previous frame */
+// KeyPressed returns true if the given key was just pressed.
 func KeyPressed(key KeyCode) bool {
 	var current, last, ok bool
 	if current, ok = keyState[key]; !ok {
@@ -24,7 +22,7 @@ func KeyPressed(key KeyCode) bool {
 	return current && !last
 }
 
-/* Returns true if the given key was released during the previous frame */
+// KeyReleased returns true if the given key was just released.
 func KeyReleased(key KeyCode) bool {
 	var current, last, ok bool
 	if current, ok = keyState[key]; !ok {
@@ -36,6 +34,7 @@ func KeyReleased(key KeyCode) bool {
 	return !current && last
 }
 
+// KeyDown returns true if the given key is currently being held down.
 func KeyDown(key KeyCode) bool {
 	if current, ok := keyState[key]; ok {
 		return current
@@ -43,13 +42,19 @@ func KeyDown(key KeyCode) bool {
 	return false
 }
 
-/* GLFW Callback - Updates key state map */
+// KeyCallback handles GLFW key callbacks to update the key state map.
 func KeyCallback(w *glfw.Window, key glfw.Key, scancode int, action glfw.Action, mods glfw.ModifierKey) {
 	code := KeyCode(key)
 	nextKeyState[code] = action != glfw.Release
 }
 
-/* Must be called at the end of every frame - will update last key state */
+// global key state
+var keyState KeyMap = KeyMap{}
+var nextKeyState KeyMap = KeyMap{}
+var lastKeyState KeyMap = KeyMap{}
+
+// updateKeyboard updates key state maps at the end of each frame.
+// Should only be called by the engine itself.
 func updateKeyboard(dt float32) {
 	for k, v := range keyState {
 		lastKeyState[k] = v
@@ -59,7 +64,7 @@ func updateKeyboard(dt float32) {
 	}
 }
 
-/* GLFW Keycodes */
+// GLFW Keycodes
 const (
 	KeyA KeyCode = 65
 	KeyB KeyCode = 66

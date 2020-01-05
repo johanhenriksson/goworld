@@ -1,15 +1,10 @@
 package engine
 
-import (
-	"github.com/johanhenriksson/goworld/ui"
-)
-
 // Application holds references to the basic engine components
 type Application struct {
 	Window     *Window
 	Scene      *Scene
 	Render     *Renderer
-	UI         *ui.Manager
 	UpdateFunc UpdateCallback
 }
 
@@ -39,14 +34,10 @@ func NewApplication(title string, width, height int) *Application {
 	renderer.Append("output", NewOutputPass(colorPass.Output))
 	renderer.Append("lines", NewLinePass())
 
-	// ui manager
-	uimgr := ui.NewManager(float32(width)*scale, float32(height)*scale)
-
 	app := &Application{
 		Window: wnd,
 		Scene:  scene,
 		Render: renderer,
-		UI:     uimgr,
 	}
 
 	// update callback
@@ -59,11 +50,7 @@ func NewApplication(title string, width, height int) *Application {
 
 	// draw callback
 	app.Window.SetRenderCallback(func(wnd *Window, dt float32) {
-		// render 3D scene
 		app.Render.Draw()
-
-		// draw user interface on top
-		app.UI.Draw()
 	})
 
 	return app
