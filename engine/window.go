@@ -11,8 +11,13 @@ import (
 )
 
 func init() {
-	/* GLFW event handling must run on the main OS thread */
+	// glfw event handling must run on the main OS thread
 	runtime.LockOSThread()
+
+	// init glfw
+	if err := glfw.Init(); err != nil {
+		log.Fatalln("Failed to initialize glfw:", err)
+	}
 }
 
 // UpdateCallback defines the window update callback function
@@ -27,18 +32,15 @@ type Window struct {
 	Width         int
 	Height        int
 	HighDPI       bool
+	focused       bool
 	updateCb      UpdateCallback
 	renderCb      RenderCallback
 	maxFrameTime  float64
 	lastFrameTime float64
 }
 
-// CreateWindow creates the main engine window, and the OpenGL
+// CreateWindow creates the main engine window, and the OpenGL context
 func CreateWindow(title string, width int, height int, highDPI bool) *Window {
-	if err := glfw.Init(); err != nil {
-		log.Fatalln("Failed to initialize glfw:", err)
-	}
-
 	/* GLFW Window settings */
 	glfw.WindowHint(glfw.ContextVersionMajor, 4)
 	glfw.WindowHint(glfw.ContextVersionMinor, 1)
@@ -68,19 +70,23 @@ func CreateWindow(title string, width int, height int, highDPI bool) *Window {
 	}
 	w.SetMaxFps(60)
 
+	// set the dimensions of the engine output buffer
 	buffw, buffh := w.GetBufferSize()
 	render.ScreenBuffer.Width = int32(buffw)
 	render.ScreenBuffer.Height = int32(buffh)
 
 	log.Println("Created window of size", width, "x", height, "scale:", w.Scale())
 
-	window.SetInputMode(glfw.CursorMode, glfw.CursorDisabled)
 	window.SetKeyCallback(KeyCallback)
 	window.SetMouseButtonCallback(MouseButtonCallback)
 	window.SetCursorPosCallback(func(wnd *glfw.Window, x, y float64) {
 		MouseMoveCallback(wnd, x, y, w.Scale())
 	})
+	window.SetFocusCallback(func(wnd *glfw.Window, focused bool) {
+		w.focused = focused
+	})
 
+	w.LockCursor()
 	return w
 }
 
@@ -140,12 +146,16 @@ func (wnd *Window) Loop() {
 		render.ScreenBuffer.Height = int32(buffh)
 
 		// render scene
-		if wnd.renderCb != nil {
-			wnd.renderCb(wnd, dt)
+		if wnd.focused {
+			if wnd.renderCb != nil {
+				wnd.renderCb(wnd, dt)
+			}
+
+			// end scene
+			wnd.Wnd.SwapBuffers()
 		}
 
-		// end scene
-		wnd.Wnd.SwapBuffers()
+		// get events
 		glfw.PollEvents()
 
 		updateMouse(dt)
@@ -155,7 +165,10 @@ func (wnd *Window) Loop() {
 		if wnd.maxFrameTime > 0 {
 			elapsed := glfw.GetTime() - t
 			dur := wnd.maxFrameTime - elapsed
-			time.Sleep(time.Duration(dur) * time.Second)
+
+			if dur > 0 {
+				time.Sleep(time.Duration(dur) * time.Second)
+			}
 		}
 	}
 }

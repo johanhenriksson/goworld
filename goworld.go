@@ -30,12 +30,15 @@ import (
 	mgl "github.com/go-gl/mathgl/mgl32"
 )
 
+var winColor = render.Color4(0.15, 0.15, 0.15, 0.8)
+var textColor = render.Color4(1, 1, 1, 1)
+
 func main() {
 	fmt.Println("goworld")
 
 	app := engine.NewApplication("voxels", 1200, 800)
-	ui := ui.NewManager(app)
-	app.Render.Append("ui", ui)
+	uim := ui.NewManager(app)
+	app.Render.Append("ui", uim)
 
 	/* grab a reference to the geometry render pass */
 	geoPass := app.Render.Get("geometry").(*engine.GeometryPass)
@@ -101,56 +104,26 @@ func main() {
 	// this composition system sucks
 	//game.NewPlacementGrid(chunks[0])
 
-	// buffer display window
-	winColor := render.Color4(0.15, 0.15, 0.15, 0.8)
-	textColor := render.Color4(1, 1, 1, 1)
-
-	bufferWindow := func(title string, texture *render.Texture, x, y float32, depth bool) {
-		win := ui.NewRect(winColor, x, y, 240, 185, -10)
-		label := ui.NewText(title, textColor, 0, 0, -21)
-		win.Attach(label)
-
-		if depth {
-			img := ui.NewDepthImage(texture, 0, 25, 240, 160, -20)
-			win.Attach(img)
-		} else {
-			img := ui.NewImage(texture, 0, 25, 240, 160, -20)
-			win.Attach(img)
-		}
-
-		ui.Attach(win)
-	}
-
+	// buffer display windows
 	lightPass := app.Render.Get("light").(*engine.LightPass)
-	bufferWindow("Diffuse", geoPass.Buffer.Diffuse, 10, 10, false)
-	bufferWindow("Occlusion", lightPass.SSAO.Gaussian.Output, 10, 205, true)
-	bufferWindow("Shadowmap", lightPass.Shadows.Output, 10, 400, true)
+	newBufferWindow(uim, "Diffuse", geoPass.Buffer.Diffuse, 10, 10, false)
+	newBufferWindow(uim, "Occlusion", lightPass.SSAO.Gaussian.Output, 10, 205, true)
+	newBufferWindow(uim, "Shadowmap", lightPass.Shadows.Output, 10, 400, true)
 
-	paletteWindow := func(x, y float32, palette render.Palette) {
-		win := ui.NewRect(winColor, x, y, 100, 185, -40)
-		label := ui.NewText("Palette", textColor, 4, 0, -41)
-		win.Attach(label)
-
-		perRow := 5
-		for i, color := range palette {
-			row := i / perRow
-			col := i % perRow
-			c := ui.NewRect(color, float32(col*20), 25.0+float32(row*20), 20, 20, -42)
-			win.Attach(c)
-		}
-
-		ui.Attach(win)
-	}
-
-	paletteWindow(260, 10, render.DefaultPalette)
-
-	versiontext := fmt.Sprintf("goworld | %s", time.Now())
-	watermark := ui.NewText(versiontext, render.Color4(1, 1, 1, 1), 10, 10, 30)
-	ui.Attach(watermark)
-
+	// palette globals
 	paletteIdx := 5
 	selected := game.NewColorVoxel(render.DefaultPalette[paletteIdx])
 
+	newPaletteWindow(uim, 260, 10, render.DefaultPalette, func(newPaletteIdx int) {
+		paletteIdx = newPaletteIdx
+		selected = game.NewColorVoxel(render.DefaultPalette[paletteIdx])
+	})
+
+	versiontext := fmt.Sprintf("goworld | %s", time.Now())
+	watermark := uim.NewText(versiontext, render.Color4(1, 1, 1, 1), 300, 10, 30)
+	uim.Attach(watermark)
+
+	// get world position at current mouse coords
 	sampleWorld := func() (mgl.Vec3, bool) {
 		depth, depthExists := geoPass.Buffer.SampleDepth(int(engine.Mouse.X), int(engine.Mouse.Y))
 		if !depthExists {
@@ -162,6 +135,8 @@ func main() {
 			depth,
 		}), true
 	}
+
+	// get world normal at current mouse coords
 	sampleNormal := func() (mgl.Vec3, bool) {
 		viewNormal, exists := geoPass.Buffer.SampleNormal(int(engine.Mouse.X), int(engine.Mouse.Y))
 		if exists {
@@ -234,6 +209,46 @@ func main() {
 
 	fmt.Println("ok")
 	app.Run()
+}
+
+func newPaletteWindow(uim *ui.Manager, x, y float32, palette render.Palette, onClickItem func(int)) ui.Component {
+	win := uim.NewRect(winColor, x, y, 100, 185, -40)
+	label := uim.NewTextbox("Palette", textColor, 4, 0, -41)
+	win.Attach(label)
+
+	perRow := 5
+	for i, color := range palette {
+		itemIdx := i
+		row := i / perRow
+		col := i % perRow
+		c := uim.NewRect(color, float32(col*20), 25.0+float32(row*20), 20, 20, -42)
+		c.OnClick(func(ev ui.MouseEvent) {
+			if ev.Button == engine.MouseButton1 {
+				onClickItem(itemIdx)
+			}
+		})
+		win.Attach(c)
+	}
+
+	uim.Attach(win)
+	return win
+}
+
+func newBufferWindow(uim *ui.Manager, title string, texture *render.Texture, x, y float32, depth bool) ui.Component {
+	win := uim.NewRect(winColor, x, y, 240, 185, -10)
+	label := uim.NewText(title, textColor, 0, 0, -21)
+	win.Attach(label)
+
+	if depth {
+		img := uim.NewDepthImage(texture, 0, 25, 240, 160, -20)
+		win.Attach(img)
+	} else {
+		img := uim.NewImage(texture, 0, 25, 240, 160, -20)
+		win.Attach(img)
+	}
+
+	uim.Attach(win)
+	return win
 }
 
 // ChunkFunc is a chunk function :)

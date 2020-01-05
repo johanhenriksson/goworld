@@ -17,7 +17,7 @@ func (m *Manager) NewRect(color render.Color, x, y, w, h, z float32) *Rect {
 	// mat := m.Resources.GetMaterial("assets/materials/ui_color.json")
 	mat := assets.GetMaterial("ui_color")
 
-	el := m.NewElement(x, y, w, h, z)
+	el := m.NewElement("Rect", x, y, w, h, z)
 	r := &Rect{
 		Element: el,
 		Color:   color,

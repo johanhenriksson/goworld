@@ -92,4 +92,8 @@ const (
 	KeyX KeyCode = 88
 	KeyY KeyCode = 89
 	KeyZ KeyCode = 90
+
+	KeyEnter     = KeyCode(glfw.KeyEnter)
+	KeyEscape    = KeyCode(glfw.KeyEscape)
+	KeyBackspace = KeyCode(glfw.KeyBackspace)
 )

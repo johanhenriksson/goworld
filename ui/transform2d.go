@@ -25,12 +25,12 @@ func CreateTransform2D(x, y, z float32) *Transform2D {
 }
 
 func (t *Transform2D) Update(dt float32) {
-	/* Update transform */
+	// update transform from properties
 	rad := t.Rotation * math.Pi / 180.0
 	rotation := mgl.AnglesToQuat(0, 0, rad, mgl.XYZ).Mat4()
 	scaling := mgl.Scale3D(t.Scale[0], t.Scale[1], 1)
 	translation := mgl.Translate3D(t.Position[0], t.Position[1], t.Position[2])
 
-	/* New transform matrix: S * R * T */
+	// new transform matrix: (S * (R * T))
 	t.Matrix = scaling.Mul4(rotation.Mul4(translation))
 }
