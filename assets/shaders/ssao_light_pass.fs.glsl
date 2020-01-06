@@ -135,6 +135,8 @@ void main() {
         contrib = calculatePointLightContrib(surfaceToLight, distanceToLight, normal);
     }
 
+    // avoids lighting the backdrop.
+    // probably inefficient though, consider another solution.
     if (depth == 1.0) {
         contrib = 0;
     }

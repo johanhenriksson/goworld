@@ -63,7 +63,6 @@ func GetMaterial(name string) *render.Material {
 	shader := GetShader(name)
 
 	// attempt to load
-	fmt.Println("+ material", name)
 	material := render.LoadMaterial(shader, "assets/materials/"+name)
 
 	return material

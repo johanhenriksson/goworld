@@ -19,39 +19,35 @@ type LightPass struct {
 	fbo *render.FrameBuffer
 }
 
+// NewLightPass creates a new deferred lighting pass
 func NewLightPass(input *render.GeometryBuffer) *LightPass {
-	ssao := SSAOSettings{
-		Samples: 32,
-		Radius:  0.8,
-		Bias:    0.025,
-		Power:   1.5,
-	}
-
-	ssaoPass := NewSSAOPass(input, &ssao)
+	// child passes
 	shadowPass := NewShadowPass(input)
+	ssaoPass := NewSSAOPass(input, &SSAOSettings{
+		Samples: 16,
+		Radius:  0.5,
+		Bias:    0.03,
+		Power:   2.0,
+		Scale:   8,
+	})
 
+	// create output frame buffer
 	fbo := render.CreateFrameBuffer(input.Width, input.Height)
 	output := fbo.AttachBuffer(gl.COLOR_ATTACHMENT0, gl.RGB, gl.RGB, gl.FLOAT)
 
-	/* use a virtual material to help with vertex attributes and textures */
+	// instantiate light pass shader
 	mat := render.CreateMaterial(render.CompileVFShader("/assets/shaders/ssao_light_pass"))
-
-	/* we're going to render a simple quad, so we input
-	 * position and texture coordinates */
-	//mat.AddDescriptor("position", gl.FLOAT, 3, 20, 0, false, false)
-	//mat.AddDescriptor("texcoord", gl.FLOAT, 2, 20, 12, false, false)
 	mat.AddDescriptors(render.F32_XYZUV)
 
-	/* the shader uses 3 textures from the geometry frame buffer.
-	 * they are previously rendered in the geometry pass. */
+	// create full screen render quad
+	quad := render.NewQuad(mat)
+
+	// add gbuffer, shadow and ssao pass inputs
 	mat.AddTexture("tex_diffuse", input.Diffuse)
 	mat.AddTexture("tex_normal", input.Normal)
 	mat.AddTexture("tex_depth", input.Depth)
 	mat.AddTexture("tex_shadow", shadowPass.Output)
 	mat.AddTexture("tex_occlusion", ssaoPass.Gaussian.Output)
-
-	/* create a render quad */
-	quad := render.NewQuad(mat)
 
 	p := &LightPass{
 		fbo:            fbo,
@@ -64,9 +60,17 @@ func NewLightPass(input *render.GeometryBuffer) *LightPass {
 		ShadowStrength: 0.3,
 		ShadowBias:     0.0001,
 	}
+
+	// set up static uniforms
+	mat.Use()
+	mat.RGBA("ambient", p.Ambient)
+	mat.Float("shadow_bias", p.ShadowBias)
+	mat.Float("shadow_strength", p.ShadowStrength)
+
 	return p
 }
 
+// DrawPass executes the deferred lighting pass.
 func (p *LightPass) DrawPass(scene *Scene) {
 	// enable back face culling
 	gl.Enable(gl.CULL_FACE)
@@ -88,9 +92,6 @@ func (p *LightPass) DrawPass(scene *Scene) {
 	shader.Use()
 	shader.Mat4f("cameraInverse", vpInv)
 	shader.Mat4f("viewInverse", vInv)
-	shader.RGBA("ambient", p.Ambient)
-	shader.Float("shadow_bias", p.ShadowBias)
-	shader.Float("shadow_strength", p.ShadowStrength)
 
 	// clear
 	gl.ClearColor(0, 0, 0, 1)

@@ -26,9 +26,8 @@ func (t *Textbox) Set(text string) {
 	t.Font.RenderOn(t.Texture, text, float32(t.Texture.Width), float32(t.Texture.Height), t.Color)
 }
 
-func (m *Manager) NewTextbox(text string, color render.Color, x, y, z float32) *Textbox {
+func (m *Manager) NewTextbox(text string, color render.Color, x, y, z, w, h float32) *Textbox {
 	/* TODO: calculate size of text */
-	w, h := float32(290.0), float32(25.0)
 	fnt := render.LoadFont("assets/fonts/SourceCodeProRegular.ttf", 12.0, 100.0, 1.5)
 	texture := fnt.Render(text, w, h, color)
 	img := m.NewImage(texture, x, y, w, h, z)

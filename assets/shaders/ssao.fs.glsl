@@ -17,11 +17,12 @@ uniform int kernel_size = 32;
 uniform float radius = 0.4;
 uniform float bias = 0.025;
 uniform float power = 1.2;
+uniform int scale = 1;
 
 
 void main()
 {
-    vec2 noiseScale = vec2(textureSize(tex_position, 0)) / 4.0;
+    vec2 noiseScale = vec2(textureSize(tex_position, 0)) / 4.0 / scale;
 
     // get input vectors from gbuffer & noise texture
     vec3 fragPos = texture(tex_position, texcoord0).xyz;

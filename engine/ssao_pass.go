@@ -11,6 +11,7 @@ import (
 
 type SSAOSettings struct {
 	Samples int
+	Scale   int32
 	Radius  float32
 	Bias    float32
 	Power   float32
@@ -31,7 +32,7 @@ type SSAOPass struct {
 }
 
 func NewSSAOPass(gbuff *render.GeometryBuffer, settings *SSAOSettings) *SSAOPass {
-	fbo := render.CreateFrameBuffer(gbuff.Width, gbuff.Height)
+	fbo := render.CreateFrameBuffer(gbuff.Width/settings.Scale, gbuff.Height/settings.Scale)
 	fbo.ClearColor = render.Color4(1, 1, 1, 1)
 	texture := fbo.AttachBuffer(gl.COLOR_ATTACHMENT0, gl.RED, gl.RGB, gl.FLOAT) // diffuse (rgb)
 
@@ -54,7 +55,7 @@ func NewSSAOPass(gbuff *render.GeometryBuffer, settings *SSAOSettings) *SSAOPass
 	/* create a render quad */
 	quad := render.NewQuad(mat)
 
-	return &SSAOPass{
+	p := &SSAOPass{
 		SSAOSettings: *settings,
 
 		fbo: fbo,
@@ -67,30 +68,34 @@ func NewSSAOPass(gbuff *render.GeometryBuffer, settings *SSAOSettings) *SSAOPass
 
 		Gaussian: gaussian,
 	}
+
+	// set up shader uniforms
+	mat.Use()
+	mat.Int32("kernel_size", int32(len(p.Kernel)))
+	mat.Float("bias", p.Bias)
+	mat.Float("radius", p.Radius)
+	mat.Float("power", p.Power)
+	mat.Int32("scale", p.Scale)
+
+	for i := 0; i < len(p.Kernel); i++ {
+		mat.Vec3(fmt.Sprintf("samples[%d]", i), &p.Kernel[i])
+	}
+
+	return p
 }
 
 func (p *SSAOPass) DrawPass(scene *Scene) {
+	// update projection
+	p.Material.Use()
+	p.Material.Mat4f("projection", scene.Camera.Projection)
+
+	// run occlusion pass
 	p.fbo.Bind()
 	p.fbo.Clear()
-
-	shader := p.Material.ShaderProgram
-
-	shader.Use()
-	shader.Mat4f("projection", scene.Camera.Projection)
-	shader.Int32("kernel_size", int32(len(p.Kernel)))
-	shader.Float("bias", p.Bias)
-	shader.Float("radius", p.Radius)
-	shader.Float("power", p.Power)
-
-	// set kernel uniform
-	for i := 0; i < len(p.Kernel); i++ {
-		shader.Vec3(fmt.Sprintf("samples[%d]", i), &p.Kernel[i])
-	}
-
 	p.Quad.Draw()
-
 	p.fbo.Unbind()
 
+	// run blur pass
 	p.Gaussian.DrawPass(scene)
 }
 

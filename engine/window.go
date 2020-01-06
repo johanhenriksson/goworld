@@ -32,6 +32,7 @@ type Window struct {
 	Width         int
 	Height        int
 	HighDPI       bool
+	FPS           float32
 	focused       bool
 	updateCb      UpdateCallback
 	renderCb      RenderCallback
@@ -122,6 +123,8 @@ func (wnd *Window) SetUpdateCallback(cb UpdateCallback) {
 
 // Loop runs the main engine loop.
 func (wnd *Window) Loop() {
+	fps := FpsCounter{}
+
 	for !wnd.Closed() {
 		// calculate frame delta time
 		t := glfw.GetTime()
@@ -161,9 +164,11 @@ func (wnd *Window) Loop() {
 		updateMouse(dt)
 		updateKeyboard(dt)
 
+		elapsed := glfw.GetTime() - t
+		wnd.FPS = float32(fps.Append(elapsed))
+
 		// wait a bit if we're running faster than the maximum fps
 		if wnd.maxFrameTime > 0 {
-			elapsed := glfw.GetTime() - t
 			dur := wnd.maxFrameTime - elapsed
 
 			if dur > 0 {
@@ -190,4 +195,26 @@ func (wnd *Window) Scale() float32 {
 	}
 	fw, _ := wnd.Wnd.GetFramebufferSize()
 	return float32(fw) / float32(wnd.Width)
+}
+
+type FpsCounter struct {
+	idx     int
+	samples []float64
+}
+
+func (fps *FpsCounter) Append(sample float64) float64 {
+	length := 10
+	if len(fps.samples) < length {
+		fps.samples = append(fps.samples, sample)
+	} else {
+		fps.samples[fps.idx%length] = sample
+	}
+	fps.idx++
+
+	sum := 0.0
+	for _, sample := range fps.samples {
+		sum += sample
+	}
+	avgTime := sum / float64(len(fps.samples))
+	return 1.0 / avgTime
 }

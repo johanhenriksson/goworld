@@ -30,7 +30,7 @@ import (
 	mgl "github.com/go-gl/mathgl/mgl32"
 )
 
-var winColor = render.Color4(0.15, 0.15, 0.15, 0.8)
+var winColor = render.Color4(0.15, 0.15, 0.15, 1)
 var textColor = render.Color4(1, 1, 1, 1)
 
 func main() {
@@ -119,7 +119,7 @@ func main() {
 	})
 
 	versiontext := fmt.Sprintf("goworld | %s", time.Now())
-	watermark := uim.NewText(versiontext, render.Color4(1, 1, 1, 1), 10, float32(app.Window.Height-30), 30)
+	watermark := uim.NewText(versiontext, render.Color4(1, 1, 1, 1), 10, float32(app.Window.Height-30), 30, 400, 25)
 	uim.Attach(watermark)
 
 	// get world position at current mouse coords
@@ -148,7 +148,7 @@ func main() {
 
 	/* Render loop */
 	app.UpdateFunc = func(dt float32) {
-		versiontext = fmt.Sprintf("goworld | %s", time.Now())
+		versiontext = fmt.Sprintf("goworld | %s | %.0f fps", time.Now().Format("2006-01-02 15:04"), app.Window.FPS)
 		watermark.Set(versiontext)
 
 		world, worldExists := sampleWorld()
@@ -212,7 +212,7 @@ func main() {
 
 func newPaletteWindow(uim *ui.Manager, x, y float32, palette render.Palette, onClickItem func(int)) ui.Component {
 	win := uim.NewRect(winColor, x, y, 100, 185, -40)
-	label := uim.NewTextbox("Palette", textColor, 4, 0, -41)
+	label := uim.NewTextbox("Palette", textColor, 4, 0, -41, 100, 25)
 	win.Attach(label)
 
 	perRow := 5
@@ -235,7 +235,7 @@ func newPaletteWindow(uim *ui.Manager, x, y float32, palette render.Palette, onC
 
 func newBufferWindow(uim *ui.Manager, title string, texture *render.Texture, x, y float32, depth bool) ui.Component {
 	win := uim.NewRect(winColor, x, y, 240, 185, -10)
-	label := uim.NewText(title, textColor, 0, 0, -21)
+	label := uim.NewText(title, textColor, 0, 0, -21, 240, 25)
 	win.Attach(label)
 
 	if depth {

@@ -19,7 +19,7 @@ type ShadowPass struct {
 func NewShadowPass(input *render.GeometryBuffer) *ShadowPass {
 	mat := assets.GetMaterial("color_geometry")
 
-	size := 4096
+	size := 2048
 	fbo := render.CreateFrameBuffer(int32(size), int32(size))
 	fbo.ClearColor = render.Color4(1, 1, 1, 1)
 	texture := fbo.AttachBuffer(gl.DEPTH_ATTACHMENT, gl.DEPTH_COMPONENT24, gl.DEPTH_COMPONENT, gl.FLOAT)
@@ -73,7 +73,6 @@ func (sp *ShadowPass) DrawPass(scene *Scene, light *Light) {
 		Shader: sp.Material.ShaderProgram,
 	}
 	scene.DrawCall(args)
-	//scene.Draw("geometry", sp.Material.Shader)
 
 	sp.shadowmap.Unbind()
 }
