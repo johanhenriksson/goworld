@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/johanhenriksson/goworld/assets"
 	"github.com/johanhenriksson/goworld/geometry"
 	"github.com/johanhenriksson/goworld/render"
@@ -38,6 +39,7 @@ func (r *Rect) Draw(args render.DrawArgs) {
 
 	/* draw rect */
 	// TODO set color
+	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 	r.quad.Draw(local)
 
 	/* call parent - draw children etc */

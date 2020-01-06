@@ -40,10 +40,8 @@ func (m *Manager) NewDepthImage(texture *render.Texture, x, y, w, h, z float32) 
 func (r *Image) Draw(args render.DrawArgs) {
 	args.Transform = r.Element.Transform.Matrix.Mul4(args.Transform) //args.Transform.Mul4(r.Element.Transform.Matrix)
 
-	gl.Enable(gl.BLEND)
-	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE)
 	r.Quad.Draw(args)
-	gl.Disable(gl.BLEND)
 
 	for _, el := range r.Element.children {
 		el.Draw(args)

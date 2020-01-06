@@ -1,8 +1,6 @@
 package ui
 
 import (
-	"fmt"
-
 	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/render"
 
@@ -65,11 +63,17 @@ func (m *Manager) DrawPass(scene *engine.Scene) {
 	// ensure back face culling is disabled
 	// since UI is scaled by Y-1, we only want back faces
 	gl.Disable(gl.CULL_FACE)
+	gl.Enable(gl.BLEND)
+
+	// clear depth buffer
+	gl.Clear(gl.DEPTH_BUFFER_BIT)
 
 	render.ScreenBuffer.Bind()
 	for _, el := range m.Children {
 		el.Draw(args)
 	}
+
+	gl.Disable(gl.BLEND)
 }
 
 // Focus the given component
@@ -98,7 +102,6 @@ func (m *Manager) glfwMouseButtonCallback(w *glfw.Window, button glfw.MouseButto
 
 func (m *Manager) handleMouse(x, y float32, button engine.MouseButton) bool {
 	// reset focus
-	fmt.Println("reset focus")
 	m.Focus(nil)
 
 	event := MouseEvent{

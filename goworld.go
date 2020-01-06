@@ -92,7 +92,6 @@ func main() {
 			chk.Ox, chk.Oy, chk.Oz = cx*csize, 0, cz*csize
 			generateChunk(chk, cx*csize, 0, cz*csize) // populate with random data
 			chk.Compute()
-			geoPass.Material.SetupVertexPointers() // wtfff
 			app.Scene.Add(obj)
 
 			chunks[cx][cz] = chk
@@ -120,7 +119,7 @@ func main() {
 	})
 
 	versiontext := fmt.Sprintf("goworld | %s", time.Now())
-	watermark := uim.NewText(versiontext, render.Color4(1, 1, 1, 1), 300, 10, 30)
+	watermark := uim.NewText(versiontext, render.Color4(1, 1, 1, 1), 10, float32(app.Window.Height-30), 30)
 	uim.Attach(watermark)
 
 	// get world position at current mouse coords
@@ -196,7 +195,7 @@ func main() {
 		if engine.KeyPressed(engine.KeyC) {
 			fmt.Println("delete from", world)
 			target := world.Sub(normal.Mul(0.5))
-			chunks[cx][cz].Set(int(target[0])%csize, int(target[1])%csize, int(target[2])%csize, nil)
+			chunks[cx][cz].Set(int(target[0])%csize, int(target[1])%csize, int(target[2])%csize, game.EmptyColorVoxel)
 			chunks[cx][cz].Compute()
 		}
 
@@ -256,22 +255,22 @@ func newBufferWindow(uim *ui.Manager, title string, texture *render.Texture, x, 
 
 func generateChunk(chk *game.ColorChunk, ox int, oy int, oz int) {
 	/* Define voxels */
-	rock2 := &game.ColorVoxel{
+	rock2 := game.ColorVoxel{
 		R: 137,
 		G: 131,
 		B: 119,
 	}
-	rock := &game.ColorVoxel{
+	rock := game.ColorVoxel{
 		R: 173,
 		G: 169,
 		B: 158,
 	}
-	grass := &game.ColorVoxel{
+	grass := game.ColorVoxel{
 		R: 72,
 		G: 140,
 		B: 54,
 	}
-	cloud := &game.ColorVoxel{
+	cloud := game.ColorVoxel{
 		R: 255,
 		G: 255,
 		B: 255,
@@ -293,7 +292,7 @@ func generateChunk(chk *game.ColorChunk, ox int, oy int, oz int) {
 				rh := int(44 * rockNoise.Sample(x+ox, oy, z+oz))
 				ch := int(8*cloudNoise.Sample(x+ox, y+oy, z+oz)) + 8
 
-				var vtype *game.ColorVoxel
+				var vtype game.ColorVoxel
 				if y < grassHeight {
 					vtype = rock2
 				}

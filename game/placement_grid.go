@@ -76,7 +76,7 @@ func (grid *PlacementGrid) Compute() {
 
 	for x := 0; x < grid.Chunk.Size; x++ {
 		for z := 0; z < grid.Chunk.Size; z++ {
-			if true || grid.Chunk.At(x, grid.Y, z) == nil {
+			if true || grid.Chunk.At(x, grid.Y, z) == EmptyColorVoxel {
 				// place box
 				grid.mesh.Box(float32(x), float32(grid.Y), float32(z), // position
 					1, 0, 1, // size

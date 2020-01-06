@@ -11,12 +11,14 @@ import (
 // Material file json representation
 type materialDef struct {
 	Shader   string
+	Buffers  []string
 	Pointers []*pointerDef
 	Textures []*textureDef
 }
 
 // Vertex pointer json representation
 type pointerDef struct {
+	Buffer    string
 	Name      string
 	Type      string
 	GlType    uint32
@@ -48,6 +50,7 @@ func LoadMaterial(shader *ShaderProgram, file string) *Material {
 
 	shader.Use()
 	mat := CreateMaterial(shader)
+	mat.Buffers = matf.Buffers
 
 	/* Load vertex pointers */
 	stride := 0
@@ -66,6 +69,7 @@ func LoadMaterial(shader *ShaderProgram, file string) *Material {
 			continue
 		}
 		mat.AddDescriptor(BufferDescriptor{
+			Buffer:    ptr.Buffer,
 			Name:      ptr.Name,
 			Type:      int(ptr.GlType),
 			Elements:  ptr.Count,
