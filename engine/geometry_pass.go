@@ -1,43 +1,41 @@
 package engine
 
 import (
-	"github.com/johanhenriksson/goworld/assets"
 	"github.com/johanhenriksson/goworld/render"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
 )
 
+// GeometryPass draws the scene geometry to a G-buffer
 type GeometryPass struct {
-	Buffer   *render.GeometryBuffer
-	Material *render.Material
+	Buffer *render.GeometryBuffer
 }
 
-/* Sets up a geometry pass.
- * A geometry buffer of the given bufferWidth x bufferHeight will be created automatically */
+// NewGeometryPass sets up a geometry pass.
 func NewGeometryPass(bufferWidth, bufferHeight int32) *GeometryPass {
-	mat := assets.GetMaterial("ssao_color_geometry")
 	p := &GeometryPass{
-		Buffer:   render.CreateGeometryBuffer(bufferWidth, bufferHeight),
-		Material: mat,
+		Buffer: render.CreateGeometryBuffer(bufferWidth, bufferHeight),
 	}
 	return p
 }
 
+// DrawPass executes the geometry pass
 func (p *GeometryPass) DrawPass(scene *Scene) {
 	p.Buffer.Bind()
-	//p.Buffer.ClearColor = scene.Camera.Clear
+	p.Buffer.ClearColor = scene.Camera.Clear
 	p.Buffer.Clear()
 
 	// kind-of hack to clear the diffuse buffer separately
-	// why???
-	camera := scene.Camera
-	gl.DrawBuffer(gl.COLOR_ATTACHMENT0) //
-	gl.ClearColor(camera.Clear.R, camera.Clear.G, camera.Clear.B, 1)
-	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+	// allows us to clear with the camera background color
+	// other buffers need to be zeroed. or???
+	/*
+		camera := scene.Camera
+		gl.DrawBuffer(gl.COLOR_ATTACHMENT0) // use only diffuse buffer
+		gl.ClearColor(camera.Clear.R, camera.Clear.G, camera.Clear.B, 1)
+		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
-	p.Buffer.DrawBuffers()
-
-	//p.Material.Use()
+		p.Buffer.DrawBuffers()
+	*/
 
 	// setup rendering
 	gl.Disable(gl.BLEND)
@@ -45,7 +43,7 @@ func (p *GeometryPass) DrawPass(scene *Scene) {
 	gl.CullFace(gl.BACK)
 
 	// draw scene
-	scene.Draw(render.GeometryPass, p.Material.ShaderProgram)
+	scene.DrawPass(render.GeometryPass)
 
 	// reset
 	gl.Disable(gl.CULL_FACE)

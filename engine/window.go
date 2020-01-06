@@ -197,11 +197,13 @@ func (wnd *Window) Scale() float32 {
 	return float32(fw) / float32(wnd.Width)
 }
 
+// FpsCounter keeps a ring buffer of frame times to compute frames per second.
 type FpsCounter struct {
 	idx     int
 	samples []float64
 }
 
+// Append a frame time to the buffer. Returns the current FPS.
 func (fps *FpsCounter) Append(sample float64) float64 {
 	length := 10
 	if len(fps.samples) < length {

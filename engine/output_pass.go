@@ -5,12 +5,14 @@ import (
 	"github.com/johanhenriksson/goworld/render"
 )
 
+// OutputPass is the final pass that writes to a camera frame buffer.
 type OutputPass struct {
 	Input *render.Texture
 	quad  *render.Quad
 	mat   *render.Material
 }
 
+// NewOutputPass creates a new output pass for the given input texture.
 func NewOutputPass(input *render.Texture) *OutputPass {
 	mat := render.CreateMaterial(render.CompileVFShader("/assets/shaders/screen_quad"))
 	mat.AddDescriptors(render.F32_XYZUV)
@@ -26,6 +28,7 @@ func NewOutputPass(input *render.Texture) *OutputPass {
 	}
 }
 
+// DrawPass draws the input texture to the scene camera buffer.
 func (p *OutputPass) DrawPass(scene *Scene) {
 	camera := scene.Camera
 

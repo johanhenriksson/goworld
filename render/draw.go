@@ -31,6 +31,5 @@ type DrawArgs struct {
 	Projection mgl.Mat4
 	View       mgl.Mat4
 	Transform  mgl.Mat4
-	Shader     *ShaderProgram
 	Pass       DrawPass
 }

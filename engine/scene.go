@@ -7,7 +7,7 @@ import (
 	mgl "github.com/go-gl/mathgl/mgl32"
 )
 
-/* Scene Graph */
+// Scene graph root
 type Scene struct {
 	/* Active camera */
 	Camera *Camera
@@ -21,6 +21,7 @@ type Scene struct {
 	Lights []Light
 }
 
+// NewScene creates a new scene.
 func NewScene() *Scene {
 	s := &Scene{
 		Camera:  nil,
@@ -32,12 +33,14 @@ func NewScene() *Scene {
 	return s
 }
 
+// Add an object to the scene
 func (s *Scene) Add(object *Object) {
 	/* TODO look for lights - maybe not here? */
 	s.Objects = append(s.Objects, object)
 }
 
-func (s *Scene) Draw(pass render.DrawPass, shader *render.ShaderProgram) {
+// DrawPass draws the scene using the default camera and a specific render pass
+func (s *Scene) DrawPass(pass render.DrawPass) {
 	if s.Camera == nil {
 		return
 	}
@@ -58,20 +61,21 @@ func (s *Scene) Draw(pass render.DrawPass, shader *render.ShaderProgram) {
 		MVP:        vp,
 		Transform:  m,
 
-		Pass:   pass,
-		Shader: shader,
+		Pass: pass,
 	}
 
-	s.DrawCall(args)
+	s.Draw(args)
 }
 
-func (s *Scene) DrawCall(args render.DrawArgs) {
+// Draw the scene using the provided render arguments
+func (s *Scene) Draw(args render.DrawArgs) {
 	/* draw root objects */
 	for _, obj := range s.Objects {
 		obj.Draw(args)
 	}
 }
 
+// Update the scene.
 func (s *Scene) Update(dt float32) {
 	if s.Camera != nil {
 		/* update camera first */

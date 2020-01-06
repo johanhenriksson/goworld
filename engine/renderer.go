@@ -5,54 +5,55 @@ import (
 	//mgl "github.com/go-gl/mathgl/mgl32"
 )
 
+// RenderPass is a step in the rendering pipeline
 type RenderPass interface {
 	DrawPass(*Scene)
 }
 
-/* Maps names to Render Passes */
+// PassMap maps names to Render Passes
 type PassMap map[string]RenderPass
 
-/* Renderer - Holds references to the Scene Graph and is
- * responsible for executing render passes in order */
+// Renderer holds references to the Scene and is responsible for executing render passes in order
 type Renderer struct {
-	Passes   []RenderPass
-	Scene    *Scene
-	Width    int32
-	Height   int32
-	pass_map PassMap
+	Passes  []RenderPass
+	Scene   *Scene
+	Width   int32
+	Height  int32
+	passMap PassMap
 }
 
-/* Instantiate a new renderer. Also sets up basic OpenGL settings */
+// NewRenderer instantiates a new rendering pipeline.
 func NewRenderer(width, height int32, scene *Scene) *Renderer {
 	r := &Renderer{
-		Width:    width,
-		Height:   height,
-		Scene:    scene,
-		Passes:   []RenderPass{},
-		pass_map: make(PassMap),
+		Width:   width,
+		Height:  height,
+		Scene:   scene,
+		Passes:  []RenderPass{},
+		passMap: make(PassMap),
 	}
 	return r
 }
 
-/* Append a new render pass */
+// Append a new render pass
 func (r *Renderer) Append(name string, pass RenderPass) {
 	r.Passes = append(r.Passes, pass)
 	if len(name) > 0 {
-		r.pass_map[name] = pass
+		r.passMap[name] = pass
 	}
 }
 
-/* Get render pass by name */
+// Get render pass by name
 func (r *Renderer) Get(name string) RenderPass {
-	return r.pass_map[name]
+	return r.passMap[name]
 }
 
-/* Clears all render passes */
+// Reset the render pipeline.
 func (r *Renderer) Reset() {
 	r.Passes = []RenderPass{}
-	r.pass_map = make(PassMap)
+	r.passMap = make(PassMap)
 }
 
+// Draw the world.
 func (r *Renderer) Draw() {
 	/* Clear screen */
 	gl.ClearColor(0.9, 0.9, 0.9, 1.0)
@@ -71,6 +72,7 @@ func (r *Renderer) Draw() {
 	}
 }
 
+// Update the world.
 func (r *Renderer) Update(dt float32) {
 	r.Scene.Update(dt)
 }

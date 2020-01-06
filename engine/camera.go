@@ -10,7 +10,7 @@ import (
 // not sure if this camera should also support orthographic projection
 // or if it's better to create a separate one
 
-/* Perspective Camera. */
+// Camera represents a 3D camera and its transform.
 type Camera struct {
 	*Transform
 	Fov        float32
@@ -23,6 +23,7 @@ type Camera struct {
 	Clear      render.Color
 }
 
+// CreateCamera creates a new camera object.
 func CreateCamera(buffer *render.FrameBuffer, x, y, z, fov, near, far float32) *Camera {
 	ratio := float32(buffer.Width) / float32(buffer.Height)
 	cam := &Camera{
@@ -46,7 +47,7 @@ func CreateCamera(buffer *render.FrameBuffer, x, y, z, fov, near, far float32) *
 /* Project world space coordinates to screen space */
 // func (cam *Camera) Project(mgl.Vec3) mgl.Vec2 { }
 
-/* Unproject screen space coordinates into world space */
+// Unproject screen space coordinates into world space
 func (cam *Camera) Unproject(pos mgl.Vec3) mgl.Vec3 {
 	// screen space -> clip space
 	point := mgl.Vec4{
@@ -69,32 +70,33 @@ func (cam *Camera) Unproject(pos mgl.Vec3) mgl.Vec3 {
 	}
 }
 
-func (c *Camera) Update(dt float32) {
+// Update the camera
+func (cam *Camera) Update(dt float32) {
 	/* Handle keyboard input */
 	move := false
 	dir := mgl.Vec3{}
 	if KeyDown(KeyW) && !KeyDown(KeyS) {
-		dir[2] += 1
+		dir[2] += 1.0
 		move = true
 	}
 	if KeyDown(KeyS) && !KeyDown(KeyW) {
-		dir[2] -= 1
+		dir[2] -= 1.0
 		move = true
 	}
 	if KeyDown(KeyA) && !KeyDown(KeyD) {
-		dir[0] -= 1
+		dir[0] -= 1.0
 		move = true
 	}
 	if KeyDown(KeyD) && !KeyDown(KeyA) {
-		dir[0] += 1
+		dir[0] += 1.0
 		move = true
 	}
 	if KeyDown(KeyE) && !KeyDown(KeyQ) {
-		dir[1] += 1
+		dir[1] += 1.0
 		move = true
 	}
 	if KeyDown(KeyQ) && !KeyDown(KeyE) {
-		dir[1] -= 1
+		dir[1] -= 1.0
 		move = true
 	}
 
@@ -103,18 +105,18 @@ func (c *Camera) Update(dt float32) {
 		dv := 12.0 * dt /* magic number: movement speed */
 		dir = dir.Normalize().Mul(dv)
 
-		right := c.Transform.Right.Mul(dir[0])
+		right := cam.Transform.Right.Mul(dir[0])
 		up := mgl.Vec3{0, dir[1], 0}
-		forward := c.Transform.Forward.Mul(dir[2])
+		forward := cam.Transform.Forward.Mul(dir[2])
 
 		/* Translate camera */
-		c.Transform.Translate(right.Add(up.Add(forward)))
+		cam.Transform.Translate(right.Add(up.Add(forward)))
 	}
 
 	/* Mouse look */
 	if MouseDown(MouseButton1) {
-		rx := c.Transform.Rotation[0] - Mouse.DY*0.08
-		ry := c.Transform.Rotation[1] - Mouse.DX*0.09
+		rx := cam.Transform.Rotation[0] - Mouse.DY*0.08
+		ry := cam.Transform.Rotation[1] - Mouse.DX*0.09
 
 		/* Camera angle limits */
 		/* -90 < rx < 90 */
@@ -127,22 +129,24 @@ func (c *Camera) Update(dt float32) {
 		if ry < -180.0 {
 			ry += 360.0
 		}
-		c.Transform.Rotation[0] = rx
-		c.Transform.Rotation[1] = ry
+		cam.Transform.Rotation[0] = rx
+		cam.Transform.Rotation[1] = ry
 	}
 
 	/* Update transform with new position & rotation */
-	c.Transform.Update(dt)
+	cam.Transform.Update(dt)
 
 	/* Calculate new view matrix based on forward vector */
-	lookAt := c.Transform.Position.Add(c.Transform.Forward)
-	c.LookAt(lookAt)
+	lookAt := cam.Transform.Position.Add(cam.Transform.Forward)
+	cam.LookAt(lookAt)
 }
 
-func (c *Camera) LookAt(target mgl.Vec3) {
-	c.View = mgl.LookAtV(c.Transform.Position, target, mgl.Vec3{0, 1, 0})
+// LookAt orients the camera towards a point in 3D space.
+func (cam *Camera) LookAt(target mgl.Vec3) {
+	cam.View = mgl.LookAtV(cam.Transform.Position, target, mgl.Vec3{0, 1, 0})
 }
 
-func (c *Camera) Use() {
-	c.Buffer.Bind()
+// Use this camera for output.
+func (cam *Camera) Use() {
+	cam.Buffer.Bind()
 }

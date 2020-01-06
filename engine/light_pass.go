@@ -6,9 +6,8 @@ import (
 	"github.com/johanhenriksson/goworld/render"
 )
 
+// LightPass draws the deferred lighting pass
 type LightPass struct {
-	Material       *render.Material
-	quad           *render.Quad
 	Output         *render.Texture
 	SSAO           *SSAOPass
 	Shadows        *ShadowPass
@@ -16,7 +15,9 @@ type LightPass struct {
 	ShadowStrength float32
 	ShadowBias     float32
 
-	fbo *render.FrameBuffer
+	fbo  *render.FrameBuffer
+	mat  *render.Material
+	quad *render.Quad
 }
 
 // NewLightPass creates a new deferred lighting pass
@@ -28,7 +29,7 @@ func NewLightPass(input *render.GeometryBuffer) *LightPass {
 		Radius:  0.5,
 		Bias:    0.03,
 		Power:   2.0,
-		Scale:   8,
+		Scale:   4,
 	})
 
 	// create output frame buffer
@@ -52,7 +53,7 @@ func NewLightPass(input *render.GeometryBuffer) *LightPass {
 	p := &LightPass{
 		fbo:            fbo,
 		Output:         output,
-		Material:       mat,
+		mat:            mat,
 		quad:           quad,
 		Shadows:        shadowPass,
 		SSAO:           ssaoPass,
@@ -70,75 +71,68 @@ func NewLightPass(input *render.GeometryBuffer) *LightPass {
 	return p
 }
 
+func (p *LightPass) setLightUniforms(light *Light) {
+	shader := p.mat.ShaderProgram
+
+	/* compute world to lightspace (light view projection) matrix */
+	lp := light.Projection
+	lv := mgl.LookAtV(light.Position, mgl.Vec3{}, mgl.Vec3{0, 1, 0}) // only for directional light
+	lvp := lp.Mul4(lv)
+	shader.Mat4f("light_vp", lvp)
+
+	/* set light uniform attributes */
+	shader.Vec3("light.Position", &light.Position)
+	shader.Vec3("light.Color", &light.Color)
+	shader.Int32("light.Type", int32(light.Type))
+	shader.Float("light.Range", light.Range)
+	shader.Float("light.Intensity", light.Intensity)
+	shader.Float("light.attenuation.Constant", light.Attenuation.Constant)
+	shader.Float("light.attenuation.Linear", light.Attenuation.Linear)
+	shader.Float("light.attenuation.Quadratic", light.Attenuation.Quadratic)
+}
+
 // DrawPass executes the deferred lighting pass.
 func (p *LightPass) DrawPass(scene *Scene) {
-	// enable back face culling
-	gl.Enable(gl.CULL_FACE)
-	gl.CullFace(gl.BACK)
-
 	// ssao pass
 	p.SSAO.DrawPass(scene)
 
-	p.fbo.Bind()
-
-	/* use light pass shader */
-	shader := p.Material.ShaderProgram
-
-	/* compute camera view projection inverse */
+	// compute camera view projection inverse
 	vp := scene.Camera.Projection.Mul4(scene.Camera.View)
 	vpInv := vp.Inv()
 	vInv := scene.Camera.View.Inv()
+	p.mat.Use()
+	p.mat.Mat4f("cameraInverse", vpInv)
+	p.mat.Mat4f("viewInverse", vInv)
 
-	shader.Use()
-	shader.Mat4f("cameraInverse", vpInv)
-	shader.Mat4f("viewInverse", vInv)
-
-	// clear
-	gl.ClearColor(0, 0, 0, 1)
-	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+	// clear output buffer
+	p.fbo.Bind()
+	p.fbo.Clear()
 
 	// set blending mode to additive
 	gl.Enable(gl.BLEND)
 	gl.BlendFunc(gl.ONE, gl.ONE)
 
+	// enable back face culling
+	gl.Enable(gl.CULL_FACE)
+	gl.CullFace(gl.BACK)
+
 	// draw lights
 	for i, light := range scene.Lights {
-		/* draw shadow pass for this light into shadow map */
+		// draw shadow pass for this light into shadow map
 		p.Shadows.DrawPass(scene, &light)
 
-		if i == 0 {
-			/* first light pass we want the shader to restore the depth buffer
-			 * then, disable depth masking so that multiple lights can be drawn */
-			gl.DepthMask(true)
-		} else {
-			gl.DepthMask(false)
-		}
+		// first light pass we want the shader to restore the depth buffer
+		// then, disable depth masking so that multiple lights can be drawn
+		gl.DepthMask(i == 0)
 
-		p.fbo.Bind()
+		// use light shader again
+		p.mat.Use()
+		p.setLightUniforms(&light)
 
-		/* use light pass shader */
-		shader.Use()
-
-		/* compute world to lightspace (light view projection) matrix */
-		lp := light.Projection
-		lv := mgl.LookAtV(light.Position, mgl.Vec3{}, mgl.Vec3{0, 1, 0}) // only for directional light
-		lvp := lp.Mul4(lv)
-		shader.Mat4f("light_vp", lvp)
-
-		/* set light uniform attributes */
-		shader.Vec3("light.Position", &light.Position)
-		shader.Vec3("light.Color", &light.Color)
-		shader.Int32("light.Type", int32(light.Type))
-		shader.Float("light.Range", light.Range)
-		shader.Float("light.Intensity", light.Intensity)
-		shader.Float("light.attenuation.Constant", light.Attenuation.Constant)
-		shader.Float("light.attenuation.Linear", light.Attenuation.Linear)
-		shader.Float("light.attenuation.Quadratic", light.Attenuation.Quadratic)
-
-		/* render light */
+		// render light
 		// todo: draw light volumes instead of a fullscreen quad
+		p.fbo.Bind()
 		p.quad.Draw()
-
 		p.fbo.Unbind()
 	}
 

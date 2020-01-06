@@ -1,24 +1,22 @@
 package engine
 
 import (
-	"github.com/johanhenriksson/goworld/assets"
 	"github.com/johanhenriksson/goworld/render"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
 	mgl "github.com/go-gl/mathgl/mgl32"
 )
 
+// ShadowPass renders shadow maps for lights.
 type ShadowPass struct {
 	Output    *render.Texture
-	Material  *render.Material
 	Width     int
 	Height    int
 	shadowmap *render.FrameBuffer
 }
 
+// NewShadowPass creates a new shadow pass
 func NewShadowPass(input *render.GeometryBuffer) *ShadowPass {
-	mat := assets.GetMaterial("color_geometry")
-
 	size := 2048
 	fbo := render.CreateFrameBuffer(int32(size), int32(size))
 	fbo.ClearColor = render.Color4(1, 1, 1, 1)
@@ -32,7 +30,6 @@ func NewShadowPass(input *render.GeometryBuffer) *ShadowPass {
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_BORDER)
 
 	p := &ShadowPass{
-		Material:  mat,
 		shadowmap: fbo,
 		Output:    texture,
 		Width:     size,
@@ -41,6 +38,7 @@ func NewShadowPass(input *render.GeometryBuffer) *ShadowPass {
 	return p
 }
 
+// DrawPass draws a shadow pass for the given light.
 func (sp *ShadowPass) DrawPass(scene *Scene, light *Light) {
 	if light.Type != DirectionalLight {
 		// only directional lights support shadows atm
@@ -48,11 +46,9 @@ func (sp *ShadowPass) DrawPass(scene *Scene, light *Light) {
 	}
 
 	/* bind shadow map depth render target */
+	// todo: each light needs its own shadow buffer?
 	sp.shadowmap.Bind()
 	sp.shadowmap.Clear()
-
-	/* use shadow pass shader - usually the standard geometry shader */
-	sp.Material.Use()
 
 	gl.DepthMask(true)
 
@@ -68,11 +64,9 @@ func (sp *ShadowPass) DrawPass(scene *Scene, light *Light) {
 		VP:         vp,
 		MVP:        vp,
 		Transform:  mgl.Ident4(),
-
-		Pass:   render.GeometryPass,
-		Shader: sp.Material.ShaderProgram,
+		Pass:       render.GeometryPass,
 	}
-	scene.DrawCall(args)
+	scene.Draw(args)
 
 	sp.shadowmap.Unbind()
 }

@@ -1,27 +1,18 @@
 package engine
 
 import (
-	"github.com/johanhenriksson/goworld/assets"
 	"github.com/johanhenriksson/goworld/render"
-	//"github.com/go-gl/gl/v4.1-core/gl"
 )
 
-type LinePass struct {
-	Material *render.Material
-}
+// LinePass draws line geometry
+type LinePass struct{}
 
-/* Sets up a geometry pass.
- * A geometry buffer of the given bufferWidth x bufferHeight will be created automatically */
+// NewLinePass sets up a line geometry pass.
 func NewLinePass() *LinePass {
-	mat := assets.GetMaterialCached("lines")
-	p := &LinePass{
-		Material: mat,
-	}
-	return p
+	return &LinePass{}
 }
 
+// DrawPass executes the line pass
 func (p *LinePass) DrawPass(scene *Scene) {
-	/* Draw scene */
-	p.Material.Use()
-	scene.Draw(render.LinePass, p.Material.ShaderProgram)
+	scene.DrawPass(render.LinePass)
 }

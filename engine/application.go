@@ -10,7 +10,7 @@ type Application struct {
 
 // NewApplication instantiates a new engine application
 func NewApplication(title string, width, height int) *Application {
-	highDpiEnabled := true
+	highDpiEnabled := false
 	wnd := CreateWindow(title, width, height, highDpiEnabled)
 
 	// create a scene

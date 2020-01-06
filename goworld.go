@@ -164,7 +164,6 @@ func main() {
 		cx := int(world.X()) / csize
 		cz := int(world.Z()) / csize
 		if cx < 0 || cz < 0 || cx >= ccount || cz >= ccount {
-			fmt.Println("target out of bounds")
 			return
 		}
 

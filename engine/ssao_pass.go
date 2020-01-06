@@ -9,6 +9,7 @@ import (
 	"github.com/johanhenriksson/goworld/render"
 )
 
+// SSAOSettings holds parameters for SSAO.
 type SSAOSettings struct {
 	Samples int
 	Scale   int32
@@ -17,6 +18,7 @@ type SSAOSettings struct {
 	Power   float32
 }
 
+// SSAOPass renders a screen space ambient occlusion texture for a gbuffer-based scene.
 type SSAOPass struct {
 	SSAOSettings
 
@@ -31,6 +33,7 @@ type SSAOPass struct {
 	Gaussian *GaussianPass
 }
 
+// NewSSAOPass creates a new SSAO pass from a gbuffer and SSAO settings.
 func NewSSAOPass(gbuff *render.GeometryBuffer, settings *SSAOSettings) *SSAOPass {
 	fbo := render.CreateFrameBuffer(gbuff.Width/settings.Scale, gbuff.Height/settings.Scale)
 	fbo.ClearColor = render.Color4(1, 1, 1, 1)
@@ -84,6 +87,7 @@ func NewSSAOPass(gbuff *render.GeometryBuffer, settings *SSAOSettings) *SSAOPass
 	return p
 }
 
+// DrawPass draws the SSAO texture.
 func (p *SSAOPass) DrawPass(scene *Scene) {
 	// update projection
 	p.Material.Use()

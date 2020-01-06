@@ -7,8 +7,10 @@ import (
 	"github.com/johanhenriksson/goworld/render"
 )
 
+// MeshBufferMap maps buffer names to vertex buffer objects
 type MeshBufferMap map[string]*render.VertexBuffer
 
+// Mesh base
 type Mesh struct {
 	*ComponentBase
 
@@ -17,6 +19,7 @@ type Mesh struct {
 	vbos     MeshBufferMap
 }
 
+// NewMesh creates a new mesh object
 func NewMesh(material string) *Mesh {
 	m := &Mesh{
 		material: assets.GetMaterialCached(material),
@@ -29,6 +32,7 @@ func NewMesh(material string) *Mesh {
 	return m
 }
 
+// addBuffer adds a named buffer to the mesh VAO.
 func (m *Mesh) addBuffer(name string) *render.VertexBuffer {
 	// create new vbo
 	vbo := render.CreateVertexBuffer()
@@ -43,6 +47,7 @@ func (m *Mesh) addBuffer(name string) *render.VertexBuffer {
 	return vbo
 }
 
+// Buffer mesh data to the GPU
 func (m *Mesh) Buffer(name string, data render.VertexData) error {
 	m.vao.Bind()
 	m.vao.Length = int32(data.Elements())
@@ -53,18 +58,18 @@ func (m *Mesh) Buffer(name string, data render.VertexData) error {
 	return vbo.Buffer(data)
 }
 
+// Update the mesh.
 func (m *Mesh) Update(dt float32) {}
 
+// Draw the mesh.
 func (m *Mesh) Draw(args render.DrawArgs) {
-	if args.Pass == render.GeometryPass {
-		m.material.Use()
+	m.material.Use()
 
-		// set up uniforms
-		m.material.Mat4f("mvp", args.MVP)
-		m.material.Mat4f("model", args.Transform)
-		m.material.Mat4f("view", args.View)
-		m.material.Mat4f("projection", args.Projection)
+	// set up uniforms
+	m.material.Mat4f("mvp", args.MVP)
+	m.material.Mat4f("model", args.Transform)
+	m.material.Mat4f("view", args.View)
+	m.material.Mat4f("projection", args.Projection)
 
-		m.vao.Draw()
-	}
+	m.vao.Draw()
 }
