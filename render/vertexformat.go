@@ -28,3 +28,37 @@ var F32_XYZUV = VertexFormat{
 		Normalize: false,
 	},
 }
+
+// F32_XYZNUV contains position, uvs and normals as 32 bit floats.
+var F32_XYZNUV = VertexFormat{
+	BufferDescriptor{
+		Buffer:    "geometry",
+		Name:      "position",
+		Type:      gl.FLOAT,
+		Elements:  3,
+		Stride:    32,
+		Offset:    0,
+		Integer:   false,
+		Normalize: false,
+	},
+	BufferDescriptor{
+		Buffer:    "geometry",
+		Name:      "normal",
+		Type:      gl.FLOAT,
+		Elements:  3,
+		Stride:    32,
+		Offset:    12,
+		Integer:   false,
+		Normalize: false,
+	},
+	BufferDescriptor{
+		Buffer:    "geometry",
+		Name:      "texcoord",
+		Type:      gl.FLOAT,
+		Elements:  2,
+		Stride:    32,
+		Offset:    24,
+		Integer:   false,
+		Normalize: false,
+	},
+}

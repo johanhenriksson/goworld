@@ -50,6 +50,7 @@ func (mat *Material) AddDescriptor(desc BufferDescriptor) {
 	}
 	desc.Index = int(loc)
 	mat.Descriptors = append(mat.Descriptors, desc)
+	mat.addBuffer(desc.Buffer)
 }
 
 // AddDescriptors adds a list of vertex pointer configurations
@@ -60,8 +61,22 @@ func (mat *Material) AddDescriptors(descriptors []BufferDescriptor) {
 	}
 }
 
+// addBuffer adds a buffer name to the buffer list if it does not already exist
+func (mat *Material) addBuffer(buffer string) {
+	for _, buffer := range mat.Buffers {
+		if buffer == buffer {
+			return
+		}
+	}
+	mat.Buffers = append(mat.Buffers, buffer)
+}
+
 // AddTexture attaches a new texture to this material, and assings it to the next available texture slot.
 func (mat *Material) AddTexture(name string, tex *Texture) {
+	if _, exists := mat.Textures[name]; exists {
+		mat.SetTexture(name, tex)
+		return
+	}
 	mat.Textures[name] = tex
 	mat.texslots = append(mat.texslots, name)
 }

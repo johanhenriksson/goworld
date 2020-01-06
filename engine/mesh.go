@@ -3,7 +3,6 @@ package engine
 import (
 	"fmt"
 
-	"github.com/johanhenriksson/goworld/assets"
 	"github.com/johanhenriksson/goworld/render"
 )
 
@@ -20,9 +19,9 @@ type Mesh struct {
 }
 
 // NewMesh creates a new mesh object
-func NewMesh(material string) *Mesh {
+func NewMesh(material *render.Material) *Mesh {
 	m := &Mesh{
-		material: assets.GetMaterialCached(material),
+		material: material,
 		vao:      render.CreateVertexArray(),
 		vbos:     MeshBufferMap{},
 	}

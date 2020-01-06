@@ -23,6 +23,7 @@ import (
 
 	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/game"
+	"github.com/johanhenriksson/goworld/geometry"
 	"github.com/johanhenriksson/goworld/math"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/ui"
@@ -44,13 +45,13 @@ func main() {
 	geoPass := app.Render.Get("geometry").(*engine.GeometryPass)
 
 	// create a camera
-	camera := engine.CreateCamera(&render.ScreenBuffer, 10, 10, 20, 65.0, 0.1, 1500.0)
-	camera.Rotation[0] = 38
-	camera.Rotation[1] = 230
-	camera.Clear = render.Color4(0.141, 0.128, 0.118, 1.0)
+	camera := engine.CreateCamera(&render.ScreenBuffer, -10, 22, -10, 65.0, 0.1, 600.0)
+	camera.Rotation[0] = 22
+	camera.Rotation[1] = 135
+	camera.Clear = render.Color4(0.141, 0.128, 0.118, 1.0) // dark gray
 	camera.Clear = render.Color4(0, 0, 0, 1)
-	camera.Clear = render.Color4(0.368, 0.611, 0.800, 1.0)
-	//camera.Clear = render.Color{0.973, 0.945, 0.776, 1.0}
+	camera.Clear = render.Color4(0.368, 0.611, 0.800, 1.0) // blue
+	//camera.Clear = render.Color{0.973, 0.945, 0.776, 1.0} // light gray
 
 	app.Scene.Camera = camera
 	app.Scene.Lights = []engine.Light{
@@ -100,6 +101,11 @@ func main() {
 	}
 	fmt.Println("done")
 
+	// test cube
+	cube := app.Scene.NewObject(0, 12, 0)
+	geometry.NewCube(cube, 1)
+	app.Scene.Add(cube)
+
 	// this composition system sucks
 	//game.NewPlacementGrid(chunks[0])
 
@@ -118,6 +124,7 @@ func main() {
 		selected = game.NewColorVoxel(render.DefaultPalette[paletteIdx])
 	})
 
+	// watermark / fps text
 	versiontext := fmt.Sprintf("goworld | %s", time.Now())
 	watermark := uim.NewText(versiontext, render.Color4(1, 1, 1, 1), 10, float32(app.Window.Height-30), 30, 400, 25)
 	uim.Attach(watermark)

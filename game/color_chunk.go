@@ -1,6 +1,7 @@
 package game
 
 import (
+	"github.com/johanhenriksson/goworld/assets"
 	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/math"
 )
@@ -18,7 +19,7 @@ type ColorChunk struct {
 }
 
 func NewColorChunk(parentObject *engine.Object, size int) *ColorChunk {
-	mesh := engine.NewMesh("ssao_color_geometry")
+	mesh := engine.NewMesh(assets.GetMaterialCached("color_voxels"))
 
 	chk := &ColorChunk{
 		Mesh: mesh,

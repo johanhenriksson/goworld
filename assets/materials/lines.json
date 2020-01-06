@@ -1,14 +1,16 @@
 {
-    "pointers": [
-        {
-            "name": "vertex",
-            "type": "float",
-            "count": 3
-        },
-        {
-            "name": "color",
-            "type": "float",
-            "count": 4
-        }
-    ]
+    "buffers": {
+        "geometry": [
+            {
+                "name": "vertex",
+                "type": "float",
+                "count": 3
+            },
+            {
+                "name": "color",
+                "type": "float",
+                "count": 4
+            }
+        ]
+    }
 }

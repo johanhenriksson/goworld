@@ -66,11 +66,6 @@ float calculatePointLightContrib(vec3 surfaceToLight, float distanceToLight, vec
     return normalCoef * attenuation;
 }
 
-vec3 gammaCorrect(vec3 color) {
-    const vec3 gamma = vec3(1.0 / 2.2);
-    return pow(color, gamma);
-}
-
 /* samples the shadow map at the given world space coordinates */
 float sampleShadowmap(sampler2D shadowmap, vec3 position) {
     /* world -> light clip coords */

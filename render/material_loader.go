@@ -8,17 +8,17 @@ import (
 	"github.com/go-gl/gl/v4.1-core/gl"
 )
 
+// todo: move to assets package
+
 // Material file json representation
 type materialDef struct {
 	Shader   string
-	Buffers  []string
-	Pointers []*pointerDef
-	Textures []*textureDef
+	Buffers  map[string][]*pointerDef
+	Textures map[string]*textureDef
 }
 
 // Vertex pointer json representation
 type pointerDef struct {
-	Buffer    string
 	Name      string
 	Type      string
 	GlType    uint32
@@ -31,7 +31,6 @@ type pointerDef struct {
 
 // Texture definition json representation
 type textureDef struct {
-	Name string
 	File string
 }
 
@@ -50,40 +49,50 @@ func LoadMaterial(shader *ShaderProgram, file string) *Material {
 
 	shader.Use()
 	mat := CreateMaterial(shader)
-	mat.Buffers = matf.Buffers
 
 	/* Load vertex pointers */
-	stride := 0
-	for _, ptr := range matf.Pointers {
-		if ptr.Name == "skip" {
-			stride += ptr.Count
-			continue
+	for buffer, pointers := range matf.Buffers {
+		stride := 0
+		for _, ptr := range pointers {
+			// padding
+			if ptr.Name == "skip" {
+				stride += ptr.Count
+				continue
+			}
+
+			if ptr.Count <= 0 {
+				panic(fmt.Errorf("Expected count >0 for pointer %s", ptr.Name))
+			}
+
+			ptr.GlType, ptr.Size = getGlType(ptr.Type)
+			ptr.Size *= ptr.Count
+			ptr.Offset = stride
+			stride += ptr.Size
 		}
-		ptr.GlType, ptr.Size = getGlType(ptr.Type)
-		ptr.Size *= ptr.Count
-		ptr.Offset = stride
-		stride += ptr.Size
-	}
-	for _, ptr := range matf.Pointers {
-		if ptr.Name == "skip" {
-			continue
+		for _, ptr := range pointers {
+			if ptr.Name == "skip" {
+				continue
+			}
+			mat.AddDescriptor(BufferDescriptor{
+				Buffer:    buffer,
+				Name:      ptr.Name,
+				Type:      int(ptr.GlType),
+				Elements:  ptr.Count,
+				Stride:    stride,
+				Offset:    ptr.Offset,
+				Normalize: ptr.Normalize,
+				Integer:   ptr.Integer,
+			})
 		}
-		mat.AddDescriptor(BufferDescriptor{
-			Buffer:    ptr.Buffer,
-			Name:      ptr.Name,
-			Type:      int(ptr.GlType),
-			Elements:  ptr.Count,
-			Stride:    stride,
-			Offset:    ptr.Offset,
-			Normalize: ptr.Normalize,
-			Integer:   ptr.Integer,
-		})
 	}
 
 	/* Load textures */
-	for _, txtf := range matf.Textures {
-		texture, _ := TextureFromFile(txtf.File)
-		mat.AddTexture(txtf.Name, texture)
+	for name, txtf := range matf.Textures {
+		texture, err := TextureFromFile(txtf.File)
+		if err != nil {
+			panic(err)
+		}
+		mat.AddTexture(name, texture)
 	}
 
 	return mat
