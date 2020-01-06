@@ -13,7 +13,7 @@ out vec4 color0;
 out vec3 normal0;
 out vec3 position0;
 
-/* In order to save vertex memory, normals are looked up in a table */
+// normal lookup table
 const vec3 normals[7] = vec3[7] (
     vec3(0,0,0),  // normal 0 - undefined
     vec3(1,0,0),  // x+
@@ -25,15 +25,20 @@ const vec3 normals[7] = vec3[7] (
 );
 
 void main() {
+    // compute modelview matrix
+    // perhaps do this offline?
     mat4 mv = view * model;
 
-    /* Transform normal */
+    // gbuffer view space normal
     vec3 normal = normals[normal_id];
-    normal0 = normalize((mv * vec4(normal,0)).xyz);
+    normal0 = normalize((mv * vec4(normal, 0.0)).xyz);
 
-    /* pass color */
+    // gbuffer view space position
+    position0 = (mv * vec4(position, 1.0)).xyz;
+
+    // pass color and occlusion
     color0 = vec4(color, occlusion);
 
-    position0 = (mv * vec4(position, 1.0)).xyz;
+    // finally, transform view -> clip space and output vertex position
     gl_Position = projection * vec4(position0,1);
 }

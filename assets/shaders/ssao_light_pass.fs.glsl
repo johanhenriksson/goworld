@@ -135,6 +135,10 @@ void main() {
         contrib = calculatePointLightContrib(surfaceToLight, distanceToLight, normal);
     }
 
+    if (depth == 1.0) {
+        contrib = 0;
+    }
+
     /* calculate light color */
     vec3 lightColor = light.Color * light.Intensity * contrib * shadow * occlusion;
 

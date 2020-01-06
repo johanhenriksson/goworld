@@ -300,7 +300,7 @@ func generateChunk(chk *game.ColorChunk, ox int, oy int, oz int) {
 				if y == grassHeight {
 					vtype = grass
 				}
-				if y < grassHeight+gh && y > grassHeight {
+				if y <= grassHeight+gh && y > grassHeight {
 					vtype = grass
 				}
 				if y < rh {

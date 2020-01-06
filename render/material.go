@@ -25,7 +25,7 @@ type BufferDescriptor struct {
 
 // Material contains a shader reference and all resources required to draw a vertex buffer array
 type Material struct {
-	Shader      *ShaderProgram
+	*ShaderProgram
 	Textures    MaterialTextureMap
 	Buffers     []string
 	Descriptors []BufferDescriptor
@@ -35,16 +35,16 @@ type Material struct {
 // CreateMaterial instantiates a new empty material
 func CreateMaterial(shader *ShaderProgram) *Material {
 	return &Material{
-		Shader:      shader,
-		Textures:    make(MaterialTextureMap),
-		Descriptors: make(BufferDescriptors, 0, 0),
+		ShaderProgram: shader,
+		Textures:      make(MaterialTextureMap),
+		Descriptors:   make(BufferDescriptors, 0, 0),
 	}
 }
 
 // AddDescriptor adds a vertex pointer configuration
 // Used to the describe the geometry format that will be drawn with this material
 func (mat *Material) AddDescriptor(desc BufferDescriptor) {
-	loc, exists := mat.Shader.GetAttrLoc(desc.Name)
+	loc, exists := mat.GetAttrLoc(desc.Name)
 	if !exists {
 		panic("No such attribute " + desc.Name)
 	}
@@ -73,12 +73,12 @@ func (mat *Material) SetTexture(name string, tex *Texture) {
 
 // Use sets the current shader and activates textures
 func (mat *Material) Use() {
-	mat.Shader.Use()
+	mat.ShaderProgram.Use()
 	i := uint32(0)
 	for _, name := range mat.texslots {
 		tex := mat.Textures[name]
 		tex.Use(i)
-		mat.Shader.Int32(name, int32(i))
+		mat.Int32(name, int32(i))
 		i++
 	}
 }

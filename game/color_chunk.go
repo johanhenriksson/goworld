@@ -86,9 +86,9 @@ func (chk *ColorChunk) Compute() {
 	occluded := func(x, y, z int) float32 {
 		if chk.At(x, y, z) != EmptyColorVoxel {
 			// occluded
-			return 0
+			return 0.25 * 1.0 / 6
 		}
-		return 1.0 / 6
+		return 0
 	}
 
 	/* occlusion pass */
@@ -103,7 +103,7 @@ func (chk *ColorChunk) Compute() {
 				}
 
 				// random occlusion factor
-				rnd := 0.14 * 0.5 * (noise.Sample(x+chk.Ox, y, z+chk.Oz) + 1)
+				rnd := 0.16 * (noise.Sample(x+chk.Ox, y, z+chk.Oz) + 1)
 
 				// sample neighbors
 				xp := occluded(x+1, y, z)
@@ -113,7 +113,7 @@ func (chk *ColorChunk) Compute() {
 				zp := occluded(x, y, z+1)
 				zn := occluded(x, y, z-1)
 
-				o := xp + xn + yp + yn + zp + zn + rnd
+				o := 1 - xp - xn - yp - yn - zp - zn - rnd
 				occlusion.Set(x, y, z, o)
 			}
 		}

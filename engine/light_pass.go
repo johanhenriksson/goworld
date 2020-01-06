@@ -78,7 +78,7 @@ func (p *LightPass) DrawPass(scene *Scene) {
 	p.fbo.Bind()
 
 	/* use light pass shader */
-	shader := p.Material.Shader
+	shader := p.Material.ShaderProgram
 
 	/* compute camera view projection inverse */
 	vp := scene.Camera.Projection.Mul4(scene.Camera.View)

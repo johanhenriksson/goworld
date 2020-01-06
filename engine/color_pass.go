@@ -54,8 +54,7 @@ func (p *ColorPass) DrawPass(scene *Scene) {
 	p.mat.Use()
 
 	// pass shader settings
-	shader := p.mat.Shader
-	shader.Float("gamma", p.Gamma)
+	p.mat.Float("gamma", p.Gamma)
 
 	p.quad.Draw()
 

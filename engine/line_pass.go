@@ -23,5 +23,5 @@ func NewLinePass() *LinePass {
 func (p *LinePass) DrawPass(scene *Scene) {
 	/* Draw scene */
 	p.Material.Use()
-	scene.Draw(render.LinePass, p.Material.Shader)
+	scene.Draw(render.LinePass, p.Material.ShaderProgram)
 }

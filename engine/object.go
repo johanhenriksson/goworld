@@ -33,14 +33,6 @@ func (o *Object) Draw(args render.DrawArgs) {
 
 	/* Draw components */
 	args.MVP = args.VP.Mul4(args.Transform)
-	args.Shader.Mat4f("mvp", args.MVP)
-
-	// model matrix is required to calculate vertex normals during the geometry pass
-	if args.Pass == render.GeometryPass {
-		args.Shader.Mat4f("model", args.Transform)
-		args.Shader.Mat4f("view", args.View)
-		args.Shader.Mat4f("projection", args.Projection)
-	}
 
 	for _, comp := range o.Components {
 		comp.Draw(args)

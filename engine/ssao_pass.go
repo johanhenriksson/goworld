@@ -73,7 +73,7 @@ func (p *SSAOPass) DrawPass(scene *Scene) {
 	p.fbo.Bind()
 	p.fbo.Clear()
 
-	shader := p.Material.Shader
+	shader := p.Material.ShaderProgram
 
 	shader.Use()
 	shader.Mat4f("projection", scene.Camera.Projection)
