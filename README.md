@@ -1,8 +1,8 @@
 # goworld
 
-*Recently revived after about 3 years*
+*Recently revived after about 3 years, working on it occasionally.*
 
-Attempt at building a basic OpenGL 3D engine from scratch, Google Go edition. The goal is to create a engine capable of producing *some* kind of *passable* graphics with a coherent art style. So far, the style has been based on colored voxels.
+Yet another attempt at building a basic OpenGL 3D engine from scratch, Google Go edition. The goal is to create a engine capable of producing *some* kind of *passable* graphics with a coherent art style. So far, the style is based on colored voxels.
 
 Only tested on OSX 10.10+. It should theoretically work on Windows/Linux.
 
@@ -26,33 +26,17 @@ Only tested on OSX 10.10+. It should theoretically work on Windows/Linux.
 
 ## Todo / Ideas
 
- * ~~Basic Scene graph~~
- * ~~Defered rendering pipeline~~
- * ~~Basic resource management:~~
-   * ~~Shaders~~
-   * ~~Textures~~
-   * ~~Materials~~
  * Improved scene graph
  * Components System
+ * Properly integrate ODE physics
  * User Interface elements:
-   * ~~Frame~~
-   * ~~Text Label~~
-   * ~~Image~~
    * Textbox
    * Button
-   * Keyboard events
-   * Mouse events
- * Embedded language (probably V8)
+ * Embedded scripting language (probably V8)
  * Console
  * Lighting
-   * ~~Directional light~~
-   * ~~Directional light shadows~~
-   * ~~Point light~~
    * Point Light shadows
    * Spot Light
    * Spot Light shadows
-   * ~~Screen-Space Ambient Occlusion~~
  * Bloom Effect
- * ~~Color Correction Pass~~
- * ~~Output Pass~~
  * Scene save/load
