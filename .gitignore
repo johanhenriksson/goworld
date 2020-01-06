@@ -2,3 +2,6 @@ goworld
 .vscode/
 .idea/*
 .DS_Store
+
+# temproarily ignore models
+assets/models/

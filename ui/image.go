@@ -27,7 +27,7 @@ func (m *Manager) NewImage(texture *render.Texture, x, y, w, h, z float32) *Imag
 
 func (m *Manager) NewDepthImage(texture *render.Texture, x, y, w, h, z float32) *Image {
 	el := m.NewElement("DepthImage", x, y, w, h, z)
-	mat := assets.GetMaterial("depth_texture")
+	mat := assets.GetMaterial("ui_depth_texture")
 	mat.AddTexture("image", texture)
 	img := &Image{
 		Element: el,
