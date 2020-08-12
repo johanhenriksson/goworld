@@ -76,9 +76,6 @@ func main() {
 		},
 	}
 
-	w := app.Scene.World
-	w.NewPlane(0, 1, 0, 0)
-
 	csize := 32
 	ccount := 10
 
@@ -172,11 +169,6 @@ func main() {
 		cz := int(world.Z()) / csize
 		if cx < 0 || cz < 0 || cx >= ccount || cz >= ccount {
 			return
-		}
-
-		if engine.KeyReleased(engine.KeyG) {
-			fmt.Println("raycast")
-			w.Raycast(1000, app.Scene.Camera.Position, app.Scene.Camera.Forward)
 		}
 
 		if engine.KeyReleased(engine.KeyF) {

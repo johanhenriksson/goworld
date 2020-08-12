@@ -28,7 +28,6 @@ Only tested on OSX 10.10+. It should theoretically work on Windows/Linux.
 
  * Improved scene graph
  * Components System
- * Properly integrate ODE physics
  * User Interface elements:
    * Textbox
    * Button
