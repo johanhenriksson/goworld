@@ -1,0 +1,22 @@
+{
+    "buffers": {
+        "geometry": [
+            {
+                "name": "position",
+                "type": "float",
+                "count": 3
+            },
+            {
+                "name": "uv",
+                "type": "float",
+                "count": 2
+            },
+            {
+                "name": "normal",
+                "type": "float",
+                "count": 3,
+                "normalize": true
+            }
+        ]
+    }
+}
