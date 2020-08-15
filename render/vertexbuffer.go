@@ -25,6 +25,16 @@ func CreateVertexBuffer() *VertexBuffer {
 	return vbo
 }
 
+// CreateIndexBuffer creates a new GL index buffer object
+func CreateIndexBuffer() *VertexBuffer {
+	vbo := &VertexBuffer{
+		Target: gl.ELEMENT_ARRAY_BUFFER,
+		Usage:  gl.STATIC_DRAW,
+	}
+	gl.GenBuffers(1, &vbo.ID)
+	return vbo
+}
+
 // Bind the vertex buffer object
 func (vbo *VertexBuffer) Bind() error {
 	if vbo.ID == 0 {
@@ -73,6 +83,6 @@ func (vbo *VertexBuffer) Buffer(vertices VertexData) error {
 	vbo.Elements = vertices.Elements()
 
 	// debug logging
-	//fmt.Printf("[VBO %d] Buffered %d x %d = %d bytes\n", vbo.Id, vbo.Size, vbo.Elements, size)
+	fmt.Printf("[VBO %d] Buffered %d x %d = %d bytes\n", vbo.ID, vbo.Size, vbo.Elements, size)
 	return nil
 }

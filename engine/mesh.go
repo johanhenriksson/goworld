@@ -48,12 +48,12 @@ func (m *Mesh) addBuffer(name string) *render.VertexBuffer {
 
 // Buffer mesh data to the GPU
 func (m *Mesh) Buffer(name string, data render.VertexData) error {
-	m.vao.Bind()
-	m.vao.Length = int32(data.Elements())
 	vbo, exists := m.vbos[name]
 	if !exists {
 		return fmt.Errorf("Unknown VBO: %s", name)
 	}
+	m.vao.Bind()
+	m.vao.Length = int32(data.Elements())
 	return vbo.Buffer(data)
 }
 
@@ -70,5 +70,5 @@ func (m *Mesh) Draw(args render.DrawArgs) {
 	m.material.Mat4f("view", args.View)
 	m.material.Mat4f("projection", args.Projection)
 
-	m.vao.Draw()
+	m.vao.DrawElements()
 }

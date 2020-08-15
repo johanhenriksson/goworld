@@ -126,7 +126,7 @@ func (q *Quad) Draw(args render.DrawArgs) {
 	q.Material.Use()
 	q.Material.Mat4f("model", args.Transform)
 	q.Material.Mat4f("viewport", args.Projection)
-	q.vao.Draw()
+	q.vao.DrawElements()
 }
 
 func (q *Quad) SetColor(color render.Color) {

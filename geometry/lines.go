@@ -87,7 +87,7 @@ func (lines *Lines) Compute() {
 func (lines *Lines) Draw(args render.DrawArgs) {
 	// setup line material
 	if len(lines.Lines) > 0 && args.Pass == render.LinePass {
-		lines.vao.Draw()
+		lines.vao.DrawElements()
 	}
 }
 
