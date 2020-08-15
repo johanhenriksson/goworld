@@ -31,7 +31,9 @@ type pointerDef struct {
 
 // Texture definition json representation
 type textureDef struct {
-	File string
+	File   string
+	Filter string
+	Wrap   string
 }
 
 // LoadMaterial loads a material from a json definition file
@@ -91,6 +93,9 @@ func LoadMaterial(shader *ShaderProgram, file string) *Material {
 		texture, err := TextureFromFile(txtf.File)
 		if err != nil {
 			panic(err)
+		}
+		if txtf.Filter == "nearest" {
+			texture.SetFilter(NearestFilter)
 		}
 		mat.AddTexture(name, texture)
 	}

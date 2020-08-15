@@ -1,6 +1,6 @@
 #version 330
 
-uniform sampler2D tileset;
+uniform sampler2D palette;
 
 in vec3 normal0;
 in vec3 position0;
@@ -12,7 +12,7 @@ layout(location=2) out vec4 out_position;
 
 void main() {
     // store color in gbuffer
-    out_diffuse = vec4(texture(tileset, uv0).xyz, 1);
+    out_diffuse = vec4(texture(palette, uv0).xyz, 1);
 
     // pack normal after interpolation
     // store in gbuffer

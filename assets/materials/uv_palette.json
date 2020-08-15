@@ -18,5 +18,12 @@
                 "normalize": true
             }
         ]
+    },
+    "textures": {
+        "palette": {
+            "file": "assets/textures/palette.png",
+            "filter": "nearest",
+            "wrap": "clamp"
+        }
     }
 }
