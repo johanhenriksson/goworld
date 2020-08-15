@@ -8,5 +8,6 @@ require (
 	github.com/go-gl/mathgl v0.0.0-20190713194549-592312d8590a
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
 	github.com/ojrac/opensimplex-go v1.0.1
+	github.com/udhos/gwob v0.0.0-20200524213453-619810f75817
 	golang.org/x/image v0.0.0-20200801110659-972c09e46d76
 )
