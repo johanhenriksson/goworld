@@ -62,5 +62,5 @@ func (q *ImageQuad) Draw(args render.DrawArgs) {
 		q.Material.Mat4f("model", args.Transform)
 		q.Material.Mat4f("viewport", args.Projection)
 	}
-	q.vao.Draw()
+	q.vao.DrawElements()
 }

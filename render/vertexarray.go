@@ -44,17 +44,8 @@ func (vao VertexArray) Unbind() {
 	gl.BindVertexArray(0)
 }
 
-// Draw all the elements in the vertex array
-func (vao VertexArray) Draw() {
-	vao.DrawElements(0, vao.Length)
-}
-
 // DrawElements draws a range of elements in the vertex array
-func (vao VertexArray) DrawElements(start, count int32) error {
-	if start < 0 || start+count > vao.Length {
-		return fmt.Errorf("VAO Draw index out of range")
-	}
-
+func (vao VertexArray) DrawElements() error {
 	// bind vertex array
 	err := vao.Bind()
 	if err != nil {
@@ -63,5 +54,17 @@ func (vao VertexArray) DrawElements(start, count int32) error {
 
 	// draw call
 	gl.DrawArrays(vao.Type, 0, vao.Length)
+	return nil
+}
+
+// DrawIndexed draws using the index buffer
+func (vao VertexArray) DrawIndexed() error {
+	// bind vertex array
+	err := vao.Bind()
+	if err != nil {
+		return err
+	}
+
+	gl.DrawElements(vao.Type, vao.Length, gl.UNSIGNED_INT, nil)
 	return nil
 }

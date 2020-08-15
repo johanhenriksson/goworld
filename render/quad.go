@@ -41,5 +41,5 @@ func (q *Quad) Draw() {
 		q.mat.Use()
 	}
 
-	q.vao.Draw()
+	q.vao.DrawElements()
 }

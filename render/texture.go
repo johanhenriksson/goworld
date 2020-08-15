@@ -10,6 +10,18 @@ import (
 	"github.com/johanhenriksson/goworld/util"
 )
 
+type TextureFilter int32
+type WrapMode int32
+
+const (
+	LinearFilter  = TextureFilter(gl.LINEAR)
+	NearestFilter = TextureFilter(gl.NEAREST)
+)
+
+const (
+	ClampWrap = WrapMode(gl.CLAMP_TO_EDGE)
+)
+
 // Texture represents an OpenGL 2D texture object
 type Texture struct {
 	ID             uint32
@@ -19,6 +31,9 @@ type Texture struct {
 	InternalFormat uint32
 	DataType       uint32
 	MipLevel       int32
+
+	filter TextureFilter
+	wrap   WrapMode
 }
 
 // CreateTexture creates a new 2D texture and sets some sane defaults
@@ -37,12 +52,22 @@ func CreateTexture(width, height int32) *Texture {
 	tx.Bind()
 
 	/* Texture parameters - pass as parameters? */
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+	tx.SetFilter(LinearFilter)
+	tx.SetWrapMode(ClampWrap)
 
 	return tx
+}
+
+func (tx *Texture) SetFilter(filter TextureFilter) {
+	tx.filter = filter
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, int32(filter))
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, int32(filter))
+}
+
+func (tx *Texture) SetWrapMode(mode WrapMode) {
+	tx.wrap = mode
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, int32(mode))
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, int32(mode))
 }
 
 // Use binds this texture to the given texture slot */
@@ -64,6 +89,7 @@ func (tx *Texture) FrameBufferTarget(attachment uint32) {
 
 // Clear the texture
 func (tx *Texture) Clear() {
+	tx.Bind()
 	gl.TexImage2D(
 		gl.TEXTURE_2D,
 		0,
@@ -78,6 +104,7 @@ func (tx *Texture) Clear() {
 // Buffer buffers texture data from an image object
 func (tx *Texture) Buffer(img *image.RGBA) {
 	/* Buffer image data */
+	tx.Bind()
 	gl.TexImage2D(
 		gl.TEXTURE_2D,
 		0,

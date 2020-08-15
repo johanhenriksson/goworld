@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/johanhenriksson/goworld/assets"
 	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/game"
 	"github.com/johanhenriksson/goworld/geometry"
@@ -99,9 +100,12 @@ func main() {
 	fmt.Println("done")
 
 	// test cube
-	cube := app.Scene.NewObject(0, 12, 0)
-	geometry.NewCube(cube, 1)
-	app.Scene.Add(cube)
+	building := app.Scene.NewObject(4.5, 9.04, 8.5)
+	building.Scale = mgl.Vec3{0.1, 0.1, 0.1}
+	cubemat := assets.GetMaterial("uv_palette")
+	geometry.NewObjModel(building, "assets/models/building.obj", cubemat)
+
+	app.Scene.Add(building)
 
 	// this composition system sucks
 	//game.NewPlacementGrid(chunks[0])
