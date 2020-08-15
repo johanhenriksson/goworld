@@ -64,11 +64,11 @@ func (shader *Shader) CompileFile(path string) error {
 	if err != nil {
 		return err
 	}
-	return shader.Compile(string(source))
+	return shader.Compile(string(source), path)
 }
 
 // Compile a shader from a source string
-func (shader *Shader) Compile(source string) error {
+func (shader *Shader) Compile(source, path string) error {
 	csource, free := util.GLString(source)
 	gl.ShaderSource(shader.ID, 1, csource, nil)
 	gl.CompileShader(shader.ID)
@@ -84,7 +84,7 @@ func (shader *Shader) Compile(source string) error {
 		log := strings.Repeat("\x00", int(logLength+1))
 		gl.GetShaderInfoLog(shader.ID, logLength, nil, gl.Str(log))
 
-		return fmt.Errorf("shader compilation failed.\n** Source: **\n%v\n** Log: **\n%v", source, log)
+		return fmt.Errorf("shader compilation failed.\n** Source: %s**\n%v\n** Log: **\n%v", path, source, log)
 	}
 
 	return nil
