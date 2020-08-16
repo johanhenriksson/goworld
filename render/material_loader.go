@@ -66,7 +66,7 @@ func LoadMaterial(shader *ShaderProgram, file string) *Material {
 				panic(fmt.Errorf("Expected count >0 for pointer %s", ptr.Name))
 			}
 
-			ptr.GlType, ptr.Size = getGlType(ptr.Type)
+			ptr.GlType, ptr.Size = GLTypeFromString(ptr.Type)
 			ptr.Size *= ptr.Count
 			ptr.Offset = stride
 			stride += ptr.Size
@@ -103,15 +103,56 @@ func LoadMaterial(shader *ShaderProgram, file string) *Material {
 	return mat
 }
 
-// getGlType returns the GL identifier & size of a data type name
-func getGlType(name string) (uint32, int) {
+// GLTypeFromString returns the GL identifier & size of a data type name
+func GLTypeFromString(name string) (uint32, int) {
 	switch name {
 	case "byte":
+		fallthrough
+	case "int8":
 		return gl.BYTE, 1
+
+	case "ubyte":
+		fallthrough
+	case "uint8":
+		fallthrough
 	case "unsigned byte":
 		return gl.UNSIGNED_BYTE, 1
+
+	case "short":
+		fallthrough
+	case "int16":
+		return gl.SHORT, 2
+
+	case "ushort":
+		fallthrough
+	case "uint16":
+		fallthrough
+	case "unsigned short":
+		return gl.UNSIGNED_SHORT, 2
+
+	case "int":
+		fallthrough
+	case "int32":
+		fallthrough
+	case "integer":
+		return gl.INT, 4
+
+	case "uint":
+		fallthrough
+	case "uint32":
+		fallthrough
+	case "unsigned integer":
+		return gl.UNSIGNED_INT, 4
+
 	case "float":
+		fallthrough
+	case "float32":
 		return gl.FLOAT, 4
+
+	case "float64":
+		fallthrough
+	case "double":
+		return gl.DOUBLE, 8
 	}
 	panic(fmt.Sprintf("Unknown GL type '%s'", name))
 }
