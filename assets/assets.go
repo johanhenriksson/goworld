@@ -58,16 +58,6 @@ func GetTexture(name string) *render.Texture {
 	return texture
 }
 
-func GetMaterial(name string) *render.Material {
-	/* load shader by the same name */
-	shader := GetShader(name)
-
-	// attempt to load
-	material := render.LoadMaterial(shader, "assets/materials/"+name)
-
-	return material
-}
-
 func GetMaterialCached(name string) *render.Material {
 	if mat, exists := cache.Materials[name]; exists {
 		return mat

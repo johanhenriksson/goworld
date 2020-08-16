@@ -12,6 +12,10 @@
                 "type": "float",
                 "count": 2,
                 "normalize": false
+            },
+            {
+                "type": "skip",
+                "count": 12
             }
         ]
     }

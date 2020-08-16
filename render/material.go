@@ -15,7 +15,7 @@ type BufferDescriptor struct {
 	Buffer    string
 	Name      string
 	Index     int
-	Type      int
+	Type      GLType
 	Elements  int
 	Stride    int
 	Offset    int
@@ -37,7 +37,7 @@ func CreateMaterial(shader *ShaderProgram) *Material {
 	return &Material{
 		ShaderProgram: shader,
 		Textures:      make(MaterialTextureMap),
-		Descriptors:   make(BufferDescriptors, 0, 0),
+		Descriptors:   make(BufferDescriptors, 0, 4),
 	}
 }
 
