@@ -1,5 +1,7 @@
 package game
 
+import "unsafe"
+
 // ColorVoxelVertex represents a single RGB-colored voxel
 type ColorVoxelVertex struct {
 	X, Y, Z byte // position
@@ -17,4 +19,8 @@ func (buffer ColorVoxelVertices) Elements() int {
 
 func (buffer ColorVoxelVertices) Size() int {
 	return 8
+}
+
+func (buffer ColorVoxelVertices) Pointer() unsafe.Pointer {
+	return unsafe.Pointer(&buffer[0])
 }

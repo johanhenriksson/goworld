@@ -7,10 +7,10 @@ import (
 /** Not exactly a quad anymore is it? */
 type ImageQuad struct {
 	Material    *render.Material
-	TopLeft     ImageVertex
-	TopRight    ImageVertex
-	BottomLeft  ImageVertex
-	BottomRight ImageVertex
+	TopLeft     Vertex
+	TopRight    Vertex
+	BottomLeft  Vertex
+	BottomRight Vertex
 	vao         *render.VertexArray
 	vbo         *render.VertexBuffer
 }
@@ -22,10 +22,10 @@ func NewImageQuad(mat *render.Material, w, h, z float32) *ImageQuad {
 func NewImageQuadAt(mat *render.Material, x, y, w, h, z float32) *ImageQuad {
 	q := &ImageQuad{
 		Material:    mat,
-		TopLeft:     ImageVertex{X: x, Y: y + h, Z: z, Tx: 0, Ty: 0},
-		TopRight:    ImageVertex{X: x + w, Y: y + h, Z: z, Tx: 1, Ty: 0},
-		BottomLeft:  ImageVertex{X: x, Y: y, Z: z, Tx: 0, Ty: 1},
-		BottomRight: ImageVertex{X: x + w, Y: y, Z: z, Tx: 1, Ty: 1},
+		TopLeft:     Vertex{X: x, Y: y + h, Z: z, U: 0, V: 0},
+		TopRight:    Vertex{X: x + w, Y: y + h, Z: z, U: 1, V: 0},
+		BottomLeft:  Vertex{X: x, Y: y, Z: z, U: 0, V: 1},
+		BottomRight: Vertex{X: x + w, Y: y, Z: z, U: 1, V: 1},
 		vao:         render.CreateVertexArray(),
 		vbo:         render.CreateVertexBuffer(),
 	}
@@ -34,7 +34,7 @@ func NewImageQuadAt(mat *render.Material, x, y, w, h, z float32) *ImageQuad {
 }
 
 func (q *ImageQuad) compute() {
-	vtx := ImageVertices{
+	vtx := Vertices{
 		q.BottomLeft, q.TopRight, q.TopLeft,
 		q.BottomLeft, q.BottomRight, q.TopRight,
 	}
@@ -49,10 +49,10 @@ func (q *ImageQuad) compute() {
 }
 
 func (q *ImageQuad) FlipY() {
-	q.TopLeft.Ty = 1.0 - q.TopLeft.Ty
-	q.TopRight.Ty = 1.0 - q.TopRight.Ty
-	q.BottomLeft.Ty = 1.0 - q.BottomLeft.Ty
-	q.BottomRight.Ty = 1.0 - q.BottomRight.Ty
+	q.TopLeft.V = 1.0 - q.TopLeft.V
+	q.TopRight.V = 1.0 - q.TopRight.V
+	q.BottomLeft.V = 1.0 - q.BottomLeft.V
+	q.BottomRight.V = 1.0 - q.BottomRight.V
 	q.compute()
 }
 

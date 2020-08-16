@@ -68,8 +68,7 @@ func (vbo *VertexBuffer) Buffer(vertices VertexData) error {
 
 	// buffer data to GPU
 	size := vertices.Size() * vertices.Elements()
-	ptr := gl.Ptr(vertices)
-	gl.BufferData(vbo.Target, size, ptr, vbo.Usage)
+	gl.BufferData(vbo.Target, size, vertices.Pointer(), vbo.Usage)
 
 	// check actual size in GPU memory
 	gpuSize := int32(0)

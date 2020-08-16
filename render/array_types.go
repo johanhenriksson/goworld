@@ -1,31 +1,48 @@
 package render
 
-type FloatArray []float32
+import "unsafe"
 
-func (a FloatArray) Elements() int {
+type UInt32Buffer []uint32
+
+func (a UInt32Buffer) Elements() int {
 	return len(a)
 }
 
-func (a FloatArray) Size() int {
+func (a UInt32Buffer) Size() int {
 	return 4
 }
 
-type UInt32Array []uint32
+func (a UInt32Buffer) Pointer() unsafe.Pointer {
+	return unsafe.Pointer(&a[0])
+}
 
-func (a UInt32Array) Elements() int {
+type Int32Buffer []int32
+
+func (a Int32Buffer) Elements() int {
 	return len(a)
 }
 
-func (a UInt32Array) Size() int {
+func (a Int32Buffer) Size() int {
 	return 4
 }
 
-type Int32Array []int32
-
-func (a Int32Array) Elements() int {
-	return len(a)
+func (a Int32Buffer) Pointer() unsafe.Pointer {
+	return unsafe.Pointer(&a[0])
 }
 
-func (a Int32Array) Size() int {
+// FloatBuffer is a simple implementation of the VertexData interface for buffering arrays of 32-bit floats
+type FloatBuffer []float32
+
+// Elements returns the number of vertex elements in the buffer
+func (vtx FloatBuffer) Elements() int {
+	return len(vtx)
+}
+
+// Size returns the byte size of a buffer element
+func (vtx FloatBuffer) Size() int {
 	return 4
+}
+
+func (vtx FloatBuffer) Pointer() unsafe.Pointer {
+	return unsafe.Pointer(&vtx[0])
 }
