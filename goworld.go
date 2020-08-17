@@ -38,7 +38,7 @@ var textColor = render.Color4(1, 1, 1, 1)
 var windowStyle = ui.Style{
 	"background": ui.Color(winColor),
 	"radius":     ui.Float(3),
-	"padding":    ui.Float(2),
+	"padding":    ui.Float(5),
 }
 
 func main() {
@@ -47,15 +47,6 @@ func main() {
 	app := engine.NewApplication("voxels", 1200, 800)
 	uim := ui.NewManager(app)
 	app.Render.Append("ui", uim)
-
-	fmt.Println("testing fonts")
-	fnt := render.LoadFont("assets/fonts/SourceCodeProRegular.ttf", 16.0, 1.0, 1.0)
-	txt := "banjo\nteam pls"
-	w, h := fnt.Measure(txt)
-	fmt.Printf("text size %dx%d\n", w, h)
-	sampleText := fnt.RenderNew(txt, render.Color4(1, 0, 0, 1))
-	sampleText.Save("test.png")
-	sampleText.Bounds()
 
 	rect := ui.NewRect(windowStyle,
 		ui.NewRect(ui.Style{"layout": ui.String("row"), "spacing": ui.Float(100)},
@@ -66,7 +57,7 @@ func main() {
 			ui.NewText("Hello Really Long Line", ui.NoStyle)))
 	uim.Attach(rect)
 	rect.SetPosition(400, 400)
-	rect.DesiredSize(1000, 1000)
+	rect.DesiredSize(200, 1000)
 
 	/* grab a reference to the geometry render pass */
 	geoPass := app.Render.Get("geometry").(*engine.GeometryPass)
@@ -138,18 +129,25 @@ func main() {
 
 	// buffer display windows
 	lightPass := app.Render.Get("light").(*engine.LightPass)
-	newBufferWindow(uim, "Diffuse", geoPass.Buffer.Diffuse, 10, 10, false)
-	newBufferWindow(uim, "Occlusion", lightPass.SSAO.Gaussian.Output, 10, 215, true)
-	newBufferWindow(uim, "Shadowmap", lightPass.Shadows.Output, 10, 420, true)
+	bufferWindows := ui.NewRect(ui.Style{"spacing": ui.Float(10)},
+		newBufferWindow("Diffuse", geoPass.Buffer.Diffuse, 10, 10, false),
+		newBufferWindow("Occlusion", lightPass.SSAO.Gaussian.Output, 10, 215, true),
+		newBufferWindow("Shadowmap", lightPass.Shadows.Output, 10, 420, true))
+	bufferWindows.SetPosition(10, 10)
+	bufferWindows.DesiredSize(500, 1000)
+	uim.Attach(bufferWindows)
 
 	// palette globals
 	paletteIdx := 5
 	selected := game.NewColorVoxel(render.DefaultPalette[paletteIdx])
 
-	newPaletteWindow(uim, 280, 10, render.DefaultPalette, func(newPaletteIdx int) {
+	paletteWnd := newPaletteWindow(render.DefaultPalette, func(newPaletteIdx int) {
 		paletteIdx = newPaletteIdx
 		selected = game.NewColorVoxel(render.DefaultPalette[paletteIdx])
 	})
+	paletteWnd.SetPosition(280, 10)
+	paletteWnd.DesiredSize(200, 400)
+	uim.Attach(paletteWnd)
 
 	// watermark / fps text
 	versiontext := fmt.Sprintf("goworld")
@@ -240,33 +238,40 @@ func main() {
 	app.Run()
 }
 
-func newPaletteWindow(uim *ui.Manager, x, y float32, palette render.Palette, onClickItem func(int)) ui.Component {
-	win := ui.NewRect(windowStyle,
-		ui.NewText("Palette", ui.NoStyle))
-	win.SetPosition(x, y)
-	win.SetSize(100, 185)
+func newPaletteWindow(palette render.Palette, onClickItem func(int)) ui.Component {
+	cols := 5
+	spacing := ui.Float(2)
+	gridStyle := ui.Style{"spacing": spacing}
+	rowStyle := ui.Style{"layout": ui.String("row"), "spacing": spacing}
+	rows := make([]ui.Component, 0, len(palette)/cols+1)
+	row := make([]ui.Component, 0, cols)
 
-	perRow := 5
-	for i, color := range palette {
-		itemIdx := i
-		row := i / perRow
-		col := i % perRow
-		c := ui.NewRect(ui.Style{"background": ui.Color(color)})
-		c.SetSize(20, 20)
-		c.SetPosition(float32(col*20), 25.0+float32(row*20))
-		c.OnClick(func(ev ui.MouseEvent) {
+	for i := 1; i <= len(palette); i++ {
+		itemIdx := i - 1
+		color := palette[itemIdx]
+
+		swatch := ui.NewRect(ui.Style{"background": ui.Color(color), "layout": ui.String("fixed")})
+		swatch.SetSize(20, 20)
+		swatch.OnClick(func(ev ui.MouseEvent) {
 			if ev.Button == engine.MouseButton1 {
 				onClickItem(itemIdx)
 			}
 		})
-		win.Attach(c)
+
+		row = append(row, swatch)
+
+		if i%cols == 0 {
+			rows = append(rows, ui.NewRect(rowStyle, row...))
+			row = make([]ui.Component, 0, cols)
+		}
 	}
 
-	uim.Attach(win)
-	return win
+	return ui.NewRect(windowStyle,
+		ui.NewText("Palette", ui.NoStyle),
+		ui.NewRect(gridStyle, rows...))
 }
 
-func newBufferWindow(uim *ui.Manager, title string, texture *render.Texture, x, y float32, depth bool) ui.Component {
+func newBufferWindow(title string, texture *render.Texture, x, y float32, depth bool) ui.Component {
 	var img ui.Component
 	if depth {
 		img = ui.NewDepthImage(texture, 240, 160, false)
@@ -274,15 +279,9 @@ func newBufferWindow(uim *ui.Manager, title string, texture *render.Texture, x, 
 		img = ui.NewImage(texture, 240, 160, false)
 	}
 
-	win := ui.NewRect(windowStyle,
+	return ui.NewRect(windowStyle,
 		ui.NewText(title, ui.NoStyle),
 		img)
-
-	win.SetPosition(x, y)
-	win.DesiredSize(300, 300)
-
-	uim.Attach(win)
-	return win
 }
 
 // ChunkFunc is a chunk function :)

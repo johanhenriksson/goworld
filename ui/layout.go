@@ -43,3 +43,7 @@ func ColumnLayout(c Component, style Style, aw, ah float32) (float32, float32) {
 	c.SetSize(dw, dh)
 	return dw, dh
 }
+
+func FixedLayout(c Component, style Style, aw, ah float32) (float32, float32) {
+	return c.Width(), c.Height()
+}

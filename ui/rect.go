@@ -30,6 +30,8 @@ func NewRect(style Style, children ...Component) *Rect {
 	layout := style.String("layout", "column")
 	if layout == "row" {
 		r.layout = RowLayout
+	} else if layout == "fixed" {
+		r.layout = FixedLayout
 	}
 
 	border := style.Float("radius", 0)
