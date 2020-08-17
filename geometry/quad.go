@@ -7,11 +7,10 @@ import (
 )
 
 type Quad struct {
-	TopLeft     ColorVertex
-	TopRight    ColorVertex
-	BottomLeft  ColorVertex
-	BottomRight ColorVertex
-	Material    *render.Material
+	Width    float32
+	Height   float32
+	Color    render.Color
+	Material *render.Material
 
 	segments int
 	border   float32
@@ -21,13 +20,12 @@ type Quad struct {
 
 func NewQuad(mat *render.Material, color render.Color, w, h float32) *Quad {
 	q := &Quad{
-		Material:    mat,
-		TopLeft:     ColorVertex{X: 0, Y: h, Z: 0, Color: color},
-		TopRight:    ColorVertex{X: w, Y: h, Z: 0, Color: color},
-		BottomLeft:  ColorVertex{X: 0, Y: 0, Z: 0, Color: color},
-		BottomRight: ColorVertex{X: w, Y: 0, Z: 0, Color: color},
-		segments:    5,
-		border:      0,
+		Material: mat,
+		Width:    w,
+		Height:   h,
+		Color:    color,
+		segments: 5,
+		border:   0,
 
 		vao: render.CreateVertexArray(),
 		vbo: render.CreateVertexBuffer(),
@@ -70,60 +68,61 @@ func (q *Quad) appendCorner(vtx *ColorVertices, origin ColorVertex, n int, r, of
 }
 
 func (q *Quad) SetSize(w, h float32) {
-	z := q.TopLeft.Z
-	color := q.TopLeft.Color
-	q.TopLeft = ColorVertex{X: 0, Y: h, Z: z, Color: color}
-	q.TopRight = ColorVertex{X: w, Y: h, Z: z, Color: color}
-	q.BottomLeft = ColorVertex{X: 0, Y: 0, Z: z, Color: color}
-	q.BottomRight = ColorVertex{X: w, Y: 0, Z: z, Color: color}
+	q.Width = w
+	q.Height = h
 	q.compute()
 }
 
 func (q *Quad) compute() {
+	b := q.border
+	TopLeft := ColorVertex{X: b, Y: q.Height - b, Z: 0, Color: q.Color}
+	TopRight := ColorVertex{X: q.Width - b, Y: q.Height - b, Z: 0, Color: q.Color}
+	BottomLeft := ColorVertex{X: b, Y: b, Z: 0, Color: q.Color}
+	BottomRight := ColorVertex{X: q.Width - b, Y: b, Z: 0, Color: q.Color}
+
 	vtx := ColorVertices{
-		q.BottomLeft, q.TopRight, q.TopLeft,
-		q.BottomLeft, q.BottomRight, q.TopRight,
+		BottomLeft, TopRight, TopLeft,
+		BottomLeft, BottomRight, TopRight,
 	}
 
 	/* If we have a positive border width, tesselate border */
-	b := float32(q.border)
 	if b > 0.0 {
-		q.appendCorner(&vtx, q.TopRight, q.segments, q.border, 0.0)
-		q.appendCorner(&vtx, q.TopLeft, q.segments, q.border, math.Pi/2.0)
-		q.appendCorner(&vtx, q.BottomLeft, q.segments, q.border, math.Pi)
-		q.appendCorner(&vtx, q.BottomRight, q.segments, q.border, 3.0*math.Pi/2.0)
+		q.appendCorner(&vtx, TopRight, q.segments, q.border, 0.0)
+		q.appendCorner(&vtx, TopLeft, q.segments, q.border, math.Pi/2.0)
+		q.appendCorner(&vtx, BottomLeft, q.segments, q.border, math.Pi)
+		q.appendCorner(&vtx, BottomRight, q.segments, q.border, 3.0*math.Pi/2.0)
 
 		/* Top Border Box */
-		topTopLeft := q.TopLeft
+		topTopLeft := TopLeft
 		topTopLeft.Y += b
-		topTopRight := q.TopRight
+		topTopRight := TopRight
 		topTopRight.Y += b
-		vtx = append(vtx, q.TopLeft, topTopRight, topTopLeft,
-			q.TopLeft, q.TopRight, topTopRight)
+		vtx = append(vtx, TopLeft, topTopRight, topTopLeft,
+			TopLeft, TopRight, topTopRight)
 
 		/* Bottom border box */
-		bottomBottomLeft := q.BottomLeft
+		bottomBottomLeft := BottomLeft
 		bottomBottomLeft.Y -= b
-		bottomBottomRight := q.BottomRight
+		bottomBottomRight := BottomRight
 		bottomBottomRight.Y -= b
-		vtx = append(vtx, bottomBottomLeft, q.BottomRight, q.BottomLeft,
-			bottomBottomLeft, bottomBottomRight, q.BottomRight)
+		vtx = append(vtx, bottomBottomLeft, BottomRight, BottomLeft,
+			bottomBottomLeft, bottomBottomRight, BottomRight)
 
 		/* Right border box */
-		rightTopRight := q.TopRight
+		rightTopRight := TopRight
 		rightTopRight.X += b
-		rightBottomRight := q.BottomRight
+		rightBottomRight := BottomRight
 		rightBottomRight.X += b
-		vtx = append(vtx, q.BottomRight, rightTopRight, q.TopRight,
-			q.BottomRight, rightBottomRight, rightTopRight)
+		vtx = append(vtx, BottomRight, rightTopRight, TopRight,
+			BottomRight, rightBottomRight, rightTopRight)
 
 		/* Left border box */
-		leftTopLeft := q.TopLeft
+		leftTopLeft := TopLeft
 		leftTopLeft.X -= b
-		leftBottomLeft := q.BottomLeft
+		leftBottomLeft := BottomLeft
 		leftBottomLeft.X -= b
-		vtx = append(vtx, leftBottomLeft, q.TopLeft, leftTopLeft,
-			leftBottomLeft, q.BottomLeft, q.TopLeft)
+		vtx = append(vtx, leftBottomLeft, TopLeft, leftTopLeft,
+			leftBottomLeft, BottomLeft, TopLeft)
 	}
 
 	/* Setup VAO */
@@ -140,8 +139,6 @@ func (q *Quad) Draw(args render.DrawArgs) {
 }
 
 func (q *Quad) SetColor(color render.Color) {
-	q.TopLeft.Color = color
-	q.TopRight.Color = color
-	q.BottomLeft.Color = color
-	q.BottomRight.Color = color
+	q.Color = color
+	q.compute()
 }

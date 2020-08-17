@@ -37,7 +37,8 @@ var textColor = render.Color4(1, 1, 1, 1)
 
 var windowStyle = ui.Style{
 	"background": ui.Color(winColor),
-	"radius":     ui.Float(5),
+	"radius":     ui.Float(3),
+	"padding":    ui.Float(2),
 }
 
 func main() {
@@ -56,10 +57,15 @@ func main() {
 	sampleText.Save("test.png")
 	sampleText.Bounds()
 
-	rect := ui.NewRect(300, 300, 100, 50, windowStyle,
-		ui.NewText("Hello Really Long Line", 0, 0, ui.NoStyle),
-		ui.NewText("Please", 0, 0, ui.NoStyle))
+	rect := ui.NewRect(windowStyle,
+		ui.NewRect(ui.Style{"layout": ui.String("row"), "spacing": ui.Float(100)},
+			ui.NewText("Hello Really Long Line", ui.NoStyle),
+			ui.NewText("Please", ui.NoStyle)),
+		ui.NewRect(ui.NoStyle,
+			ui.NewText("Please", ui.NoStyle),
+			ui.NewText("Hello Really Long Line", ui.NoStyle)))
 	uim.Attach(rect)
+	rect.SetPosition(400, 400)
 	rect.DesiredSize(1000, 1000)
 
 	/* grab a reference to the geometry render pass */
@@ -147,9 +153,8 @@ func main() {
 
 	// watermark / fps text
 	versiontext := fmt.Sprintf("goworld")
-	watermark := ui.NewText(versiontext, 10, float32(app.Window.Height-30), ui.Style{
-		"color": ui.Color(render.White),
-	})
+	watermark := ui.NewText(versiontext, ui.Style{"color": ui.Color(render.White)})
+	watermark.SetPosition(10, float32(app.Window.Height-30))
 	watermark.Texture.Save("test.png")
 	uim.Attach(watermark)
 
@@ -236,18 +241,19 @@ func main() {
 }
 
 func newPaletteWindow(uim *ui.Manager, x, y float32, palette render.Palette, onClickItem func(int)) ui.Component {
-	win := ui.NewRect(x, y, 100, 185, windowStyle)
-	label := ui.NewText("Palette", 4, -3, ui.NoStyle)
-	win.Attach(label)
+	win := ui.NewRect(windowStyle,
+		ui.NewText("Palette", ui.NoStyle))
+	win.SetPosition(x, y)
+	win.SetSize(100, 185)
 
 	perRow := 5
 	for i, color := range palette {
 		itemIdx := i
 		row := i / perRow
 		col := i % perRow
-		c := ui.NewRect(float32(col*20), 25.0+float32(row*20), 20, 20, ui.Style{
-			"background": ui.Color(color),
-		})
+		c := ui.NewRect(ui.Style{"background": ui.Color(color)})
+		c.SetSize(20, 20)
+		c.SetPosition(float32(col*20), 25.0+float32(row*20))
 		c.OnClick(func(ev ui.MouseEvent) {
 			if ev.Button == engine.MouseButton1 {
 				onClickItem(itemIdx)
@@ -261,17 +267,19 @@ func newPaletteWindow(uim *ui.Manager, x, y float32, palette render.Palette, onC
 }
 
 func newBufferWindow(uim *ui.Manager, title string, texture *render.Texture, x, y float32, depth bool) ui.Component {
-	win := ui.NewRect(x, y, 240, 185, windowStyle)
-	label := ui.NewText(title, 0, -3, ui.NoStyle)
-	win.Attach(label)
-
+	var img ui.Component
 	if depth {
-		img := ui.NewDepthImage(texture, 0, 25, 240, 160, false)
-		win.Attach(img)
+		img = ui.NewDepthImage(texture, 240, 160, false)
 	} else {
-		img := ui.NewImage(texture, 0, 25, 240, 160, false)
-		win.Attach(img)
+		img = ui.NewImage(texture, 240, 160, false)
 	}
+
+	win := ui.NewRect(windowStyle,
+		ui.NewText(title, ui.NoStyle),
+		img)
+
+	win.SetPosition(x, y)
+	win.DesiredSize(300, 300)
 
 	uim.Attach(win)
 	return win

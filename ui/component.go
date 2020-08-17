@@ -29,6 +29,7 @@ type Component interface {
 	SetSize(float32, float32)
 	DesiredSize(float32, float32) (float32, float32)
 	SetPosition(float32, float32)
+	Children() []Component
 
 	Draw(render.DrawArgs)
 

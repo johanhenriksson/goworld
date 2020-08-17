@@ -72,7 +72,7 @@ func (e *Element) SetSize(width, height float32) {
 }
 
 func (e *Element) DesiredSize(availableWidth, availableHeight float32) (float32, float32) {
-	return e.width, e.height
+	return availableWidth, availableHeight
 }
 
 func (e *Element) SetPosition(x, y float32) {

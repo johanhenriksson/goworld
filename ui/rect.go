@@ -9,18 +9,27 @@ import (
 
 type Rect struct {
 	*Element
-	Style Style
-	quad  *geometry.Quad
+	Style  Style
+	layout RectLayout
+	quad   *geometry.Quad
 }
 
-func NewRect(x, y, w, h float32, style Style, children ...Component) *Rect {
+type RectLayout func(Component, Style, float32, float32) (float32, float32)
+
+func NewRect(style Style, children ...Component) *Rect {
 	mat := assets.GetMaterial("ui_color")
-	color := style.Color("background", render.Black)
+	color := style.Color("background", render.Transparent)
 
 	r := &Rect{
-		Element: NewElement("Rect", x, y, w, h),
-		quad:    geometry.NewQuad(mat, color, w, h),
+		Element: NewElement("Rect", 0, 0, 0, 0),
+		quad:    geometry.NewQuad(mat, color, 0, 0),
+		layout:  ColumnLayout,
 		Style:   style,
+	}
+
+	layout := style.String("layout", "column")
+	if layout == "row" {
+		r.layout = RowLayout
 	}
 
 	border := style.Float("radius", 0)
@@ -52,28 +61,7 @@ func (r *Rect) Draw(args render.DrawArgs) {
 }
 
 func (r *Rect) DesiredSize(aw, ah float32) (float32, float32) {
-
-	// column layout
-	// width = min(style("width"), aw)
-	// calculate desired height at current width
-	dw := float32(0)
-	dh := float32(0)
-	for _, child := range r.children {
-		cx, cy := float32(0), dh
-		cdw, cdh := child.DesiredSize(aw, ah-dh)
-		if cdw > dw {
-			dw = cdw
-		}
-		child.SetPosition(cx, cy)
-		dh += cdh
-	}
-
-	if dw > aw {
-		dw = aw
-	}
-
-	r.SetSize(dw, dh)
-	return dw, dh
+	return r.layout(r, r.Style, aw, ah)
 }
 
 func (r *Rect) SetSize(w, h float32) {

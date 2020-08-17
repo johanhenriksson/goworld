@@ -1,6 +1,7 @@
 package render
 
 import (
+	"fmt"
 	"image/color"
 
 	mgl "github.com/go-gl/mathgl/mgl32"
@@ -11,6 +12,7 @@ var Black = Color{0, 0, 0, 1}
 var Red = Color{1, 0, 0, 1}
 var Green = Color{0, 1, 0, 1}
 var Blue = Color{0, 0, 1, 1}
+var Transparent = Color{0, 0, 0, 0}
 
 /** Color type */
 type Color struct {
@@ -36,4 +38,8 @@ func (c Color) Vec3() mgl.Vec3 {
 
 func (c Color) Vec4() mgl.Vec4 {
 	return mgl.Vec4{c.R, c.G, c.B, c.A}
+}
+
+func (c Color) String() string {
+	return fmt.Sprintf("(R:%.2f G:%.2f B:%.2f A:%.2f)", c.R, c.G, c.B, c.A)
 }
