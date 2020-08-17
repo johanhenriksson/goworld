@@ -23,22 +23,21 @@ func (t *Textbox) Set(text string) {
 	if t.focused {
 		text += "_"
 	}
-	t.Font.RenderOn(t.Texture, text, float32(t.Texture.Width), float32(t.Texture.Height), t.Color)
+	t.Font.Render(t.Texture, text, t.Color)
 }
 
-func (m *Manager) NewTextbox(text string, color render.Color, x, y, z, w, h float32) *Textbox {
+func NewTextbox(text string, color render.Color, x, y float32) *Textbox {
 	/* TODO: calculate size of text */
-	fnt := render.LoadFont("assets/fonts/SourceCodeProRegular.ttf", 12.0, 100.0, 1.5)
-	texture := fnt.Render(text, w, h, color)
-	img := m.NewImage(texture, x, y, w, h, z)
-	img.Quad.FlipY()
+	fnt := render.LoadFont("assets/fonts/SourceCodeProRegular.ttf", 12.0, 2, 1.5)
+	w, h := fnt.Measure(text)
+	texture := render.CreateTexture(int32(w), int32(h))
+	fnt.Render(texture, text, color)
 
 	t := &Textbox{
-		Image: img,
+		Image: NewImage(texture, x, y, float32(w), float32(h), true),
 		Font:  fnt,
 		Text:  text,
 		Color: color,
-		Size:  h,
 	}
 	t.OnClick(func(ev MouseEvent) {
 		fmt.Println("caught input focus")

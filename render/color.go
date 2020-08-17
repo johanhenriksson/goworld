@@ -6,6 +6,12 @@ import (
 	mgl "github.com/go-gl/mathgl/mgl32"
 )
 
+var White = Color{1, 1, 1, 1}
+var Black = Color{0, 0, 0, 1}
+var Red = Color{1, 0, 0, 1}
+var Green = Color{0, 1, 0, 1}
+var Blue = Color{0, 0, 1, 1}
+
 /** Color type */
 type Color struct {
 	R, G, B, A float32

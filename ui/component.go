@@ -23,7 +23,15 @@ type KeyEvent struct {
 }
 
 type Component interface {
+	Width() float32
+	Height() float32
+	ZIndex() float32
+	SetSize(float32, float32)
+	DesiredSize(float32, float32) (float32, float32)
+	SetPosition(float32, float32)
+
 	Draw(render.DrawArgs)
+
 	HandleMouse(MouseEvent) bool
 	HandleKey(KeyEvent)
 	HandleInput(rune)

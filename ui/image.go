@@ -13,28 +13,26 @@ type Image struct {
 	Quad    *geometry.ImageQuad
 }
 
-func (m *Manager) NewImage(texture *render.Texture, x, y, w, h, z float32) *Image {
-	el := m.NewElement("Image", x, y, w, h, z)
+func NewImage(texture *render.Texture, x, y, w, h float32, invert bool) *Image {
+	el := NewElement("Image", x, y, w, h)
 	mat := assets.GetMaterial("ui_texture")
 	mat.AddTexture("image", texture)
-	img := &Image{
+	return &Image{
 		Element: el,
 		Texture: texture,
-		Quad:    geometry.NewImageQuad(mat, w, h, z),
+		Quad:    geometry.NewImageQuad(mat, w, h, invert),
 	}
-	return img
 }
 
-func (m *Manager) NewDepthImage(texture *render.Texture, x, y, w, h, z float32) *Image {
-	el := m.NewElement("DepthImage", x, y, w, h, z)
+func NewDepthImage(texture *render.Texture, x, y, w, h float32, invert bool) *Image {
+	el := NewElement("DepthImage", x, y, w, h)
 	mat := assets.GetMaterial("ui_depth_texture")
 	mat.AddTexture("image", texture)
-	img := &Image{
+	return &Image{
 		Element: el,
 		Texture: texture,
-		Quad:    geometry.NewImageQuad(mat, w, h, z),
+		Quad:    geometry.NewImageQuad(mat, w, h, invert),
 	}
-	return img
 }
 
 func (r *Image) Draw(args render.DrawArgs) {
@@ -45,5 +43,12 @@ func (r *Image) Draw(args render.DrawArgs) {
 
 	for _, el := range r.Element.children {
 		el.Draw(args)
+	}
+}
+
+func (r *Image) SetSize(w, h float32) {
+	if w != r.width || h != r.height {
+		r.Element.SetSize(w, h)
+		r.Quad.SetSize(w, h)
 	}
 }

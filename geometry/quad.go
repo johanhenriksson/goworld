@@ -14,18 +14,18 @@ type Quad struct {
 	Material    *render.Material
 
 	segments int
-	border   float64
+	border   float32
 	vao      *render.VertexArray
 	vbo      *render.VertexBuffer
 }
 
-func NewQuad(mat *render.Material, color render.Color, w, h, z float32) *Quad {
+func NewQuad(mat *render.Material, color render.Color, w, h float32) *Quad {
 	q := &Quad{
 		Material:    mat,
-		TopLeft:     ColorVertex{X: 0, Y: h, Z: z, Color: color},
-		TopRight:    ColorVertex{X: w, Y: h, Z: z, Color: color},
-		BottomLeft:  ColorVertex{X: 0, Y: 0, Z: z, Color: color},
-		BottomRight: ColorVertex{X: w, Y: 0, Z: z, Color: color},
+		TopLeft:     ColorVertex{X: 0, Y: h, Z: 0, Color: color},
+		TopRight:    ColorVertex{X: w, Y: h, Z: 0, Color: color},
+		BottomLeft:  ColorVertex{X: 0, Y: 0, Z: 0, Color: color},
+		BottomRight: ColorVertex{X: w, Y: 0, Z: 0, Color: color},
 		segments:    5,
 		border:      0,
 
@@ -39,13 +39,13 @@ func NewQuad(mat *render.Material, color render.Color, w, h, z float32) *Quad {
 	return q
 }
 
-func (q *Quad) BorderWidth() float64 { return q.border }
-func (q *Quad) SetBorderWidth(width float64) {
+func (q *Quad) BorderWidth() float32 { return q.border }
+func (q *Quad) SetBorderWidth(width float32) {
 	q.border = width
 	q.compute()
 }
 
-func (q *Quad) appendCorner(vtx *ColorVertices, origin ColorVertex, n int, r, offset float64) {
+func (q *Quad) appendCorner(vtx *ColorVertices, origin ColorVertex, n int, r, offset float32) {
 	if n == 0 {
 		/* TODO: Square corner */
 	} else {
@@ -54,8 +54,8 @@ func (q *Quad) appendCorner(vtx *ColorVertices, origin ColorVertex, n int, r, of
 		var prev ColorVertex
 		for i := 0; i <= n; i++ {
 			p := ColorVertex{
-				X:     origin.X + float32(r*math.Cos(offset+float64(i)*v)),
-				Y:     origin.Y + float32(r*math.Sin(offset+float64(i)*v)),
+				X:     origin.X + r*float32(math.Cos(float64(offset)+float64(i)*v)),
+				Y:     origin.Y + r*float32(math.Sin(float64(offset)+float64(i)*v)),
 				Z:     origin.Z,
 				Color: origin.Color,
 			}
@@ -67,6 +67,16 @@ func (q *Quad) appendCorner(vtx *ColorVertices, origin ColorVertex, n int, r, of
 			prev = p
 		}
 	}
+}
+
+func (q *Quad) SetSize(w, h float32) {
+	z := q.TopLeft.Z
+	color := q.TopLeft.Color
+	q.TopLeft = ColorVertex{X: 0, Y: h, Z: z, Color: color}
+	q.TopRight = ColorVertex{X: w, Y: h, Z: z, Color: color}
+	q.BottomLeft = ColorVertex{X: 0, Y: 0, Z: z, Color: color}
+	q.BottomRight = ColorVertex{X: w, Y: 0, Z: z, Color: color}
+	q.compute()
 }
 
 func (q *Quad) compute() {

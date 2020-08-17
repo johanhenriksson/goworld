@@ -11,26 +11,47 @@ type ImageQuad struct {
 	TopRight    Vertex
 	BottomLeft  Vertex
 	BottomRight Vertex
+	InvertY     bool
 	vao         *render.VertexArray
 	vbo         *render.VertexBuffer
 }
 
-func NewImageQuad(mat *render.Material, w, h, z float32) *ImageQuad {
-	return NewImageQuadAt(mat, 0, 0, w, h, z)
-}
-
-func NewImageQuadAt(mat *render.Material, x, y, w, h, z float32) *ImageQuad {
+func NewImageQuad(mat *render.Material, w, h float32, invert bool) *ImageQuad {
 	q := &ImageQuad{
 		Material:    mat,
-		TopLeft:     Vertex{X: x, Y: y + h, Z: z, U: 0, V: 0},
-		TopRight:    Vertex{X: x + w, Y: y + h, Z: z, U: 1, V: 0},
-		BottomLeft:  Vertex{X: x, Y: y, Z: z, U: 0, V: 1},
-		BottomRight: Vertex{X: x + w, Y: y, Z: z, U: 1, V: 1},
+		InvertY:     invert,
+		TopLeft:     Vertex{X: 0, Y: h, Z: 0, U: 0, V: 0},
+		TopRight:    Vertex{X: w, Y: h, Z: 0, U: 1, V: 0},
+		BottomLeft:  Vertex{X: 0, Y: 0, Z: 0, U: 0, V: 1},
+		BottomRight: Vertex{X: w, Y: 0, Z: 0, U: 1, V: 1},
 		vao:         render.CreateVertexArray(),
 		vbo:         render.CreateVertexBuffer(),
 	}
+	if q.InvertY {
+		q.TopLeft.V = 1 - q.TopLeft.V
+		q.TopRight.V = 1 - q.TopRight.V
+		q.BottomLeft.V = 1 - q.BottomLeft.V
+		q.BottomRight.V = 1 - q.BottomRight.V
+	}
 	q.compute()
 	return q
+}
+
+func (q *ImageQuad) SetSize(w, h float32) {
+	z := q.TopLeft.Z
+	q.TopLeft = Vertex{X: 0, Y: h, Z: z, U: 0, V: 0}
+	q.TopRight = Vertex{X: w, Y: h, Z: z, U: 1, V: 0}
+	q.BottomLeft = Vertex{X: 0, Y: 0, Z: z, U: 0, V: 1}
+	q.BottomRight = Vertex{X: w, Y: 0, Z: z, U: 1, V: 1}
+
+	if q.InvertY {
+		q.TopLeft.V = 1 - q.TopLeft.V
+		q.TopRight.V = 1 - q.TopRight.V
+		q.BottomLeft.V = 1 - q.BottomLeft.V
+		q.BottomRight.V = 1 - q.BottomRight.V
+	}
+
+	q.compute()
 }
 
 func (q *ImageQuad) compute() {
@@ -46,14 +67,6 @@ func (q *ImageQuad) compute() {
 	if q.Material != nil {
 		q.Material.SetupVertexPointers()
 	}
-}
-
-func (q *ImageQuad) FlipY() {
-	q.TopLeft.V = 1.0 - q.TopLeft.V
-	q.TopRight.V = 1.0 - q.TopRight.V
-	q.BottomLeft.V = 1.0 - q.BottomLeft.V
-	q.BottomRight.V = 1.0 - q.BottomRight.V
-	q.compute()
 }
 
 func (q *ImageQuad) Draw(args render.DrawArgs) {

@@ -3,7 +3,7 @@ package render
 import (
 	"image"
 	"image/draw"
-	_ "image/png" // png support
+	"image/png" // png support
 	"os"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
@@ -19,7 +19,8 @@ const (
 )
 
 const (
-	ClampWrap = WrapMode(gl.CLAMP_TO_EDGE)
+	ClampWrap  = WrapMode(gl.CLAMP_TO_EDGE)
+	RepeatWrap = WrapMode(gl.REPEAT)
 )
 
 // Texture represents an OpenGL 2D texture object
@@ -103,8 +104,8 @@ func (tx *Texture) Clear() {
 
 // Buffer buffers texture data from an image object
 func (tx *Texture) Buffer(img *image.RGBA) {
-	/* Buffer image data */
-	tx.Bind()
+	tx.Width = int32(img.Rect.Size().X)
+	tx.Height = int32(img.Rect.Size().Y)
 	gl.TexImage2D(
 		gl.TEXTURE_2D,
 		0,
@@ -126,6 +127,29 @@ func (tx *Texture) BufferFloats(img []float32) {
 		0,
 		tx.Format, tx.DataType,
 		gl.Ptr(&img[0]))
+}
+
+func (tx *Texture) Bounds() image.Rectangle {
+	return image.Rect(0, 0, int(tx.Width), int(tx.Height))
+}
+
+func (tx *Texture) ToImage() *image.RGBA {
+	tx.Bind()
+	img := image.NewRGBA(tx.Bounds())
+	gl.GetTexImage(gl.TEXTURE_2D, 0, gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(img.Pix))
+	return img
+}
+
+func (tx *Texture) Save(filename string) error {
+	img := tx.ToImage()
+
+	f, err := os.Create(filename)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	return png.Encode(f, img)
 }
 
 // TextureFromImage is a helper method to create an OpenGL texture from an image object */
