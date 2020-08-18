@@ -4,6 +4,7 @@ import (
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/johanhenriksson/goworld/assets"
 	"github.com/johanhenriksson/goworld/geometry"
+	"github.com/johanhenriksson/goworld/math"
 	"github.com/johanhenriksson/goworld/render"
 )
 
@@ -13,28 +14,26 @@ type Image struct {
 	Quad    *geometry.ImageQuad
 }
 
-func (m *Manager) NewImage(texture *render.Texture, x, y, w, h, z float32) *Image {
-	el := m.NewElement("Image", x, y, w, h, z)
+func NewImage(texture *render.Texture, w, h float32, invert bool) *Image {
+	el := NewElement("Image", 0, 0, w, h)
 	mat := assets.GetMaterial("ui_texture")
 	mat.AddTexture("image", texture)
-	img := &Image{
+	return &Image{
 		Element: el,
 		Texture: texture,
-		Quad:    geometry.NewImageQuad(mat, w, h, z),
+		Quad:    geometry.NewImageQuad(mat, w, h, invert),
 	}
-	return img
 }
 
-func (m *Manager) NewDepthImage(texture *render.Texture, x, y, w, h, z float32) *Image {
-	el := m.NewElement("DepthImage", x, y, w, h, z)
+func NewDepthImage(texture *render.Texture, w, h float32, invert bool) *Image {
+	el := NewElement("DepthImage", 0, 0, w, h)
 	mat := assets.GetMaterial("ui_depth_texture")
 	mat.AddTexture("image", texture)
-	img := &Image{
+	return &Image{
 		Element: el,
 		Texture: texture,
-		Quad:    geometry.NewImageQuad(mat, w, h, z),
+		Quad:    geometry.NewImageQuad(mat, w, h, invert),
 	}
-	return img
 }
 
 func (r *Image) Draw(args render.DrawArgs) {
@@ -46,4 +45,18 @@ func (r *Image) Draw(args render.DrawArgs) {
 	for _, el := range r.Element.children {
 		el.Draw(args)
 	}
+}
+
+func (r *Image) SetSize(w, h float32) {
+	if w != r.width || h != r.height {
+		r.Element.SetSize(w, h)
+		r.Quad.SetSize(w, h)
+		u := math.Min(w/float32(r.Texture.Width), 1)
+		v := math.Min(h/float32(r.Texture.Height), 1)
+		r.Quad.SetUV(u, v)
+	}
+}
+
+func (r *Image) DesiredSize(w, h float32) (float32, float32) {
+	return r.width, r.height
 }

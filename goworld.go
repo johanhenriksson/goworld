@@ -35,6 +35,12 @@ import (
 var winColor = render.Color4(0.15, 0.15, 0.15, 1)
 var textColor = render.Color4(1, 1, 1, 1)
 
+var windowStyle = ui.Style{
+	"background": ui.Color(winColor),
+	"radius":     ui.Float(3),
+	"padding":    ui.Float(5),
+}
+
 func main() {
 	fmt.Println("goworld")
 
@@ -42,11 +48,22 @@ func main() {
 	uim := ui.NewManager(app)
 	app.Render.Append("ui", uim)
 
+	rect := ui.NewRect(windowStyle,
+		ui.NewRect(ui.Style{"layout": ui.String("row"), "spacing": ui.Float(100)},
+			ui.NewText("Hello Really Long Line", ui.NoStyle),
+			ui.NewText("Please", ui.NoStyle)),
+		ui.NewRect(ui.NoStyle,
+			ui.NewText("Please", ui.NoStyle),
+			ui.NewText("Hello Really Long Line", ui.NoStyle)))
+	uim.Attach(rect)
+	rect.SetPosition(400, 400)
+	rect.DesiredSize(200, 1000)
+
 	/* grab a reference to the geometry render pass */
 	geoPass := app.Render.Get("geometry").(*engine.GeometryPass)
 
 	// create a camera
-	camera := engine.CreateCamera(&render.ScreenBuffer, -10, 22, -10, 65.0, 0.1, 600.0)
+	camera := engine.CreateCamera(&render.ScreenBuffer, -10, 22, -10, 55.0, 0.1, 600.0)
 	camera.Rotation[0] = 22
 	camera.Rotation[1] = 135
 	camera.Clear = render.Color4(0.141, 0.128, 0.118, 1.0) // dark gray
@@ -77,7 +94,7 @@ func main() {
 		},
 	}
 
-	csize := 32
+	csize := 16
 	ccount := 10
 
 	fmt.Print("generating chunks... ")
@@ -102,8 +119,8 @@ func main() {
 	// test cube
 	building := app.Scene.NewObject(4.5, 9.04, 8.5)
 	building.Scale = mgl.Vec3{0.1, 0.1, 0.1}
-	cubemat := assets.GetMaterial("uv_palette")
-	geometry.NewObjModel(building, "assets/models/building.obj", cubemat)
+	palette := assets.GetMaterialCached("uv_palette")
+	geometry.NewObjModel(building, palette, "models/building.obj")
 
 	app.Scene.Add(building)
 
@@ -112,25 +129,34 @@ func main() {
 
 	// buffer display windows
 	lightPass := app.Render.Get("light").(*engine.LightPass)
-	newBufferWindow(uim, "Diffuse", geoPass.Buffer.Diffuse, 10, 10, false)
-	newBufferWindow(uim, "Occlusion", lightPass.SSAO.Gaussian.Output, 10, 205, true)
-	newBufferWindow(uim, "Shadowmap", lightPass.Shadows.Output, 10, 400, true)
+	bufferWindows := ui.NewRect(ui.Style{"spacing": ui.Float(10)},
+		newBufferWindow("Diffuse", geoPass.Buffer.Diffuse, 10, 10, false),
+		newBufferWindow("Occlusion", lightPass.SSAO.Gaussian.Output, 10, 215, true),
+		newBufferWindow("Shadowmap", lightPass.Shadows.Output, 10, 420, true))
+	bufferWindows.SetPosition(10, 10)
+	bufferWindows.DesiredSize(500, 1000)
+	uim.Attach(bufferWindows)
 
 	// palette globals
 	paletteIdx := 5
 	selected := game.NewColorVoxel(render.DefaultPalette[paletteIdx])
 
-	newPaletteWindow(uim, 260, 10, render.DefaultPalette, func(newPaletteIdx int) {
+	paletteWnd := newPaletteWindow(render.DefaultPalette, func(newPaletteIdx int) {
 		paletteIdx = newPaletteIdx
 		selected = game.NewColorVoxel(render.DefaultPalette[paletteIdx])
 	})
+	paletteWnd.SetPosition(280, 10)
+	paletteWnd.DesiredSize(200, 400)
+	uim.Attach(paletteWnd)
 
 	// watermark / fps text
-	versiontext := fmt.Sprintf("goworld | %s", time.Now())
-	watermark := uim.NewText(versiontext, render.Color4(1, 1, 1, 1), 10, float32(app.Window.Height-30), 30, 400, 25)
+	versiontext := fmt.Sprintf("goworld")
+	watermark := ui.NewText(versiontext, ui.Style{"color": ui.Color(render.White)})
+	watermark.SetPosition(10, float32(app.Window.Height-30))
+	watermark.Texture.Save("test.png")
 	uim.Attach(watermark)
 
-	// get world position at current mouse coords
+	// sample world position at current mouse coords
 	sampleWorld := func() (mgl.Vec3, bool) {
 		depth, depthExists := geoPass.Buffer.SampleDepth(int(engine.Mouse.X), int(engine.Mouse.Y))
 		if !depthExists {
@@ -143,7 +169,7 @@ func main() {
 		}), true
 	}
 
-	// get world normal at current mouse coords
+	// sample world normal at current mouse coords
 	sampleNormal := func() (mgl.Vec3, bool) {
 		viewNormal, exists := geoPass.Buffer.SampleNormal(int(engine.Mouse.X), int(engine.Mouse.Y))
 		if exists {
@@ -212,44 +238,50 @@ func main() {
 	app.Run()
 }
 
-func newPaletteWindow(uim *ui.Manager, x, y float32, palette render.Palette, onClickItem func(int)) ui.Component {
-	win := uim.NewRect(winColor, x, y, 100, 185, -40)
-	label := uim.NewTextbox("Palette", textColor, 4, 0, -41, 100, 25)
-	win.Attach(label)
+func newPaletteWindow(palette render.Palette, onClickItem func(int)) ui.Component {
+	cols := 5
+	spacing := ui.Float(2)
+	gridStyle := ui.Style{"spacing": spacing}
+	rowStyle := ui.Style{"layout": ui.String("row"), "spacing": spacing}
+	rows := make([]ui.Component, 0, len(palette)/cols+1)
+	row := make([]ui.Component, 0, cols)
 
-	perRow := 5
-	for i, color := range palette {
-		itemIdx := i
-		row := i / perRow
-		col := i % perRow
-		c := uim.NewRect(color, float32(col*20), 25.0+float32(row*20), 20, 20, -42)
-		c.OnClick(func(ev ui.MouseEvent) {
+	for i := 1; i <= len(palette); i++ {
+		itemIdx := i - 1
+		color := palette[itemIdx]
+
+		swatch := ui.NewRect(ui.Style{"background": ui.Color(color), "layout": ui.String("fixed")})
+		swatch.SetSize(20, 20)
+		swatch.OnClick(func(ev ui.MouseEvent) {
 			if ev.Button == engine.MouseButton1 {
 				onClickItem(itemIdx)
 			}
 		})
-		win.Attach(c)
+
+		row = append(row, swatch)
+
+		if i%cols == 0 {
+			rows = append(rows, ui.NewRect(rowStyle, row...))
+			row = make([]ui.Component, 0, cols)
+		}
 	}
 
-	uim.Attach(win)
-	return win
+	return ui.NewRect(windowStyle,
+		ui.NewText("Palette", ui.NoStyle),
+		ui.NewRect(gridStyle, rows...))
 }
 
-func newBufferWindow(uim *ui.Manager, title string, texture *render.Texture, x, y float32, depth bool) ui.Component {
-	win := uim.NewRect(winColor, x, y, 240, 185, -10)
-	label := uim.NewText(title, textColor, 0, 0, -21, 240, 25)
-	win.Attach(label)
-
+func newBufferWindow(title string, texture *render.Texture, x, y float32, depth bool) ui.Component {
+	var img ui.Component
 	if depth {
-		img := uim.NewDepthImage(texture, 0, 25, 240, 160, -20)
-		win.Attach(img)
+		img = ui.NewDepthImage(texture, 240, 160, false)
 	} else {
-		img := uim.NewImage(texture, 0, 25, 240, 160, -20)
-		win.Attach(img)
+		img = ui.NewImage(texture, 240, 160, false)
 	}
 
-	uim.Attach(win)
-	return win
+	return ui.NewRect(windowStyle,
+		ui.NewText(title, ui.NoStyle),
+		img)
 }
 
 // ChunkFunc is a chunk function :)

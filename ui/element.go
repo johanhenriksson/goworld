@@ -17,10 +17,10 @@ type Element struct {
 	mouseHandlers []MouseHandler
 }
 
-func (m *Manager) NewElement(name string, x, y, w, h, z float32) *Element {
+func NewElement(name string, x, y, w, h float32) *Element {
 	e := &Element{
 		Name:      name,
-		Transform: CreateTransform2D(x, y, z),
+		Transform: CreateTransform2D(x, y, -1),
 
 		width:         w,
 		height:        h,
@@ -33,7 +33,11 @@ func (m *Manager) NewElement(name string, x, y, w, h, z float32) *Element {
 func (e *Element) ZIndex() float32 {
 	// not sure how this is going to work yet
 	// parents must be drawn underneath children (?)
-	return e.z
+	z := e.z
+	if e.parent != nil {
+		z += e.parent.ZIndex() + 1
+	}
+	return z
 }
 
 // Parent peturns the parent element
@@ -45,6 +49,8 @@ func (e *Element) Parent() Component {
 func (e *Element) SetParent(parent Component) {
 	// TODO detach from current parent?
 	e.parent = parent
+	e.Transform.Position = mgl.Vec3{e.Transform.Position.X(), e.Transform.Position.Y(), e.ZIndex()}
+	e.Transform.Update(0)
 }
 
 // Children returns a list of child elements
@@ -58,6 +64,20 @@ func (e *Element) Width() float32 {
 
 func (e *Element) Height() float32 {
 	return e.height
+}
+
+func (e *Element) SetSize(width, height float32) {
+	e.width = width
+	e.height = height
+}
+
+func (e *Element) DesiredSize(availableWidth, availableHeight float32) (float32, float32) {
+	return availableWidth, availableHeight
+}
+
+func (e *Element) SetPosition(x, y float32) {
+	e.Transform.Position = mgl.Vec3{x, y, e.Transform.Position.Z()}
+	e.Transform.Update(0)
 }
 
 // Attach a child to this element

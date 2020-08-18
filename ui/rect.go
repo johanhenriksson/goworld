@@ -9,22 +9,38 @@ import (
 
 type Rect struct {
 	*Element
-	Color render.Color
-	quad  *geometry.Quad
+	Style  Style
+	layout RectLayout
+	quad   *geometry.Quad
 }
 
-func (m *Manager) NewRect(color render.Color, x, y, w, h, z float32) *Rect {
-	// UI Manager should provide access to some resource manager thingy
-	// mat := m.Resources.GetMaterial("assets/materials/ui_color.json")
-	mat := assets.GetMaterial("ui_color")
+type RectLayout func(Component, Style, float32, float32) (float32, float32)
 
-	el := m.NewElement("Rect", x, y, w, h, z)
+func NewRect(style Style, children ...Component) *Rect {
+	mat := assets.GetMaterial("ui_color")
+	color := style.Color("background", render.Transparent)
+
 	r := &Rect{
-		Element: el,
-		Color:   color,
-		quad:    geometry.NewQuad(mat, color, w, h, z),
+		Element: NewElement("Rect", 0, 0, 0, 0),
+		quad:    geometry.NewQuad(mat, color, 0, 0),
+		layout:  ColumnLayout,
+		Style:   style,
 	}
-	//r.quad.SetBorderWidth(5)
+
+	layout := style.String("layout", "column")
+	if layout == "row" {
+		r.layout = RowLayout
+	} else if layout == "fixed" {
+		r.layout = FixedLayout
+	}
+
+	border := style.Float("radius", 0)
+	r.quad.SetBorderWidth(border)
+
+	for _, child := range children {
+		r.Attach(child)
+	}
+
 	return r
 }
 
@@ -44,4 +60,15 @@ func (r *Rect) Draw(args render.DrawArgs) {
 
 	/* call parent - draw children etc */
 	r.Element.Draw(args)
+}
+
+func (r *Rect) DesiredSize(aw, ah float32) (float32, float32) {
+	return r.layout(r, r.Style, aw, ah)
+}
+
+func (r *Rect) SetSize(w, h float32) {
+	if w != r.width || h != r.height {
+		r.Element.SetSize(w, h)
+		r.quad.SetSize(w, h)
+	}
 }

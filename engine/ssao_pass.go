@@ -130,10 +130,8 @@ func createHemisphereNoiseTexture(size int) *render.Texture {
 	noise.Format = gl.RGB
 	noise.DataType = gl.FLOAT
 
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT)
+	noise.SetFilter(render.NearestFilter)
+	noise.SetWrapMode(render.RepeatWrap)
 
 	noiseData := make([]float32, 3*size*size)
 	for i := 0; i < len(noiseData); i += 3 {
