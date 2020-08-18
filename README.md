@@ -1,8 +1,19 @@
 # goworld
 
-*Recently revived after about 3 years, working on it occasionally.*
+*Not in active development! Working on it occasionally.*
 
 Yet another attempt at building a basic OpenGL 3D engine from scratch, Google Go edition. The goal is to create a engine capable of producing *some* kind of *passable* graphics with a coherent art style. So far, the style is based on colored voxels.
+
+**Features:**
+- Deferred Rendering Pipeline
+- Directional Lights
+- Directional Shadows
+- Point Lights
+- Screen-Space Ambient Occlusion (HBAO)
+- Color Grading with Lookup Tables
+- OBJ Model Loader
+- TrueType Font Rendering
+- UI: Panels, Labels, basic layout engine
 
 Only tested on OSX 10.10+. It should theoretically work on Windows/Linux.
 
@@ -11,18 +22,6 @@ Only tested on OSX 10.10+. It should theoretically work on Windows/Linux.
 ## System Requirements
 
  * OpenGL 4.1 Core Profile
-
-## Dependencies
-
- * GLFW
- * OpenGL 4.1
- * Open Dynamics Engine (ODE)
-
-**Installation Steps**
- 
- * Clone & build ODE
- * Install dependencies
- * Run!
 
 ## Todo / Ideas
 
