@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"github.com/johanhenriksson/goworld/assets"
 	"github.com/johanhenriksson/goworld/math"
 	"github.com/johanhenriksson/goworld/render"
 )
@@ -27,19 +28,17 @@ func (t *Text) Set(text string) {
 
 func NewText(text string, style Style) *Text {
 	// create font
-	dpi := float32(1.0)
 	size := style.Float("size", 16.0)
 	spacing := style.Float("spacing", 1.0)
-	fnt := render.LoadFont("assets/fonts/SourceCodeProRegular.ttf",
-		size, dpi, spacing)
+	font := assets.GetFont("assets/fonts/SourceCodeProRegular.ttf", size, spacing)
 
 	// create opengl texture
-	width, height := fnt.Measure(text)
+	width, height := font.Measure(text)
 	texture := render.CreateTexture(int32(width), int32(height))
 
 	element := &Text{
 		Image: NewImage(texture, float32(width), float32(height), true, style),
-		Font:  fnt,
+		Font:  font,
 		Style: style,
 	}
 	element.Set(text)

@@ -9,11 +9,13 @@ import (
 type ShaderMap map[string]*render.ShaderProgram
 type TextureMap map[string]*render.Texture
 type MaterialMap map[string]*render.Material
+type FontMap map[string]*render.Font
 
 type ResourceCache struct {
 	Shaders   ShaderMap
 	Textures  TextureMap
 	Materials MaterialMap
+	Fonts     FontMap
 }
 
 /* Global asset cache */
@@ -24,6 +26,7 @@ func init() {
 		Shaders:   make(ShaderMap),
 		Textures:  make(TextureMap),
 		Materials: make(MaterialMap),
+		Fonts:     make(FontMap),
 	}
 }
 
@@ -67,4 +70,17 @@ func GetMaterialCached(name string) *render.Material {
 	cache.Materials[name] = mat
 
 	return mat
+}
+
+func GetFont(name string, size, spacing float32) *render.Font {
+	key := fmt.Sprintf("%s-%.1f-%.1f", name, size, spacing)
+	if font, exists := cache.Fonts[key]; exists {
+		return font
+	}
+
+	dpi := float32(1.0)
+	font := render.LoadFont(name, dpi, size, spacing)
+	cache.Fonts[key] = font
+
+	return font
 }

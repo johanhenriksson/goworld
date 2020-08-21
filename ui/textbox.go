@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"unicode/utf8"
 
+	"github.com/johanhenriksson/goworld/assets"
 	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/render"
 )
@@ -26,14 +27,14 @@ func (t *Textbox) Set(text string) {
 
 func NewTextbox(text string, style Style) *Textbox {
 	size := style.Float("size", 12.0)
-	lineHeight := style.Float("line-height", 1.5)
-	fnt := render.LoadFont("assets/fonts/SourceCodeProRegular.ttf", size, 2, lineHeight)
-	w, h := fnt.Measure(text)
+	spacing := style.Float("spacing", 1.5)
+	font := assets.GetFont("assets/fonts/SourceCodeProRegular.ttf", size, spacing)
+	w, h := font.Measure(text)
 	texture := render.CreateTexture(int32(w), int32(h))
 
 	t := &Textbox{
 		Image: NewImage(texture, float32(w), float32(h), true, style),
-		Font:  fnt,
+		Font:  font,
 		Text:  text,
 	}
 	t.OnClick(func(ev MouseEvent) {
