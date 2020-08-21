@@ -5,6 +5,12 @@ import (
 	"github.com/johanhenriksson/goworld/render"
 )
 
+type Styled interface {
+	Float(string, float32) float32
+	String(string, string) string
+	Color(string, render.Color) render.Color
+}
+
 // ErrIllegalCast occurs when attempting to cast a style variable to an incompatible type
 var ErrIllegalCast = fmt.Errorf("illegal cast")
 

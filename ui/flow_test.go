@@ -10,9 +10,9 @@ func TestFlowRect(t *testing.T) {
 	rect := NewRect(NoStyle)
 	rect.Attach(NewText("Hello", NoStyle))
 	rect.Attach(NewText("Please", NoStyle))
-	_, dh := rect.DesiredSize(300, 300)
+	desired := rect.Flow(Size{300, 300})
 
-	if dh != 32.0 {
-		t.Errorf("expected height %f", dh)
+	if desired.Height != 32.0 {
+		t.Errorf("expected height %f", desired.Height)
 	}
 }

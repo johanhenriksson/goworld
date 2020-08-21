@@ -49,7 +49,7 @@ func main() {
 	app.Render.Append("ui", uim)
 
 	rect := ui.NewRect(windowStyle,
-		ui.NewRect(ui.Style{"layout": ui.String("row"), "spacing": ui.Float(100)},
+		ui.NewRect(ui.Style{"layout": ui.String("row"), "padding": ui.Float(10)},
 			ui.NewText("Hello Really Long Line", ui.NoStyle),
 			ui.NewText("Please", ui.NoStyle)),
 		ui.NewRect(ui.NoStyle,
@@ -57,7 +57,7 @@ func main() {
 			ui.NewText("Hello Really Long Line", ui.NoStyle)))
 	uim.Attach(rect)
 	rect.SetPosition(400, 400)
-	rect.DesiredSize(200, 1000)
+	rect.Flow(ui.Size{400, 1000})
 
 	/* grab a reference to the geometry render pass */
 	geoPass := app.Render.Get("geometry").(*engine.GeometryPass)
@@ -67,9 +67,8 @@ func main() {
 	camera.Rotation[0] = 22
 	camera.Rotation[1] = 135
 	camera.Clear = render.Color4(0.141, 0.128, 0.118, 1.0) // dark gray
-	camera.Clear = render.Color4(0, 0, 0, 1)
+	camera.Clear = render.Color4(0.973, 0.945, 0.776, 1.0) // light gray
 	camera.Clear = render.Color4(0.368, 0.611, 0.800, 1.0) // blue
-	//camera.Clear = render.Color{0.973, 0.945, 0.776, 1.0} // light gray
 
 	app.Scene.Camera = camera
 	app.Scene.Lights = []engine.Light{
@@ -134,7 +133,7 @@ func main() {
 		newBufferWindow("Occlusion", lightPass.SSAO.Gaussian.Output, 10, 215, true),
 		newBufferWindow("Shadowmap", lightPass.Shadows.Output, 10, 420, true))
 	bufferWindows.SetPosition(10, 10)
-	bufferWindows.DesiredSize(500, 1000)
+	bufferWindows.Flow(ui.Size{500, 1000})
 	uim.Attach(bufferWindows)
 
 	// palette globals
@@ -146,7 +145,7 @@ func main() {
 		selected = game.NewColorVoxel(render.DefaultPalette[paletteIdx])
 	})
 	paletteWnd.SetPosition(280, 10)
-	paletteWnd.DesiredSize(200, 400)
+	paletteWnd.Flow(ui.Size{200, 400})
 	uim.Attach(paletteWnd)
 
 	// watermark / fps text
@@ -240,9 +239,8 @@ func main() {
 
 func newPaletteWindow(palette render.Palette, onClickItem func(int)) ui.Component {
 	cols := 5
-	spacing := ui.Float(2)
-	gridStyle := ui.Style{"spacing": spacing}
-	rowStyle := ui.Style{"layout": ui.String("row"), "spacing": spacing}
+	gridStyle := ui.Style{"layout": ui.String("column"), "spacing": ui.Float(2)}
+	rowStyle := ui.Style{"layout": ui.String("row"), "spacing": ui.Float(2)}
 	rows := make([]ui.Component, 0, len(palette)/cols+1)
 	row := make([]ui.Component, 0, cols)
 
@@ -251,7 +249,7 @@ func newPaletteWindow(palette render.Palette, onClickItem func(int)) ui.Componen
 		color := palette[itemIdx]
 
 		swatch := ui.NewRect(ui.Style{"background": ui.Color(color), "layout": ui.String("fixed")})
-		swatch.SetSize(20, 20)
+		swatch.Resize(ui.Size{20, 20})
 		swatch.OnClick(func(ev ui.MouseEvent) {
 			if ev.Button == engine.MouseButton1 {
 				onClickItem(itemIdx)
@@ -276,7 +274,7 @@ func newBufferWindow(title string, texture *render.Texture, x, y float32, depth 
 	if depth {
 		img = ui.NewDepthImage(texture, 240, 160, false)
 	} else {
-		img = ui.NewImage(texture, 240, 160, false)
+		img = ui.NewImage(texture, 240, 160, false, ui.NoStyle)
 	}
 
 	return ui.NewRect(windowStyle,

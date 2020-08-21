@@ -10,10 +10,8 @@ import (
 
 type Textbox struct {
 	*Image
-	Size  float32
-	Text  string
-	Font  *render.Font
-	Color render.Color
+	Text string
+	Font *render.Font
 
 	focused bool
 }
@@ -23,26 +21,26 @@ func (t *Textbox) Set(text string) {
 	if t.focused {
 		text += "_"
 	}
-	t.Font.Render(t.Texture, text, t.Color)
+	t.Font.Render(t.Texture, text, t.Color("color", render.White))
 }
 
-func NewTextbox(text string, color render.Color) *Textbox {
-	/* TODO: calculate size of text */
-	fnt := render.LoadFont("assets/fonts/SourceCodeProRegular.ttf", 12.0, 2, 1.5)
+func NewTextbox(text string, style Style) *Textbox {
+	size := style.Float("size", 12.0)
+	lineHeight := style.Float("line-height", 1.5)
+	fnt := render.LoadFont("assets/fonts/SourceCodeProRegular.ttf", size, 2, lineHeight)
 	w, h := fnt.Measure(text)
 	texture := render.CreateTexture(int32(w), int32(h))
-	fnt.Render(texture, text, color)
 
 	t := &Textbox{
-		Image: NewImage(texture, float32(w), float32(h), true),
+		Image: NewImage(texture, float32(w), float32(h), true, style),
 		Font:  fnt,
 		Text:  text,
-		Color: color,
 	}
 	t.OnClick(func(ev MouseEvent) {
 		fmt.Println("caught input focus")
 		ev.UI.Focus(t)
 	})
+	t.Set(text)
 	return t
 }
 
