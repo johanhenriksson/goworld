@@ -3,18 +3,18 @@ package render
 import (
 	"image"
 	"io/ioutil"
-	"math"
 
 	"github.com/golang/freetype/truetype"
+	"github.com/johanhenriksson/goworld/math"
 	"golang.org/x/image/font"
 	"golang.org/x/image/math/fixed"
 )
 
 type Font struct {
 	File    string
-	Size    float64
-	DPI     float64
-	Spacing float64
+	Size    float32
+	DPI     float32
+	Spacing float32
 	Color   Color
 
 	fnt    *truetype.Font
@@ -24,18 +24,18 @@ type Font struct {
 func (f *Font) setup() {
 	f.drawer = &font.Drawer{
 		Face: truetype.NewFace(f.fnt, &truetype.Options{
-			Size:    f.Size,
-			DPI:     72 * f.DPI,
+			Size:    float64(f.Size),
+			DPI:     float64(72 * f.DPI),
 			Hinting: font.HintingFull,
 		}),
 	}
 }
 
 func (f *Font) LineHeight() float32 {
-	return float32(math.Ceil(f.Size * f.Spacing * f.DPI))
+	return math.Ceil(f.Size * f.Spacing * f.DPI)
 }
 
-func (f *Font) Measure(text string) (int, int) {
+func (f *Font) Measure(text string) (float32, float32) {
 	lines := 1
 	width := 0
 	s := 0
@@ -61,7 +61,7 @@ func (f *Font) Measure(text string) (int, int) {
 
 	lineHeight := int(f.LineHeight())
 	height := lineHeight*lines + (lineHeight / 2)
-	return width, height
+	return float32(width), float32(height)
 }
 
 func (f *Font) RenderNew(text string, color Color) *Texture {
@@ -78,7 +78,7 @@ func (f *Font) Render(tx *Texture, text string, color Color) {
 
 	// todo: its probably not a great idea to allocate an image on every draw
 	// perhaps textures should always have a backing image ?
-	rgba := image.NewRGBA(image.Rect(0, 0, width, height))
+	rgba := image.NewRGBA(image.Rect(0, 0, int(math.Ceil(width)), int(math.Ceil(height))))
 	f.drawer.Dst = rgba
 
 	s := 0
@@ -105,7 +105,7 @@ func (f *Font) Render(tx *Texture, text string, color Color) {
 }
 
 /** Load a truetype font */
-func LoadFont(filename string, size, dpi, spacing float64) *Font {
+func LoadFont(filename string, size, dpi, spacing float32) *Font {
 	fontBytes, err := ioutil.ReadFile(filename)
 	if err != nil {
 		panic(err)

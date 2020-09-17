@@ -6,24 +6,24 @@ import (
 )
 
 type Element struct {
+	Style
 	Name      string
 	Transform *Transform2D
+	Size      Size
 
-	width         float32
-	height        float32
 	z             float32
 	parent        Component
 	children      []Component
 	mouseHandlers []MouseHandler
 }
 
-func NewElement(name string, x, y, w, h float32) *Element {
+func NewElement(name string, x, y, w, h float32, style Style) *Element {
 	e := &Element{
+		Style:     style,
 		Name:      name,
 		Transform: CreateTransform2D(x, y, -1),
+		Size:      Size{w, h},
 
-		width:         w,
-		height:        h,
 		children:      []Component{},
 		mouseHandlers: []MouseHandler{},
 	}
@@ -59,20 +59,20 @@ func (e *Element) Children() []Component {
 }
 
 func (e *Element) Width() float32 {
-	return e.width
+	return e.Size.Width
 }
 
 func (e *Element) Height() float32 {
-	return e.height
+	return e.Size.Height
 }
 
-func (e *Element) SetSize(width, height float32) {
-	e.width = width
-	e.height = height
+func (e *Element) Resize(size Size) Size {
+	e.Size = size
+	return size
 }
 
-func (e *Element) DesiredSize(availableWidth, availableHeight float32) (float32, float32) {
-	return availableWidth, availableHeight
+func (e *Element) Flow(available Size) Size {
+	return available
 }
 
 func (e *Element) SetPosition(x, y float32) {
@@ -98,7 +98,7 @@ func (e *Element) Draw(args render.DrawArgs) {
 // InBounds returns true of the given 2D position is wihtin the bounds of this element
 func (e *Element) InBounds(pos mgl.Vec2) bool {
 	return pos.X() >= 0 && pos.Y() >= 0 &&
-		pos.X() <= e.width && pos.Y() <= e.height
+		pos.X() <= e.Width() && pos.Y() <= e.Height()
 }
 
 // HandleMouse attempts to handle a mouse event with this element

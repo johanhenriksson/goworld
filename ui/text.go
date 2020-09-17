@@ -1,6 +1,8 @@
 package ui
 
 import (
+	"github.com/johanhenriksson/goworld/assets"
+	"github.com/johanhenriksson/goworld/math"
 	"github.com/johanhenriksson/goworld/render"
 )
 
@@ -17,42 +19,36 @@ func (t *Text) Set(text string) {
 	}
 
 	width, height := t.Font.Measure(text)
-	t.Font.Render(t.Texture, text, t.Style.Color("color", render.White))
+	color := t.Style.Color("color", render.White)
+
+	t.Font.Render(t.Texture, text, color)
 	t.Text = text
-	t.SetSize(float32(width), float32(height))
+	t.Resize(Size{width, height})
 }
 
 func NewText(text string, style Style) *Text {
 	// create font
-	dpi := 1.0
 	size := style.Float("size", 16.0)
 	spacing := style.Float("spacing", 1.0)
-	fnt := render.LoadFont("assets/fonts/SourceCodeProRegular.ttf",
-		float64(size), dpi, float64(spacing))
+	font := assets.GetFont("assets/fonts/SourceCodeProRegular.ttf", size, spacing)
 
 	// create opengl texture
-	width, height := fnt.Measure(text)
+	width, height := font.Measure(text)
 	texture := render.CreateTexture(int32(width), int32(height))
 
 	element := &Text{
-		Image: NewImage(texture, float32(width), float32(height), true),
-		Font:  fnt,
+		Image: NewImage(texture, float32(width), float32(height), true, style),
+		Font:  font,
 		Style: style,
 	}
 	element.Set(text)
 	return element
 }
 
-func (t *Text) DesiredSize(w, h float32) (float32, float32) {
-	dwi, dhi := t.Font.Measure(t.Text)
-	dw := float32(dwi)
-	dh := float32(dhi)
-	if dw > w {
-		dw = w
-	}
-	if dh > h {
-		dh = h
-	}
-	t.SetSize(dw, dh)
-	return dw, dh
+func (t *Text) Flow(size Size) Size {
+	dw, dh := t.Font.Measure(t.Text)
+	desired := Size{dw, dh}
+	desired.Width = math.Min(size.Width, desired.Width)
+	desired.Height = math.Min(size.Height, desired.Height)
+	return desired
 }

@@ -9,22 +9,20 @@ import (
 
 type Rect struct {
 	*Element
-	Style  Style
 	layout RectLayout
 	quad   *geometry.Quad
 }
 
-type RectLayout func(Component, Style, float32, float32) (float32, float32)
+type RectLayout func(Component, Size) Size
 
 func NewRect(style Style, children ...Component) *Rect {
 	mat := assets.GetMaterial("ui_color")
 	color := style.Color("background", render.Transparent)
 
 	r := &Rect{
-		Element: NewElement("Rect", 0, 0, 0, 0),
+		Element: NewElement("Rect", 0, 0, 0, 0, style),
 		quad:    geometry.NewQuad(mat, color, 0, 0),
 		layout:  ColumnLayout,
-		Style:   style,
 	}
 
 	layout := style.String("layout", "column")
@@ -54,21 +52,24 @@ func (r *Rect) Draw(args render.DrawArgs) {
 	local.Transform = r.Element.Transform.Matrix.Mul4(args.Transform)
 
 	/* draw rect */
-	// TODO set color
+	// this belongs in the quad drawing code
+	// avoid GL calls outside of the "core" packages render/engine/geometry
 	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+
 	r.quad.Draw(local)
 
 	/* call parent - draw children etc */
 	r.Element.Draw(args)
 }
 
-func (r *Rect) DesiredSize(aw, ah float32) (float32, float32) {
-	return r.layout(r, r.Style, aw, ah)
+func (r *Rect) Flow(available Size) Size {
+	return r.layout(r, available)
 }
 
-func (r *Rect) SetSize(w, h float32) {
-	if w != r.width || h != r.height {
-		r.Element.SetSize(w, h)
-		r.quad.SetSize(w, h)
+func (r *Rect) Resize(size Size) Size {
+	if size.Width != r.Width() || size.Height != r.Height() {
+		r.Element.Resize(size)
+		r.quad.SetSize(size.Width, size.Height)
 	}
+	return r.Size
 }

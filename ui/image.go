@@ -14,8 +14,8 @@ type Image struct {
 	Quad    *geometry.ImageQuad
 }
 
-func NewImage(texture *render.Texture, w, h float32, invert bool) *Image {
-	el := NewElement("Image", 0, 0, w, h)
+func NewImage(texture *render.Texture, w, h float32, invert bool, style Style) *Image {
+	el := NewElement("Image", 0, 0, w, h, style)
 	mat := assets.GetMaterial("ui_texture")
 	mat.AddTexture("image", texture)
 	return &Image{
@@ -26,7 +26,7 @@ func NewImage(texture *render.Texture, w, h float32, invert bool) *Image {
 }
 
 func NewDepthImage(texture *render.Texture, w, h float32, invert bool) *Image {
-	el := NewElement("DepthImage", 0, 0, w, h)
+	el := NewElement("DepthImage", 0, 0, w, h, NoStyle)
 	mat := assets.GetMaterial("ui_depth_texture")
 	mat.AddTexture("image", texture)
 	return &Image{
@@ -47,16 +47,17 @@ func (r *Image) Draw(args render.DrawArgs) {
 	}
 }
 
-func (r *Image) SetSize(w, h float32) {
-	if w != r.width || h != r.height {
-		r.Element.SetSize(w, h)
-		r.Quad.SetSize(w, h)
-		u := math.Min(w/float32(r.Texture.Width), 1)
-		v := math.Min(h/float32(r.Texture.Height), 1)
+func (r *Image) Resize(size Size) Size {
+	if size.Width != r.Width() || size.Height != r.Height() {
+		r.Element.Resize(size)
+		r.Quad.SetSize(size.Width, size.Height)
+		u := math.Min(size.Width/float32(r.Texture.Width), 1)
+		v := math.Min(size.Height/float32(r.Texture.Height), 1)
 		r.Quad.SetUV(u, v)
 	}
+	return r.Size
 }
 
-func (r *Image) DesiredSize(w, h float32) (float32, float32) {
-	return r.width, r.height
+func (r *Image) Flow(available Size) Size {
+	return r.Size
 }

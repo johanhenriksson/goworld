@@ -18,6 +18,14 @@ func Max(a, b float32) float32 {
 	return b
 }
 
+func Ceil(x float32) float32 {
+	return float32(math.Ceil(float64(x)))
+}
+
+func Floor(x float32) float32 {
+	return float32(math.Floor(float64(x)))
+}
+
 func Sqrt(x float32) float32 {
 	return float32(math.Sqrt(float64(x)))
 }
