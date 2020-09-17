@@ -3,8 +3,8 @@ package ui
 import "github.com/johanhenriksson/goworld/math"
 
 func RowLayout(c Component, sz Size) Size {
-	pad := c.Float("padding", 0)
-	spacing := c.Float("spacing", 0)
+	pad := c.GetStyle().Float("padding", 0)
+	spacing := c.GetStyle().Float("spacing", 0)
 
 	// ask each child for its desired size (in this case, width)
 	//
@@ -14,7 +14,7 @@ func RowLayout(c Component, sz Size) Size {
 	//  - shrink: use as little space as possible (i.e. the requested size)
 	//
 	// annoying case: desired size is greater than the available space
-	// 
+	//
 	// problems:
 	//  - what if we want to constrain the maximum width?
 	//    child A wants to grow, B wants to shrink.
@@ -41,8 +41,8 @@ func RowLayout(c Component, sz Size) Size {
 }
 
 func ColumnLayout(c Component, sz Size) Size {
-	pad := c.Float("padding", 0)
-	spacing := c.Float("spacing", 0)
+	pad := c.GetStyle().Float("padding", 0)
+	spacing := c.GetStyle().Float("spacing", 0)
 
 	desired := Size{}
 	for _, child := range c.Children() {

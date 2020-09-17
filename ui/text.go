@@ -19,9 +19,8 @@ func (t *Text) Set(text string) {
 	}
 
 	width, height := t.Font.Measure(text)
-	color := t.Style.Color("color", render.White)
 
-	t.Font.Render(t.Texture, text, color)
+	t.Font.Render(t.Texture, text, render.White)
 	t.Text = text
 	t.Resize(Size{width, height})
 }

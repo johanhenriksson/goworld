@@ -10,8 +10,9 @@ import (
 
 type Image struct {
 	*Element
-	Texture *render.Texture
-	Quad    *geometry.ImageQuad
+	Transparent bool
+	Texture     *render.Texture
+	Quad        *geometry.ImageQuad
 }
 
 func NewImage(texture *render.Texture, w, h float32, invert bool, style Style) *Image {
@@ -19,9 +20,10 @@ func NewImage(texture *render.Texture, w, h float32, invert bool, style Style) *
 	mat := assets.GetMaterial("ui_texture")
 	mat.AddTexture("image", texture)
 	return &Image{
-		Element: el,
-		Texture: texture,
-		Quad:    geometry.NewImageQuad(mat, w, h, invert),
+		Element:     el,
+		Texture:     texture,
+		Quad:        geometry.NewImageQuad(mat, w, h, invert),
+		Transparent: false,
 	}
 }
 
@@ -39,7 +41,14 @@ func NewDepthImage(texture *render.Texture, w, h float32, invert bool) *Image {
 func (r *Image) Draw(args render.DrawArgs) {
 	args.Transform = r.Element.Transform.Matrix.Mul4(args.Transform) //args.Transform.Mul4(r.Element.Transform.Matrix)
 
-	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE)
+	if r.Transparent {
+		gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+	} else {
+		gl.BlendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA)
+	}
+	r.Quad.Material.Use()
+	r.Quad.Material.RGBA("tint", r.Style.Color("color", render.White))
+	r.Quad.Material.SetTexture("image", r.Texture)
 	r.Quad.Draw(args)
 
 	for _, el := range r.Element.children {

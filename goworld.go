@@ -32,13 +32,13 @@ import (
 	mgl "github.com/go-gl/mathgl/mgl32"
 )
 
-var winColor = render.Color4(0.15, 0.15, 0.15, 1)
+var winColor = render.Color4(0.15, 0.15, 0.15, 0.85)
 var textColor = render.Color4(1, 1, 1, 1)
 
 var windowStyle = ui.Style{
-	"background": ui.Color(winColor),
-	"radius":     ui.Float(3),
-	"padding":    ui.Float(5),
+	"color":   ui.Color(winColor),
+	"radius":  ui.Float(3),
+	"padding": ui.Float(5),
 }
 
 func main() {
@@ -118,9 +118,9 @@ func main() {
 	// buffer display windows
 	lightPass := app.Render.Get("light").(*engine.LightPass)
 	bufferWindows := ui.NewRect(ui.Style{"spacing": ui.Float(10)},
-		newBufferWindow("Diffuse", geoPass.Buffer.Diffuse, 10, 10, false),
-		newBufferWindow("Occlusion", lightPass.SSAO.Gaussian.Output, 10, 215, true),
-		newBufferWindow("Shadowmap", lightPass.Shadows.Output, 10, 420, true))
+		newBufferWindow("Diffuse", geoPass.Buffer.Diffuse, false),
+		newBufferWindow("Occlusion", lightPass.SSAO.Gaussian.Output, true),
+		newBufferWindow("Shadowmap", lightPass.Shadows.Output, true))
 	bufferWindows.SetPosition(10, 10)
 	bufferWindows.Flow(ui.Size{500, 1000})
 	uim.Attach(bufferWindows)
@@ -139,10 +139,21 @@ func main() {
 
 	// watermark / fps text
 	versiontext := fmt.Sprintf("goworld")
-	watermark := ui.NewText(versiontext, ui.Style{"color": ui.Color(render.White)})
+	watermark := ui.NewText(versiontext, ui.Style{"color": ui.Color(render.Red)})
 	watermark.SetPosition(10, float32(app.Window.Height-30))
-	watermark.Texture.Save("test.png")
 	uim.Attach(watermark)
+
+	uv_checker := assets.GetTexture("textures/uv_checker.png")
+	uv_checker.Border = 50
+	br := ui.NewRect(ui.Style{
+		"radius":  ui.Float(25),
+		"padding": ui.Float(10),
+		"color":   ui.Color(render.White),
+		"image":   ui.Texture(uv_checker),
+	}, ui.NewImage(assets.GetTexture("textures/kitten.png"), 200, 200, true, ui.NoStyle))
+	br.SetPosition(500, 300)
+	br.Flow(ui.Size{200, 200})
+	uim.Attach(br)
 
 	// sample world position at current mouse coords
 	sampleWorld := func() (mgl.Vec3, bool) {
@@ -237,7 +248,7 @@ func newPaletteWindow(palette render.Palette, onClickItem func(int)) ui.Componen
 		itemIdx := i - 1
 		color := palette[itemIdx]
 
-		swatch := ui.NewRect(ui.Style{"background": ui.Color(color), "layout": ui.String("fixed")})
+		swatch := ui.NewRect(ui.Style{"color": ui.Color(color), "layout": ui.String("fixed")})
 		swatch.Resize(ui.Size{20, 20})
 		swatch.OnClick(func(ev ui.MouseEvent) {
 			if ev.Button == engine.MouseButton1 {
@@ -258,7 +269,7 @@ func newPaletteWindow(palette render.Palette, onClickItem func(int)) ui.Componen
 		ui.NewRect(gridStyle, rows...))
 }
 
-func newBufferWindow(title string, texture *render.Texture, x, y float32, depth bool) ui.Component {
+func newBufferWindow(title string, texture *render.Texture, depth bool) ui.Component {
 	var img ui.Component
 	if depth {
 		img = ui.NewDepthImage(texture, 240, 160, false)

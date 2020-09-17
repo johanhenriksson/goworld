@@ -37,8 +37,8 @@ void main() {
     position0 = (mv * vec4(position, 1.0)).xyz;
 
     // pass color and occlusion
-    color0 = vec4(color, occlusion);
+    color0 = vec4(color * (1 - occlusion), 1);
 
     // finally, transform view -> clip space and output vertex position
-    gl_Position = projection * vec4(position0,1);
+    gl_Position = projection * vec4(position0, 1);
 }

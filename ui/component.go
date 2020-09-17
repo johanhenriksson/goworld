@@ -5,7 +5,7 @@ import (
 )
 
 type Component interface {
-	Styled
+	GetStyle() Style
 
 	Width() float32
 	Height() float32

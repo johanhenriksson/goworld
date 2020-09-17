@@ -4,6 +4,10 @@ import (
 	"math"
 )
 
+const E = float32(math.E)
+const Pi = float32(math.Pi)
+const Sqrt2 = float32(math.Sqrt2)
+
 func Min(a, b float32) float32 {
 	if a < b {
 		return a

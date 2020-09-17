@@ -6,12 +6,11 @@ import (
 )
 
 type Element struct {
-	Style
+	Style     Style
 	Name      string
 	Transform *Transform2D
 	Size      Size
 
-	z             float32
 	parent        Component
 	children      []Component
 	mouseHandlers []MouseHandler
@@ -33,11 +32,10 @@ func NewElement(name string, x, y, w, h float32, style Style) *Element {
 func (e *Element) ZIndex() float32 {
 	// not sure how this is going to work yet
 	// parents must be drawn underneath children (?)
-	z := e.z
 	if e.parent != nil {
-		z += e.parent.ZIndex() + 1
+		return e.parent.ZIndex() + 1
 	}
-	return z
+	return 0
 }
 
 // Parent peturns the parent element
@@ -141,3 +139,7 @@ func (e *Element) OnClick(callback MouseHandler) {
 
 func (e *Element) Focus() {}
 func (e *Element) Blur()  {}
+
+func (e *Element) GetStyle() Style {
+	return e.Style
+}

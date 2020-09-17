@@ -11,19 +11,21 @@ type Rect struct {
 	*Element
 	layout RectLayout
 	quad   *geometry.Quad
+	tex    *render.Texture
 }
 
 type RectLayout func(Component, Size) Size
 
 func NewRect(style Style, children ...Component) *Rect {
-	mat := assets.GetMaterial("ui_color")
-	color := style.Color("background", render.Transparent)
+	mat := assets.GetMaterial("ui_texture")
 
 	r := &Rect{
 		Element: NewElement("Rect", 0, 0, 0, 0, style),
-		quad:    geometry.NewQuad(mat, color, 0, 0),
+		quad:    geometry.NewQuad(mat, 0, 0),
 		layout:  ColumnLayout,
+		tex:     render.TextureFromColor(render.White),
 	}
+	mat.AddTexture("image", r.tex)
 
 	layout := style.String("layout", "column")
 	if layout == "row" {
@@ -56,6 +58,11 @@ func (r *Rect) Draw(args render.DrawArgs) {
 	// avoid GL calls outside of the "core" packages render/engine/geometry
 	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 
+	color := r.Style.Color("color", render.Transparent)
+	image := r.Style.Texture("image", r.tex)
+	r.quad.Material.Use()
+	r.quad.Material.RGBA("tint", color)
+	r.quad.Material.SetTexture("image", image)
 	r.quad.Draw(local)
 
 	/* call parent - draw children etc */

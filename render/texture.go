@@ -32,6 +32,7 @@ type Texture struct {
 	InternalFormat uint32
 	DataType       uint32
 	MipLevel       int32
+	Border         int
 
 	filter TextureFilter
 	wrap   WrapMode
@@ -49,6 +50,7 @@ func CreateTexture(width, height int32) *Texture {
 		Format:         gl.RGBA,
 		InternalFormat: gl.RGBA,
 		DataType:       gl.UNSIGNED_BYTE,
+		Border:         0,
 	}
 	tx.Bind()
 
@@ -106,6 +108,7 @@ func (tx *Texture) Clear() {
 func (tx *Texture) Buffer(img *image.RGBA) {
 	tx.Width = int32(img.Rect.Size().X)
 	tx.Height = int32(img.Rect.Size().Y)
+	tx.DataType = gl.UNSIGNED_BYTE
 	gl.TexImage2D(
 		gl.TEXTURE_2D,
 		0,
@@ -118,7 +121,7 @@ func (tx *Texture) Buffer(img *image.RGBA) {
 
 // BufferFloats buffers texture data from a float array
 func (tx *Texture) BufferFloats(img []float32) {
-	/* Buffer image data */
+	tx.DataType = gl.FLOAT
 	gl.TexImage2D(
 		gl.TEXTURE_2D,
 		0,
@@ -168,6 +171,13 @@ func TextureFromFile(file string) (*Texture, error) {
 		return nil, err
 	}
 	return TextureFromImage(img), nil
+}
+
+// TextureFromColor creates a 1x1 texture from a color
+func TextureFromColor(color Color) *Texture {
+	tx := CreateTexture(1, 1)
+	tx.BufferFloats([]float32{color.R, color.G, color.B, color.A})
+	return tx
 }
 
 // ImageFromFile loads an image from a file. Returns an RGBA image object */

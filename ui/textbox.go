@@ -22,7 +22,7 @@ func (t *Textbox) Set(text string) {
 	if t.focused {
 		text += "_"
 	}
-	t.Font.Render(t.Texture, text, t.Color("color", render.White))
+	t.Font.Render(t.Texture, text, t.Style.Color("color", render.White))
 }
 
 func NewTextbox(text string, style Style) *Textbox {
