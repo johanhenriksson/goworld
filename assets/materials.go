@@ -132,3 +132,14 @@ func GetMaterial(name string) *render.Material {
 
 	return mat
 }
+
+func GetMaterialCached(name string) *render.Material {
+	if mat, exists := cache.Materials[name]; exists {
+		return mat
+	}
+
+	mat := GetMaterial(name)
+	cache.Materials[name] = mat
+
+	return mat
+}

@@ -61,17 +61,6 @@ func GetTexture(name string) *render.Texture {
 	return texture
 }
 
-func GetMaterialCached(name string) *render.Material {
-	if mat, exists := cache.Materials[name]; exists {
-		return mat
-	}
-
-	mat := GetMaterial(name)
-	cache.Materials[name] = mat
-
-	return mat
-}
-
 func GetFont(name string, size, spacing float32) *render.Font {
 	key := fmt.Sprintf("%s-%.1f-%.1f", name, size, spacing)
 	if font, exists := cache.Fonts[key]; exists {
@@ -79,6 +68,7 @@ func GetFont(name string, size, spacing float32) *render.Font {
 	}
 
 	dpi := float32(1.0)
+	fmt.Printf("+ font %s (%.1fpt, %.1f, %dx)\n", name, size, spacing, int(dpi))
 	font := render.LoadFont(name, dpi, size, spacing)
 	cache.Fonts[key] = font
 

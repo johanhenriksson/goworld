@@ -6,6 +6,24 @@ func RowLayout(c Component, sz Size) Size {
 	pad := c.Float("padding", 0)
 	spacing := c.Float("spacing", 0)
 
+	// ask each child for its desired size (in this case, width)
+	//
+	// simple case: desired size is less than the available space
+	// divide any extra space according to the sizing mode of each child
+	//  - grow: take available space, divided equally (default)
+	//  - shrink: use as little space as possible (i.e. the requested size)
+	//
+	// annoying case: desired size is greater than the available space
+	// 
+	// problems:
+	//  - what if we want to constrain the maximum width?
+	//    child A wants to grow, B wants to shrink.
+
+	// can we just ignore dynamic horizontal sizing? its not a browser after all
+	// two kinds of elements:
+	// containers - variable width according to their largest child
+	// controls - fixed width (labels, images, buttons etc)
+
 	desired := Size{}
 	for _, child := range c.Children() {
 		child.SetPosition(pad+desired.Width, pad)

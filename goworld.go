@@ -48,17 +48,6 @@ func main() {
 	uim := ui.NewManager(app)
 	app.Render.Append("ui", uim)
 
-	rect := ui.NewRect(windowStyle,
-		ui.NewRect(ui.Style{"layout": ui.String("row"), "padding": ui.Float(10)},
-			ui.NewText("Hello Really Long Line", ui.NoStyle),
-			ui.NewText("Please", ui.NoStyle)),
-		ui.NewRect(ui.NoStyle,
-			ui.NewText("Please", ui.NoStyle),
-			ui.NewText("Hello Really Long Line", ui.NoStyle)))
-	uim.Attach(rect)
-	rect.SetPosition(400, 400)
-	rect.Flow(ui.Size{400, 1000})
-
 	/* grab a reference to the geometry render pass */
 	geoPass := app.Render.Get("geometry").(*engine.GeometryPass)
 

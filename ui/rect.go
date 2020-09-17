@@ -52,8 +52,10 @@ func (r *Rect) Draw(args render.DrawArgs) {
 	local.Transform = r.Element.Transform.Matrix.Mul4(args.Transform)
 
 	/* draw rect */
-	// TODO set color
+	// this belongs in the quad drawing code
+	// avoid GL calls outside of the "core" packages render/engine/geometry
 	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+
 	r.quad.Draw(local)
 
 	/* call parent - draw children etc */
