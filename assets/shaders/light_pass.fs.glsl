@@ -31,6 +31,7 @@ uniform Light light;     // uniform light data
 uniform vec4 ambient; // ambient light
 uniform float shadow_strength;
 uniform float shadow_bias;
+uniform float ssao_amount = 1.0;
 
 in vec2 texcoord0;
 
@@ -140,10 +141,12 @@ void main() {
     vec3 lightColor = light.Color * light.Intensity * contrib * shadow * occlusion;
 
     /* add ambient light */
-    lightColor += ambient.a * ambient.rgb * ssao;
+    lightColor += ambient.a * ambient.rgb;
 
     /* mix with diffuse */
     lightColor *= diffuseColor;
+
+    lightColor *= mix(1, ssao, ssao_amount);
 
     /* write fragment color & restore depth buffer */
     color = vec4(lightColor,  1.0);

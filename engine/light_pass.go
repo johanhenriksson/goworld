@@ -14,6 +14,7 @@ type LightPass struct {
 	Ambient        render.Color
 	ShadowStrength float32
 	ShadowBias     float32
+	SSAOAmount     float32
 
 	fbo  *render.FrameBuffer
 	mat  *render.Material
@@ -29,7 +30,7 @@ func NewLightPass(input *render.GeometryBuffer) *LightPass {
 		Radius:  0.5,
 		Bias:    0.03,
 		Power:   2.0,
-		Scale:   4,
+		Scale:   2,
 	})
 
 	// create output frame buffer
@@ -60,6 +61,7 @@ func NewLightPass(input *render.GeometryBuffer) *LightPass {
 		Ambient:        render.Color4(0.1, 0.1, 0.1, 1),
 		ShadowStrength: 0.3,
 		ShadowBias:     0.0001,
+		SSAOAmount:     0.75,
 	}
 
 	// set up static uniforms
@@ -67,6 +69,7 @@ func NewLightPass(input *render.GeometryBuffer) *LightPass {
 	mat.RGBA("ambient", p.Ambient)
 	mat.Float("shadow_bias", p.ShadowBias)
 	mat.Float("shadow_strength", p.ShadowStrength)
+	mat.Float("ssao_amount", p.SSAOAmount)
 
 	return p
 }
