@@ -9,16 +9,14 @@ import (
 // Object is the basic component of a scene. It has a transform, a list of components and optionally child objects.
 type Object struct {
 	*Transform
-	Scene      *Scene
 	Components []Component
 	Children   []*Object
 }
 
 // NewObject creates a new object in the scene.
-func (s *Scene) NewObject(x, y, z float32) *Object {
+func NewObject(x, y, z float32) *Object {
 	return &Object{
 		Transform:  CreateTransform(x, y, z),
-		Scene:      s,
 		Components: []Component{},
 		Children:   []*Object{},
 	}

@@ -10,7 +10,7 @@ import (
 
 type PlacementGrid struct {
 	*engine.ComponentBase
-	Chunk *ColorChunk
+	ChunkMesh *ChunkMesh
 
 	mesh *geometry.Lines
 
@@ -20,20 +20,20 @@ type PlacementGrid struct {
 
 func NewPlacementGrid(parentObject *engine.Object) *PlacementGrid {
 	pg := &PlacementGrid{
-		mesh:  geometry.CreateLines(),
-		Chunk: nil,
+		mesh:      geometry.CreateLines(),
+		ChunkMesh: nil,
 	}
 	pg.ComponentBase = engine.NewComponent(parentObject, pg)
 
 	// find chunk
-	obj, exists := parentObject.GetComponent(pg.Chunk)
+	obj, exists := parentObject.GetComponent(pg.ChunkMesh)
 	if !exists {
 		panic("no chunk component")
 	}
-	chunk := obj.(*ColorChunk)
+	chunk := obj.(*ChunkMesh)
 
 	// compute grid mesh
-	pg.Chunk = chunk
+	pg.ChunkMesh = chunk
 	pg.Y = 8
 	pg.Compute()
 
@@ -41,7 +41,7 @@ func NewPlacementGrid(parentObject *engine.Object) *PlacementGrid {
 }
 
 func (grid *PlacementGrid) Up() {
-	if grid.Y < (grid.Chunk.Size - 1) {
+	if grid.Y < (grid.ChunkMesh.Sy - 1) {
 		fmt.Println("grid up")
 		grid.Y += 1
 		grid.Compute()
@@ -74,9 +74,9 @@ func (grid *PlacementGrid) Draw(args render.DrawArgs) {
 func (grid *PlacementGrid) Compute() {
 	grid.mesh.Clear()
 
-	for x := 0; x < grid.Chunk.Size; x++ {
-		for z := 0; z < grid.Chunk.Size; z++ {
-			if true || grid.Chunk.At(x, grid.Y, z) == EmptyColorVoxel {
+	for x := 0; x < grid.ChunkMesh.Sx; x++ {
+		for z := 0; z < grid.ChunkMesh.Sz; z++ {
+			if true || grid.ChunkMesh.At(x, grid.Y, z) == EmptyVoxel {
 				// place box
 				grid.mesh.Box(float32(x), float32(grid.Y), float32(z), // position
 					1, 0, 1, // size

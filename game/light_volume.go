@@ -6,9 +6,9 @@ import (
 )
 
 type LightVolume struct {
-	Falloff float32
-	Size    int
-	data    [][][]LightVoxel
+	Falloff    float32
+	Sx, Sy, Sz int
+	data       [][][]LightVoxel
 }
 
 type LightVoxel struct {
@@ -16,17 +16,19 @@ type LightVoxel struct {
 	V       float32
 }
 
-func NewLightVolume(size int) *LightVolume {
-	lvox := make([][][]LightVoxel, size)
-	for z := 0; z < size; z++ {
-		lvox[z] = make([][]LightVoxel, size)
-		for y := 0; y < size; y++ {
-			lvox[z][y] = make([]LightVoxel, size)
+func NewLightVolume(sx, sy, sz int) *LightVolume {
+	lvox := make([][][]LightVoxel, sz)
+	for z := 0; z < sz; z++ {
+		lvox[z] = make([][]LightVoxel, sx)
+		for x := 0; x < sx; x++ {
+			lvox[z][x] = make([]LightVoxel, sy)
 		}
 	}
 	return &LightVolume{
 		Falloff: 0.6,
-		Size:    size,
+		Sx:      sx,
+		Sy:      sy,
+		Sz:      sz,
 		data:    lvox,
 	}
 }
@@ -47,10 +49,10 @@ func (lv *LightVolume) Block(x, y, z int) {
 }
 
 func (lv *LightVolume) Get(x, y, z int) *LightVoxel {
-	if x < 0 || y < 0 || z < 0 || x >= lv.Size || y >= lv.Size || z >= lv.Size {
+	if x < 0 || y < 0 || z < 0 || x >= lv.Sx || y >= lv.Sy || z >= lv.Sz {
 		return nil
 	}
-	return &lv.data[z][y][x]
+	return &lv.data[z][x][y]
 }
 
 func (lv *LightVolume) Calculate() {
@@ -58,37 +60,36 @@ func (lv *LightVolume) Calculate() {
 	for {
 		i++
 		changed := false
-		for y := 0; y < lv.Size; y++ {
-			for z := 0; z < lv.Size; z++ {
-				for x := 0; x < lv.Size; x++ {
-					lp := &lv.data[z][y][x]
+		for z := 0; z < lv.Sz; z++ {
+			for x := 0; x < lv.Sx; x++ {
+				for y := 0; y < lv.Sy; y++ {
+					lp := lv.Get(x, y, z)
 					if lp.Blocked {
 						lp.V = 0
 						continue
 					}
 
 					nmax := float32(0)
-
 					if x > 0 {
-						nmax = math.Max(nmax, lv.data[z][y][x-1].V*lv.Falloff)
+						nmax = math.Max(nmax, lv.Get(x-1, y, z).V*lv.Falloff)
 					}
 					if y > 0 {
-						nmax = math.Max(nmax, lv.data[z][y-1][x].V*lv.Falloff)
+						nmax = math.Max(nmax, lv.Get(x, y-1, z).V*lv.Falloff)
 					}
 					if z > 0 {
-						nmax = math.Max(nmax, lv.data[z-1][y][x].V*lv.Falloff)
+						nmax = math.Max(nmax, lv.Get(x, y, z-1).V*lv.Falloff)
 					}
-					if x < lv.Size-1 {
-						nmax = math.Max(nmax, lv.data[z][y][x+1].V*lv.Falloff)
+					if x < lv.Sx-1 {
+						nmax = math.Max(nmax, lv.Get(x+1, y, z).V*lv.Falloff)
 					}
-					if y < lv.Size-1 {
-						nmax = math.Max(nmax, lv.data[z][y+1][x].V)
+					if y < lv.Sy-1 {
+						nmax = math.Max(nmax, lv.Get(x, y+1, z).V)
 					}
-					if z < lv.Size-1 {
-						nmax = math.Max(nmax, lv.data[z+1][y][x].V*lv.Falloff)
+					if z < lv.Sz-1 {
+						nmax = math.Max(nmax, lv.Get(x, y, z+1).V*lv.Falloff)
 					}
 
-					if y == lv.Size-1 {
+					if y == lv.Sy-1 {
 						nmax = 1
 					}
 

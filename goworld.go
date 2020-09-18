@@ -25,7 +25,6 @@ import (
 	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/game"
 	"github.com/johanhenriksson/goworld/geometry"
-	"github.com/johanhenriksson/goworld/math"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/ui"
 
@@ -66,7 +65,7 @@ func main() {
 			Color:      mgl.Vec3{0.9 * 0.973, 0.9 * 0.945, 0.9 * 0.776},
 			Type:       engine.DirectionalLight,
 			Projection: mgl.Ortho(-200, 300, -30, 250, -200, 760),
-			Position:   mgl.Vec3{-3, 2, -2},
+			Position:   mgl.Vec3{-2, 2, -1},
 		},
 		{ // centered point light
 			Attenuation: engine.Attenuation{
@@ -82,30 +81,30 @@ func main() {
 		},
 	}
 
-	csize := 16
-	ccount := 10
+	csize := 32
+	ccount := 2
+
+	world := game.NewWorld(31481234, csize)
 
 	fmt.Print("generating chunks... ")
-	chunks := make([][]*game.ColorChunk, ccount)
+	chunks := make([][]*game.ChunkMesh, ccount)
 	for cx := 0; cx < ccount; cx++ {
-		chunks[cx] = make([]*game.ColorChunk, ccount)
+		chunks[cx] = make([]*game.ChunkMesh, ccount)
 		for cz := 0; cz < ccount; cz++ {
-			obj := app.Scene.NewObject(float32(cx*csize), 0, float32(cz*csize))
-			chk := game.NewColorChunk(obj, csize)
-			chk.Seed = 31481234
-			chk.Ox, chk.Oy, chk.Oz = cx*csize, 0, cz*csize
-			generateChunk(chk, cx*csize, 0, cz*csize) // populate with random data
-			chk.Compute()
+			obj := engine.NewObject(float32(cx*csize), 0, float32(cz*csize))
+			chunk := world.AddChunk(cx, cz)
+			mesh := game.NewChunkMesh(obj, chunk)
+			mesh.Compute()
 			app.Scene.Add(obj)
 
-			chunks[cx][cz] = chk
+			chunks[cx][cz] = mesh
 			fmt.Printf("(%d,%d) ", cx, cz)
 		}
 	}
 	fmt.Println("done")
 
 	// test cube
-	building := app.Scene.NewObject(4.5, 9.04, 8.5)
+	building := engine.NewObject(4.5, 9.04, 8.5)
 	building.Scale = mgl.Vec3{0.1, 0.1, 0.1}
 	palette := assets.GetMaterialCached("uv_palette")
 	geometry.NewObjModel(building, palette, "models/building.obj")
@@ -119,6 +118,7 @@ func main() {
 	lightPass := app.Render.Get("light").(*engine.LightPass)
 	bufferWindows := ui.NewRect(ui.Style{"spacing": ui.Float(10)},
 		newBufferWindow("Diffuse", geoPass.Buffer.Diffuse, false),
+		newBufferWindow("Normal", geoPass.Buffer.Normal, false),
 		newBufferWindow("Occlusion", lightPass.SSAO.Gaussian.Output, true),
 		newBufferWindow("Shadowmap", lightPass.Shadows.Output, true))
 	bufferWindows.SetPosition(10, 10)
@@ -127,11 +127,11 @@ func main() {
 
 	// palette globals
 	paletteIdx := 5
-	selected := game.NewColorVoxel(render.DefaultPalette[paletteIdx])
+	selected := game.NewVoxel(render.DefaultPalette[paletteIdx])
 
 	paletteWnd := newPaletteWindow(render.DefaultPalette, func(newPaletteIdx int) {
 		paletteIdx = newPaletteIdx
-		selected = game.NewColorVoxel(render.DefaultPalette[paletteIdx])
+		selected = game.NewVoxel(render.DefaultPalette[paletteIdx])
 	})
 	paletteWnd.SetPosition(280, 10)
 	paletteWnd.Flow(ui.Size{200, 400})
@@ -139,21 +139,21 @@ func main() {
 
 	// watermark / fps text
 	versiontext := fmt.Sprintf("goworld")
-	watermark := ui.NewText(versiontext, ui.Style{"color": ui.Color(render.Red)})
+	watermark := ui.NewText(versiontext, ui.Style{"color": ui.Color(render.White)})
 	watermark.SetPosition(10, float32(app.Window.Height-30))
 	uim.Attach(watermark)
 
-	uv_checker := assets.GetTexture("textures/uv_checker.png")
-	uv_checker.Border = 50
-	br := ui.NewRect(ui.Style{
-		"radius":  ui.Float(25),
-		"padding": ui.Float(10),
-		"color":   ui.Color(render.White),
-		"image":   ui.Texture(uv_checker),
-	}, ui.NewImage(assets.GetTexture("textures/kitten.png"), 200, 200, true, ui.NoStyle))
-	br.SetPosition(500, 300)
-	br.Flow(ui.Size{200, 200})
-	uim.Attach(br)
+	// uv_checker := assets.GetTexture("textures/uv_checker.png")
+	// uv_checker.Border = 50
+	// br := ui.NewRect(ui.Style{
+	// 	"radius":  ui.Float(25),
+	// 	"padding": ui.Float(10),
+	// 	"color":   ui.Color(render.White),
+	// 	"image":   ui.Texture(uv_checker),
+	// })
+	// br.SetPosition(500, 300)
+	// br.Resize(ui.Size{200, 200})
+	// uim.Attach(br)
 
 	// sample world position at current mouse coords
 	sampleWorld := func() (mgl.Vec3, bool) {
@@ -202,12 +202,12 @@ func main() {
 
 		if engine.KeyReleased(engine.KeyF) {
 			paletteIdx++
-			selected = game.NewColorVoxel(render.DefaultPalette[paletteIdx%len(render.DefaultPalette)])
+			selected = game.NewVoxel(render.DefaultPalette[paletteIdx%len(render.DefaultPalette)])
 		}
 
 		if engine.KeyReleased(engine.KeyR) {
 			paletteIdx--
-			selected = game.NewColorVoxel(render.DefaultPalette[paletteIdx%len(render.DefaultPalette)])
+			selected = game.NewVoxel(render.DefaultPalette[paletteIdx%len(render.DefaultPalette)])
 		}
 
 		// place voxel
@@ -222,7 +222,7 @@ func main() {
 		if engine.KeyPressed(engine.KeyC) {
 			fmt.Println("delete from", world)
 			target := world.Sub(normal.Mul(0.5))
-			chunks[cx][cz].Set(int(target[0])%csize, int(target[1])%csize, int(target[2])%csize, game.EmptyColorVoxel)
+			chunks[cx][cz].Set(int(target[0])%csize, int(target[1])%csize, int(target[2])%csize, game.EmptyVoxel)
 			chunks[cx][cz].Compute()
 		}
 
@@ -284,67 +284,3 @@ func newBufferWindow(title string, texture *render.Texture, depth bool) ui.Compo
 
 // ChunkFunc is a chunk function :)
 //type ChunkFunc func(*game.Chunk, ChunkFuncParams)
-
-func generateChunk(chk *game.ColorChunk, ox int, oy int, oz int) {
-	/* Define voxels */
-	rock2 := game.ColorVoxel{
-		R: 137,
-		G: 131,
-		B: 119,
-	}
-	rock := game.ColorVoxel{
-		R: 173,
-		G: 169,
-		B: 158,
-	}
-	grass := game.ColorVoxel{
-		R: 72,
-		G: 140,
-		B: 54,
-	}
-	cloud := game.ColorVoxel{
-		R: 255,
-		G: 255,
-		B: 255,
-	}
-
-	/* Fill chunk with voxels */
-	size := chk.Size
-
-	rockNoise := math.NewNoise(chk.Seed+10000, 1.0/40.0)
-	grassNoise := math.NewNoise(chk.Seed+10002, 1.0/28.0)
-	cloudNoise := math.NewNoise(chk.Seed+24511626, 1/40.0)
-
-	grassHeight := 8
-
-	for z := 0; z < size; z++ {
-		for y := 0; y < size; y++ {
-			for x := 0; x < size; x++ {
-				gh := int(9 * grassNoise.Sample(x+ox, oy, z+oz))
-				rh := int(44 * rockNoise.Sample(x+ox, oy, z+oz))
-				ch := int(8*cloudNoise.Sample(x+ox, y+oy, z+oz)) + 8
-
-				var vtype game.ColorVoxel
-				if y < grassHeight {
-					vtype = rock2
-				}
-
-				if y == grassHeight {
-					vtype = grass
-				}
-				if y <= grassHeight+gh && y > grassHeight {
-					vtype = grass
-				}
-				if y < rh {
-					vtype = rock
-				}
-
-				if ch > 12 && y > 98-ch && y < 100+ch {
-					vtype = cloud
-				}
-
-				chk.Set(x, y, z, vtype)
-			}
-		}
-	}
-}
