@@ -216,6 +216,7 @@ func main() {
 			target := world.Add(normal.Mul(0.5))
 			chunks[cx][cz].Set(int(target[0])%csize, int(target[1])%csize, int(target[2])%csize, selected)
 			chunks[cx][cz].Compute()
+			chunks[cx][cz].Write("chunks")
 		}
 
 		// remove voxel

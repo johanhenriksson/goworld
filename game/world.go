@@ -42,16 +42,14 @@ func (w *World) LoadAround(pos mgl.Vec3) {
 }
 
 func (w *World) AddChunk(cx, cz int) *Chunk {
+	chunk, err := LoadChunk("chunks", cx, cz)
+	if err != nil {
+		chunk = NewChunk(w.ChunkSize, w.Seed, cx, cz)
+		// generate voxel data
+		GenerateChunk(chunk)
+	}
 	//obj := engine.NewObject(float32(cx*w.ChunkSize), 0, float32(cz*w.ChunkSize))
-	chk := NewChunk(w.ChunkSize, w.Seed, cx, cz)
-	chk.Ox, chk.Oy, chk.Oz = cx*w.ChunkSize, 0, cz*w.ChunkSize
 
-	// generate voxel data
-	GenerateChunk(chk)
-
-	// compute geometry
-	//chk.Compute()
-
-	w.Cache[ChunkPos{X: cx, Z: cz}] = chk
-	return chk
+	w.Cache[ChunkPos{X: cx, Z: cz}] = chunk
+	return chunk
 }
