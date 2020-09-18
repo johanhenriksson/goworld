@@ -11,6 +11,11 @@ type LightVolume struct {
 	data    [][][]LightVoxel
 }
 
+type LightVoxel struct {
+	Blocked bool
+	V       float32
+}
+
 func NewLightVolume(size int) *LightVolume {
 	lvox := make([][][]LightVoxel, size)
 	for z := 0; z < size; z++ {
@@ -20,35 +25,35 @@ func NewLightVolume(size int) *LightVolume {
 		}
 	}
 	return &LightVolume{
-		Falloff: 0.7,
+		Falloff: 0.6,
 		Size:    size,
 		data:    lvox,
 	}
 }
 
-func (lv *LightVolume) reset() {
-	for z := 0; z < lv.Size; z++ {
-		for y := 0; y < lv.Size; y++ {
-			for x := 0; x < lv.Size; x++ {
-				lv.data[z][y][x].Calculated = false
-			}
-		}
-	}
-}
-
 func (lv *LightVolume) Brightness(x, y, z int) float32 {
-	if x < 0 || y < 0 || z < 0 || x >= lv.Size || y >= lv.Size || z >= lv.Size {
-		return 1
+	v := lv.Get(x, y, z)
+	if v != nil {
+		return v.V
 	}
-	return lv.data[z][y][x].V
+	return 1
 }
 
 func (lv *LightVolume) Block(x, y, z int) {
-	lv.data[z][y][x].Blocked = true
+	v := lv.Get(x, y, z)
+	if v != nil {
+		v.Blocked = true
+	}
+}
+
+func (lv *LightVolume) Get(x, y, z int) *LightVoxel {
+	if x < 0 || y < 0 || z < 0 || x >= lv.Size || y >= lv.Size || z >= lv.Size {
+		return nil
+	}
+	return &lv.data[z][y][x]
 }
 
 func (lv *LightVolume) Calculate() {
-	lv.reset()
 	i := 0
 	for {
 		i++
@@ -57,12 +62,8 @@ func (lv *LightVolume) Calculate() {
 			for z := 0; z < lv.Size; z++ {
 				for x := 0; x < lv.Size; x++ {
 					lp := &lv.data[z][y][x]
-					if lp.Calculated {
-						continue
-					}
 					if lp.Blocked {
 						lp.V = 0
-						lp.Calculated = true
 						continue
 					}
 
@@ -94,7 +95,6 @@ func (lv *LightVolume) Calculate() {
 					if lp.V != nmax {
 						lp.V = nmax
 						changed = true
-						lp.Calculated = true
 					}
 				}
 			}
@@ -103,19 +103,5 @@ func (lv *LightVolume) Calculate() {
 			fmt.Println("Light volume calculation finished in", i, "iterations")
 			break
 		}
-	}
-}
-
-type LightVoxel struct {
-	Blocked    bool
-	Calculated bool
-	V          float32
-}
-
-func (lp LightVoxel) String() string {
-	if lp.Blocked {
-		return "    "
-	} else {
-		return fmt.Sprintf("%.2f", lp.V)
 	}
 }
