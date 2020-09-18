@@ -23,7 +23,7 @@ func NewQuad(mat *render.Material, w, h float32) *Quad {
 		Material: mat,
 		Width:    w,
 		Height:   h,
-		segments: 0,
+		segments: 5,
 		border:   0,
 
 		vao: render.CreateVertexArray(),

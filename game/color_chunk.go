@@ -3,7 +3,6 @@ package game
 import (
 	"github.com/johanhenriksson/goworld/assets"
 	"github.com/johanhenriksson/goworld/engine"
-	"github.com/johanhenriksson/goworld/math"
 )
 
 /* Chunks are smallest renderable units of voxel geometry */
@@ -83,42 +82,17 @@ func (chk *ColorChunk) Compute() {
 	s := chk.Size
 	data := make(ColorVoxelVertices, 0, 64)
 
-	occlusion := NewOcclusionData(s)
-	occluded := func(x, y, z int) float32 {
-		if chk.At(x, y, z) != EmptyColorVoxel {
-			// occluded
-			return 0.25 * 1.0 / 6
-		}
-		return 0
-	}
-
-	/* occlusion pass */
-	noise := math.NewNoise(chk.Seed, 1)
-	for z := 0; z < s; z++ {
-		for y := 0; y < s; y++ {
-			for x := 0; x < s; x++ {
-				v := chk.At(x, y, z)
-				if v != EmptyColorVoxel {
-					// occlusion is only calculated for empty voxels
-					continue
+	light := NewLightVolume(chk.Size)
+	for z := 0; z < light.Size; z++ {
+		for y := 0; y < light.Size; y++ {
+			for x := 0; x < light.Size; x++ {
+				if !chk.Free(x, y, z) {
+					light.Block(x, y, z)
 				}
-
-				// random occlusion factor
-				rnd := 0.16 * (noise.Sample(x+chk.Ox, y, z+chk.Oz) + 1)
-
-				// sample neighbors
-				xp := occluded(x+1, y, z)
-				xn := occluded(x-1, y, z)
-				yp := occluded(x, y+1, z)
-				yn := occluded(x, y-1, z)
-				zp := occluded(x, y, z+1)
-				zn := occluded(x, y, z-1)
-
-				o := 1 - xp - xn - yp - yn - zp - zn - rnd
-				occlusion.Set(x, y, z, o)
 			}
 		}
 	}
+	light.Calculate()
 
 	/* geometry pass */
 	for z := 0; z < s; z++ {
@@ -138,7 +112,7 @@ func (chk *ColorChunk) Compute() {
 				zn := chk.At(x, y, z-1) == EmptyColorVoxel
 
 				/* Compute & append vertex data */
-				vertices := v.Compute(occlusion, byte(x), byte(y), byte(z), xp, xn, yp, yn, zp, zn)
+				vertices := v.Compute(light, byte(x), byte(y), byte(z), xp, xn, yp, yn, zp, zn)
 				data = append(data, vertices...)
 			}
 		}

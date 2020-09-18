@@ -25,12 +25,16 @@ func NewColorVoxel(color render.Color) ColorVoxel {
 }
 
 // Compute the verticies of this Color Voxel
-func (v ColorVoxel) Compute(occlusion *OcclusionData, x, y, z byte, xp, xn, yp, yn, zp, zn bool) ColorVoxelVertices {
+func (v ColorVoxel) Compute(light *LightVolume, x, y, z byte, xp, xn, yp, yn, zp, zn bool) ColorVoxelVertices {
 	data := make(ColorVoxelVertices, 0, 36)
+	brightness := func(x, y, z byte) byte {
+		lv := 1 - light.Brightness(int(x), int(y), int(z))
+		return byte(255 * lv)
+	}
 
 	// Right (X+) N=1
 	if xp {
-		o := occlusion.Get(x+1, y, z)
+		o := brightness(x+1, y, z)
 		data = append(data,
 			ColorVoxelVertex{X: x + 1, Y: y + 0, Z: z + 1, N: 1, R: v.R, G: v.G, B: v.B, O: o}, // front bottom right
 			ColorVoxelVertex{X: x + 1, Y: y + 0, Z: z + 0, N: 1, R: v.R, G: v.G, B: v.B, O: o}, // back bottom right
@@ -42,7 +46,7 @@ func (v ColorVoxel) Compute(occlusion *OcclusionData, x, y, z byte, xp, xn, yp, 
 
 	// Left faces (X-) N=2
 	if xn {
-		o := occlusion.Get(x-1, y, z)
+		o := brightness(x-1, y, z)
 		data = append(data,
 			ColorVoxelVertex{X: x + 0, Y: y + 0, Z: z + 1, N: 2, R: v.R, G: v.G, B: v.B, O: o}, // bottom left back
 			ColorVoxelVertex{X: x + 0, Y: y + 1, Z: z + 0, N: 2, R: v.R, G: v.G, B: v.B, O: o}, // top left front
@@ -54,7 +58,7 @@ func (v ColorVoxel) Compute(occlusion *OcclusionData, x, y, z byte, xp, xn, yp, 
 
 	// Top faces (Y+) N=3
 	if yp {
-		o := occlusion.Get(x, y+1, z)
+		o := brightness(x, y+1, z)
 		data = append(data,
 			ColorVoxelVertex{X: x + 0, Y: y + 1, Z: z + 0, N: 3, R: v.R, G: v.G, B: v.B, O: o}, // left top front
 			ColorVoxelVertex{X: x + 0, Y: y + 1, Z: z + 1, N: 3, R: v.R, G: v.G, B: v.B, O: o}, // left top back
@@ -66,7 +70,7 @@ func (v ColorVoxel) Compute(occlusion *OcclusionData, x, y, z byte, xp, xn, yp, 
 
 	// Bottom faces (Y-) N=4
 	if yn {
-		o := occlusion.Get(x, y-1, z)
+		o := brightness(x, y-1, z)
 		data = append(data,
 			ColorVoxelVertex{X: x + 0, Y: y + 0, Z: z + 0, N: 4, R: v.R, G: v.G, B: v.B, O: o}, // left
 			ColorVoxelVertex{X: x + 1, Y: y + 0, Z: z + 0, N: 4, R: v.R, G: v.G, B: v.B, O: o}, // right
@@ -78,7 +82,7 @@ func (v ColorVoxel) Compute(occlusion *OcclusionData, x, y, z byte, xp, xn, yp, 
 
 	// Front faces (Z+) N=5
 	if zp {
-		o := occlusion.Get(x, y, z+1)
+		o := brightness(x, y, z+1)
 		data = append(data,
 			ColorVoxelVertex{X: x + 0, Y: y + 0, Z: z + 1, N: 5, R: v.R, G: v.G, B: v.B, O: o},
 			ColorVoxelVertex{X: x + 1, Y: y + 0, Z: z + 1, N: 5, R: v.R, G: v.G, B: v.B, O: o},
@@ -90,7 +94,7 @@ func (v ColorVoxel) Compute(occlusion *OcclusionData, x, y, z byte, xp, xn, yp, 
 
 	// Back faces (Z-) N=6
 	if zn {
-		o := occlusion.Get(x, y, z-1)
+		o := brightness(x, y, z-1)
 		data = append(data,
 			ColorVoxelVertex{X: x + 0, Y: y + 0, Z: z + 0, N: 6, R: v.R, G: v.G, B: v.B, O: o},
 			ColorVoxelVertex{X: x + 0, Y: y + 1, Z: z + 0, N: 6, R: v.R, G: v.G, B: v.B, O: o},
