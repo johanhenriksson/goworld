@@ -84,7 +84,13 @@ func (c *Chunk) Write(path string) error {
 		return err
 	}
 	encoder := gob.NewEncoder(file)
-	return encoder.Encode(c)
+	err = encoder.Encode(c)
+	if err == nil {
+		fmt.Printf("Wrote chunk %d,%d to disk\n", c.Cx, c.Cz)
+	} else {
+		fmt.Printf("Error writing chunk %d,%d: %s\n", c.Cx, c.Cz, err)
+	}
+	return err
 }
 
 func LoadChunk(path string, cx, cz int) (*Chunk, error) {

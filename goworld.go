@@ -21,10 +21,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/johanhenriksson/goworld/assets"
 	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/game"
-	"github.com/johanhenriksson/goworld/geometry"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/ui"
 
@@ -64,8 +62,9 @@ func main() {
 			Intensity:  0.8,
 			Color:      mgl.Vec3{0.9 * 0.973, 0.9 * 0.945, 0.9 * 0.776},
 			Type:       engine.DirectionalLight,
-			Projection: mgl.Ortho(-200, 300, -30, 250, -200, 760),
+			Projection: mgl.Ortho(-31, 60, -20, 90, -10, 80),
 			Position:   mgl.Vec3{-2, 2, -1},
+			Shadows:    true,
 		},
 		{ // centered point light
 			Attenuation: engine.Attenuation{
@@ -77,7 +76,19 @@ func main() {
 			Intensity: 1.0,
 			Range:     70,
 			Type:      engine.PointLight,
-			Position:  mgl.Vec3{65, 27, 65},
+			Position:  mgl.Vec3{16, 30, 16},
+		},
+		{ // centered point light
+			Attenuation: engine.Attenuation{
+				Constant:  1.00,
+				Linear:    0.09,
+				Quadratic: 0.32,
+			},
+			Color:     mgl.Vec3{0.517, 0.506, 0.447},
+			Intensity: 8.0,
+			Range:     30,
+			Type:      engine.PointLight,
+			Position:  mgl.Vec3{30, 35, 52},
 		},
 	}
 
@@ -103,13 +114,12 @@ func main() {
 	}
 	fmt.Println("done")
 
-	// test cube
-	building := engine.NewObject(4.5, 9.04, 8.5)
-	building.Scale = mgl.Vec3{0.1, 0.1, 0.1}
-	palette := assets.GetMaterialCached("uv_palette")
-	geometry.NewObjModel(building, palette, "models/building.obj")
-
-	app.Scene.Add(building)
+	// test model
+	// building := engine.NewObject(4.5, 9.04, 8.5)
+	// building.Scale = mgl.Vec3{0.1, 0.1, 0.1}
+	// palette := assets.GetMaterialCached("uv_palette")
+	// geometry.NewObjModel(building, palette, "models/building.obj")
+	// app.Scene.Add(building)
 
 	// this composition system sucks
 	//game.NewPlacementGrid(chunks[0])
@@ -201,14 +211,18 @@ func main() {
 		}
 		chunk := chunks[cx][cz]
 
-		if engine.KeyReleased(engine.KeyF) {
-			paletteIdx++
-			selected = game.NewVoxel(render.DefaultPalette[paletteIdx%len(render.DefaultPalette)])
-		}
-
 		if engine.KeyReleased(engine.KeyR) {
-			paletteIdx--
-			selected = game.NewVoxel(render.DefaultPalette[paletteIdx%len(render.DefaultPalette)])
+			// replace voxel
+			fmt.Println("replace at", worldPos)
+			target := worldPos.Sub(normal.Mul(0.5))
+			world.Set(int(target[0]), int(target[1]), int(target[2]), selected)
+
+			// recompute mesh
+			chunk.Light.Calculate()
+			chunk.Compute()
+
+			// write to disk
+			go chunk.Write("chunks")
 		}
 
 		// place voxel
@@ -218,18 +232,11 @@ func main() {
 			world.Set(int(target[0]), int(target[1]), int(target[2]), selected)
 
 			// recompute mesh
+			chunk.Light.Calculate()
 			chunk.Compute()
 
 			// write to disk
-			go func() {
-				fmt.Println("Writing chunk to disk...")
-				err := chunk.Write("chunks")
-				if err == nil {
-					fmt.Printf("Wrote chunk %d,%d to disk\n", chunk.Cx, chunk.Cz)
-				} else {
-					fmt.Printf("Error writing chunk %d,%d: %s\n", chunk.Cx, chunk.Cz, err)
-				}
-			}()
+			go chunk.Write("chunks")
 		}
 
 		// remove voxel
@@ -237,11 +244,17 @@ func main() {
 			fmt.Println("delete from", worldPos)
 			target := worldPos.Sub(normal.Mul(0.5))
 			world.Set(int(target[0]), int(target[1]), int(target[2]), game.EmptyVoxel)
+
+			// recompute mesh
+			chunk.Light.Calculate()
 			chunk.Compute()
+
+			// write to disk
+			go chunk.Write("chunks")
 		}
 
 		// eyedropper
-		if engine.KeyPressed(engine.KeyI) {
+		if engine.KeyPressed(engine.KeyF) {
 			target := worldPos.Sub(normal.Mul(0.5))
 			selected = world.Voxel(int(target[0]), int(target[1]), int(target[2]))
 		}

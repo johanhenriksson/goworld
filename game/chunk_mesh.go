@@ -8,26 +8,44 @@ import (
 type ChunkMesh struct {
 	*engine.Mesh
 	*Chunk
+	meshComputed chan VoxelVertices
 }
 
 func NewChunkMesh(object *engine.Object, chunk *Chunk) *ChunkMesh {
 	mesh := engine.NewMesh(assets.GetMaterialCached("color_voxels"))
 	chk := &ChunkMesh{
-		Mesh:  mesh,
-		Chunk: chunk,
+		Mesh:         mesh,
+		Chunk:        chunk,
+		meshComputed: make(chan VoxelVertices),
 	}
 	chk.ComponentBase = engine.NewComponent(object, chk)
 	return chk
 }
 
-// Computes the chunk mesh and returns a pointer to it.
+func (cm *ChunkMesh) Update(dt float32) {
+	select {
+	case newMesh := <-cm.meshComputed:
+		cm.Buffer("geometry", newMesh)
+	default:
+	}
+}
+
+// Queues recomputation of the mesh
 func (cm *ChunkMesh) Compute() {
+	go func() {
+		data := cm.computeVertexData()
+		cm.meshComputed <- data
+	}()
+}
+
+func (cm *ChunkMesh) computeVertexData() VoxelVertices {
 	data := make(VoxelVertices, 0, 64)
 	light := cm.Light.Brightness
+	Omax := float32(220)
 
 	for z := -1; z <= cm.Sz; z++ {
-		for y := -1; y <= cm.Sy; y++ {
-			for x := -1; x <= cm.Sx; x++ {
+		for x := -1; x <= cm.Sx; x++ {
+			for y := -1; y <= cm.Sy; y++ {
 				v := cm.At(x, y, z)
 				if v != EmptyVoxel {
 					// consider ONLY empty voxels
@@ -65,73 +83,72 @@ func (cm *ChunkMesh) Compute() {
 						v1 := VoxelVertex{
 							X: byte(x + 1), Y: byte(y + 1), Z: byte(z + 1), N: n,
 							R: xp.R, G: xp.G, B: xp.B,
-							O: byte(255 * (1 - (lzp+lyp+lypzp+l)/4)),
+							O: byte(Omax * (1 - (lzp+lyp+lypzp+l)/4)),
 						}
 						if ypf && zpf {
-							v1.O = byte(255 * (1 - (lzp+lyp+l)/3))
+							v1.O = byte(Omax * (1 - (lzp+lyp+l)/3))
 						}
 						v2 := VoxelVertex{
 							X: byte(x + 1), Y: byte(y + 1), Z: byte(z), N: n,
 							R: xp.R, G: xp.G, B: xp.B,
-							O: byte(255 * (1 - (lzn+lyp+lypzn+l)/4)),
+							O: byte(Omax * (1 - (lzn+lyp+lypzn+l)/4)),
 						}
 						if ypf && znf {
-							v2.O = byte(255 * (1 - (lzn+lyp+l)/3))
+							v2.O = byte(Omax * (1 - (lzn+lyp+l)/3))
 						}
 						v3 := VoxelVertex{
 							X: byte(x + 1), Y: byte(y), Z: byte(z + 1), N: n,
 							R: xp.R, G: xp.G, B: xp.B,
-							O: byte(255 * (1 - (lzp+lyn+lynzp+l)/4)),
+							O: byte(Omax * (1 - (lzp+lyn+lynzp+l)/4)),
 						}
 						if ynf && zpf {
-							v3.O = byte(255 * (1 - (lzp+lyn+l)/4))
+							v3.O = byte(Omax * (1 - (lzp+lyn+l)/3))
 						}
 						v4 := VoxelVertex{
 							X: byte(x + 1), Y: byte(y), Z: byte(z), N: n,
 							R: xp.R, G: xp.G, B: xp.B,
-							O: byte(255 * (1 - (lzn+lyn+lynzn+l)/4)),
+							O: byte(Omax * (1 - (lzn+lyn+lynzn+l)/4)),
 						}
 						if ynf && znf {
-							v4.O = byte(255 * (1 - (lzn+lyn+l)/3))
+							v4.O = byte(Omax * (1 - (lzn+lyn+l)/3))
 						}
 						data = append(data, v2, v3, v1, v4, v3, v2)
 					}
 
 					if xnf {
-
 						// xn is empty - tesselate square with x+ normal
 						n := byte(1)
 						v1 := VoxelVertex{
 							X: byte(x), Y: byte(y + 1), Z: byte(z), N: n,
 							R: xn.R, G: xn.G, B: xn.B,
-							O: byte(255 * (1 - (lyp+lzn+lypzn+l)/4)),
+							O: byte(Omax * (1 - (lyp+lzn+lypzn+l)/4)),
 						}
 						if ypf && znf {
-							v1.O = byte(255 * (1 - (lyp+lzn+l)/3))
+							v1.O = byte(Omax * (1 - (lyp+lzn+l)/3))
 						}
 						v2 := VoxelVertex{
 							X: byte(x), Y: byte(y + 1), Z: byte(z + 1), N: n,
 							R: xn.R, G: xn.G, B: xn.B,
-							O: byte(255 * (1 - (lyp+lzp+lypzp+l)/4)),
+							O: byte(Omax * (1 - (lyp+lzp+lypzp+l)/4)),
 						}
 						if ypf && zpf {
-							v2.O = byte(255 * (1 - (lyp+lzp+l)/3))
+							v2.O = byte(Omax * (1 - (lyp+lzp+l)/3))
 						}
 						v3 := VoxelVertex{
 							X: byte(x), Y: byte(y), Z: byte(z), N: n,
 							R: xn.R, G: xn.G, B: xn.B,
-							O: byte(255 * (1 - (lyn+lzn+lynzn+l)/4)),
+							O: byte(Omax * (1 - (lyn+lzn+lynzn+l)/4)),
 						}
 						if ynf && znf {
-							v3.O = byte(255 * (1 - (lyn+lzn+l)/3))
+							v3.O = byte(Omax * (1 - (lyn+lzn+l)/3))
 						}
 						v4 := VoxelVertex{
 							X: byte(x), Y: byte(y), Z: byte(z + 1), N: n,
 							R: xn.R, G: xn.G, B: xn.B,
-							O: byte(255 * (1 - (lyn+lzp+lynzp+l)/4)),
+							O: byte(Omax * (1 - (lyn+lzp+lynzp+l)/4)),
 						}
 						if ynf && zpf {
-							v4.O = byte(255 * (1 - (lyn+lzp+l)/3))
+							v4.O = byte(Omax * (1 - (lyn+lzp+l)/3))
 						}
 						data = append(data, v2, v3, v1, v4, v3, v2)
 					}
@@ -152,34 +169,34 @@ func (cm *ChunkMesh) Compute() {
 						v1 := VoxelVertex{
 							X: byte(x + 1), Y: byte(y + 1), Z: byte(z + 1), N: n,
 							R: yp.R, G: yp.G, B: yp.B,
-							O: byte(255 * (1 - (lxp+lzp+lxpzp+l)/4)),
+							O: byte(Omax * (1 - (lxp+lzp+lxpzp+l)/4)),
 						}
 						if xpf && zpf {
-							v1.O = byte(255 * (1 - (lxp+lzp+l)/3))
+							v1.O = byte(Omax * (1 - (lxp+lzp+l)/3))
 						}
 						v2 := VoxelVertex{
 							X: byte(x + 1), Y: byte(y + 1), Z: byte(z), N: n,
 							R: yp.R, G: yp.G, B: yp.B,
-							O: byte(255 * (1 - (lxp+lzn+lxpzn+l)/4)),
+							O: byte(Omax * (1 - (lxp+lzn+lxpzn+l)/4)),
 						}
 						if xpf && znf {
-							v2.O = byte(255 * (1 - (lxp+lzn+l)/3))
+							v2.O = byte(Omax * (1 - (lxp+lzn+l)/3))
 						}
 						v3 := VoxelVertex{
 							X: byte(x), Y: byte(y + 1), Z: byte(z + 1), N: n,
 							R: yp.R, G: yp.G, B: yp.B,
-							O: byte(255 * (1 - (lxn+lzp+lxnzp+l)/4)),
+							O: byte(Omax * (1 - (lxn+lzp+lxnzp+l)/4)),
 						}
 						if xnf && zpf {
-							v3.O = byte(255 * (1 - (lxn+lzp+l)/3))
+							v3.O = byte(Omax * (1 - (lxn+lzp+l)/3))
 						}
 						v4 := VoxelVertex{
 							X: byte(x), Y: byte(y + 1), Z: byte(z), N: n,
 							R: yp.R, G: yp.G, B: yp.B,
-							O: byte(255 * (1 - (lxn+lzn+lxnzn+l)/4)),
+							O: byte(Omax * (1 - (lxn+lzn+lxnzn+l)/4)),
 						}
 						if xnf && znf {
-							v4.O = byte(255 * (1 - (lxn+lzn+l)/3))
+							v4.O = byte(Omax * (1 - (lxn+lzn+l)/3))
 						}
 						data = append(data, v1, v3, v2, v2, v3, v4)
 					}
@@ -190,34 +207,34 @@ func (cm *ChunkMesh) Compute() {
 						v1 := VoxelVertex{
 							X: byte(x + 1), Y: byte(y), Z: byte(z + 1), N: n,
 							R: yn.R, G: yn.G, B: yn.B,
-							O: byte(255 * (1 - (lxp+lzp+lxpzp+l)/4)),
+							O: byte(Omax * (1 - (lxp+lzp+lxpzp+l)/4)),
 						}
 						if xpf && zpf {
-							v1.O = byte(255 * (1 - (lxp+lzp+l)/3))
+							v1.O = byte(Omax * (1 - l/3))
 						}
 						v2 := VoxelVertex{
 							X: byte(x + 1), Y: byte(y), Z: byte(z), N: n,
 							R: yn.R, G: yn.G, B: yn.B,
-							O: byte(255 * (1 - (lxp+lzn+lxpzn+l)/4)),
+							O: byte(Omax * (1 - (lxp+lzn+lxpzn+l)/4)),
 						}
 						if xpf && znf {
-							v2.O = byte(255 * (1 - (lxp+lzn+l)/3))
+							v2.O = byte(Omax * (1 - l/3))
 						}
 						v3 := VoxelVertex{
 							X: byte(x), Y: byte(y), Z: byte(z + 1), N: n,
 							R: yn.R, G: yn.G, B: yn.B,
-							O: byte(255 * (1 - (lxn+lzp+lxnzp+l)/4)),
+							O: byte(Omax * (1 - (lxn+lzp+lxnzp+l)/4)),
 						}
 						if xnf && zpf {
-							v3.O = byte(255 * (1 - (lxn+lzp+l)/3))
+							v3.O = byte(Omax * (1 - l/3))
 						}
 						v4 := VoxelVertex{
 							X: byte(x), Y: byte(y), Z: byte(z), N: n,
 							R: yn.R, G: yn.G, B: yn.B,
-							O: byte(255 * (1 - (lxn+lzn+lxnzn+l)/4)),
+							O: byte(Omax * (1 - (lxn+lzn+lxnzn+l)/4)),
 						}
 						if xnf && znf {
-							v4.O = byte(255 * (1 - (lxn+lzn+l)/3))
+							v4.O = byte(Omax * (1 - l/3))
 						}
 						data = append(data, v2, v3, v1, v4, v3, v2)
 					}
@@ -239,34 +256,34 @@ func (cm *ChunkMesh) Compute() {
 						v1 := VoxelVertex{
 							X: byte(x), Y: byte(y + 1), Z: byte(z + 1), N: n,
 							R: zp.R, G: zp.G, B: zp.B,
-							O: byte(255 * (1 - (lxn+lyp+lxnyp+l)/4)),
+							O: byte(Omax * (1 - (lxn+lyp+lxnyp+l)/4)),
 						}
 						if xnf && ypf {
-							v1.O = byte(255 * (1 - (lxn+lyp+l)/3))
+							v1.O = byte(Omax * (1 - (lxn+lyp+l)/3))
 						}
 						v2 := VoxelVertex{
 							X: byte(x + 1), Y: byte(y + 1), Z: byte(z + 1), N: n,
 							R: zp.R, G: zp.G, B: zp.B,
-							O: byte(255 * (1 - (lxp+lyp+lxpyp+l)/4)),
+							O: byte(Omax * (1 - (lxp+lyp+lxpyp+l)/4)),
 						}
 						if xpf && ypf {
-							v2.O = byte(255 * (1 - (lxp+lyp+l)/3))
+							v2.O = byte(Omax * (1 - (lxp+lyp+l)/3))
 						}
 						v3 := VoxelVertex{
 							X: byte(x), Y: byte(y), Z: byte(z + 1), N: n,
 							R: zp.R, G: zp.G, B: zp.B,
-							O: byte(255 * (1 - (lxn+lyn+lxnyn+l)/4)),
+							O: byte(Omax * (1 - (lxn+lyn+lxnyn+l)/4)),
 						}
 						if xnf && ynf {
-							v3.O = byte(255 * (1 - (lxn+lyn+l)/3))
+							v3.O = byte(Omax * (1 - (lxn+lyn+l)/3))
 						}
 						v4 := VoxelVertex{
 							X: byte(x + 1), Y: byte(y), Z: byte(z + 1), N: n,
 							R: zp.R, G: zp.G, B: zp.B,
-							O: byte(255 * (1 - (lxp+lyn+lxpyn+l)/4)),
+							O: byte(Omax * (1 - (lxp+lyn+lxpyn+l)/4)),
 						}
 						if xpf && ynf {
-							v4.O = byte(255 * (1 - (lxp+lyn+l)/3))
+							v4.O = byte(Omax * (1 - (lxp+lyn+l)/3))
 						}
 						data = append(data, v2, v3, v1, v4, v3, v2)
 					}
@@ -277,34 +294,34 @@ func (cm *ChunkMesh) Compute() {
 						v1 := VoxelVertex{
 							X: byte(x), Y: byte(y + 1), Z: byte(z), N: n,
 							R: zn.R, G: zn.G, B: zn.B,
-							O: byte(255 * (1 - (lxn+lyp+lxnyp+l)/4)),
+							O: byte(Omax * (1 - (lxn+lyp+lxnyp+l)/4)),
 						}
 						if xnf && ypf {
-							v1.O = byte(255 * (1 - (lxn+lyp+l)/3))
+							v1.O = byte(Omax * (1 - (lxn+lyp+l)/3))
 						}
 						v2 := VoxelVertex{
 							X: byte(x + 1), Y: byte(y + 1), Z: byte(z), N: n,
 							R: zn.R, G: zn.G, B: zn.B,
-							O: byte(255 * (1 - (lxp+lyp+lxpyp+l)/4)),
+							O: byte(Omax * (1 - (lxp+lyp+lxpyp+l)/4)),
 						}
 						if xpf && ypf {
-							v2.O = byte(255 * (1 - (lxp+lyp+l)/3))
+							v2.O = byte(Omax * (1 - (lxp+lyp+l)/3))
 						}
 						v3 := VoxelVertex{
 							X: byte(x), Y: byte(y), Z: byte(z), N: n,
 							R: zn.R, G: zn.G, B: zn.B,
-							O: byte(255 * (1 - (lxn+lyn+lxnyn+l)/4)),
+							O: byte(Omax * (1 - (lxn+lyn+lxnyn+l)/4)),
 						}
 						if xnf && ynf {
-							v3.O = byte(255 * (1 - (lxn+lyn+l)/3))
+							v3.O = byte(Omax * (1 - (lxn+lyn+l)/3))
 						}
 						v4 := VoxelVertex{
 							X: byte(x + 1), Y: byte(y), Z: byte(z), N: n,
 							R: zn.R, G: zn.G, B: zn.B,
-							O: byte(255 * (1 - (lxp+lyn+lxpyn+l)/4)),
+							O: byte(Omax * (1 - (lxp+lyn+lxpyn+l)/4)),
 						}
 						if xpf && ynf {
-							v4.O = byte(255 * (1 - (lxp+lyn+l)/3))
+							v4.O = byte(Omax * (1 - (lxp+lyn+l)/3))
 						}
 						data = append(data, v1, v3, v2, v2, v3, v4)
 					}
@@ -312,7 +329,5 @@ func (cm *ChunkMesh) Compute() {
 			}
 		}
 	}
-
-	// buffer vertex data to GPU memory
-	cm.Buffer("geometry", data)
+	return data
 }

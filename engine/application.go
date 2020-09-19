@@ -10,7 +10,7 @@ type Application struct {
 
 // NewApplication instantiates a new engine application
 func NewApplication(title string, width, height int) *Application {
-	highDpiEnabled := true
+	highDpiEnabled := false
 	wnd := CreateWindow(title, width, height, highDpiEnabled)
 
 	// create a scene
@@ -27,7 +27,7 @@ func NewApplication(title string, width, height int) *Application {
 	renderer := NewRenderer(renderWidth, renderHeight, scene)
 	geoPass := NewGeometryPass(renderWidth, renderHeight)
 	lightPass := NewLightPass(geoPass.Buffer)
-	colorPass := NewColorPass(lightPass.Output, "saturated")
+	colorPass := NewColorPass(lightPass.Output, "none")
 	renderer.Append("geometry", geoPass)
 	renderer.Append("light", lightPass)
 	renderer.Append("postprocess", colorPass)

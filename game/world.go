@@ -47,7 +47,6 @@ func (w *World) AddChunk(cx, cz int) *Chunk {
 	if err != nil {
 		chunk = w.Provider.Chunk(cx, cz)
 	}
-	//obj := engine.NewObject(float32(cx*w.ChunkSize), 0, float32(cz*w.ChunkSize))
 
 	w.Cache[ChunkPos{cx, cz}] = chunk
 	return chunk
@@ -68,6 +67,5 @@ func (w *World) Set(x, y, z int, voxel Voxel) {
 	if chunk, exists := w.Cache[ChunkPos{cx, cz}]; exists {
 		chunk.Set(lx, ly, lz, voxel)
 		chunk.Light.Block(lx, ly, lz, voxel != EmptyVoxel)
-		chunk.Light.Calculate()
 	}
 }

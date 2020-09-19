@@ -58,7 +58,7 @@ func NewLightPass(input *render.GeometryBuffer) *LightPass {
 		quad:           quad,
 		Shadows:        shadowPass,
 		SSAO:           ssaoPass,
-		Ambient:        render.Color4(0.1, 0.1, 0.1, 1),
+		Ambient:        render.Color4(0.25, 0.25, 0.25, 1),
 		ShadowStrength: 0.3,
 		ShadowBias:     0.0001,
 		SSAOAmount:     0.5,
@@ -128,8 +128,8 @@ func (p *LightPass) DrawPass(scene *Scene) {
 	p.quad.Draw()
 
 	// draw lights one by one
-	gl.DepthMask(false)
-	for _, light := range scene.Lights {
+	for i, light := range scene.Lights {
+		gl.DepthMask(i == 0)
 		// draw shadow pass for this light into shadow map
 		p.Shadows.DrawPass(scene, &light)
 
