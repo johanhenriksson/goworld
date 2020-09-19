@@ -50,6 +50,10 @@ func (sp *ShadowPass) DrawPass(scene *Scene, light *Light) {
 	sp.shadowmap.Bind()
 	sp.shadowmap.Clear()
 
+	if !light.Shadows {
+		return
+	}
+
 	gl.DepthMask(true)
 
 	/* compute world to lightspace (light view projection) matrix */
