@@ -32,6 +32,8 @@ type Light struct {
 // LightType indicates which kind of light. Point, Directional etc
 type LightType int32
 
+const AmbientLight LightType = 0
+
 // PointLight is a normal light casting rays in all directions.
 const PointLight LightType = 1
 

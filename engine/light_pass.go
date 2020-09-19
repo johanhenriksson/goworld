@@ -35,7 +35,7 @@ func NewLightPass(input *render.GeometryBuffer) *LightPass {
 
 	// create output frame buffer
 	fbo := render.CreateFrameBuffer(input.Width, input.Height)
-	output := fbo.AttachBuffer(gl.COLOR_ATTACHMENT0, gl.RGB, gl.RGB, gl.FLOAT)
+	output := fbo.AttachBuffer(gl.COLOR_ATTACHMENT0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE)
 
 	// instantiate light pass shader
 	mat := render.CreateMaterial(render.CompileVFShader("/assets/shaders/light_pass"))
@@ -66,7 +66,6 @@ func NewLightPass(input *render.GeometryBuffer) *LightPass {
 
 	// set up static uniforms
 	mat.Use()
-	mat.RGBA("ambient", p.Ambient)
 	mat.Float("shadow_bias", p.ShadowBias)
 	mat.Float("shadow_strength", p.ShadowStrength)
 	mat.Float("ssao_amount", p.SSAOAmount)
@@ -119,14 +118,23 @@ func (p *LightPass) DrawPass(scene *Scene) {
 	gl.Enable(gl.CULL_FACE)
 	gl.CullFace(gl.BACK)
 
-	// draw lights
-	for i, light := range scene.Lights {
+	// ambient light pass
+	ambient := Light{
+		Color:     mgl.Vec3{p.Ambient.R, p.Ambient.G, p.Ambient.B},
+		Intensity: 1,
+	}
+	p.setLightUniforms(&ambient)
+	p.fbo.Bind()
+	p.quad.Draw()
+
+	// draw lights one by one
+	gl.DepthMask(false)
+	for _, light := range scene.Lights {
 		// draw shadow pass for this light into shadow map
 		p.Shadows.DrawPass(scene, &light)
 
 		// first light pass we want the shader to restore the depth buffer
 		// then, disable depth masking so that multiple lights can be drawn
-		gl.DepthMask(i == 0)
 
 		// use light shader again
 		p.mat.Use()
@@ -136,10 +144,9 @@ func (p *LightPass) DrawPass(scene *Scene) {
 		// todo: draw light volumes instead of a fullscreen quad
 		p.fbo.Bind()
 		p.quad.Draw()
-		p.fbo.Unbind()
 	}
 
-	/* reset GL state */
+	// reset GL state
 	gl.DepthMask(true)
 	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 	gl.Disable(gl.CULL_FACE)

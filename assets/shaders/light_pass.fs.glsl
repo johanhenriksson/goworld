@@ -1,5 +1,6 @@
 #version 330
 
+#define AMBIENT_LIGHT 0
 #define POINT_LIGHT 1
 #define DIRECTIONAL_LIGHT 2
 
@@ -28,7 +29,6 @@ uniform mat4 light_vp;     // world to light space
 uniform mat4 viewInverse;     // projection matrix
 
 uniform Light light;     // uniform light data
-uniform vec4 ambient; // ambient light
 uniform float shadow_strength;
 uniform float shadow_bias;
 uniform float ssao_amount = 1.0;
@@ -115,13 +115,22 @@ void main() {
     /* calculate contribution from the light source */
     float contrib = 0.0;
     float shadow = 1.0;
-    if (light.Type == DIRECTIONAL_LIGHT) {
+    if (light.Type == AMBIENT_LIGHT) {
+        contrib = 1.0;
+    }
+    else if (light.Type == DIRECTIONAL_LIGHT) {
         // directional lights store the direction in the position uniform
         vec3 dir = normalize(light.Position);
         contrib = max(dot(dir, normal), 0.0);
 
         // experimental shadows
         shadow = sampleShadowmap(tex_shadow, position);
+
+        // avoids lighting the backdrop.
+        // probably inefficient though, consider another solution.
+        if (depth == 1.0) {
+            contrib = 0;
+        }
     }
     else if (light.Type == POINT_LIGHT) {
         /* calculate light vector & distance */
@@ -129,19 +138,16 @@ void main() {
         float distanceToLight = length(surfaceToLight);
         surfaceToLight = normalize(surfaceToLight);
         contrib = calculatePointLightContrib(surfaceToLight, distanceToLight, normal);
-    }
 
-    // avoids lighting the backdrop.
-    // probably inefficient though, consider another solution.
-    if (depth == 1.0) {
-        contrib = 0;
+        // avoids lighting the backdrop.
+        // probably inefficient though, consider another solution.
+        if (depth == 1.0) {
+            contrib = 0;
+        }
     }
 
     /* calculate light color */
     vec3 lightColor = light.Color * light.Intensity * contrib * shadow * occlusion;
-
-    /* add ambient light */
-    lightColor += ambient.a * ambient.rgb;
 
     /* mix with diffuse */
     lightColor *= diffuseColor;
