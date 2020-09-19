@@ -6,8 +6,8 @@ import (
 )
 
 type ChunkProvider interface {
-	Get(x, y, z int) Voxels
-	Update(x, y, z int, v Voxel)
+	Chunk(x, z int) *Chunk
+	Voxel(x, y, z int) Voxel
 }
 
 type ChunkPos struct {
@@ -34,6 +34,7 @@ func NewWorld(seed, size int) *World {
 		DrawDistance: 3,
 		ChunkSize:    size,
 		Cache:        make(map[ChunkPos]*Chunk),
+		Provider:     ExampleWorldgen(seed, size),
 	}
 }
 
@@ -44,12 +45,29 @@ func (w *World) LoadAround(pos mgl.Vec3) {
 func (w *World) AddChunk(cx, cz int) *Chunk {
 	chunk, err := LoadChunk("chunks", cx, cz)
 	if err != nil {
-		chunk = NewChunk(w.ChunkSize, w.Seed, cx, cz)
-		// generate voxel data
-		GenerateChunk(chunk)
+		chunk = w.Provider.Chunk(cx, cz)
 	}
 	//obj := engine.NewObject(float32(cx*w.ChunkSize), 0, float32(cz*w.ChunkSize))
 
-	w.Cache[ChunkPos{X: cx, Z: cz}] = chunk
+	w.Cache[ChunkPos{cx, cz}] = chunk
 	return chunk
+}
+
+func (w *World) Voxel(x, y, z int) Voxel {
+	cx, cz := x/w.ChunkSize, z/w.ChunkSize
+	lx, ly, lz := x%w.ChunkSize, y, z%w.ChunkSize
+	if chunk, exists := w.Cache[ChunkPos{cx, cz}]; exists {
+		return chunk.At(lx, ly, lz)
+	}
+	return w.Provider.Voxel(x, y, z)
+}
+
+func (w *World) Set(x, y, z int, voxel Voxel) {
+	cx, cz := x/w.ChunkSize, z/w.ChunkSize
+	lx, ly, lz := x%w.ChunkSize, y, z%w.ChunkSize
+	if chunk, exists := w.Cache[ChunkPos{cx, cz}]; exists {
+		chunk.Set(lx, ly, lz, voxel)
+		chunk.Light.Block(lx, ly, lz, voxel != EmptyVoxel)
+		chunk.Light.Calculate()
+	}
 }

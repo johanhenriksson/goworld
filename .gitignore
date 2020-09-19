@@ -1,4 +1,5 @@
 goworld
+chunks/
 .vscode/
 .idea/*
 .DS_Store

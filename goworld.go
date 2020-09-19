@@ -43,7 +43,7 @@ var windowStyle = ui.Style{
 func main() {
 	fmt.Println("goworld")
 
-	app := engine.NewApplication("voxels", 1200, 800)
+	app := engine.NewApplication("voxels", 1400, 1000)
 	uim := ui.NewManager(app)
 	app.Render.Append("ui", uim)
 
@@ -184,7 +184,7 @@ func main() {
 		versiontext = fmt.Sprintf("goworld | %s | %.0f fps", time.Now().Format("2006-01-02 15:04"), app.Window.FPS)
 		watermark.Set(versiontext)
 
-		world, worldExists := sampleWorld()
+		worldPos, worldExists := sampleWorld()
 		if !worldExists {
 			return
 		}
@@ -194,11 +194,12 @@ func main() {
 			return
 		}
 
-		cx := int(world.X()) / csize
-		cz := int(world.Z()) / csize
+		cx := int(worldPos.X()) / csize
+		cz := int(worldPos.Z()) / csize
 		if cx < 0 || cz < 0 || cx >= ccount || cz >= ccount {
 			return
 		}
+		chunk := chunks[cx][cz]
 
 		if engine.KeyReleased(engine.KeyF) {
 			paletteIdx++
@@ -212,25 +213,37 @@ func main() {
 
 		// place voxel
 		if engine.MouseDownPress(engine.MouseButton2) {
-			fmt.Println("place at", world)
-			target := world.Add(normal.Mul(0.5))
-			chunks[cx][cz].Set(int(target[0])%csize, int(target[1])%csize, int(target[2])%csize, selected)
-			chunks[cx][cz].Compute()
-			chunks[cx][cz].Write("chunks")
+			fmt.Println("place at", worldPos)
+			target := worldPos.Add(normal.Mul(0.5))
+			world.Set(int(target[0]), int(target[1]), int(target[2]), selected)
+
+			// recompute mesh
+			chunk.Compute()
+
+			// write to disk
+			go func() {
+				fmt.Println("Writing chunk to disk...")
+				err := chunk.Write("chunks")
+				if err == nil {
+					fmt.Printf("Wrote chunk %d,%d to disk\n", chunk.Cx, chunk.Cz)
+				} else {
+					fmt.Printf("Error writing chunk %d,%d: %s\n", chunk.Cx, chunk.Cz, err)
+				}
+			}()
 		}
 
 		// remove voxel
 		if engine.KeyPressed(engine.KeyC) {
-			fmt.Println("delete from", world)
-			target := world.Sub(normal.Mul(0.5))
-			chunks[cx][cz].Set(int(target[0])%csize, int(target[1])%csize, int(target[2])%csize, game.EmptyVoxel)
-			chunks[cx][cz].Compute()
+			fmt.Println("delete from", worldPos)
+			target := worldPos.Sub(normal.Mul(0.5))
+			world.Set(int(target[0]), int(target[1]), int(target[2]), game.EmptyVoxel)
+			chunk.Compute()
 		}
 
 		// eyedropper
 		if engine.KeyPressed(engine.KeyI) {
-			target := world.Sub(normal.Mul(0.5))
-			selected = chunks[cx][cz].At(int(target[0])%csize, int(target[1])%csize, int(target[2])%csize)
+			target := worldPos.Sub(normal.Mul(0.5))
+			selected = world.Voxel(int(target[0]), int(target[1]), int(target[2]))
 		}
 	}
 
