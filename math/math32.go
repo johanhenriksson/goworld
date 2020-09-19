@@ -22,6 +22,16 @@ func Max(a, b float32) float32 {
 	return b
 }
 
+func Clamp(v, min, max float32) float32 {
+	if v > max {
+		return max
+	}
+	if v < min {
+		return min
+	}
+	return v
+}
+
 func Ceil(x float32) float32 {
 	return float32(math.Ceil(float64(x)))
 }
@@ -44,4 +54,11 @@ func Cos(x float32) float32 {
 
 func Tan(x float32) float32 {
 	return float32(math.Tan(float64(x)))
+}
+
+func Sign(x float32) float32 {
+	if x > 0 {
+		return 1
+	}
+	return -1
 }
