@@ -21,6 +21,7 @@ type Light struct {
 	Range       float32
 	Intensity   float32
 	Type        LightType
+	Shadows     bool
 
 	Projection mgl.Mat4 // Shadow projection matrix
 	ProjWidth  float32

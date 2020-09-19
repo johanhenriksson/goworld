@@ -61,7 +61,7 @@ func NewLightPass(input *render.GeometryBuffer) *LightPass {
 		Ambient:        render.Color4(0.1, 0.1, 0.1, 1),
 		ShadowStrength: 0.3,
 		ShadowBias:     0.0001,
-		SSAOAmount:     0.75,
+		SSAOAmount:     0.5,
 	}
 
 	// set up static uniforms
