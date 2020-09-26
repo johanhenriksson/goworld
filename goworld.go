@@ -62,11 +62,11 @@ func main() {
 			Intensity:  0.8,
 			Color:      mgl.Vec3{0.9 * 0.973, 0.9 * 0.945, 0.9 * 0.776},
 			Type:       engine.DirectionalLight,
-			Projection: mgl.Ortho(-31, 60, -20, 90, -10, 80),
+			Projection: mgl.Ortho(-71, 120, -20, 140, -10, 140),
 			Position:   mgl.Vec3{-2, 2, -1},
-			Shadows:    true,
+			Shadows:    false,
 		},
-		{ // centered point light
+		{ // light
 			Attenuation: engine.Attenuation{
 				Constant:  1.00,
 				Linear:    0.09,
@@ -78,7 +78,7 @@ func main() {
 			Type:      engine.PointLight,
 			Position:  mgl.Vec3{16, 30, 16},
 		},
-		{ // centered point light
+		{ // text highlight
 			Attenuation: engine.Attenuation{
 				Constant:  1.00,
 				Linear:    0.09,
@@ -93,11 +93,11 @@ func main() {
 	}
 
 	csize := 32
-	ccount := 2
+	ccount := 4
 
 	world := game.NewWorld(31481234, csize)
 
-	fmt.Print("generating chunks... ")
+	fmt.Print("Generating chunks... ")
 	chunks := make([][]*game.ChunkMesh, ccount)
 	for cx := 0; cx < ccount; cx++ {
 		chunks[cx] = make([]*game.ChunkMesh, ccount)
@@ -112,7 +112,7 @@ func main() {
 			fmt.Printf("(%d,%d) ", cx, cz)
 		}
 	}
-	fmt.Println("done")
+	fmt.Println("World generation complete")
 
 	// test model
 	// building := engine.NewObject(4.5, 9.04, 8.5)

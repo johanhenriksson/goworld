@@ -1,8 +1,6 @@
 package geometry
 
 import (
-	"fmt"
-
 	"github.com/johanhenriksson/goworld/math"
 	"github.com/johanhenriksson/goworld/render"
 )
@@ -122,7 +120,6 @@ func (q *Quad) compute() {
 	bw, bh := float32(0), float32(0)
 	if tex := q.texture(); tex != nil {
 		tb := float32(tex.Border)
-		fmt.Println("quad border", tb)
 		bw, bh = tb/float32(tex.Width), tb/float32(tex.Height)
 	}
 

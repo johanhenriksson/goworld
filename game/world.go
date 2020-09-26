@@ -1,6 +1,7 @@
 package game
 
 import (
+	"fmt"
 	mgl "github.com/go-gl/mathgl/mgl32"
 	"github.com/johanhenriksson/goworld/engine"
 )
@@ -46,6 +47,7 @@ func (w *World) AddChunk(cx, cz int) *Chunk {
 	chunk, err := LoadChunk("chunks", cx, cz)
 	if err != nil {
 		chunk = w.Provider.Chunk(cx, cz)
+		fmt.Printf("Generated chunk %d,%d\n", cx, cz)
 	}
 
 	w.Cache[ChunkPos{cx, cz}] = chunk

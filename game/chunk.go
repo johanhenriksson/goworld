@@ -107,5 +107,6 @@ func LoadChunk(path string, cx, cz int) (*Chunk, error) {
 	if err != nil {
 		return nil, err
 	}
+	fmt.Printf("Read chunk %d,%d from disk\n", chunk.Cx, chunk.Cz)
 	return chunk, nil
 }
