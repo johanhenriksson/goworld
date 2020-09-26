@@ -1,7 +1,11 @@
 package engine
 
 import (
+	"fmt"
+
 	"github.com/go-gl/gl/v4.1-core/gl"
+
+	"github.com/johanhenriksson/goworld/render"
 )
 
 // RenderPass is a step in the rendering pipeline
@@ -15,14 +19,12 @@ type PassMap map[string]RenderPass
 // Renderer holds references to the Scene and is responsible for executing render passes in order
 type Renderer struct {
 	Passes  []RenderPass
-	Scene   *Scene
 	passMap PassMap
 }
 
 // NewRenderer instantiates a new rendering pipeline.
-func NewRenderer(scene *Scene) *Renderer {
+func NewRenderer() *Renderer {
 	r := &Renderer{
-		Scene:   scene,
 		Passes:  []RenderPass{},
 		passMap: make(PassMap),
 	}
@@ -31,6 +33,10 @@ func NewRenderer(scene *Scene) *Renderer {
 
 // Append a new render pass
 func (r *Renderer) Append(name string, pass RenderPass) {
+	if len(name) == 0 {
+		panic(fmt.Errorf("Render passes must have names"))
+	}
+
 	r.Passes = append(r.Passes, pass)
 	if len(name) > 0 {
 		r.passMap[name] = pass
@@ -49,25 +55,21 @@ func (r *Renderer) Reset() {
 }
 
 // Draw the world.
-func (r *Renderer) Draw() {
-	/* Clear screen */
+func (r *Renderer) Draw(scene *Scene) {
+	// clear screen buffer
+	render.ScreenBuffer.Bind()
 	gl.ClearColor(0.9, 0.9, 0.9, 1.0)
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
-	/* Enable blending */
+	// enable blending
 	gl.Enable(gl.BLEND)
 	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 
-	/* Depth test */
+	// enable depth test
 	gl.Enable(gl.DEPTH_TEST)
 	gl.DepthFunc(gl.LESS)
 
 	for _, pass := range r.Passes {
-		pass.DrawPass(r.Scene)
+		pass.DrawPass(scene)
 	}
-}
-
-// Update the world.
-func (r *Renderer) Update(dt float32) {
-	r.Scene.Update(dt)
 }

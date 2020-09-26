@@ -2,6 +2,7 @@ package render
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
@@ -55,13 +56,20 @@ func CreateProgram() *ShaderProgram {
 	}
 }
 
-// CompileVFShader is a shorthand to compile a vertex & fragment shader and link them into a shader program.
+// CompileShaderProgram is a shorthand to compile a vertex & fragment shader and link them into a shader program.
 // Uses the given file path plus ".vs.glsl" for the vertex shader and ".fs.glsl" for
 // the fragment shader.
-func CompileVFShader(shaderFileName string) *ShaderProgram {
+func CompileShaderProgram(shaderFileName string) *ShaderProgram {
 	program := CreateProgram()
 	program.Attach(VertexShader(fmt.Sprintf("%s.vs.glsl", shaderFileName)))
 	program.Attach(FragmentShader(fmt.Sprintf("%s.fs.glsl", shaderFileName)))
+
+	// optional geometry shader
+	gsPath := fmt.Sprintf("%s.gs.glsl", shaderFileName)
+	if _, err := os.Stat(gsPath); err == nil {
+		program.Attach(GeometryShader(gsPath))
+	}
+
 	program.Link()
 	return program
 }

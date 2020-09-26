@@ -19,6 +19,8 @@ const VertexShaderType ShaderType = gl.VERTEX_SHADER
 // FragmentShaderType is a Fragment Shader
 const FragmentShaderType ShaderType = gl.FRAGMENT_SHADER
 
+const GeometryShaderType ShaderType = gl.GEOMETRY_SHADER
+
 // Shader represents a shader part of a GLSL program
 type Shader struct {
 	ID       uint32
@@ -51,6 +53,15 @@ func VertexShader(path string) *Shader {
 // Panics on compilation errors
 func FragmentShader(path string) *Shader {
 	s := CreateShader(FragmentShaderType)
+	err := s.CompileFile(path)
+	if err != nil {
+		panic(err)
+	}
+	return s
+}
+
+func GeometryShader(path string) *Shader {
+	s := CreateShader(GeometryShaderType)
 	err := s.CompileFile(path)
 	if err != nil {
 		panic(err)

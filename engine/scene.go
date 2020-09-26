@@ -54,6 +54,7 @@ func (s *Scene) DrawPass(pass render.DrawPass) {
 		VP:         vp,
 		MVP:        vp,
 		Transform:  m,
+		Position:   s.Camera.Position,
 
 		Pass: pass,
 	}

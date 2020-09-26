@@ -46,10 +46,12 @@ func main() {
 
 	app := engine.NewApplication("voxels", 1400, 1000)
 	uim := ui.NewManager(app)
-	app.Render.Append("ui", uim)
+	app.Pipeline.Append("ui", uim)
+
+	scene := engine.NewScene()
 
 	/* grab a reference to the geometry render pass */
-	geoPass := app.Render.Get("geometry").(*engine.GeometryPass)
+	geoPass := app.Pipeline.Get("geometry").(*engine.GeometryPass)
 
 	// create a camera
 	camera := engine.CreateCamera(&render.ScreenBuffer, vec3.New(1, 22, 1), 55.0, 0.1, 600.0)
@@ -59,8 +61,8 @@ func main() {
 	camera.Clear = render.Color4(0.973, 0.945, 0.776, 1.0) // light gray
 	camera.Clear = render.Color4(0.368, 0.611, 0.800, 1.0) // blue
 
-	app.Scene.Camera = camera
-	app.Scene.Lights = []engine.Light{
+	scene.Camera = camera
+	scene.Lights = []engine.Light{
 		{ // directional light
 			Intensity:  0.8,
 			Color:      vec3.New(0.9*0.973, 0.9*0.945, 0.9*0.776),
@@ -110,7 +112,7 @@ func main() {
 			chunk := world.AddChunk(cx, cz)
 			mesh := game.NewChunkMesh(obj, chunk)
 			mesh.Compute()
-			app.Scene.Add(obj)
+			scene.Add(obj)
 
 			chunks[cx][cz] = mesh
 			fmt.Printf("(%d,%d) ", cx, cz)
@@ -125,13 +127,13 @@ func main() {
 	// building.Scale = mgl.Vec3{0.1, 0.1, 0.1}
 	// palette := assets.GetMaterialCached("uv_palette")
 	// geometry.NewObjModel(building, palette, "models/building.obj")
-	// app.Scene.Add(building)
+	// scene.Add(building)
 
 	// this composition system sucks
 	//game.NewPlacementGrid(chunks[0])
 
 	// buffer display windows
-	lightPass := app.Render.Get("light").(*engine.LightPass)
+	lightPass := app.Pipeline.Get("light").(*engine.LightPass)
 	bufferWindows := ui.NewRect(ui.Style{"spacing": ui.Float(10)},
 		newBufferWindow("Diffuse", geoPass.Buffer.Diffuse, false),
 		newBufferWindow("Normal", geoPass.Buffer.Normal, false),
@@ -209,8 +211,18 @@ func main() {
 	velocity := vec3.Zero
 	grounded := true
 
+	psys := engine.NewObject(vec3.Zero)
+	engine.NewParticleSystem(psys)
+	scene.Add(psys)
+
+	app.Draw = func(wnd *engine.Window, dt float32) {
+		app.Pipeline.Draw(scene)
+	}
+
 	/* Render loop */
-	app.UpdateFunc = func(dt float32) {
+	app.Update = func(dt float32) {
+		scene.Update(dt)
+
 		versiontext = fmt.Sprintf("goworld | %s | %.0f fps", time.Now().Format("2006-01-02 15:04"), app.Window.FPS)
 		watermark.Set(versiontext)
 

@@ -2,19 +2,16 @@ package engine
 
 // Application holds references to the basic engine components
 type Application struct {
-	Window     *Window
-	Scene      *Scene
-	Render     *Renderer
-	UpdateFunc UpdateCallback
+	Window   *Window
+	Pipeline *Renderer
+	Update   UpdateCallback
+	Draw     RenderCallback
 }
 
 // NewApplication instantiates a new engine application
 func NewApplication(title string, width, height int) *Application {
 	highDpiEnabled := false
 	wnd := CreateWindow(title, width, height, highDpiEnabled)
-
-	// create a scene
-	scene := NewScene()
 
 	// figure out render resolution if we're on a high dpi screen
 	scale := float32(1.0)
@@ -24,7 +21,7 @@ func NewApplication(title string, width, height int) *Application {
 	renderWidth, renderHeight := int32(float32(width)*scale), int32(float32(height)*scale)
 
 	// set upp renderer
-	renderer := NewRenderer(scene)
+	renderer := NewRenderer()
 	geoPass := NewGeometryPass(renderWidth, renderHeight)
 	lightPass := NewLightPass(geoPass.Buffer)
 	colorPass := NewColorPass(lightPass.Output, "saturated")
@@ -35,22 +32,22 @@ func NewApplication(title string, width, height int) *Application {
 	renderer.Append("lines", NewLinePass())
 
 	app := &Application{
-		Window: wnd,
-		Scene:  scene,
-		Render: renderer,
+		Window:   wnd,
+		Pipeline: renderer,
 	}
 
 	// update callback
 	app.Window.SetUpdateCallback(func(dt float32) {
-		app.Render.Update(dt)
-		if app.UpdateFunc != nil {
-			app.UpdateFunc(dt)
+		if app.Update != nil {
+			app.Update(dt)
 		}
 	})
 
 	// draw callback
 	app.Window.SetRenderCallback(func(wnd *Window, dt float32) {
-		app.Render.Draw()
+		if app.Draw != nil {
+			app.Draw(wnd, dt)
+		}
 	})
 
 	return app

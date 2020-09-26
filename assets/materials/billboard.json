@@ -1,0 +1,11 @@
+{
+    "buffers": {
+        "geometry": [
+            {
+                "name": "position",
+                "type": "float",
+                "count": 3
+            }
+        ]
+    }
+}

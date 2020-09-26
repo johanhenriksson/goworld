@@ -1,6 +1,8 @@
 package render
 
-import "unsafe"
+import (
+	"unsafe"
+)
 
 type UInt32Buffer []uint32
 
@@ -44,5 +46,25 @@ func (vtx FloatBuffer) Size() int {
 }
 
 func (vtx FloatBuffer) Pointer() unsafe.Pointer {
+	return unsafe.Pointer(&vtx[0])
+}
+
+type Vec3 struct {
+	X float32
+	Y float32
+	Z float32
+}
+
+type Vec3Buffer []Vec3
+
+func (vtx Vec3Buffer) Elements() int {
+	return len(vtx)
+}
+
+func (vtx Vec3Buffer) Size() int {
+	return 12
+}
+
+func (vtx Vec3Buffer) Pointer() unsafe.Pointer {
 	return unsafe.Pointer(&vtx[0])
 }

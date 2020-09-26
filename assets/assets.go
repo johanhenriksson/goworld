@@ -38,7 +38,7 @@ func GetShader(name string) *render.ShaderProgram {
 
 	// attempt to load
 	fmt.Println("+ shader", name)
-	shader := render.CompileVFShader("assets/shaders/" + name)
+	shader := render.CompileShaderProgram("assets/shaders/" + name)
 	cache.Shaders[name] = shader
 
 	return shader

@@ -2,6 +2,7 @@ package render
 
 import (
 	"github.com/johanhenriksson/goworld/math/mat4"
+	"github.com/johanhenriksson/goworld/math/vec3"
 )
 
 type DrawPass int32
@@ -10,6 +11,7 @@ const (
 	GeometryPass DrawPass = iota
 	LightPass
 	LinePass
+	ParticlePass
 )
 
 /** UI Component render interface */
@@ -31,5 +33,6 @@ type DrawArgs struct {
 	Projection mat4.T
 	View       mat4.T
 	Transform  mat4.T
+	Position   vec3.T
 	Pass       DrawPass
 }
