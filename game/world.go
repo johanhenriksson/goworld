@@ -71,3 +71,12 @@ func (w *World) Set(x, y, z int, voxel Voxel) {
 		chunk.Light.Block(lx, ly, lz, voxel != EmptyVoxel)
 	}
 }
+
+func (w *World) HeightAt(p mgl.Vec3) float32 {
+	x, y, z := int(p.X()), int(p.Y()), int(p.Z())
+	for w.Voxel(x, y, z) == EmptyVoxel && y >= 0 {
+		y--
+	}
+	y++
+	return float32(y)
+}

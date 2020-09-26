@@ -72,47 +72,6 @@ func (cam *Camera) Unproject(pos mgl.Vec3) mgl.Vec3 {
 
 // Update the camera
 func (cam *Camera) Update(dt float32) {
-	/* Handle keyboard input */
-	move := false
-	dir := mgl.Vec3{}
-	if KeyDown(KeyW) && !KeyDown(KeyS) {
-		dir[2] += 1.0
-		move = true
-	}
-	if KeyDown(KeyS) && !KeyDown(KeyW) {
-		dir[2] -= 1.0
-		move = true
-	}
-	if KeyDown(KeyA) && !KeyDown(KeyD) {
-		dir[0] -= 1.0
-		move = true
-	}
-	if KeyDown(KeyD) && !KeyDown(KeyA) {
-		dir[0] += 1.0
-		move = true
-	}
-	if KeyDown(KeyE) && !KeyDown(KeyQ) {
-		dir[1] += 1.0
-		move = true
-	}
-	if KeyDown(KeyQ) && !KeyDown(KeyE) {
-		dir[1] -= 1.0
-		move = true
-	}
-
-	if move {
-		/* Calculate normalized movement vector */
-		dv := 12.0 * dt /* magic number: movement speed */
-		dir = dir.Normalize().Mul(dv)
-
-		right := cam.Transform.Right.Mul(dir[0])
-		up := mgl.Vec3{0, dir[1], 0}
-		forward := cam.Transform.Forward.Mul(dir[2])
-
-		/* Translate camera */
-		cam.Transform.Translate(right.Add(up.Add(forward)))
-	}
-
 	/* Mouse look */
 	if MouseDown(MouseButton1) {
 		rx := cam.Transform.Rotation[0] - Mouse.DY*0.08

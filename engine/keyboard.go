@@ -96,4 +96,5 @@ const (
 	KeyEnter     = KeyCode(glfw.KeyEnter)
 	KeyEscape    = KeyCode(glfw.KeyEscape)
 	KeyBackspace = KeyCode(glfw.KeyBackspace)
+	KeySpace     = KeyCode(glfw.KeySpace)
 )

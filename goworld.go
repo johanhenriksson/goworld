@@ -49,7 +49,7 @@ func main() {
 	geoPass := app.Render.Get("geometry").(*engine.GeometryPass)
 
 	// create a camera
-	camera := engine.CreateCamera(&render.ScreenBuffer, -10, 22, -10, 55.0, 0.1, 600.0)
+	camera := engine.CreateCamera(&render.ScreenBuffer, 1, 22, 1, 55.0, 0.1, 600.0)
 	camera.Rotation[0] = 22
 	camera.Rotation[1] = 135
 	camera.Clear = render.Color4(0.141, 0.128, 0.118, 1.0) // dark gray
@@ -189,10 +189,108 @@ func main() {
 		return viewNormal, false
 	}
 
+	// physics constants
+	gravity := float32(20)
+	speed := float32(60)
+	airspeed := float32(33)
+	friction := float32(0.91)
+	airfriction := float32(0.955)
+	camOffset := mgl.Vec3{0, 1.75, 0}
+
+	// player physics state
+	position := camera.Position.Sub(camOffset)
+	velocity := mgl.Vec3{0,0,0}
+	grounded := true
+
 	/* Render loop */
 	app.UpdateFunc = func(dt float32) {
 		versiontext = fmt.Sprintf("goworld | %s | %.0f fps", time.Now().Format("2006-01-02 15:04"), app.Window.FPS)
 		watermark.Set(versiontext)
+
+		/*** movement **************************************/
+
+		move := mgl.Vec3{0,0,0}
+		moving := false
+		if engine.KeyDown(engine.KeyW) && !engine.KeyDown(engine.KeyS) {
+			move[2] += 1.0
+			moving = true
+		}
+		if engine.KeyDown(engine.KeyS) && !engine.KeyDown(engine.KeyW) {
+			move[2] -= 1.0
+			moving = true
+		}
+		if engine.KeyDown(engine.KeyA) && !engine.KeyDown(engine.KeyD) {
+			move[0] -= 1.0
+			moving = true
+		}
+		if engine.KeyDown(engine.KeyD) && !engine.KeyDown(engine.KeyA) {
+			move[0] += 1.0
+			moving = true
+		}
+	
+		if moving {
+			right := camera.Transform.Right.Mul(move[0])
+			forward := camera.Transform.Forward.Mul(move[2])
+
+			move = right.Add(forward)
+			move[1] = 0 // remove y component
+			move = move.Normalize()
+		}
+		if grounded {
+			move = move.Mul(speed)
+		} else {
+			move = move.Mul(airspeed)
+		}
+
+		// apply movement
+		velocity = velocity.Add(move.Mul(dt))
+
+		// friction
+		if grounded {
+			velocity = mgl.Vec3{velocity.X() * friction, velocity.Y(), velocity.Z() * friction}
+		} else {
+			velocity = mgl.Vec3{velocity.X() * airfriction, velocity.Y(), velocity.Z() * airfriction}
+		}
+
+		// gravity
+		velocity = velocity.Add(mgl.Vec3{0, -gravity*dt, 0})
+
+		// apply movement in Y
+		position = position.Add(mgl.Vec3{0, velocity.Y()*dt, 0})
+
+		// ground collision
+		height := world.HeightAt(position)
+		if position.Y() < height {
+			position = mgl.Vec3{position.X(), height, position.Z()}
+			velocity[1] = 0
+			grounded = true
+		} else {
+			grounded = false
+		}
+
+		// jumping
+		if grounded && engine.KeyDown(engine.KeySpace) {
+			velocity[1] += 7
+		}
+
+		// x collision
+		xstep := position.Add(mgl.Vec3{velocity.X()*dt, 0, 0})
+		if world.HeightAt(xstep) > position.Y() {
+			velocity[0] = 0
+		}
+
+		// z collision
+		zstep := position.Add(mgl.Vec3{0, 0, velocity.Z()*dt})
+		if world.HeightAt(zstep) > position.Y() {
+			velocity[2] = 0
+		}
+		
+		position = position.Add(mgl.Vec3{velocity.X()*dt, 0, velocity.Z()*dt})
+
+		fmt.Println(dt, position, height)
+		camera.Position = position.Add(camOffset)
+
+		/*** end movement **************************************/
 
 		worldPos, worldExists := sampleWorld()
 		if !worldExists {
