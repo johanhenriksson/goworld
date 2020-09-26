@@ -2,9 +2,10 @@
 
 *Not in active development! Working on it occasionally.*
 
-Yet another attempt at building a basic OpenGL 3D engine from scratch, Google Go edition. The goal is to create a engine capable of producing *some* kind of *passable* graphics with a coherent art style. So far, the style is based on colored voxels.
+Yet another attempt at building a basic OpenGL 3D engine from scratch, this time in Go. The goal is to create a engine capable of producing *some* kind of *passable* graphics with a coherent art style. So far, the style is based around colored voxels.
 
 **Features:**
+- Voxel World demo, with basic player physics and an editable, persistent world.
 - Deferred Rendering Pipeline
 - Directional Lights
 - Directional Shadows
@@ -15,9 +16,10 @@ Yet another attempt at building a basic OpenGL 3D engine from scratch, Google Go
 - TrueType Font Rendering
 - UI: Panels, Labels, basic layout engine
 
-Only tested on OSX 10.10+. It should theoretically work on Windows/Linux.
+Only tested on OSX 10.10+. It should *theoretically* work on Windows and Linux.
 
-![Screenshot from 2019-05/07](docs/img/screenshot190507.png)
+![Screenshot from 2020-09-26](docs/img/screenshot200926.png)
+![Screenshot from 2019-05-07](docs/img/screenshot190507.png)
 
 ## System Requirements
 

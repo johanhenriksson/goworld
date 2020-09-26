@@ -27,7 +27,7 @@ func NewApplication(title string, width, height int) *Application {
 	renderer := NewRenderer(renderWidth, renderHeight, scene)
 	geoPass := NewGeometryPass(renderWidth, renderHeight)
 	lightPass := NewLightPass(geoPass.Buffer)
-	colorPass := NewColorPass(lightPass.Output, "none")
+	colorPass := NewColorPass(lightPass.Output, "saturated")
 	renderer.Append("geometry", geoPass)
 	renderer.Append("light", lightPass)
 	renderer.Append("postprocess", colorPass)

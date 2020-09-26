@@ -190,12 +190,14 @@ func main() {
 	}
 
 	// physics constants
-	gravity := float32(20)
+	gravity := float32(53)
 	speed := float32(60)
 	airspeed := float32(33)
 	friction := float32(0.91)
+	jumpvel := 0.37 * gravity
 	airfriction := float32(0.955)
 	camOffset := mgl.Vec3{0, 1.75, 0}
+	fly := true
 
 	// player physics state
 	position := camera.Position.Sub(camOffset)
@@ -227,16 +229,31 @@ func main() {
 			move[0] += 1.0
 			moving = true
 		}
+		if fly && engine.KeyDown(engine.KeyQ) && !engine.KeyDown(engine.KeyE) {
+			move[1] -= 1.0
+			moving = true
+		}
+		if fly && engine.KeyDown(engine.KeyE) && !engine.KeyDown(engine.KeyQ) {
+			move[1] += 1.0
+			moving = true
+		}
+		if engine.KeyPressed(engine.KeyV) {
+			fly = !fly
+		}
 	
 		if moving {
 			right := camera.Transform.Right.Mul(move[0])
 			forward := camera.Transform.Forward.Mul(move[2])
+			up := mgl.Vec3{0, move[1], 0}
 
 			move = right.Add(forward)
 			move[1] = 0 // remove y component
+			if fly {
+				move = move.Add(up)
+			}
 			move = move.Normalize()
 		}
-		if grounded {
+		if grounded || fly {
 			move = move.Mul(speed)
 		} else {
 			move = move.Mul(airspeed)
@@ -247,13 +264,17 @@ func main() {
 
 		// friction
 		if grounded {
-			velocity = mgl.Vec3{velocity.X() * friction, velocity.Y(), velocity.Z() * friction}
+			// velocity = mgl.Vec3{velocity.X() * friction, velocity.Y(), velocity.Z() * friction}
+			velocity = velocity.Mul(friction)
 		} else {
-			velocity = mgl.Vec3{velocity.X() * airfriction, velocity.Y(), velocity.Z() * airfriction}
+			// velocity = mgl.Vec3{velocity.X() * airfriction, velocity.Y(), velocity.Z() * airfriction}
+			velocity = velocity.Mul(airfriction)
 		}
 
 		// gravity
-		velocity = velocity.Add(mgl.Vec3{0, -gravity*dt, 0})
+		if !fly {
+			velocity = velocity.Add(mgl.Vec3{0, -gravity*dt, 0})
+		}
 
 		// apply movement in Y
 		position = position.Add(mgl.Vec3{0, velocity.Y()*dt, 0})
@@ -270,7 +291,7 @@ func main() {
 
 		// jumping
 		if grounded && engine.KeyDown(engine.KeySpace) {
-			velocity[1] += 7
+			velocity[1] += jumpvel
 		}
 
 		// x collision
@@ -285,9 +306,10 @@ func main() {
 			velocity[2] = 0
 		}
 		
+		// add horizontal movement
 		position = position.Add(mgl.Vec3{velocity.X()*dt, 0, velocity.Z()*dt})
 
-		fmt.Println(dt, position, height)
+		// update camera position
 		camera.Position = position.Add(camOffset)
 
 		/*** end movement **************************************/
