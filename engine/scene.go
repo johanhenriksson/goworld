@@ -1,20 +1,19 @@
 package engine
 
 import (
+	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/render"
-
-	mgl "github.com/go-gl/mathgl/mgl32"
 )
 
 // Scene graph root
 type Scene struct {
-	/* Active camera */
+	// Active camera
 	Camera *Camera
 
-	/* Root Objects */
+	// Root Objects
 	Objects []*Object
 
-	/* temporary: list of all lights in the scene */
+	// List of all lights in the scene
 	Lights []Light
 }
 
@@ -31,7 +30,7 @@ func NewScene() *Scene {
 
 // Add an object to the scene
 func (s *Scene) Add(object *Object) {
-	/* TODO look for lights - maybe not here? */
+	// TODO: keep track of lights
 	s.Objects = append(s.Objects, object)
 }
 
@@ -43,9 +42,8 @@ func (s *Scene) DrawPass(pass render.DrawPass) {
 
 	p := s.Camera.Projection
 	v := s.Camera.View
-	m := mgl.Ident4()
-	vp := p.Mul4(v)
-	// mvp := vp * m
+	m := mat4.Ident()
+	vp := p.Mul(&v)
 
 	/* DrawArgs will be copied down recursively into the scene graph.
 	 * Each object adds its transformation matrix before passing
@@ -65,7 +63,7 @@ func (s *Scene) DrawPass(pass render.DrawPass) {
 
 // Draw the scene using the provided render arguments
 func (s *Scene) Draw(args render.DrawArgs) {
-	/* draw root objects */
+	// draw root objects
 	for _, obj := range s.Objects {
 		obj.Draw(args)
 	}
@@ -74,15 +72,12 @@ func (s *Scene) Draw(args render.DrawArgs) {
 // Update the scene.
 func (s *Scene) Update(dt float32) {
 	if s.Camera != nil {
-		/* update camera first */
+		// update camera first
 		s.Camera.Update(dt)
 	}
 
-	/* update root objects */
+	// update root objects
 	for _, obj := range s.Objects {
 		obj.Update(dt)
 	}
-
-	/* test: position first light on camera */
-	//s.lights[0].Position = s.Camera.Position
 }

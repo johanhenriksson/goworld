@@ -2,7 +2,9 @@ package engine
 
 import (
 	"github.com/go-gl/gl/v4.1-core/gl"
-	mgl "github.com/go-gl/mathgl/mgl32"
+
+	"github.com/johanhenriksson/goworld/math/mat4"
+	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
 )
 
@@ -78,9 +80,9 @@ func (p *LightPass) setLightUniforms(light *Light) {
 
 	/* compute world to lightspace (light view projection) matrix */
 	lp := light.Projection
-	lv := mgl.LookAtV(light.Position, mgl.Vec3{}, mgl.Vec3{0, 1, 0}) // only for directional light
-	lvp := lp.Mul4(lv)
-	shader.Mat4f("light_vp", lvp)
+	lv := mat4.LookAt(light.Position, vec3.Zero) // only for directional light
+	lvp := lp.Mul(&lv)
+	shader.Mat4f("light_vp", &lvp)
 
 	/* set light uniform attributes */
 	shader.Vec3("light.Position", &light.Position)
@@ -99,12 +101,12 @@ func (p *LightPass) DrawPass(scene *Scene) {
 	p.SSAO.DrawPass(scene)
 
 	// compute camera view projection inverse
-	vp := scene.Camera.Projection.Mul4(scene.Camera.View)
+	vp := scene.Camera.Projection.Mul(&scene.Camera.View)
 	vpInv := vp.Inv()
 	vInv := scene.Camera.View.Inv()
 	p.mat.Use()
-	p.mat.Mat4f("cameraInverse", vpInv)
-	p.mat.Mat4f("viewInverse", vInv)
+	p.mat.Mat4f("cameraInverse", &vpInv)
+	p.mat.Mat4f("viewInverse", &vInv)
 
 	// clear output buffer
 	p.fbo.Bind()
@@ -120,7 +122,7 @@ func (p *LightPass) DrawPass(scene *Scene) {
 
 	// ambient light pass
 	ambient := Light{
-		Color:     mgl.Vec3{p.Ambient.R, p.Ambient.G, p.Ambient.B},
+		Color:     p.Ambient.Vec3(),
 		Intensity: 1,
 	}
 	p.setLightUniforms(&ambient)

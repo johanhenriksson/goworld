@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"image/color"
 
-	mgl "github.com/go-gl/mathgl/mgl32"
+	"github.com/johanhenriksson/goworld/math/vec3"
+	"github.com/johanhenriksson/goworld/math/vec4"
 )
 
 var White = Color{1, 1, 1, 1}
@@ -32,12 +33,12 @@ func (c Color) RGBA() color.RGBA {
 	}
 }
 
-func (c Color) Vec3() mgl.Vec3 {
-	return mgl.Vec3{c.R, c.G, c.B}
+func (c Color) Vec3() vec3.T {
+	return vec3.T{c.R, c.G, c.B}
 }
 
-func (c Color) Vec4() mgl.Vec4 {
-	return mgl.Vec4{c.R, c.G, c.B, c.A}
+func (c Color) Vec4() vec4.T {
+	return vec4.T{c.R, c.G, c.B, c.A}
 }
 
 func (c Color) String() string {

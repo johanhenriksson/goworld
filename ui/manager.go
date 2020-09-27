@@ -1,19 +1,20 @@
 package ui
 
 import (
+	"github.com/go-gl/gl/v4.1-core/gl"
+	"github.com/go-gl/glfw/v3.1/glfw"
+
 	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/engine/keys"
 	"github.com/johanhenriksson/goworld/engine/mouse"
+	"github.com/johanhenriksson/goworld/math/vec2"
+	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/render"
-
-	"github.com/go-gl/gl/v4.1-core/gl"
-	"github.com/go-gl/glfw/v3.1/glfw"
-	mgl "github.com/go-gl/mathgl/mgl32"
 )
 
 // Manager is the main UI manager. Handles routing of events and drawing of the UI.
 type Manager struct {
-	Viewport mgl.Mat4
+	Viewport mat4.T
 	Width    float32
 	Height   float32
 	Focused  Component
@@ -30,7 +31,7 @@ func NewManager(app *engine.Application) *Manager {
 	m := &Manager{
 		Width:    width,
 		Height:   height,
-		Viewport: mgl.Ortho(0, width, height, 0, 1000, -1000),
+		Viewport: mat4.Orthographic(0, width, height, 0, 1000, -1000),
 		Children: []Component{},
 	}
 
@@ -51,7 +52,7 @@ func (m *Manager) Attach(child Component) {
 // DrawPass draws the UI
 func (m *Manager) DrawPass(scene *engine.Scene) {
 	p := m.Viewport
-	v := mgl.Ident4() // unused by UI
+	v := mat4.Ident() // unused by UI
 	vp := p           // unused by UI
 
 	args := render.DrawArgs{
@@ -59,7 +60,7 @@ func (m *Manager) DrawPass(scene *engine.Scene) {
 		View:       v,
 		VP:         vp,
 		MVP:        vp,
-		Transform:  mgl.Ident4(),
+		Transform:  mat4.Ident(),
 	}
 
 	// ensure back face culling is disabled
@@ -108,7 +109,7 @@ func (m *Manager) handleMouse(x, y float32, button mouse.Button) bool {
 
 	event := MouseEvent{
 		UI:     m,
-		Point:  mgl.Vec2{x, y},
+		Point:  vec2.T{x, y},
 		Button: button,
 	}
 	for _, el := range m.Children {

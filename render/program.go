@@ -5,8 +5,11 @@ import (
 	"strings"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
-	mgl "github.com/go-gl/mathgl/mgl32"
 
+	"github.com/johanhenriksson/goworld/math/mat4"
+	"github.com/johanhenriksson/goworld/math/vec2"
+	"github.com/johanhenriksson/goworld/math/vec3"
+	"github.com/johanhenriksson/goworld/math/vec4"
 	"github.com/johanhenriksson/goworld/util"
 )
 
@@ -145,38 +148,31 @@ func (program *ShaderProgram) GetAttrLoc(attr string) (AttributeLocation, bool) 
 	return loc, true
 }
 
-// Mat3f sets a 3x3 matrix uniform value
-func (program *ShaderProgram) Mat3f(name string, mat3 mgl.Mat3) {
-	if loc, ok := program.GetUniformLoc(name); ok {
-		gl.UniformMatrix3fv(int32(loc), 1, false, &mat3[0])
-	}
-}
-
 // Mat4f Sets a 4 by 4 matrix uniform value
-func (program *ShaderProgram) Mat4f(name string, mat4 mgl.Mat4) {
+func (program *ShaderProgram) Mat4f(name string, mat4 *mat4.T) {
 	if loc, ok := program.GetUniformLoc(name); ok {
 		gl.UniformMatrix4fv(int32(loc), 1, false, &mat4[0])
 	}
 }
 
 // Vec2 sets a Vec2 uniform value
-func (program *ShaderProgram) Vec2(name string, vec *mgl.Vec2) {
+func (program *ShaderProgram) Vec2(name string, vec *vec2.T) {
 	if loc, ok := program.GetUniformLoc(name); ok {
-		gl.Uniform2f(int32(loc), vec[0], vec[1])
+		gl.Uniform2f(int32(loc), vec.X, vec.Y)
 	}
 }
 
 // Vec3 sets a Vec3 uniform value
-func (program *ShaderProgram) Vec3(name string, vec *mgl.Vec3) {
+func (program *ShaderProgram) Vec3(name string, vec *vec3.T) {
 	if loc, ok := program.GetUniformLoc(name); ok {
-		gl.Uniform3f(int32(loc), vec[0], vec[1], vec[2])
+		gl.Uniform3f(int32(loc), vec.X, vec.Y, vec.Z)
 	}
 }
 
 // Vec4 sets a Vec4f uniform value
-func (program *ShaderProgram) Vec4(name string, vec *mgl.Vec4) {
+func (program *ShaderProgram) Vec4(name string, vec *vec4.T) {
 	if loc, ok := program.GetUniformLoc(name); ok {
-		gl.Uniform4f(int32(loc), vec[0], vec[1], vec[2], vec[3])
+		gl.Uniform4f(int32(loc), vec.X, vec.Y, vec.Z, vec.W)
 	}
 }
 

@@ -51,7 +51,7 @@ func (r *Rect) Draw(args render.DrawArgs) {
 
 	/* compute local transform */
 	local := args
-	local.Transform = r.Element.Transform.Matrix.Mul4(args.Transform)
+	local.Transform = r.Element.Transform.Matrix.Mul(&args.Transform)
 
 	/* draw rect */
 	// this belongs in the quad drawing code

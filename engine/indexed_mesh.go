@@ -39,9 +39,9 @@ func (m *IndexedMesh) Buffer(name string, data render.VertexData) error {
 // Draw the mesh
 func (m *IndexedMesh) Draw(args render.DrawArgs) {
 	m.material.Use()
-	m.material.Mat4f("model", args.Transform)
-	m.material.Mat4f("view", args.View)
-	m.material.Mat4f("projection", args.Projection)
+	m.material.Mat4f("model", &args.Transform)
+	m.material.Mat4f("view", &args.View)
+	m.material.Mat4f("projection", &args.Projection)
 
 	m.vao.DrawIndexed()
 }

@@ -1,7 +1,9 @@
 package ui
 
 import (
-	mgl "github.com/go-gl/mathgl/mgl32"
+	"github.com/johanhenriksson/goworld/math/vec2"
+	"github.com/johanhenriksson/goworld/math/vec3"
+	"github.com/johanhenriksson/goworld/math/vec4"
 	"github.com/johanhenriksson/goworld/render"
 )
 
@@ -47,7 +49,7 @@ func (e *Element) Parent() Component {
 func (e *Element) SetParent(parent Component) {
 	// TODO detach from current parent?
 	e.parent = parent
-	e.Transform.Position = mgl.Vec3{e.Transform.Position.X(), e.Transform.Position.Y(), e.ZIndex()}
+	e.Transform.Position = vec3.Extend(e.Transform.Position.XY(), e.ZIndex())
 	e.Transform.Update(0)
 }
 
@@ -74,7 +76,7 @@ func (e *Element) Flow(available Size) Size {
 }
 
 func (e *Element) SetPosition(x, y float32) {
-	e.Transform.Position = mgl.Vec3{x, y, e.Transform.Position.Z()}
+	e.Transform.Position = vec3.T{x, y, e.Transform.Position.Z}
 	e.Transform.Update(0)
 }
 
@@ -87,23 +89,24 @@ func (e *Element) Attach(child Component) {
 // Draw this element and its children
 func (e *Element) Draw(args render.DrawArgs) {
 	/* Multiply transform to args */
-	args.Transform = e.Transform.Matrix.Mul4(args.Transform)
+	args.Transform = e.Transform.Matrix.Mul(&args.Transform)
 	for _, el := range e.children {
 		el.Draw(args)
 	}
 }
 
 // InBounds returns true of the given 2D position is wihtin the bounds of this element
-func (e *Element) InBounds(pos mgl.Vec2) bool {
-	return pos.X() >= 0 && pos.Y() >= 0 &&
-		pos.X() <= e.Width() && pos.Y() <= e.Height()
+func (e *Element) InBounds(pos vec2.T) bool {
+	return pos.X >= 0 && pos.Y >= 0 &&
+		pos.X <= e.Width() && pos.Y <= e.Height()
 }
 
 // HandleMouse attempts to handle a mouse event with this element
 func (e *Element) HandleMouse(ev MouseEvent) bool {
 	// transform the point into our local coordinate system
-	projected := e.Transform.Matrix.Inv().Mul4x1(mgl.Vec4{ev.Point.X(), ev.Point.Y(), 0, 1})
-	ev.Point = mgl.Vec2{projected.X(), projected.Y()}
+	invTransform := e.Transform.Matrix.Inv()
+	projected := invTransform.MulVec4(vec4.Extend2(ev.Point, 0, 1))
+	ev.Point = projected.XY()
 
 	// check if we're inside element bounds
 	if !e.InBounds(ev.Point) {

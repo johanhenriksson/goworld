@@ -1,7 +1,7 @@
 package render
 
 import (
-	mgl "github.com/go-gl/mathgl/mgl32"
+	"github.com/johanhenriksson/goworld/math/mat4"
 )
 
 type DrawPass int32
@@ -26,10 +26,10 @@ type Drawable interface {
 
 /** Passed to Drawables on render */
 type DrawArgs struct {
-	VP         mgl.Mat4
-	MVP        mgl.Mat4
-	Projection mgl.Mat4
-	View       mgl.Mat4
-	Transform  mgl.Mat4
+	VP         mat4.T
+	MVP        mat4.T
+	Projection mat4.T
+	View       mat4.T
+	Transform  mat4.T
 	Pass       DrawPass
 }

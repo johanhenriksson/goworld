@@ -4,6 +4,7 @@ import (
 	"fmt"
 	mgl "github.com/go-gl/mathgl/mgl32"
 	"github.com/johanhenriksson/goworld/engine"
+	"github.com/johanhenriksson/goworld/math/vec3"
 )
 
 type ChunkProvider interface {
@@ -29,7 +30,7 @@ type World struct {
 
 func NewWorld(seed, size int) *World {
 	return &World{
-		Object:       engine.NewObject(0, 0, 0),
+		Object:       engine.NewObject(vec3.Zero),
 		Seed:         seed,
 		KeepDistance: 5,
 		DrawDistance: 3,
@@ -72,8 +73,8 @@ func (w *World) Set(x, y, z int, voxel Voxel) {
 	}
 }
 
-func (w *World) HeightAt(p mgl.Vec3) float32 {
-	x, y, z := int(p.X()), int(p.Y()), int(p.Z())
+func (w *World) HeightAt(p vec3.T) float32 {
+	x, y, z := int(p.X), int(p.Y), int(p.Z)
 	for w.Voxel(x, y, z) == EmptyVoxel && y >= 0 {
 		y--
 	}

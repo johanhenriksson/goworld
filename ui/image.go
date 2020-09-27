@@ -39,7 +39,7 @@ func NewDepthImage(texture *render.Texture, w, h float32, invert bool) *Image {
 }
 
 func (r *Image) Draw(args render.DrawArgs) {
-	args.Transform = r.Element.Transform.Matrix.Mul4(args.Transform) //args.Transform.Mul4(r.Element.Transform.Matrix)
+	args.Transform = r.Element.Transform.Matrix.Mul(&args.Transform) //args.Transform.Mul4(r.Element.Transform.Matrix)
 
 	if r.Transparent {
 		gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
