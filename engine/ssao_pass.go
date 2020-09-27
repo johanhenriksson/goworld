@@ -108,9 +108,9 @@ func createSSAOKernel(samples int) []vec3.T {
 	kernel := make([]vec3.T, samples)
 	for i := 0; i < len(kernel); i++ {
 		sample := vec3.T{
-			rand.Float32()*2 - 1,
-			rand.Float32()*2 - 1,
-			rand.Float32(),
+			X: rand.Float32()*2 - 1,
+			Y: rand.Float32()*2 - 1,
+			Z: rand.Float32(),
 		}
 		sample.Normalize()
 		sample = sample.Scaled(rand.Float32()) // random length

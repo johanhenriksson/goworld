@@ -14,10 +14,10 @@ type Transform2D struct {
 }
 
 /* Creates a new 2D transform */
-func CreateTransform2D(x, y, z float32) *Transform2D {
+func CreateTransform2D(position vec2.T, z float32) *Transform2D {
 	t := &Transform2D{
 		Matrix:   mat4.Ident(),
-		Position: vec3.T{x, y, z},
+		Position: vec3.Extend(position, z),
 		Scale:    vec2.One,
 		Rotation: 0.0,
 	}
@@ -26,5 +26,5 @@ func CreateTransform2D(x, y, z float32) *Transform2D {
 }
 
 func (t *Transform2D) Update(dt float32) {
-	t.Matrix = mat4.Transform(t.Position, vec3.T{0, 0, t.Rotation}, vec3.Extend(t.Scale, 1))
+	t.Matrix = mat4.Transform(t.Position, vec3.New(0, 0, t.Rotation), vec3.Extend(t.Scale, 1))
 }

@@ -7,8 +7,8 @@ import (
 	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/engine/keys"
 	"github.com/johanhenriksson/goworld/engine/mouse"
-	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/math/mat4"
+	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/render"
 )
 
@@ -94,7 +94,7 @@ func (m *Manager) glfwMouseButtonCallback(w *glfw.Window, button glfw.MouseButto
 	// we're only interested in mouse down events at this time
 	if action != glfw.Release {
 		// supress if the event was handled by an element
-		if m.handleMouse(mouse.X, mouse.Y, mouse.Button(button)) {
+		if m.handleMouse(mouse.Position, mouse.Button(button)) {
 			return
 		}
 	}
@@ -103,13 +103,13 @@ func (m *Manager) glfwMouseButtonCallback(w *glfw.Window, button glfw.MouseButto
 	mouse.ButtonCallback(w, button, action, mod)
 }
 
-func (m *Manager) handleMouse(x, y float32, button mouse.Button) bool {
+func (m *Manager) handleMouse(position vec2.T, button mouse.Button) bool {
 	// reset focus
 	m.Focus(nil)
 
 	event := MouseEvent{
 		UI:     m,
-		Point:  vec2.T{x, y},
+		Point:  position,
 		Button: button,
 	}
 	for _, el := range m.Children {

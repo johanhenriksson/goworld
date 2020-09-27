@@ -5,6 +5,10 @@ import (
 	"github.com/johanhenriksson/goworld/math/vec3"
 )
 
+func New(x, y, z, w float32) T {
+	return T{x, y, z, w}
+}
+
 func Extend(v vec3.T, w float32) T {
 	return T{v.X, v.Y, v.Z, w}
 }

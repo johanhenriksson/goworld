@@ -5,6 +5,7 @@ import (
 	"github.com/johanhenriksson/goworld/assets"
 	"github.com/johanhenriksson/goworld/geometry"
 	"github.com/johanhenriksson/goworld/math"
+	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/render"
 )
 
@@ -15,26 +16,26 @@ type Image struct {
 	Quad        *geometry.ImageQuad
 }
 
-func NewImage(texture *render.Texture, w, h float32, invert bool, style Style) *Image {
-	el := NewElement("Image", 0, 0, w, h, style)
+func NewImage(texture *render.Texture, size vec2.T, invert bool, style Style) *Image {
+	el := NewElement("Image", vec2.Zero, size, style)
 	mat := assets.GetMaterial("ui_texture")
 	mat.AddTexture("image", texture)
 	return &Image{
 		Element:     el,
 		Texture:     texture,
-		Quad:        geometry.NewImageQuad(mat, w, h, invert),
+		Quad:        geometry.NewImageQuad(mat, size, invert),
 		Transparent: false,
 	}
 }
 
-func NewDepthImage(texture *render.Texture, w, h float32, invert bool) *Image {
-	el := NewElement("DepthImage", 0, 0, w, h, NoStyle)
+func NewDepthImage(texture *render.Texture, size vec2.T, invert bool) *Image {
+	el := NewElement("DepthImage", vec2.Zero, size, NoStyle)
 	mat := assets.GetMaterial("ui_depth_texture")
 	mat.AddTexture("image", texture)
 	return &Image{
 		Element: el,
 		Texture: texture,
-		Quad:    geometry.NewImageQuad(mat, w, h, invert),
+		Quad:    geometry.NewImageQuad(mat, size, invert),
 	}
 }
 
@@ -56,17 +57,17 @@ func (r *Image) Draw(args render.DrawArgs) {
 	}
 }
 
-func (r *Image) Resize(size Size) Size {
-	if size.Width != r.Width() || size.Height != r.Height() {
+func (r *Image) Resize(size vec2.T) vec2.T {
+	if size.X != r.Width() || size.Y != r.Height() {
 		r.Element.Resize(size)
-		r.Quad.SetSize(size.Width, size.Height)
-		u := math.Min(size.Width/float32(r.Texture.Width), 1)
-		v := math.Min(size.Height/float32(r.Texture.Height), 1)
+		r.Quad.SetSize(size)
+		u := math.Min(size.X/float32(r.Texture.Width), 1)
+		v := math.Min(size.Y/float32(r.Texture.Height), 1)
 		r.Quad.SetUV(u, v)
 	}
 	return r.Size
 }
 
-func (r *Image) Flow(available Size) Size {
+func (r *Image) Flow(available vec2.T) vec2.T {
 	return r.Size
 }

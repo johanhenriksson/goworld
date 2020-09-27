@@ -64,6 +64,10 @@ func (v *T) Scale(f float32) {
 	v.Y *= f
 }
 
+func (v *T) Swap() T {
+	return T{v.Y, v.X}
+}
+
 func (v *T) Invert() {
 	v.X = -v.X
 	v.Y = -v.Y
@@ -86,4 +90,9 @@ func (v T) Sub(v2 T) T {
 // Mul multiplies each element of the vector with the corresponding element of another vector
 func (v T) Mul(v2 T) T {
 	return T{v.X * v2.X, v.Y * v2.Y}
+}
+
+// Div divides each element of the vector with the corresponding element of another vector
+func (v T) Div(v2 T) T {
+	return T{v.X / v2.X, v.Y / v2.Y}
 }

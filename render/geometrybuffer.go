@@ -3,6 +3,7 @@ package render
 import (
 	"github.com/go-gl/gl/v4.1-core/gl"
 
+	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/math/vec3"
 )
 
@@ -37,8 +38,9 @@ func CreateGeometryBuffer(width, height int32) *GeometryBuffer {
 }
 
 // SampleNormal samples the view space normal at the given pixel location
-func (g *GeometryBuffer) SampleNormal(x, y int) (vec3.T, bool) {
+func (g *GeometryBuffer) SampleNormal(p vec2.T) (vec3.T, bool) {
 	g.Bind()
+	x, y := int(p.X), int(p.Y)
 	// sample normal buffer (COLOR_ATTACHMENT1)
 	normalEncoded := g.FrameBuffer.Sample(gl.COLOR_ATTACHMENT1, x, int(g.Normal.Height)-y-1)
 	if normalEncoded.R == 0 && normalEncoded.G == 0 && normalEncoded.B == 0 {
@@ -50,8 +52,9 @@ func (g *GeometryBuffer) SampleNormal(x, y int) (vec3.T, bool) {
 	return viewNormal, true
 }
 
-func (g *GeometryBuffer) SampleDepth(x, y int) (float32, bool) {
+func (g *GeometryBuffer) SampleDepth(p vec2.T) (float32, bool) {
 	g.Bind()
+	x, y := int(p.X), int(p.Y)
 	depth := g.FrameBuffer.SampleDepth(x, int(g.Depth.Height)-y-1)
 	return depth, depth != 0.0
 }

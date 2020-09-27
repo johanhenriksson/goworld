@@ -2,6 +2,7 @@ package mouse
 
 import (
 	"github.com/go-gl/glfw/v3.1/glfw"
+	"github.com/johanhenriksson/goworld/math/vec2"
 )
 
 // Button refers to a mouse button.
@@ -10,10 +11,10 @@ type Button glfw.MouseButton
 // ButtonMap holds information about the state of the mouse buttons.
 type ButtonMap map[Button]bool
 
-var X, Y float32
-var DX, DY float32
+var Position = vec2.Zero
+var Delta = vec2.Zero
 
-var lX, lY float32
+var last = vec2.Zero
 var initialized = false
 var buttons = make([]bool, 32)
 var nextbuttons = make([]bool, 32)
@@ -42,20 +43,17 @@ func ButtonCallback(w *glfw.Window, button glfw.MouseButton, action glfw.Action,
 
 // MoveCallback updates the cursor position
 func MoveCallback(w *glfw.Window, x, y float64, scale float32) {
-	X = float32(x) * scale
-	Y = float32(y) * scale
+	Position = vec2.New(float32(x), float32(y)).Scaled(scale)
 }
 
 // Update updates mouse delta x/y on every frame
 func Update(dt float32) {
 	if initialized {
-		DX = lX - X
-		DY = lY - Y
+		Delta = last.Sub(Position)
 	} else {
 		initialized = true
 	}
-	lX = X
-	lY = Y
+	last = Position
 
 	copy(lastbuttons[:], buttons[:])
 	copy(buttons[:], nextbuttons[:])

@@ -67,6 +67,10 @@ func Floor(x float32) float32 {
 	return float32(math.Floor(float64(x)))
 }
 
+func Mod(x, y float32) float32 {
+	return float32(math.Mod(float64(x), float64(y)))
+}
+
 // Sqrt returns the square root of a number
 func Sqrt(x float32) float32 {
 	return float32(math.Sqrt(float64(x)))

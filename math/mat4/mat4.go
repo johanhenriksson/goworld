@@ -26,23 +26,32 @@ func (m1 T) Sub(m2 T) T {
 	return T{m1[0] - m2[0], m1[1] - m2[1], m1[2] - m2[2], m1[3] - m2[3], m1[4] - m2[4], m1[5] - m2[5], m1[6] - m2[6], m1[7] - m2[7], m1[8] - m2[8], m1[9] - m2[9], m1[10] - m2[10], m1[11] - m2[11], m1[12] - m2[12], m1[13] - m2[13], m1[14] - m2[14], m1[15] - m2[15]}
 }
 
-// Mul performs a scalar multiplcation of the matrix. This is equivalent to iterating
+// Scale performs a scalar multiplcation of the matrix. This is equivalent to iterating
 // over every element of the matrix and multiply it by c.
 func (m1 T) Scale(c float32) T {
 	return T{m1[0] * c, m1[1] * c, m1[2] * c, m1[3] * c, m1[4] * c, m1[5] * c, m1[6] * c, m1[7] * c, m1[8] * c, m1[9] * c, m1[10] * c, m1[11] * c, m1[12] * c, m1[13] * c, m1[14] * c, m1[15] * c}
 }
 
-// Mul4x1 performs a "matrix product" between this matrix
-// and another of the given dimension. For any two matrices of dimensionality
-// MxN and NxO, the result will be MxO. For instance, T multiplied using
-// Mul4x2 will result in a Tx2.
-func (m1 *T) MulVec4(v vec4.T) vec4.T {
+// VMul multiplies a vec4 with the matrix
+func (m1 *T) VMul(v vec4.T) vec4.T {
 	return vec4.T{
 		m1[0]*v.X + m1[4]*v.Y + m1[8]*v.Z + m1[12]*v.W,
 		m1[1]*v.X + m1[5]*v.Y + m1[9]*v.Z + m1[13]*v.W,
 		m1[2]*v.X + m1[6]*v.Y + m1[10]*v.Z + m1[14]*v.W,
 		m1[3]*v.X + m1[7]*v.Y + m1[11]*v.Z + m1[15]*v.W,
 	}
+}
+
+func (m1 *T) TransformPoint(v vec3.T) vec3.T {
+	p := vec4.Extend(v, 1)
+	vt := m1.VMul(p)
+	return vt.XYZ().Scaled(1 / vt.W)
+}
+
+func (m1 *T) TransformDir(v vec3.T) vec3.T {
+	p := vec4.Extend(v, 0)
+	vt := m1.VMul(p)
+	return vt.XYZ()
 }
 
 // Mul4 performs a "matrix product" between this matrix
@@ -89,7 +98,7 @@ func (m *T) Det() float32 {
 	return m[0]*m[5]*m[10]*m[15] - m[0]*m[5]*m[11]*m[14] - m[0]*m[6]*m[9]*m[15] + m[0]*m[6]*m[11]*m[13] + m[0]*m[7]*m[9]*m[14] - m[0]*m[7]*m[10]*m[13] - m[1]*m[4]*m[10]*m[15] + m[1]*m[4]*m[11]*m[14] + m[1]*m[6]*m[8]*m[15] - m[1]*m[6]*m[11]*m[12] - m[1]*m[7]*m[8]*m[14] + m[1]*m[7]*m[10]*m[12] + m[2]*m[4]*m[9]*m[15] - m[2]*m[4]*m[11]*m[13] - m[2]*m[5]*m[8]*m[15] + m[2]*m[5]*m[11]*m[12] + m[2]*m[7]*m[8]*m[13] - m[2]*m[7]*m[9]*m[12] - m[3]*m[4]*m[9]*m[14] + m[3]*m[4]*m[10]*m[13] + m[3]*m[5]*m[8]*m[14] - m[3]*m[5]*m[10]*m[12] - m[3]*m[6]*m[8]*m[13] + m[3]*m[6]*m[9]*m[12]
 }
 
-// Inv computes the inverse of a square matrix. An inverse is a square matrix such that when multiplied by the
+// Invert computes the inverse of a square matrix. An inverse is a square matrix such that when multiplied by the
 // original, yields the identity.
 //
 // M_inv * M = M * M_inv = I
@@ -101,7 +110,7 @@ func (m *T) Det() float32 {
 // If the determinant is 0.0, this function returns the zero matrix. However, due to floating point errors, it is
 // entirely plausible to get a false positive or negative.
 // In the future, an alternate function may be written which takes in a pre-computed determinant.
-func (m *T) Inv() T {
+func (m *T) Invert() T {
 	det := m.Det()
 	if math.Equal(det, float32(0.0)) {
 		return T{}
@@ -151,18 +160,6 @@ func (m1 *T) ApproxEqualThreshold(m2 *T, threshold float32) bool {
 	return true
 }
 
-// ApproxFuncEqual performs an element-wise approximate equality test between two matrices
-// with a given equality functions, intended to be used with FloatEqualFunc; although and comparison
-// function may be used in practice.
-func (m1 *T) ApproxFuncEqual(m2 *T, eq func(float32, float32) bool) bool {
-	for i := range m1 {
-		if !eq(m1[i], m2[i]) {
-			return false
-		}
-	}
-	return true
-}
-
 // At returns the matrix element at the given row and column.
 // This is equivalent to mat[col * numRow + row] where numRow is constant
 // (E.G. for a Mat3x2 it's equal to 3)
@@ -174,20 +171,12 @@ func (m *T) At(row, col int) float32 {
 }
 
 // Set sets the corresponding matrix element at the given row and column.
-// This has a pointer receiver because it mutates the matrix.
-//
-// This method is garbage-in garbage-out. For instance, on a T asking for
-// Set(5,0,val) will work just like Set(1,1,val). Or it may panic if it's out of bounds.
 func (m *T) Set(row, col int, value float32) {
 	m[col*4+row] = value
 }
 
 // Index returns the index of the given row and column, to be used with direct
 // access. E.G. Index(0,0) = 0.
-//
-// This is a garbage-in garbage-out method. For instance, on a T asking for the index of
-// (5,0) will work the same as asking for (1,1). Or it may give you a value that will cause
-// a panic if you try to access the array with it if it's truly out of bounds.
 func (m *T) Index(row, col int) int {
 	return col*4 + row
 }
@@ -251,24 +240,24 @@ func (m T) String() string {
 
 func (m *T) Right() vec3.T {
 	return vec3.T{
-		m[4*0+0],
-		m[4*1+0],
-		m[4*2+0],
+		X: m[4*0+0],
+		Y: m[4*1+0],
+		Z: m[4*2+0],
 	}
 }
 
 func (m *T) Up() vec3.T {
 	return vec3.T{
-		m[4*0+1],
-		m[4*1+1],
-		m[4*2+1],
+		X: m[4*0+1],
+		Y: m[4*1+1],
+		Z: m[4*2+1],
 	}
 }
 
 func (m *T) Forward() vec3.T {
 	return vec3.T{
-		-m[4*0+2],
-		-m[4*1+2],
-		-m[4*2+2],
+		X: -m[4*0+2],
+		Y: -m[4*1+2],
+		Z: -m[4*2+2],
 	}
 }

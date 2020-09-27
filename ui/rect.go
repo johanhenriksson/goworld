@@ -4,6 +4,7 @@ import (
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/johanhenriksson/goworld/assets"
 	"github.com/johanhenriksson/goworld/geometry"
+	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/render"
 )
 
@@ -14,14 +15,16 @@ type Rect struct {
 	tex    *render.Texture
 }
 
-type RectLayout func(Component, Size) Size
+type RectLayout func(Component, vec2.T) vec2.T
 
 func NewRect(style Style, children ...Component) *Rect {
 	mat := assets.GetMaterial("ui_texture")
+	size := vec2.Zero
+	position := vec2.Zero
 
 	r := &Rect{
-		Element: NewElement("Rect", 0, 0, 0, 0, style),
-		quad:    geometry.NewQuad(mat, 0, 0),
+		Element: NewElement("Rect", position, size, style),
+		quad:    geometry.NewQuad(mat, size),
 		layout:  ColumnLayout,
 		tex:     render.TextureFromColor(render.White),
 	}
@@ -69,14 +72,14 @@ func (r *Rect) Draw(args render.DrawArgs) {
 	r.Element.Draw(args)
 }
 
-func (r *Rect) Flow(available Size) Size {
+func (r *Rect) Flow(available vec2.T) vec2.T {
 	return r.layout(r, available)
 }
 
-func (r *Rect) Resize(size Size) Size {
-	if size.Width != r.Width() || size.Height != r.Height() {
+func (r *Rect) Resize(size vec2.T) vec2.T {
+	if size.X != r.Width() || size.Y != r.Height() {
 		r.Element.Resize(size)
-		r.quad.SetSize(size.Width, size.Height)
+		r.quad.SetSize(size)
 	}
 	return r.Size
 }

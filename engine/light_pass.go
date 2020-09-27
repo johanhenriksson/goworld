@@ -102,8 +102,8 @@ func (p *LightPass) DrawPass(scene *Scene) {
 
 	// compute camera view projection inverse
 	vp := scene.Camera.Projection.Mul(&scene.Camera.View)
-	vpInv := vp.Inv()
-	vInv := scene.Camera.View.Inv()
+	vpInv := vp.Invert()
+	vInv := scene.Camera.View.Invert()
 	p.mat.Use()
 	p.mat.Mat4f("cameraInverse", &vpInv)
 	p.mat.Mat4f("viewInverse", &vInv)

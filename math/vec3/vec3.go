@@ -129,3 +129,8 @@ func (v T) XZ() vec2.T {
 func (v T) YZ() vec2.T {
 	return vec2.T{X: v.Y, Y: v.Z}
 }
+
+// Div divides each element of the vector with the corresponding element of another vector
+func (v T) Div(v2 T) T {
+	return T{v.X / v2.X, v.Y / v2.Y, v.Z / v2.Z}
+}
