@@ -1,7 +1,7 @@
 package main
 
 /*
- * Copyright (C) 2016-2019 Johan Henriksson
+ * Copyright (C) 2016-2020 Johan Henriksson
  *
  * goworld is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,6 +22,8 @@ import (
 	"time"
 
 	"github.com/johanhenriksson/goworld/engine"
+	"github.com/johanhenriksson/goworld/engine/keys"
+	"github.com/johanhenriksson/goworld/engine/mouse"
 	"github.com/johanhenriksson/goworld/game"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/ui"
@@ -92,8 +94,8 @@ func main() {
 		},
 	}
 
-	csize := 32
-	ccount := 4
+	csize := 16
+	ccount := 8
 
 	world := game.NewWorld(31481234, csize)
 
@@ -167,20 +169,20 @@ func main() {
 
 	// sample world position at current mouse coords
 	sampleWorld := func() (mgl.Vec3, bool) {
-		depth, depthExists := geoPass.Buffer.SampleDepth(int(engine.Mouse.X), int(engine.Mouse.Y))
+		depth, depthExists := geoPass.Buffer.SampleDepth(int(mouse.X), int(mouse.Y))
 		if !depthExists {
 			return mgl.Vec3{}, false
 		}
 		return camera.Unproject(mgl.Vec3{
-			engine.Mouse.X / float32(geoPass.Buffer.Depth.Width),
-			engine.Mouse.Y / float32(geoPass.Buffer.Depth.Height),
+			mouse.X / float32(geoPass.Buffer.Depth.Width),
+			mouse.Y / float32(geoPass.Buffer.Depth.Height),
 			depth,
 		}), true
 	}
 
 	// sample world normal at current mouse coords
 	sampleNormal := func() (mgl.Vec3, bool) {
-		viewNormal, exists := geoPass.Buffer.SampleNormal(int(engine.Mouse.X), int(engine.Mouse.Y))
+		viewNormal, exists := geoPass.Buffer.SampleNormal(int(mouse.X), int(mouse.Y))
 		if exists {
 			viewInv := camera.View.Inv()
 			worldNormal := viewInv.Mul4x1(viewNormal.Vec4(0)).Vec3()
@@ -194,14 +196,14 @@ func main() {
 	speed := float32(60)
 	airspeed := float32(33)
 	friction := float32(0.91)
-	jumpvel := 0.37 * gravity
+	jumpvel := 0.25 * gravity
 	airfriction := float32(0.955)
 	camOffset := mgl.Vec3{0, 1.75, 0}
-	fly := true
+	fly := false
 
 	// player physics state
 	position := camera.Position.Sub(camOffset)
-	velocity := mgl.Vec3{0,0,0}
+	velocity := mgl.Vec3{0, 0, 0}
 	grounded := true
 
 	/* Render loop */
@@ -211,36 +213,36 @@ func main() {
 
 		/*** movement **************************************/
 
-		move := mgl.Vec3{0,0,0}
+		move := mgl.Vec3{0, 0, 0}
 		moving := false
-		if engine.KeyDown(engine.KeyW) && !engine.KeyDown(engine.KeyS) {
+		if keys.Down(keys.W) && !keys.Down(keys.S) {
 			move[2] += 1.0
 			moving = true
 		}
-		if engine.KeyDown(engine.KeyS) && !engine.KeyDown(engine.KeyW) {
+		if keys.Down(keys.S) && !keys.Down(keys.W) {
 			move[2] -= 1.0
 			moving = true
 		}
-		if engine.KeyDown(engine.KeyA) && !engine.KeyDown(engine.KeyD) {
+		if keys.Down(keys.A) && !keys.Down(keys.D) {
 			move[0] -= 1.0
 			moving = true
 		}
-		if engine.KeyDown(engine.KeyD) && !engine.KeyDown(engine.KeyA) {
+		if keys.Down(keys.D) && !keys.Down(keys.A) {
 			move[0] += 1.0
 			moving = true
 		}
-		if fly && engine.KeyDown(engine.KeyQ) && !engine.KeyDown(engine.KeyE) {
+		if fly && keys.Down(keys.Q) && !keys.Down(keys.E) {
 			move[1] -= 1.0
 			moving = true
 		}
-		if fly && engine.KeyDown(engine.KeyE) && !engine.KeyDown(engine.KeyQ) {
+		if fly && keys.Down(keys.E) && !keys.Down(keys.Q) {
 			move[1] += 1.0
 			moving = true
 		}
-		if engine.KeyPressed(engine.KeyV) {
+		if keys.Pressed(keys.V) {
 			fly = !fly
 		}
-	
+
 		if moving {
 			right := camera.Transform.Right.Mul(move[0])
 			forward := camera.Transform.Forward.Mul(move[2])
@@ -259,30 +261,37 @@ func main() {
 			move = move.Mul(airspeed)
 		}
 
+		if keys.Down(keys.LeftShift) {
+			move = move.Mul(2)
+		}
+
 		// apply movement
 		velocity = velocity.Add(move.Mul(dt))
 
 		// friction
 		if grounded {
-			// velocity = mgl.Vec3{velocity.X() * friction, velocity.Y(), velocity.Z() * friction}
-			velocity = velocity.Mul(friction)
+			velocity[0] *= friction
+			velocity[2] *= friction
 		} else {
-			// velocity = mgl.Vec3{velocity.X() * airfriction, velocity.Y(), velocity.Z() * airfriction}
-			velocity = velocity.Mul(airfriction)
+			velocity[0] *= airfriction
+			velocity[2] *= airfriction
 		}
 
 		// gravity
 		if !fly {
-			velocity = velocity.Add(mgl.Vec3{0, -gravity*dt, 0})
+			velocity[1] -= gravity * dt
+		} else {
+			// apply Y friction while flying
+			velocity[1] *= airfriction
 		}
 
 		// apply movement in Y
-		position = position.Add(mgl.Vec3{0, velocity.Y()*dt, 0})
+		position = position.Add(mgl.Vec3{0, velocity.Y() * dt, 0})
 
 		// ground collision
 		height := world.HeightAt(position)
 		if position.Y() < height {
-			position = mgl.Vec3{position.X(), height, position.Z()}
+			position[1] = height
 			velocity[1] = 0
 			grounded = true
 		} else {
@@ -290,24 +299,24 @@ func main() {
 		}
 
 		// jumping
-		if grounded && engine.KeyDown(engine.KeySpace) {
+		if grounded && keys.Down(keys.Space) {
 			velocity[1] += jumpvel
 		}
 
 		// x collision
-		xstep := position.Add(mgl.Vec3{velocity.X()*dt, 0, 0})
+		xstep := position.Add(mgl.Vec3{velocity.X() * dt, 0, 0})
 		if world.HeightAt(xstep) > position.Y() {
 			velocity[0] = 0
 		}
 
 		// z collision
-		zstep := position.Add(mgl.Vec3{0, 0, velocity.Z()*dt})
+		zstep := position.Add(mgl.Vec3{0, 0, velocity.Z() * dt})
 		if world.HeightAt(zstep) > position.Y() {
 			velocity[2] = 0
 		}
-		
+
 		// add horizontal movement
-		position = position.Add(mgl.Vec3{velocity.X()*dt, 0, velocity.Z()*dt})
+		position = position.Add(mgl.Vec3{velocity.X() * dt, 0, velocity.Z() * dt})
 
 		// update camera position
 		camera.Position = position.Add(camOffset)
@@ -331,7 +340,7 @@ func main() {
 		}
 		chunk := chunks[cx][cz]
 
-		if engine.KeyReleased(engine.KeyR) {
+		if keys.Released(keys.R) {
 			// replace voxel
 			fmt.Println("replace at", worldPos)
 			target := worldPos.Sub(normal.Mul(0.5))
@@ -346,7 +355,7 @@ func main() {
 		}
 
 		// place voxel
-		if engine.MouseDownPress(engine.MouseButton2) {
+		if mouse.Pressed(mouse.Button2) {
 			fmt.Println("place at", worldPos)
 			target := worldPos.Add(normal.Mul(0.5))
 			world.Set(int(target[0]), int(target[1]), int(target[2]), selected)
@@ -360,7 +369,7 @@ func main() {
 		}
 
 		// remove voxel
-		if engine.KeyPressed(engine.KeyC) {
+		if keys.Pressed(keys.C) {
 			fmt.Println("delete from", worldPos)
 			target := worldPos.Sub(normal.Mul(0.5))
 			world.Set(int(target[0]), int(target[1]), int(target[2]), game.EmptyVoxel)
@@ -374,7 +383,7 @@ func main() {
 		}
 
 		// eyedropper
-		if engine.KeyPressed(engine.KeyF) {
+		if keys.Pressed(keys.F) {
 			target := worldPos.Sub(normal.Mul(0.5))
 			selected = world.Voxel(int(target[0]), int(target[1]), int(target[2]))
 		}
@@ -398,7 +407,7 @@ func newPaletteWindow(palette render.Palette, onClickItem func(int)) ui.Componen
 		swatch := ui.NewRect(ui.Style{"color": ui.Color(color), "layout": ui.String("fixed")})
 		swatch.Resize(ui.Size{20, 20})
 		swatch.OnClick(func(ev ui.MouseEvent) {
-			if ev.Button == engine.MouseButton1 {
+			if ev.Button == mouse.Button1 {
 				onClickItem(itemIdx)
 			}
 		})

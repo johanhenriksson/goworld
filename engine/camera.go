@@ -4,6 +4,7 @@ import (
 	"math"
 
 	mgl "github.com/go-gl/mathgl/mgl32"
+	"github.com/johanhenriksson/goworld/engine/mouse"
 	"github.com/johanhenriksson/goworld/render"
 )
 
@@ -73,9 +74,9 @@ func (cam *Camera) Unproject(pos mgl.Vec3) mgl.Vec3 {
 // Update the camera
 func (cam *Camera) Update(dt float32) {
 	/* Mouse look */
-	if MouseDown(MouseButton1) {
-		rx := cam.Transform.Rotation[0] - Mouse.DY*0.08
-		ry := cam.Transform.Rotation[1] - Mouse.DX*0.09
+	if mouse.Down(mouse.Button1) {
+		rx := cam.Transform.Rotation[0] - mouse.DY*0.08
+		ry := cam.Transform.Rotation[1] - mouse.DX*0.09
 
 		/* Camera angle limits */
 		/* -90 < rx < 90 */

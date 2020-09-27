@@ -7,6 +7,8 @@ import (
 
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/glfw/v3.1/glfw"
+	"github.com/johanhenriksson/goworld/engine/keys"
+	"github.com/johanhenriksson/goworld/engine/mouse"
 	"github.com/johanhenriksson/goworld/render"
 )
 
@@ -78,10 +80,10 @@ func CreateWindow(title string, width int, height int, highDPI bool) *Window {
 
 	log.Println("Created window of size", width, "x", height, "scale:", w.Scale())
 
-	window.SetKeyCallback(KeyCallback)
-	window.SetMouseButtonCallback(MouseButtonCallback)
+	window.SetKeyCallback(keys.KeyCallback)
+	window.SetMouseButtonCallback(mouse.ButtonCallback)
 	window.SetCursorPosCallback(func(wnd *glfw.Window, x, y float64) {
-		MouseMoveCallback(wnd, x, y, w.Scale())
+		mouse.MoveCallback(wnd, x, y, w.Scale())
 	})
 	window.SetFocusCallback(func(wnd *glfw.Window, focused bool) {
 		w.focused = focused
@@ -133,7 +135,7 @@ func (wnd *Window) Loop() {
 
 		// todo: this is part of the FPS camera.
 		// move it somewhere more appropriate
-		if MouseDown(MouseButton1) {
+		if mouse.Down(mouse.Button1) {
 			wnd.LockCursor()
 		} else {
 			wnd.ReleaseCursor()
@@ -161,8 +163,8 @@ func (wnd *Window) Loop() {
 		// get events
 		glfw.PollEvents()
 
-		updateMouse(dt)
-		updateKeyboard(dt)
+		mouse.Update(dt)
+		keys.Update(dt)
 
 		elapsed := glfw.GetTime() - t
 		wnd.FPS = float32(fps.Append(elapsed))

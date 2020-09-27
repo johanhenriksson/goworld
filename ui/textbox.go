@@ -5,7 +5,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/johanhenriksson/goworld/assets"
-	"github.com/johanhenriksson/goworld/engine"
+	"github.com/johanhenriksson/goworld/engine/keys"
 	"github.com/johanhenriksson/goworld/render"
 )
 
@@ -70,12 +70,12 @@ func (t *Textbox) HandleKey(event KeyEvent) {
 	}
 
 	// backspace
-	if event.Key == engine.KeyBackspace {
+	if event.Key == keys.Backspace {
 		t.backspace()
 	}
 
 	// drop focus on esc
-	if event.Key == engine.KeyEscape {
+	if event.Key == keys.Escape {
 		event.UI.Focus(nil)
 	}
 }

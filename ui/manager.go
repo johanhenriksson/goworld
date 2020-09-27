@@ -2,6 +2,8 @@ package ui
 
 import (
 	"github.com/johanhenriksson/goworld/engine"
+	"github.com/johanhenriksson/goworld/engine/keys"
+	"github.com/johanhenriksson/goworld/engine/mouse"
 	"github.com/johanhenriksson/goworld/render"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
@@ -91,16 +93,16 @@ func (m *Manager) glfwMouseButtonCallback(w *glfw.Window, button glfw.MouseButto
 	// we're only interested in mouse down events at this time
 	if action != glfw.Release {
 		// supress if the event was handled by an element
-		if m.handleMouse(engine.Mouse.X, engine.Mouse.Y, engine.MouseButton(button)) {
+		if m.handleMouse(mouse.X, mouse.Y, mouse.Button(button)) {
 			return
 		}
 	}
 
 	// pass event to the engine
-	engine.MouseButtonCallback(w, button, action, mod)
+	mouse.ButtonCallback(w, button, action, mod)
 }
 
-func (m *Manager) handleMouse(x, y float32, button engine.MouseButton) bool {
+func (m *Manager) handleMouse(x, y float32, button mouse.Button) bool {
 	// reset focus
 	m.Focus(nil)
 
@@ -124,13 +126,13 @@ func (m *Manager) glfwKeyCallback(w *glfw.Window, key glfw.Key, scancode int, ac
 	if m.Focused != nil {
 		ev := KeyEvent{
 			UI:    m,
-			Key:   engine.KeyCode(key),
+			Key:   keys.Code(key),
 			Press: action == glfw.Press,
 		}
 		m.Focused.HandleKey(ev)
 	} else {
 		// pass event to the engine
-		engine.KeyCallback(w, key, scancode, action, mods)
+		keys.KeyCallback(w, key, scancode, action, mods)
 	}
 }
 

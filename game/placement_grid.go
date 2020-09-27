@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/johanhenriksson/goworld/engine"
+	"github.com/johanhenriksson/goworld/engine/keys"
 	"github.com/johanhenriksson/goworld/geometry"
 	"github.com/johanhenriksson/goworld/render"
 )
@@ -57,10 +58,10 @@ func (grid *PlacementGrid) Down() {
 }
 
 func (grid *PlacementGrid) Update(dt float32) {
-	if engine.KeyReleased(engine.KeyJ) {
+	if keys.Released(keys.J) {
 		grid.Down()
 	}
-	if engine.KeyReleased(engine.KeyK) {
+	if keys.Released(keys.K) {
 		grid.Up()
 	}
 }
