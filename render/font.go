@@ -6,6 +6,7 @@ import (
 
 	"github.com/golang/freetype/truetype"
 	"github.com/johanhenriksson/goworld/math"
+	"github.com/johanhenriksson/goworld/math/vec2"
 	"golang.org/x/image/font"
 	"golang.org/x/image/math/fixed"
 )
@@ -35,7 +36,7 @@ func (f *Font) LineHeight() float32 {
 	return math.Ceil(f.Size * f.Spacing * f.DPI)
 }
 
-func (f *Font) Measure(text string) (float32, float32) {
+func (f *Font) Measure(text string) vec2.T {
 	lines := 1
 	width := 0
 	s := 0
@@ -61,12 +62,12 @@ func (f *Font) Measure(text string) (float32, float32) {
 
 	lineHeight := int(f.LineHeight())
 	height := lineHeight*lines + (lineHeight / 2)
-	return float32(width), float32(height)
+	return vec2.NewI(width, height)
 }
 
 func (f *Font) RenderNew(text string, color Color) *Texture {
-	w, h := f.Measure(text)
-	texture := CreateTexture(int32(w), int32(h))
+	size := f.Measure(text)
+	texture := CreateTexture(int32(size.X), int32(size.Y))
 	f.Render(texture, text, color)
 	return texture
 }
@@ -74,11 +75,11 @@ func (f *Font) RenderNew(text string, color Color) *Texture {
 func (f *Font) Render(tx *Texture, text string, color Color) {
 	f.drawer.Src = image.NewUniform(color.RGBA())
 
-	width, height := f.Measure(text)
+	size := f.Measure(text)
 
 	// todo: its probably not a great idea to allocate an image on every draw
 	// perhaps textures should always have a backing image ?
-	rgba := image.NewRGBA(image.Rect(0, 0, int(math.Ceil(width)), int(math.Ceil(height))))
+	rgba := image.NewRGBA(image.Rect(0, 0, int(math.Ceil(size.X)), int(math.Ceil(size.Y))))
 	f.drawer.Dst = rgba
 
 	s := 0

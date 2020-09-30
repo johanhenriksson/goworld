@@ -2,7 +2,6 @@ package engine
 
 import (
 	"github.com/go-gl/gl/v4.1-core/gl"
-	//mgl "github.com/go-gl/mathgl/mgl32"
 )
 
 // RenderPass is a step in the rendering pipeline

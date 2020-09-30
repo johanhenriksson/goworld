@@ -3,6 +3,7 @@ package ui
 import (
 	"github.com/johanhenriksson/goworld/assets"
 	"github.com/johanhenriksson/goworld/math"
+	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/render"
 )
 
@@ -18,11 +19,11 @@ func (t *Text) Set(text string) {
 		return
 	}
 
-	width, height := t.Font.Measure(text)
+	size := t.Font.Measure(text)
 
 	t.Font.Render(t.Texture, text, render.White)
 	t.Text = text
-	t.Resize(Size{width, height})
+	t.Resize(size)
 }
 
 func NewText(text string, style Style) *Text {
@@ -32,11 +33,11 @@ func NewText(text string, style Style) *Text {
 	font := assets.GetFont("assets/fonts/SourceCodeProRegular.ttf", size, spacing)
 
 	// create opengl texture
-	width, height := font.Measure(text)
-	texture := render.CreateTexture(int32(width), int32(height))
+	bounds := font.Measure(text)
+	texture := render.CreateTexture(int32(bounds.X), int32(bounds.Y))
 
 	element := &Text{
-		Image: NewImage(texture, float32(width), float32(height), true, style),
+		Image: NewImage(texture, bounds, true, style),
 		Font:  font,
 		Style: style,
 	}
@@ -44,10 +45,9 @@ func NewText(text string, style Style) *Text {
 	return element
 }
 
-func (t *Text) Flow(size Size) Size {
-	dw, dh := t.Font.Measure(t.Text)
-	desired := Size{dw, dh}
-	desired.Width = math.Min(size.Width, desired.Width)
-	desired.Height = math.Min(size.Height, desired.Height)
+func (t *Text) Flow(size vec2.T) vec2.T {
+	desired := t.Font.Measure(t.Text)
+	desired.X = math.Min(size.X, desired.X)
+	desired.Y = math.Min(size.Y, desired.Y)
 	return desired
 }

@@ -5,7 +5,8 @@ import (
 	"math/rand"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
-	mgl "github.com/go-gl/mathgl/mgl32"
+
+	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
 )
 
@@ -28,7 +29,7 @@ type SSAOPass struct {
 	Material *render.Material
 	Quad     *render.Quad
 	Noise    *render.Texture
-	Kernel   []mgl.Vec3
+	Kernel   []vec3.T
 
 	Gaussian *GaussianPass
 }
@@ -91,7 +92,7 @@ func NewSSAOPass(gbuff *render.GeometryBuffer, settings *SSAOSettings) *SSAOPass
 func (p *SSAOPass) DrawPass(scene *Scene) {
 	// update projection
 	p.Material.Use()
-	p.Material.Mat4f("projection", scene.Camera.Projection)
+	p.Material.Mat4f("projection", &scene.Camera.Projection)
 
 	// run occlusion pass
 	p.fbo.Bind()
@@ -103,21 +104,21 @@ func (p *SSAOPass) DrawPass(scene *Scene) {
 	p.Gaussian.DrawPass(scene)
 }
 
-func createSSAOKernel(samples int) []mgl.Vec3 {
-	kernel := make([]mgl.Vec3, samples)
+func createSSAOKernel(samples int) []vec3.T {
+	kernel := make([]vec3.T, samples)
 	for i := 0; i < len(kernel); i++ {
-		sample := mgl.Vec3{
-			rand.Float32()*2 - 1,
-			rand.Float32()*2 - 1,
-			rand.Float32(),
+		sample := vec3.T{
+			X: rand.Float32()*2 - 1,
+			Y: rand.Float32()*2 - 1,
+			Z: rand.Float32(),
 		}
-		sample = sample.Normalize()
-		sample.Mul(rand.Float32()) // random length
+		sample.Normalize()
+		sample = sample.Scaled(rand.Float32()) // random length
 
 		// scaling
 		scale := float32(i) / float32(samples)
 		scale = lerp(0.1, 1.0, scale*scale)
-		sample = sample.Mul(scale)
+		sample = sample.Scaled(scale)
 
 		kernel[i] = sample
 	}

@@ -65,9 +65,9 @@ func (m *Mesh) Draw(args render.DrawArgs) {
 	m.material.Use()
 
 	// set up uniforms
-	m.material.Mat4f("model", args.Transform)
-	m.material.Mat4f("view", args.View)
-	m.material.Mat4f("projection", args.Projection)
+	m.material.Mat4f("model", &args.Transform)
+	m.material.Mat4f("view", &args.View)
+	m.material.Mat4f("projection", &args.Projection)
 
 	m.vao.DrawElements()
 }

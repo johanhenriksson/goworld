@@ -1,8 +1,11 @@
 package ui
 
-import "github.com/johanhenriksson/goworld/math"
+import (
+	"github.com/johanhenriksson/goworld/math"
+	"github.com/johanhenriksson/goworld/math/vec2"
+)
 
-func RowLayout(c Component, sz Size) Size {
+func RowLayout(c Component, sz vec2.T) vec2.T {
 	pad := c.GetStyle().Float("padding", 0)
 	spacing := c.GetStyle().Float("spacing", 0)
 
@@ -24,47 +27,42 @@ func RowLayout(c Component, sz Size) Size {
 	// containers - variable width according to their largest child
 	// controls - fixed width (labels, images, buttons etc)
 
-	desired := Size{}
+	desired := vec2.T{}
 	for _, child := range c.Children() {
-		child.SetPosition(pad+desired.Width, pad)
-		childSize := child.Flow(Size{
-			Width:  sz.Width - desired.Width - 2*pad,
-			Height: sz.Height - 2*pad,
+		child.SetPosition(vec2.New(pad+desired.X, pad))
+		childSize := child.Flow(vec2.T{
+			X: sz.X - desired.X - 2*pad,
+			Y: sz.Y - 2*pad,
 		})
-		desired.Width += childSize.Width + spacing
-		desired.Height = math.Max(desired.Height, childSize.Height)
+		desired.X += childSize.X + spacing
+		desired.Y = math.Max(desired.Y, childSize.Y)
 	}
-	desired.Width += 2*pad - spacing
-	desired.Height += 2 * pad
+	desired.X += 2*pad - spacing
+	desired.Y += 2 * pad
 
 	return c.Resize(desired)
 }
 
-func ColumnLayout(c Component, sz Size) Size {
+func ColumnLayout(c Component, sz vec2.T) vec2.T {
 	pad := c.GetStyle().Float("padding", 0)
 	spacing := c.GetStyle().Float("spacing", 0)
 
-	desired := Size{}
+	desired := vec2.T{}
 	for _, child := range c.Children() {
-		child.SetPosition(pad, pad+desired.Height)
-		childSize := child.Flow(Size{
-			Width:  sz.Width - 2*pad,
-			Height: sz.Height - desired.Height - 2*pad,
+		child.SetPosition(vec2.New(pad, pad+desired.Y))
+		childSize := child.Flow(vec2.T{
+			X: sz.X - 2*pad,
+			Y: sz.Y - desired.Y - 2*pad,
 		})
-		desired.Width = math.Max(desired.Width, childSize.Width)
-		desired.Height += childSize.Height + spacing
+		desired.X = math.Max(desired.X, childSize.X)
+		desired.Y += childSize.Y + spacing
 	}
-	desired.Height += 2*pad - spacing
-	desired.Width += 2 * pad
+	desired.Y += 2*pad - spacing
+	desired.X += 2 * pad
 
 	return c.Resize(desired)
 }
 
-func FixedLayout(c Component, sz Size) Size {
-	return Size{c.Width(), c.Height()}
-}
-
-type Size struct {
-	Width  float32
-	Height float32
+func FixedLayout(c Component, sz vec2.T) vec2.T {
+	return vec2.T{c.Width(), c.Height()}
 }

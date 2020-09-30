@@ -29,11 +29,11 @@ func NewTextbox(text string, style Style) *Textbox {
 	size := style.Float("size", 12.0)
 	spacing := style.Float("spacing", 1.5)
 	font := assets.GetFont("assets/fonts/SourceCodeProRegular.ttf", size, spacing)
-	w, h := font.Measure(text)
-	texture := render.CreateTexture(int32(w), int32(h))
+	bounds := font.Measure(text)
+	texture := render.CreateTexture(int32(bounds.X), int32(bounds.Y))
 
 	t := &Textbox{
-		Image: NewImage(texture, float32(w), float32(h), true, style),
+		Image: NewImage(texture, bounds, true, style),
 		Font:  font,
 		Text:  text,
 	}

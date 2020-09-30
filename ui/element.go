@@ -1,7 +1,8 @@
 package ui
 
 import (
-	mgl "github.com/go-gl/mathgl/mgl32"
+	"github.com/johanhenriksson/goworld/math/vec2"
+	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
 )
 
@@ -9,19 +10,19 @@ type Element struct {
 	Style     Style
 	Name      string
 	Transform *Transform2D
-	Size      Size
+	Size      vec2.T
 
 	parent        Component
 	children      []Component
 	mouseHandlers []MouseHandler
 }
 
-func NewElement(name string, x, y, w, h float32, style Style) *Element {
+func NewElement(name string, position, size vec2.T, style Style) *Element {
 	e := &Element{
 		Style:     style,
 		Name:      name,
-		Transform: CreateTransform2D(x, y, -1),
-		Size:      Size{w, h},
+		Transform: CreateTransform2D(position, -1),
+		Size:      size,
 
 		children:      []Component{},
 		mouseHandlers: []MouseHandler{},
@@ -47,7 +48,7 @@ func (e *Element) Parent() Component {
 func (e *Element) SetParent(parent Component) {
 	// TODO detach from current parent?
 	e.parent = parent
-	e.Transform.Position = mgl.Vec3{e.Transform.Position.X(), e.Transform.Position.Y(), e.ZIndex()}
+	e.Transform.Position = vec3.Extend(e.Transform.Position.XY(), e.ZIndex())
 	e.Transform.Update(0)
 }
 
@@ -57,24 +58,24 @@ func (e *Element) Children() []Component {
 }
 
 func (e *Element) Width() float32 {
-	return e.Size.Width
+	return e.Size.X
 }
 
 func (e *Element) Height() float32 {
-	return e.Size.Height
+	return e.Size.Y
 }
 
-func (e *Element) Resize(size Size) Size {
+func (e *Element) Resize(size vec2.T) vec2.T {
 	e.Size = size
 	return size
 }
 
-func (e *Element) Flow(available Size) Size {
+func (e *Element) Flow(available vec2.T) vec2.T {
 	return available
 }
 
-func (e *Element) SetPosition(x, y float32) {
-	e.Transform.Position = mgl.Vec3{x, y, e.Transform.Position.Z()}
+func (e *Element) SetPosition(position vec2.T) {
+	e.Transform.Position = vec3.Extend(position, e.Transform.Position.Z)
 	e.Transform.Update(0)
 }
 
@@ -87,23 +88,24 @@ func (e *Element) Attach(child Component) {
 // Draw this element and its children
 func (e *Element) Draw(args render.DrawArgs) {
 	/* Multiply transform to args */
-	args.Transform = e.Transform.Matrix.Mul4(args.Transform)
+	args.Transform = e.Transform.Matrix.Mul(&args.Transform)
 	for _, el := range e.children {
 		el.Draw(args)
 	}
 }
 
 // InBounds returns true of the given 2D position is wihtin the bounds of this element
-func (e *Element) InBounds(pos mgl.Vec2) bool {
-	return pos.X() >= 0 && pos.Y() >= 0 &&
-		pos.X() <= e.Width() && pos.Y() <= e.Height()
+func (e *Element) InBounds(pos vec2.T) bool {
+	return pos.X >= 0 && pos.Y >= 0 &&
+		pos.X <= e.Width() && pos.Y <= e.Height()
 }
 
 // HandleMouse attempts to handle a mouse event with this element
 func (e *Element) HandleMouse(ev MouseEvent) bool {
 	// transform the point into our local coordinate system
-	projected := e.Transform.Matrix.Inv().Mul4x1(mgl.Vec4{ev.Point.X(), ev.Point.Y(), 0, 1})
-	ev.Point = mgl.Vec2{projected.X(), projected.Y()}
+	invTransform := e.Transform.Matrix.Invert()
+	projected := invTransform.TransformPoint(vec3.Extend(ev.Point, 0))
+	ev.Point = projected.XY()
 
 	// check if we're inside element bounds
 	if !e.InBounds(ev.Point) {

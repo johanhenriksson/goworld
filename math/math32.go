@@ -4,10 +4,34 @@ import (
 	"math"
 )
 
-const E = float32(math.E)
-const Pi = float32(math.Pi)
-const Sqrt2 = float32(math.Sqrt2)
+// Various useful constants.
+var (
+	MinNormal = float32(1.1754943508222875e-38) // 1 / 2**(127 - 1)
+	MinValue  = float32(math.SmallestNonzeroFloat32)
+	MaxValue  = float32(math.MaxFloat32)
 
+	InfPos = float32(math.Inf(1))
+	InfNeg = float32(math.Inf(-1))
+	NaN    = float32(math.NaN())
+
+	E       = float32(math.E)
+	Pi      = float32(math.Pi)
+	PiOver2 = Pi / 2
+	PiOver4 = Pi / 4
+	Sqrt2   = float32(math.Sqrt2)
+
+	Epsilon = float32(1e-10)
+)
+
+// Abs returns the absolute value of a number
+func Abs(v float32) float32 {
+	if v < 0 {
+		return -v
+	}
+	return v
+}
+
+// Min returns the smaller of two numbers
 func Min(a, b float32) float32 {
 	if a < b {
 		return a
@@ -15,6 +39,7 @@ func Min(a, b float32) float32 {
 	return b
 }
 
+// Max returns the greater of two numbers
 func Max(a, b float32) float32 {
 	if a > b {
 		return a
@@ -32,14 +57,21 @@ func Clamp(v, min, max float32) float32 {
 	return v
 }
 
+// Ceil a number to the closest integer
 func Ceil(x float32) float32 {
 	return float32(math.Ceil(float64(x)))
 }
 
+// Floor a number to the closest integer
 func Floor(x float32) float32 {
 	return float32(math.Floor(float64(x)))
 }
 
+func Mod(x, y float32) float32 {
+	return float32(math.Mod(float64(x), float64(y)))
+}
+
+// Sqrt returns the square root of a number
 func Sqrt(x float32) float32 {
 	return float32(math.Sqrt(float64(x)))
 }
@@ -61,4 +93,36 @@ func Sign(x float32) float32 {
 		return 1
 	}
 	return -1
+}
+
+func DegToRad(deg float32) float32 {
+	return Pi * deg / 180.0
+}
+
+func RadToDeg(rad float32) float32 {
+	return 180.0 * rad / Pi
+}
+
+func Equal(a, b float32) bool {
+	return EqualThreshold(a, b, Epsilon)
+}
+
+// EqualThreshold is a utility function to compare floats.
+// It's Taken from http://floating-point-gui.de/errors/comparison/
+//
+// It is slightly altered to not call Abs when not needed.
+//
+// This differs from FloatEqual in that it lets you pass in your comparison threshold, so that you can adjust the comparison value to your specific needs
+func EqualThreshold(a, b, epsilon float32) bool {
+	if a == b { // Handles the case of inf or shortcuts the loop when no significant error has accumulated
+		return true
+	}
+
+	diff := Abs(a - b)
+	if a*b == 0 || diff < MinNormal { // If a or b are 0 or both are extremely close to it
+		return diff < epsilon*epsilon
+	}
+
+	// Else compare difference
+	return diff/(Abs(a)+Abs(b)) < epsilon
 }

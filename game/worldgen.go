@@ -5,18 +5,22 @@ import (
 )
 
 type WorldGenerator struct {
-	Seed  int
-	Size  int
-	Rock  *math.Noise
-	Grass *math.Noise
+	Seed     int
+	Size     int
+	Rock     *math.Noise
+	Grass    *math.Noise
+	Cave     *math.Noise
+	Variance *math.Noise
 }
 
 func ExampleWorldgen(seed, size int) *WorldGenerator {
 	return &WorldGenerator{
-		Seed:  seed,
-		Size:  size,
-		Rock:  math.NewNoise(seed+10000, 1.0/40.0),
-		Grass: math.NewNoise(seed+10002, 1.0/28.0),
+		Seed:     seed,
+		Size:     size,
+		Rock:     math.NewNoise(seed+10000, 1.0/40.0),
+		Grass:    math.NewNoise(seed+10002, 1.0/28.0),
+		Cave:     math.NewNoise(seed+18002, 1.0/14.0),
+		Variance: math.NewNoise(seed+12004, 1.0/0.5),
 	}
 }
 
@@ -34,6 +38,7 @@ func (wg *WorldGenerator) Chunk(cx, cz int) *Chunk {
 		}
 	}
 	chunk.Light.Calculate()
+	go chunk.Write("chunks")
 	return chunk
 }
 
@@ -59,6 +64,17 @@ func (wg *WorldGenerator) Voxel(x, y, z int) Voxel {
 	}
 	if y < rh {
 		vtype = rock
+	}
+
+	if wg.Cave.Sample(x, y, z) > 0.5 {
+		vtype = EmptyVoxel
+	}
+
+	if vtype != EmptyVoxel {
+		l := 1 - 0.3 * (wg.Variance.Sample(x, y, z) + 1)/2
+		vtype.R = byte(l * float32(vtype.R))
+		vtype.G = byte(l * float32(vtype.G))
+		vtype.B = byte(l * float32(vtype.B))
 	}
 
 	return vtype

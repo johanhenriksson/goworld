@@ -14,7 +14,8 @@ Yet another attempt at building a basic OpenGL 3D engine from scratch, this time
 - Color Grading with Lookup Tables
 - OBJ Model Loader
 - TrueType Font Rendering
-- UI: Panels, Labels, basic layout engine
+- UI: Panels, Labels, Images, and a simple layout engine
+- Custom ergonomic 3D math library derived from mathgl and go3d
 
 Only tested on OSX 10.10+. It should *theoretically* work on Windows and Linux.
 
@@ -27,16 +28,14 @@ Only tested on OSX 10.10+. It should *theoretically* work on Windows and Linux.
 
 ## Todo / Ideas
 
- * Improved scene graph
- * Components System
+ * Improved Scene Graph / Components System
  * User Interface elements:
    * Textbox
    * Button
- * Embedded scripting language (probably V8)
+ * Embedded scripting language (probably javascript/V8)
  * Console
  * Lighting
    * Point Light shadows
    * Spot Light
    * Spot Light shadows
- * Bloom Effect
- * Scene save/load
+ * Bloom Post-Process Effect

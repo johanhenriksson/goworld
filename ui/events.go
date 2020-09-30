@@ -1,9 +1,9 @@
 package ui
 
 import (
-	mgl "github.com/go-gl/mathgl/mgl32"
 	"github.com/johanhenriksson/goworld/engine/keys"
 	"github.com/johanhenriksson/goworld/engine/mouse"
+	"github.com/johanhenriksson/goworld/math/vec2"
 )
 
 type MouseHandler func(MouseEvent)
@@ -11,7 +11,7 @@ type MouseHandler func(MouseEvent)
 // MouseEvent represents a mouse event as it propagates through the component hierarchy
 type MouseEvent struct {
 	UI     *Manager
-	Point  mgl.Vec2
+	Point  vec2.T
 	Button mouse.Button
 }
 

@@ -7,6 +7,8 @@ import (
 	"os"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
+
+	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/util"
 )
 
@@ -59,6 +61,10 @@ func CreateTexture(width, height int32) *Texture {
 	tx.SetWrapMode(ClampWrap)
 
 	return tx
+}
+
+func (tx *Texture) Size() vec2.T {
+	return vec2.New(float32(tx.Width), float32(tx.Height))
 }
 
 func (tx *Texture) SetFilter(filter TextureFilter) {

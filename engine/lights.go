@@ -2,8 +2,8 @@ package engine
 
 import (
 	"github.com/johanhenriksson/goworld/render"
-
-	mgl "github.com/go-gl/mathgl/mgl32"
+	"github.com/johanhenriksson/goworld/math/vec3"
+	"github.com/johanhenriksson/goworld/math/mat4"
 )
 
 // Attenuation properties for point lights
@@ -16,14 +16,14 @@ type Attenuation struct {
 // Light holds information about a generic light
 type Light struct {
 	Attenuation Attenuation
-	Position    mgl.Vec3
-	Color       mgl.Vec3
+	Position    vec3.T
+	Color       vec3.T
 	Range       float32
 	Intensity   float32
 	Type        LightType
 	Shadows     bool
 
-	Projection mgl.Mat4 // Shadow projection matrix
+	Projection mat4.T // Shadow projection matrix
 	ProjWidth  float32
 	ProjHeight float32
 	ShadowMap  *render.Texture

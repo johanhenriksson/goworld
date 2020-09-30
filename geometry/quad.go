@@ -2,6 +2,7 @@ package geometry
 
 import (
 	"github.com/johanhenriksson/goworld/math"
+	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/render"
 )
 
@@ -16,11 +17,11 @@ type Quad struct {
 	vbo      *render.VertexBuffer
 }
 
-func NewQuad(mat *render.Material, w, h float32) *Quad {
+func NewQuad(mat *render.Material, size vec2.T) *Quad {
 	q := &Quad{
 		Material: mat,
-		Width:    w,
-		Height:   h,
+		Width:    size.X,
+		Height:   size.Y,
 		segments: 5,
 		border:   0,
 
@@ -100,9 +101,9 @@ func (q *Quad) appendCorner(vtx *Vertices, origin Vertex, offset float32) {
 	}
 }
 
-func (q *Quad) SetSize(w, h float32) {
-	q.Width = w
-	q.Height = h
+func (q *Quad) SetSize(size vec2.T) {
+	q.Width = size.X
+	q.Height = size.Y
 	q.compute()
 }
 
@@ -191,7 +192,7 @@ func (q *Quad) compute() {
 
 func (q *Quad) Draw(args render.DrawArgs) {
 	q.Material.Use()
-	q.Material.Mat4f("model", args.Transform)
-	q.Material.Mat4f("viewport", args.Projection)
+	q.Material.Mat4f("model", &args.Transform)
+	q.Material.Mat4f("viewport", &args.Projection)
 	q.vao.DrawElements()
 }

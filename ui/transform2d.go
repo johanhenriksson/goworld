@@ -1,23 +1,24 @@
 package ui
 
 import (
-	mgl "github.com/go-gl/mathgl/mgl32"
-	"math"
+	"github.com/johanhenriksson/goworld/math/mat4"
+	"github.com/johanhenriksson/goworld/math/vec2"
+	"github.com/johanhenriksson/goworld/math/vec3"
 )
 
 type Transform2D struct {
-	Matrix   mgl.Mat4
-	Position mgl.Vec3
-	Scale    mgl.Vec2
+	Matrix   mat4.T
+	Position vec3.T
+	Scale    vec2.T
 	Rotation float32
 }
 
 /* Creates a new 2D transform */
-func CreateTransform2D(x, y, z float32) *Transform2D {
+func CreateTransform2D(position vec2.T, z float32) *Transform2D {
 	t := &Transform2D{
-		Matrix:   mgl.Ident4(),
-		Position: mgl.Vec3{x, y, z},
-		Scale:    mgl.Vec2{1, 1},
+		Matrix:   mat4.Ident(),
+		Position: vec3.Extend(position, z),
+		Scale:    vec2.One,
 		Rotation: 0.0,
 	}
 	t.Update(0)
@@ -25,12 +26,5 @@ func CreateTransform2D(x, y, z float32) *Transform2D {
 }
 
 func (t *Transform2D) Update(dt float32) {
-	// update transform from properties
-	rad := t.Rotation * math.Pi / 180.0
-	rotation := mgl.AnglesToQuat(0, 0, rad, mgl.XYZ).Mat4()
-	scaling := mgl.Scale3D(t.Scale[0], t.Scale[1], 1)
-	translation := mgl.Translate3D(t.Position[0], t.Position[1], t.Position[2])
-
-	// new transform matrix: (S * (R * T))
-	t.Matrix = scaling.Mul4(rotation.Mul4(translation))
+	t.Matrix = mat4.Transform(t.Position, vec3.New(0, 0, t.Rotation), vec3.Extend(t.Scale, 1))
 }

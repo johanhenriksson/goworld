@@ -1,10 +1,11 @@
 package engine
 
 import (
-	"github.com/johanhenriksson/goworld/render"
-
 	"github.com/go-gl/gl/v4.1-core/gl"
-	mgl "github.com/go-gl/mathgl/mgl32"
+
+	"github.com/johanhenriksson/goworld/math/mat4"
+	"github.com/johanhenriksson/goworld/math/vec3"
+	"github.com/johanhenriksson/goworld/render"
 )
 
 // ShadowPass renders shadow maps for lights.
@@ -59,15 +60,15 @@ func (sp *ShadowPass) DrawPass(scene *Scene, light *Light) {
 	/* compute world to lightspace (light view projection) matrix */
 	// todo: move to light object
 	p := light.Projection
-	v := mgl.LookAtV(light.Position, mgl.Vec3{0, 0, 0}, mgl.Vec3{0, 1, 0})
-	vp := p.Mul4(v)
+	v := mat4.LookAt(light.Position, vec3.One)
+	vp := p.Mul(&v)
 
 	args := render.DrawArgs{
 		Projection: p,
 		View:       v,
 		VP:         vp,
 		MVP:        vp,
-		Transform:  mgl.Ident4(),
+		Transform:  mat4.Ident(),
 		Pass:       render.GeometryPass,
 	}
 	scene.Draw(args)

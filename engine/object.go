@@ -4,6 +4,7 @@ import (
 	"reflect"
 
 	"github.com/johanhenriksson/goworld/render"
+	"github.com/johanhenriksson/goworld/math/vec3"
 )
 
 // Object is the basic component of a scene. It has a transform, a list of components and optionally child objects.
@@ -14,9 +15,9 @@ type Object struct {
 }
 
 // NewObject creates a new object in the scene.
-func NewObject(x, y, z float32) *Object {
+func NewObject(position vec3.T) *Object {
 	return &Object{
-		Transform:  CreateTransform(x, y, z),
+		Transform:  CreateTransform(position),
 		Components: []Component{},
 		Children:   []*Object{},
 	}
@@ -30,8 +31,8 @@ func (o *Object) Attach(component Component) {
 // Draw the object, its components and its children.
 func (o *Object) Draw(args render.DrawArgs) {
 	// apply transforms
-	args.Transform = o.Transform.Matrix.Mul4(args.Transform)
-	args.MVP = args.VP.Mul4(args.Transform)
+	args.Transform = o.Transform.Matrix.Mul(&args.Transform)
+	args.MVP = args.VP.Mul(&args.Transform)
 
 	// draw components
 	for _, comp := range o.Components {

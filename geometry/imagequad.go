@@ -1,6 +1,7 @@
 package geometry
 
 import (
+	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/render"
 )
 
@@ -15,12 +16,12 @@ type ImageQuad struct {
 	vbo      *render.VertexBuffer
 }
 
-func NewImageQuad(mat *render.Material, w, h float32, invert bool) *ImageQuad {
+func NewImageQuad(mat *render.Material, size vec2.T, invert bool) *ImageQuad {
 	q := &ImageQuad{
 		Material: mat,
 		InvertY:  invert,
-		Width:    w,
-		Height:   h,
+		Width:    size.X,
+		Height:   size.Y,
 		U:        1,
 		V:        1,
 		vao:      render.CreateVertexArray(),
@@ -30,9 +31,9 @@ func NewImageQuad(mat *render.Material, w, h float32, invert bool) *ImageQuad {
 	return q
 }
 
-func (q *ImageQuad) SetSize(w, h float32) {
-	q.Width = w
-	q.Height = h
+func (q *ImageQuad) SetSize(size vec2.T) {
+	q.Width = size.X
+	q.Height = size.Y
 	q.compute()
 }
 
@@ -72,8 +73,8 @@ func (q *ImageQuad) compute() {
 func (q *ImageQuad) Draw(args render.DrawArgs) {
 	if q.Material != nil {
 		q.Material.Use()
-		q.Material.Mat4f("model", args.Transform)
-		q.Material.Mat4f("viewport", args.Projection)
+		q.Material.Mat4f("model", &args.Transform)
+		q.Material.Mat4f("viewport", &args.Projection)
 	}
 	q.vao.DrawElements()
 }
