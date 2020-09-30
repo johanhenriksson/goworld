@@ -1,6 +1,7 @@
 package geometry
 
 import (
+	"fmt"
 	"github.com/johanhenriksson/goworld/math"
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/render"
@@ -32,6 +33,7 @@ func NewQuad(mat *render.Material, size vec2.T) *Quad {
 	q.vbo.Bind()
 	mat.SetupVertexPointers()
 	q.compute()
+	fmt.Printf("[VBO %d] Quad %.0fx%.0f\n", q.vbo.ID, size.X, size.Y)
 	return q
 }
 

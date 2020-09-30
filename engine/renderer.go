@@ -16,16 +16,12 @@ type PassMap map[string]RenderPass
 type Renderer struct {
 	Passes  []RenderPass
 	Scene   *Scene
-	Width   int32
-	Height  int32
 	passMap PassMap
 }
 
 // NewRenderer instantiates a new rendering pipeline.
-func NewRenderer(width, height int32, scene *Scene) *Renderer {
+func NewRenderer(scene *Scene) *Renderer {
 	r := &Renderer{
-		Width:   width,
-		Height:  height,
 		Scene:   scene,
 		Passes:  []RenderPass{},
 		passMap: make(PassMap),

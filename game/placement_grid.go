@@ -12,6 +12,7 @@ import (
 type PlacementGrid struct {
 	*engine.ComponentBase
 	ChunkMesh *ChunkMesh
+	Color     render.Color
 
 	mesh *geometry.Lines
 
@@ -23,6 +24,7 @@ func NewPlacementGrid(parentObject *engine.Object) *PlacementGrid {
 	pg := &PlacementGrid{
 		mesh:      geometry.CreateLines(),
 		ChunkMesh: nil,
+		Color:     render.Black,
 	}
 	pg.ComponentBase = engine.NewComponent(parentObject, pg)
 
@@ -35,7 +37,7 @@ func NewPlacementGrid(parentObject *engine.Object) *PlacementGrid {
 
 	// compute grid mesh
 	pg.ChunkMesh = chunk
-	pg.Y = 8
+	pg.Y = 15
 	pg.Compute()
 
 	return pg
@@ -44,7 +46,7 @@ func NewPlacementGrid(parentObject *engine.Object) *PlacementGrid {
 func (grid *PlacementGrid) Up() {
 	if grid.Y < (grid.ChunkMesh.Sy - 1) {
 		fmt.Println("grid up")
-		grid.Y += 1
+		grid.Y++
 		grid.Compute()
 	}
 }
@@ -52,16 +54,16 @@ func (grid *PlacementGrid) Up() {
 func (grid *PlacementGrid) Down() {
 	if grid.Y > 0 {
 		fmt.Println("grid down")
-		grid.Y -= 1
+		grid.Y--
 		grid.Compute()
 	}
 }
 
 func (grid *PlacementGrid) Update(dt float32) {
-	if keys.Released(keys.J) {
+	if keys.Pressed(keys.J) {
 		grid.Down()
 	}
-	if keys.Released(keys.K) {
+	if keys.Pressed(keys.K) {
 		grid.Up()
 	}
 }
@@ -79,9 +81,9 @@ func (grid *PlacementGrid) Compute() {
 		for z := 0; z < grid.ChunkMesh.Sz; z++ {
 			if true || grid.ChunkMesh.At(x, grid.Y, z) == EmptyVoxel {
 				// place box
-				grid.mesh.Box(float32(x), float32(grid.Y), float32(z), // position
+				grid.mesh.Box(float32(x), float32(grid.Y)+0.001, float32(z), // position
 					1, 0, 1, // size
-					0, 0, 0, 0.35) // color (RGBA)
+					grid.Color) // color (RGBA)
 			}
 		}
 	}

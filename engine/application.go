@@ -24,14 +24,14 @@ func NewApplication(title string, width, height int) *Application {
 	renderWidth, renderHeight := int32(float32(width)*scale), int32(float32(height)*scale)
 
 	// set upp renderer
-	renderer := NewRenderer(renderWidth, renderHeight, scene)
+	renderer := NewRenderer(scene)
 	geoPass := NewGeometryPass(renderWidth, renderHeight)
 	lightPass := NewLightPass(geoPass.Buffer)
 	colorPass := NewColorPass(lightPass.Output, "saturated")
 	renderer.Append("geometry", geoPass)
 	renderer.Append("light", lightPass)
 	renderer.Append("postprocess", colorPass)
-	renderer.Append("output", NewOutputPass(colorPass.Output))
+	renderer.Append("output", NewOutputPass(colorPass.Output, geoPass.Buffer.Depth))
 	renderer.Append("lines", NewLinePass())
 
 	app := &Application{

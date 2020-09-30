@@ -40,7 +40,7 @@ func NewColorPass(input *render.Texture, filter string) *ColorPass {
 		Input:  input,
 		Output: output,
 		Lut:    lut,
-		Gamma:  2.2,
+		Gamma:  1.7,
 		fbo:    fbo,
 		mat:    mat,
 		quad:   quad,

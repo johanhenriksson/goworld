@@ -110,24 +110,27 @@ func (p *LightPass) DrawPass(scene *Scene) {
 
 	// clear output buffer
 	p.fbo.Bind()
+	p.fbo.ClearColor = scene.Camera.Clear
 	p.fbo.Clear()
-
-	// set blending mode to additive
-	gl.Enable(gl.BLEND)
-	gl.BlendFunc(gl.ONE, gl.ONE)
 
 	// enable back face culling
 	gl.Enable(gl.CULL_FACE)
 	gl.CullFace(gl.BACK)
+
+	// enable blending
+	gl.Enable(gl.BLEND)
 
 	// ambient light pass
 	ambient := Light{
 		Color:     p.Ambient.Vec3(),
 		Intensity: 1,
 	}
+	gl.BlendFunc(gl.SRC_ALPHA, gl.ZERO)
 	p.setLightUniforms(&ambient)
-	p.fbo.Bind()
 	p.quad.Draw()
+
+	// set blending mode to additive
+	gl.BlendFunc(gl.ONE, gl.ONE)
 
 	// draw lights one by one
 	for i, light := range scene.Lights {

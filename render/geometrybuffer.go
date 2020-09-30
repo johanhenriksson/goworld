@@ -24,9 +24,9 @@ func CreateGeometryBuffer(width, height int32) *GeometryBuffer {
 		FrameBuffer: fbo,
 
 		Depth:    fbo.AttachBuffer(gl.DEPTH_ATTACHMENT, gl.DEPTH_COMPONENT24, gl.DEPTH_COMPONENT, gl.FLOAT), // depth
-		Diffuse:  fbo.AttachBuffer(gl.COLOR_ATTACHMENT0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE),                // diffuse (rgb)
-		Normal:   fbo.AttachBuffer(gl.COLOR_ATTACHMENT1, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE),                // world normal (rgb)
-		Position: fbo.AttachBuffer(gl.COLOR_ATTACHMENT2, gl.RGB32F, gl.RGBA, gl.FLOAT),                      // world position (rgb)
+		Diffuse:  fbo.AttachBuffer(gl.COLOR_ATTACHMENT0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE),                  // diffuse (rgb)
+		Normal:   fbo.AttachBuffer(gl.COLOR_ATTACHMENT1, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE),                  // world normal (rgb)
+		Position: fbo.AttachBuffer(gl.COLOR_ATTACHMENT2, gl.RGB32F, gl.RGB, gl.FLOAT),                       // world position (rgb)
 		// todo: specular & smoothness buffer maybe
 	}
 
@@ -52,6 +52,7 @@ func (g *GeometryBuffer) SampleNormal(p vec2.T) (vec3.T, bool) {
 	return viewNormal, true
 }
 
+// SampleDepth samples the depth at a given point
 func (g *GeometryBuffer) SampleDepth(p vec2.T) (float32, bool) {
 	g.Bind()
 	x, y := int(p.X), int(p.Y)

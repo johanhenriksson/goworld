@@ -1,7 +1,6 @@
 package engine
 
 import (
-	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/johanhenriksson/goworld/render"
 )
 
@@ -13,10 +12,11 @@ type OutputPass struct {
 }
 
 // NewOutputPass creates a new output pass for the given input texture.
-func NewOutputPass(input *render.Texture) *OutputPass {
+func NewOutputPass(input, depth *render.Texture) *OutputPass {
 	mat := render.CreateMaterial(render.CompileVFShader("/assets/shaders/screen_quad"))
 	mat.AddDescriptors(render.F32_XYZUV)
 	mat.AddTexture("tex_input", input)
+	mat.AddTexture("tex_depth", depth)
 
 	/* create a render quad */
 	quad := render.NewQuad(mat)
@@ -34,8 +34,9 @@ func (p *OutputPass) DrawPass(scene *Scene) {
 
 	// camera settings
 	camera.Use()
+	scene.Camera.Buffer.ClearColor = scene.Camera.Clear
+	scene.Camera.Buffer.Clear()
 
 	// draw
-	gl.Clear(gl.DEPTH_BUFFER_BIT | gl.COLOR_BUFFER_BIT)
 	p.quad.Draw()
 }

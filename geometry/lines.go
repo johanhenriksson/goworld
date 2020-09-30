@@ -2,31 +2,29 @@ package geometry
 
 import (
 	"github.com/johanhenriksson/goworld/assets"
+	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
-	mgl "github.com/go-gl/mathgl/mgl32"
 )
 
 type Lines struct {
 	Lines    []Line
 	Material *render.Material
-	Width    float32
 	vao      *render.VertexArray
 	vbo      *render.VertexBuffer
 }
 
 type Line struct {
-	Start mgl.Vec3
-	End   mgl.Vec3
-	Color mgl.Vec4
+	Start vec3.T
+	End   vec3.T
+	Color render.Color
 }
 
 func CreateLines() *Lines {
 	l := &Lines{
 		Lines:    make([]Line, 0, 0),
 		Material: assets.GetMaterialCached("lines"),
-		Width:    10.0,
 		vao:      render.CreateVertexArray(),
 		vbo:      render.CreateVertexBuffer(),
 	}
@@ -43,23 +41,23 @@ func (lines *Lines) Clear() {
 	lines.Compute()
 }
 
-func (lines *Lines) Box(x, y, z, w, h, d, r, g, b, a float32) {
+func (lines *Lines) Box(x, y, z, w, h, d float32, color render.Color) {
 	/* Bottom square */
-	lines.Line(x, y, z, x+w, y, z, r, g, b, a)
-	lines.Line(x, y, z, x, y, z+d, r, g, b, a)
-	lines.Line(x+w, y, z, x+w, y, z+d, r, g, b, a)
-	lines.Line(x, y, z+w, x+w, y, z+d, r, g, b, a)
+	lines.Line(vec3.New(x, y, z), vec3.New(x+w, y, z), color)
+	lines.Line(vec3.New(x, y, z), vec3.New(x, y, z+d), color)
+	lines.Line(vec3.New(x+w, y, z), vec3.New(x+w, y, z+d), color)
+	lines.Line(vec3.New(x, y, z+w), vec3.New(x+w, y, z+d), color)
 
 	/* Top square */
-	lines.Line(x, y+h, z, x+w, y+h, z, r, g, b, a)
-	lines.Line(x, y+h, z, x, y+h, z+d, r, g, b, a)
-	lines.Line(x+w, y+h, z, x+w, y+h, z+d, r, g, b, a)
-	lines.Line(x, y+h, z+w, x+w, y+h, z+d, r, g, b, a)
+	lines.Line(vec3.New(x, y+h, z), vec3.New(x+w, y+h, z), color)
+	lines.Line(vec3.New(x, y+h, z), vec3.New(x, y+h, z+d), color)
+	lines.Line(vec3.New(x+w, y+h, z), vec3.New(x+w, y+h, z+d), color)
+	lines.Line(vec3.New(x, y+h, z+w), vec3.New(x+w, y+h, z+d), color)
 
-	lines.Line(x, y, z, x, y+h, z, r, g, b, a)
-	lines.Line(x+w, y, z, x+w, y+h, z, r, g, b, a)
-	lines.Line(x, y, z+d, x, y+h, z+d, r, g, b, a)
-	lines.Line(x+w, y, z+d, x+w, y+h, z+d, r, g, b, a)
+	lines.Line(vec3.New(x, y, z), vec3.New(x, y+h, z), color)
+	lines.Line(vec3.New(x+w, y, z), vec3.New(x+w, y+h, z), color)
+	lines.Line(vec3.New(x, y, z+d), vec3.New(x, y+h, z+d), color)
+	lines.Line(vec3.New(x+w, y, z+d), vec3.New(x+w, y+h, z+d), color)
 }
 
 func (lines *Lines) Compute() {
@@ -69,10 +67,10 @@ func (lines *Lines) Compute() {
 		line := lines.Lines[i]
 		a := &data[2*i+0]
 		b := &data[2*i+1]
-		a.X, a.Y, a.Z = line.Start[0], line.Start[1], line.Start[2]
-		b.X, b.Y, b.Z = line.End[0], line.End[1], line.End[2]
-		a.R, a.G, a.B, a.A = line.Color[0], line.Color[1], line.Color[2], line.Color[3]
-		b.R, b.G, b.B, b.A = line.Color[0], line.Color[1], line.Color[2], line.Color[3]
+		a.X, a.Y, a.Z = line.Start.X, line.Start.Y, line.Start.Z
+		b.X, b.Y, b.Z = line.End.X, line.End.Y, line.End.Z
+		a.R, a.G, a.B, a.A = line.Color.R, line.Color.G, line.Color.B, line.Color.A
+		b.R, b.G, b.B, b.A = line.Color.R, line.Color.G, line.Color.B, line.Color.A
 	}
 	lines.vao.Length = int32(2 * count)
 	lines.vao.Type = gl.LINES
@@ -87,14 +85,16 @@ func (lines *Lines) Compute() {
 func (lines *Lines) Draw(args render.DrawArgs) {
 	// setup line material
 	if len(lines.Lines) > 0 && args.Pass == render.LinePass {
+		lines.Material.Use()
+		lines.Material.Mat4f("mvp", &args.MVP)
 		lines.vao.DrawElements()
 	}
 }
 
-func (lines *Lines) Line(start_x, start_y, start_z, end_x, end_y, end_z, r, g, b, a float32) {
+func (lines *Lines) Line(start, end vec3.T, color render.Color) {
 	lines.Add(Line{
-		Start: mgl.Vec3{start_x, start_y, start_z},
-		End:   mgl.Vec3{end_x, end_y, end_z},
-		Color: mgl.Vec4{r, g, b, a},
+		Start: start,
+		End:   end,
+		Color: color,
 	})
 }

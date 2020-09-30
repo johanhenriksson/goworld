@@ -118,6 +118,8 @@ func main() {
 	}
 	fmt.Println("World generation complete")
 
+	game.NewPlacementGrid(chunks[0][0].Object())
+
 	// test model
 	// building := engine.NewObject(4.5, 9.04, 8.5)
 	// building.Scale = mgl.Vec3{0.1, 0.1, 0.1}

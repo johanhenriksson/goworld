@@ -6,13 +6,13 @@ import (
 	"github.com/go-gl/gl/v4.1-core/gl"
 )
 
-/* Rename to something that reflects that it's an attachment to a frame buffer */
+// DrawBuffer holds a target texture of a frame buffer object
 type DrawBuffer struct {
 	Target  uint32 // GL attachment enum (DEPTH_ATTACHMENT, COLOR_ATTACHMENT etc)
 	Texture *Texture
 }
 
-/** Represents an OpenGL frame buffer object */
+// FrameBuffer holds information about an OpenGL frame buffer object
 type FrameBuffer struct {
 	Buffers    []DrawBuffer
 	ClearColor Color
@@ -20,8 +20,10 @@ type FrameBuffer struct {
 	Height     int32
 	id         uint32
 	mipLvl     int32
+	targets    []uint32
 }
 
+// ScreenBuffer is the frame buffer of the screen
 var ScreenBuffer = FrameBuffer{
 	Buffers:    []DrawBuffer{},
 	ClearColor: Color{0, 0, 0, 1},
@@ -29,12 +31,11 @@ var ScreenBuffer = FrameBuffer{
 	Height:     0,
 	id:         0,
 	mipLvl:     0,
+	targets:    []uint32{gl.COLOR_ATTACHMENT0},
 }
 
-/**
- * Create a new frame buffer texture and attach it to the given target.
- * Returns a pointer to the created texture object. FBO must be bound first.
- */
+// AttachBuffer creates a new frame buffer texture and attaches it to the given target.
+// Returns a pointer to the created texture object. FBO must be bound first.
 func (f *FrameBuffer) AttachBuffer(target, internalFormat, format, datatype uint32) *Texture {
 	// Create texture object
 	texture := CreateTexture(f.Width, f.Height)
@@ -52,33 +53,40 @@ func (f *FrameBuffer) AttachBuffer(target, internalFormat, format, datatype uint
 			Target:  target,
 			Texture: texture,
 		})
+
+		// add the target to the list of enabled draw buffers
+		f.targets = append(f.targets, target)
 	}
 
 	return texture
 }
 
+// CreateFrameBuffer creates a new frame buffer object with a given size
 func CreateFrameBuffer(width, height int32) *FrameBuffer {
 	f := &FrameBuffer{
 		Width:      width,
 		Height:     height,
 		Buffers:    []DrawBuffer{},
 		ClearColor: Color4(0, 0, 0, 1),
+		targets:    make([]uint32, 0, 8),
 	}
 	gl.GenFramebuffers(1, &f.id)
 	gl.BindFramebuffer(gl.FRAMEBUFFER, f.id)
 	return f
 }
 
+// Bind the frame buffer for drawing
 func (f *FrameBuffer) Bind() {
+	// set viewport size equal to buffer size
+	gl.Viewport(0, 0, f.Width, f.Height)
+
 	gl.BindTexture(gl.TEXTURE_2D, 0) // why?
 
 	// bind this frame buffer
 	gl.BindFramebuffer(gl.FRAMEBUFFER, f.id)
-
-	// set viewport size equal to buffer size
-	gl.Viewport(0, 0, f.Width, f.Height)
 }
 
+// Unbind the frame buffer
 func (f *FrameBuffer) Unbind() {
 	// finish drawing
 	gl.Flush()
@@ -87,13 +95,13 @@ func (f *FrameBuffer) Unbind() {
 	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
 }
 
-/* Clear the frame buffer. Make sure its bound first */
+// Clear the frame buffer. Make sure its bound first
 func (f *FrameBuffer) Clear() {
 	gl.ClearColor(f.ClearColor.R, f.ClearColor.G, f.ClearColor.B, f.ClearColor.A)
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 }
 
-/* Delete frame buffer object */
+// Delete the frame buffer object
 func (f *FrameBuffer) Delete() {
 	if f.id == 0 {
 		panic("Cant delete framebuffer 0")
@@ -102,6 +110,7 @@ func (f *FrameBuffer) Delete() {
 	f.id = 0
 }
 
+// Sample the color buffer at a given coordinate.
 func (f *FrameBuffer) Sample(target uint32, x, y int) Color {
 	pixel := make([]float32, 4)
 	gl.ReadBuffer(target)
@@ -109,6 +118,7 @@ func (f *FrameBuffer) Sample(target uint32, x, y int) Color {
 	return Color4(pixel[0], pixel[1], pixel[2], pixel[3])
 }
 
+// SampleDepth samples the depth buffer at a given coordinate.
 func (f *FrameBuffer) SampleDepth(x, y int) float32 {
 	float := float32(0)
 	gl.ReadPixels(int32(x), int32(y), 1, 1, gl.DEPTH_COMPONENT, gl.FLOAT, unsafe.Pointer(&float))
@@ -117,9 +127,5 @@ func (f *FrameBuffer) SampleDepth(x, y int) float32 {
 
 // DrawBuffers sets up all the attached buffers for drawing
 func (f *FrameBuffer) DrawBuffers() {
-	buff := []uint32{}
-	for _, buffer := range f.Buffers {
-		buff = append(buff, buffer.Target)
-	}
-	gl.DrawBuffers(int32(len(buff)), &buff[0])
+	gl.DrawBuffers(int32(len(f.targets)), &f.targets[0])
 }

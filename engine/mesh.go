@@ -62,6 +62,10 @@ func (m *Mesh) Update(dt float32) {}
 
 // Draw the mesh.
 func (m *Mesh) Draw(args render.DrawArgs) {
+	if args.Pass != render.GeometryPass && args.Pass != render.LightPass {
+		return
+	}
+
 	m.material.Use()
 
 	// set up uniforms
