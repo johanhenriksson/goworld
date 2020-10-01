@@ -12,13 +12,11 @@ type ShadowBuffer struct {
 
 // NewShadowBuffer creates a new shadow buffer
 func NewShadowBuffer(width, height int32) *ShadowBuffer {
-	/* create frame buffer object */
 	f := CreateFrameBuffer(width, height)
-	s := &ShadowBuffer{
+	return &ShadowBuffer{
 		FrameBuffer: f,
 
 		// add a depth buffer
 		Depth: f.AttachBuffer(gl.DEPTH_ATTACHMENT, gl.DEPTH_COMPONENT24, gl.DEPTH_COMPONENT, gl.FLOAT),
 	}
-	return s
 }

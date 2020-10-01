@@ -11,14 +11,14 @@ type ChunkMesh struct {
 	meshComputed chan VoxelVertices
 }
 
-func NewChunkMesh(object *engine.Object, chunk *Chunk) *ChunkMesh {
-	mesh := engine.NewMesh(assets.GetMaterialCached("color_voxels"))
+func NewChunkMesh(parent *engine.Object, chunk *Chunk) *ChunkMesh {
+	mesh := engine.NewMesh(parent, assets.GetMaterialCached("color_voxels"))
 	chk := &ChunkMesh{
 		Mesh:         mesh,
 		Chunk:        chunk,
 		meshComputed: make(chan VoxelVertices),
 	}
-	chk.ComponentBase = engine.NewComponent(object, chk)
+	parent.Attach(chk)
 	return chk
 }
 

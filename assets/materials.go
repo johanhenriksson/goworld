@@ -49,7 +49,7 @@ func LoadMaterialDefinition(file string) (*MaterialDefinition, error) {
 	return matf, nil
 }
 
-func LoadMaterial(shader *render.ShaderProgram, matf *MaterialDefinition) (*render.Material, error) {
+func LoadMaterial(shader *render.Shader, matf *MaterialDefinition) (*render.Material, error) {
 	mat := render.CreateMaterial(shader)
 
 	/* Load vertex pointers */

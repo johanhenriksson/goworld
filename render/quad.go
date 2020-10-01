@@ -14,20 +14,16 @@ var ScreenQuad = FloatBuffer{
 // Quad is a drawable quad
 type Quad struct {
 	vao *VertexArray
-	vbo *VertexBuffer
 	mat *Material
 }
 
 // NewQuad creates a new quad with a given material
 func NewQuad(mat *Material) *Quad {
 	q := &Quad{
-		vao: CreateVertexArray(),
-		vbo: CreateVertexBuffer(),
+		vao: CreateVertexArray(Triangles, "geometry"),
 		mat: mat,
 	}
-	q.vao.Length = 6 // two triangles, six vertices
-	q.vao.Bind()
-	q.vbo.Buffer(ScreenQuad)
+	q.vao.Buffer("geometry", ScreenQuad)
 	if mat != nil {
 		mat.SetupVertexPointers()
 	}
@@ -41,5 +37,5 @@ func (q *Quad) Draw() {
 		q.mat.Use()
 	}
 
-	q.vao.DrawElements()
+	q.vao.Draw()
 }

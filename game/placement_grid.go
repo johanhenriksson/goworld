@@ -10,7 +10,8 @@ import (
 )
 
 type PlacementGrid struct {
-	*engine.ComponentBase
+	*engine.Object
+
 	ChunkMesh *ChunkMesh
 	Color     render.Color
 
@@ -20,26 +21,20 @@ type PlacementGrid struct {
 	Y int
 }
 
-func NewPlacementGrid(parentObject *engine.Object) *PlacementGrid {
+func NewPlacementGrid(chunk *ChunkMesh) *PlacementGrid {
 	pg := &PlacementGrid{
+		Object:    chunk.Object,
 		mesh:      geometry.CreateLines(),
-		ChunkMesh: nil,
+		ChunkMesh: chunk,
 		Color:     render.Black,
 	}
-	pg.ComponentBase = engine.NewComponent(parentObject, pg)
-
-	// find chunk
-	obj, exists := parentObject.GetComponent(pg.ChunkMesh)
-	if !exists {
-		panic("no chunk component")
-	}
-	chunk := obj.(*ChunkMesh)
 
 	// compute grid mesh
 	pg.ChunkMesh = chunk
-	pg.Y = 15
+	pg.Y = 9
 	pg.Compute()
 
+	pg.Object.Attach(pg)
 	return pg
 }
 

@@ -2,26 +2,26 @@ package geometry
 
 import (
 	"fmt"
+
 	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/udhos/gwob"
 )
 
 type ObjModel struct {
-	*engine.IndexedMesh
+	*engine.Mesh
 	Path string
 }
 
 func NewObjModel(parent *engine.Object, mat *render.Material, path string) *ObjModel {
 	obj := &ObjModel{
-		IndexedMesh: engine.NewIndexedMesh(mat),
-		Path:        path,
+		Mesh: engine.NewMesh(parent, mat),
+		Path: path,
 	}
+	obj.AddIndex(render.UInt32)
 	if err := obj.load(); err != nil {
 		fmt.Println("Error loading model", path, ":", err)
 	}
-
-	obj.ComponentBase = engine.NewComponent(parent, obj)
 	return obj
 }
 
@@ -52,6 +52,6 @@ func (obj *ObjModel) load() error {
 	}
 
 	obj.Buffer("geometry", meshdata)
-	obj.BufferIndices(indices)
+	obj.Buffer("index", indices)
 	return nil
 }

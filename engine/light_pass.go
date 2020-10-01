@@ -32,7 +32,7 @@ func NewLightPass(input *render.GeometryBuffer) *LightPass {
 		Radius:  0.5,
 		Bias:    0.03,
 		Power:   2.0,
-		Scale:   2,
+		Scale:   1,
 	})
 
 	// create output frame buffer
@@ -40,7 +40,7 @@ func NewLightPass(input *render.GeometryBuffer) *LightPass {
 	output := fbo.AttachBuffer(gl.COLOR_ATTACHMENT0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE)
 
 	// instantiate light pass shader
-	mat := render.CreateMaterial(render.CompileShaderProgram("/assets/shaders/light_pass"))
+	mat := render.CreateMaterial(render.CompileShader("/assets/shaders/light_pass"))
 	mat.AddDescriptors(render.F32_XYZUV)
 
 	// create full screen render quad
@@ -76,23 +76,21 @@ func NewLightPass(input *render.GeometryBuffer) *LightPass {
 }
 
 func (p *LightPass) setLightUniforms(light *Light) {
-	shader := p.mat.ShaderProgram
-
 	/* compute world to lightspace (light view projection) matrix */
 	lp := light.Projection
 	lv := mat4.LookAt(light.Position, vec3.Zero) // only for directional light
 	lvp := lp.Mul(&lv)
-	shader.Mat4f("light_vp", &lvp)
+	p.mat.Mat4f("light_vp", &lvp)
 
 	/* set light uniform attributes */
-	shader.Vec3("light.Position", &light.Position)
-	shader.Vec3("light.Color", &light.Color)
-	shader.Int32("light.Type", int32(light.Type))
-	shader.Float("light.Range", light.Range)
-	shader.Float("light.Intensity", light.Intensity)
-	shader.Float("light.attenuation.Constant", light.Attenuation.Constant)
-	shader.Float("light.attenuation.Linear", light.Attenuation.Linear)
-	shader.Float("light.attenuation.Quadratic", light.Attenuation.Quadratic)
+	p.mat.Vec3("light.Position", &light.Position)
+	p.mat.Vec3("light.Color", &light.Color)
+	p.mat.Int32("light.Type", int32(light.Type))
+	p.mat.Float("light.Range", light.Range)
+	p.mat.Float("light.Intensity", light.Intensity)
+	p.mat.Float("light.attenuation.Constant", light.Attenuation.Constant)
+	p.mat.Float("light.attenuation.Linear", light.Attenuation.Linear)
+	p.mat.Float("light.attenuation.Quadratic", light.Attenuation.Quadratic)
 }
 
 // DrawPass executes the deferred lighting pass.

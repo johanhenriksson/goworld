@@ -7,22 +7,15 @@ import (
 
 type Cube struct {
 	*engine.Mesh
-	Size float32
 }
 
-func NewCube(parent *engine.Object, size float32) *Cube {
-	// create default material
+func NewCube(parent *engine.Object) *Cube {
 	mat := assets.GetMaterialCached("default")
-
 	cube := &Cube{
-		Mesh: engine.NewMesh(mat),
-		Size: size,
+		Mesh: engine.NewMesh(parent, mat),
 	}
 	cube.generate()
-
-	cube.ComponentBase = engine.NewComponent(parent, cube)
 	return cube
-
 }
 
 func (c *Cube) generate() {

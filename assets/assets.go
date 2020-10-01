@@ -6,7 +6,7 @@ import (
 	"github.com/johanhenriksson/goworld/render"
 )
 
-type ShaderMap map[string]*render.ShaderProgram
+type ShaderMap map[string]*render.Shader
 type TextureMap map[string]*render.Texture
 type MaterialMap map[string]*render.Material
 type FontMap map[string]*render.Font
@@ -30,7 +30,7 @@ func init() {
 	}
 }
 
-func GetShader(name string) *render.ShaderProgram {
+func GetShader(name string) *render.Shader {
 	// check shader cache
 	if shader, exists := cache.Shaders[name]; exists {
 		return shader
@@ -38,7 +38,7 @@ func GetShader(name string) *render.ShaderProgram {
 
 	// attempt to load
 	fmt.Println("+ shader", name)
-	shader := render.CompileShaderProgram("assets/shaders/" + name)
+	shader := render.CompileShader("assets/shaders/" + name)
 	cache.Shaders[name] = shader
 
 	return shader

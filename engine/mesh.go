@@ -1,8 +1,6 @@
 package engine
 
 import (
-	"fmt"
-
 	"github.com/johanhenriksson/goworld/render"
 )
 
@@ -11,50 +9,34 @@ type MeshBufferMap map[string]*render.VertexBuffer
 
 // Mesh base
 type Mesh struct {
-	*ComponentBase
+	*Object
 
 	material *render.Material
 	vao      *render.VertexArray
-	vbos     MeshBufferMap
 }
 
 // NewMesh creates a new mesh object
-func NewMesh(material *render.Material) *Mesh {
+func NewMesh(parent *Object, material *render.Material) *Mesh {
 	m := &Mesh{
+		Object:   parent,
 		material: material,
-		vao:      render.CreateVertexArray(),
-		vbos:     MeshBufferMap{},
+		vao:      render.CreateVertexArray(render.Triangles),
 	}
 	for _, buffer := range m.material.Buffers {
-		m.addBuffer(buffer)
+		m.vao.AddBuffer(buffer)
+		m.material.SetupBufferPointers(buffer)
 	}
+	parent.Attach(m)
 	return m
-}
-
-// addBuffer adds a named buffer to the mesh VAO.
-func (m *Mesh) addBuffer(name string) *render.VertexBuffer {
-	// create new vbo
-	vbo := render.CreateVertexBuffer()
-
-	// set up vertex array pointers for this buffer
-	m.vao.Bind()
-	vbo.Bind()
-	m.material.SetupBufferPointers(name)
-
-	// store reference & return vbo object
-	m.vbos[name] = vbo
-	return vbo
 }
 
 // Buffer mesh data to the GPU
 func (m *Mesh) Buffer(name string, data render.VertexData) error {
-	vbo, exists := m.vbos[name]
-	if !exists {
-		return fmt.Errorf("Unknown VBO: %s", name)
-	}
-	m.vao.Bind()
-	m.vao.Length = int32(data.Elements())
-	return vbo.Buffer(data)
+	return m.vao.Buffer(name, data)
+}
+
+func (m *Mesh) AddIndex(datatype render.GLType) {
+	m.vao.AddIndexBuffer(datatype)
 }
 
 // Update the mesh.
@@ -73,5 +55,5 @@ func (m *Mesh) Draw(args render.DrawArgs) {
 	m.material.Mat4f("view", &args.View)
 	m.material.Mat4f("projection", &args.Projection)
 
-	m.vao.DrawElements()
+	m.vao.Draw()
 }

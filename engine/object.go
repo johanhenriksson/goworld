@@ -1,10 +1,8 @@
 package engine
 
 import (
-	"reflect"
-
-	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/math/vec3"
+	"github.com/johanhenriksson/goworld/render"
 )
 
 // Object is the basic component of a scene. It has a transform, a list of components and optionally child objects.
@@ -60,13 +58,6 @@ func (o *Object) Update(dt float32) {
 	}
 }
 
-// GetComponent returns the first component of a given type
-func (o *Object) GetComponent(component Component) (Component, bool) {
-	t := reflect.TypeOf(component)
-	for _, c := range o.Components {
-		if c.Type() == t {
-			return c, true
-		}
-	}
-	return component, false
+func (o *Object) Base() *Object {
+	return o
 }

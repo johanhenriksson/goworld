@@ -58,8 +58,8 @@ func main() {
 	camera.Rotation.X = 22
 	camera.Rotation.Y = 135
 	camera.Clear = render.Color4(0.141, 0.128, 0.118, 1.0) // dark gray
-	camera.Clear = render.Color4(0.973, 0.945, 0.776, 1.0) // light gray
 	camera.Clear = render.Color4(0.368, 0.611, 0.800, 1.0) // blue
+	camera.Clear = render.Color4(0.973, 0.945, 0.876, 1.0) // light gray
 
 	scene.Camera = camera
 	scene.Lights = []engine.Light{
@@ -120,7 +120,7 @@ func main() {
 	}
 	fmt.Println("World generation complete")
 
-	game.NewPlacementGrid(chunks[0][0].Object())
+	game.NewPlacementGrid(chunks[0][0])
 
 	// test model
 	// building := engine.NewObject(4.5, 9.04, 8.5)
@@ -211,9 +211,12 @@ func main() {
 	velocity := vec3.Zero
 	grounded := true
 
-	psys := engine.NewObject(vec3.Zero)
-	engine.NewParticleSystem(psys)
-	scene.Add(psys)
+	psys := engine.NewParticleSystem(engine.NewObject(vec3.New(3.5, 8, 3.5)))
+	scene.Add(psys.Object)
+
+	// add a test cube
+	// cube := geometry.NewCube(engine.NewObject(vec3.New(3, 10, 3)))
+	// scene.Add(cube.Object)
 
 	app.Draw = func(wnd *engine.Window, dt float32) {
 		app.Pipeline.Draw(scene)

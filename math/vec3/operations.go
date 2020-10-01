@@ -1,6 +1,7 @@
 package vec3
 
 import (
+	"github.com/johanhenriksson/goworld/math/random"
 	"github.com/johanhenriksson/goworld/math/vec2"
 )
 
@@ -27,5 +28,13 @@ func Cross(a, b *T) T {
 		a.Y*b.Z - a.Z*b.Y,
 		a.Z*b.X - a.X*b.Z,
 		a.X*b.Y - a.Y*b.X,
+	}
+}
+
+func Random(min, max T) T {
+	return T{
+		random.Range(min.X, max.X),
+		random.Range(min.Y, max.Y),
+		random.Range(min.Z, max.Z),
 	}
 }

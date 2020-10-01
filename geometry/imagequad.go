@@ -13,7 +13,6 @@ type ImageQuad struct {
 	V        float32
 	InvertY  bool
 	vao      *render.VertexArray
-	vbo      *render.VertexBuffer
 }
 
 func NewImageQuad(mat *render.Material, size vec2.T, invert bool) *ImageQuad {
@@ -24,8 +23,7 @@ func NewImageQuad(mat *render.Material, size vec2.T, invert bool) *ImageQuad {
 		Height:   size.Y,
 		U:        1,
 		V:        1,
-		vao:      render.CreateVertexArray(),
-		vbo:      render.CreateVertexBuffer(),
+		vao:      render.CreateVertexArray(render.Triangles, "geometry"),
 	}
 	q.compute()
 	return q
@@ -62,9 +60,8 @@ func (q *ImageQuad) compute() {
 	}
 
 	/* Setup VAO */
-	q.vao.Length = int32(len(vtx))
 	q.vao.Bind()
-	q.vbo.Buffer(vtx)
+	q.vao.Buffer("geometry", vtx)
 	if q.Material != nil {
 		q.Material.SetupVertexPointers()
 	}
@@ -76,5 +73,5 @@ func (q *ImageQuad) Draw(args render.DrawArgs) {
 		q.Material.Mat4f("model", &args.Transform)
 		q.Material.Mat4f("viewport", &args.Projection)
 	}
-	q.vao.DrawElements()
+	q.vao.Draw()
 }

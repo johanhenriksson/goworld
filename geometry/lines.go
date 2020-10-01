@@ -4,15 +4,12 @@ import (
 	"github.com/johanhenriksson/goworld/assets"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
-
-	"github.com/go-gl/gl/v4.1-core/gl"
 )
 
 type Lines struct {
 	Lines    []Line
 	Material *render.Material
 	vao      *render.VertexArray
-	vbo      *render.VertexBuffer
 }
 
 type Line struct {
@@ -23,10 +20,9 @@ type Line struct {
 
 func CreateLines() *Lines {
 	l := &Lines{
-		Lines:    make([]Line, 0, 0),
+		Lines:    make([]Line, 0, 8),
 		Material: assets.GetMaterialCached("lines"),
-		vao:      render.CreateVertexArray(),
-		vbo:      render.CreateVertexBuffer(),
+		vao:      render.CreateVertexArray(render.Lines, "geometry"),
 	}
 	l.Compute()
 	return l
@@ -72,12 +68,11 @@ func (lines *Lines) Compute() {
 		a.R, a.G, a.B, a.A = line.Color.R, line.Color.G, line.Color.B, line.Color.A
 		b.R, b.G, b.B, b.A = line.Color.R, line.Color.G, line.Color.B, line.Color.A
 	}
-	lines.vao.Length = int32(2 * count)
-	lines.vao.Type = gl.LINES
 	lines.vao.Bind()
-	lines.vbo.Bind()
-	if lines.vao.Length > 0 {
-		lines.vbo.Buffer(data)
+	if len(data) > 0 {
+		lines.vao.Buffer("geometry", data)
+	} else {
+		lines.vao.Length = 0
 	}
 	lines.Material.SetupVertexPointers()
 }
@@ -87,7 +82,7 @@ func (lines *Lines) Draw(args render.DrawArgs) {
 	if len(lines.Lines) > 0 && args.Pass == render.LinePass {
 		lines.Material.Use()
 		lines.Material.Mat4f("mvp", &args.MVP)
-		lines.vao.DrawElements()
+		lines.vao.Draw()
 	}
 }
 

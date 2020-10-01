@@ -19,13 +19,11 @@ type Scene struct {
 
 // NewScene creates a new scene.
 func NewScene() *Scene {
-	s := &Scene{
+	return &Scene{
 		Camera:  nil,
 		Objects: []*Object{},
 		Lights:  []Light{},
 	}
-
-	return s
 }
 
 // Add an object to the scene

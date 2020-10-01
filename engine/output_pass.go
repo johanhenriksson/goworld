@@ -13,7 +13,7 @@ type OutputPass struct {
 
 // NewOutputPass creates a new output pass for the given input texture.
 func NewOutputPass(input, depth *render.Texture) *OutputPass {
-	mat := render.CreateMaterial(render.CompileShaderProgram("/assets/shaders/screen_quad"))
+	mat := render.CreateMaterial(render.CompileShader("/assets/shaders/screen_quad"))
 	mat.AddDescriptors(render.F32_XYZUV)
 	mat.AddTexture("tex_input", input)
 	mat.AddTexture("tex_depth", depth)

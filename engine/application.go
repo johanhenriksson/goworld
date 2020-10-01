@@ -21,6 +21,10 @@ func NewApplication(title string, width, height int) *Application {
 	renderWidth, renderHeight := int32(float32(width)*scale), int32(float32(height)*scale)
 
 	// set upp renderer
+	// this belongs somewhere else probably
+	// actually, the entire application concept is pretty much rendundant at this point.
+	// perhaps the window should be passed directly to a renderer?
+	// or the other way around?
 	renderer := NewRenderer()
 	geoPass := NewGeometryPass(renderWidth, renderHeight)
 	lightPass := NewLightPass(geoPass.Buffer)
@@ -30,6 +34,7 @@ func NewApplication(title string, width, height int) *Application {
 	renderer.Append("postprocess", colorPass)
 	renderer.Append("output", NewOutputPass(colorPass.Output, geoPass.Buffer.Depth))
 	renderer.Append("lines", NewLinePass())
+	renderer.Append("particles", NewParticlePass())
 
 	app := &Application{
 		Window:   wnd,

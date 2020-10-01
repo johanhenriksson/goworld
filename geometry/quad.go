@@ -1,7 +1,6 @@
 package geometry
 
 import (
-	"fmt"
 	"github.com/johanhenriksson/goworld/math"
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/render"
@@ -15,7 +14,6 @@ type Quad struct {
 	segments int
 	border   float32
 	vao      *render.VertexArray
-	vbo      *render.VertexBuffer
 }
 
 func NewQuad(mat *render.Material, size vec2.T) *Quad {
@@ -26,14 +24,10 @@ func NewQuad(mat *render.Material, size vec2.T) *Quad {
 		segments: 5,
 		border:   0,
 
-		vao: render.CreateVertexArray(),
-		vbo: render.CreateVertexBuffer(),
+		vao: render.CreateVertexArray(render.Triangles, "geometry"),
 	}
-	q.vao.Bind()
-	q.vbo.Bind()
 	mat.SetupVertexPointers()
 	q.compute()
-	fmt.Printf("[VBO %d] Quad %.0fx%.0f\n", q.vbo.ID, size.X, size.Y)
 	return q
 }
 
@@ -187,14 +181,13 @@ func (q *Quad) compute() {
 	}
 
 	/* Setup VAO */
-	q.vao.Length = int32(len(vtx))
 	q.vao.Bind()
-	q.vbo.Buffer(vtx)
+	q.vao.Buffer("geometry", vtx)
 }
 
 func (q *Quad) Draw(args render.DrawArgs) {
 	q.Material.Use()
 	q.Material.Mat4f("model", &args.Transform)
 	q.Material.Mat4f("viewport", &args.Projection)
-	q.vao.DrawElements()
+	q.vao.Draw()
 }
