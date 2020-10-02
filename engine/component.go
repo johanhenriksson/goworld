@@ -8,5 +8,4 @@ import (
 type Component interface {
 	Update(float32)
 	Draw(render.DrawArgs)
-	Base() *Object
 }

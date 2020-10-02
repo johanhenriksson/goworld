@@ -92,7 +92,7 @@ func NewSSAOPass(gbuff *render.GeometryBuffer, settings *SSAOSettings) *SSAOPass
 func (p *SSAOPass) DrawPass(scene *Scene) {
 	// update projection
 	p.Material.Use()
-	p.Material.Mat4f("projection", &scene.Camera.Projection)
+	p.Material.Mat4("projection", &scene.Camera.Projection)
 
 	// run occlusion pass
 	p.fbo.Bind()

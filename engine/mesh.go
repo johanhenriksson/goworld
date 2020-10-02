@@ -10,6 +10,7 @@ type MeshBufferMap map[string]*render.VertexBuffer
 // Mesh base
 type Mesh struct {
 	*Object
+	Pass render.DrawPass
 
 	material *render.Material
 	vao      *render.VertexArray
@@ -19,6 +20,7 @@ type Mesh struct {
 func NewMesh(parent *Object, material *render.Material) *Mesh {
 	m := &Mesh{
 		Object:   parent,
+		Pass:     render.GeometryPass,
 		material: material,
 		vao:      render.CreateVertexArray(render.Triangles),
 	}
@@ -44,16 +46,21 @@ func (m *Mesh) Update(dt float32) {}
 
 // Draw the mesh.
 func (m *Mesh) Draw(args render.DrawArgs) {
-	if args.Pass != render.GeometryPass && args.Pass != render.LightPass {
+	if m.Pass == render.GeometryPass && args.Pass != render.GeometryPass && args.Pass != render.LightPass {
+		return
+	}
+	if m.Pass == render.ForwardPass && args.Pass != render.ForwardPass {
 		return
 	}
 
 	m.material.Use()
 
 	// set up uniforms
-	m.material.Mat4f("model", &args.Transform)
-	m.material.Mat4f("view", &args.View)
-	m.material.Mat4f("projection", &args.Projection)
+	m.material.Mat4("model", &args.Transform)
+	m.material.Mat4("view", &args.View)
+	m.material.Mat4("projection", &args.Projection)
+	m.material.Mat4("mvp", &args.MVP)
+	m.material.Vec3("eye", &args.Position)
 
 	m.vao.Draw()
 }

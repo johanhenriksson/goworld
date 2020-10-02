@@ -12,6 +12,7 @@ const (
 	LightPass
 	LinePass
 	ParticlePass
+	ForwardPass
 )
 
 /** UI Component render interface */

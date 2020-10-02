@@ -85,8 +85,8 @@ func (ps *ParticleSystem) Draw(args render.DrawArgs) {
 	gl.DepthMask(false)
 	ps.mat.Use()
 	ps.mat.Vec3("eye", &args.Position)
-	ps.mat.Mat4f("model", &args.Transform)
-	ps.mat.Mat4f("vp", &args.VP)
+	ps.mat.Mat4("model", &args.Transform)
+	ps.mat.Mat4("vp", &args.VP)
 	ps.vao.Draw()
 	gl.DepthMask(true)
 }

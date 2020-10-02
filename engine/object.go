@@ -57,7 +57,3 @@ func (o *Object) Update(dt float32) {
 		child.Update(dt)
 	}
 }
-
-func (o *Object) Base() *Object {
-	return o
-}

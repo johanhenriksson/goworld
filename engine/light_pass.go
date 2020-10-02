@@ -80,7 +80,7 @@ func (p *LightPass) setLightUniforms(light *Light) {
 	lp := light.Projection
 	lv := mat4.LookAt(light.Position, vec3.Zero) // only for directional light
 	lvp := lp.Mul(&lv)
-	p.mat.Mat4f("light_vp", &lvp)
+	p.mat.Mat4("light_vp", &lvp)
 
 	/* set light uniform attributes */
 	p.mat.Vec3("light.Position", &light.Position)
@@ -103,8 +103,8 @@ func (p *LightPass) DrawPass(scene *Scene) {
 	vpInv := vp.Invert()
 	vInv := scene.Camera.View.Invert()
 	p.mat.Use()
-	p.mat.Mat4f("cameraInverse", &vpInv)
-	p.mat.Mat4f("viewInverse", &vInv)
+	p.mat.Mat4("cameraInverse", &vpInv)
+	p.mat.Mat4("viewInverse", &vInv)
 
 	// clear output buffer
 	p.fbo.Bind()

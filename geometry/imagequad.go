@@ -70,8 +70,8 @@ func (q *ImageQuad) compute() {
 func (q *ImageQuad) Draw(args render.DrawArgs) {
 	if q.Material != nil {
 		q.Material.Use()
-		q.Material.Mat4f("model", &args.Transform)
-		q.Material.Mat4f("viewport", &args.Projection)
+		q.Material.Mat4("model", &args.Transform)
+		q.Material.Mat4("viewport", &args.Projection)
 	}
 	q.vao.Draw()
 }

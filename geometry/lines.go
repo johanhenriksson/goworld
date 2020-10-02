@@ -77,11 +77,13 @@ func (lines *Lines) Compute() {
 	lines.Material.SetupVertexPointers()
 }
 
+func (lines *Lines) Update(dt float32) {}
+
 func (lines *Lines) Draw(args render.DrawArgs) {
 	// setup line material
 	if len(lines.Lines) > 0 && args.Pass == render.LinePass {
 		lines.Material.Use()
-		lines.Material.Mat4f("mvp", &args.MVP)
+		lines.Material.Mat4("mvp", &args.MVP)
 		lines.vao.Draw()
 	}
 }

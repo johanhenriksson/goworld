@@ -38,8 +38,10 @@ type AttributeMap map[string]AttributeLocation
 
 // Shader represents a GLSL program composed of several shaders
 type Shader struct {
-	ID         uint32
-	Name       string
+	ID    uint32
+	Name  string
+	Debug bool
+
 	shaders    []*ShaderStage
 	linked     bool
 	uniforms   UniformMap
@@ -153,6 +155,9 @@ func (program *Shader) GetAttrLoc(attr string) (AttributeLocation, bool) {
 
 		loc = AttributeLocation(gl.GetAttribLocation(program.ID, *cstr))
 		if loc == UnknownAttribute {
+			if program.Debug {
+				fmt.Println("Unknown attribute", attr, "in shader", program.Name)
+			}
 			return loc, false
 		}
 		program.attributes[attr] = loc
@@ -160,12 +165,10 @@ func (program *Shader) GetAttrLoc(attr string) (AttributeLocation, bool) {
 	return loc, true
 }
 
-// Mat4f Sets a 4 by 4 matrix uniform value
-func (program *Shader) Mat4f(name string, mat4 *mat4.T) {
+// Mat4 Sets a 4 by 4 matrix uniform value
+func (program *Shader) Mat4(name string, mat4 *mat4.T) {
 	if loc, ok := program.GetUniformLoc(name); ok {
 		gl.UniformMatrix4fv(int32(loc), 1, false, &mat4[0])
-	} else {
-		fmt.Println("Warning: Unknown uniform mat4", name, "in shader", program.Name)
 	}
 }
 
@@ -173,8 +176,6 @@ func (program *Shader) Mat4f(name string, mat4 *mat4.T) {
 func (program *Shader) Vec2(name string, vec *vec2.T) {
 	if loc, ok := program.GetUniformLoc(name); ok {
 		gl.Uniform2f(int32(loc), vec.X, vec.Y)
-	} else {
-		fmt.Println("Warning: Unknown uniform vec2", name, "in shader", program.Name)
 	}
 }
 
@@ -182,8 +183,6 @@ func (program *Shader) Vec2(name string, vec *vec2.T) {
 func (program *Shader) Vec3(name string, vec *vec3.T) {
 	if loc, ok := program.GetUniformLoc(name); ok {
 		gl.Uniform3f(int32(loc), vec.X, vec.Y, vec.Z)
-	} else {
-		fmt.Println("Warning: Unknown uniform vec3", name, "in shader", program.Name)
 	}
 }
 
@@ -191,8 +190,6 @@ func (program *Shader) Vec3(name string, vec *vec3.T) {
 func (program *Shader) Vec4(name string, vec *vec4.T) {
 	if loc, ok := program.GetUniformLoc(name); ok {
 		gl.Uniform4f(int32(loc), vec.X, vec.Y, vec.Z, vec.W)
-	} else {
-		fmt.Println("Warning: Unknown uniform vec4", name, "in shader", program.Name)
 	}
 }
 
@@ -200,8 +197,6 @@ func (program *Shader) Vec4(name string, vec *vec4.T) {
 func (program *Shader) Int32(name string, val int32) {
 	if loc, ok := program.GetUniformLoc(name); ok {
 		gl.Uniform1i(int32(loc), val)
-	} else {
-		fmt.Println("Warning: Unknown uniform int32", name, "in shader", program.Name)
 	}
 }
 
@@ -209,8 +204,6 @@ func (program *Shader) Int32(name string, val int32) {
 func (program *Shader) UInt32(name string, val uint32) {
 	if loc, ok := program.GetUniformLoc(name); ok {
 		gl.Uniform1ui(int32(loc), val)
-	} else {
-		fmt.Println("Warning: Unknown uniform uint32", name, "in shader", program.Name)
 	}
 }
 
@@ -218,8 +211,6 @@ func (program *Shader) UInt32(name string, val uint32) {
 func (program *Shader) Float(name string, val float32) {
 	if loc, ok := program.GetUniformLoc(name); ok {
 		gl.Uniform1f(int32(loc), val)
-	} else {
-		fmt.Println("Warning: Unknown uniform float32", name, "in shader", program.Name)
 	}
 }
 
@@ -227,8 +218,6 @@ func (program *Shader) Float(name string, val float32) {
 func (program *Shader) RGB(name string, color Color) {
 	if loc, ok := program.GetUniformLoc(name); ok {
 		gl.Uniform3f(int32(loc), color.R, color.G, color.B)
-	} else {
-		fmt.Println("Warning: Unknown uniform RGB", name, "in shader", program.Name)
 	}
 }
 
@@ -236,7 +225,5 @@ func (program *Shader) RGB(name string, color Color) {
 func (program *Shader) RGBA(name string, color Color) {
 	if loc, ok := program.GetUniformLoc(name); ok {
 		gl.Uniform4f(int32(loc), color.R, color.G, color.B, color.A)
-	} else {
-		fmt.Println("Warning: Unknown uniform RGBA", name, "in shader", program.Name)
 	}
 }
