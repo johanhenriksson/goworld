@@ -29,7 +29,7 @@ func (o *Object) Attach(component Component) {
 // Draw the object, its components and its children.
 func (o *Object) Draw(args render.DrawArgs) {
 	// apply transforms
-	args.Transform = o.Transform.Matrix.Mul(&args.Transform)
+	args.Transform = args.Transform.Mul(&o.Transform.Matrix)
 	args.MVP = args.VP.Mul(&args.Transform)
 
 	// draw components

@@ -29,6 +29,6 @@ func Transform(position, rotation, scale vec3.T) T {
 	R := Rotate(rotation)
 	S := Scale(scale)
 	T := Translate(position)
-	rt := R.Mul(&S)
-	return T.Mul(&rt)
+	rs := S.Mul(&R)
+	return T.Mul(&rs)
 }
