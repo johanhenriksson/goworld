@@ -1,15 +1,18 @@
 package geometry
 
 import (
-	"github.com/johanhenriksson/goworld/render"
 	"unsafe"
+
+	"github.com/johanhenriksson/goworld/math/vec3"
+	"github.com/johanhenriksson/goworld/render"
 )
 
 // ColorVertex is used to represent vertices in solid-color elements
 type ColorVertex struct {
-	X, Y, Z      float32 // 12 bytes
-	render.Color         // 16 bytes
-} // 28 bytes
+	Position vec3.T       // 12 bytes
+	Normal   vec3.T       // 12 bytes
+	Color    render.Color // 16 bytes
+} // 40 bytes
 
 // ColorVertices is a GPU bufferable slice of ColorVertex objects
 type ColorVertices []ColorVertex
@@ -21,7 +24,7 @@ func (buffer ColorVertices) Elements() int {
 
 // Size returns the element size in bytes
 func (buffer ColorVertices) Size() int {
-	return 28
+	return 40
 }
 
 func (buffer ColorVertices) Pointer() unsafe.Pointer {

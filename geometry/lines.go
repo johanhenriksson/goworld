@@ -18,9 +18,9 @@ type Line struct {
 	Color render.Color
 }
 
-func CreateLines() *Lines {
+func CreateLines(lines ...Line) *Lines {
 	l := &Lines{
-		Lines:    make([]Line, 0, 8),
+		Lines:    lines,
 		Material: assets.GetMaterialCached("lines"),
 		vao:      render.CreateVertexArray(render.Lines, "geometry"),
 	}
@@ -63,10 +63,10 @@ func (lines *Lines) Compute() {
 		line := lines.Lines[i]
 		a := &data[2*i+0]
 		b := &data[2*i+1]
-		a.X, a.Y, a.Z = line.Start.X, line.Start.Y, line.Start.Z
-		b.X, b.Y, b.Z = line.End.X, line.End.Y, line.End.Z
-		a.R, a.G, a.B, a.A = line.Color.R, line.Color.G, line.Color.B, line.Color.A
-		b.R, b.G, b.B, b.A = line.Color.R, line.Color.G, line.Color.B, line.Color.A
+		a.Position = line.Start
+		a.Color = line.Color
+		b.Position = line.End
+		b.Color = line.Color
 	}
 	lines.vao.Bind()
 	if len(data) > 0 {
