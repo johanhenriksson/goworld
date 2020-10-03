@@ -28,6 +28,8 @@ type Particle struct {
 }
 
 type ParticleSystem struct {
+	*Transform
+
 	Particles []Particle
 	Count     int
 	Chance    float32
@@ -80,6 +82,8 @@ func (ps *ParticleSystem) Draw(args DrawArgs) {
 		return
 	}
 
+	args = args.Apply(ps.Transform)
+
 	render.Blend(true)
 	render.BlendFunc(gl.ONE, gl.ONE)
 	render.DepthMask(false)
@@ -93,10 +97,12 @@ func (ps *ParticleSystem) Draw(args DrawArgs) {
 	render.DepthMask(true)
 }
 
-func NewParticleSystem() *ParticleSystem {
+func NewParticleSystem(position vec3.T) *ParticleSystem {
 	count := 8
 	mat := assets.GetMaterial("billboard")
 	ps := &ParticleSystem{
+		Transform: NewTransform(position, vec3.Zero, vec3.One),
+
 		Count:  count,
 		Chance: 0.08,
 		MinVel: vec3.New(-0.05, 0.4, -0.05),
@@ -109,7 +115,6 @@ func NewParticleSystem() *ParticleSystem {
 		positions: make(vec3.Array, count),
 	}
 
-	// ps.vao.Buffer("geometry", ps.positions)
 	mat.SetupVertexPointers()
 
 	return ps

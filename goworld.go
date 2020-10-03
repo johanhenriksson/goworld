@@ -110,10 +110,7 @@ func main() {
 		for cz := 0; cz < ccount; cz++ {
 			chunk := world.AddChunk(cx, cz)
 			mesh := game.NewChunkMesh(chunk)
-
-			obj := engine.NewObject(vec3.NewI(cx, 0, cz).ScaleI(csize), vec3.Zero)
-			obj.Attach(mesh)
-			scene.Add(obj)
+			scene.Add(mesh)
 
 			chunks[cx][cz] = mesh
 			fmt.Printf("(%d,%d) ", cx, cz)
@@ -212,9 +209,8 @@ func main() {
 	velocity := vec3.Zero
 	grounded := true
 
-	psys := engine.NewObject(vec3.New(3.5, 8, 3.5), vec3.Zero)
-	psys.Attach(engine.NewParticleSystem())
-	scene.Add(psys)
+	particles := engine.NewParticleSystem(vec3.New(3.5, 8, 3.5))
+	scene.Add(particles)
 
 	// add a test cube
 	// cube := geometry.NewCube(engine.NewObject(vec3.New(3, 10, 3)))

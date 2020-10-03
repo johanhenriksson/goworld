@@ -3,6 +3,7 @@ package game
 import (
 	"github.com/johanhenriksson/goworld/assets"
 	"github.com/johanhenriksson/goworld/engine"
+	"github.com/johanhenriksson/goworld/math/vec3"
 )
 
 type ChunkMesh struct {
@@ -18,11 +19,13 @@ func NewChunkMesh(chunk *Chunk) *ChunkMesh {
 		Chunk:        chunk,
 		meshComputed: make(chan VoxelVertices),
 	}
+	mesh.Position = vec3.NewI(chunk.Ox, 0, chunk.Oz)
 	chk.Compute()
 	return chk
 }
 
 func (cm *ChunkMesh) Update(dt float32) {
+	cm.Mesh.Update(dt)
 	select {
 	case newMesh := <-cm.meshComputed:
 		cm.Buffer("geometry", newMesh)

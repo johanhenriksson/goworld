@@ -20,7 +20,7 @@ type Line struct {
 	Color render.Color
 }
 
-func CreateLines(parent *engine.Object, lines ...Line) *Lines {
+func CreateLines(lines ...Line) *Lines {
 	l := &Lines{
 		// Object:   parent,
 		Lines:    lines,

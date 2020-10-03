@@ -9,6 +9,7 @@ type MeshBufferMap map[string]*render.VertexBuffer
 
 // Mesh base
 type Mesh struct {
+	*Transform
 	Pass DrawPass
 
 	material *render.Material
@@ -18,10 +19,10 @@ type Mesh struct {
 // NewMesh creates a new mesh object
 func NewMesh(material *render.Material) *Mesh {
 	m := &Mesh{
-		// Object:   parent,
-		Pass:     DrawGeometry,
-		material: material,
-		vao:      render.CreateVertexArray(render.Triangles),
+		Transform: Identity(),
+		Pass:      DrawGeometry,
+		material:  material,
+		vao:       render.CreateVertexArray(render.Triangles),
 	}
 	for _, buffer := range m.material.Buffers {
 		m.vao.AddBuffer(buffer)
@@ -39,9 +40,6 @@ func (m *Mesh) AddIndex(datatype render.GLType) {
 	m.vao.AddIndexBuffer(datatype)
 }
 
-// Update the mesh.
-func (m *Mesh) Update(dt float32) {}
-
 // Draw the mesh.
 func (m *Mesh) Draw(args DrawArgs) {
 	if m.Pass == DrawGeometry && args.Pass != DrawGeometry && args.Pass != DrawShadow {
@@ -52,6 +50,7 @@ func (m *Mesh) Draw(args DrawArgs) {
 	}
 
 	m.material.Use()
+	args = args.Apply(m.Transform)
 
 	// set up uniforms
 	m.material.Mat4("model", &args.Transform)

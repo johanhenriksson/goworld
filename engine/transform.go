@@ -16,8 +16,8 @@ type Transform struct {
 	Up       vec3.T
 }
 
-// CreateTransform creates a new 3D transform
-func CreateTransform(position, rotation, scale vec3.T) *Transform {
+// NewTransform creates a new 3D transform
+func NewTransform(position, rotation, scale vec3.T) *Transform {
 	t := &Transform{
 		Matrix:   mat4.Ident(),
 		Position: position,
@@ -26,6 +26,10 @@ func CreateTransform(position, rotation, scale vec3.T) *Transform {
 	}
 	t.Update(0)
 	return t
+}
+
+func Identity() *Transform {
+	return NewTransform(vec3.Zero, vec3.Zero, vec3.One)
 }
 
 // Update transform matrix and its right/up/forward vectors

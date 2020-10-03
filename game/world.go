@@ -2,8 +2,6 @@ package game
 
 import (
 	"fmt"
-	mgl "github.com/go-gl/mathgl/mgl32"
-	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/math/vec3"
 )
 
@@ -18,8 +16,6 @@ type ChunkPos struct {
 }
 
 type World struct {
-	*engine.Object
-
 	Seed         int
 	ChunkSize    int
 	KeepDistance int
@@ -30,7 +26,6 @@ type World struct {
 
 func NewWorld(seed, size int) *World {
 	return &World{
-		Object:       engine.NewObject(vec3.Zero, vec3.Zero),
 		Seed:         seed,
 		KeepDistance: 5,
 		DrawDistance: 3,
@@ -38,10 +33,6 @@ func NewWorld(seed, size int) *World {
 		Cache:        make(map[ChunkPos]*Chunk),
 		Provider:     ExampleWorldgen(seed, size),
 	}
-}
-
-func (w *World) LoadAround(pos mgl.Vec3) {
-
 }
 
 func (w *World) AddChunk(cx, cz int) *Chunk {
