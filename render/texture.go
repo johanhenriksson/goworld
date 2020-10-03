@@ -28,8 +28,8 @@ const (
 // Texture represents an OpenGL 2D texture object
 type Texture struct {
 	ID             uint32
-	Width          int32
-	Height         int32
+	Width          int
+	Height         int
 	Format         uint32
 	InternalFormat uint32
 	DataType       uint32
@@ -41,7 +41,7 @@ type Texture struct {
 }
 
 // CreateTexture creates a new 2D texture and sets some sane defaults
-func CreateTexture(width, height int32) *Texture {
+func CreateTexture(width, height int) *Texture {
 	var id uint32
 	gl.GenTextures(1, &id)
 
@@ -103,7 +103,7 @@ func (tx *Texture) Clear() {
 		gl.TEXTURE_2D,
 		0,
 		int32(tx.InternalFormat), // gl.RGBA,
-		tx.Width, tx.Height,
+		int32(tx.Width), int32(tx.Height),
 		0,
 		tx.Format,   //gl.RGBA,
 		tx.DataType, // gl.UNSIGNED_BYTE,
@@ -112,14 +112,14 @@ func (tx *Texture) Clear() {
 
 // Buffer buffers texture data from an image object
 func (tx *Texture) Buffer(img *image.RGBA) {
-	tx.Width = int32(img.Rect.Size().X)
-	tx.Height = int32(img.Rect.Size().Y)
+	tx.Width = img.Rect.Size().X
+	tx.Height = img.Rect.Size().Y
 	tx.DataType = gl.UNSIGNED_BYTE
 	gl.TexImage2D(
 		gl.TEXTURE_2D,
 		0,
 		int32(tx.InternalFormat),
-		tx.Width, tx.Height,
+		int32(tx.Width), int32(tx.Height),
 		0,
 		tx.Format, tx.DataType,
 		gl.Ptr(img.Pix))
@@ -132,7 +132,7 @@ func (tx *Texture) BufferFloats(img []float32) {
 		gl.TEXTURE_2D,
 		0,
 		int32(tx.InternalFormat),
-		tx.Width, tx.Height,
+		int32(tx.Width), int32(tx.Height),
 		0,
 		tx.Format, tx.DataType,
 		gl.Ptr(&img[0]))
@@ -163,8 +163,8 @@ func (tx *Texture) Save(filename string) error {
 
 // TextureFromImage is a helper method to create an OpenGL texture from an image object */
 func TextureFromImage(img *image.RGBA) *Texture {
-	width := int32(img.Rect.Size().X)
-	height := int32(img.Rect.Size().Y)
+	width := img.Rect.Size().X
+	height := img.Rect.Size().Y
 	tx := CreateTexture(width, height)
 	tx.Buffer(img)
 	return tx

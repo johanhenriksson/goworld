@@ -67,7 +67,7 @@ func (f *Font) Measure(text string) vec2.T {
 
 func (f *Font) RenderNew(text string, color Color) *Texture {
 	size := f.Measure(text)
-	texture := CreateTexture(int32(size.X), int32(size.Y))
+	texture := CreateTexture(int(size.X), int(size.Y))
 	f.Render(texture, text, color)
 	return texture
 }

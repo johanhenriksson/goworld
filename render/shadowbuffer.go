@@ -11,7 +11,7 @@ type ShadowBuffer struct {
 }
 
 // NewShadowBuffer creates a new shadow buffer
-func NewShadowBuffer(width, height int32) *ShadowBuffer {
+func NewShadowBuffer(width, height int) *ShadowBuffer {
 	f := CreateFrameBuffer(width, height)
 	return &ShadowBuffer{
 		FrameBuffer: f,

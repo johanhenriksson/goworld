@@ -81,14 +81,17 @@ func (ps *ParticleSystem) Draw(args render.DrawArgs) {
 		return
 	}
 
-	gl.BlendFunc(gl.ONE, gl.ONE)
-	gl.DepthMask(false)
+	render.Blend(true)
+	render.BlendFunc(gl.ONE, gl.ONE)
+	render.DepthMask(false)
+
 	ps.mat.Use()
 	ps.mat.Vec3("eye", &args.Position)
 	ps.mat.Mat4("model", &args.Transform)
 	ps.mat.Mat4("vp", &args.VP)
 	ps.vao.Draw()
-	gl.DepthMask(true)
+
+	render.DepthMask(true)
 }
 
 func NewParticleSystem(parent *Object) *ParticleSystem {

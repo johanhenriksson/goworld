@@ -2,11 +2,13 @@ package geometry
 
 import (
 	"github.com/johanhenriksson/goworld/assets"
+	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
 )
 
 type Lines struct {
+	*engine.Object
 	Lines    []Line
 	Material *render.Material
 	vao      *render.VertexArray
@@ -18,8 +20,9 @@ type Line struct {
 	Color render.Color
 }
 
-func CreateLines(lines ...Line) *Lines {
+func CreateLines(parent *engine.Object, lines ...Line) *Lines {
 	l := &Lines{
+		Object:   parent,
 		Lines:    lines,
 		Material: assets.GetMaterialCached("lines"),
 		vao:      render.CreateVertexArray(render.Lines, "geometry"),

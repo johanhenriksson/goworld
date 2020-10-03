@@ -12,7 +12,7 @@ type GeometryPass struct {
 }
 
 // NewGeometryPass sets up a geometry pass.
-func NewGeometryPass(bufferWidth, bufferHeight int32) *GeometryPass {
+func NewGeometryPass(bufferWidth, bufferHeight int) *GeometryPass {
 	p := &GeometryPass{
 		Buffer: render.CreateGeometryBuffer(bufferWidth, bufferHeight),
 	}
@@ -31,19 +31,15 @@ func (p *GeometryPass) DrawPass(scene *Scene) {
 	gl.DrawBuffer(gl.COLOR_ATTACHMENT0) // use only diffuse buffer
 	gl.ClearColor(camera.Clear.R, camera.Clear.G, camera.Clear.B, 1)
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+
 	p.Buffer.DrawBuffers()
 
 	// setup rendering
-	gl.Disable(gl.BLEND)
-	gl.Enable(gl.CULL_FACE)
-	gl.CullFace(gl.BACK)
+	render.Blend(false)
+	render.CullFace(render.CullBack)
 
 	// draw scene
 	scene.DrawPass(render.GeometryPass)
-
-	// reset
-	gl.Disable(gl.CULL_FACE)
-	gl.Enable(gl.BLEND)
 
 	p.Buffer.Unbind()
 }

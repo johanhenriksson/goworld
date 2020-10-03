@@ -22,8 +22,8 @@ func NewObject(position vec3.T) *Object {
 }
 
 // Attach a component to the object
-func (o *Object) Attach(component Component) {
-	o.Components = append(o.Components, component)
+func (o *Object) Attach(components ...Component) {
+	o.Components = append(o.Components, components...)
 }
 
 // Draw the object, its components and its children.
@@ -56,4 +56,8 @@ func (o *Object) Update(dt float32) {
 	for _, child := range o.Children {
 		child.Update(dt)
 	}
+}
+
+func (o *Object) Base() *Object {
+	return o
 }

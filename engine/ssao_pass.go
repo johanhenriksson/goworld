@@ -13,7 +13,7 @@ import (
 // SSAOSettings holds parameters for SSAO.
 type SSAOSettings struct {
 	Samples int
-	Scale   int32
+	Scale   int
 	Radius  float32
 	Bias    float32
 	Power   float32
@@ -79,7 +79,7 @@ func NewSSAOPass(gbuff *render.GeometryBuffer, settings *SSAOSettings) *SSAOPass
 	mat.Float("bias", p.Bias)
 	mat.Float("radius", p.Radius)
 	mat.Float("power", p.Power)
-	mat.Int32("scale", p.Scale)
+	mat.Int32("scale", int32(p.Scale))
 
 	for i := 0; i < len(p.Kernel); i++ {
 		mat.Vec3(fmt.Sprintf("samples[%d]", i), &p.Kernel[i])
@@ -126,7 +126,7 @@ func createSSAOKernel(samples int) []vec3.T {
 }
 
 func createHemisphereNoiseTexture(size int) *render.Texture {
-	noise := render.CreateTexture(int32(size), int32(size))
+	noise := render.CreateTexture(size, size)
 	noise.InternalFormat = gl.RGB16F
 	noise.Format = gl.RGB
 	noise.DataType = gl.FLOAT

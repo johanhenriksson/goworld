@@ -43,9 +43,9 @@ func (r *Image) Draw(args render.DrawArgs) {
 	args.Transform = r.Element.Transform.Matrix.Mul(&args.Transform) //args.Transform.Mul4(r.Element.Transform.Matrix)
 
 	if r.Transparent {
-		gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+		render.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 	} else {
-		gl.BlendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA)
+		render.BlendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA)
 	}
 	r.Quad.Material.Use()
 	r.Quad.Material.RGBA("tint", r.Style.Color("color", render.White))

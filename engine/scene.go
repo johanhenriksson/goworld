@@ -11,7 +11,7 @@ type Scene struct {
 	Camera *Camera
 
 	// Root Objects
-	Objects []*Object
+	Objects []Component
 
 	// List of all lights in the scene
 	Lights []Light
@@ -21,13 +21,13 @@ type Scene struct {
 func NewScene() *Scene {
 	return &Scene{
 		Camera:  nil,
-		Objects: []*Object{},
+		Objects: []Component{},
 		Lights:  []Light{},
 	}
 }
 
 // Add an object to the scene
-func (s *Scene) Add(object *Object) {
+func (s *Scene) Add(object Component) {
 	// TODO: keep track of lights
 	s.Objects = append(s.Objects, object)
 }

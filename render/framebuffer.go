@@ -16,8 +16,8 @@ type DrawBuffer struct {
 type FrameBuffer struct {
 	Buffers    []DrawBuffer
 	ClearColor Color
-	Width      int32
-	Height     int32
+	Width      int
+	Height     int
 	id         uint32
 	mipLvl     int32
 	targets    []uint32
@@ -62,7 +62,7 @@ func (f *FrameBuffer) AttachBuffer(target, internalFormat, format, datatype uint
 }
 
 // CreateFrameBuffer creates a new frame buffer object with a given size
-func CreateFrameBuffer(width, height int32) *FrameBuffer {
+func CreateFrameBuffer(width, height int) *FrameBuffer {
 	f := &FrameBuffer{
 		Width:      width,
 		Height:     height,
@@ -78,7 +78,7 @@ func CreateFrameBuffer(width, height int32) *FrameBuffer {
 // Bind the frame buffer for drawing
 func (f *FrameBuffer) Bind() {
 	// set viewport size equal to buffer size
-	gl.Viewport(0, 0, f.Width, f.Height)
+	Viewport(0, 0, f.Width, f.Height)
 
 	gl.BindTexture(gl.TEXTURE_2D, 0) // why?
 

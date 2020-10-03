@@ -19,7 +19,7 @@ type ShadowPass struct {
 // NewShadowPass creates a new shadow pass
 func NewShadowPass(input *render.GeometryBuffer) *ShadowPass {
 	size := 4096
-	fbo := render.CreateFrameBuffer(int32(size), int32(size))
+	fbo := render.CreateFrameBuffer(size, size)
 	fbo.ClearColor = render.Color4(1, 1, 1, 1)
 	texture := fbo.AttachBuffer(gl.DEPTH_ATTACHMENT, gl.DEPTH_COMPONENT24, gl.DEPTH_COMPONENT, gl.FLOAT)
 

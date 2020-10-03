@@ -76,8 +76,8 @@ func CreateWindow(title string, width int, height int, highDPI bool) *Window {
 
 	// set the dimensions of the engine output buffer
 	buffw, buffh := w.GetBufferSize()
-	render.ScreenBuffer.Width = int32(buffw)
-	render.ScreenBuffer.Height = int32(buffh)
+	render.ScreenBuffer.Width = buffw
+	render.ScreenBuffer.Height = buffh
 
 	log.Println("Created window of size", width, "x", height, "scale:", w.Scale())
 
@@ -148,8 +148,8 @@ func (wnd *Window) Loop() {
 		}
 
 		buffw, buffh := wnd.GetBufferSize()
-		render.ScreenBuffer.Width = int32(buffw)
-		render.ScreenBuffer.Height = int32(buffh)
+		render.ScreenBuffer.Width = buffw
+		render.ScreenBuffer.Height = buffh
 
 		// render scene
 		if wnd.focused {

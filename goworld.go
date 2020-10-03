@@ -212,7 +212,7 @@ func main() {
 	grounded := true
 
 	psys := engine.NewParticleSystem(engine.NewObject(vec3.New(3.5, 8, 3.5)))
-	scene.Add(psys.Object)
+	scene.Add(psys)
 
 	// add a test cube
 	// cube := geometry.NewCube(engine.NewObject(vec3.New(3, 10, 3)))

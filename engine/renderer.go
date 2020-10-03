@@ -62,11 +62,11 @@ func (r *Renderer) Draw(scene *Scene) {
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
 	// enable blending
-	gl.Enable(gl.BLEND)
-	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+	render.Blend(true)
+	render.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 
 	// enable depth test
-	gl.Enable(gl.DEPTH_TEST)
+	render.DepthTest(true)
 	gl.DepthFunc(gl.LESS)
 
 	for _, pass := range r.Passes {

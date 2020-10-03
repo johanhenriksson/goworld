@@ -44,3 +44,8 @@ func (c Color) Vec4() vec4.T {
 func (c Color) String() string {
 	return fmt.Sprintf("(R:%.2f G:%.2f B:%.2f A:%.2f)", c.R, c.G, c.B, c.A)
 }
+
+func (c Color) WithAlpha(a float32) Color {
+	c.A = a
+	return c
+}

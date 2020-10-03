@@ -11,6 +11,5 @@ void main() {
     vec3 dir = normalize(lightPos);
     float contrib = max(dot(dir, normal0), 0.0);
 
-    frag_color = (0.5 + 0.5 * contrib) * color0;
-    frag_color.a = 1;
+    frag_color = vec4((0.5 + 0.5 * contrib) * color0.rgb, color0.a);
 }

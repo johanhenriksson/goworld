@@ -59,7 +59,7 @@ func (r *Rect) Draw(args render.DrawArgs) {
 	/* draw rect */
 	// this belongs in the quad drawing code
 	// avoid GL calls outside of the "core" packages render/engine/geometry
-	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+	render.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 
 	color := r.Style.Color("color", render.Transparent)
 	image := r.Style.Texture("image", r.tex)

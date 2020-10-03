@@ -2,8 +2,6 @@ package engine
 
 import (
 	"github.com/johanhenriksson/goworld/render"
-
-	"github.com/go-gl/gl/v4.1-core/gl"
 )
 
 // GeometryPass draws the scene geometry to a G-buffer
@@ -19,13 +17,9 @@ func (p *ForwardPass) DrawPass(scene *Scene) {
 	scene.Camera.Use()
 
 	// setup rendering
-	gl.Enable(gl.BLEND)
-	gl.Enable(gl.CULL_FACE)
-	gl.CullFace(gl.BACK)
+	render.Blend(true)
+	render.CullFace(render.CullBack)
 
 	// draw scene
 	scene.DrawPass(render.ForwardPass)
-
-	// reset
-	// gl.Disable(gl.CULL_FACE)
 }

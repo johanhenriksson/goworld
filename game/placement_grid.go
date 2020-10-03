@@ -24,9 +24,9 @@ type PlacementGrid struct {
 func NewPlacementGrid(chunk *ChunkMesh) *PlacementGrid {
 	pg := &PlacementGrid{
 		Object:    chunk.Object,
-		mesh:      geometry.CreateLines(),
 		ChunkMesh: chunk,
 		Color:     render.Black,
+		mesh:      geometry.CreateLines(chunk.Object),
 	}
 
 	// compute grid mesh

@@ -34,7 +34,7 @@ func NewText(text string, style Style) *Text {
 
 	// create opengl texture
 	bounds := font.Measure(text)
-	texture := render.CreateTexture(int32(bounds.X), int32(bounds.Y))
+	texture := render.CreateTexture(int(bounds.X), int(bounds.Y))
 
 	element := &Text{
 		Image: NewImage(texture, bounds, true, style),

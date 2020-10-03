@@ -66,7 +66,7 @@ func (m *Manager) DrawPass(scene *engine.Scene) {
 	// ensure back face culling is disabled
 	// since UI is scaled by Y-1, we only want back faces
 	gl.Disable(gl.CULL_FACE)
-	gl.Enable(gl.BLEND)
+	render.Blend(true)
 
 	// clear depth buffer
 	gl.Clear(gl.DEPTH_BUFFER_BIT)
@@ -75,8 +75,6 @@ func (m *Manager) DrawPass(scene *engine.Scene) {
 	for _, el := range m.Children {
 		el.Draw(args)
 	}
-
-	gl.Disable(gl.BLEND)
 }
 
 // Focus the given component

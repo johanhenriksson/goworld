@@ -112,27 +112,26 @@ func (p *LightPass) DrawPass(scene *Scene) {
 	p.fbo.Clear()
 
 	// enable back face culling
-	gl.Enable(gl.CULL_FACE)
-	gl.CullFace(gl.BACK)
+	render.CullFace(render.CullBack)
 
 	// enable blending
-	gl.Enable(gl.BLEND)
+	render.Blend(true)
 
 	// ambient light pass
 	ambient := Light{
 		Color:     p.Ambient.Vec3(),
 		Intensity: 1,
 	}
-	gl.BlendFunc(gl.SRC_ALPHA, gl.ZERO)
+	render.BlendFunc(gl.SRC_ALPHA, gl.ZERO)
 	p.setLightUniforms(&ambient)
 	p.quad.Draw()
 
 	// set blending mode to additive
-	gl.BlendFunc(gl.ONE, gl.ONE)
+	render.BlendFunc(gl.ONE, gl.ONE)
 
 	// draw lights one by one
 	for i, light := range scene.Lights {
-		gl.DepthMask(i == 0)
+		render.DepthMask(i == 0)
 		// draw shadow pass for this light into shadow map
 		p.Shadows.DrawPass(scene, &light)
 
@@ -150,7 +149,7 @@ func (p *LightPass) DrawPass(scene *Scene) {
 	}
 
 	// reset GL state
-	gl.DepthMask(true)
-	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+	render.DepthMask(true)
+	render.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 	gl.Disable(gl.CULL_FACE)
 }

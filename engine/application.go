@@ -18,7 +18,7 @@ func NewApplication(title string, width, height int) *Application {
 	if highDpiEnabled {
 		scale = wnd.Scale()
 	}
-	renderWidth, renderHeight := int32(float32(width)*scale), int32(float32(height)*scale)
+	renderWidth, renderHeight := int(float32(width)*scale), int(float32(height)*scale)
 
 	// set upp renderer
 	// this belongs somewhere else probably

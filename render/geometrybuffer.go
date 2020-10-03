@@ -17,7 +17,7 @@ type GeometryBuffer struct {
 }
 
 // CreateGeometryBuffer creates a frame buffer suitable for storing geometry data in defered shading
-func CreateGeometryBuffer(width, height int32) *GeometryBuffer {
+func CreateGeometryBuffer(width, height int) *GeometryBuffer {
 	fbo := CreateFrameBuffer(width, height)
 
 	g := &GeometryBuffer{
