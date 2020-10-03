@@ -25,6 +25,7 @@ import (
 	"github.com/johanhenriksson/goworld/engine/keys"
 	"github.com/johanhenriksson/goworld/engine/mouse"
 	"github.com/johanhenriksson/goworld/game"
+	"github.com/johanhenriksson/goworld/geometry"
 	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/math/vec3"
@@ -212,11 +213,14 @@ func main() {
 	grounded := true
 
 	psys := engine.NewParticleSystem(engine.NewObject(vec3.New(3.5, 8, 3.5)))
-	scene.Add(psys)
+	scene.Add(psys.Object)
 
 	// add a test cube
 	// cube := geometry.NewCube(engine.NewObject(vec3.New(3, 10, 3)))
 	// scene.Add(cube.Object)
+
+	gizmo := geometry.NewGizmo(vec3.New(3, 9.5, 3))
+	scene.Add(gizmo)
 
 	app.Draw = func(wnd *engine.Window, dt float32) {
 		app.Pipeline.Draw(scene)
