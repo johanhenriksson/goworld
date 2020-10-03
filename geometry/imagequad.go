@@ -1,6 +1,7 @@
 package geometry
 
 import (
+	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/render"
 )
@@ -67,7 +68,7 @@ func (q *ImageQuad) compute() {
 	}
 }
 
-func (q *ImageQuad) Draw(args render.DrawArgs) {
+func (q *ImageQuad) Draw(args engine.DrawArgs) {
 	if q.Material != nil {
 		q.Material.Use()
 		q.Material.Mat4("model", &args.Transform)

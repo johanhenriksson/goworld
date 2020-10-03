@@ -23,31 +23,26 @@ func NewGizmo(position vec3.T) *Gizmo {
 
 	s := side / 2
 
-	x := engine.NewObject(vec3.UnitX)
-	x.Attach(NewCone(x, radius, height, segments, render.Red))
-	x.Transform.Rotation.Z = -90
+	x := engine.NewObject(vec3.UnitX, vec3.New(0, 0, -90))
+	x.Attach(NewCone(radius, height, segments, render.Red))
 
-	xy := engine.NewObject(vec3.New(-s, s, 0))
-	xy.Transform.Rotation.X = 90
-	xy.Attach(NewPlane(xy, side, render.Blue.WithAlpha(planeAlpha)))
+	xy := engine.NewObject(vec3.New(-s, s, 0), vec3.New(90, 0, 0))
+	xy.Attach(NewPlane(side, render.Blue.WithAlpha(planeAlpha)))
 
-	y := engine.NewObject(vec3.UnitY)
-	y.Attach(NewCone(y, radius, height, segments, render.Green))
+	y := engine.NewObject(vec3.UnitY, vec3.Zero)
+	y.Attach(NewCone(radius, height, segments, render.Green))
 
-	xz := engine.NewObject(vec3.New(-s, 0, -s))
-	xz.Transform.Rotation.Y = 90
-	xz.Attach(NewPlane(xz, side, render.Green.WithAlpha(planeAlpha)))
+	xz := engine.NewObject(vec3.New(-s, 0, -s), vec3.New(0, 90, 0))
+	xz.Attach(NewPlane(side, render.Green.WithAlpha(planeAlpha)))
 
-	z := engine.NewObject(vec3.UnitZ)
-	z.Attach(NewCone(z, radius, height, segments, render.Blue))
-	z.Transform.Rotation.X = 90
+	z := engine.NewObject(vec3.UnitZ, vec3.New(90, 0, 0))
+	z.Attach(NewCone(radius, height, segments, render.Blue))
 
-	yz := engine.NewObject(vec3.New(0, s, -s))
-	yz.Transform.Rotation.Z = 90
-	yz.Attach(NewPlane(yz, side, render.Red.WithAlpha(planeAlpha)))
+	yz := engine.NewObject(vec3.New(0, s, -s), vec3.New(0, 0, 90))
+	yz.Attach(NewPlane(side, render.Red.WithAlpha(planeAlpha)))
 
 	g := &Gizmo{
-		Object: engine.NewObject(position),
+		Object: engine.NewObject(position, vec3.Zero),
 		X:      x,
 		Y:      y,
 		Z:      z,
@@ -81,7 +76,7 @@ func NewGizmo(position vec3.T) *Gizmo {
 	return g
 }
 
-func (g *Gizmo) Draw(args render.DrawArgs) {
+func (g *Gizmo) Draw(args engine.DrawArgs) {
 	render.DepthMask(false)
 	render.DepthTest(false)
 	render.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)

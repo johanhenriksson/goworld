@@ -39,7 +39,7 @@ func (p *GeometryPass) DrawPass(scene *Scene) {
 	render.CullFace(render.CullBack)
 
 	// draw scene
-	scene.DrawPass(render.GeometryPass)
+	scene.DrawPass(DrawGeometry)
 
 	p.Buffer.Unbind()
 }

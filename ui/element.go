@@ -1,9 +1,9 @@
 package ui
 
 import (
+	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/math/vec3"
-	"github.com/johanhenriksson/goworld/render"
 )
 
 type Element struct {
@@ -86,7 +86,7 @@ func (e *Element) Attach(child Component) {
 }
 
 // Draw this element and its children
-func (e *Element) Draw(args render.DrawArgs) {
+func (e *Element) Draw(args engine.DrawArgs) {
 	/* Multiply transform to args */
 	args.Transform = e.Transform.Matrix.Mul(&args.Transform)
 	for _, el := range e.children {

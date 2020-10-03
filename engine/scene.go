@@ -2,7 +2,6 @@ package engine
 
 import (
 	"github.com/johanhenriksson/goworld/math/mat4"
-	"github.com/johanhenriksson/goworld/render"
 )
 
 // Scene graph root
@@ -33,7 +32,7 @@ func (s *Scene) Add(object Component) {
 }
 
 // DrawPass draws the scene using the default camera and a specific render pass
-func (s *Scene) DrawPass(pass render.DrawPass) {
+func (s *Scene) DrawPass(pass DrawPass) {
 	if s.Camera == nil {
 		return
 	}
@@ -46,7 +45,7 @@ func (s *Scene) DrawPass(pass render.DrawPass) {
 	/* DrawArgs will be copied down recursively into the scene graph.
 	 * Each object adds its transformation matrix before passing
 	 * it on to their children */
-	args := render.DrawArgs{
+	args := DrawArgs{
 		Projection: p,
 		View:       v,
 		VP:         vp,
@@ -61,7 +60,7 @@ func (s *Scene) DrawPass(pass render.DrawPass) {
 }
 
 // Draw the scene using the provided render arguments
-func (s *Scene) Draw(args render.DrawArgs) {
+func (s *Scene) Draw(args DrawArgs) {
 	// draw root objects
 	for _, obj := range s.Objects {
 		obj.Draw(args)

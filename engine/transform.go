@@ -17,12 +17,12 @@ type Transform struct {
 }
 
 // CreateTransform creates a new 3D transform
-func CreateTransform(position vec3.T) *Transform {
+func CreateTransform(position, rotation, scale vec3.T) *Transform {
 	t := &Transform{
 		Matrix:   mat4.Ident(),
 		Position: position,
-		Rotation: vec3.Zero,
-		Scale:    vec3.One,
+		Rotation: rotation,
+		Scale:    scale,
 	}
 	t.Update(0)
 	return t

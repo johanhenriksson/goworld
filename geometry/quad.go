@@ -1,6 +1,7 @@
 package geometry
 
 import (
+	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/math"
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/render"
@@ -185,7 +186,7 @@ func (q *Quad) compute() {
 	q.vao.Buffer("geometry", vtx)
 }
 
-func (q *Quad) Draw(args render.DrawArgs) {
+func (q *Quad) Draw(args engine.DrawArgs) {
 	q.Material.Use()
 	q.Material.Mat4("model", &args.Transform)
 	q.Material.Mat4("viewport", &args.Projection)

@@ -1,4 +1,4 @@
-package render
+package engine
 
 import (
 	"github.com/johanhenriksson/goworld/math/mat4"
@@ -8,23 +8,16 @@ import (
 type DrawPass int32
 
 const (
-	GeometryPass DrawPass = iota
-	LightPass
-	LinePass
-	ParticlePass
-	ForwardPass
+	DrawGeometry DrawPass = iota
+	DrawShadow
+	DrawLines
+	DrawParticles
+	DrawForward
 )
 
 /** UI Component render interface */
 type Drawable interface {
 	Draw(DrawArgs)
-
-	ZIndex() float32
-
-	/* Render tree */
-	Parent() Drawable
-	SetParent(Drawable)
-	Children() []Drawable
 }
 
 /** Passed to Drawables on render */
@@ -36,4 +29,11 @@ type DrawArgs struct {
 	Transform  mat4.T
 	Position   vec3.T
 	Pass       DrawPass
+}
+
+// Apply the effects of a transform
+func (d DrawArgs) Apply(t *Transform) DrawArgs {
+	d.Transform = d.Transform.Mul(&t.Matrix)
+	d.MVP = d.VP.Mul(&d.Transform)
+	return d
 }

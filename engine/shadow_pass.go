@@ -55,7 +55,7 @@ func (sp *ShadowPass) DrawPass(scene *Scene, light *Light) {
 		return
 	}
 
-	gl.DepthMask(true)
+	render.DepthMask(true)
 
 	/* compute world to lightspace (light view projection) matrix */
 	// todo: move to light object
@@ -63,13 +63,13 @@ func (sp *ShadowPass) DrawPass(scene *Scene, light *Light) {
 	v := mat4.LookAt(light.Position, vec3.One)
 	vp := p.Mul(&v)
 
-	args := render.DrawArgs{
+	args := DrawArgs{
 		Projection: p,
 		View:       v,
 		VP:         vp,
 		MVP:        vp,
 		Transform:  mat4.Ident(),
-		Pass:       render.GeometryPass,
+		Pass:       DrawGeometry,
 	}
 	scene.Draw(args)
 

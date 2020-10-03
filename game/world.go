@@ -30,7 +30,7 @@ type World struct {
 
 func NewWorld(seed, size int) *World {
 	return &World{
-		Object:       engine.NewObject(vec3.Zero),
+		Object:       engine.NewObject(vec3.Zero, vec3.Zero),
 		Seed:         seed,
 		KeepDistance: 5,
 		DrawDistance: 3,

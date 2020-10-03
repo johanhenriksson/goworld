@@ -108,11 +108,11 @@ func main() {
 	for cx := 0; cx < ccount; cx++ {
 		chunks[cx] = make([]*game.ChunkMesh, ccount)
 		for cz := 0; cz < ccount; cz++ {
-
-			obj := engine.NewObject(vec3.NewI(cx, 0, cz).ScaleI(csize))
 			chunk := world.AddChunk(cx, cz)
-			mesh := game.NewChunkMesh(obj, chunk)
-			mesh.Compute()
+			mesh := game.NewChunkMesh(chunk)
+
+			obj := engine.NewObject(vec3.NewI(cx, 0, cz).ScaleI(csize), vec3.Zero)
+			obj.Attach(mesh)
 			scene.Add(obj)
 
 			chunks[cx][cz] = mesh
@@ -121,7 +121,7 @@ func main() {
 	}
 	fmt.Println("World generation complete")
 
-	game.NewPlacementGrid(chunks[0][0])
+	// game.NewPlacementGrid(chunks[0][0])
 
 	// test model
 	// building := engine.NewObject(4.5, 9.04, 8.5)
@@ -212,8 +212,9 @@ func main() {
 	velocity := vec3.Zero
 	grounded := true
 
-	psys := engine.NewParticleSystem(engine.NewObject(vec3.New(3.5, 8, 3.5)))
-	scene.Add(psys.Object)
+	psys := engine.NewObject(vec3.New(3.5, 8, 3.5), vec3.Zero)
+	psys.Attach(engine.NewParticleSystem())
+	scene.Add(psys)
 
 	// add a test cube
 	// cube := geometry.NewCube(engine.NewObject(vec3.New(3, 10, 3)))

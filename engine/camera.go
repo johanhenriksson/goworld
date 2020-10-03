@@ -26,7 +26,7 @@ type Camera struct {
 func CreateCamera(buffer *render.FrameBuffer, position vec3.T, fov, near, far float32) *Camera {
 	ratio := float32(buffer.Width) / float32(buffer.Height)
 	cam := &Camera{
-		Transform:  CreateTransform(position),
+		Transform:  CreateTransform(position, vec3.Zero, vec3.One),
 		Buffer:     buffer,
 		Ratio:      ratio,
 		Fov:        fov,

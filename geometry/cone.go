@@ -16,16 +16,16 @@ type Cone struct {
 	Color    render.Color
 }
 
-func NewCone(parent *engine.Object, radius, height float32, segments int, color render.Color) *Cone {
+func NewCone(radius, height float32, segments int, color render.Color) *Cone {
 	mat := assets.GetMaterialCached("vertex_color")
 	cone := &Cone{
-		Mesh:     engine.NewMesh(parent, mat),
+		Mesh:     engine.NewMesh(mat),
 		Radius:   radius,
 		Height:   height,
 		Segments: segments,
 		Color:    color,
 	}
-	cone.Pass = render.ForwardPass
+	cone.Pass = engine.DrawForward
 	cone.generate()
 	return cone
 }
@@ -59,9 +59,9 @@ func (c *Cone) generate() {
 		v1 := vec3.New(math.Cos(a1), 0, -math.Sin(a1)).Scaled(c.Radius)
 		v2 := vec3.New(math.Cos(a2), 0, -math.Sin(a2)).Scaled(c.Radius)
 		o := 3 * (i + c.Segments)
-		data[o+2] = ColorVertex{Position: v2, Normal: n, Color: c.Color}
-		data[o+1] = ColorVertex{Position: base, Normal: n, Color: c.Color}
 		data[o+0] = ColorVertex{Position: v1, Normal: n, Color: c.Color}
+		data[o+1] = ColorVertex{Position: base, Normal: n, Color: c.Color}
+		data[o+2] = ColorVertex{Position: v2, Normal: n, Color: c.Color}
 	}
 
 	c.Buffer("geometry", data)

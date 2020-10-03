@@ -18,7 +18,7 @@ func NewParticlePass() *ParticlePass {
 // DrawPass executes the particle pass
 func (p *ParticlePass) DrawPass(scene *Scene) {
 	// kind of awkward
-	scene.DrawPass(render.ParticlePass)
+	scene.DrawPass(DrawParticles)
 }
 
 type Particle struct {
@@ -28,7 +28,6 @@ type Particle struct {
 }
 
 type ParticleSystem struct {
-	*Object
 	Particles []Particle
 	Count     int
 	Chance    float32
@@ -76,8 +75,8 @@ func (ps *ParticleSystem) remove(i int) {
 	ps.Particles = ps.Particles[:len(ps.Particles)-1]
 }
 
-func (ps *ParticleSystem) Draw(args render.DrawArgs) {
-	if args.Pass != render.ParticlePass {
+func (ps *ParticleSystem) Draw(args DrawArgs) {
+	if args.Pass != DrawParticles {
 		return
 	}
 
@@ -94,11 +93,10 @@ func (ps *ParticleSystem) Draw(args render.DrawArgs) {
 	render.DepthMask(true)
 }
 
-func NewParticleSystem(parent *Object) *ParticleSystem {
+func NewParticleSystem() *ParticleSystem {
 	count := 8
 	mat := assets.GetMaterial("billboard")
 	ps := &ParticleSystem{
-		Object: parent,
 		Count:  count,
 		Chance: 0.08,
 		MinVel: vec3.New(-0.05, 0.4, -0.05),
@@ -110,7 +108,6 @@ func NewParticleSystem(parent *Object) *ParticleSystem {
 		vao:       render.CreateVertexArray(render.Points, "geometry"),
 		positions: make(vec3.Array, count),
 	}
-	parent.Attach(ps)
 
 	// ps.vao.Buffer("geometry", ps.positions)
 	mat.SetupVertexPointers()

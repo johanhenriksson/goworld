@@ -3,6 +3,7 @@ package ui
 import (
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/johanhenriksson/goworld/assets"
+	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/geometry"
 	"github.com/johanhenriksson/goworld/math"
 	"github.com/johanhenriksson/goworld/math/vec2"
@@ -39,7 +40,7 @@ func NewDepthImage(texture *render.Texture, size vec2.T, invert bool) *Image {
 	}
 }
 
-func (r *Image) Draw(args render.DrawArgs) {
+func (r *Image) Draw(args engine.DrawArgs) {
 	args.Transform = r.Element.Transform.Matrix.Mul(&args.Transform) //args.Transform.Mul4(r.Element.Transform.Matrix)
 
 	if r.Transparent {

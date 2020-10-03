@@ -151,5 +151,4 @@ func (p *LightPass) DrawPass(scene *Scene) {
 	// reset GL state
 	render.DepthMask(true)
 	render.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
-	gl.Disable(gl.CULL_FACE)
 }

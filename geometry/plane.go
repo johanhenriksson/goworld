@@ -13,14 +13,14 @@ type Plane struct {
 	Color render.Color
 }
 
-func NewPlane(parent *engine.Object, size float32, color render.Color) *Plane {
+func NewPlane(size float32, color render.Color) *Plane {
 	mat := assets.GetMaterialCached("vertex_color")
 	plane := &Plane{
-		Mesh:  engine.NewMesh(parent, mat),
+		Mesh:  engine.NewMesh(mat),
 		Size:  size,
 		Color: color,
 	}
-	plane.Pass = render.ForwardPass
+	plane.Pass = engine.DrawForward
 	plane.generate()
 	return plane
 }

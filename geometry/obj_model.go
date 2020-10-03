@@ -13,9 +13,9 @@ type ObjModel struct {
 	Path string
 }
 
-func NewObjModel(parent *engine.Object, mat *render.Material, path string) *ObjModel {
+func NewObjModel(mat *render.Material, path string) *ObjModel {
 	obj := &ObjModel{
-		Mesh: engine.NewMesh(parent, mat),
+		Mesh: engine.NewMesh(mat),
 		Path: path,
 	}
 	obj.AddIndex(render.UInt32)

@@ -9,18 +9,17 @@ type MeshBufferMap map[string]*render.VertexBuffer
 
 // Mesh base
 type Mesh struct {
-	*Object
-	Pass render.DrawPass
+	Pass DrawPass
 
 	material *render.Material
 	vao      *render.VertexArray
 }
 
 // NewMesh creates a new mesh object
-func NewMesh(parent *Object, material *render.Material) *Mesh {
+func NewMesh(material *render.Material) *Mesh {
 	m := &Mesh{
-		Object:   parent,
-		Pass:     render.GeometryPass,
+		// Object:   parent,
+		Pass:     DrawGeometry,
 		material: material,
 		vao:      render.CreateVertexArray(render.Triangles),
 	}
@@ -28,7 +27,6 @@ func NewMesh(parent *Object, material *render.Material) *Mesh {
 		m.vao.AddBuffer(buffer)
 		m.material.SetupBufferPointers(buffer)
 	}
-	parent.Attach(m)
 	return m
 }
 
@@ -45,11 +43,11 @@ func (m *Mesh) AddIndex(datatype render.GLType) {
 func (m *Mesh) Update(dt float32) {}
 
 // Draw the mesh.
-func (m *Mesh) Draw(args render.DrawArgs) {
-	if m.Pass == render.GeometryPass && args.Pass != render.GeometryPass && args.Pass != render.LightPass {
+func (m *Mesh) Draw(args DrawArgs) {
+	if m.Pass == DrawGeometry && args.Pass != DrawGeometry && args.Pass != DrawShadow {
 		return
 	}
-	if m.Pass == render.ForwardPass && args.Pass != render.ForwardPass {
+	if m.Pass == DrawForward && args.Pass != DrawForward {
 		return
 	}
 

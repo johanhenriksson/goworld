@@ -55,7 +55,7 @@ func (m *Manager) DrawPass(scene *engine.Scene) {
 	v := mat4.Ident() // unused by UI
 	vp := p           // unused by UI
 
-	args := render.DrawArgs{
+	args := engine.DrawArgs{
 		Projection: p,
 		View:       v,
 		VP:         vp,

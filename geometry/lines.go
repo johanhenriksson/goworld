@@ -8,7 +8,7 @@ import (
 )
 
 type Lines struct {
-	*engine.Object
+	// *engine.Object
 	Lines    []Line
 	Material *render.Material
 	vao      *render.VertexArray
@@ -22,7 +22,7 @@ type Line struct {
 
 func CreateLines(parent *engine.Object, lines ...Line) *Lines {
 	l := &Lines{
-		Object:   parent,
+		// Object:   parent,
 		Lines:    lines,
 		Material: assets.GetMaterialCached("lines"),
 		vao:      render.CreateVertexArray(render.Lines, "geometry"),
@@ -82,9 +82,9 @@ func (lines *Lines) Compute() {
 
 func (lines *Lines) Update(dt float32) {}
 
-func (lines *Lines) Draw(args render.DrawArgs) {
+func (lines *Lines) Draw(args engine.DrawArgs) {
 	// setup line material
-	if len(lines.Lines) > 0 && args.Pass == render.LinePass {
+	if len(lines.Lines) > 0 && args.Pass == engine.DrawLines {
 		lines.Material.Use()
 		lines.Material.Mat4("mvp", &args.MVP)
 		lines.vao.Draw()

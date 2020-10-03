@@ -10,10 +10,10 @@ type Cube struct {
 	Size float32
 }
 
-func NewCube(parent *engine.Object, size float32) *Cube {
+func NewCube(size float32) *Cube {
 	mat := assets.GetMaterialCached("default")
 	cube := &Cube{
-		Mesh: engine.NewMesh(parent, mat),
+		Mesh: engine.NewMesh(mat),
 		Size: size,
 	}
 	cube.generate()

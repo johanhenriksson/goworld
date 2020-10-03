@@ -21,5 +21,5 @@ func (p *ForwardPass) DrawPass(scene *Scene) {
 	render.CullFace(render.CullBack)
 
 	// draw scene
-	scene.DrawPass(render.ForwardPass)
+	scene.DrawPass(DrawForward)
 }
