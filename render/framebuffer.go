@@ -14,24 +14,22 @@ type DrawBuffer struct {
 
 // FrameBuffer holds information about an OpenGL frame buffer object
 type FrameBuffer struct {
-	Buffers    []DrawBuffer
-	ClearColor Color
-	Width      int
-	Height     int
-	id         uint32
-	mipLvl     int32
-	targets    []uint32
+	Buffers []DrawBuffer
+	Width   int
+	Height  int
+	id      uint32
+	mipLvl  int32
+	targets []uint32
 }
 
 // ScreenBuffer is the frame buffer of the screen
 var ScreenBuffer = FrameBuffer{
-	Buffers:    []DrawBuffer{},
-	ClearColor: Color{0, 0, 0, 1},
-	Width:      0,
-	Height:     0,
-	id:         0,
-	mipLvl:     0,
-	targets:    []uint32{gl.COLOR_ATTACHMENT0},
+	Buffers: []DrawBuffer{},
+	Width:   0,
+	Height:  0,
+	id:      0,
+	mipLvl:  0,
+	targets: []uint32{gl.COLOR_ATTACHMENT0},
 }
 
 // AttachBuffer creates a new frame buffer texture and attaches it to the given target.
@@ -64,11 +62,10 @@ func (f *FrameBuffer) AttachBuffer(target, internalFormat, format, datatype uint
 // CreateFrameBuffer creates a new frame buffer object with a given size
 func CreateFrameBuffer(width, height int) *FrameBuffer {
 	f := &FrameBuffer{
-		Width:      width,
-		Height:     height,
-		Buffers:    []DrawBuffer{},
-		ClearColor: Color4(0, 0, 0, 1),
-		targets:    make([]uint32, 0, 8),
+		Width:   width,
+		Height:  height,
+		Buffers: []DrawBuffer{},
+		targets: make([]uint32, 0, 8),
 	}
 	gl.GenFramebuffers(1, &f.id)
 	gl.BindFramebuffer(gl.FRAMEBUFFER, f.id)
@@ -93,12 +90,6 @@ func (f *FrameBuffer) Unbind() {
 
 	// unbind
 	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
-}
-
-// Clear the frame buffer. Make sure its bound first
-func (f *FrameBuffer) Clear() {
-	gl.ClearColor(f.ClearColor.R, f.ClearColor.G, f.ClearColor.B, f.ClearColor.A)
-	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 }
 
 // Delete the frame buffer object

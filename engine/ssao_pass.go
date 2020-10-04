@@ -37,7 +37,6 @@ type SSAOPass struct {
 // NewSSAOPass creates a new SSAO pass from a gbuffer and SSAO settings.
 func NewSSAOPass(gbuff *render.GeometryBuffer, settings *SSAOSettings) *SSAOPass {
 	fbo := render.CreateFrameBuffer(gbuff.Width/settings.Scale, gbuff.Height/settings.Scale)
-	fbo.ClearColor = render.Color4(1, 1, 1, 1)
 	texture := fbo.AttachBuffer(gl.COLOR_ATTACHMENT0, gl.RED, gl.RGB, gl.FLOAT) // diffuse (rgb)
 
 	// gaussian blur pass
@@ -90,14 +89,19 @@ func NewSSAOPass(gbuff *render.GeometryBuffer, settings *SSAOSettings) *SSAOPass
 
 // DrawPass draws the SSAO texture.
 func (p *SSAOPass) DrawPass(scene *Scene) {
+	render.Blend(false)
+	render.DepthOutput(false)
+
 	// update projection
 	p.Material.Use()
 	p.Material.Mat4("projection", &scene.Camera.Projection)
 
 	// run occlusion pass
 	p.fbo.Bind()
-	p.fbo.Clear()
+
+	render.ClearWith(render.White)
 	p.Quad.Draw()
+
 	p.fbo.Unbind()
 
 	// run blur pass

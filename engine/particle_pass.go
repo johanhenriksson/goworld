@@ -86,7 +86,7 @@ func (ps *ParticleSystem) Draw(args DrawArgs) {
 
 	render.Blend(true)
 	render.BlendFunc(gl.ONE, gl.ONE)
-	render.DepthMask(false)
+	render.DepthOutput(false)
 
 	ps.mat.Use()
 	ps.mat.Vec3("eye", &args.Position)
@@ -94,7 +94,7 @@ func (ps *ParticleSystem) Draw(args DrawArgs) {
 	ps.mat.Mat4("vp", &args.VP)
 	ps.vao.Draw()
 
-	render.DepthMask(true)
+	render.DepthOutput(true)
 }
 
 func NewParticleSystem(position vec3.T) *ParticleSystem {

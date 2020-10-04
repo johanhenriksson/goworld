@@ -88,14 +88,8 @@ func NewGizmo(position vec3.T) *Gizmo {
 }
 
 func (g *Gizmo) Draw(args engine.DrawArgs) {
-	render.DepthMask(false)
-	render.DepthTest(false)
 	render.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
-
 	engine.Draw(args.Apply(g.Transform), g.Lines, g.X, g.Y, g.Z, g.XY, g.XZ, g.YZ)
-
-	render.DepthTest(true)
-	render.DepthMask(true)
 }
 
 func (g *Gizmo) Update(dt float32) {

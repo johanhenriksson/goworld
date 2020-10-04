@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/johanhenriksson/goworld/assets"
 	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/engine/keys"
 	"github.com/johanhenriksson/goworld/engine/mouse"
@@ -45,7 +46,7 @@ var windowStyle = ui.Style{
 func main() {
 	fmt.Println("goworld")
 
-	app := engine.NewApplication("voxels", 1400, 1000)
+	app := engine.NewApplication("goworld", 1400, 1000)
 	uim := ui.NewManager(app)
 	app.Pipeline.Append("ui", uim)
 
@@ -120,12 +121,12 @@ func main() {
 
 	// game.NewPlacementGrid(chunks[0][0])
 
-	// test model
-	// building := engine.NewObject(4.5, 9.04, 8.5)
-	// building.Scale = mgl.Vec3{0.1, 0.1, 0.1}
-	// palette := assets.GetMaterialCached("uv_palette")
-	// geometry.NewObjModel(building, palette, "models/building.obj")
-	// scene.Add(building)
+	// test obj model
+	palette := assets.GetMaterialCached("uv_palette")
+	building := geometry.NewObjModel(palette, "models/building.obj")
+	building.Scale = vec3.New(0.1, 0.1, 0.1)
+	building.Position = vec3.New(8, 9.1, 2)
+	scene.Add(building)
 
 	// this composition system sucks
 	//game.NewPlacementGrid(chunks[0])

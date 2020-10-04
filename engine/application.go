@@ -33,9 +33,9 @@ func NewApplication(title string, width, height int) *Application {
 	renderer.Append("light", lightPass)
 	renderer.Append("postprocess", colorPass)
 	renderer.Append("output", NewOutputPass(colorPass.Output, geoPass.Buffer.Depth))
-	renderer.Append("forward", NewForwardPass())
 	renderer.Append("lines", NewLinePass())
 	renderer.Append("particles", NewParticlePass())
+	renderer.Append("forward", NewForwardPass())
 
 	app := &Application{
 		Window:   wnd,

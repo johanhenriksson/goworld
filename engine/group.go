@@ -26,15 +26,11 @@ func (o *Group) Attach(components ...Component) {
 // Draw the components in the group
 func (o *Group) Draw(args DrawArgs) {
 	args = args.Apply(o.Transform)
-	for _, comp := range o.Components {
-		comp.Draw(args)
-	}
+	Draw(args, o.Components...)
 }
 
 // Update all components in the group
 func (o *Group) Update(dt float32) {
 	o.Transform.Update(dt)
-	for _, comp := range o.Components {
-		comp.Update(dt)
-	}
+	Update(dt, o.Components...)
 }

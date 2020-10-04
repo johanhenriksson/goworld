@@ -20,7 +20,6 @@ type ShadowPass struct {
 func NewShadowPass(input *render.GeometryBuffer) *ShadowPass {
 	size := 4096
 	fbo := render.CreateFrameBuffer(size, size)
-	fbo.ClearColor = render.Color4(1, 1, 1, 1)
 	texture := fbo.AttachBuffer(gl.DEPTH_ATTACHMENT, gl.DEPTH_COMPONENT24, gl.DEPTH_COMPONENT, gl.FLOAT)
 
 	// set the shadow buffer texture to clamp to a white border so that samples
@@ -41,37 +40,38 @@ func NewShadowPass(input *render.GeometryBuffer) *ShadowPass {
 
 // DrawPass draws a shadow pass for the given light.
 func (sp *ShadowPass) DrawPass(scene *Scene, light *Light) {
+	if !light.Shadows {
+		return
+	}
 	if light.Type != DirectionalLight {
 		// only directional lights support shadows atm
 		return
 	}
 
-	/* bind shadow map depth render target */
+	// bind shadow map depth render target
 	// todo: each light needs its own shadow buffer?
 	sp.shadowmap.Bind()
-	sp.shadowmap.Clear()
+	defer sp.shadowmap.Unbind()
 
-	if !light.Shadows {
-		return
-	}
+	render.DepthOutput(true)
+	render.ClearWith(render.White)
+	render.ClearDepth()
 
-	render.DepthMask(true)
-
-	/* compute world to lightspace (light view projection) matrix */
+	// compute world to lightspace (light's view projection) matrix
 	// todo: move to light object
 	p := light.Projection
-	v := mat4.LookAt(light.Position, vec3.One)
+	v := mat4.LookAt(light.Position, vec3.Zero)
 	vp := p.Mul(&v)
 
-	args := DrawArgs{
+	// draw shadow casters
+	scene.Draw(DrawArgs{
 		Projection: p,
 		View:       v,
 		VP:         vp,
 		MVP:        vp,
 		Transform:  mat4.Ident(),
 		Pass:       DrawGeometry,
-	}
-	scene.Draw(args)
+	})
 
-	sp.shadowmap.Unbind()
+	render.DepthOutput(false)
 }

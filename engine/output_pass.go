@@ -34,8 +34,7 @@ func (p *OutputPass) DrawPass(scene *Scene) {
 
 	// camera settings
 	camera.Use()
-	scene.Camera.Buffer.ClearColor = scene.Camera.Clear
-	scene.Camera.Buffer.Clear()
+	render.ClearWith(scene.Camera.Clear)
 
 	// draw
 	p.quad.Draw()

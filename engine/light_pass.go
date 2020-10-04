@@ -76,9 +76,10 @@ func NewLightPass(input *render.GeometryBuffer) *LightPass {
 }
 
 func (p *LightPass) setLightUniforms(light *Light) {
-	/* compute world to lightspace (light view projection) matrix */
+	// compute world to lightspace (light view projection) matrix
+	// note: this is only for directional lights
 	lp := light.Projection
-	lv := mat4.LookAt(light.Position, vec3.Zero) // only for directional light
+	lv := mat4.LookAt(light.Position, vec3.Zero)
 	lvp := lp.Mul(&lv)
 	p.mat.Mat4("light_vp", &lvp)
 
@@ -108,35 +109,33 @@ func (p *LightPass) DrawPass(scene *Scene) {
 
 	// clear output buffer
 	p.fbo.Bind()
-	p.fbo.ClearColor = scene.Camera.Clear
-	p.fbo.Clear()
+	render.ClearWith(render.Black)
 
 	// enable back face culling
 	render.CullFace(render.CullBack)
 
 	// enable blending
-	render.Blend(true)
+	render.Blend(false)
 
 	// ambient light pass
 	ambient := Light{
 		Color:     p.Ambient.Vec3(),
 		Intensity: 1,
 	}
-	render.BlendFunc(gl.SRC_ALPHA, gl.ZERO)
 	p.setLightUniforms(&ambient)
 	p.quad.Draw()
 
 	// set blending mode to additive
-	render.BlendFunc(gl.ONE, gl.ONE)
+	render.BlendAdditive()
 
 	// draw lights one by one
-	for i, light := range scene.Lights {
-		render.DepthMask(i == 0)
+	for _, light := range scene.Lights {
 		// draw shadow pass for this light into shadow map
 		p.Shadows.DrawPass(scene, &light)
 
 		// first light pass we want the shader to restore the depth buffer
 		// then, disable depth masking so that multiple lights can be drawn
+		// render.DepthOutput(i == 0)
 
 		// use light shader again
 		p.mat.Use()
@@ -149,6 +148,6 @@ func (p *LightPass) DrawPass(scene *Scene) {
 	}
 
 	// reset GL state
-	render.DepthMask(true)
-	render.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+	render.DepthOutput(true)
+	render.Blend(false)
 }

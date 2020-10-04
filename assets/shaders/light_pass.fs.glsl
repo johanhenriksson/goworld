@@ -125,12 +125,6 @@ void main() {
 
         // experimental shadows
         shadow = sampleShadowmap(tex_shadow, position);
-
-        // avoids lighting the backdrop.
-        // probably inefficient though, consider another solution.
-        if (depth == 1.0) {
-            contrib = 0;
-        }
     }
     else if (light.Type == POINT_LIGHT) {
         /* calculate light vector & distance */
@@ -138,12 +132,12 @@ void main() {
         float distanceToLight = length(surfaceToLight);
         surfaceToLight = normalize(surfaceToLight);
         contrib = calculatePointLightContrib(surfaceToLight, distanceToLight, normal);
+    }
 
-        // avoids lighting the backdrop.
-        // probably inefficient though, consider another solution.
-        if (depth == 1.0) {
-            contrib = 0;
-        }
+    // avoids lighting the backdrop.
+    // probably inefficient though, consider another solution.
+    if (depth == 1.0) {
+        contrib = 0;
     }
 
     /* calculate light color */

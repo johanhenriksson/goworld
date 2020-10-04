@@ -50,13 +50,12 @@ func NewColorPass(input *render.Texture, filter string) *ColorPass {
 // DrawPass applies color correction to the scene
 func (p *ColorPass) DrawPass(scene *Scene) {
 	p.fbo.Bind()
-	p.fbo.Clear()
-	p.mat.Use()
+	defer p.fbo.Unbind()
 
 	// pass shader settings
+	p.mat.Use()
 	p.mat.Float("gamma", p.Gamma)
 
+	render.Clear()
 	p.quad.Draw()
-
-	p.fbo.Unbind()
 }
