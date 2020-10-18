@@ -7,11 +7,22 @@ import (
 )
 
 var (
-	One   = T{1, 1, 1, 1}
-	Zero  = T{0, 0, 0, 0}
+	// Zero is the zero vector
+	Zero = T{0, 0, 0, 0}
+
+	// One is the unit vector
+	One = T{1, 1, 1, 1}
+
+	// UnitX returns a unit vector in the X direction
 	UnitX = T{1, 0, 0, 0}
+
+	// UnitY returns a unit vector in the Y direction
 	UnitY = T{0, 1, 0, 0}
+
+	// UnitZ returns a unit vector in the Z direction
 	UnitZ = T{0, 0, 1, 0}
+
+	// UnitW returns a unit vector in the W direction
 	UnitW = T{0, 0, 0, 1}
 )
 
@@ -20,6 +31,7 @@ type T struct {
 	X, Y, Z, W float32
 }
 
+// Slice converts the vector into a 4-element slice of float32
 func (v T) Slice() [4]float32 {
 	return [4]float32{v.X, v.Y, v.Z, v.W}
 }
@@ -107,11 +119,12 @@ func (v T) Mul(v2 T) T {
 	return T{v.X * v2.X, v.Y * v2.Y, v.Z * v2.Z, v.W * v2.W}
 }
 
-// XY returns a 2-component vector with the X, Y components of this vector
+// XY returns a 2-component vector with the X, Y components
 func (v T) XY() vec2.T {
 	return vec2.T{X: v.X, Y: v.Y}
 }
 
+// XYZ returns a 3-component vector with the X, Y, Z components
 func (v T) XYZ() vec3.T {
 	return vec3.T{X: v.X, Y: v.Y, Z: v.Z}
 }

@@ -12,70 +12,91 @@ import (
 	"github.com/johanhenriksson/goworld/math/vec4"
 )
 
+// T holds a 4x4 float32 matrix
 type T f32.Mat4
 
 // Add performs an element-wise addition of two matrices, this is
-// equivalent to iterating over every element of m1 and adding the corresponding value of m2.
-func (m1 T) Add(m2 T) T {
-	return T{m1[0] + m2[0], m1[1] + m2[1], m1[2] + m2[2], m1[3] + m2[3], m1[4] + m2[4], m1[5] + m2[5], m1[6] + m2[6], m1[7] + m2[7], m1[8] + m2[8], m1[9] + m2[9], m1[10] + m2[10], m1[11] + m2[11], m1[12] + m2[12], m1[13] + m2[13], m1[14] + m2[14], m1[15] + m2[15]}
+// equivalent to iterating over every element of m and adding the corresponding value of m2.
+func (m T) Add(m2 T) T {
+	return T{
+		m[0] + m2[0], m[1] + m2[1], m[2] + m2[2], m[3] + m2[3],
+		m[4] + m2[4], m[5] + m2[5], m[6] + m2[6], m[7] + m2[7],
+		m[8] + m2[8], m[9] + m2[9], m[10] + m2[10], m[11] + m2[11],
+		m[12] + m2[12], m[13] + m2[13], m[14] + m2[14], m[15] + m2[15],
+	}
 }
 
 // Sub performs an element-wise subtraction of two matrices, this is
-// equivalent to iterating over every element of m1 and subtracting the corresponding value of m2.
-func (m1 T) Sub(m2 T) T {
-	return T{m1[0] - m2[0], m1[1] - m2[1], m1[2] - m2[2], m1[3] - m2[3], m1[4] - m2[4], m1[5] - m2[5], m1[6] - m2[6], m1[7] - m2[7], m1[8] - m2[8], m1[9] - m2[9], m1[10] - m2[10], m1[11] - m2[11], m1[12] - m2[12], m1[13] - m2[13], m1[14] - m2[14], m1[15] - m2[15]}
+// equivalent to iterating over every element of m and subtracting the corresponding value of m2.
+func (m T) Sub(m2 T) T {
+	return T{
+		m[0] - m2[0], m[1] - m2[1], m[2] - m2[2], m[3] - m2[3],
+		m[4] - m2[4], m[5] - m2[5], m[6] - m2[6], m[7] - m2[7],
+		m[8] - m2[8], m[9] - m2[9], m[10] - m2[10], m[11] - m2[11],
+		m[12] - m2[12], m[13] - m2[13], m[14] - m2[14], m[15] - m2[15],
+	}
 }
 
 // Scale performs a scalar multiplcation of the matrix. This is equivalent to iterating
 // over every element of the matrix and multiply it by c.
-func (m1 T) Scale(c float32) T {
-	return T{m1[0] * c, m1[1] * c, m1[2] * c, m1[3] * c, m1[4] * c, m1[5] * c, m1[6] * c, m1[7] * c, m1[8] * c, m1[9] * c, m1[10] * c, m1[11] * c, m1[12] * c, m1[13] * c, m1[14] * c, m1[15] * c}
-}
-
-// VMul multiplies a vec4 with the matrix
-func (m1 *T) VMul(v vec4.T) vec4.T {
-	return vec4.T{
-		m1[0]*v.X + m1[4]*v.Y + m1[8]*v.Z + m1[12]*v.W,
-		m1[1]*v.X + m1[5]*v.Y + m1[9]*v.Z + m1[13]*v.W,
-		m1[2]*v.X + m1[6]*v.Y + m1[10]*v.Z + m1[14]*v.W,
-		m1[3]*v.X + m1[7]*v.Y + m1[11]*v.Z + m1[15]*v.W,
+func (m T) Scale(c float32) T {
+	return T{
+		m[0] * c, m[1] * c, m[2] * c, m[3] * c,
+		m[4] * c, m[5] * c, m[6] * c, m[7] * c,
+		m[8] * c, m[9] * c, m[10] * c, m[11] * c,
+		m[12] * c, m[13] * c, m[14] * c, m[15] * c,
 	}
 }
 
-func (m1 *T) TransformPoint(v vec3.T) vec3.T {
+// VMul multiplies a vec4 with the matrix
+func (m *T) VMul(v vec4.T) vec4.T {
+	return vec4.T{
+		X: m[0]*v.X + m[4]*v.Y + m[8]*v.Z + m[12]*v.W,
+		Y: m[1]*v.X + m[5]*v.Y + m[9]*v.Z + m[13]*v.W,
+		Z: m[2]*v.X + m[6]*v.Y + m[10]*v.Z + m[14]*v.W,
+		W: m[3]*v.X + m[7]*v.Y + m[11]*v.Z + m[15]*v.W,
+	}
+}
+
+// TransformPoint transforms a point to world space
+func (m *T) TransformPoint(v vec3.T) vec3.T {
 	p := vec4.Extend(v, 1)
-	vt := m1.VMul(p)
+	vt := m.VMul(p)
 	return vt.XYZ().Scaled(1 / vt.W)
 }
 
-func (m1 *T) TransformDir(v vec3.T) vec3.T {
+// TransformDir transforms a direction vector to world space
+func (m *T) TransformDir(v vec3.T) vec3.T {
 	p := vec4.Extend(v, 0)
-	vt := m1.VMul(p)
+	vt := m.VMul(p)
 	return vt.XYZ()
 }
 
-// Mul4 performs a "matrix product" between this matrix
+// Mul performs a "matrix product" between this matrix
 // and another of the given dimension. For any two matrices of dimensionality
 // MxN and NxO, the result will be MxO. For instance, T multiplied using
 // Mul4x2 will result in a Tx2.
-func (m1 *T) Mul(m2 *T) T {
+func (m *T) Mul(m2 *T) T {
 	return T{
-		m1[0]*m2[0] + m1[4]*m2[1] + m1[8]*m2[2] + m1[12]*m2[3],
-		m1[1]*m2[0] + m1[5]*m2[1] + m1[9]*m2[2] + m1[13]*m2[3],
-		m1[2]*m2[0] + m1[6]*m2[1] + m1[10]*m2[2] + m1[14]*m2[3],
-		m1[3]*m2[0] + m1[7]*m2[1] + m1[11]*m2[2] + m1[15]*m2[3],
-		m1[0]*m2[4] + m1[4]*m2[5] + m1[8]*m2[6] + m1[12]*m2[7],
-		m1[1]*m2[4] + m1[5]*m2[5] + m1[9]*m2[6] + m1[13]*m2[7],
-		m1[2]*m2[4] + m1[6]*m2[5] + m1[10]*m2[6] + m1[14]*m2[7],
-		m1[3]*m2[4] + m1[7]*m2[5] + m1[11]*m2[6] + m1[15]*m2[7],
-		m1[0]*m2[8] + m1[4]*m2[9] + m1[8]*m2[10] + m1[12]*m2[11],
-		m1[1]*m2[8] + m1[5]*m2[9] + m1[9]*m2[10] + m1[13]*m2[11],
-		m1[2]*m2[8] + m1[6]*m2[9] + m1[10]*m2[10] + m1[14]*m2[11],
-		m1[3]*m2[8] + m1[7]*m2[9] + m1[11]*m2[10] + m1[15]*m2[11],
-		m1[0]*m2[12] + m1[4]*m2[13] + m1[8]*m2[14] + m1[12]*m2[15],
-		m1[1]*m2[12] + m1[5]*m2[13] + m1[9]*m2[14] + m1[13]*m2[15],
-		m1[2]*m2[12] + m1[6]*m2[13] + m1[10]*m2[14] + m1[14]*m2[15],
-		m1[3]*m2[12] + m1[7]*m2[13] + m1[11]*m2[14] + m1[15]*m2[15],
+		m[0]*m2[0] + m[4]*m2[1] + m[8]*m2[2] + m[12]*m2[3],
+		m[1]*m2[0] + m[5]*m2[1] + m[9]*m2[2] + m[13]*m2[3],
+		m[2]*m2[0] + m[6]*m2[1] + m[10]*m2[2] + m[14]*m2[3],
+		m[3]*m2[0] + m[7]*m2[1] + m[11]*m2[2] + m[15]*m2[3],
+
+		m[0]*m2[4] + m[4]*m2[5] + m[8]*m2[6] + m[12]*m2[7],
+		m[1]*m2[4] + m[5]*m2[5] + m[9]*m2[6] + m[13]*m2[7],
+		m[2]*m2[4] + m[6]*m2[5] + m[10]*m2[6] + m[14]*m2[7],
+		m[3]*m2[4] + m[7]*m2[5] + m[11]*m2[6] + m[15]*m2[7],
+
+		m[0]*m2[8] + m[4]*m2[9] + m[8]*m2[10] + m[12]*m2[11],
+		m[1]*m2[8] + m[5]*m2[9] + m[9]*m2[10] + m[13]*m2[11],
+		m[2]*m2[8] + m[6]*m2[9] + m[10]*m2[10] + m[14]*m2[11],
+		m[3]*m2[8] + m[7]*m2[9] + m[11]*m2[10] + m[15]*m2[11],
+
+		m[0]*m2[12] + m[4]*m2[13] + m[8]*m2[14] + m[12]*m2[15],
+		m[1]*m2[12] + m[5]*m2[13] + m[9]*m2[14] + m[13]*m2[15],
+		m[2]*m2[12] + m[6]*m2[13] + m[10]*m2[14] + m[14]*m2[15],
+		m[3]*m2[12] + m[7]*m2[13] + m[11]*m2[14] + m[15]*m2[15],
 	}
 }
 
@@ -86,8 +107,13 @@ func (m1 *T) Mul(m2 *T) T {
 //    [[a b]]    [[a c e]]
 //    [[c d]] =  [[b d f]]
 //    [[e f]]
-func (m1 *T) Transpose() T {
-	return T{m1[0], m1[4], m1[8], m1[12], m1[1], m1[5], m1[9], m1[13], m1[2], m1[6], m1[10], m1[14], m1[3], m1[7], m1[11], m1[15]}
+func (m *T) Transpose() T {
+	return T{
+		m[0], m[4], m[8], m[12],
+		m[1], m[5], m[9], m[13],
+		m[2], m[6], m[10], m[14],
+		m[3], m[7], m[11], m[15],
+	}
 }
 
 // Det returns the determinant of a matrix. It is a measure of a square matrix's
@@ -95,7 +121,12 @@ func (m1 *T) Transpose() T {
 // determinant is hard coded based on pre-computed cofactor expansion, and uses
 // no loops. Of course, the addition and multiplication must still be done.
 func (m *T) Det() float32 {
-	return m[0]*m[5]*m[10]*m[15] - m[0]*m[5]*m[11]*m[14] - m[0]*m[6]*m[9]*m[15] + m[0]*m[6]*m[11]*m[13] + m[0]*m[7]*m[9]*m[14] - m[0]*m[7]*m[10]*m[13] - m[1]*m[4]*m[10]*m[15] + m[1]*m[4]*m[11]*m[14] + m[1]*m[6]*m[8]*m[15] - m[1]*m[6]*m[11]*m[12] - m[1]*m[7]*m[8]*m[14] + m[1]*m[7]*m[10]*m[12] + m[2]*m[4]*m[9]*m[15] - m[2]*m[4]*m[11]*m[13] - m[2]*m[5]*m[8]*m[15] + m[2]*m[5]*m[11]*m[12] + m[2]*m[7]*m[8]*m[13] - m[2]*m[7]*m[9]*m[12] - m[3]*m[4]*m[9]*m[14] + m[3]*m[4]*m[10]*m[13] + m[3]*m[5]*m[8]*m[14] - m[3]*m[5]*m[10]*m[12] - m[3]*m[6]*m[8]*m[13] + m[3]*m[6]*m[9]*m[12]
+	return m[0]*m[5]*m[10]*m[15] - m[0]*m[5]*m[11]*m[14] - m[0]*m[6]*m[9]*m[15] + m[0]*m[6]*m[11]*m[13] +
+		m[0]*m[7]*m[9]*m[14] - m[0]*m[7]*m[10]*m[13] - m[1]*m[4]*m[10]*m[15] + m[1]*m[4]*m[11]*m[14] +
+		m[1]*m[6]*m[8]*m[15] - m[1]*m[6]*m[11]*m[12] - m[1]*m[7]*m[8]*m[14] + m[1]*m[7]*m[10]*m[12] +
+		m[2]*m[4]*m[9]*m[15] - m[2]*m[4]*m[11]*m[13] - m[2]*m[5]*m[8]*m[15] + m[2]*m[5]*m[11]*m[12] +
+		m[2]*m[7]*m[8]*m[13] - m[2]*m[7]*m[9]*m[12] - m[3]*m[4]*m[9]*m[14] + m[3]*m[4]*m[10]*m[13] +
+		m[3]*m[5]*m[8]*m[14] - m[3]*m[5]*m[10]*m[12] - m[3]*m[6]*m[8]*m[13] + m[3]*m[6]*m[9]*m[12]
 }
 
 // Invert computes the inverse of a square matrix. An inverse is a square matrix such that when multiplied by the
@@ -140,9 +171,9 @@ func (m *T) Invert() T {
 
 // ApproxEqual performs an element-wise approximate equality test between two matrices,
 // as if FloatEqual had been used.
-func (m1 *T) ApproxEqual(m2 *T) bool {
-	for i := range m1 {
-		if !math.Equal(m1[i], m2[i]) {
+func (m *T) ApproxEqual(m2 *T) bool {
+	for i := range m {
+		if !math.Equal(m[i], m2[i]) {
 			return false
 		}
 	}
@@ -151,9 +182,9 @@ func (m1 *T) ApproxEqual(m2 *T) bool {
 
 // ApproxEqualThreshold performs an element-wise approximate equality test between two matrices
 // with a given epsilon threshold, as if FloatEqualThreshold had been used.
-func (m1 *T) ApproxEqualThreshold(m2 *T, threshold float32) bool {
-	for i := range m1 {
-		if !math.EqualThreshold(m1[i], m2[i], threshold) {
+func (m *T) ApproxEqualThreshold(m2 *T, threshold float32) bool {
+	for i := range m {
+		if !math.EqualThreshold(m[i], m2[i], threshold) {
 			return false
 		}
 	}
@@ -185,7 +216,12 @@ func (m *T) Index(row, col int) int {
 // This package makes no distinction between row and column vectors, so it
 // will be a normal VecM for a MxN matrix.
 func (m *T) Row(row int) vec4.T {
-	return vec4.T{m[row+0], m[row+4], m[row+8], m[row+12]}
+	return vec4.T{
+		X: m[row+0],
+		Y: m[row+4],
+		Z: m[row+8],
+		W: m[row+12],
+	}
 }
 
 // Rows decomposes a matrix into its corresponding row vectors.
@@ -198,7 +234,12 @@ func (m *T) Rows() (row0, row1, row2, row3 vec4.T) {
 // This package makes no distinction between row and column vectors, so it
 // will be a normal VecN for a MxN matrix.
 func (m *T) Col(col int) vec4.T {
-	return vec4.T{m[col*4+0], m[col*4+1], m[col*4+2], m[col*4+3]}
+	return vec4.T{
+		X: m[col*4+0],
+		Y: m[col*4+1],
+		Z: m[col*4+2],
+		W: m[col*4+3],
+	}
 }
 
 // Cols decomposes a matrix into its corresponding column vectors.
@@ -223,7 +264,7 @@ func (m *T) Abs() T {
 	}
 }
 
-// Pretty prints the matrix
+// String pretty prints the matrix
 func (m T) String() string {
 	buf := new(bytes.Buffer)
 	w := tabwriter.NewWriter(buf, 4, 4, 1, ' ', tabwriter.AlignRight)
@@ -238,6 +279,7 @@ func (m T) String() string {
 	return buf.String()
 }
 
+// Right extracts the right vector from a transformation matrix
 func (m *T) Right() vec3.T {
 	return vec3.T{
 		X: m[4*0+0],
@@ -246,6 +288,7 @@ func (m *T) Right() vec3.T {
 	}
 }
 
+// Up extracts the up vector from a transformation matrix
 func (m *T) Up() vec3.T {
 	return vec3.T{
 		X: m[4*0+1],
@@ -254,6 +297,7 @@ func (m *T) Up() vec3.T {
 	}
 }
 
+// Forward extracts the forward vector from a transformation matrix
 func (m *T) Forward() vec3.T {
 	return vec3.T{
 		X: -m[4*0+2],

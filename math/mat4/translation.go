@@ -25,6 +25,7 @@ func Rotate(rotation vec3.T) T {
 	return T(rot)
 }
 
+// Transform creates a new transformation matrix from a position vector, an euler rotation vector, and a scale vector.
 func Transform(position, rotation, scale vec3.T) T {
 	R := Rotate(rotation)
 	S := Scale(scale)

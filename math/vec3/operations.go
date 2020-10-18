@@ -5,14 +5,17 @@ import (
 	"github.com/johanhenriksson/goworld/math/vec2"
 )
 
+// New returns a Vec3 from its components
 func New(x, y, z float32) T {
 	return T{x, y, z}
 }
 
+// NewI returns a Vec3 from integer components
 func NewI(x, y, z int) T {
 	return T{float32(x), float32(y), float32(z)}
 }
 
+// Extend a vec2 to a vec3 by adding a Z component
 func Extend(v vec2.T, z float32) T {
 	return T{v.X, v.Y, z}
 }
@@ -31,6 +34,12 @@ func Cross(a, b *T) T {
 	}
 }
 
+// Distance returns the euclidian distance between two points.
+func Distance(a, b *T) float32 {
+	return a.Sub(*b).Length()
+}
+
+// Random vector, not normalized.
 func Random(min, max T) T {
 	return T{
 		random.Range(min.X, max.X),
