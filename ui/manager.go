@@ -41,6 +41,9 @@ func NewManager(app *engine.Application) *Manager {
 	app.Window.Wnd.SetMouseButtonCallback(m.glfwMouseButtonCallback)
 	app.Window.Wnd.SetCharCallback(m.glfwInputCallback)
 
+	// watermark / fps text
+	m.Attach(NewWatermark(app.Window))
+
 	return m
 }
 

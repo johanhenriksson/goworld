@@ -15,6 +15,7 @@ type Element struct {
 	parent        Component
 	children      []Component
 	mouseHandlers []MouseHandler
+	z             float32
 }
 
 func NewElement(name string, position, size vec2.T, style Style) *Element {
@@ -26,6 +27,7 @@ func NewElement(name string, position, size vec2.T, style Style) *Element {
 
 		children:      []Component{},
 		mouseHandlers: []MouseHandler{},
+		z:             1,
 	}
 	return e
 }
@@ -34,9 +36,15 @@ func (e *Element) ZIndex() float32 {
 	// not sure how this is going to work yet
 	// parents must be drawn underneath children (?)
 	if e.parent != nil {
-		return e.parent.ZIndex() + 1
+		return e.parent.ZIndex() - e.z
 	}
-	return 0
+	return -e.z
+}
+
+func (e *Element) SetZIndex(z float32) {
+	e.z = z
+	e.Transform.Position = vec3.Extend(e.Transform.Position.XY(), e.ZIndex())
+	e.Transform.Update(0)
 }
 
 // Parent peturns the parent element
