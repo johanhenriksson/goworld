@@ -36,14 +36,14 @@ func main() {
 	uim := ui.NewManager(app)
 	app.Pipeline.Append("ui", uim)
 
-	scene := engine.NewScene()
-
 	// create a camera
 	camera := engine.CreateCamera(&render.ScreenBuffer, vec3.New(1, 22, 1), 55.0, 0.1, 600.0)
 	camera.Clear = render.Color4(0.973, 0.945, 0.876, 1.0) // light gray
 	camera.Rotation.X = 22
 	camera.Rotation.Y = 135
 
+	// scene & lighting setup
+	scene := engine.NewScene()
 	scene.Camera = camera
 	scene.Lights = []engine.Light{
 		{ // directional light
@@ -56,10 +56,11 @@ func main() {
 		},
 	}
 
-	fmt.Print("Generating chunks... ")
+	// create chunk
 	world := game.NewWorld(31481234, 16)
 	chunk := world.AddChunk(0, 0)
 
+	// first person controls
 	player := game.NewPlayer(camera, func(player *game.Player, target vec3.T) (bool, vec3.T) {
 		height := world.HeightAt(target)
 		if target.Y < height {
@@ -69,11 +70,12 @@ func main() {
 	})
 	player.Flying = true
 
+	// create editor
 	geometryPass := app.Pipeline.Get("geometry").(*engine.GeometryPass)
 	edit := editor.NewEditor(chunk, camera, geometryPass.Buffer)
 	scene.Add(edit)
 
-	// buffer display windows
+	// buffer debug windows
 	uim.Attach(editor.DebugBufferWindows(app))
 
 	// render

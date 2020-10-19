@@ -1,6 +1,9 @@
 package engine
 
 import (
+	"fmt"
+
+	"github.com/johanhenriksson/goworld/assets"
 	"github.com/johanhenriksson/goworld/render"
 )
 
@@ -18,11 +21,22 @@ type Mesh struct {
 
 // NewMesh creates a new mesh object
 func NewMesh(material *render.Material) *Mesh {
+	return NewPrimitiveMesh(render.Triangles, material)
+}
+
+// NewLineMesh creates a new mesh for drawing lines
+func NewLineMesh() *Mesh {
+	material := assets.GetMaterialCached("lines")
+	return NewPrimitiveMesh(render.Lines, material)
+}
+
+// NewPrimitiveMesh creates a new mesh composed of a given GL primitive
+func NewPrimitiveMesh(primitive render.GLPrimitive, material *render.Material) *Mesh {
 	m := &Mesh{
 		Transform: Identity(),
 		Pass:      DrawGeometry,
 		material:  material,
-		vao:       render.CreateVertexArray(render.Triangles),
+		vao:       render.CreateVertexArray(primitive),
 	}
 	for _, buffer := range m.material.Buffers {
 		m.vao.AddBuffer(buffer)
@@ -48,6 +62,9 @@ func (m *Mesh) Draw(args DrawArgs) {
 	}
 	if m.Pass == DrawForward && args.Pass != DrawForward {
 		return
+	}
+	if m.Pass == DrawLines {
+		fmt.Println("draw line mesh!")
 	}
 
 	m.material.Use()

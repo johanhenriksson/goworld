@@ -1,8 +1,6 @@
 package editor
 
 import (
-	"fmt"
-
 	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/game"
 	"github.com/johanhenriksson/goworld/geometry"
@@ -11,17 +9,16 @@ import (
 )
 
 type EraseTool struct {
-	box *geometry.ColorCube
+	box *geometry.Box
 }
 
 func NewEraseTool() *EraseTool {
 	return &EraseTool{
-		box: geometry.NewColorCube(render.Red, 1.05),
+		box: geometry.NewBox(vec3.One, render.Red),
 	}
 }
 
 func (pt *EraseTool) Use(e *Editor, position, normal vec3.T) {
-	fmt.Println("(tool) Erase at", position)
 	target := position.Sub(normal.Scaled(0.5))
 	e.Chunk.Set(int(target.X), int(target.Y), int(target.Z), game.EmptyVoxel)
 
@@ -34,10 +31,10 @@ func (pt *EraseTool) Use(e *Editor, position, normal vec3.T) {
 }
 
 func (pt *EraseTool) Update(editor *Editor, dt float32, position, normal vec3.T) {
-	pt.box.Position = position.Sub(normal.Scaled(0.5)).Floor().Add(vec3.One.Scaled(0.5))
-	pt.box.Update(dt)
+	pt.box.Position = position.Sub(normal.Scaled(0.5)).Floor()
+	engine.Update(dt, pt.box)
 }
 
 func (pt *EraseTool) Draw(editor *Editor, args engine.DrawArgs) {
-	pt.box.Draw(args)
+	engine.Draw(args, pt.box)
 }

@@ -16,8 +16,9 @@ type Editor struct {
 	Palette *PaletteWindow
 	Tool    Tool
 
-	PlaceTool *PlaceTool
-	EraseTool *EraseTool
+	PlaceTool  *PlaceTool
+	EraseTool  *EraseTool
+	SampleTool *SampleTool
 
 	mesh    *game.ChunkMesh
 	gbuffer *render.GeometryBuffer
@@ -30,12 +31,14 @@ func NewEditor(chunk *game.Chunk, camera *engine.Camera, gbuffer *render.Geometr
 		Camera:  camera,
 		Palette: NewPaletteWindow(render.DefaultPalette),
 
-		PlaceTool: NewPlaceTool(),
-		EraseTool: NewEraseTool(),
+		PlaceTool:  NewPlaceTool(),
+		EraseTool:  NewEraseTool(),
+		SampleTool: NewSampleTool(),
 
 		mesh:    game.NewChunkMesh(chunk),
 		gbuffer: gbuffer,
 	}
+	editor.Tool = editor.PlaceTool
 	return editor
 }
 
@@ -88,12 +91,10 @@ func (e *Editor) Update(dt float32) {
 		e.Tool = e.EraseTool
 	}
 
-	// eyedropper
-	// if keys.Pressed(keys.T) {
-	// fmt.Println("Sample", position)
-	// target := position.Sub(normal.Scaled(0.5))
-	// e.selected = e.palette.IndexOf(e.Chunk.At(int(target.X), int(target.Y), int(target.Z)))
-	// }
+	// eyedropper tool
+	if keys.Pressed(keys.T) {
+		e.Tool = e.SampleTool
+	}
 }
 
 // sample world position at current mouse coords
