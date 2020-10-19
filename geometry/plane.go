@@ -7,12 +7,14 @@ import (
 	"github.com/johanhenriksson/goworld/render"
 )
 
+// Plane is a colored, one segment, one-sided 3D plane
 type Plane struct {
 	*engine.Mesh
 	Size  float32
 	Color render.Color
 }
 
+// NewPlane creates a new 3D plane of a given size and color.
 func NewPlane(size float32, color render.Color) *Plane {
 	mat := assets.GetMaterialCached("vertex_color")
 	plane := &Plane{

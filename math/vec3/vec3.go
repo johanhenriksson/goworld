@@ -15,11 +15,20 @@ var (
 	// UnitX is the unit vector in the X direction
 	UnitX = T{1, 0, 0}
 
+	// UnitXN is the unit vector in the negative X direction
+	UnitXN = T{-1, 0, 0}
+
 	// UnitY is the unit vector in the Y direction
 	UnitY = T{0, 1, 0}
 
+	// UnitYN is the unit vector in the negative Y direction
+	UnitYN = T{0, -1, 0}
+
 	// UnitZ is the unit vector in the Z direction
 	UnitZ = T{0, 0, 1}
+
+	// UnitZN is the unit vector in the negative Z direction
+	UnitZN = T{0, 0, -1}
 )
 
 // T holds a 3-component vector of 32-bit floats
@@ -96,6 +105,16 @@ func (v *T) Inverted() T {
 	i := *v
 	i.Invert()
 	return i
+}
+
+// Floor each components of the vector
+func (v T) Floor() T {
+	return T{math.Floor(v.X), math.Floor(v.Y), math.Floor(v.Z)}
+}
+
+// Ceil each component of the vector
+func (v T) Ceil() T {
+	return T{math.Ceil(v.X), math.Ceil(v.Y), math.Ceil(v.Z)}
 }
 
 // Add each element of the vector with the corresponding element of another vector

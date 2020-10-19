@@ -5,8 +5,10 @@ import (
 	"github.com/johanhenriksson/goworld/math/vec3"
 )
 
+// DrawPass is a type identifier for a render draw pass.
 type DrawPass int32
 
+// Various draw pass constants
 const (
 	DrawGeometry DrawPass = iota
 	DrawShadow
@@ -15,12 +17,8 @@ const (
 	DrawForward
 )
 
-/** UI Component render interface */
-type Drawable interface {
-	Draw(DrawArgs)
-}
-
-/** Passed to Drawables on render */
+// DrawArgs holds the arguments used to perform a draw pass.
+// Includes the various transformation matrices and position of the camera.
 type DrawArgs struct {
 	VP         mat4.T
 	MVP        mat4.T

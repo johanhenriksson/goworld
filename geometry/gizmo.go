@@ -7,6 +7,7 @@ import (
 	"github.com/johanhenriksson/goworld/render"
 )
 
+// Gizmo is the visual representation of the 3D positioning tool
 type Gizmo struct {
 	*engine.Transform
 	Lines *Lines
@@ -19,6 +20,7 @@ type Gizmo struct {
 	YZ *Plane
 }
 
+// NewGizmo creates a new gizmo at the given position
 func NewGizmo(position vec3.T) *Gizmo {
 	radius := float32(0.1)
 	height := float32(0.25)
@@ -87,11 +89,13 @@ func NewGizmo(position vec3.T) *Gizmo {
 	return g
 }
 
+// Draw the gizmo
 func (g *Gizmo) Draw(args engine.DrawArgs) {
 	render.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 	engine.Draw(args.Apply(g.Transform), g.Lines, g.X, g.Y, g.Z, g.XY, g.XZ, g.YZ)
 }
 
+// Update the gizmo
 func (g *Gizmo) Update(dt float32) {
 	engine.Update(dt, g.Lines, g.X, g.Y, g.Z, g.XY, g.XZ, g.YZ)
 }

@@ -8,6 +8,7 @@ import (
 	"github.com/johanhenriksson/goworld/render"
 )
 
+// Cone mesh
 type Cone struct {
 	*engine.Mesh
 	Radius   float32
@@ -16,6 +17,7 @@ type Cone struct {
 	Color    render.Color
 }
 
+// NewCone generates a new parameterized cone mesh
 func NewCone(radius, height float32, segments int, color render.Color) *Cone {
 	mat := assets.GetMaterialCached("vertex_color")
 	cone := &Cone{

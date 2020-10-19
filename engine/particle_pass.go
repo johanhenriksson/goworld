@@ -8,9 +8,11 @@ import (
 	"github.com/johanhenriksson/goworld/render"
 )
 
+// ParticlePass represents the particle system draw pass
 type ParticlePass struct {
 }
 
+// NewParticlePass creates a new particle system draw pass
 func NewParticlePass() *ParticlePass {
 	return &ParticlePass{}
 }
@@ -21,12 +23,14 @@ func (p *ParticlePass) DrawPass(scene *Scene) {
 	scene.DrawPass(DrawParticles)
 }
 
+// Particle holds data about a single particle
 type Particle struct {
 	Position vec3.T
 	Velocity vec3.T
 	Duration float32
 }
 
+// ParticleSystem holds the properties of a particle system effect
 type ParticleSystem struct {
 	*Transform
 
@@ -43,6 +47,7 @@ type ParticleSystem struct {
 	vao       *render.VertexArray
 }
 
+// Update the particle system
 func (ps *ParticleSystem) Update(dt float32) {
 	if len(ps.Particles) < ps.Count && random.Chance(ps.Chance) {
 		// add particle
@@ -77,6 +82,7 @@ func (ps *ParticleSystem) remove(i int) {
 	ps.Particles = ps.Particles[:len(ps.Particles)-1]
 }
 
+// Draw the particle system
 func (ps *ParticleSystem) Draw(args DrawArgs) {
 	if args.Pass != DrawParticles {
 		return
@@ -97,6 +103,7 @@ func (ps *ParticleSystem) Draw(args DrawArgs) {
 	render.DepthOutput(true)
 }
 
+// NewParticleSystem creates a new particle system
 func NewParticleSystem(position vec3.T) *ParticleSystem {
 	count := 8
 	mat := assets.GetMaterial("billboard")

@@ -28,6 +28,7 @@ func NewTransform(position, rotation, scale vec3.T) *Transform {
 	return t
 }
 
+// Identity returns a new transform that does nothing.
 func Identity() *Transform {
 	return NewTransform(vec3.Zero, vec3.Zero, vec3.One)
 }

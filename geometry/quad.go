@@ -7,7 +7,8 @@ import (
 	"github.com/johanhenriksson/goworld/render"
 )
 
-type Quad struct {
+// Rect with support for borders and rounded corners.
+type Rect struct {
 	Width    float32
 	Height   float32
 	Material *render.Material
@@ -17,8 +18,8 @@ type Quad struct {
 	vao      *render.VertexArray
 }
 
-func NewQuad(mat *render.Material, size vec2.T) *Quad {
-	q := &Quad{
+func NewQuad(mat *render.Material, size vec2.T) *Rect {
+	q := &Rect{
 		Material: mat,
 		Width:    size.X,
 		Height:   size.Y,
@@ -32,13 +33,13 @@ func NewQuad(mat *render.Material, size vec2.T) *Quad {
 	return q
 }
 
-func (q *Quad) BorderWidth() float32 { return q.border }
-func (q *Quad) SetBorderWidth(width float32) {
+func (q *Rect) BorderWidth() float32 { return q.border }
+func (q *Rect) SetBorderWidth(width float32) {
 	q.border = width
 	q.compute()
 }
 
-func (q *Quad) appendCorner(vtx *Vertices, origin Vertex, offset float32) {
+func (q *Rect) appendCorner(vtx *Vertices, origin Vertex, offset float32) {
 	r := q.border
 	n := q.segments
 
@@ -98,20 +99,20 @@ func (q *Quad) appendCorner(vtx *Vertices, origin Vertex, offset float32) {
 	}
 }
 
-func (q *Quad) SetSize(size vec2.T) {
+func (q *Rect) SetSize(size vec2.T) {
 	q.Width = size.X
 	q.Height = size.Y
 	q.compute()
 }
 
-func (q *Quad) texture() *render.Texture {
+func (q *Rect) texture() *render.Texture {
 	for _, tex := range q.Material.Textures {
 		return tex
 	}
 	return nil
 }
 
-func (q *Quad) compute() {
+func (q *Rect) compute() {
 	b := q.border
 
 	w, h := q.Width, q.Height
@@ -186,7 +187,7 @@ func (q *Quad) compute() {
 	q.vao.Buffer("geometry", vtx)
 }
 
-func (q *Quad) Draw(args engine.DrawArgs) {
+func (q *Rect) Draw(args engine.DrawArgs) {
 	q.Material.Use()
 	q.Material.Mat4("model", &args.Transform)
 	q.Material.Mat4("viewport", &args.Projection)

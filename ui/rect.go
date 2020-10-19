@@ -9,10 +9,12 @@ import (
 	"github.com/johanhenriksson/goworld/render"
 )
 
+// Rect is a rectangle with support for borders & rounded corners.
+// Acts as the basic building block for all UI elements.
 type Rect struct {
 	*Element
 	layout RectLayout
-	quad   *geometry.Quad
+	mesh   *geometry.Rect
 	tex    *render.Texture
 }
 
@@ -25,7 +27,7 @@ func NewRect(style Style, children ...Component) *Rect {
 
 	r := &Rect{
 		Element: NewElement("Rect", position, size, style),
-		quad:    geometry.NewQuad(mat, size),
+		mesh:    geometry.NewQuad(mat, size),
 		layout:  ColumnLayout,
 		tex:     render.TextureFromColor(render.White),
 	}
@@ -39,7 +41,7 @@ func NewRect(style Style, children ...Component) *Rect {
 	}
 
 	border := style.Float("radius", 0)
-	r.quad.SetBorderWidth(border)
+	r.mesh.SetBorderWidth(border)
 
 	for _, child := range children {
 		r.Attach(child)
@@ -64,10 +66,10 @@ func (r *Rect) Draw(args engine.DrawArgs) {
 
 	color := r.Style.Color("color", render.Transparent)
 	image := r.Style.Texture("image", r.tex)
-	r.quad.Material.Use()
-	r.quad.Material.RGBA("tint", color)
-	r.quad.Material.SetTexture("image", image)
-	r.quad.Draw(local)
+	r.mesh.Material.Use()
+	r.mesh.Material.RGBA("tint", color)
+	r.mesh.Material.SetTexture("image", image)
+	r.mesh.Draw(local)
 
 	/* call parent - draw children etc */
 	r.Element.Draw(args)
@@ -80,7 +82,7 @@ func (r *Rect) Flow(available vec2.T) vec2.T {
 func (r *Rect) Resize(size vec2.T) vec2.T {
 	if size.X != r.Width() || size.Y != r.Height() {
 		r.Element.Resize(size)
-		r.quad.SetSize(size)
+		r.mesh.SetSize(size)
 	}
 	return r.Size
 }

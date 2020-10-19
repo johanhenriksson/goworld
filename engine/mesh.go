@@ -31,11 +31,12 @@ func NewMesh(material *render.Material) *Mesh {
 	return m
 }
 
-// Buffer mesh data to the GPU
+// Buffer mesh data to GPU memory
 func (m *Mesh) Buffer(name string, data render.VertexData) error {
 	return m.vao.Buffer(name, data)
 }
 
+// AddIndex adds an index buffer of the given type.
 func (m *Mesh) AddIndex(datatype render.GLType) {
 	m.vao.AddIndexBuffer(datatype)
 }

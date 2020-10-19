@@ -27,6 +27,7 @@ func (buffer ColorVertices) Size() int {
 	return 40
 }
 
+// Pointer returns an unsafe pointer to the first element
 func (buffer ColorVertices) Pointer() unsafe.Pointer {
 	return unsafe.Pointer(&buffer[0])
 }
