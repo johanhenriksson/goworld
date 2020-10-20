@@ -88,6 +88,9 @@ func (vao *VertexArray) AddBuffer(name string) *VertexBuffer {
 	if name == "index" {
 		panic("index is reserved for index buffers")
 	}
+	if vbo, exists := vao.vbos[name]; exists {
+		return vbo
+	}
 
 	// set up vertex array pointers for this buffer
 	vao.Bind()

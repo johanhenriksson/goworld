@@ -1,6 +1,7 @@
 package editor
 
 import (
+	"github.com/johanhenriksson/goworld/assets"
 	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/engine/keys"
 	"github.com/johanhenriksson/goworld/engine/mouse"
@@ -12,6 +13,8 @@ import (
 
 // Editor base struct
 type Editor struct {
+	*engine.Group
+
 	Chunk   *game.Chunk
 	Camera  *engine.Camera
 	Palette *PaletteWindow
@@ -22,6 +25,8 @@ type Editor struct {
 	SampleTool  *SampleTool
 	ReplaceTool *ReplaceTool
 
+	XPlane *geometry.Plane
+
 	bounds  *geometry.Box
 	mesh    *game.ChunkMesh
 	gbuffer *render.GeometryBuffer
@@ -29,7 +34,8 @@ type Editor struct {
 
 // NewEditor creates a new editor application
 func NewEditor(chunk *game.Chunk, camera *engine.Camera, gbuffer *render.GeometryBuffer) *Editor {
-	editor := &Editor{
+	e := &Editor{
+		Group:   engine.NewGroup(vec3.Zero, vec3.Zero),
 		Chunk:   chunk,
 		Camera:  camera,
 		Palette: NewPaletteWindow(render.DefaultPalette),
@@ -39,24 +45,33 @@ func NewEditor(chunk *game.Chunk, camera *engine.Camera, gbuffer *render.Geometr
 		SampleTool:  NewSampleTool(),
 		ReplaceTool: NewReplaceTool(),
 
+		XPlane: geometry.NewPlane(16, render.Red),
+
 		mesh:    game.NewChunkMesh(chunk),
 		bounds:  geometry.NewBox(vec3.NewI(chunk.Sx, chunk.Sy, chunk.Sz), render.DarkGrey),
 		gbuffer: gbuffer,
 	}
-	editor.Tool = editor.PlaceTool
-	return editor
+
+	e.XPlane.Passes.Set(render.Geometry)
+	e.XPlane.Rotation.X = -90
+	e.XPlane.Position = vec3.New(8, 8, 0.01)
+	e.XPlane.SetMaterial(assets.GetMaterialCached("color"))
+
+	e.Tool = e.PlaceTool
+
+	e.Attach(e.mesh, e.bounds, e.XPlane)
+
+	return e
 }
 
-func (e *Editor) Draw(args engine.DrawArgs) {
-	engine.Draw(args, e.mesh, e.bounds)
-
-	if e.Tool != nil {
-		e.Tool.Draw(e, args)
-	}
+func (e *Editor) Collect(pass engine.DrawPass, args engine.DrawArgs) {
+	e.Group.Collect(pass, args)
+	engine.Collect(pass, args, e.Tool)
 }
 
 func (e *Editor) Update(dt float32) {
-	engine.Update(dt, e.mesh, e.bounds)
+	e.Group.Update(dt)
+	engine.Update(dt, e.Tool)
 
 	exists, position, normal := e.cursorPositionNormal()
 	if !exists {
@@ -64,12 +79,17 @@ func (e *Editor) Update(dt float32) {
 	}
 
 	if e.Tool != nil {
-		e.Tool.Update(e, dt, position, normal)
+		e.Tool.Hover(e, position, normal)
 
 		// use active tool
 		if mouse.Pressed(mouse.Button2) {
 			e.Tool.Use(e, position, normal)
 		}
+	}
+
+	// deselect tool
+	if keys.Pressed(keys.Escape) {
+		e.Tool = nil
 	}
 
 	// place tool
@@ -82,6 +102,7 @@ func (e *Editor) Update(dt float32) {
 		e.Tool = e.EraseTool
 	}
 
+	// replace tool
 	if keys.Pressed(keys.R) {
 		e.Tool = e.ReplaceTool
 	}

@@ -26,11 +26,14 @@ func (pt *SampleTool) Use(e *Editor, position, normal vec3.T) {
 	e.Tool = e.PlaceTool
 }
 
-func (pt *SampleTool) Update(editor *Editor, dt float32, position, normal vec3.T) {
+func (pt *SampleTool) Hover(editor *Editor, position, normal vec3.T) {
 	pt.box.Position = position.Sub(normal.Scaled(0.5)).Floor()
+}
+
+func (pt *SampleTool) Update(dt float32) {
 	engine.Update(dt, pt.box)
 }
 
-func (pt *SampleTool) Draw(editor *Editor, args engine.DrawArgs) {
-	engine.Draw(args, pt.box)
+func (pt *SampleTool) Collect(pass engine.DrawPass, args engine.DrawArgs) {
+	engine.Collect(pass, args, pt.box)
 }

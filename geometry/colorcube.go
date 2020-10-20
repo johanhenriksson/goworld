@@ -22,7 +22,7 @@ func NewColorCube(color render.Color, size float32) *ColorCube {
 		Size:  size,
 		Color: color,
 	}
-	cube.Pass = engine.DrawForward
+	cube.Passes.Set(render.Forward)
 	cube.generate()
 	return cube
 }

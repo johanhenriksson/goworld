@@ -30,11 +30,14 @@ func (pt *EraseTool) Use(e *Editor, position, normal vec3.T) {
 	go e.Chunk.Write("chunks")
 }
 
-func (pt *EraseTool) Update(editor *Editor, dt float32, position, normal vec3.T) {
+func (pt *EraseTool) Hover(editor *Editor, position, normal vec3.T) {
 	pt.box.Position = position.Sub(normal.Scaled(0.5)).Floor()
+}
+
+func (pt *EraseTool) Update(dt float32) {
 	engine.Update(dt, pt.box)
 }
 
-func (pt *EraseTool) Draw(editor *Editor, args engine.DrawArgs) {
-	engine.Draw(args, pt.box)
+func (pt *EraseTool) Collect(pass engine.DrawPass, args engine.DrawArgs) {
+	pt.box.Collect(pass, args)
 }

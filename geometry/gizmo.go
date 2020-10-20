@@ -1,7 +1,6 @@
 package geometry
 
 import (
-	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
@@ -9,7 +8,7 @@ import (
 
 // Gizmo is the visual representation of the 3D positioning tool
 type Gizmo struct {
-	*engine.Transform
+	*engine.Group
 	Lines *Lines
 
 	X  *Cone
@@ -54,8 +53,8 @@ func NewGizmo(position vec3.T) *Gizmo {
 	yz.Rotation = vec3.New(0, 0, 90)
 
 	g := &Gizmo{
-		Transform: engine.NewTransform(position, vec3.Zero, vec3.One),
-		Lines:     CreateLines(),
+		Group: engine.NewGroup(position, vec3.Zero),
+		Lines: CreateLines(),
 
 		X:  x,
 		Y:  y,
@@ -86,16 +85,8 @@ func NewGizmo(position vec3.T) *Gizmo {
 
 	g.Lines.Compute()
 
+	// attach components
+	g.Attach(g.Lines, x, y, z, xy, xz, yz)
+
 	return g
-}
-
-// Draw the gizmo
-func (g *Gizmo) Draw(args engine.DrawArgs) {
-	render.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
-	engine.Draw(args.Apply(g.Transform), g.Lines, g.X, g.Y, g.Z, g.XY, g.XZ, g.YZ)
-}
-
-// Update the gizmo
-func (g *Gizmo) Update(dt float32) {
-	engine.Update(dt, g.Lines, g.X, g.Y, g.Z, g.XY, g.XZ, g.YZ)
 }

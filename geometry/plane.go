@@ -22,7 +22,7 @@ func NewPlane(size float32, color render.Color) *Plane {
 		Size:  size,
 		Color: color,
 	}
-	plane.Pass = engine.DrawForward
+	plane.Passes.Set(render.Forward)
 	plane.generate()
 	return plane
 }

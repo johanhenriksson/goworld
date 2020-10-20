@@ -58,8 +58,8 @@ func (grid *PlacementGrid) Update(dt float32) {
 	}
 }
 
-func (grid *PlacementGrid) Draw(args engine.DrawArgs) {
-	grid.mesh.Draw(args)
+func (grid *PlacementGrid) DrawLines(args engine.DrawArgs) {
+	grid.mesh.DrawLines(args)
 }
 
 /* Compute grid mesh - draw an empty box for every empty

@@ -6,7 +6,7 @@ import (
 )
 
 type Tool interface {
+	engine.Component
 	Use(*Editor, vec3.T, vec3.T)
-	Update(*Editor, float32, vec3.T, vec3.T)
-	Draw(*Editor, engine.DrawArgs)
+	Hover(*Editor, vec3.T, vec3.T)
 }

@@ -82,9 +82,9 @@ func (lines *Lines) Compute() {
 
 func (lines *Lines) Update(dt float32) {}
 
-func (lines *Lines) Draw(args engine.DrawArgs) {
+func (lines *Lines) DrawLines(args engine.DrawArgs) {
 	// setup line material
-	if len(lines.Lines) > 0 && args.Pass == engine.DrawLines {
+	if len(lines.Lines) > 0 && args.Pass == render.LinePass {
 		lines.Material.Use()
 		lines.Material.Mat4("mvp", &args.MVP)
 		lines.vao.Draw()
@@ -97,4 +97,10 @@ func (lines *Lines) Line(start, end vec3.T, color render.Color) {
 		End:   end,
 		Color: color,
 	})
+}
+
+func (lines *Lines) Collect(pass engine.DrawPass, args engine.DrawArgs) {
+	if pass.Visible(lines, args) {
+		pass.Queue(lines, args)
+	}
 }

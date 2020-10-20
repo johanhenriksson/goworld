@@ -30,11 +30,14 @@ func (pt *ReplaceTool) Use(e *Editor, position, normal vec3.T) {
 	go e.Chunk.Write("chunks")
 }
 
-func (pt *ReplaceTool) Update(editor *Editor, dt float32, position, normal vec3.T) {
+func (pt *ReplaceTool) Hover(editor *Editor, position, normal vec3.T) {
 	pt.box.Position = position.Sub(normal.Scaled(0.5)).Floor()
+}
+
+func (pt *ReplaceTool) Update(dt float32) {
 	engine.Update(dt, pt.box)
 }
 
-func (pt *ReplaceTool) Draw(editor *Editor, args engine.DrawArgs) {
-	engine.Draw(args, pt.box)
+func (pt *ReplaceTool) Collect(pass engine.DrawPass, args engine.DrawArgs) {
+	engine.Collect(pass, args, pt.box)
 }

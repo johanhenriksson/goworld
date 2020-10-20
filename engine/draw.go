@@ -3,19 +3,14 @@ package engine
 import (
 	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/math/vec3"
+	"github.com/johanhenriksson/goworld/render"
 )
 
-// DrawPass is a type identifier for a render draw pass.
-type DrawPass int32
-
-// Various draw pass constants
-const (
-	DrawGeometry DrawPass = iota
-	DrawShadow
-	DrawLines
-	DrawParticles
-	DrawForward
-)
+type DrawPass interface {
+	Type() render.Pass
+	Visible(Component, DrawArgs) bool
+	Queue(Component, DrawArgs)
+}
 
 // DrawArgs holds the arguments used to perform a draw pass.
 // Includes the various transformation matrices and position of the camera.
@@ -26,7 +21,7 @@ type DrawArgs struct {
 	View       mat4.T
 	Transform  mat4.T
 	Position   vec3.T
-	Pass       DrawPass
+	Pass       render.Pass
 }
 
 // Apply the effects of a transform

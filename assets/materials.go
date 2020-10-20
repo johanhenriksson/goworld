@@ -49,7 +49,9 @@ func LoadMaterialDefinition(file string) (*MaterialDefinition, error) {
 	return matf, nil
 }
 
-func LoadMaterial(shader *render.Shader, matf *MaterialDefinition) (*render.Material, error) {
+func LoadMaterial(matf *MaterialDefinition) (*render.Material, error) {
+	shader := GetShader(matf.Shader)
+
 	mat := render.CreateMaterial(shader)
 
 	/* Load vertex pointers */
@@ -118,14 +120,11 @@ func GetMaterial(name string) *render.Material {
 
 	// use configured shader name if provided
 	// otherwise fall back to material name
-	shaderName := def.Shader
-	if shaderName == "" {
-		shaderName = name
+	if def.Shader == "" {
+		def.Shader = name
 	}
 
-	shader := GetShader(shaderName)
-
-	mat, err := LoadMaterial(shader, def)
+	mat, err := LoadMaterial(def)
 	if err != nil {
 		panic(err)
 	}

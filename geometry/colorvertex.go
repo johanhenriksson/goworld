@@ -9,9 +9,9 @@ import (
 
 // ColorVertex is used to represent vertices in solid-color elements
 type ColorVertex struct {
-	Position vec3.T       // 12 bytes
-	Normal   vec3.T       // 12 bytes
-	Color    render.Color // 16 bytes
+	Position vec3.T       `vtx:"position,float,3"` // 12 bytes
+	Normal   vec3.T       `vtx:"normal,float,3"`   // 12 bytes
+	Color    render.Color `vtx:"color,float,4"`    // 16 bytes
 } // 40 bytes
 
 // ColorVertices is a GPU bufferable slice of ColorVertex objects

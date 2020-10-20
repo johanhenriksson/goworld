@@ -23,14 +23,12 @@ func (o *Group) Attach(components ...Component) {
 	o.Components = append(o.Components, components...)
 }
 
-// Draw the components in the group
-func (o *Group) Draw(args DrawArgs) {
-	args = args.Apply(o.Transform)
-	Draw(args, o.Components...)
-}
-
 // Update all components in the group
 func (o *Group) Update(dt float32) {
 	o.Transform.Update(dt)
 	Update(dt, o.Components...)
+}
+
+func (o *Group) Collect(pass DrawPass, args DrawArgs) {
+	Collect(pass, args.Apply(o.Transform), o.Components...)
 }

@@ -27,7 +27,7 @@ func NewCone(radius, height float32, segments int, color render.Color) *Cone {
 		Segments: segments,
 		Color:    color,
 	}
-	cone.Pass = engine.DrawForward
+	cone.Passes.Set(render.Forward)
 	cone.generate()
 	return cone
 }

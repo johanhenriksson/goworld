@@ -8,19 +8,44 @@ import (
 	"github.com/johanhenriksson/goworld/render"
 )
 
+type ParticleDrawable interface {
+	DrawParticles(DrawArgs)
+}
+
 // ParticlePass represents the particle system draw pass
 type ParticlePass struct {
+	queue *DrawQueue
 }
 
 // NewParticlePass creates a new particle system draw pass
 func NewParticlePass() *ParticlePass {
-	return &ParticlePass{}
+	return &ParticlePass{
+		queue: NewDrawQueue(),
+	}
+}
+
+// Type returns the render pass type identifier
+func (p *ParticlePass) Type() render.Pass {
+	return render.Particles
 }
 
 // DrawPass executes the particle pass
 func (p *ParticlePass) DrawPass(scene *Scene) {
-	// kind of awkward
-	scene.DrawPass(DrawParticles)
+	p.queue.Clear()
+	scene.Collect(p)
+	for _, cmd := range p.queue.items {
+		drawable := cmd.Component.(ParticleDrawable)
+		drawable.DrawParticles(cmd.Args)
+	}
+}
+
+func (p *ParticlePass) Visible(c Component, args DrawArgs) bool {
+	_, ok := c.(ParticleDrawable)
+	return ok
+}
+
+func (p *ParticlePass) Queue(c Component, args DrawArgs) {
+	p.queue.Add(c, args)
 }
 
 // Particle holds data about a single particle
@@ -84,7 +109,7 @@ func (ps *ParticleSystem) remove(i int) {
 
 // Draw the particle system
 func (ps *ParticleSystem) Draw(args DrawArgs) {
-	if args.Pass != DrawParticles {
+	if args.Pass != render.Particles {
 		return
 	}
 

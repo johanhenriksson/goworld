@@ -31,12 +31,26 @@ func (s *Scene) Add(object Component) {
 	s.Objects = append(s.Objects, object)
 }
 
-// DrawPass draws the scene using the default camera and a specific render pass
-func (s *Scene) DrawPass(pass DrawPass) {
-	if s.Camera == nil {
-		return
+// Update the scene.
+func (s *Scene) Update(dt float32) {
+	if s.Camera != nil {
+		// update camera first
+		s.Camera.Update(dt)
 	}
 
+	// update root objects
+	for _, obj := range s.Objects {
+		obj.Update(dt)
+	}
+}
+
+func (s *Scene) CollectWithArgs(pass DrawPass, args DrawArgs) {
+	for _, obj := range s.Objects {
+		obj.Collect(pass, args)
+	}
+}
+
+func (s *Scene) Collect(pass DrawPass) {
 	p := s.Camera.Projection
 	v := s.Camera.View
 	m := mat4.Ident()
@@ -52,30 +66,8 @@ func (s *Scene) DrawPass(pass DrawPass) {
 		MVP:        vp,
 		Transform:  m,
 		Position:   s.Camera.Position,
-
-		Pass: pass,
+		Pass:       pass.Type(),
 	}
 
-	s.Draw(args)
-}
-
-// Draw the scene using the provided render arguments
-func (s *Scene) Draw(args DrawArgs) {
-	// draw root objects
-	for _, obj := range s.Objects {
-		obj.Draw(args)
-	}
-}
-
-// Update the scene.
-func (s *Scene) Update(dt float32) {
-	if s.Camera != nil {
-		// update camera first
-		s.Camera.Update(dt)
-	}
-
-	// update root objects
-	for _, obj := range s.Objects {
-		obj.Update(dt)
-	}
+	s.CollectWithArgs(pass, args)
 }

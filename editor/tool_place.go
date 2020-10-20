@@ -30,11 +30,14 @@ func (pt *PlaceTool) Use(e *Editor, position, normal vec3.T) {
 	go e.Chunk.Write("chunks")
 }
 
-func (pt *PlaceTool) Update(editor *Editor, dt float32, position, normal vec3.T) {
+func (pt *PlaceTool) Hover(editor *Editor, position, normal vec3.T) {
 	pt.box.Position = position.Add(normal.Scaled(0.5)).Floor()
+}
+
+func (pt *PlaceTool) Update(dt float32) {
 	engine.Update(dt, pt.box)
 }
 
-func (pt *PlaceTool) Draw(editor *Editor, args engine.DrawArgs) {
-	engine.Draw(args, pt.box)
+func (pt *PlaceTool) Collect(pass engine.DrawPass, args engine.DrawArgs) {
+	engine.Collect(pass, args, pt.box)
 }
