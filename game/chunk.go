@@ -18,15 +18,15 @@ type Chunk struct {
 
 func NewChunk(size, seed, cx, cz int) *Chunk {
 	return &Chunk{
-		Data:  make(Voxels, size*size*128),
-		Light: NewLightVolume(size, 129, size),
+		Data:  make(Voxels, size*size*size),
+		Light: NewLightVolume(size, size, size),
 		Seed:  seed,
 		Cx:    cx,
 		Cz:    cz,
 		Ox:    cx * size,
 		Oz:    cz * size,
 		Sx:    size,
-		Sy:    128,
+		Sy:    size,
 		Sz:    size,
 	}
 }

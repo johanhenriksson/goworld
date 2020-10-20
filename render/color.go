@@ -19,6 +19,8 @@ var (
 	Yellow      = Color{1, 1, 0, 1}
 	Cyan        = Color{0, 1, 1, 1}
 	Transparent = Color{0, 0, 0, 0}
+
+	DarkGrey = Color{0.2, 0.2, 0.2, 1}
 )
 
 // Color holds 32-bit RGBA colors

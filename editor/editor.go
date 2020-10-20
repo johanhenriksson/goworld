@@ -5,6 +5,7 @@ import (
 	"github.com/johanhenriksson/goworld/engine/keys"
 	"github.com/johanhenriksson/goworld/engine/mouse"
 	"github.com/johanhenriksson/goworld/game"
+	"github.com/johanhenriksson/goworld/geometry"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
 )
@@ -16,10 +17,12 @@ type Editor struct {
 	Palette *PaletteWindow
 	Tool    Tool
 
-	PlaceTool  *PlaceTool
-	EraseTool  *EraseTool
-	SampleTool *SampleTool
+	PlaceTool   *PlaceTool
+	EraseTool   *EraseTool
+	SampleTool  *SampleTool
+	ReplaceTool *ReplaceTool
 
+	bounds  *geometry.Box
 	mesh    *game.ChunkMesh
 	gbuffer *render.GeometryBuffer
 }
@@ -31,11 +34,13 @@ func NewEditor(chunk *game.Chunk, camera *engine.Camera, gbuffer *render.Geometr
 		Camera:  camera,
 		Palette: NewPaletteWindow(render.DefaultPalette),
 
-		PlaceTool:  NewPlaceTool(),
-		EraseTool:  NewEraseTool(),
-		SampleTool: NewSampleTool(),
+		PlaceTool:   NewPlaceTool(),
+		EraseTool:   NewEraseTool(),
+		SampleTool:  NewSampleTool(),
+		ReplaceTool: NewReplaceTool(),
 
 		mesh:    game.NewChunkMesh(chunk),
+		bounds:  geometry.NewBox(vec3.NewI(chunk.Sx, chunk.Sy, chunk.Sz), render.DarkGrey),
 		gbuffer: gbuffer,
 	}
 	editor.Tool = editor.PlaceTool
@@ -43,7 +48,7 @@ func NewEditor(chunk *game.Chunk, camera *engine.Camera, gbuffer *render.Geometr
 }
 
 func (e *Editor) Draw(args engine.DrawArgs) {
-	e.mesh.Draw(args)
+	engine.Draw(args, e.mesh, e.bounds)
 
 	if e.Tool != nil {
 		e.Tool.Draw(e, args)
@@ -51,7 +56,7 @@ func (e *Editor) Draw(args engine.DrawArgs) {
 }
 
 func (e *Editor) Update(dt float32) {
-	e.mesh.Update(dt)
+	engine.Update(dt, e.mesh, e.bounds)
 
 	exists, position, normal := e.cursorPositionNormal()
 	if !exists {
@@ -67,20 +72,6 @@ func (e *Editor) Update(dt float32) {
 		}
 	}
 
-	// if keys.Released(keys.R) {
-	// 	// replace voxel
-	// 	fmt.Println("Replace at", position)
-	// 	target := position.Sub(normal.Scaled(0.5))
-	// 	e.Chunk.Set(int(target.X), int(target.Y), int(target.Z), selected)
-
-	// 	// recompute mesh
-	// 	e.Chunk.Light.Calculate()
-	// 	e.mesh.Compute()
-
-	// 	// write to disk
-	// 	go e.Chunk.Write("chunks")
-	// }
-
 	// place tool
 	if keys.Pressed(keys.F) {
 		e.Tool = e.PlaceTool
@@ -89,6 +80,10 @@ func (e *Editor) Update(dt float32) {
 	// erase tool
 	if keys.Pressed(keys.C) {
 		e.Tool = e.EraseTool
+	}
+
+	if keys.Pressed(keys.R) {
+		e.Tool = e.ReplaceTool
 	}
 
 	// eyedropper tool
