@@ -27,7 +27,7 @@ func NewRect(style Style, children ...Component) *Rect {
 
 	r := &Rect{
 		Element: NewElement("Rect", position, size, style),
-		mesh:    geometry.NewQuad(mat, size),
+		mesh:    geometry.NewRect(mat, size),
 		layout:  ColumnLayout,
 		tex:     render.TextureFromColor(render.White),
 	}

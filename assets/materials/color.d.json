@@ -1,0 +1,21 @@
+{
+    "buffers": {
+        "geometry": [
+            {
+                "name": "position",
+                "type": "float",
+                "count": 3
+            },
+            {
+                "name": "normal",
+                "type": "float",
+                "count": 3
+            },
+            {
+                "name": "color",
+                "type": "float",
+                "count": 4
+            }
+        ]
+    }
+}

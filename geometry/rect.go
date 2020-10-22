@@ -18,7 +18,7 @@ type Rect struct {
 	vao      *render.VertexArray
 }
 
-func NewQuad(mat *render.Material, size vec2.T) *Rect {
+func NewRect(mat *render.Material, size vec2.T) *Rect {
 	q := &Rect{
 		Material: mat,
 		Width:    size.X,

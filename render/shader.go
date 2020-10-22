@@ -80,6 +80,28 @@ func CompileShader(shaderFileName string) *Shader {
 	return program
 }
 
+func CompileShaderFiles(name, path string, fileNames ...string) *Shader {
+	program := CreateShader(name)
+	for _, fileName := range fileNames {
+		if len(fileName) < 3 {
+			panic(fmt.Errorf("invalid shader filename: %s", fileName))
+		}
+		kind := fileName[len(fileName)-3:]
+		switch kind {
+		case ".fs":
+			program.Attach(FragmentShader(fmt.Sprintf("%s/%s.glsl", path, fileName)))
+		case ".vs":
+			program.Attach(VertexShader(fmt.Sprintf("%s/%s.glsl", path, fileName)))
+		case ".gs":
+			program.Attach(GeometryShader(fmt.Sprintf("%s/%s.glsl", path, fileName)))
+		default:
+			panic(fmt.Errorf("invalid shader type %s: %s", kind, fileName))
+		}
+	}
+	program.Link()
+	return program
+}
+
 // Use binds the program for use in rendering
 func (program *Shader) Use() {
 	if !program.linked {

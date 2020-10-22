@@ -16,7 +16,7 @@ type ColorCube struct {
 
 // NewCube creates a vertex colored cube mesh with a given size
 func NewColorCube(color render.Color, size float32) *ColorCube {
-	mat := assets.GetMaterialShared("vertex_color")
+	mat := assets.GetMaterialShared("color.f")
 	cube := &ColorCube{
 		Mesh:  engine.NewMesh("ColorCube", mat),
 		Size:  size,
