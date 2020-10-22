@@ -53,8 +53,8 @@ func NewGizmo(position vec3.T) *Gizmo {
 	yz.Rotation = vec3.New(0, 0, 90)
 
 	g := &Gizmo{
-		Group: engine.NewGroup(position, vec3.Zero),
-		Lines: CreateLines(),
+		Group: engine.NewGroup("Gizmo", position, vec3.Zero),
+		Lines: CreateLines("GizmoLines"),
 
 		X:  x,
 		Y:  y,

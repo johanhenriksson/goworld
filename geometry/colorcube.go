@@ -16,13 +16,13 @@ type ColorCube struct {
 
 // NewCube creates a vertex colored cube mesh with a given size
 func NewColorCube(color render.Color, size float32) *ColorCube {
-	mat := assets.GetMaterialCached("vertex_color")
+	mat := assets.GetMaterialShared("vertex_color")
 	cube := &ColorCube{
-		Mesh:  engine.NewMesh(mat),
+		Mesh:  engine.NewMesh("ColorCube", mat),
 		Size:  size,
 		Color: color,
 	}
-	cube.Passes.Set(render.Forward)
+	cube.Pass = render.Forward
 	cube.generate()
 	return cube
 }

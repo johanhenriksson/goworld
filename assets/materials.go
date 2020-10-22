@@ -49,12 +49,12 @@ func LoadMaterialDefinition(file string) (*MaterialDefinition, error) {
 	return matf, nil
 }
 
-func LoadMaterial(matf *MaterialDefinition) (*render.Material, error) {
+func LoadMaterial(name string, matf *MaterialDefinition) (*render.Material, error) {
 	shader := GetShader(matf.Shader)
 
-	mat := render.CreateMaterial(shader)
+	mat := render.CreateMaterial(name, shader)
 
-	/* Load vertex pointers */
+	// load vertex pointers
 	for buffer, pointers := range matf.Buffers {
 		stride := 0
 		for _, ptr := range pointers {
@@ -96,7 +96,7 @@ func LoadMaterial(matf *MaterialDefinition) (*render.Material, error) {
 		}
 	}
 
-	/* Load textures */
+	// load textures
 	for name, txtf := range matf.Textures {
 		texture, err := render.TextureFromFile(txtf.File)
 		if err != nil {
@@ -111,28 +111,28 @@ func LoadMaterial(matf *MaterialDefinition) (*render.Material, error) {
 	return mat, nil
 }
 
+// GetMaterial returns a new instance of a material
 func GetMaterial(name string) *render.Material {
 	path := fmt.Sprintf("assets/materials/%s.json", name)
 	def, err := LoadMaterialDefinition(path)
 	if err != nil {
-		panic(err)
+		panic(fmt.Errorf("failed to load material definition %s: %s", name, err))
 	}
 
-	// use configured shader name if provided
-	// otherwise fall back to material name
 	if def.Shader == "" {
 		def.Shader = name
 	}
 
-	mat, err := LoadMaterial(def)
+	mat, err := LoadMaterial(name, def)
 	if err != nil {
-		panic(err)
+		panic(fmt.Errorf("failed to load material %s: %s", name, err))
 	}
 
 	return mat
 }
 
-func GetMaterialCached(name string) *render.Material {
+// GetMaterialShared returns a shared instance of a material
+func GetMaterialShared(name string) *render.Material {
 	if mat, exists := cache.Materials[name]; exists {
 		return mat
 	}

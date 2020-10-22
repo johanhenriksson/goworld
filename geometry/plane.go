@@ -16,13 +16,13 @@ type Plane struct {
 
 // NewPlane creates a new 3D plane of a given size and color.
 func NewPlane(size float32, color render.Color) *Plane {
-	mat := assets.GetMaterialCached("vertex_color")
+	mat := assets.GetMaterialShared("vertex_color")
 	plane := &Plane{
-		Mesh:  engine.NewMesh(mat),
+		Mesh:  engine.NewMesh("Plane", mat),
 		Size:  size,
 		Color: color,
 	}
-	plane.Passes.Set(render.Forward)
+	plane.Pass = render.Forward
 	plane.generate()
 	return plane
 }

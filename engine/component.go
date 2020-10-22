@@ -1,7 +1,8 @@
 package engine
 
-// Component is the general interface for scene object components.
+// Component is the general interface for scene components.
 type Component interface {
+	Name() string
 	Update(float32)
 	Collect(DrawPass, DrawArgs)
 }
@@ -16,6 +17,7 @@ func Update(dt float32, components ...Component) {
 	}
 }
 
+// Collect drawables from a set of components
 func Collect(pass DrawPass, args DrawArgs, components ...Component) {
 	for _, c := range components {
 		if c == nil {

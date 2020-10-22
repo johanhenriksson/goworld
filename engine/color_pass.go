@@ -29,7 +29,7 @@ func NewColorPass(input *render.Texture, filter string) *ColorPass {
 	lut := assets.GetTexture(lutName)
 
 	// create virtual material
-	mat := render.CreateMaterial(render.CompileShader("/assets/shaders/color_pass"))
+	mat := render.CreateMaterial("color_pass", render.CompileShader("/assets/shaders/color_pass"))
 	mat.AddDescriptors(render.F32_XYZUV)
 	mat.AddTexture("tex_input", input)
 	mat.AddTexture("tex_lut", lut)

@@ -1,6 +1,8 @@
 package render
 
 import (
+	"fmt"
+
 	"github.com/go-gl/gl/v4.1-core/gl"
 )
 
@@ -9,8 +11,6 @@ type MaterialTextureMap map[string]*Texture
 
 // BufferDescriptors is a list of vertex pointer descriptors
 type BufferDescriptors []BufferDescriptor
-
-type ShaderMap map[Pass]*Shader
 
 // BufferDescriptor describes a vertex pointer into a buffer
 type BufferDescriptor struct {
@@ -29,20 +29,25 @@ type BufferDescriptor struct {
 type Material struct {
 	*Shader
 	Textures    MaterialTextureMap
-	Shaders     ShaderMap
 	Buffers     []string
 	Descriptors []BufferDescriptor
 
 	texslots []string // since map is unordered
+	name     string
 }
 
 // CreateMaterial instantiates a new empty material
-func CreateMaterial(shader *Shader) *Material {
+func CreateMaterial(name string, shader *Shader) *Material {
 	return &Material{
 		Shader:      shader,
 		Textures:    make(MaterialTextureMap),
 		Descriptors: make(BufferDescriptors, 0, 4),
+		name:        name,
 	}
+}
+
+func (mat *Material) String() string {
+	return fmt.Sprintf("Material %s", mat.name)
 }
 
 // AddDescriptor adds a vertex pointer configuration
@@ -50,7 +55,7 @@ func CreateMaterial(shader *Shader) *Material {
 func (mat *Material) AddDescriptor(desc BufferDescriptor) {
 	loc, exists := mat.GetAttrLoc(desc.Name)
 	if !exists {
-		panic("No such attribute " + desc.Name)
+		panic(fmt.Errorf("%s: No such attribute %s", mat, desc.Name))
 	}
 	desc.Index = int(loc)
 	mat.Descriptors = append(mat.Descriptors, desc)
@@ -100,18 +105,6 @@ func (mat *Material) Use() {
 		mat.Int32(name, int32(i))
 		i++
 	}
-}
-
-func (mat *Material) UsePass(pass Pass) *Shader {
-	shader := mat.Shaders[pass]
-	i := uint32(0)
-	for _, name := range mat.texslots {
-		tex := mat.Textures[name]
-		tex.Use(i)
-		mat.Int32(name, int32(i))
-		i++
-	}
-	return shader
 }
 
 // EnablePointers enables vertex pointers used by this material

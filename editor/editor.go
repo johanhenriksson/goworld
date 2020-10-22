@@ -1,7 +1,6 @@
 package editor
 
 import (
-	"github.com/johanhenriksson/goworld/assets"
 	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/engine/keys"
 	"github.com/johanhenriksson/goworld/engine/mouse"
@@ -35,7 +34,7 @@ type Editor struct {
 // NewEditor creates a new editor application
 func NewEditor(chunk *game.Chunk, camera *engine.Camera, gbuffer *render.GeometryBuffer) *Editor {
 	e := &Editor{
-		Group:   engine.NewGroup(vec3.Zero, vec3.Zero),
+		Group:   engine.NewGroup("Editor", vec3.Zero, vec3.Zero),
 		Chunk:   chunk,
 		Camera:  camera,
 		Palette: NewPaletteWindow(render.DefaultPalette),
@@ -48,14 +47,14 @@ func NewEditor(chunk *game.Chunk, camera *engine.Camera, gbuffer *render.Geometr
 		XPlane: geometry.NewPlane(16, render.Red),
 
 		mesh:    game.NewChunkMesh(chunk),
-		bounds:  geometry.NewBox(vec3.NewI(chunk.Sx, chunk.Sy, chunk.Sz), render.DarkGrey),
+		bounds:  geometry.NewBox(vec3.NewI(16, 16, 16), render.Red),
 		gbuffer: gbuffer,
 	}
 
-	e.XPlane.Passes.Set(render.Geometry)
+	e.XPlane.Pass = render.Geometry
 	e.XPlane.Rotation.X = -90
+	e.XPlane.Rotation.Z = 180
 	e.XPlane.Position = vec3.New(8, 8, 0.01)
-	e.XPlane.SetMaterial(assets.GetMaterialCached("color"))
 
 	e.Tool = e.PlaceTool
 
@@ -135,13 +134,3 @@ func (e *Editor) cursorPositionNormal() (bool, vec3.T, vec3.T) {
 
 	return true, position, normal
 }
-
-// editor components:
-// - arcball camera (low prio)
-// - tools
-//   place voxel
-//     1. palette
-//     2. destination box - perhaps even ghost voxel?
-//     3. placement grids
-//   remove voxel
-// 	   1. source box

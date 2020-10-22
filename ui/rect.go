@@ -21,7 +21,7 @@ type Rect struct {
 type RectLayout func(Component, vec2.T) vec2.T
 
 func NewRect(style Style, children ...Component) *Rect {
-	mat := assets.GetMaterial("ui_texture")
+	mat := assets.GetMaterialShared("ui_texture")
 	size := vec2.Zero
 	position := vec2.Zero
 

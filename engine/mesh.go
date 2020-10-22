@@ -11,28 +11,30 @@ type MeshBufferMap map[string]*render.VertexBuffer
 // Mesh base
 type Mesh struct {
 	*Transform
-	Passes render.Passes
+	Pass render.Pass
 
+	name     string
 	material *render.Material
 	vao      *render.VertexArray
 }
 
 // NewMesh creates a new mesh object
-func NewMesh(material *render.Material) *Mesh {
-	return NewPrimitiveMesh(render.Triangles, render.Geometry, material)
+func NewMesh(name string, material *render.Material) *Mesh {
+	return NewPrimitiveMesh(name, render.Triangles, render.Geometry, material)
 }
 
 // NewLineMesh creates a new mesh for drawing lines
-func NewLineMesh() *Mesh {
-	material := assets.GetMaterialCached("lines")
-	return NewPrimitiveMesh(render.Lines, render.LinePass, material)
+func NewLineMesh(name string) *Mesh {
+	material := assets.GetMaterialShared("lines")
+	return NewPrimitiveMesh(name, render.Lines, render.LinePass, material)
 }
 
 // NewPrimitiveMesh creates a new mesh composed of a given GL primitive
-func NewPrimitiveMesh(primitive render.GLPrimitive, pass render.Pass, material *render.Material) *Mesh {
+func NewPrimitiveMesh(name string, primitive render.GLPrimitive, pass render.Pass, material *render.Material) *Mesh {
 	m := &Mesh{
 		Transform: Identity(),
-		Passes:    render.Passes{pass},
+		Pass:      pass,
+		name:      name,
 		material:  material,
 		vao:       render.CreateVertexArray(primitive),
 	}
@@ -41,6 +43,11 @@ func NewPrimitiveMesh(primitive render.GLPrimitive, pass render.Pass, material *
 		m.material.SetupBufferPointers(buffer)
 	}
 	return m
+}
+
+// Returns the name of the mesh
+func (m *Mesh) Name() string {
+	return m.name
 }
 
 // Buffer mesh data to GPU memory
@@ -53,19 +60,8 @@ func (m *Mesh) AddIndex(datatype render.GLType) {
 	m.vao.AddIndexBuffer(datatype)
 }
 
-func (m *Mesh) SetMaterial(mat *render.Material) {
-	m.material.DisablePointers()
-	m.material = mat
-
-	m.vao.Bind()
-	for _, buffer := range m.material.Buffers {
-		m.vao.AddBuffer(buffer)
-		m.material.SetupBufferPointers(buffer)
-	}
-}
-
 func (m *Mesh) Collect(pass DrawPass, args DrawArgs) {
-	if m.Passes.Includes(pass.Type()) && pass.Visible(m, args) {
+	if m.Pass == pass.Type() && pass.Visible(m, args) {
 		pass.Queue(m, args.Apply(m.Transform))
 	}
 }
@@ -93,7 +89,13 @@ func (m *Mesh) DrawForward(args DrawArgs) {
 	shader.Mat4("view", &args.View)
 	shader.Mat4("projection", &args.Projection)
 	shader.Mat4("mvp", &args.MVP)
-	shader.Vec3("eye", &args.Position)
+
+	m.vao.Draw()
+}
+
+func (m *Mesh) DrawLines(args DrawArgs) {
+	m.material.Use()
+	m.material.Mat4("mvp", &args.MVP)
 
 	m.vao.Draw()
 }

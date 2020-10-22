@@ -18,6 +18,10 @@ func NewReplaceTool() *ReplaceTool {
 	}
 }
 
+func (pt *ReplaceTool) Name() string {
+	return "ReplaceTool"
+}
+
 func (pt *ReplaceTool) Use(e *Editor, position, normal vec3.T) {
 	target := position.Sub(normal.Scaled(0.5))
 	e.Chunk.Set(int(target.X), int(target.Y), int(target.Z), game.NewVoxel(e.Palette.Selected))

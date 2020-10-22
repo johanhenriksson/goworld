@@ -19,15 +19,15 @@ type Cone struct {
 
 // NewCone generates a new parameterized cone mesh
 func NewCone(radius, height float32, segments int, color render.Color) *Cone {
-	mat := assets.GetMaterialCached("vertex_color")
+	mat := assets.GetMaterialShared("vertex_color")
 	cone := &Cone{
-		Mesh:     engine.NewMesh(mat),
+		Mesh:     engine.NewMesh("Cone", mat),
 		Radius:   radius,
 		Height:   height,
 		Segments: segments,
 		Color:    color,
 	}
-	cone.Passes.Set(render.Forward)
+	cone.Pass = render.Forward
 	cone.generate()
 	return cone
 }

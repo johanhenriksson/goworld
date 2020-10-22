@@ -8,14 +8,21 @@ import (
 type Group struct {
 	*Transform
 	Components []Component
+	name       string
 }
 
 // NewGroup creates a new object group
-func NewGroup(position, rotation vec3.T) *Group {
+func NewGroup(name string, position, rotation vec3.T) *Group {
 	return &Group{
 		Transform:  NewTransform(position, rotation, vec3.One),
 		Components: []Component{},
+		name:       name,
 	}
+}
+
+// Name returns the name of the group
+func (o *Group) Name() string {
+	return o.name
 }
 
 // Attach a component to the group

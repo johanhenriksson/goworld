@@ -13,9 +13,9 @@ type Cube struct {
 
 // NewCube creates a new textured cube mesh with a given size
 func NewCube(size float32) *Cube {
-	mat := assets.GetMaterialCached("default")
+	mat := assets.GetMaterialShared("default")
 	cube := &Cube{
-		Mesh: engine.NewMesh(mat),
+		Mesh: engine.NewMesh("TexCube", mat),
 		Size: size,
 	}
 	cube.generate()

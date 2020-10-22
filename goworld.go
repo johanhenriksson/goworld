@@ -23,7 +23,7 @@ import (
 	"github.com/johanhenriksson/goworld/editor"
 	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/game"
-	"github.com/johanhenriksson/goworld/geometry"
+	// "github.com/johanhenriksson/goworld/geometry"
 	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
@@ -79,8 +79,8 @@ func main() {
 	// buffer debug windows
 	uim.Attach(editor.DebugBufferWindows(app))
 
-	gizmo := geometry.NewGizmo(vec3.New(3, 9, 3))
-	scene.Add(gizmo)
+	// gizmo := geometry.NewGizmo(vec3.New(3, 9, 3))
+	// scene.Add(gizmo)
 
 	// render
 	app.Draw = func(wnd *engine.Window, dt float32) {

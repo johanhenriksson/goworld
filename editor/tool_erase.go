@@ -18,6 +18,10 @@ func NewEraseTool() *EraseTool {
 	}
 }
 
+func (pt *EraseTool) Name() string {
+	return "EraseTool"
+}
+
 func (pt *EraseTool) Use(e *Editor, position, normal vec3.T) {
 	target := position.Sub(normal.Scaled(0.5))
 	e.Chunk.Set(int(target.X), int(target.Y), int(target.Z), game.EmptyVoxel)

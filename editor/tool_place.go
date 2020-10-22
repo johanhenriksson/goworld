@@ -18,6 +18,10 @@ func NewPlaceTool() *PlaceTool {
 	}
 }
 
+func (pt *PlaceTool) Name() string {
+	return "PlaceTool"
+}
+
 func (pt *PlaceTool) Use(e *Editor, position, normal vec3.T) {
 	target := position.Add(normal.Scaled(0.5))
 	e.Chunk.Set(int(target.X), int(target.Y), int(target.Z), game.NewVoxel(e.Palette.Selected))

@@ -17,6 +17,10 @@ func NewSampleTool() *SampleTool {
 	}
 }
 
+func (pt *SampleTool) Name() string {
+	return "SampleTool"
+}
+
 func (pt *SampleTool) Use(e *Editor, position, normal vec3.T) {
 	target := position.Sub(normal.Scaled(0.5))
 	voxel := e.Chunk.At(int(target.X), int(target.Y), int(target.Z))

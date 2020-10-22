@@ -14,7 +14,7 @@ type Box struct {
 
 func NewBox(size vec3.T, color render.Color) *Box {
 	b := &Box{
-		Mesh:  engine.NewLineMesh(),
+		Mesh:  engine.NewLineMesh("Box"),
 		Size:  size,
 		Color: color,
 	}

@@ -12,6 +12,7 @@ type Lines struct {
 	Lines    []Line
 	Material *render.Material
 	vao      *render.VertexArray
+	name     string
 }
 
 type Line struct {
@@ -20,15 +21,20 @@ type Line struct {
 	Color render.Color
 }
 
-func CreateLines(lines ...Line) *Lines {
+func CreateLines(name string, lines ...Line) *Lines {
 	l := &Lines{
 		// Object:   parent,
 		Lines:    lines,
-		Material: assets.GetMaterialCached("lines"),
+		Material: assets.GetMaterialShared("lines"),
 		vao:      render.CreateVertexArray(render.Lines, "geometry"),
+		name:     name,
 	}
 	l.Compute()
 	return l
+}
+
+func (lines *Lines) Name() string {
+	return lines.name
 }
 
 func (lines *Lines) Add(line Line) {
