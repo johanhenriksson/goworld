@@ -15,7 +15,6 @@ var F32_XYZUV = VertexFormat{
 		Elements:  3,
 		Stride:    20,
 		Offset:    0,
-		Integer:   false,
 		Normalize: false,
 	},
 	BufferDescriptor{
@@ -24,7 +23,6 @@ var F32_XYZUV = VertexFormat{
 		Elements:  2,
 		Stride:    20,
 		Offset:    12,
-		Integer:   false,
 		Normalize: false,
 	},
 }
@@ -38,7 +36,6 @@ var F32_XYZNUV = VertexFormat{
 		Elements:  3,
 		Stride:    32,
 		Offset:    0,
-		Integer:   false,
 		Normalize: false,
 	},
 	BufferDescriptor{
@@ -48,7 +45,6 @@ var F32_XYZNUV = VertexFormat{
 		Elements:  3,
 		Stride:    32,
 		Offset:    12,
-		Integer:   false,
 		Normalize: false,
 	},
 	BufferDescriptor{
@@ -58,7 +54,6 @@ var F32_XYZNUV = VertexFormat{
 		Elements:  2,
 		Stride:    32,
 		Offset:    24,
-		Integer:   false,
 		Normalize: false,
 	},
 }

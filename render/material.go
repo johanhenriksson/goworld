@@ -53,11 +53,11 @@ func (mat *Material) String() string {
 // AddDescriptor adds a vertex pointer configuration
 // Used to the describe the geometry format that will be drawn with this material
 func (mat *Material) AddDescriptor(desc BufferDescriptor) {
-	loc, exists := mat.GetAttrLoc(desc.Name)
+	loc, exists := mat.getAttribute(desc.Name)
 	if !exists {
 		panic(fmt.Errorf("%s: No such attribute %s", mat, desc.Name))
 	}
-	desc.Index = int(loc)
+	desc.Index = int(loc.Index)
 	mat.Descriptors = append(mat.Descriptors, desc)
 	mat.addBuffer(desc.Buffer)
 }

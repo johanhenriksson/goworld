@@ -17,9 +17,9 @@ import (
 
 const (
 	// UnknownAttribute is returned when an attribute name can't be resolved
-	UnknownAttribute AttributeLocation = -1
+	UnknownAttribute int32 = -1
 	// UnknownUniform is returned when a uniform name can't be resolved
-	UnknownUniform UniformLocation = -1
+	UnknownUniform int32 = -1
 )
 
 // TODO: return proper errors, dont just crash
@@ -30,11 +30,14 @@ type AttributeLocation int32
 // UniformLocation is a GL uniform location index
 type UniformLocation int32
 
-// UniformMap maps uniform names to GL uniform locations
-type UniformMap map[string]UniformLocation
+type ShaderInput struct {
+	Name  string
+	Index int32
+	Type  GLType
+}
 
-// AttributeMap maps attribute names to GL attribute locations
-type AttributeMap map[string]AttributeLocation
+// ShaderInputs maps names to GL attribute &uniform locations
+type ShaderInputs map[string]ShaderInput
 
 // Shader represents a GLSL program composed of several shaders
 type Shader struct {
@@ -44,8 +47,8 @@ type Shader struct {
 
 	shaders    []*ShaderStage
 	linked     bool
-	uniforms   UniformMap
-	attributes AttributeMap
+	uniforms   ShaderInputs
+	attributes ShaderInputs
 }
 
 // CreateShader creates a new shader program
@@ -56,8 +59,8 @@ func CreateShader(name string) *Shader {
 		Name:       name,
 		linked:     false,
 		shaders:    make([]*ShaderStage, 0),
-		uniforms:   make(UniformMap),
-		attributes: make(AttributeMap),
+		uniforms:   make(ShaderInputs),
+		attributes: make(ShaderInputs),
 	}
 }
 
@@ -77,6 +80,10 @@ func CompileShader(shaderFileName string) *Shader {
 	}
 
 	program.Link()
+
+	program.getAttributes()
+	program.getUniforms()
+
 	return program
 }
 
@@ -99,7 +106,65 @@ func CompileShaderFiles(name, path string, fileNames ...string) *Shader {
 		}
 	}
 	program.Link()
+
+	program.getAttributes()
+	program.getUniforms()
+
 	return program
+}
+
+func (program *Shader) getAttributes() {
+	var count int32
+	gl.GetProgramiv(program.ID, gl.ACTIVE_ATTRIBUTES, &count)
+
+	program.attributes = make(ShaderInputs)
+	for i := 0; i < int(count); i++ {
+		name, loc, gltype := program.readAttribute(i)
+		program.attributes[name] = ShaderInput{
+			Name:  name,
+			Index: loc,
+			Type:  gltype,
+		}
+		fmt.Printf("attribute %+v\n", program.attributes[name])
+	}
+}
+
+func (program *Shader) readAttribute(index int) (string, int32, GLType) {
+	var gltype uint32
+	var length, size int32
+	buffer := strings.Repeat("\x00", 129)
+	bufferPtr := gl.Str(buffer)
+	gl.GetActiveAttrib(program.ID, uint32(index), 128, &length, &size, &gltype, bufferPtr)
+	loc := gl.GetAttribLocation(program.ID, bufferPtr)
+	name := buffer[:length]
+	return name, loc, GLType(gltype)
+}
+
+func (program *Shader) getUniforms() {
+	var count int32
+	gl.GetProgramiv(program.ID, gl.ACTIVE_UNIFORMS, &count)
+
+	program.uniforms = make(ShaderInputs)
+	for i := 0; i < int(count); i++ {
+		name, loc, gltype := program.readUniform(i)
+		program.uniforms[name] = ShaderInput{
+			Name:  name,
+			Index: loc,
+			Type:  gltype,
+		}
+		fmt.Printf("uniform %+v\n", program.uniforms[name])
+	}
+}
+
+func (program *Shader) readUniform(index int) (string, int32, GLType) {
+	var gltype uint32
+	var length, size int32
+	buffer := strings.Repeat("\x00", 129)
+	bufferPtr := gl.Str(buffer)
+	gl.GetActiveUniform(program.ID, uint32(index), 128, &length, &size, &gltype, bufferPtr)
+	loc := gl.GetUniformLocation(program.ID, bufferPtr)
+	name := buffer[:length]
+	return name, loc, GLType(gltype)
 }
 
 // Use binds the program for use in rendering
@@ -150,102 +215,116 @@ func (program *Shader) Link() {
 	program.linked = true
 }
 
-// GetUniformLoc returns a GLSL uniform location, and a bool indicating whether it exists or not
-func (program *Shader) GetUniformLoc(uniform string) (UniformLocation, bool) {
-	loc, ok := program.uniforms[uniform]
+// getUniform returns a GLSL uniform location, and a bool indicating whether it exists or not
+func (program *Shader) getUniform(uniform string) (ShaderInput, bool) {
+	input, ok := program.uniforms[uniform]
 	if !ok {
-		// get C string
-		cstr, free := util.GLString(uniform)
-		defer free()
-
-		loc = UniformLocation(gl.GetUniformLocation(program.ID, *cstr))
-		if loc == UnknownUniform {
-			return loc, false
+		if program.Debug {
+			fmt.Println("Unknown uniform", uniform, "in shader", program.Name)
 		}
-		program.uniforms[uniform] = loc
+		return ShaderInput{Name: uniform, Index: -1}, false
 	}
-	return loc, true
+	return input, true
 }
 
-// GetAttrLoc returns a GLSL attribute location, and a bool indicating whether it exists or not
-func (program *Shader) GetAttrLoc(attr string) (AttributeLocation, bool) {
-	loc, ok := program.attributes[attr]
+// getAttribute returns a GLSL attribute location, and a bool indicating whether it exists or not
+func (program *Shader) getAttribute(attr string) (ShaderInput, bool) {
+	input, ok := program.attributes[attr]
 	if !ok {
-		// get c string
-		cstr, free := util.GLString(attr)
-		defer free()
-
-		loc = AttributeLocation(gl.GetAttribLocation(program.ID, *cstr))
-		if loc == UnknownAttribute {
-			if program.Debug {
-				fmt.Println("Unknown attribute", attr, "in shader", program.Name)
-			}
-			return loc, false
+		if program.Debug {
+			fmt.Println("Unknown attribute", attr, "in shader", program.Name)
 		}
-		program.attributes[attr] = loc
+		return ShaderInput{Name: attr, Index: -1}, false
 	}
-	return loc, true
+	return input, true
 }
 
 // Mat4 Sets a 4 by 4 matrix uniform value
 func (program *Shader) Mat4(name string, mat4 *mat4.T) {
-	if loc, ok := program.GetUniformLoc(name); ok {
-		gl.UniformMatrix4fv(int32(loc), 1, false, &mat4[0])
+	if input, ok := program.getUniform(name); ok {
+		if input.Type != Mat4f {
+			panic(fmt.Errorf("cant assign %s to uniform %s, expected %s", Mat4f, name, input.Type))
+		}
+		gl.UniformMatrix4fv(input.Index, 1, false, &mat4[0])
 	}
 }
 
 // Vec2 sets a Vec2 uniform value
 func (program *Shader) Vec2(name string, vec *vec2.T) {
-	if loc, ok := program.GetUniformLoc(name); ok {
-		gl.Uniform2f(int32(loc), vec.X, vec.Y)
+	if input, ok := program.getUniform(name); ok {
+		if input.Type != Vec3f {
+			panic(fmt.Errorf("cant assign %s to uniform %s, expected %s", Vec2f, name, input.Type))
+		}
+		gl.Uniform2f(input.Index, vec.X, vec.Y)
 	}
 }
 
 // Vec3 sets a Vec3 uniform value
 func (program *Shader) Vec3(name string, vec *vec3.T) {
-	if loc, ok := program.GetUniformLoc(name); ok {
-		gl.Uniform3f(int32(loc), vec.X, vec.Y, vec.Z)
+	if input, ok := program.getUniform(name); ok {
+		if input.Type != Vec3f {
+			panic(fmt.Errorf("cant assign %s to uniform %s, expected %s", Vec3f, name, input.Type))
+		}
+		gl.Uniform3f(input.Index, vec.X, vec.Y, vec.Z)
 	}
 }
 
 // Vec4 sets a Vec4f uniform value
 func (program *Shader) Vec4(name string, vec *vec4.T) {
-	if loc, ok := program.GetUniformLoc(name); ok {
-		gl.Uniform4f(int32(loc), vec.X, vec.Y, vec.Z, vec.W)
+	if input, ok := program.getUniform(name); ok {
+		if input.Type != Vec3f {
+			panic(fmt.Errorf("cant assign %s to uniform %s, expected %s", Vec4f, name, input.Type))
+		}
+		gl.Uniform4f(input.Index, vec.X, vec.Y, vec.Z, vec.W)
 	}
 }
 
 // Int32 sets an integer 32 uniform value
 func (program *Shader) Int32(name string, val int32) {
-	if loc, ok := program.GetUniformLoc(name); ok {
-		gl.Uniform1i(int32(loc), val)
+	if input, ok := program.getUniform(name); ok {
+		if input.Type != Int32 && input.Type != Texture2D {
+			panic(fmt.Errorf("cant assign %s to uniform %s, expected %s", Int32, name, input.Type))
+		}
+		gl.Uniform1i(input.Index, val)
 	}
 }
 
 // UInt32 sets an unsigned integer 32 uniform value
 func (program *Shader) UInt32(name string, val uint32) {
-	if loc, ok := program.GetUniformLoc(name); ok {
-		gl.Uniform1ui(int32(loc), val)
+	if input, ok := program.getUniform(name); ok {
+		if input.Type != UInt32 {
+			panic(fmt.Errorf("cant assign %s to uniform %s, expected %s", UInt32, name, input.Type))
+		}
+		gl.Uniform1ui(input.Index, val)
 	}
 }
 
 // Float sets a float uniform value
 func (program *Shader) Float(name string, val float32) {
-	if loc, ok := program.GetUniformLoc(name); ok {
-		gl.Uniform1f(int32(loc), val)
+	if input, ok := program.getUniform(name); ok {
+		if input.Type != Float {
+			panic(fmt.Errorf("cant assign %s to uniform %s, expected %s", Float, name, input.Type))
+		}
+		gl.Uniform1f(input.Index, val)
 	}
 }
 
 // RGB sets a uniform to a color RGB value
 func (program *Shader) RGB(name string, color Color) {
-	if loc, ok := program.GetUniformLoc(name); ok {
-		gl.Uniform3f(int32(loc), color.R, color.G, color.B)
+	if input, ok := program.getUniform(name); ok {
+		if input.Type != Vec3f {
+			panic(fmt.Errorf("cant assign RGB color to uniform %s, expected %s", name, input.Type))
+		}
+		gl.Uniform3f(input.Index, color.R, color.G, color.B)
 	}
 }
 
 // RGBA sets a uniform to a color RGBA value
 func (program *Shader) RGBA(name string, color Color) {
-	if loc, ok := program.GetUniformLoc(name); ok {
-		gl.Uniform4f(int32(loc), color.R, color.G, color.B, color.A)
+	if input, ok := program.getUniform(name); ok {
+		if input.Type != Vec4f {
+			panic(fmt.Errorf("cant assign RGBA color to uniform %s, expected %s", name, input.Type))
+		}
+		gl.Uniform4f(input.Index, color.R, color.G, color.B, color.A)
 	}
 }
