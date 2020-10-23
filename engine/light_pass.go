@@ -41,11 +41,10 @@ func NewLightPass(input *render.GeometryBuffer) *LightPass {
 
 	// instantiate light pass shader
 	// mat := render.CreateMaterial("light_pass", render.CompileShader("/assets/shaders/pass/light"))
-	mat := render.CreateMaterial("light_pass", render.CompileShaderFiles(
+	mat := render.CreateMaterial("light_pass", render.CompileShader(
 		"light_pass",
-		"/assets/shaders/pass",
-		"postprocess.vs",
-		"light.fs"))
+		"/assets/shaders/pass/postprocess.vs",
+		"/assets/shaders/pass/light.fs"))
 	mat.AddDescriptors(render.F32_XYZUV)
 
 	// create full screen render quad

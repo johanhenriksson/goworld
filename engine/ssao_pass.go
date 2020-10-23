@@ -49,11 +49,10 @@ func NewSSAOPass(gbuff *render.GeometryBuffer, settings *SSAOSettings) *SSAOPass
 	noise := createHemisphereNoiseTexture(4)
 
 	/* use a virtual material to help with vertex attributes and textures */
-	mat := render.CreateMaterial("ssao_pass", render.CompileShaderFiles(
+	mat := render.CreateMaterial("ssao_pass", render.CompileShader(
 		"ssao_pass",
-		"/assets/shaders/pass",
-		"postprocess.vs",
-		"ssao.fs"))
+		"/assets/shaders/pass/postprocess.vs",
+		"/assets/shaders/pass/ssao.fs"))
 	mat.AddDescriptors(render.F32_XYZUV)
 	mat.AddTexture("tex_position", gbuff.Position)
 	mat.AddTexture("tex_normal", gbuff.Normal)

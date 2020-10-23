@@ -18,11 +18,10 @@ func NewGaussianPass(input *render.Texture) *GaussianPass {
 	fbo := render.CreateFrameBuffer(input.Width, input.Height)
 	texture := fbo.AttachBuffer(gl.COLOR_ATTACHMENT0, gl.RED, gl.RGB, gl.FLOAT)
 
-	mat := render.CreateMaterial("gaussian_pass", render.CompileShaderFiles(
+	mat := render.CreateMaterial("gaussian_pass", render.CompileShader(
 		"gaussian_pass",
-		"/assets/shaders/pass",
-		"postprocess.vs",
-		"gaussian.fs"))
+		"/assets/shaders/pass/postprocess.vs",
+		"/assets/shaders/pass/gaussian.fs"))
 	mat.AddDescriptors(render.F32_XYZUV)
 	mat.AddTexture("tex_input", input)
 
