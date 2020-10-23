@@ -7,7 +7,7 @@ import (
 // OutputPass is the final pass that writes to a camera frame buffer.
 type OutputPass struct {
 	Input *render.Texture
-	quad  *render.Quad
+	quad  *Quad
 	mat   *render.Material
 }
 
@@ -22,7 +22,7 @@ func NewOutputPass(input, depth *render.Texture) *OutputPass {
 	mat.AddTexture("tex_depth", depth)
 
 	/* create a render quad */
-	quad := render.NewQuad(mat)
+	quad := NewQuad(mat)
 
 	return &OutputPass{
 		Input: input,

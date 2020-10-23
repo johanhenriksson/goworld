@@ -5,11 +5,11 @@ import (
 )
 
 // VertexFormat describes vertex buffer pointers
-type VertexFormat []BufferDescriptor
+type VertexFormat []VertexPointer
 
 // F32_XYZUV contains position & texture coords as 5 32-bit floats: X, Y, Z, U, V
 var F32_XYZUV = VertexFormat{
-	BufferDescriptor{
+	VertexPointer{
 		Name:      "position",
 		Type:      gl.FLOAT,
 		Elements:  3,
@@ -17,7 +17,7 @@ var F32_XYZUV = VertexFormat{
 		Offset:    0,
 		Normalize: false,
 	},
-	BufferDescriptor{
+	VertexPointer{
 		Name:      "texcoord",
 		Type:      gl.FLOAT,
 		Elements:  2,
@@ -29,8 +29,7 @@ var F32_XYZUV = VertexFormat{
 
 // F32_XYZNUV contains position, uvs and normals as 32 bit floats.
 var F32_XYZNUV = VertexFormat{
-	BufferDescriptor{
-		Buffer:    "geometry",
+	VertexPointer{
 		Name:      "position",
 		Type:      gl.FLOAT,
 		Elements:  3,
@@ -38,8 +37,7 @@ var F32_XYZNUV = VertexFormat{
 		Offset:    0,
 		Normalize: false,
 	},
-	BufferDescriptor{
-		Buffer:    "geometry",
+	VertexPointer{
 		Name:      "normal",
 		Type:      gl.FLOAT,
 		Elements:  3,
@@ -47,8 +45,7 @@ var F32_XYZNUV = VertexFormat{
 		Offset:    12,
 		Normalize: false,
 	},
-	BufferDescriptor{
-		Buffer:    "geometry",
+	VertexPointer{
 		Name:      "texcoord",
 		Type:      gl.FLOAT,
 		Elements:  2,

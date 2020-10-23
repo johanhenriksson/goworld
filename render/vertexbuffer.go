@@ -2,6 +2,8 @@ package render
 
 import (
 	"fmt"
+	"reflect"
+	"unsafe"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
 )
@@ -36,12 +38,11 @@ func CreateIndexBuffer() *VertexBuffer {
 }
 
 // Bind the vertex buffer object
-func (vbo *VertexBuffer) Bind() error {
+func (vbo *VertexBuffer) Bind() {
 	if vbo.ID == 0 {
-		return fmt.Errorf("Cannot bind buffer id 0")
+		panic(fmt.Errorf("cant bind vbo id 0"))
 	}
 	gl.BindBuffer(vbo.Target, vbo.ID)
-	return nil
 }
 
 // Unbind the vertex buffer object
@@ -58,30 +59,44 @@ func (vbo *VertexBuffer) Delete() {
 	}
 }
 
-// Buffer data to GPU memory
-func (vbo *VertexBuffer) Buffer(vertices VertexData) error {
-	// bind buffer
-	err := vbo.Bind()
-	if err != nil {
-		return err
+type BufferCommand struct {
+	Elements int
+	Size     int
+	Source   unsafe.Pointer
+}
+
+func (vbo *VertexBuffer) BufferFrom(elements, size int, ptr unsafe.Pointer) {
+	vbo.Elements = elements
+	vbo.Size = size * elements
+
+	if elements <= 0 {
+		return
 	}
 
 	// buffer data to GPU
-	size := vertices.Size() * vertices.Elements()
-	gl.BufferData(vbo.Target, size, vertices.Pointer(), vbo.Usage)
+	vbo.Bind()
+	gl.BufferData(vbo.Target, vbo.Size, ptr, vbo.Usage)
 
 	// check actual size in GPU memory
 	gpuSize := int32(0)
 	gl.GetBufferParameteriv(vbo.Target, gl.BUFFER_SIZE, &gpuSize)
-	if int(gpuSize) != size {
-		return fmt.Errorf("Failed buffering data to buffer #%d, expected size %d bytes, actual: %d bytes",
-			vbo.ID, size, gpuSize)
+	if int(gpuSize) != vbo.Size {
+		panic(fmt.Errorf("failed to buffer data to vbo #%d, expected size %d bytes, actual: %d bytes",
+			vbo.ID, vbo.Size, gpuSize))
 	}
+}
 
-	vbo.Size = vertices.Size()
-	vbo.Elements = vertices.Elements()
+// Buffer data to GPU memory
+func (vbo *VertexBuffer) Buffer(data interface{}) int {
+	t := reflect.TypeOf(data)
+	if t.Kind() != reflect.Slice {
+		panic(fmt.Errorf("buffered data must be a slice"))
+	}
+	v := reflect.ValueOf(data)
+	elements := v.Len()
+	size := int(t.Elem().Size())
+	ptr := unsafe.Pointer(v.Pointer())
 
-	// debug logging
-	// fmt.Printf("[VBO %d] Buffered %d x %d = %d bytes\n", vbo.ID, vbo.Size, vbo.Elements, size)
-	return nil
+	vbo.BufferFrom(elements, size, ptr)
+	return elements
 }

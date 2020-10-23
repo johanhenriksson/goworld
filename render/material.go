@@ -9,12 +9,8 @@ import (
 // MaterialTextureMap maps texture names to texture objects
 type MaterialTextureMap map[string]*Texture
 
-// BufferDescriptors is a list of vertex pointer descriptors
-type BufferDescriptors []BufferDescriptor
-
-// BufferDescriptor describes a vertex pointer into a buffer
-type BufferDescriptor struct {
-	Buffer    string
+// VertexPointer describes a vertex pointer into a buffer
+type VertexPointer struct {
 	Name      string
 	Index     int
 	Type      GLType
@@ -25,12 +21,35 @@ type BufferDescriptor struct {
 	Integer   bool
 }
 
+func (d *VertexPointer) Enable() {
+	gl.EnableVertexAttribArray(uint32(d.Index))
+	if d.Integer {
+		gl.VertexAttribIPointer(
+			uint32(d.Index),
+			int32(d.Elements),
+			uint32(d.Type),
+			int32(d.Stride),
+			gl.PtrOffset(int(d.Offset)))
+	} else {
+		gl.VertexAttribPointer(
+			uint32(d.Index),
+			int32(d.Elements),
+			uint32(d.Type),
+			d.Normalize,
+			int32(d.Stride),
+			gl.PtrOffset(int(d.Offset)))
+	}
+}
+
+func (d *VertexPointer) Disable() {
+	gl.DisableVertexAttribArray(uint32(d.Index))
+}
+
 // Material contains a shader reference and all resources required to draw a vertex buffer array
 type Material struct {
 	*Shader
-	Textures    MaterialTextureMap
-	Buffers     []string
-	Descriptors []BufferDescriptor
+	Textures MaterialTextureMap
+	Pointers []VertexPointer
 
 	texslots []string // since map is unordered
 	name     string
@@ -39,10 +58,10 @@ type Material struct {
 // CreateMaterial instantiates a new empty material
 func CreateMaterial(name string, shader *Shader) *Material {
 	return &Material{
-		Shader:      shader,
-		Textures:    make(MaterialTextureMap),
-		Descriptors: make(BufferDescriptors, 0, 4),
-		name:        name,
+		Shader:   shader,
+		Textures: make(MaterialTextureMap),
+		Pointers: make([]VertexPointer, 0, 4),
+		name:     name,
 	}
 }
 
@@ -52,32 +71,21 @@ func (mat *Material) String() string {
 
 // AddDescriptor adds a vertex pointer configuration
 // Used to the describe the geometry format that will be drawn with this material
-func (mat *Material) AddDescriptor(desc BufferDescriptor) {
-	loc, exists := mat.getAttribute(desc.Name)
+func (mat *Material) AddDescriptor(desc VertexPointer) {
+	loc, exists := mat.Attribute(desc.Name)
 	if !exists {
 		panic(fmt.Errorf("%s: No such attribute %s", mat, desc.Name))
 	}
 	desc.Index = int(loc.Index)
-	mat.Descriptors = append(mat.Descriptors, desc)
-	mat.addBuffer(desc.Buffer)
+	mat.Pointers = append(mat.Pointers, desc)
 }
 
 // AddDescriptors adds a list of vertex pointer configurations
 // Used to the describe the geometry format that will be drawn with this material
-func (mat *Material) AddDescriptors(descriptors []BufferDescriptor) {
+func (mat *Material) AddDescriptors(descriptors []VertexPointer) {
 	for _, desc := range descriptors {
 		mat.AddDescriptor(desc)
 	}
-}
-
-// addBuffer adds a buffer name to the buffer list if it does not already exist
-func (mat *Material) addBuffer(buffer string) {
-	for _, buffer := range mat.Buffers {
-		if buffer == buffer {
-			return
-		}
-	}
-	mat.Buffers = append(mat.Buffers, buffer)
 }
 
 // AddTexture attaches a new texture to this material, and assings it to the next available texture slot.
@@ -109,14 +117,14 @@ func (mat *Material) Use() {
 
 // EnablePointers enables vertex pointers used by this material
 func (mat *Material) EnablePointers() {
-	for _, desc := range mat.Descriptors {
+	for _, desc := range mat.Pointers {
 		gl.EnableVertexAttribArray(uint32(desc.Index))
 	}
 }
 
 // DisablePointers disables vertex pointers used by this material
 func (mat *Material) DisablePointers() {
-	for _, desc := range mat.Descriptors {
+	for _, desc := range mat.Pointers {
 		gl.DisableVertexAttribArray(uint32(desc.Index))
 	}
 }
@@ -125,35 +133,7 @@ func (mat *Material) DisablePointers() {
 // Use after binding the target vertex array object you want to configure!
 func (mat *Material) SetupVertexPointers() {
 	mat.EnablePointers()
-	for _, desc := range mat.Descriptors {
-		if desc.Integer {
-			gl.VertexAttribIPointer(
-				uint32(desc.Index),
-				int32(desc.Elements),
-				uint32(desc.Type),
-				int32(desc.Stride),
-				gl.PtrOffset(int(desc.Offset)))
-		} else {
-			gl.VertexAttribPointer(
-				uint32(desc.Index),
-				int32(desc.Elements),
-				uint32(desc.Type),
-				desc.Normalize,
-				int32(desc.Stride),
-				gl.PtrOffset(int(desc.Offset)))
-		}
-	}
-}
-
-// SetupBufferPointers sets up vertex pointers for a given buffer used by this material.
-func (mat *Material) SetupBufferPointers(buffer string) {
-	mat.EnablePointers()
-	for _, desc := range mat.Descriptors {
-		if desc.Buffer != buffer {
-			continue
-		}
-
-		gl.EnableVertexAttribArray(uint32(desc.Index))
+	for _, desc := range mat.Pointers {
 		if desc.Integer {
 			gl.VertexAttribIPointer(
 				uint32(desc.Index),

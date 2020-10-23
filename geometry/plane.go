@@ -14,6 +14,12 @@ type Plane struct {
 	Color render.Color
 }
 
+type MeshOptions struct {
+	Material       string
+	SharedMaterial bool
+	Pass           render.Pass
+}
+
 // NewPlane creates a new 3D plane of a given size and color.
 func NewPlane(size float32, color render.Color) *Plane {
 	mat := assets.GetMaterialShared("color.f")

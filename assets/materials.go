@@ -55,7 +55,7 @@ func LoadMaterial(name string, matf *MaterialDefinition) (*render.Material, erro
 	mat := render.CreateMaterial(name, shader)
 
 	// load vertex pointers
-	for buffer, pointers := range matf.Buffers {
+	for _, pointers := range matf.Buffers {
 		stride := 0
 		for _, ptr := range pointers {
 			if ptr.Count <= 0 {
@@ -83,8 +83,7 @@ func LoadMaterial(name string, matf *MaterialDefinition) (*render.Material, erro
 			if ptr.Type == "skip" {
 				continue
 			}
-			mat.AddDescriptor(render.BufferDescriptor{
-				Buffer:    buffer,
+			mat.AddDescriptor(render.VertexPointer{
 				Name:      ptr.Name,
 				Type:      ptr.GlType,
 				Elements:  ptr.Count,

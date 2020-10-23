@@ -50,7 +50,7 @@ func (t GLType) Size() int {
 	case Double:
 		return 8
 	}
-	panic(ErrUnknownType)
+	panic(fmt.Errorf("unknown size for GL type %s", t))
 }
 
 func (t GLType) String() string {

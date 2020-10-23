@@ -28,7 +28,6 @@ func NewRect(mat *render.Material, size vec2.T) *Rect {
 
 		vao: render.CreateVertexArray(render.Triangles, "geometry"),
 	}
-	mat.SetupVertexPointers()
 	q.compute()
 	return q
 }
@@ -185,6 +184,7 @@ func (q *Rect) compute() {
 	/* Setup VAO */
 	q.vao.Bind()
 	q.vao.Buffer("geometry", vtx)
+	q.Material.SetupVertexPointers()
 }
 
 func (q *Rect) Draw(args engine.DrawArgs) {

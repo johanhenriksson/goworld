@@ -27,7 +27,7 @@ type SSAOPass struct {
 
 	Output   *render.Texture
 	Material *render.Material
-	Quad     *render.Quad
+	Quad     *Quad
 	Noise    *render.Texture
 	Kernel   []vec3.T
 
@@ -59,7 +59,7 @@ func NewSSAOPass(gbuff *render.GeometryBuffer, settings *SSAOSettings) *SSAOPass
 	mat.AddTexture("tex_noise", noise)
 
 	/* create a render quad */
-	quad := render.NewQuad(mat)
+	quad := NewQuad(mat)
 
 	p := &SSAOPass{
 		SSAOSettings: *settings,

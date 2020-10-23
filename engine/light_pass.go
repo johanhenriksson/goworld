@@ -20,7 +20,7 @@ type LightPass struct {
 
 	fbo  *render.FrameBuffer
 	mat  *render.Material
-	quad *render.Quad
+	quad *Quad
 }
 
 // NewLightPass creates a new deferred lighting pass
@@ -48,7 +48,7 @@ func NewLightPass(input *render.GeometryBuffer) *LightPass {
 	mat.AddDescriptors(render.F32_XYZUV)
 
 	// create full screen render quad
-	quad := render.NewQuad(mat)
+	quad := NewQuad(mat)
 
 	// add gbuffer, shadow and ssao pass inputs
 	mat.AddTexture("tex_diffuse", input.Diffuse)

@@ -2,7 +2,7 @@
     "buffers": {
         "geometry": [
             {
-                "name": "vertex",
+                "name": "position",
                 "type": "float",
                 "count": 3
             },

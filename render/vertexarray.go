@@ -30,12 +30,13 @@ func CreateVertexArray(primitive GLPrimitive, buffers ...string) *VertexArray {
 	gl.GenVertexArrays(1, &id)
 	vao.ID = int(id)
 
-	// create buffers
+	// leave it bound
 	vao.Bind()
-	for _, buffer := range buffers {
-		vao.AddBuffer(buffer)
-	}
 	return vao
+}
+
+func (vao *VertexArray) Indexed() bool {
+	return vao.index != gl.NONE
 }
 
 // Delete frees the memory associated with this vertex array object
@@ -71,67 +72,45 @@ func (vao VertexArray) Unbind() {
 func (vao VertexArray) Draw() {
 	if vao.Length == 0 {
 		fmt.Println("Warning: Attempt to draw VAO with length 0")
+		return
 	}
 
 	// draw call
 	vao.Bind()
 
-	if vao.index == gl.NONE {
+	if !vao.Indexed() {
 		gl.DrawArrays(uint32(vao.Type), 0, int32(vao.Length))
 	} else {
 		gl.DrawElements(uint32(vao.Type), int32(vao.Length), uint32(vao.index), nil)
 	}
 }
 
-// AddBuffer adds a named buffer to the VAO.
-func (vao *VertexArray) AddBuffer(name string) *VertexBuffer {
-	if name == "index" {
-		panic("index is reserved for index buffers")
-	}
-	if vbo, exists := vao.vbos[name]; exists {
-		return vbo
-	}
-
-	// set up vertex array pointers for this buffer
-	vao.Bind()
-
-	// create new vbo
-	vbo := CreateVertexBuffer()
-	vbo.Bind()
-
-	// store reference & return vbo object
-	vao.vbos[name] = vbo
-	return vbo
-}
-
-// AddIndexBuffer adds an index buffer to the VAO.
-func (vao *VertexArray) AddIndexBuffer(datatype GLType) *VertexBuffer {
-	// set up vertex array pointers for this buffer
-	vao.Bind()
-	vao.index = datatype
-
-	// create new vbo
-	vbo := CreateIndexBuffer()
-	vbo.Bind()
-
-	// store reference & return vbo object
-	vao.vbos["index"] = vbo
-	return vbo
+func (vao *VertexArray) SetIndexType(t GLType) {
+	// get rid of this later
+	vao.index = t
 }
 
 // Buffer vertex data to the GPU
-func (vao *VertexArray) Buffer(name string, data VertexData) error {
-	vbo, exists := vao.vbos[name]
-	if !exists {
-		panic(fmt.Sprintf("Unknown VBO: %s", name))
-	}
-
-	if data.Elements() == 0 {
-		vao.Length = 0
-		return nil
+func (vao *VertexArray) Buffer(name string, data interface{}) {
+	if name == "index" {
+		// set index type
+		// then get rid of SetIndexType
 	}
 
 	vao.Bind()
-	vao.Length = data.Elements()
-	return vbo.Buffer(data)
+
+	vbo, exists := vao.vbos[name]
+	if !exists {
+		// create new buffer
+		vbo = CreateVertexBuffer()
+		vao.vbos[name] = vbo
+	}
+
+	// buffer data to vbo
+	elements := vbo.Buffer(data)
+
+	// update number of elements
+	if !vao.Indexed() || name == "index" {
+		vao.Length = elements
+	}
 }

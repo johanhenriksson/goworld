@@ -1,6 +1,7 @@
 package geometry
 
 import (
+	"fmt"
 	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
@@ -56,5 +57,6 @@ func (b *Box) compute() {
 		ColorVertex{Position: vec3.New(x+w, y, z+d), Color: b.Color},
 		ColorVertex{Position: vec3.New(x+w, y+h, z+d), Color: b.Color},
 	}
+	fmt.Println("box")
 	b.Buffer("geometry", vertices)
 }

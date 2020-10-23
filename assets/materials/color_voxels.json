@@ -3,27 +3,31 @@
         "geometry": [
             {
                 "name": "position",
-                "type": "unsigned byte",
+                "type": "uint8",
                 "count": 3,
-                "normalize": false
+                "normalize": false,
+                "integer": false
             },
             {
                 "name": "normal_id",
-                "type": "unsigned byte",
+                "type": "uint8",
                 "count": 1,
+                "normalize": false,
                 "integer": true
             },
             {
                 "name": "color",
-                "type": "unsigned byte",
+                "type": "uint8",
                 "count": 3,
-                "normalize": true
+                "normalize": true,
+                "integer": false
             },
             {
                 "name": "occlusion",
-                "type": "unsigned byte",
+                "type": "uint8",
                 "count": 1,
-                "normalize": true
+                "normalize": true,
+                "integer": false
             }
         ]
     }

@@ -18,7 +18,7 @@ func NewObjModel(mat *render.Material, path string) *ObjModel {
 		Mesh: engine.NewMesh(fmt.Sprintf("Mesh:%s", path), mat),
 		Path: path,
 	}
-	obj.AddIndex(render.UInt32)
+	obj.SetIndexType(render.UInt32)
 	if err := obj.load(); err != nil {
 		fmt.Println("Error loading model", path, ":", err)
 	}

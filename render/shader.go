@@ -13,20 +13,7 @@ import (
 	"github.com/johanhenriksson/goworld/util"
 )
 
-const (
-	// UnknownAttribute is returned when an attribute name can't be resolved
-	UnknownAttribute int32 = -1
-	// UnknownUniform is returned when a uniform name can't be resolved
-	UnknownUniform int32 = -1
-)
-
 // TODO: return proper errors, dont just crash
-
-// AttributeLocation is a GL attribute location index
-type AttributeLocation int32
-
-// UniformLocation is a GL uniform location index
-type UniformLocation int32
 
 type ShaderInput struct {
 	Name  string
@@ -125,8 +112,8 @@ func (shader *Shader) Link() {
 	shader.linked = true
 }
 
-// getUniform returns a GLSL uniform location, and a bool indicating whether it exists or not
-func (shader *Shader) getUniform(uniform string) (ShaderInput, bool) {
+// Uniform returns a GLSL uniform location, and a bool indicating whether it exists or not
+func (shader *Shader) Uniform(uniform string) (ShaderInput, bool) {
 	input, ok := shader.uniforms[uniform]
 	if !ok {
 		if shader.Debug {
@@ -137,8 +124,8 @@ func (shader *Shader) getUniform(uniform string) (ShaderInput, bool) {
 	return input, true
 }
 
-// getAttribute returns a GLSL attribute location, and a bool indicating whether it exists or not
-func (shader *Shader) getAttribute(attr string) (ShaderInput, bool) {
+// Attribute returns a GLSL attribute location, and a bool indicating whether it exists or not
+func (shader *Shader) Attribute(attr string) (ShaderInput, bool) {
 	input, ok := shader.attributes[attr]
 	if !ok {
 		if shader.Debug {
@@ -151,7 +138,7 @@ func (shader *Shader) getAttribute(attr string) (ShaderInput, bool) {
 
 // Mat4 Sets a 4 by 4 matrix uniform value
 func (shader *Shader) Mat4(name string, mat4 *mat4.T) {
-	if input, ok := shader.getUniform(name); ok {
+	if input, ok := shader.Uniform(name); ok {
 		if input.Type != Mat4f {
 			panic(fmt.Errorf("cant assign %s to uniform %s, expected %s", Mat4f, name, input.Type))
 		}
@@ -161,7 +148,7 @@ func (shader *Shader) Mat4(name string, mat4 *mat4.T) {
 
 // Vec2 sets a Vec2 uniform value
 func (shader *Shader) Vec2(name string, vec *vec2.T) {
-	if input, ok := shader.getUniform(name); ok {
+	if input, ok := shader.Uniform(name); ok {
 		if input.Type != Vec3f {
 			panic(fmt.Errorf("cant assign %s to uniform %s, expected %s", Vec2f, name, input.Type))
 		}
@@ -171,7 +158,7 @@ func (shader *Shader) Vec2(name string, vec *vec2.T) {
 
 // Vec3 sets a Vec3 uniform value
 func (program *Shader) Vec3(name string, vec *vec3.T) {
-	if input, ok := program.getUniform(name); ok {
+	if input, ok := program.Uniform(name); ok {
 		if input.Type != Vec3f {
 			panic(fmt.Errorf("cant assign %s to uniform %s, expected %s", Vec3f, name, input.Type))
 		}
@@ -181,7 +168,7 @@ func (program *Shader) Vec3(name string, vec *vec3.T) {
 
 // Vec4 sets a Vec4f uniform value
 func (shader *Shader) Vec4(name string, vec *vec4.T) {
-	if input, ok := shader.getUniform(name); ok {
+	if input, ok := shader.Uniform(name); ok {
 		if input.Type != Vec3f {
 			panic(fmt.Errorf("cant assign %s to uniform %s, expected %s", Vec4f, name, input.Type))
 		}
@@ -191,7 +178,7 @@ func (shader *Shader) Vec4(name string, vec *vec4.T) {
 
 // Int32 sets an integer 32 uniform value
 func (shader *Shader) Int32(name string, val int32) {
-	if input, ok := shader.getUniform(name); ok {
+	if input, ok := shader.Uniform(name); ok {
 		if input.Type != Int32 && input.Type != Texture2D {
 			panic(fmt.Errorf("cant assign %s to uniform %s, expected %s", Int32, name, input.Type))
 		}
@@ -201,7 +188,7 @@ func (shader *Shader) Int32(name string, val int32) {
 
 // UInt32 sets an unsigned integer 32 uniform value
 func (shader *Shader) UInt32(name string, val uint32) {
-	if input, ok := shader.getUniform(name); ok {
+	if input, ok := shader.Uniform(name); ok {
 		if input.Type != UInt32 {
 			panic(fmt.Errorf("cant assign %s to uniform %s, expected %s", UInt32, name, input.Type))
 		}
@@ -211,7 +198,7 @@ func (shader *Shader) UInt32(name string, val uint32) {
 
 // Float sets a float uniform value
 func (shader *Shader) Float(name string, val float32) {
-	if input, ok := shader.getUniform(name); ok {
+	if input, ok := shader.Uniform(name); ok {
 		if input.Type != Float {
 			panic(fmt.Errorf("cant assign %s to uniform %s, expected %s", Float, name, input.Type))
 		}
@@ -221,7 +208,7 @@ func (shader *Shader) Float(name string, val float32) {
 
 // RGB sets a uniform to a color RGB value
 func (shader *Shader) RGB(name string, color Color) {
-	if input, ok := shader.getUniform(name); ok {
+	if input, ok := shader.Uniform(name); ok {
 		if input.Type != Vec3f {
 			panic(fmt.Errorf("cant assign RGB color to uniform %s, expected %s", name, input.Type))
 		}
@@ -231,7 +218,7 @@ func (shader *Shader) RGB(name string, color Color) {
 
 // RGBA sets a uniform to a color RGBA value
 func (shader *Shader) RGBA(name string, color Color) {
-	if input, ok := shader.getUniform(name); ok {
+	if input, ok := shader.Uniform(name); ok {
 		if input.Type != Vec4f {
 			panic(fmt.Errorf("cant assign RGBA color to uniform %s, expected %s", name, input.Type))
 		}
@@ -247,6 +234,7 @@ func (shader *Shader) readAttributes() {
 	for i := 0; i < int(attributes); i++ {
 		attr := shader.readAttribute(i)
 		shader.attributes[attr.Name] = attr
+		fmt.Println(shader.Name, "attrib", attr.Name, attr.Type)
 	}
 }
 
@@ -273,6 +261,7 @@ func (shader *Shader) readUniforms() {
 	for i := 0; i < int(uniforms); i++ {
 		uniform := shader.readUniform(i)
 		shader.uniforms[uniform.Name] = uniform
+		fmt.Println(shader.Name, "uniform", uniform.Name, uniform.Type)
 	}
 }
 
