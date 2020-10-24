@@ -4,7 +4,9 @@ import (
 	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/math"
 	"github.com/johanhenriksson/goworld/math/vec2"
+	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
+	"github.com/johanhenriksson/goworld/render/vertex"
 )
 
 // Rect with support for borders and rounded corners.
@@ -26,7 +28,7 @@ func NewRect(mat *render.Material, size vec2.T) *Rect {
 		segments: 5,
 		border:   0,
 
-		vao: render.CreateVertexArray(render.Triangles, "geometry"),
+		vao: render.CreateVertexArray(render.Triangles),
 	}
 	q.compute()
 	return q
@@ -38,7 +40,7 @@ func (q *Rect) SetBorderWidth(width float32) {
 	q.compute()
 }
 
-func (q *Rect) appendCorner(vtx *Vertices, origin Vertex, offset float32) {
+func (q *Rect) appendCorner(vtx *[]vertex.T, origin vertex.T, offset float32) {
 	r := q.border
 	n := q.segments
 
@@ -50,26 +52,32 @@ func (q *Rect) appendCorner(vtx *Vertices, origin Vertex, offset float32) {
 	bw, bh = float32(128.0/1024.0), float32(128.0/1024.0)
 
 	if n == 0 {
-		first := Vertex{
-			X: origin.X + r*math.Cos(offset),
-			Y: origin.Y + r*math.Sin(offset),
-			Z: 0,
-			U: origin.U + bw*math.Cos(offset),
-			V: origin.V + bh*math.Sin(offset),
+		first := vertex.T{
+			P: origin.P.Add(vec3.New(
+				r*math.Cos(offset),
+				r*math.Sin(offset),
+				0)),
+			T: origin.T.Add(vec2.New(
+				bw*math.Cos(offset),
+				bh*math.Sin(offset))),
 		}
-		corner := Vertex{
-			X: origin.X + r*math.Cos(offset+math.Pi/4)*math.Sqrt2,
-			Y: origin.Y + r*math.Sin(offset+math.Pi/4)*math.Sqrt2,
-			Z: 0,
-			U: origin.U + bw*math.Cos(offset+math.Pi/4)*math.Sqrt2,
-			V: origin.V + bh*math.Sin(offset+math.Pi/4)*math.Sqrt2,
+		corner := vertex.T{
+			P: origin.P.Add(vec3.New(
+				r*math.Cos(offset+math.Pi/4)*math.Sqrt2,
+				r*math.Sin(offset+math.Pi/4)*math.Sqrt2,
+				0)),
+			T: origin.T.Add(vec2.New(
+				bw*math.Cos(offset+math.Pi/4)*math.Sqrt2,
+				bh*math.Sin(offset+math.Pi/4)*math.Sqrt2)),
 		}
-		second := Vertex{
-			X: origin.X + r*math.Cos(offset+math.Pi/2),
-			Y: origin.Y + r*math.Sin(offset+math.Pi/2),
-			Z: 0,
-			U: origin.U + bw*math.Cos(offset+math.Pi/2),
-			V: origin.V + bh*math.Sin(offset+math.Pi/2),
+		second := vertex.T{
+			P: origin.P.Add(vec3.New(
+				r*math.Cos(offset+math.Pi/2),
+				r*math.Sin(offset+math.Pi/2),
+				0)),
+			T: origin.T.Add(vec2.New(
+				bw*math.Cos(offset+math.Pi/2),
+				bh*math.Sin(offset+math.Pi/2))),
 		}
 		*vtx = append(*vtx, first, origin, corner)
 		*vtx = append(*vtx, corner, origin, second)
@@ -77,16 +85,13 @@ func (q *Rect) appendCorner(vtx *Vertices, origin Vertex, offset float32) {
 		/* Rounded corner */
 
 		v := (math.Pi / 2.0) / float32(n)
-		var prev Vertex
+		var prev vertex.T
 		for i := 0; i <= n; i++ {
 			x := math.Cos(offset + float32(i)*v)
 			y := math.Sin(offset + float32(i)*v)
-			p := Vertex{
-				X: origin.X + r*x,
-				Y: origin.Y + r*y,
-				Z: origin.Z,
-				U: origin.U + bw*x,
-				V: origin.V + bh*y,
+			p := vertex.T{
+				P: origin.P.Add(vec3.New(r*x, r*y, 0)),
+				T: origin.T.Add(vec2.New(bw*x, bh*y)),
 			}
 
 			if i > 0 {
@@ -123,68 +128,69 @@ func (q *Rect) compute() {
 
 	bw, bh = float32(128.0/1024.0), float32(128.0/1024.0)
 
-	TopLeft := Vertex{X: b, Y: h - b, Z: 0, U: bw, V: 1 - bh}
-	TopRight := Vertex{X: w - b, Y: h - b, Z: 0, U: 1 - bw, V: 1 - bh}
-	BottomLeft := Vertex{X: b, Y: b, Z: 0, U: bw, V: bh}
-	BottomRight := Vertex{X: w - b, Y: b, Z: 0, U: 1 - bw, V: bh}
+	TopLeft := vertex.T{P: vec3.New(b, h-b, 0), T: vec2.New(bw, 1-bh)}
+	TopRight := vertex.T{P: vec3.New(w-b, h-b, 0), T: vec2.New(1-bw, 1-bh)}
+	BottomLeft := vertex.T{P: vec3.New(b, b, 0), T: vec2.New(bw, bh)}
+	BottomRight := vertex.T{P: vec3.New(w-b, b, 0), T: vec2.New(1-bw, bh)}
 
-	vtx := Vertices{
+	vtx := []vertex.T{
 		BottomLeft, TopRight, TopLeft,
 		BottomLeft, BottomRight, TopRight,
 	}
 
-	/* If we have a positive border width, tesselate border */
+	// if we have a positive border width, tesselate border
 	if b > 0.0 {
 		q.appendCorner(&vtx, TopRight, 0.0)
 		q.appendCorner(&vtx, TopLeft, math.Pi/2.0)
 		q.appendCorner(&vtx, BottomLeft, math.Pi)
 		q.appendCorner(&vtx, BottomRight, 3.0*math.Pi/2.0)
 
-		/* Top Border Box */
+		// top border box
 		topTopLeft := TopLeft
-		topTopLeft.Y += b
-		topTopLeft.V = 1
+		topTopLeft.P.Y += b
+		topTopLeft.T.Y = 1
 		topTopRight := TopRight
-		topTopRight.Y += b
-		topTopRight.V = 1
+		topTopRight.P.Y += b
+		topTopRight.T.Y = 1
 		vtx = append(vtx, TopLeft, topTopRight, topTopLeft,
 			TopLeft, TopRight, topTopRight)
 
-		/* Bottom border box */
+		// bottom border box
 		bottomBottomLeft := BottomLeft
-		bottomBottomLeft.Y -= b
-		bottomBottomLeft.V = 0
+		bottomBottomLeft.P.Y -= b
+		bottomBottomLeft.T.Y = 0
 		bottomBottomRight := BottomRight
-		bottomBottomRight.Y -= b
-		bottomBottomRight.V = 0
+		bottomBottomRight.P.Y -= b
+		bottomBottomRight.T.Y = 0
 		vtx = append(vtx, bottomBottomLeft, BottomRight, BottomLeft,
 			bottomBottomLeft, bottomBottomRight, BottomRight)
 
-		/* Right border box */
+		// right border box
 		rightTopRight := TopRight
-		rightTopRight.X += b
-		rightTopRight.U = 1
+		rightTopRight.P.X += b
+		rightTopRight.T.X = 1
 		rightBottomRight := BottomRight
-		rightBottomRight.X += b
-		rightBottomRight.U = 1
+		rightBottomRight.P.X += b
+		rightBottomRight.T.X = 1
 		vtx = append(vtx, BottomRight, rightTopRight, TopRight,
 			BottomRight, rightBottomRight, rightTopRight)
 
-		/* Left border box */
+		// left border box
 		leftTopLeft := TopLeft
-		leftTopLeft.X -= b
-		leftTopLeft.U = 0
+		leftTopLeft.P.X -= b
+		leftTopLeft.T.X = 0
 		leftBottomLeft := BottomLeft
-		leftBottomLeft.X -= b
-		leftBottomLeft.U = 0
+		leftBottomLeft.P.X -= b
+		leftBottomLeft.T.X = 0
 		vtx = append(vtx, leftBottomLeft, TopLeft, leftTopLeft,
 			leftBottomLeft, BottomLeft, TopLeft)
 	}
 
 	/* Setup VAO */
 	q.vao.Bind()
-	q.vao.Buffer("geometry", vtx)
-	q.Material.SetupVertexPointers()
+	// q.vao.Buffer("geometry", vtx)
+	ptr := q.Material.VertexPointers(vtx)
+	q.vao.BufferTo(ptr, vtx)
 }
 
 func (q *Rect) Draw(args engine.DrawArgs) {

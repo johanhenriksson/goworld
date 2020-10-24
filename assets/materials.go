@@ -54,47 +54,6 @@ func LoadMaterial(name string, matf *MaterialDefinition) (*render.Material, erro
 
 	mat := render.CreateMaterial(name, shader)
 
-	// load vertex pointers
-	for _, pointers := range matf.Buffers {
-		stride := 0
-		for _, ptr := range pointers {
-			if ptr.Count <= 0 {
-				return nil, fmt.Errorf("Expected count >0 for pointer %s", ptr.Name)
-			}
-
-			// padding
-			if ptr.Type == "skip" {
-				stride += ptr.Count
-				continue
-			}
-
-			// convert GL data type
-			gltype, err := render.GLTypeFromString(ptr.Type)
-			if err != nil {
-				return nil, err
-			}
-
-			ptr.GlType = gltype
-			ptr.Size = gltype.Size() * ptr.Count
-			ptr.Offset = stride
-			stride += ptr.Size
-		}
-		for _, ptr := range pointers {
-			if ptr.Type == "skip" {
-				continue
-			}
-			mat.AddDescriptor(render.VertexPointer{
-				Name:      ptr.Name,
-				Type:      ptr.GlType,
-				Elements:  ptr.Count,
-				Stride:    stride,
-				Offset:    ptr.Offset,
-				Normalize: ptr.Normalize,
-				Integer:   ptr.Integer,
-			})
-		}
-	}
-
 	// load textures
 	for name, txtf := range matf.Textures {
 		texture, err := render.TextureFromFile(txtf.File)

@@ -45,7 +45,6 @@ func NewLightPass(input *render.GeometryBuffer) *LightPass {
 		"light_pass",
 		"/assets/shaders/pass/postprocess.vs",
 		"/assets/shaders/pass/light.fs"))
-	mat.AddDescriptors(render.F32_XYZUV)
 
 	// create full screen render quad
 	quad := NewQuad(mat)

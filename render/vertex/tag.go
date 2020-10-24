@@ -20,7 +20,6 @@ func ParseTag(tag string) (Tag, error) {
 	}
 	norm := false
 	name := strings.Trim(p[0], " ")
-
 	kind := strings.Trim(p[1], " ")
 
 	count, err := strconv.Atoi(p[2])

@@ -77,13 +77,9 @@ func (lines *Lines) Compute() {
 		b.Position = line.End
 		b.Color = line.Color
 	}
-	lines.vao.Bind()
-	if len(data) > 0 {
-		lines.vao.Buffer("geometry", data)
-	} else {
-		lines.vao.Length = 0
-	}
-	lines.Material.SetupVertexPointers()
+
+	ptr := lines.Material.VertexPointers(data)
+	lines.vao.BufferTo(ptr, data)
 }
 
 func (lines *Lines) Update(dt float32) {}

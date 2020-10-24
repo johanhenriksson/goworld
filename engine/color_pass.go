@@ -35,7 +35,6 @@ func NewColorPass(input *render.Texture, filter string) *ColorPass {
 			"color_pass",
 			"/assets/shaders/pass/postprocess.vs",
 			"/assets/shaders/pass/color.fs"))
-	mat.AddDescriptors(render.F32_XYZUV)
 	mat.AddTexture("tex_input", input)
 	mat.AddTexture("tex_lut", lut)
 

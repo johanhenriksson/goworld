@@ -17,7 +17,6 @@ func NewOutputPass(input, depth *render.Texture) *OutputPass {
 		"output_pass",
 		"/assets/shaders/pass/postprocess.vs",
 		"/assets/shaders/pass/output.fs"))
-	mat.AddDescriptors(render.F32_XYZUV)
 	mat.AddTexture("tex_input", input)
 	mat.AddTexture("tex_depth", depth)
 

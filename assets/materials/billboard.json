@@ -1,13 +1,4 @@
-{
-    "buffers": {
-        "geometry": [
-            {
-                "name": "position",
-                "type": "float",
-                "count": 3
-            }
-        ]
-    },
+{ 
     "textures": {
         "sprite": {
             "file": "assets/textures/fire.png",

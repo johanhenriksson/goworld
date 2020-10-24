@@ -82,6 +82,9 @@ func main() {
 	// gizmo := geometry.NewGizmo(vec3.New(3, 9, 3))
 	// scene.Add(gizmo)
 
+	// particles := engine.NewParticleSystem(vec3.New(3, 9, 3))
+	// scene.Add(particles)
+
 	// render
 	app.Draw = func(wnd *engine.Window, dt float32) {
 		app.Pipeline.Draw(scene)

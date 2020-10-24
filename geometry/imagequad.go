@@ -3,7 +3,9 @@ package geometry
 import (
 	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/math/vec2"
+	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
+	"github.com/johanhenriksson/goworld/render/vertex"
 )
 
 type ImageQuad struct {
@@ -24,7 +26,7 @@ func NewImageQuad(mat *render.Material, size vec2.T, invert bool) *ImageQuad {
 		Height:   size.Y,
 		U:        1,
 		V:        1,
-		vao:      render.CreateVertexArray(render.Triangles, "geometry"),
+		vao:      render.CreateVertexArray(render.Triangles),
 	}
 	q.compute()
 	return q
@@ -43,29 +45,27 @@ func (q *ImageQuad) SetUV(u, v float32) {
 }
 
 func (q *ImageQuad) compute() {
-	TopLeft := Vertex{X: 0, Y: q.Height, Z: 0, U: 0, V: 0}
-	TopRight := Vertex{X: q.Width, Y: q.Height, Z: 0, U: q.U, V: 0}
-	BottomLeft := Vertex{X: 0, Y: 0, Z: 0, U: 0, V: q.V}
-	BottomRight := Vertex{X: q.Width, Y: 0, Z: 0, U: q.U, V: q.V}
+	TopLeft := vertex.T{P: vec3.New(0, q.Height, 0), T: vec2.New(0, 0)}
+	TopRight := vertex.T{P: vec3.New(q.Width, q.Height, 0), T: vec2.New( q.U, 0)}
+	BottomLeft := vertex.T{P: vec3.New(0, 0, 0), T: vec2.New(0, q.V)}
+	BottomRight := vertex.T{P: vec3.New(q.Width, 0, 0), T: vec2.New(q.U, q.V)}
 
 	if q.InvertY {
-		TopLeft.V = 1 - TopLeft.V
-		TopRight.V = 1 - TopRight.V
-		BottomLeft.V = 1 - BottomLeft.V
-		BottomRight.V = 1 - BottomRight.V
+		TopLeft.T.Y = 1 - TopLeft.T.Y
+		TopRight.T.Y = 1 - TopRight.T.Y
+		BottomLeft.T.Y = 1 - BottomLeft.T.Y
+		BottomRight.T.Y = 1 - BottomRight.T.Y
 	}
 
-	vtx := Vertices{
+	vtx := []vertex.T{
 		BottomLeft, TopRight, TopLeft,
 		BottomLeft, BottomRight, TopRight,
 	}
 
-	/* Setup VAO */
+	ptr := q.Material.VertexPointers(vtx)
+
 	q.vao.Bind()
-	q.vao.Buffer("geometry", vtx)
-	if q.Material != nil {
-		q.Material.SetupVertexPointers()
-	}
+	q.vao.BufferTo(ptr, vtx)
 }
 
 func (q *ImageQuad) Draw(args engine.DrawArgs) {

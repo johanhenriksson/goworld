@@ -2,6 +2,7 @@ package render
 
 import (
 	"fmt"
+	"reflect"
 	"strings"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
@@ -10,6 +11,7 @@ import (
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/math/vec4"
+	"github.com/johanhenriksson/goworld/render/vertex"
 	"github.com/johanhenriksson/goworld/util"
 )
 
@@ -224,6 +226,64 @@ func (shader *Shader) RGBA(name string, color Color) {
 		}
 		gl.Uniform4f(input.Index, color.R, color.G, color.B, color.A)
 	}
+}
+
+func (shader *Shader) VertexPointers(data interface{}) Pointers {
+	t := reflect.TypeOf(data)
+	if t.Kind() != reflect.Slice {
+		return nil
+	}
+
+	el := t.Elem()
+	if el.Kind() != reflect.Struct {
+		fmt.Println("not a struct")
+		return nil
+	}
+
+	size := int(el.Size())
+
+	offset := 0
+	pointers := make(Pointers, 0, el.NumField())
+	for i := 0; i < el.NumField(); i++ {
+		f := el.Field(i)
+		tag, err := vertex.ParseTag(f.Tag.Get("vtx"))
+		if err != nil {
+			fmt.Printf("tag error on %s.%s: %s\n", el.Name(), f.Name, err)
+			continue
+		}
+
+		gltype, err := GLTypeFromString(tag.Type)
+		if err != nil {
+			panic(fmt.Errorf("invalid GL type: %s", tag.Type))
+		}
+
+		attr, exists := shader.Attribute(tag.Name)
+		if !exists {
+			// skip?
+			fmt.Printf("attribute %s does not exist on %s\n", tag.Name, el.Name())
+			offset += gltype.Size() * tag.Count
+			continue
+		}
+
+		ptr := Pointer{
+			Index:       int(attr.Index),
+			Name:        tag.Name,
+			Source:      gltype,
+			Destination: attr.Type,
+			Elements:    tag.Count,
+			Normalize:   tag.Normalize,
+			Offset:      offset,
+			Stride:      size,
+		}
+
+		pointers = append(pointers, ptr)
+
+		fmt.Printf("%+v\n", ptr)
+
+		offset += gltype.Size() * tag.Count
+	}
+
+	return pointers
 }
 
 func (shader *Shader) readAttributes() {

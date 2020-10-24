@@ -114,3 +114,26 @@ func (vao *VertexArray) Buffer(name string, data interface{}) {
 		vao.Length = elements
 	}
 }
+
+func (vao *VertexArray) BufferTo(pointers Pointers, data interface{}) {
+	name := pointers.BufferName()
+
+	vao.Bind()
+
+	vbo, exists := vao.vbos[name]
+	if !exists {
+		// create new buffer
+		vbo = CreateVertexBuffer()
+		vao.vbos[name] = vbo
+	}
+
+	// buffer data to vbo
+	elements := vbo.Buffer(data)
+
+	// update number of elements
+	if !vao.Indexed() {
+		vao.Length = elements
+	}
+
+	pointers.Enable()
+}

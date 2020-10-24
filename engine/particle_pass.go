@@ -147,7 +147,7 @@ func NewParticleSystem(position vec3.T) *ParticleSystem {
 		positions: make(vec3.Array, count),
 	}
 
-	mat.SetupVertexPointers()
+	//mat.SetupVertexPointers()
 
 	return ps
 }

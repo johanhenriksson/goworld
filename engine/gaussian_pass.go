@@ -22,7 +22,6 @@ func NewGaussianPass(input *render.Texture) *GaussianPass {
 		"gaussian_pass",
 		"/assets/shaders/pass/postprocess.vs",
 		"/assets/shaders/pass/gaussian.fs"))
-	mat.AddDescriptors(render.F32_XYZUV)
 	mat.AddTexture("tex_input", input)
 
 	quad := NewQuad(mat)

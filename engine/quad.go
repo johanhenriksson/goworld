@@ -18,7 +18,7 @@ func NewQuad(mat *render.Material) *Quad {
 		Mesh: NewMesh("screen_quad", mat),
 	}
 
-	q.Buffer("geometry", []vertex.T{
+	vtx := []vertex.T{
 		{P: vec3.New(-1, -1, 0), T: vec2.New(0, 0)},
 		{P: vec3.New(1, 1, 0), T: vec2.New(1, 1)},
 		{P: vec3.New(-1, 1, 0), T: vec2.New(0, 1)},
@@ -26,7 +26,10 @@ func NewQuad(mat *render.Material) *Quad {
 		{P: vec3.New(-1, -1, 0), T: vec2.New(0, 0)},
 		{P: vec3.New(1, -1, 0), T: vec2.New(1, 0)},
 		{P: vec3.New(1, 1, 0), T: vec2.New(1, 1)},
-	})
+	}
+
+	ptr := mat.VertexPointers(vtx)
+	q.vao.BufferTo(ptr, vtx)
 
 	return q
 }

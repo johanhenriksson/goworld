@@ -1,16 +1,1 @@
-{
-    "buffers": {
-        "geometry": [
-            {
-                "name": "vertex",
-                "type": "float",
-                "count": 3
-            },
-            {
-                "name": "color",
-                "type": "float",
-                "count": 4
-            }
-        ]
-    }
-}
+{ }
