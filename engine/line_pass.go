@@ -21,11 +21,13 @@ func NewLinePass() *LinePass {
 }
 
 func (p *LinePass) Type() render.Pass {
-	return render.LinePass
+	return render.Line
 }
 
+func (p *LinePass) Resize(width, height int) {}
+
 // DrawPass executes the line pass
-func (p *LinePass) DrawPass(scene *Scene) {
+func (p *LinePass) Draw(scene *Scene) {
 	scene.Camera.Use()
 
 	p.queue.Clear()

@@ -46,8 +46,13 @@ func (p *ShadowPass) Type() render.Pass {
 	return render.Geometry
 }
 
-// DrawPass draws a shadow pass for the given light.
-func (p *ShadowPass) DrawPass(scene *Scene, light *Light) {
+// Resize is called on window resize. Should update any window size-dependent buffers
+func (p *ShadowPass) Resize(width, height int) {}
+
+func (p *ShadowPass) Draw(scene *Scene) {}
+
+// DrawLight draws a shadow pass for the given light.
+func (p *ShadowPass) DrawLight(scene *Scene, light *Light) {
 	if !light.Shadows {
 		return
 	}

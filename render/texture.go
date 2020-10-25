@@ -110,6 +110,12 @@ func (tx *Texture) Clear() {
 		nil)         // null ptr
 }
 
+func (tx *Texture) Resize(width, height int) {
+	tx.Width = width
+	tx.Height = height
+	tx.Clear()
+}
+
 // Buffer buffers texture data from an image object
 func (tx *Texture) Buffer(img *image.RGBA) {
 	tx.Width = img.Rect.Size().X

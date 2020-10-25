@@ -10,13 +10,15 @@ type ForwardDrawable interface {
 
 // ForwardPass holds information required to perform a forward rendering pass.
 type ForwardPass struct {
-	queue *DrawQueue
+	Output *render.ColorBuffer
+	queue  *DrawQueue
 }
 
 // NewForwardPass sets up a forward pass.
-func NewForwardPass() *ForwardPass {
+func NewForwardPass(output *render.ColorBuffer) *ForwardPass {
 	return &ForwardPass{
-		queue: NewDrawQueue(),
+		Output: output,
+		queue:  NewDrawQueue(),
 	}
 }
 
@@ -24,10 +26,12 @@ func (p *ForwardPass) Type() render.Pass {
 	return render.Forward
 }
 
+func (p *ForwardPass) Resize(width, height int) {}
+
 // DrawPass executes the forward pass
-func (p *ForwardPass) DrawPass(scene *Scene) {
+func (p *ForwardPass) Draw(scene *Scene) {
 	scene.Camera.Use()
-	render.ScreenBuffer.Bind()
+	p.Output.Bind()
 
 	// setup rendering
 	render.Blend(true)

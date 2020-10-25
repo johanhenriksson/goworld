@@ -20,6 +20,12 @@ func (p *GeometryPass) Type() render.Pass {
 	return render.Geometry
 }
 
+// Resize is called on window resize. Should update any window size-dependent buffers
+func (p *GeometryPass) Resize(width, height int) {
+	// recreate gbuffer
+	p.Buffer.Resize(width, height)
+}
+
 // NewGeometryPass sets up a geometry pass.
 func NewGeometryPass(bufferWidth, bufferHeight int) *GeometryPass {
 	p := &GeometryPass{
@@ -30,7 +36,7 @@ func NewGeometryPass(bufferWidth, bufferHeight int) *GeometryPass {
 }
 
 // DrawPass executes the geometry pass
-func (p *GeometryPass) DrawPass(scene *Scene) {
+func (p *GeometryPass) Draw(scene *Scene) {
 	p.Buffer.Bind()
 	render.Clear()
 	render.ClearDepth()

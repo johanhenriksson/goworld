@@ -5,11 +5,14 @@ type Pass string
 
 // Various draw pass constants
 const (
-	Geometry   Pass = "geometry"
-	DrawShadow      = "shadow"
-	LinePass        = "lines"
-	Particles       = "particles"
-	Forward         = "forward"
+	Geometry    Pass = "geometry"
+	Shadow           = "shadow"
+	Line             = "lines"
+	Particles        = "particles"
+	Forward          = "forward"
+	Lights           = "light"
+	Postprocess      = "postprocess"
+	UI               = "ui"
 )
 
 type Passes []Pass

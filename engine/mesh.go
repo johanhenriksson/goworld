@@ -28,7 +28,7 @@ func NewMesh(name string, material *render.Material) *Mesh {
 // NewLineMesh creates a new mesh for drawing lines
 func NewLineMesh(name string) *Mesh {
 	material := assets.GetMaterialShared("lines")
-	return NewPrimitiveMesh(name, render.Lines, render.LinePass, material)
+	return NewPrimitiveMesh(name, render.Lines, render.Line, material)
 }
 
 // NewPrimitiveMesh creates a new mesh composed of a given GL primitive

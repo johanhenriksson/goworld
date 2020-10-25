@@ -25,8 +25,8 @@ type Manager struct {
 // NewManager creates a new UI manager.
 func NewManager(app *engine.Application) *Manager {
 	// grab UI dimensions from application window
-	width := float32(app.Window.Width) * app.Window.Scale()
-	height := float32(app.Window.Height) * app.Window.Scale()
+	width := float32(app.Window.Width) * app.Window.Scale
+	height := float32(app.Window.Height) * app.Window.Scale
 
 	m := &Manager{
 		Width:    width,
@@ -47,13 +47,17 @@ func NewManager(app *engine.Application) *Manager {
 	return m
 }
 
+func (m *Manager) Type() render.Pass {
+	return render.UI
+}
+
 // Attach a child component
 func (m *Manager) Attach(child Component) {
 	m.Children = append(m.Children, child)
 }
 
 // DrawPass draws the UI
-func (m *Manager) DrawPass(scene *engine.Scene) {
+func (m *Manager) Draw(scene *engine.Scene) {
 	p := m.Viewport
 	v := mat4.Ident() // unused by UI
 	vp := p           // unused by UI
@@ -144,3 +148,11 @@ func (m *Manager) glfwInputCallback(w *glfw.Window, char rune) {
 		m.Focused.HandleInput(char)
 	}
 }
+
+func (m *Manager) Visible(c engine.Component, args engine.DrawArgs) bool {
+	return false
+}
+
+func (m *Manager) Queue(c engine.Component, args engine.DrawArgs) {}
+
+func (m *Manager) Resize(width, height int) {}

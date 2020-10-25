@@ -45,13 +45,13 @@ func (f *FrameBuffer) AttachBuffer(target, internalFormat, format, datatype uint
 	// Set texture as frame buffer target
 	texture.FrameBufferTarget(target)
 
-	if target != gl.DEPTH_ATTACHMENT {
-		// Attach to frame buffer
-		f.Buffers = append(f.Buffers, DrawBuffer{
-			Target:  target,
-			Texture: texture,
-		})
+	// Attach to frame buffer
+	f.Buffers = append(f.Buffers, DrawBuffer{
+		Target:  target,
+		Texture: texture,
+	})
 
+	if target != gl.DEPTH_ATTACHMENT {
 		// add the target to the list of enabled draw buffers
 		f.targets = append(f.targets, target)
 	}
@@ -119,4 +119,12 @@ func (f *FrameBuffer) SampleDepth(x, y int) float32 {
 // DrawBuffers sets up all the attached buffers for drawing
 func (f *FrameBuffer) DrawBuffers() {
 	gl.DrawBuffers(int32(len(f.targets)), &f.targets[0])
+}
+
+func (f *FrameBuffer) Resize(width, height int) {
+	f.Width = width
+	f.Height = height
+	for _, buffer := range f.Buffers {
+		buffer.Texture.Resize(width, height)
+	}
 }

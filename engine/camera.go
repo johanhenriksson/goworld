@@ -70,6 +70,10 @@ func (cam *Camera) Update(dt float32) {
 	// Update transform with new position & rotation
 	cam.Transform.Update(dt)
 
+	// update projection matrix in case aspect ratio changed
+	ratio := float32(cam.Buffer.Width) / float32(cam.Buffer.Height)
+	cam.Projection = mat4.Perspective(math.DegToRad(cam.Fov), ratio, cam.Near, cam.Far)
+
 	// Calculate new view matrix based on forward vector
 	lookAt := cam.Transform.Position.Add(cam.Transform.Forward)
 	cam.View = mat4.LookAt(cam.Transform.Position, lookAt)

@@ -29,8 +29,11 @@ func (p *ParticlePass) Type() render.Pass {
 	return render.Particles
 }
 
+// Resize is called on window resize. Should update any window size-dependent buffers
+func (p *ParticlePass) Resize(width, height int) {}
+
 // DrawPass executes the particle pass
-func (p *ParticlePass) DrawPass(scene *Scene) {
+func (p *ParticlePass) Draw(scene *Scene) {
 	p.queue.Clear()
 	scene.Collect(p)
 	for _, cmd := range p.queue.items {

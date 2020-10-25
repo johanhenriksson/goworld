@@ -8,31 +8,56 @@ import (
 	"github.com/johanhenriksson/goworld/render"
 )
 
-// RenderPass is a step in the rendering pipeline
-type RenderPass interface {
-	DrawPass(*Scene)
-}
-
 // PassMap maps names to Render Passes
-type PassMap map[string]RenderPass
+type PassMap map[string]DrawPass
+
+type PostPass interface {
+	Input(*render.Texture)
+	Output() *render.Texture
+}
 
 // Renderer holds references to the Scene and is responsible for executing render passes in order
 type Renderer struct {
-	Passes  []RenderPass
+	Passes  []DrawPass
 	passMap PassMap
+
+	Output    *OutputPass
+	Geometry  *GeometryPass
+	Light     *LightPass
+	Forward   *ForwardPass
+	Particles *ParticlePass
+	Colors    *ColorPass
+	Lines     *LinePass
 }
 
 // NewRenderer instantiates a new rendering pipeline.
 func NewRenderer() *Renderer {
 	r := &Renderer{
-		Passes:  []RenderPass{},
+		Passes:  []DrawPass{},
 		passMap: make(PassMap),
 	}
+
+	width, height := render.ScreenBuffer.Width, render.ScreenBuffer.Height
+
+	r.Geometry = NewGeometryPass(width, height)
+	r.Light = NewLightPass(r.Geometry.Buffer)
+	r.Forward = NewForwardPass(r.Light.Output)
+
+	r.Colors = NewColorPass(r.Light.Output, "saturated")
+	r.Output = NewOutputPass(r.Colors.Output, r.Geometry.Buffer)
+	r.Lines = NewLinePass()
+	r.Particles = NewParticlePass()
 	return r
 }
 
+func (r *Renderer) Resize(width, height int) {
+	r.Geometry.Resize(width, height)
+	r.Light.Resize(width, height)
+	r.Colors.Resize(width, height)
+}
+
 // Append a new render pass
-func (r *Renderer) Append(name string, pass RenderPass) {
+func (r *Renderer) Append(name string, pass DrawPass) {
 	if len(name) == 0 {
 		panic(fmt.Errorf("Render passes must have names"))
 	}
@@ -44,13 +69,13 @@ func (r *Renderer) Append(name string, pass RenderPass) {
 }
 
 // Get render pass by name
-func (r *Renderer) Get(name string) RenderPass {
+func (r *Renderer) Get(name string) DrawPass {
 	return r.passMap[name]
 }
 
 // Reset the render pipeline.
 func (r *Renderer) Reset() {
-	r.Passes = []RenderPass{}
+	r.Passes = []DrawPass{}
 	r.passMap = make(PassMap)
 }
 
@@ -69,7 +94,14 @@ func (r *Renderer) Draw(scene *Scene) {
 	render.DepthTest(true)
 	gl.DepthFunc(gl.LESS)
 
+	r.Geometry.Draw(scene)
+	r.Light.Draw(scene)
+	r.Forward.Draw(scene)
+	r.Colors.Draw(scene)
+	r.Output.Draw(scene)
+	r.Lines.Draw(scene)
+	r.Particles.Draw(scene)
 	for _, pass := range r.Passes {
-		pass.DrawPass(scene)
+		pass.Draw(scene)
 	}
 }

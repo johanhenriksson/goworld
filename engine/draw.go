@@ -8,8 +8,10 @@ import (
 
 type DrawPass interface {
 	Type() render.Pass
+	Draw(*Scene)
 	Visible(Component, DrawArgs) bool
 	Queue(Component, DrawArgs)
+	Resize(int, int)
 }
 
 // DrawArgs holds the arguments used to perform a draw pass.

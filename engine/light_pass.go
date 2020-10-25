@@ -1,8 +1,6 @@
 package engine
 
 import (
-	"github.com/go-gl/gl/v4.1-core/gl"
-
 	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
@@ -10,7 +8,7 @@ import (
 
 // LightPass draws the deferred lighting pass
 type LightPass struct {
-	Output         *render.Texture
+	Output         *render.ColorBuffer
 	SSAO           *SSAOPass
 	Shadows        *ShadowPass
 	Ambient        render.Color
@@ -19,7 +17,6 @@ type LightPass struct {
 	SSAOAmount     float32
 
 	quad     *Quad
-	fbo      *render.FrameBuffer
 	shader   *render.Shader
 	textures *render.TextureMap
 }
@@ -36,10 +33,6 @@ func NewLightPass(input *render.GeometryBuffer) *LightPass {
 		Scale:   1,
 	})
 
-	// create output frame buffer
-	fbo := render.CreateFrameBuffer(input.Width, input.Height)
-	output := fbo.AttachBuffer(gl.COLOR_ATTACHMENT0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE)
-
 	// instantiate light pass shader
 	shader := render.CompileShader(
 		"light_pass",
@@ -55,7 +48,7 @@ func NewLightPass(input *render.GeometryBuffer) *LightPass {
 	tx.Add("tex_occlusion", ssaoPass.Gaussian.Output)
 
 	p := &LightPass{
-		Output:         output,
+		Output:         render.NewColorBuffer(input.Width, input.Height),
 		Shadows:        shadowPass,
 		SSAO:           ssaoPass,
 		Ambient:        render.Color4(0.25, 0.25, 0.25, 1),
@@ -66,7 +59,6 @@ func NewLightPass(input *render.GeometryBuffer) *LightPass {
 		quad:     NewQuad(shader),
 		shader:   shader,
 		textures: tx,
-		fbo:      fbo,
 	}
 
 	// set up static uniforms
@@ -76,6 +68,16 @@ func NewLightPass(input *render.GeometryBuffer) *LightPass {
 	shader.Float("ssao_amount", p.SSAOAmount)
 
 	return p
+}
+
+func (p *LightPass) Type() render.Pass {
+	return render.Lights
+}
+
+// Resize is called on window resize. Should update any window size-dependent buffers
+func (p *LightPass) Resize(width, height int) {
+	// p.SSAO.Resize(width, height)
+	p.Output.Resize(width, height)
 }
 
 func (p *LightPass) setLightUniforms(light *Light) {
@@ -97,8 +99,8 @@ func (p *LightPass) setLightUniforms(light *Light) {
 	p.shader.Float("light.attenuation.Quadratic", light.Attenuation.Quadratic)
 }
 
-// DrawPass executes the deferred lighting pass.
-func (p *LightPass) DrawPass(scene *Scene) {
+// Draw executes the deferred lighting pass.
+func (p *LightPass) Draw(scene *Scene) {
 	// ssao pass
 	p.SSAO.DrawPass(scene)
 
@@ -112,7 +114,7 @@ func (p *LightPass) DrawPass(scene *Scene) {
 	p.shader.Mat4("viewInverse", &vInv)
 
 	// clear output buffer
-	p.fbo.Bind()
+	p.Output.Bind()
 	render.ClearWith(render.Black)
 
 	// enable back face culling
@@ -137,7 +139,7 @@ func (p *LightPass) DrawPass(scene *Scene) {
 	// draw lights one by one
 	for _, light := range scene.Lights {
 		// draw shadow pass for this light into shadow map
-		p.Shadows.DrawPass(scene, &light)
+		p.Shadows.DrawLight(scene, &light)
 
 		// first light pass we want the shader to restore the depth buffer
 		// then, disable depth masking so that multiple lights can be drawn
@@ -149,11 +151,19 @@ func (p *LightPass) DrawPass(scene *Scene) {
 
 		// render light
 		// todo: draw light volumes instead of a fullscreen quad
-		p.fbo.Bind()
+		p.Output.Bind()
 		p.quad.Draw()
 	}
 
 	// reset GL state
 	render.DepthOutput(true)
 	render.Blend(false)
+}
+
+func (p *LightPass) Visible(c Component, args DrawArgs) bool {
+	// todo: use the collect/queue pattern to find lights to draw
+	return false
+}
+
+func (p *LightPass) Queue(c Component, args DrawArgs) {
 }

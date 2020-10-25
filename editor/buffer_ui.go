@@ -8,8 +8,8 @@ import (
 )
 
 func DebugBufferWindows(app *engine.Application) ui.Component {
-	lightPass := app.Pipeline.Get("light").(*engine.LightPass)
-	geoPass := app.Pipeline.Get("geometry").(*engine.GeometryPass)
+	lightPass := app.Pipeline.Light
+	geoPass := app.Pipeline.Geometry
 	bufferWindows := ui.NewRect(ui.Style{"spacing": ui.Float(10)},
 		newBufferWindow("Diffuse", geoPass.Buffer.Diffuse, false),
 		newBufferWindow("Normal", geoPass.Buffer.Normal, false),

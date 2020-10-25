@@ -86,7 +86,7 @@ func (lines *Lines) Update(dt float32) {}
 
 func (lines *Lines) DrawLines(args engine.DrawArgs) {
 	// setup line material
-	if len(lines.Lines) > 0 && args.Pass == render.LinePass {
+	if len(lines.Lines) > 0 && args.Pass == render.Line {
 		lines.Material.Use()
 		lines.Material.Mat4("mvp", &args.MVP)
 		lines.vao.Draw()
