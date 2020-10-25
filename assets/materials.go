@@ -63,7 +63,7 @@ func LoadMaterial(name string, matf *MaterialDefinition) (*render.Material, erro
 		if txtf.Filter == "nearest" {
 			texture.SetFilter(render.NearestFilter)
 		}
-		mat.AddTexture(name, texture)
+		mat.Textures.Add(name, texture)
 	}
 
 	return mat, nil

@@ -1,10 +1,10 @@
 package editor
 
 import (
-	"github.com/johanhenriksson/goworld/ui"
 	"github.com/johanhenriksson/goworld/engine"
-	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/math/vec2"
+	"github.com/johanhenriksson/goworld/render"
+	"github.com/johanhenriksson/goworld/ui"
 )
 
 func DebugBufferWindows(app *engine.Application) ui.Component {
@@ -13,6 +13,7 @@ func DebugBufferWindows(app *engine.Application) ui.Component {
 	bufferWindows := ui.NewRect(ui.Style{"spacing": ui.Float(10)},
 		newBufferWindow("Diffuse", geoPass.Buffer.Diffuse, false),
 		newBufferWindow("Normal", geoPass.Buffer.Normal, false),
+		newBufferWindow("Position", geoPass.Buffer.Position, false),
 		newBufferWindow("Occlusion", lightPass.SSAO.Gaussian.Output, true),
 		newBufferWindow("Shadowmap", lightPass.Shadows.Output, true))
 	bufferWindows.SetPosition(vec2.New(10, 10))

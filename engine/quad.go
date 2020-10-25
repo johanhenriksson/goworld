@@ -9,13 +9,13 @@ import (
 
 // Quad is a fullscreen quad used for render passes
 type Quad struct {
-	*Mesh
+	vao *render.VertexArray
 }
 
 // NewQuad creates a new quad with a given material
-func NewQuad(mat *render.Material) *Quad {
+func NewQuad(shader *render.Shader) *Quad {
 	q := &Quad{
-		Mesh: NewMesh("screen_quad", mat),
+		vao: render.CreateVertexArray(render.Triangles),
 	}
 
 	vtx := []vertex.T{
@@ -28,16 +28,12 @@ func NewQuad(mat *render.Material) *Quad {
 		{P: vec3.New(1, 1, 0), T: vec2.New(1, 1)},
 	}
 
-	ptr := mat.VertexPointers(vtx)
+	ptr := shader.VertexPointers(vtx)
 	q.vao.BufferTo(ptr, vtx)
 
 	return q
 }
 
 func (q *Quad) Draw() {
-	q.vao.Bind()
-	if q.material != nil {
-		q.material.Use()
-	}
 	q.vao.Draw()
 }

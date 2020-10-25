@@ -18,9 +18,10 @@ type LightPass struct {
 	ShadowBias     float32
 	SSAOAmount     float32
 
-	fbo  *render.FrameBuffer
-	mat  *render.Material
-	quad *Quad
+	quad     *Quad
+	fbo      *render.FrameBuffer
+	shader   *render.Shader
+	textures *render.TextureMap
 }
 
 // NewLightPass creates a new deferred lighting pass
@@ -40,40 +41,39 @@ func NewLightPass(input *render.GeometryBuffer) *LightPass {
 	output := fbo.AttachBuffer(gl.COLOR_ATTACHMENT0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE)
 
 	// instantiate light pass shader
-	// mat := render.CreateMaterial("light_pass", render.CompileShader("/assets/shaders/pass/light"))
-	mat := render.CreateMaterial("light_pass", render.CompileShader(
+	shader := render.CompileShader(
 		"light_pass",
 		"/assets/shaders/pass/postprocess.vs",
-		"/assets/shaders/pass/light.fs"))
-
-	// create full screen render quad
-	quad := NewQuad(mat)
+		"/assets/shaders/pass/light.fs")
 
 	// add gbuffer, shadow and ssao pass inputs
-	mat.AddTexture("tex_diffuse", input.Diffuse)
-	mat.AddTexture("tex_normal", input.Normal)
-	mat.AddTexture("tex_depth", input.Depth)
-	mat.AddTexture("tex_shadow", shadowPass.Output)
-	mat.AddTexture("tex_occlusion", ssaoPass.Gaussian.Output)
+	tx := render.NewTextureMap(shader)
+	tx.Add("tex_diffuse", input.Diffuse)
+	tx.Add("tex_normal", input.Normal)
+	tx.Add("tex_depth", input.Depth)
+	tx.Add("tex_shadow", shadowPass.Output)
+	tx.Add("tex_occlusion", ssaoPass.Gaussian.Output)
 
 	p := &LightPass{
-		fbo:            fbo,
 		Output:         output,
-		mat:            mat,
-		quad:           quad,
 		Shadows:        shadowPass,
 		SSAO:           ssaoPass,
 		Ambient:        render.Color4(0.25, 0.25, 0.25, 1),
 		ShadowStrength: 0.3,
 		ShadowBias:     0.0001,
 		SSAOAmount:     0.5,
+
+		quad:     NewQuad(shader),
+		shader:   shader,
+		textures: tx,
+		fbo:      fbo,
 	}
 
 	// set up static uniforms
-	mat.Use()
-	mat.Float("shadow_bias", p.ShadowBias)
-	mat.Float("shadow_strength", p.ShadowStrength)
-	mat.Float("ssao_amount", p.SSAOAmount)
+	shader.Use()
+	shader.Float("shadow_bias", p.ShadowBias)
+	shader.Float("shadow_strength", p.ShadowStrength)
+	shader.Float("ssao_amount", p.SSAOAmount)
 
 	return p
 }
@@ -84,17 +84,17 @@ func (p *LightPass) setLightUniforms(light *Light) {
 	lp := light.Projection
 	lv := mat4.LookAt(light.Position, vec3.Zero)
 	lvp := lp.Mul(&lv)
-	p.mat.Mat4("light_vp", &lvp)
+	p.shader.Mat4("light_vp", &lvp)
 
 	/* set light uniform attributes */
-	p.mat.Vec3("light.Position", &light.Position)
-	p.mat.Vec3("light.Color", &light.Color)
-	p.mat.Int32("light.Type", int32(light.Type))
-	p.mat.Float("light.Range", light.Range)
-	p.mat.Float("light.Intensity", light.Intensity)
-	p.mat.Float("light.attenuation.Constant", light.Attenuation.Constant)
-	p.mat.Float("light.attenuation.Linear", light.Attenuation.Linear)
-	p.mat.Float("light.attenuation.Quadratic", light.Attenuation.Quadratic)
+	p.shader.Vec3("light.Position", &light.Position)
+	p.shader.Vec3("light.Color", &light.Color)
+	p.shader.Int32("light.Type", int(light.Type))
+	p.shader.Float("light.Range", light.Range)
+	p.shader.Float("light.Intensity", light.Intensity)
+	p.shader.Float("light.attenuation.Constant", light.Attenuation.Constant)
+	p.shader.Float("light.attenuation.Linear", light.Attenuation.Linear)
+	p.shader.Float("light.attenuation.Quadratic", light.Attenuation.Quadratic)
 }
 
 // DrawPass executes the deferred lighting pass.
@@ -106,9 +106,10 @@ func (p *LightPass) DrawPass(scene *Scene) {
 	vp := scene.Camera.Projection.Mul(&scene.Camera.View)
 	vpInv := vp.Invert()
 	vInv := scene.Camera.View.Invert()
-	p.mat.Use()
-	p.mat.Mat4("cameraInverse", &vpInv)
-	p.mat.Mat4("viewInverse", &vInv)
+	p.shader.Use()
+	p.textures.Use()
+	p.shader.Mat4("cameraInverse", &vpInv)
+	p.shader.Mat4("viewInverse", &vInv)
 
 	// clear output buffer
 	p.fbo.Bind()
@@ -123,13 +124,15 @@ func (p *LightPass) DrawPass(scene *Scene) {
 	// ambient light pass
 	ambient := Light{
 		Color:     p.Ambient.Vec3(),
-		Intensity: 1,
+		Intensity: 1.3,
 	}
 	p.setLightUniforms(&ambient)
 	p.quad.Draw()
 
 	// set blending mode to additive
 	render.BlendAdditive()
+
+	render.DepthOutput(false)
 
 	// draw lights one by one
 	for _, light := range scene.Lights {
@@ -138,10 +141,10 @@ func (p *LightPass) DrawPass(scene *Scene) {
 
 		// first light pass we want the shader to restore the depth buffer
 		// then, disable depth masking so that multiple lights can be drawn
-		// render.DepthOutput(i == 0)
 
 		// use light shader again
-		p.mat.Use()
+		p.shader.Use()
+		p.textures.Use()
 		p.setLightUniforms(&light)
 
 		// render light

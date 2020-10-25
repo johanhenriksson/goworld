@@ -144,7 +144,7 @@ func (shader *Shader) Mat4(name string, mat4 *mat4.T) {
 		if input.Type != Mat4f {
 			panic(fmt.Errorf("cant assign %s to uniform %s, expected %s", Mat4f, name, input.Type))
 		}
-		gl.UniformMatrix4fv(input.Index, 1, false, &mat4[0])
+		gl.ProgramUniformMatrix4fv(shader.ID, input.Index, 1, false, &mat4[0])
 	}
 }
 
@@ -154,17 +154,17 @@ func (shader *Shader) Vec2(name string, vec *vec2.T) {
 		if input.Type != Vec3f {
 			panic(fmt.Errorf("cant assign %s to uniform %s, expected %s", Vec2f, name, input.Type))
 		}
-		gl.Uniform2f(input.Index, vec.X, vec.Y)
+		gl.ProgramUniform2f(shader.ID, input.Index, vec.X, vec.Y)
 	}
 }
 
 // Vec3 sets a Vec3 uniform value
-func (program *Shader) Vec3(name string, vec *vec3.T) {
-	if input, ok := program.Uniform(name); ok {
+func (shader *Shader) Vec3(name string, vec *vec3.T) {
+	if input, ok := shader.Uniform(name); ok {
 		if input.Type != Vec3f {
 			panic(fmt.Errorf("cant assign %s to uniform %s, expected %s", Vec3f, name, input.Type))
 		}
-		gl.Uniform3f(input.Index, vec.X, vec.Y, vec.Z)
+		gl.ProgramUniform3f(shader.ID, input.Index, vec.X, vec.Y, vec.Z)
 	}
 }
 
@@ -174,27 +174,27 @@ func (shader *Shader) Vec4(name string, vec *vec4.T) {
 		if input.Type != Vec3f {
 			panic(fmt.Errorf("cant assign %s to uniform %s, expected %s", Vec4f, name, input.Type))
 		}
-		gl.Uniform4f(input.Index, vec.X, vec.Y, vec.Z, vec.W)
+		gl.ProgramUniform4f(shader.ID, input.Index, vec.X, vec.Y, vec.Z, vec.W)
 	}
 }
 
 // Int32 sets an integer 32 uniform value
-func (shader *Shader) Int32(name string, val int32) {
+func (shader *Shader) Int32(name string, val int) {
 	if input, ok := shader.Uniform(name); ok {
 		if input.Type != Int32 && input.Type != Texture2D {
 			panic(fmt.Errorf("cant assign %s to uniform %s, expected %s", Int32, name, input.Type))
 		}
-		gl.Uniform1i(input.Index, val)
+		gl.ProgramUniform1i(shader.ID, input.Index, int32(val))
 	}
 }
 
 // UInt32 sets an unsigned integer 32 uniform value
-func (shader *Shader) UInt32(name string, val uint32) {
+func (shader *Shader) UInt32(name string, val int) {
 	if input, ok := shader.Uniform(name); ok {
 		if input.Type != UInt32 {
 			panic(fmt.Errorf("cant assign %s to uniform %s, expected %s", UInt32, name, input.Type))
 		}
-		gl.Uniform1ui(input.Index, val)
+		gl.ProgramUniform1ui(shader.ID, input.Index, uint32(val))
 	}
 }
 
@@ -204,7 +204,7 @@ func (shader *Shader) Float(name string, val float32) {
 		if input.Type != Float {
 			panic(fmt.Errorf("cant assign %s to uniform %s, expected %s", Float, name, input.Type))
 		}
-		gl.Uniform1f(input.Index, val)
+		gl.ProgramUniform1f(shader.ID, input.Index, val)
 	}
 }
 
@@ -214,7 +214,7 @@ func (shader *Shader) RGB(name string, color Color) {
 		if input.Type != Vec3f {
 			panic(fmt.Errorf("cant assign RGB color to uniform %s, expected %s", name, input.Type))
 		}
-		gl.Uniform3f(input.Index, color.R, color.G, color.B)
+		gl.ProgramUniform3f(shader.ID, input.Index, color.R, color.G, color.B)
 	}
 }
 
@@ -224,7 +224,7 @@ func (shader *Shader) RGBA(name string, color Color) {
 		if input.Type != Vec4f {
 			panic(fmt.Errorf("cant assign RGBA color to uniform %s, expected %s", name, input.Type))
 		}
-		gl.Uniform4f(input.Index, color.R, color.G, color.B, color.A)
+		gl.ProgramUniform4f(shader.ID, input.Index, color.R, color.G, color.B, color.A)
 	}
 }
 
@@ -246,7 +246,11 @@ func (shader *Shader) VertexPointers(data interface{}) Pointers {
 	pointers := make(Pointers, 0, el.NumField())
 	for i := 0; i < el.NumField(); i++ {
 		f := el.Field(i)
-		tag, err := vertex.ParseTag(f.Tag.Get("vtx"))
+		tagstr := f.Tag.Get("vtx")
+		if tagstr == "skip" {
+			continue
+		}
+		tag, err := vertex.ParseTag(tagstr)
 		if err != nil {
 			fmt.Printf("tag error on %s.%s: %s\n", el.Name(), f.Name, err)
 			continue
@@ -259,7 +263,6 @@ func (shader *Shader) VertexPointers(data interface{}) Pointers {
 
 		attr, exists := shader.Attribute(tag.Name)
 		if !exists {
-			// skip?
 			fmt.Printf("attribute %s does not exist on %s\n", tag.Name, el.Name())
 			offset += gltype.Size() * tag.Count
 			continue

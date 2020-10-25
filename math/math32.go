@@ -135,3 +135,8 @@ func EqualThreshold(a, b, epsilon float32) bool {
 	// Else compare difference
 	return diff/(Abs(a)+Abs(b)) < epsilon
 }
+
+// Lerp performs linear interpolation between a and b
+func Lerp(a, b, f float32) float32 {
+	return a + f*(b-a)
+}

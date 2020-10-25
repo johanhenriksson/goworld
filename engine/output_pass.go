@@ -6,27 +6,28 @@ import (
 
 // OutputPass is the final pass that writes to a camera frame buffer.
 type OutputPass struct {
-	Input *render.Texture
-	quad  *Quad
-	mat   *render.Material
+	Input    *render.Texture
+	shader   *render.Shader
+	textures *render.TextureMap
+	quad     *Quad
 }
 
 // NewOutputPass creates a new output pass for the given input texture.
 func NewOutputPass(input, depth *render.Texture) *OutputPass {
-	mat := render.CreateMaterial("output_pass", render.CompileShader(
+	shader := render.CompileShader(
 		"output_pass",
 		"/assets/shaders/pass/postprocess.vs",
-		"/assets/shaders/pass/output.fs"))
-	mat.AddTexture("tex_input", input)
-	mat.AddTexture("tex_depth", depth)
+		"/assets/shaders/pass/output.fs")
 
-	/* create a render quad */
-	quad := NewQuad(mat)
+	tx := render.NewTextureMap(shader)
+	tx.Add("tex_input", input)
+	tx.Add("tex_depth", depth)
 
 	return &OutputPass{
-		Input: input,
-		quad:  quad,
-		mat:   mat,
+		Input:    input,
+		shader:   shader,
+		textures: tx,
+		quad:     NewQuad(shader),
 	}
 }
 
@@ -39,5 +40,7 @@ func (p *OutputPass) DrawPass(scene *Scene) {
 	render.ClearWith(scene.Camera.Clear)
 
 	// draw
+	p.shader.Use()
+	p.textures.Use()
 	p.quad.Draw()
 }

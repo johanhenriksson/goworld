@@ -10,13 +10,14 @@ import (
 
 // ColorPass represents a color correction pass and its settings.
 type ColorPass struct {
-	Input  *render.Texture
-	Output *render.Texture
-	Lut    *render.Texture
-	Gamma  float32
-	fbo    *render.FrameBuffer
-	mat    *render.Material
-	quad   *Quad
+	Input    *render.Texture
+	Output   *render.Texture
+	Lut      *render.Texture
+	Gamma    float32
+	fbo      *render.FrameBuffer
+	shader   *render.Shader
+	textures *render.TextureMap
+	quad     *Quad
 }
 
 // NewColorPass instantiates a new color correction pass.
@@ -28,26 +29,25 @@ func NewColorPass(input *render.Texture, filter string) *ColorPass {
 	lutName := fmt.Sprintf("textures/color_grading/%s.png", filter)
 	lut := assets.GetTexture(lutName)
 
-	// create virtual material
-	mat := render.CreateMaterial(
+	shader := render.CompileShader(
 		"color_pass",
-		render.CompileShader(
-			"color_pass",
-			"/assets/shaders/pass/postprocess.vs",
-			"/assets/shaders/pass/color.fs"))
-	mat.AddTexture("tex_input", input)
-	mat.AddTexture("tex_lut", lut)
+		"/assets/shaders/pass/postprocess.vs",
+		"/assets/shaders/pass/color.fs")
+	tx := render.NewTextureMap(shader)
 
-	quad := NewQuad(mat)
+	tx.Add("tex_input", input)
+	tx.Add("tex_lut", lut)
 
 	return &ColorPass{
 		Input:  input,
 		Output: output,
 		Lut:    lut,
 		Gamma:  1.7,
-		fbo:    fbo,
-		mat:    mat,
-		quad:   quad,
+
+		fbo:      fbo,
+		quad:     NewQuad(shader),
+		textures: tx,
+		shader:   shader,
 	}
 }
 
@@ -57,8 +57,9 @@ func (p *ColorPass) DrawPass(scene *Scene) {
 	defer p.fbo.Unbind()
 
 	// pass shader settings
-	p.mat.Use()
-	p.mat.Float("gamma", p.Gamma)
+	p.shader.Use()
+	p.textures.Use()
+	p.shader.Float("gamma", p.Gamma)
 
 	render.Clear()
 	p.quad.Draw()

@@ -110,10 +110,7 @@ func (q *Rect) SetSize(size vec2.T) {
 }
 
 func (q *Rect) texture() *render.Texture {
-	for _, tex := range q.Material.Textures {
-		return tex
-	}
-	return nil
+	return q.Material.Textures.Slot(0)
 }
 
 func (q *Rect) compute() {

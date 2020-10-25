@@ -80,8 +80,8 @@ func (tx *Texture) SetWrapMode(mode WrapMode) {
 }
 
 // Use binds this texture to the given texture slot */
-func (tx *Texture) Use(slot uint32) {
-	gl.ActiveTexture(gl.TEXTURE0 + slot)
+func (tx *Texture) Use(slot int) {
+	gl.ActiveTexture(gl.TEXTURE0 + uint32(slot))
 	gl.Enable(gl.TEXTURE_2D)
 	tx.Bind()
 }

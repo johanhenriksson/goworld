@@ -20,7 +20,7 @@ type Image struct {
 func NewImage(texture *render.Texture, size vec2.T, invert bool, style Style) *Image {
 	el := NewElement("Image", vec2.Zero, size, style)
 	mat := assets.GetMaterial("ui_texture")
-	mat.AddTexture("image", texture)
+	mat.Textures.Add("image", texture)
 	return &Image{
 		Element:     el,
 		Texture:     texture,
@@ -32,7 +32,7 @@ func NewImage(texture *render.Texture, size vec2.T, invert bool, style Style) *I
 func NewDepthImage(texture *render.Texture, size vec2.T, invert bool) *Image {
 	el := NewElement("DepthImage", vec2.Zero, size, NoStyle)
 	mat := assets.GetMaterial("ui_depth_texture")
-	mat.AddTexture("image", texture)
+	mat.Textures.Add("image", texture)
 	return &Image{
 		Element: el,
 		Texture: texture,
@@ -50,7 +50,7 @@ func (r *Image) Draw(args engine.DrawArgs) {
 	}
 	r.Quad.Material.Use()
 	r.Quad.Material.RGBA("tint", r.Style.Color("color", render.White))
-	r.Quad.Material.SetTexture("image", r.Texture)
+	r.Quad.Material.Textures.Set("image", r.Texture)
 	r.Quad.Draw(args)
 
 	for _, el := range r.Element.children {
