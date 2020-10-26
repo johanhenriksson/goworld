@@ -1,8 +1,6 @@
 package engine
 
 import (
-	"fmt"
-
 	"github.com/go-gl/gl/v4.1-core/gl"
 
 	"github.com/johanhenriksson/goworld/math"
@@ -24,6 +22,7 @@ type SSAOSettings struct {
 type SSAOPass struct {
 	SSAOSettings
 
+	GBuffer  *render.GeometryBuffer
 	Gaussian *GaussianPass
 	Output   *render.Texture
 	Noise    *render.Texture
@@ -49,21 +48,21 @@ func NewSSAOPass(gbuff *render.GeometryBuffer, settings *SSAOSettings) *SSAOPass
 	// generate noise texture
 	noise := createHemisphereNoiseTexture(4)
 
-	/* use a virtual material to help with vertex attributes and textures */
 	shader := render.CompileShader(
 		"ssao_pass",
 		"/assets/shaders/pass/postprocess.vs",
 		"/assets/shaders/pass/ssao.fs")
 
 	tx := render.NewTextureMap(shader)
-	tx.Add("tex_position", gbuff.Position)
 	tx.Add("tex_normal", gbuff.Normal)
+	tx.Add("tex_position", gbuff.Position)
 	tx.Add("tex_noise", noise)
 
 	// create a render quad
 
 	p := &SSAOPass{
 		SSAOSettings: *settings,
+		GBuffer:      gbuff,
 		quad:         NewQuad(shader),
 
 		Noise:  noise,
@@ -84,22 +83,20 @@ func NewSSAOPass(gbuff *render.GeometryBuffer, settings *SSAOSettings) *SSAOPass
 	shader.Float("radius", p.Radius)
 	shader.Float("power", p.Power)
 	shader.Int32("scale", p.Scale)
-
-	for i, kernel := range p.Kernel {
-		shader.Vec3(fmt.Sprintf("samples[%d]", i), &kernel)
-	}
+	shader.Vec3Array("samples", p.Kernel)
 
 	return p
 }
 
 // DrawPass draws the SSAO texture.
-func (p *SSAOPass) DrawPass(scene *Scene) {
+func (p *SSAOPass) Draw(scene *Scene) {
 	render.Blend(false)
 	render.DepthOutput(false)
 
 	// update projection
 	p.shader.Use()
 	p.shader.Mat4("projection", &scene.Camera.Projection)
+	p.textures.Use()
 
 	// run occlusion pass
 	p.fbo.Bind()
@@ -142,7 +139,7 @@ func createHemisphereNoiseTexture(size int) *render.Texture {
 	noiseData := make([]float32, 3*size*size)
 	for i := 0; i < len(noiseData); i += 3 {
 		noiseData[i+0] = random.Range(-1, 1)
-		noiseData[i+1] = random.Range(-1, 1)
+		noiseData[i+1] = 1 // random.Range(-1, 1)
 		noiseData[i+2] = 0
 	}
 	noise.BufferFloats(noiseData)

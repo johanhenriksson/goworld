@@ -26,6 +26,9 @@ func (tm *TextureMap) Add(name string, tex *Texture) {
 
 // Set changes a bound texture
 func (tm *TextureMap) Set(name string, tex *Texture) {
+	if _, exists := tm.textures[name]; !exists {
+		panic("no such texture")
+	}
 	tm.textures[name] = tex
 }
 

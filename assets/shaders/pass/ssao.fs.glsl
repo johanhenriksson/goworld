@@ -10,7 +10,7 @@ uniform sampler2D tex_position; // position gbuffer
 uniform sampler2D tex_normal; // normal gbuffer
 uniform sampler2D tex_noise; // noise texture
 
-uniform vec3 samples[64];
+uniform vec3 samples[32];
 
 // parameters (you'd probably want to use them as uniforms to more easily tweak the effect)
 uniform int kernel_size = 32;
@@ -60,5 +60,5 @@ void main()
     occlusion = 1.0 - (occlusion / kernel_size);
     occlusion = pow(occlusion, power);
     
-    out_ssao = vec4(occlusion, occlusion, occlusion, 1);
+    out_ssao = vec4(vec3(occlusion), 1);
 }

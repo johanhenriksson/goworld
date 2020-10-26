@@ -39,10 +39,8 @@ func (p *OutputPass) Type() render.Pass {
 
 // DrawPass draws the input texture to the scene camera buffer.
 func (p *OutputPass) Draw(scene *Scene) {
-	camera := scene.Camera
-
 	// camera settings
-	camera.Use()
+	scene.Camera.Use()
 	render.ClearWith(scene.Camera.Clear)
 
 	// draw

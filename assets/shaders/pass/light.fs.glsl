@@ -102,6 +102,7 @@ void main() {
     vec3 normal = normalize(worldNormal.xyz);
 
     /* calculate world position from depth map and the inverse camera view projection */
+    // why do we do this when we have a position buffer? :/
     float depth = texture(tex_depth, texcoord0).r;
     vec3 position = positionFromDepth(depth);
 

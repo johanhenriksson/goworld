@@ -77,8 +77,6 @@ func (f *FrameBuffer) Bind() {
 	// set viewport size equal to buffer size
 	Viewport(0, 0, f.Width, f.Height)
 
-	gl.BindTexture(gl.TEXTURE_2D, 0) // why?
-
 	// bind this frame buffer
 	gl.BindFramebuffer(gl.FRAMEBUFFER, f.id)
 }

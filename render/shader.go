@@ -15,11 +15,10 @@ import (
 	"github.com/johanhenriksson/goworld/util"
 )
 
-// TODO: return proper errors, dont just crash
-
 type ShaderInput struct {
 	Name  string
 	Index int32
+	Size  int32
 	Type  GLType
 }
 
@@ -64,18 +63,24 @@ func CompileShader(name string, fileNames ...string) *Shader {
 }
 
 // Use binds the program for use in rendering
-func (program *Shader) Use() {
-	if !program.linked {
-		panic(fmt.Sprintf("shader %s is not linked", program.Name))
+func (shader *Shader) Use() {
+	if !shader.linked {
+		panic(fmt.Sprintf("shader %s is not linked", shader.Name))
 	}
-	gl.UseProgram(program.ID)
+	gl.UseProgram(shader.ID)
+	if shader.Debug {
+		fmt.Println("use shader", shader.Name)
+	}
 }
 
 // SetFragmentData sets the name of the fragment color output variable
 func (shader *Shader) SetFragmentData(fragVariable string) {
 	cstr, free := util.GLString(fragVariable)
+	defer free()
 	gl.BindFragDataLocation(shader.ID, 0, *cstr)
-	free()
+	if err := gl.GetError(); err != gl.NONE {
+		panic(fmt.Errorf("set uniform error: %d", err))
+	}
 }
 
 // Attach a shader to the program. Panics if the program is already linked
@@ -95,7 +100,7 @@ func (shader *Shader) Link() {
 
 	gl.LinkProgram(shader.ID)
 
-	/* Read status */
+	// read status
 	var status int32
 	gl.GetProgramiv(shader.ID, gl.LINK_STATUS, &status)
 	if status == gl.FALSE {
@@ -168,6 +173,23 @@ func (shader *Shader) Vec3(name string, vec *vec3.T) {
 	}
 }
 
+func (shader *Shader) Vec3Array(name string, vecs []vec3.T) {
+	if input, ok := shader.Uniform(fmt.Sprintf("%s[0]", name)); ok {
+		if input.Type != Vec3f {
+			panic(fmt.Errorf("cant assign %s to uniform %s, expected %s", Vec3f, name, input.Type))
+		}
+		if input.Size == 1 {
+			panic(fmt.Errorf("%s is not an array", name))
+		}
+		if len(vecs) >= int(input.Size) {
+			panic(fmt.Errorf("input is too large for %s, max length: %d", name, input.Size))
+		}
+		for i, vec := range vecs {
+			gl.ProgramUniform3f(shader.ID, input.Index+int32(i), vec.X, vec.Y, vec.Z)
+		}
+	}
+}
+
 // Vec4 sets a Vec4f uniform value
 func (shader *Shader) Vec4(name string, vec *vec4.T) {
 	if input, ok := shader.Uniform(name); ok {
@@ -175,6 +197,9 @@ func (shader *Shader) Vec4(name string, vec *vec4.T) {
 			panic(fmt.Errorf("cant assign %s to uniform %s, expected %s", Vec4f, name, input.Type))
 		}
 		gl.ProgramUniform4f(shader.ID, input.Index, vec.X, vec.Y, vec.Z, vec.W)
+		if shader.Debug {
+			fmt.Println(shader.Name, name, "=", vec)
+		}
 	}
 }
 
@@ -185,6 +210,12 @@ func (shader *Shader) Int32(name string, val int) {
 			panic(fmt.Errorf("cant assign %s to uniform %s, expected %s", Int32, name, input.Type))
 		}
 		gl.ProgramUniform1i(shader.ID, input.Index, int32(val))
+		if err := gl.GetError(); err != gl.NONE {
+			panic(fmt.Errorf("set uniform error: %d", err))
+		}
+		if shader.Debug {
+			fmt.Println(shader.Name, name, "= int32", val)
+		}
 	}
 }
 
@@ -195,6 +226,12 @@ func (shader *Shader) UInt32(name string, val int) {
 			panic(fmt.Errorf("cant assign %s to uniform %s, expected %s", UInt32, name, input.Type))
 		}
 		gl.ProgramUniform1ui(shader.ID, input.Index, uint32(val))
+		if err := gl.GetError(); err != gl.NONE {
+			panic(fmt.Errorf("set uniform error: %d", err))
+		}
+		if shader.Debug {
+			fmt.Println(shader.Name, name, "=", val)
+		}
 	}
 }
 
@@ -263,7 +300,7 @@ func (shader *Shader) VertexPointers(data interface{}) Pointers {
 
 		attr, exists := shader.Attribute(tag.Name)
 		if !exists {
-			fmt.Printf("attribute %s does not exist on %s\n", tag.Name, el.Name())
+			fmt.Printf("attribute %s does not exist on %s\n", tag.Name, shader.Name)
 			offset += gltype.Size() * tag.Count
 			continue
 		}
@@ -280,8 +317,6 @@ func (shader *Shader) VertexPointers(data interface{}) Pointers {
 		}
 
 		pointers = append(pointers, ptr)
-
-		fmt.Printf("%+v\n", ptr)
 
 		offset += gltype.Size() * tag.Count
 	}
@@ -312,6 +347,7 @@ func (shader *Shader) readAttribute(index int) ShaderInput {
 	return ShaderInput{
 		Name:  buffer[:length],
 		Index: loc,
+		Size:  size,
 		Type:  GLType(gltype),
 	}
 }
@@ -324,7 +360,7 @@ func (shader *Shader) readUniforms() {
 	for i := 0; i < int(uniforms); i++ {
 		uniform := shader.readUniform(i)
 		shader.uniforms[uniform.Name] = uniform
-		fmt.Println(shader.Name, "uniform", uniform.Name, uniform.Type)
+		fmt.Println(shader.Name, "uniform", uniform.Name, uniform.Type, "=", uniform.Index, "size:", uniform.Size)
 	}
 }
 
@@ -339,6 +375,7 @@ func (shader *Shader) readUniform(index int) ShaderInput {
 	return ShaderInput{
 		Name:  buffer[:length],
 		Index: loc,
+		Size:  size,
 		Type:  GLType(gltype),
 	}
 }

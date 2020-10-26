@@ -25,8 +25,8 @@ type Manager struct {
 // NewManager creates a new UI manager.
 func NewManager(app *engine.Application) *Manager {
 	// grab UI dimensions from application window
-	width := float32(app.Window.Width) * app.Window.Scale
-	height := float32(app.Window.Height) * app.Window.Scale
+	width := float32(app.Window.Width)   // * app.Window.Scale
+	height := float32(app.Window.Height) // * app.Window.Scale
 
 	m := &Manager{
 		Width:    width,

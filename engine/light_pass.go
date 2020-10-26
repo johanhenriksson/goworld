@@ -8,6 +8,7 @@ import (
 
 // LightPass draws the deferred lighting pass
 type LightPass struct {
+	GBuffer        *render.GeometryBuffer
 	Output         *render.ColorBuffer
 	SSAO           *SSAOPass
 	Shadows        *ShadowPass
@@ -30,7 +31,7 @@ func NewLightPass(input *render.GeometryBuffer) *LightPass {
 		Radius:  0.5,
 		Bias:    0.03,
 		Power:   2.0,
-		Scale:   1,
+		Scale:   8,
 	})
 
 	// instantiate light pass shader
@@ -48,6 +49,7 @@ func NewLightPass(input *render.GeometryBuffer) *LightPass {
 	tx.Add("tex_occlusion", ssaoPass.Gaussian.Output)
 
 	p := &LightPass{
+		GBuffer:        input,
 		Output:         render.NewColorBuffer(input.Width, input.Height),
 		Shadows:        shadowPass,
 		SSAO:           ssaoPass,
@@ -102,16 +104,12 @@ func (p *LightPass) setLightUniforms(light *Light) {
 // Draw executes the deferred lighting pass.
 func (p *LightPass) Draw(scene *Scene) {
 	// ssao pass
-	p.SSAO.DrawPass(scene)
+	p.SSAO.Draw(scene)
 
 	// compute camera view projection inverse
 	vp := scene.Camera.Projection.Mul(&scene.Camera.View)
 	vpInv := vp.Invert()
 	vInv := scene.Camera.View.Invert()
-	p.shader.Use()
-	p.textures.Use()
-	p.shader.Mat4("cameraInverse", &vpInv)
-	p.shader.Mat4("viewInverse", &vInv)
 
 	// clear output buffer
 	p.Output.Bind()
@@ -122,6 +120,11 @@ func (p *LightPass) Draw(scene *Scene) {
 
 	// enable blending
 	render.Blend(false)
+
+	p.shader.Use()
+	p.textures.Use()
+	p.shader.Mat4("cameraInverse", &vpInv)
+	p.shader.Mat4("viewInverse", &vInv)
 
 	// ambient light pass
 	ambient := Light{
@@ -144,6 +147,8 @@ func (p *LightPass) Draw(scene *Scene) {
 		// first light pass we want the shader to restore the depth buffer
 		// then, disable depth masking so that multiple lights can be drawn
 
+		p.Output.Bind()
+
 		// use light shader again
 		p.shader.Use()
 		p.textures.Use()
@@ -151,7 +156,6 @@ func (p *LightPass) Draw(scene *Scene) {
 
 		// render light
 		// todo: draw light volumes instead of a fullscreen quad
-		p.Output.Bind()
 		p.quad.Draw()
 	}
 
