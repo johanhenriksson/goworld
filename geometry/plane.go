@@ -5,6 +5,7 @@ import (
 	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
+	"github.com/johanhenriksson/goworld/render/vertex"
 )
 
 // Plane is a colored, one segment, one-sided 3D plane
@@ -35,29 +36,29 @@ func NewPlane(size float32, color render.Color) *Plane {
 
 func (p *Plane) generate() {
 	s := p.Size / 2
-	o := ColorVertex{
-		Position: vec3.New(-s, 0, -s),
-		Normal:   vec3.UnitY,
-		Color:    p.Color,
+	o := vertex.C{
+		P: vec3.New(-s, 0, -s),
+		N: vec3.UnitY,
+		C: p.Color.Vec4(),
 	}
-	x := ColorVertex{
-		Position: vec3.New(s, 0, -s),
-		Normal:   vec3.UnitY,
-		Color:    p.Color,
+	x := vertex.C{
+		P: vec3.New(s, 0, -s),
+		N: vec3.UnitY,
+		C: p.Color.Vec4(),
 	}
-	z := ColorVertex{
-		Position: vec3.New(-s, 0, s),
-		Normal:   vec3.UnitY,
-		Color:    p.Color,
+	z := vertex.C{
+		P: vec3.New(-s, 0, s),
+		N: vec3.UnitY,
+		C: p.Color.Vec4(),
 	}
-	d := ColorVertex{
-		Position: vec3.New(s, 0, s),
-		Normal:   vec3.UnitY,
-		Color:    p.Color,
+	d := vertex.C{
+		P: vec3.New(s, 0, s),
+		N: vec3.UnitY,
+		C: p.Color.Vec4(),
 	}
-	data := ColorVertices{
+	data := []vertex.C{
 		o, z, x, x, z, d,
 		x, z, o, d, z, x,
 	}
-	p.Buffer("geometry", data)
+	p.Buffer(data)
 }

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"image/color"
 
+	"github.com/johanhenriksson/goworld/math/byte4"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/math/vec4"
 )
@@ -51,6 +52,14 @@ func (c Color) Vec3() vec3.T {
 // Vec4 returns a vec4 containing the RGBA components of the color
 func (c Color) Vec4() vec4.T {
 	return vec4.New(c.R, c.G, c.B, c.A)
+}
+
+func (c Color) Byte4() byte4.T {
+	return byte4.New(
+		byte(255.0*c.R),
+		byte(255.0*c.G),
+		byte(255.0*c.B),
+		byte(255.0*c.A))
 }
 
 func (c Color) String() string {

@@ -5,6 +5,7 @@ import (
 	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
+	"github.com/johanhenriksson/goworld/render/vertex"
 )
 
 type Lines struct {
@@ -67,15 +68,15 @@ func (lines *Lines) Box(x, y, z, w, h, d float32, color render.Color) {
 
 func (lines *Lines) Compute() {
 	count := len(lines.Lines)
-	data := make(ColorVertices, 2*count)
+	data := make([]vertex.C, 2*count)
 	for i := 0; i < count; i++ {
 		line := lines.Lines[i]
 		a := &data[2*i+0]
 		b := &data[2*i+1]
-		a.Position = line.Start
-		a.Color = line.Color
-		b.Position = line.End
-		b.Color = line.Color
+		a.P = line.Start
+		a.C = line.Color.Vec4()
+		b.P = line.End
+		b.C = line.Color.Vec4()
 	}
 
 	ptr := lines.Material.VertexPointers(data)

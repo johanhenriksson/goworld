@@ -4,3 +4,7 @@ package byte4
 type T struct {
 	X, Y, Z, W byte
 }
+
+func New(x, y, z, w byte) T {
+	return T{x, y, z, w}
+}

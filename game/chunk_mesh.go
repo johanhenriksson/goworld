@@ -9,7 +9,7 @@ import (
 type ChunkMesh struct {
 	*engine.Mesh
 	*Chunk
-	meshComputed chan VoxelVertices
+	meshComputed chan []VoxelVertex
 }
 
 func NewChunkMesh(chunk *Chunk) *ChunkMesh {
@@ -17,7 +17,7 @@ func NewChunkMesh(chunk *Chunk) *ChunkMesh {
 	chk := &ChunkMesh{
 		Mesh:         mesh,
 		Chunk:        chunk,
-		meshComputed: make(chan VoxelVertices),
+		meshComputed: make(chan []VoxelVertex),
 	}
 	mesh.Position = vec3.NewI(chunk.Ox, 0, chunk.Oz)
 	chk.Compute()
@@ -28,7 +28,7 @@ func (cm *ChunkMesh) Update(dt float32) {
 	cm.Mesh.Update(dt)
 	select {
 	case newMesh := <-cm.meshComputed:
-		cm.Buffer("geometry", newMesh)
+		cm.Buffer(newMesh)
 	default:
 	}
 }
@@ -41,8 +41,8 @@ func (cm *ChunkMesh) Compute() {
 	}()
 }
 
-func (cm *ChunkMesh) computeVertexData() VoxelVertices {
-	data := make(VoxelVertices, 0, 64)
+func (cm *ChunkMesh) computeVertexData() []VoxelVertex {
+	data := make([]VoxelVertex, 0, 64)
 	light := cm.Light.Brightness
 	Omax := float32(220)
 

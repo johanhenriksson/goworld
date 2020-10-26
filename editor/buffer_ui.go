@@ -22,12 +22,12 @@ func DebugBufferWindows(app *engine.Application) ui.Component {
 }
 
 func newBufferWindow(title string, texture *render.Texture, depth bool) ui.Component {
-	var img ui.Component
+	var img *ui.Image
 	size := vec2.New(240, 160)
 	if depth {
-		img = ui.NewDepthImage(texture, size, false)
+		img = ui.NewDepthImage(texture, size, true)
 	} else {
-		img = ui.NewImage(texture, size, false, ui.NoStyle)
+		img = ui.NewImage(texture, size, true, ui.NoStyle)
 	}
 
 	return ui.NewRect(WindowStyle,

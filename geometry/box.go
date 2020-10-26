@@ -2,9 +2,11 @@ package geometry
 
 import (
 	"fmt"
+
 	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
+	"github.com/johanhenriksson/goworld/render/vertex"
 )
 
 type Box struct {
@@ -26,37 +28,38 @@ func NewBox(size vec3.T, color render.Color) *Box {
 func (b *Box) compute() {
 	x, y, z := b.Position.X, b.Position.Y, b.Position.Z
 	w, h, d := b.Size.X, b.Size.Y, b.Size.Z
-	vertices := ColorVertices{
+	c := b.Color.Vec4()
+	vertices := []vertex.C{
 		// bottom square
-		ColorVertex{Position: vec3.New(x, y, z), Color: b.Color},
-		ColorVertex{Position: vec3.New(x+w, y, z), Color: b.Color},
-		ColorVertex{Position: vec3.New(x, y, z), Color: b.Color},
-		ColorVertex{Position: vec3.New(x, y, z+d), Color: b.Color},
-		ColorVertex{Position: vec3.New(x+w, y, z), Color: b.Color},
-		ColorVertex{Position: vec3.New(x+w, y, z+d), Color: b.Color},
-		ColorVertex{Position: vec3.New(x, y, z+w), Color: b.Color},
-		ColorVertex{Position: vec3.New(x+w, y, z+d), Color: b.Color},
+		{P: vec3.New(x, y, z), C: c},
+		{P: vec3.New(x+w, y, z), C: c},
+		{P: vec3.New(x, y, z), C: c},
+		{P: vec3.New(x, y, z+d), C: c},
+		{P: vec3.New(x+w, y, z), C: c},
+		{P: vec3.New(x+w, y, z+d), C: c},
+		{P: vec3.New(x, y, z+w), C: c},
+		{P: vec3.New(x+w, y, z+d), C: c},
 
 		// top square
-		ColorVertex{Position: vec3.New(x, y+h, z), Color: b.Color},
-		ColorVertex{Position: vec3.New(x+w, y+h, z), Color: b.Color},
-		ColorVertex{Position: vec3.New(x, y+h, z), Color: b.Color},
-		ColorVertex{Position: vec3.New(x, y+h, z+d), Color: b.Color},
-		ColorVertex{Position: vec3.New(x+w, y+h, z), Color: b.Color},
-		ColorVertex{Position: vec3.New(x+w, y+h, z+d), Color: b.Color},
-		ColorVertex{Position: vec3.New(x, y+h, z+w), Color: b.Color},
-		ColorVertex{Position: vec3.New(x+w, y+h, z+d), Color: b.Color},
+		{P: vec3.New(x, y+h, z), C: c},
+		{P: vec3.New(x+w, y+h, z), C: c},
+		{P: vec3.New(x, y+h, z), C: c},
+		{P: vec3.New(x, y+h, z+d), C: c},
+		{P: vec3.New(x+w, y+h, z), C: c},
+		{P: vec3.New(x+w, y+h, z+d), C: c},
+		{P: vec3.New(x, y+h, z+w), C: c},
+		{P: vec3.New(x+w, y+h, z+d), C: c},
 
 		// connecting lines
-		ColorVertex{Position: vec3.New(x, y, z), Color: b.Color},
-		ColorVertex{Position: vec3.New(x, y+h, z), Color: b.Color},
-		ColorVertex{Position: vec3.New(x+w, y, z), Color: b.Color},
-		ColorVertex{Position: vec3.New(x+w, y+h, z), Color: b.Color},
-		ColorVertex{Position: vec3.New(x, y, z+d), Color: b.Color},
-		ColorVertex{Position: vec3.New(x, y+h, z+d), Color: b.Color},
-		ColorVertex{Position: vec3.New(x+w, y, z+d), Color: b.Color},
-		ColorVertex{Position: vec3.New(x+w, y+h, z+d), Color: b.Color},
+		{P: vec3.New(x, y, z), C: c},
+		{P: vec3.New(x, y+h, z), C: c},
+		{P: vec3.New(x+w, y, z), C: c},
+		{P: vec3.New(x+w, y+h, z), C: c},
+		{P: vec3.New(x, y, z+d), C: c},
+		{P: vec3.New(x, y+h, z+d), C: c},
+		{P: vec3.New(x+w, y, z+d), C: c},
+		{P: vec3.New(x+w, y+h, z+d), C: c},
 	}
 	fmt.Println("box")
-	b.Buffer("geometry", vertices)
+	b.Buffer(vertices)
 }

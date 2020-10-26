@@ -13,11 +13,11 @@ type MeshBufferMap map[string]*render.VertexBuffer
 // Mesh base
 type Mesh struct {
 	*Transform
-	Pass render.Pass
+	Pass     render.Pass
+	Material *render.Material
 
-	name     string
-	material *render.Material
-	vao      *render.VertexArray
+	name string
+	vao  *render.VertexArray
 }
 
 // NewMesh creates a new mesh object
@@ -37,7 +37,7 @@ func NewPrimitiveMesh(name string, primitive render.GLPrimitive, pass render.Pas
 		Transform: Identity(),
 		Pass:      pass,
 		name:      name,
-		material:  material,
+		Material:  material,
 		vao:       render.CreateVertexArray(primitive),
 	}
 	return m
@@ -69,8 +69,8 @@ func (m *Mesh) Collect(pass DrawPass, args DrawArgs) {
 }
 
 func (m *Mesh) DrawDeferred(args DrawArgs) {
-	m.material.Use()
-	shader := m.material.Shader // UsePass(render.Geometry)
+	m.Material.Use()
+	shader := m.Material.Shader // UsePass(render.Geometry)
 
 	// set up uniforms
 	shader.Mat4("model", &args.Transform)
@@ -83,8 +83,8 @@ func (m *Mesh) DrawDeferred(args DrawArgs) {
 }
 
 func (m *Mesh) DrawForward(args DrawArgs) {
-	m.material.Use()
-	shader := m.material.Shader // UsePass(render.Geometry)
+	m.Material.Use()
+	shader := m.Material.Shader // UsePass(render.Geometry)
 
 	// set up uniforms
 	shader.Mat4("model", &args.Transform)
@@ -96,14 +96,14 @@ func (m *Mesh) DrawForward(args DrawArgs) {
 }
 
 func (m *Mesh) DrawLines(args DrawArgs) {
-	m.material.Use()
-	m.material.Mat4("mvp", &args.MVP)
+	m.Material.Use()
+	m.Material.Mat4("mvp", &args.MVP)
 
 	m.vao.Draw()
 }
 
-func (m Mesh) Buffer(buffer string, data interface{}) {
-	pointers := m.material.VertexPointers(data)
+func (m Mesh) Buffer(data interface{}) {
+	pointers := m.Material.VertexPointers(data)
 
 	// compatibility hack
 	if len(pointers) == 0 {

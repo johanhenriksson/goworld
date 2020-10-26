@@ -3,6 +3,9 @@ package geometry
 import (
 	"github.com/johanhenriksson/goworld/assets"
 	"github.com/johanhenriksson/goworld/engine"
+	"github.com/johanhenriksson/goworld/math/vec2"
+	"github.com/johanhenriksson/goworld/math/vec3"
+	"github.com/johanhenriksson/goworld/render/vertex"
 )
 
 // Cube mesh, textured
@@ -24,54 +27,54 @@ func NewCube(size float32) *Cube {
 
 func (c *Cube) generate() {
 	s := c.Size / 2
-	data := Vertices{
+	data := []vertex.T{
 		// XP
-		Vertex{s, -s, s, 1, 0, 0, 1, 1},
-		Vertex{s, -s, -s, 1, 0, 0, 1, 0},
-		Vertex{s, s, -s, 1, 0, 0, 0, 0},
-		Vertex{s, -s, s, 1, 0, 0, 1, 1},
-		Vertex{s, s, -s, 1, 0, 0, 0, 0},
-		Vertex{s, s, s, 1, 0, 0, 0, 1},
+		{P: vec3.New(s, -s, s), N: vec3.UnitX, T: vec2.New(1, 1)},
+		{P: vec3.New(s, -s, -s), N: vec3.UnitX, T: vec2.New(1, 0)},
+		{P: vec3.New(s, s, -s), N: vec3.UnitX, T: vec2.New(0, 0)},
+		{P: vec3.New(s, -s, s), N: vec3.UnitX, T: vec2.New(1, 1)},
+		{P: vec3.New(s, s, -s), N: vec3.UnitX, T: vec2.New(0, 0)},
+		{P: vec3.New(s, s, s), N: vec3.UnitX, T: vec2.New(0, 1)},
 
 		// XN
-		Vertex{-s, -s, s, -1, 0, 0, 0, 1},
-		Vertex{-s, s, -s, -1, 0, 0, 1, 0},
-		Vertex{-s, -s, -s, -1, 0, 0, 0, 0},
-		Vertex{-s, -s, s, -1, 0, 0, 0, 1},
-		Vertex{-s, s, s, -1, 0, 0, 1, 1},
-		Vertex{-s, s, -s, -1, 0, 0, 1, 0},
+		{P: vec3.New(-s, -s, s), N: vec3.UnitXN, T: vec2.New(0, 1)},
+		{P: vec3.New(-s, s, -s), N: vec3.UnitXN, T: vec2.New(1, 0)},
+		{P: vec3.New(-s, -s, -s), N: vec3.UnitXN, T: vec2.New(0, 0)},
+		{P: vec3.New(-s, -s, s), N: vec3.UnitXN, T: vec2.New(0, 1)},
+		{P: vec3.New(-s, s, s), N: vec3.UnitXN, T: vec2.New(1, 1)},
+		{P: vec3.New(-s, s, -s), N: vec3.UnitXN, T: vec2.New(1, 0)},
 
 		// YP
-		Vertex{-s, s, -s, 0, 1, 0, 0, 0},
-		Vertex{-s, s, s, 0, 1, 0, 0, 1},
-		Vertex{s, s, -s, 0, 1, 0, 1, 0},
-		Vertex{s, s, -s, 0, 1, 0, 1, 0},
-		Vertex{-s, s, s, 0, 1, 0, 0, 1},
-		Vertex{s, s, s, 0, 1, 0, 1, 1},
+		{P: vec3.New(-s, s, -s), N: vec3.UnitY, T: vec2.New(0, 0)},
+		{P: vec3.New(-s, s, s), N: vec3.UnitY, T: vec2.New(0, 1)},
+		{P: vec3.New(s, s, -s), N: vec3.UnitY, T: vec2.New(1, 0)},
+		{P: vec3.New(s, s, -s), N: vec3.UnitY, T: vec2.New(1, 0)},
+		{P: vec3.New(-s, s, s), N: vec3.UnitY, T: vec2.New(0, 1)},
+		{P: vec3.New(s, s, s), N: vec3.UnitY, T: vec2.New(1, 1)},
 
 		// YN
-		Vertex{-s, -s, -s, 0, -1, 0, 0, 0},
-		Vertex{s, -s, -s, 0, -1, 0, 1, 0},
-		Vertex{-s, -s, s, 0, -1, 0, 0, 1},
-		Vertex{s, -s, -s, 0, -1, 0, 1, 0},
-		Vertex{s, -s, s, 0, -1, 0, 1, 1},
-		Vertex{-s, -s, s, 0, -1, 0, 0, 1},
+		{P: vec3.New(-s, -s, -s), N: vec3.UnitYN, T: vec2.New(0, 0)},
+		{P: vec3.New(s, -s, -s), N: vec3.UnitYN, T: vec2.New(1, 0)},
+		{P: vec3.New(-s, -s, s), N: vec3.UnitYN, T: vec2.New(0, 1)},
+		{P: vec3.New(s, -s, -s), N: vec3.UnitYN, T: vec2.New(1, 0)},
+		{P: vec3.New(s, -s, s), N: vec3.UnitYN, T: vec2.New(1, 1)},
+		{P: vec3.New(-s, -s, s), N: vec3.UnitYN, T: vec2.New(0, 1)},
 
 		// ZP
-		Vertex{-s, -s, s, 0, 0, 1, 1, 0},
-		Vertex{s, -s, s, 0, 0, 1, 0, 0},
-		Vertex{-s, s, s, 0, 0, 1, 1, 1},
-		Vertex{s, -s, s, 0, 0, 1, 0, 0},
-		Vertex{s, s, s, 0, 0, 1, 0, 1},
-		Vertex{-s, s, s, 0, 0, 1, 1, 1},
+		{P: vec3.New(-s, -s, s), N: vec3.UnitZ, T: vec2.New(1, 0)},
+		{P: vec3.New(s, -s, s), N: vec3.UnitZ, T: vec2.New(0, 0)},
+		{P: vec3.New(-s, s, s), N: vec3.UnitZ, T: vec2.New(1, 1)},
+		{P: vec3.New(s, -s, s), N: vec3.UnitZ, T: vec2.New(0, 0)},
+		{P: vec3.New(s, s, s), N: vec3.UnitZ, T: vec2.New(0, 1)},
+		{P: vec3.New(-s, s, s), N: vec3.UnitZ, T: vec2.New(1, 1)},
 
 		// ZN
-		Vertex{-s, -s, -s, 0, 0, -1, 0, 0},
-		Vertex{-s, s, -s, 0, 0, -1, 0, 1},
-		Vertex{s, -s, -s, 0, 0, -1, 1, 0},
-		Vertex{s, -s, -s, 0, 0, -1, 1, 0},
-		Vertex{-s, s, -s, 0, 0, -1, 0, 1},
-		Vertex{s, s, -s, 0, 0, -1, 1, 1},
+		{P: vec3.New(-s, -s, -s), N: vec3.UnitZN, T: vec2.New(0, 0)},
+		{P: vec3.New(-s, s, -s), N: vec3.UnitZN, T: vec2.New(0, 1)},
+		{P: vec3.New(s, -s, -s), N: vec3.UnitZN, T: vec2.New(1, 0)},
+		{P: vec3.New(s, -s, -s), N: vec3.UnitZN, T: vec2.New(1, 0)},
+		{P: vec3.New(-s, s, -s), N: vec3.UnitZN, T: vec2.New(0, 1)},
+		{P: vec3.New(s, s, -s), N: vec3.UnitZN, T: vec2.New(1, 1)},
 	}
-	c.Buffer("geometry", data)
+	c.Buffer(data)
 }

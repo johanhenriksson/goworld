@@ -17,6 +17,8 @@ type Rect struct {
 
 	segments int
 	border   float32
+	Invert   bool
+	Depth    bool
 	vao      *render.VertexArray
 }
 
@@ -27,6 +29,8 @@ func NewRect(mat *render.Material, size vec2.T) *Rect {
 		Height:   size.Y,
 		segments: 5,
 		border:   0,
+		Invert:   false,
+		Depth:    false,
 
 		vao: render.CreateVertexArray(render.Triangles),
 	}
@@ -123,7 +127,7 @@ func (q *Rect) compute() {
 		bw, bh = tb/float32(tex.Width), tb/float32(tex.Height)
 	}
 
-	bw, bh = float32(128.0/1024.0), float32(128.0/1024.0)
+	// bw, bh = float32(128.0/1024.0), float32(128.0/1024.0)
 
 	TopLeft := vertex.T{P: vec3.New(b, h-b, 0), T: vec2.New(bw, 1-bh)}
 	TopRight := vertex.T{P: vec3.New(w-b, h-b, 0), T: vec2.New(1-bw, 1-bh)}
@@ -194,5 +198,7 @@ func (q *Rect) Draw(args engine.DrawArgs) {
 	q.Material.Use()
 	q.Material.Mat4("model", &args.Transform)
 	q.Material.Mat4("viewport", &args.Projection)
+	q.Material.Bool("invert", q.Invert)
+	q.Material.Bool("depth", q.Depth)
 	q.vao.Draw()
 }

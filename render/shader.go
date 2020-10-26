@@ -206,7 +206,7 @@ func (shader *Shader) Vec4(name string, vec *vec4.T) {
 // Int32 sets an integer 32 uniform value
 func (shader *Shader) Int32(name string, val int) {
 	if input, ok := shader.Uniform(name); ok {
-		if input.Type != Int32 && input.Type != Texture2D {
+		if input.Type != Int32 && input.Type != Texture2D && input.Type != gl.BOOL {
 			panic(fmt.Errorf("cant assign %s to uniform %s, expected %s", Int32, name, input.Type))
 		}
 		gl.ProgramUniform1i(shader.ID, input.Index, int32(val))
@@ -233,6 +233,14 @@ func (shader *Shader) UInt32(name string, val int) {
 			fmt.Println(shader.Name, name, "=", val)
 		}
 	}
+}
+
+func (shader *Shader) Bool(name string, val bool) {
+	i := 0
+	if val {
+		i = 1
+	}
+	shader.Int32(name, i)
 }
 
 // Float sets a float uniform value

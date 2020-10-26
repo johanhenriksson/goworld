@@ -5,6 +5,7 @@ import (
 	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
+	"github.com/johanhenriksson/goworld/render/vertex"
 )
 
 // ColorCube is a vertex colored cube mesh
@@ -14,7 +15,7 @@ type ColorCube struct {
 	Color render.Color
 }
 
-// NewCube creates a vertex colored cube mesh with a given size
+// NewColorCube creates a vertex colored cube mesh with a given size
 func NewColorCube(color render.Color, size float32) *ColorCube {
 	mat := assets.GetMaterialShared("color.f")
 	cube := &ColorCube{
@@ -29,48 +30,49 @@ func NewColorCube(color render.Color, size float32) *ColorCube {
 
 func (c *ColorCube) generate() {
 	s := c.Size / 2
-	data := ColorVertices{
-		ColorVertex{vec3.New(s, -s, s), vec3.UnitX, c.Color},
-		ColorVertex{vec3.New(s, -s, -s), vec3.UnitX, c.Color},
-		ColorVertex{vec3.New(s, s, -s), vec3.UnitX, c.Color},
-		ColorVertex{vec3.New(s, -s, s), vec3.UnitX, c.Color},
-		ColorVertex{vec3.New(s, s, -s), vec3.UnitX, c.Color},
-		ColorVertex{vec3.New(s, s, s), vec3.UnitX, c.Color},
+	co := c.Color.Vec4()
+	data := []vertex.C{
+		{P: vec3.New(s, -s, s), N: vec3.UnitX, C: co},
+		{P: vec3.New(s, -s, -s), N: vec3.UnitX, C: co},
+		{P: vec3.New(s, s, -s), N: vec3.UnitX, C: co},
+		{P: vec3.New(s, -s, s), N: vec3.UnitX, C: co},
+		{P: vec3.New(s, s, -s), N: vec3.UnitX, C: co},
+		{P: vec3.New(s, s, s), N: vec3.UnitX, C: co},
 
-		ColorVertex{vec3.New(-s, -s, s), vec3.UnitXN, c.Color},
-		ColorVertex{vec3.New(-s, s, -s), vec3.UnitXN, c.Color},
-		ColorVertex{vec3.New(-s, -s, -s), vec3.UnitXN, c.Color},
-		ColorVertex{vec3.New(-s, -s, s), vec3.UnitXN, c.Color},
-		ColorVertex{vec3.New(-s, s, s), vec3.UnitXN, c.Color},
-		ColorVertex{vec3.New(-s, s, -s), vec3.UnitXN, c.Color},
+		{P: vec3.New(-s, -s, s), N: vec3.UnitXN, C: co},
+		{P: vec3.New(-s, s, -s), N: vec3.UnitXN, C: co},
+		{P: vec3.New(-s, -s, -s), N: vec3.UnitXN, C: co},
+		{P: vec3.New(-s, -s, s), N: vec3.UnitXN, C: co},
+		{P: vec3.New(-s, s, s), N: vec3.UnitXN, C: co},
+		{P: vec3.New(-s, s, -s), N: vec3.UnitXN, C: co},
 
-		ColorVertex{vec3.New(-s, s, -s), vec3.UnitY, c.Color},
-		ColorVertex{vec3.New(-s, s, s), vec3.UnitY, c.Color},
-		ColorVertex{vec3.New(s, s, -s), vec3.UnitY, c.Color},
-		ColorVertex{vec3.New(s, s, -s), vec3.UnitY, c.Color},
-		ColorVertex{vec3.New(-s, s, s), vec3.UnitY, c.Color},
-		ColorVertex{vec3.New(s, s, s), vec3.UnitY, c.Color},
+		{P: vec3.New(-s, s, -s), N: vec3.UnitY, C: co},
+		{P: vec3.New(-s, s, s), N: vec3.UnitY, C: co},
+		{P: vec3.New(s, s, -s), N: vec3.UnitY, C: co},
+		{P: vec3.New(s, s, -s), N: vec3.UnitY, C: co},
+		{P: vec3.New(-s, s, s), N: vec3.UnitY, C: co},
+		{P: vec3.New(s, s, s), N: vec3.UnitY, C: co},
 
-		ColorVertex{vec3.New(-s, -s, -s), vec3.UnitYN, c.Color},
-		ColorVertex{vec3.New(s, -s, -s), vec3.UnitYN, c.Color},
-		ColorVertex{vec3.New(-s, -s, s), vec3.UnitYN, c.Color},
-		ColorVertex{vec3.New(s, -s, -s), vec3.UnitYN, c.Color},
-		ColorVertex{vec3.New(s, -s, s), vec3.UnitYN, c.Color},
-		ColorVertex{vec3.New(-s, -s, s), vec3.UnitYN, c.Color},
+		{P: vec3.New(-s, -s, -s), N: vec3.UnitYN, C: co},
+		{P: vec3.New(s, -s, -s), N: vec3.UnitYN, C: co},
+		{P: vec3.New(-s, -s, s), N: vec3.UnitYN, C: co},
+		{P: vec3.New(s, -s, -s), N: vec3.UnitYN, C: co},
+		{P: vec3.New(s, -s, s), N: vec3.UnitYN, C: co},
+		{P: vec3.New(-s, -s, s), N: vec3.UnitYN, C: co},
 
-		ColorVertex{vec3.New(-s, -s, s), vec3.UnitZ, c.Color},
-		ColorVertex{vec3.New(s, -s, s), vec3.UnitZ, c.Color},
-		ColorVertex{vec3.New(-s, s, s), vec3.UnitZ, c.Color},
-		ColorVertex{vec3.New(s, -s, s), vec3.UnitZ, c.Color},
-		ColorVertex{vec3.New(s, s, s), vec3.UnitZ, c.Color},
-		ColorVertex{vec3.New(-s, s, s), vec3.UnitZ, c.Color},
+		{P: vec3.New(-s, -s, s), N: vec3.UnitZ, C: co},
+		{P: vec3.New(s, -s, s), N: vec3.UnitZ, C: co},
+		{P: vec3.New(-s, s, s), N: vec3.UnitZ, C: co},
+		{P: vec3.New(s, -s, s), N: vec3.UnitZ, C: co},
+		{P: vec3.New(s, s, s), N: vec3.UnitZ, C: co},
+		{P: vec3.New(-s, s, s), N: vec3.UnitZ, C: co},
 
-		ColorVertex{vec3.New(-s, -s, -s), vec3.UnitZN, c.Color},
-		ColorVertex{vec3.New(-s, s, -s), vec3.UnitZN, c.Color},
-		ColorVertex{vec3.New(s, -s, -s), vec3.UnitZN, c.Color},
-		ColorVertex{vec3.New(s, -s, -s), vec3.UnitZN, c.Color},
-		ColorVertex{vec3.New(-s, s, -s), vec3.UnitZN, c.Color},
-		ColorVertex{vec3.New(s, s, -s), vec3.UnitZN, c.Color},
+		{P: vec3.New(-s, -s, -s), N: vec3.UnitZN, C: co},
+		{P: vec3.New(-s, s, -s), N: vec3.UnitZN, C: co},
+		{P: vec3.New(s, -s, -s), N: vec3.UnitZN, C: co},
+		{P: vec3.New(s, -s, -s), N: vec3.UnitZN, C: co},
+		{P: vec3.New(-s, s, -s), N: vec3.UnitZN, C: co},
+		{P: vec3.New(s, s, -s), N: vec3.UnitZN, C: co},
 	}
-	c.Buffer("geometry", data)
+	c.Buffer(data)
 }
