@@ -33,6 +33,17 @@ const (
 	Y Code = 89
 	Z Code = 90
 
+	Key0 = Code(glfw.Key0)
+	Key1 = Code(glfw.Key1)
+	Key2 = Code(glfw.Key2)
+	Key3 = Code(glfw.Key3)
+	Key4 = Code(glfw.Key4)
+	Key5 = Code(glfw.Key5)
+	Key6 = Code(glfw.Key6)
+	Key7 = Code(glfw.Key7)
+	Key8 = Code(glfw.Key8)
+	Key9 = Code(glfw.Key9)
+
 	Enter       = Code(glfw.KeyEnter)
 	Escape      = Code(glfw.KeyEscape)
 	Backspace   = Code(glfw.KeyBackspace)

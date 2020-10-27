@@ -25,6 +25,10 @@ type Editor struct {
 	ReplaceTool *ReplaceTool
 
 	XPlane *geometry.Plane
+	YPlane *geometry.Plane
+	ZPlane *geometry.Plane
+
+	xp, yp, zp int
 
 	bounds  *geometry.Box
 	mesh    *game.ChunkMesh
@@ -45,6 +49,8 @@ func NewEditor(chunk *game.Chunk, camera *engine.Camera, gbuffer *render.Geometr
 		ReplaceTool: NewReplaceTool(),
 
 		XPlane: geometry.NewPlane(16, render.Red.WithAlpha(0.25)),
+		YPlane: geometry.NewPlane(16, render.Green.WithAlpha(0.25)),
+		ZPlane: geometry.NewPlane(16, render.Blue.WithAlpha(0.25)),
 
 		mesh:    game.NewChunkMesh(chunk),
 		bounds:  geometry.NewBox(vec3.NewI(16, 16, 16), render.Color4(0.3, 0.3, 0.3, 1)),
@@ -52,12 +58,17 @@ func NewEditor(chunk *game.Chunk, camera *engine.Camera, gbuffer *render.Geometr
 	}
 
 	e.XPlane.Rotation.X = -90
-	e.XPlane.Rotation.Z = 180
-	e.XPlane.Position = vec3.New(8, 8, 7.0)
+	e.XPlane.Rotation.Z = 90
+	e.XPlane.Position = vec3.New(float32(e.xp), 8, 8)
+
+	e.YPlane.Position = vec3.New(8, float32(e.yp), 8)
+
+	e.ZPlane.Rotation.X = -90
+	e.ZPlane.Position = vec3.New(8, 8, float32(e.zp))
 
 	e.Tool = e.PlaceTool
 
-	e.Attach(e.mesh, e.bounds, e.XPlane)
+	e.Attach(e.mesh, e.bounds, e.XPlane, e.YPlane, e.ZPlane)
 
 	return e
 }
@@ -108,6 +119,26 @@ func (e *Editor) Update(dt float32) {
 	// eyedropper tool
 	if keys.Pressed(keys.T) {
 		e.Tool = e.SampleTool
+	}
+
+	m := 1
+	if keys.Down(keys.LeftShift) {
+		m = -1
+	}
+
+	if keys.Pressed(keys.Key1) {
+		e.xp = (e.xp + e.Chunk.Sx + m + 1) % (e.Chunk.Sx + 1)
+		e.XPlane.Position.X = float32(e.xp)
+	}
+
+	if keys.Pressed(keys.Key2) {
+		e.yp = (e.yp + e.Chunk.Sy + m + 1) % (e.Chunk.Sy + 1)
+		e.YPlane.Position.Y = float32(e.yp)
+	}
+
+	if keys.Pressed(keys.Key3) {
+		e.zp = (e.zp + e.Chunk.Sz + m + 1) % (e.Chunk.Sz + 1)
+		e.ZPlane.Position.Z = float32(e.zp)
 	}
 }
 
