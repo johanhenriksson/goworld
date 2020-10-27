@@ -5,6 +5,7 @@ layout(location=0) out vec4 color;
 
 uniform sampler2D tex_input; // source image
 uniform sampler2D tex_lut; // color lookup table
+uniform sampler2D tex_ssao;
 uniform float gamma = 2.2;
 
 #define MAXCOLOR 15.0 
@@ -35,6 +36,9 @@ vec3 lookup_color(sampler2D lut, vec3 clr) {
 void main() {
     // get input color
     vec3 src = texture(tex_input, texcoord0.xy).rgb;
+    float ssao = texture(tex_ssao, texcoord0.xy).r;
+
+    src *= ssao;
 
     // color grading
     vec3 graded = lookup_color(tex_lut, src);

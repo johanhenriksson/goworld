@@ -8,14 +8,15 @@ import (
 )
 
 func DebugBufferWindows(app *engine.Application) ui.Component {
-	lightPass := app.Pipeline.Light
-	geoPass := app.Pipeline.Geometry
+	light := app.Pipeline.Light
+	geom := app.Pipeline.Geometry
+	ssao := app.Pipeline.SSAO
 	bufferWindows := ui.NewRect(ui.Style{"spacing": ui.Float(10)},
-		newBufferWindow("Diffuse", geoPass.Buffer.Diffuse, false),
-		newBufferWindow("Normal", geoPass.Buffer.Normal, false),
-		newBufferWindow("Position", geoPass.Buffer.Position, false),
-		newBufferWindow("Occlusion", lightPass.SSAO.Gaussian.Output, true),
-		newBufferWindow("Light", lightPass.Output.Texture, false))
+		newBufferWindow("Diffuse", geom.Buffer.Diffuse, false),
+		newBufferWindow("Normal", geom.Buffer.Normal, false),
+		newBufferWindow("Position", geom.Buffer.Position, false),
+		newBufferWindow("Occlusion", ssao.Gaussian.Output, true),
+		newBufferWindow("Light", light.Output.Texture, false))
 	bufferWindows.SetPosition(vec2.New(10, 10))
 	bufferWindows.Flow(vec2.New(500, 1000))
 	return bufferWindows

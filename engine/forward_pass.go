@@ -64,6 +64,10 @@ func (p *ForwardPass) Draw(scene *Scene) {
 	p.fbo.Bind()
 	defer p.fbo.Unbind()
 	p.fbo.DrawBuffers()
+	// gl.Disablei(gl.BLEND, gl.COLOR_ATTACHMENT1)
+	// gl.Disablei(gl.BLEND, gl.COLOR_ATTACHMENT2)
+	// gl.BlendFuncSeparatei(gl.COLOR_ATTACHMENT1, gl.ZERO, gl.ONE, gl.ZERO, gl.ONE)
+	// gl.BlendFuncSeparatei(gl.COLOR_ATTACHMENT2, gl.ZERO, gl.ONE, gl.ZERO, gl.ONE)
 
 	// disable depth testing
 	// todo: should be disabled for transparent things, not everything

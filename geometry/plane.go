@@ -36,29 +36,21 @@ func NewPlane(size float32, color render.Color) *Plane {
 
 func (p *Plane) generate() {
 	s := p.Size / 2
-	o := vertex.C{
-		P: vec3.New(-s, 0, -s),
-		N: vec3.UnitY,
-		C: p.Color.Vec4(),
-	}
-	x := vertex.C{
-		P: vec3.New(s, 0, -s),
-		N: vec3.UnitY,
-		C: p.Color.Vec4(),
-	}
-	z := vertex.C{
-		P: vec3.New(-s, 0, s),
-		N: vec3.UnitY,
-		C: p.Color.Vec4(),
-	}
-	d := vertex.C{
-		P: vec3.New(s, 0, s),
-		N: vec3.UnitY,
-		C: p.Color.Vec4(),
-	}
+	y := float32(0.001)
+
+	o1 := vertex.C{P: vec3.New(-s, y, -s), N: vec3.UnitY, C: p.Color.Vec4()}
+	x1 := vertex.C{P: vec3.New(s, y, -s), N: vec3.UnitY, C: p.Color.Vec4()}
+	z1 := vertex.C{P: vec3.New(-s, y, s), N: vec3.UnitY, C: p.Color.Vec4()}
+	d1 := vertex.C{P: vec3.New(s, y, s), N: vec3.UnitY, C: p.Color.Vec4()}
+
+	o2 := vertex.C{P: vec3.New(-s, -y, -s), N: vec3.UnitYN, C: p.Color.Vec4()}
+	x2 := vertex.C{P: vec3.New(s, -y, -s), N: vec3.UnitYN, C: p.Color.Vec4()}
+	z2 := vertex.C{P: vec3.New(-s, -y, s), N: vec3.UnitYN, C: p.Color.Vec4()}
+	d2 := vertex.C{P: vec3.New(s, -y, s), N: vec3.UnitYN, C: p.Color.Vec4()}
+
 	data := []vertex.C{
-		o, z, x, x, z, d,
-		x, z, o, d, z, x,
+		o1, z1, x1, x1, z1, d1,
+		x2, z2, o2, d2, z2, x2,
 	}
 	p.Buffer(data)
 }

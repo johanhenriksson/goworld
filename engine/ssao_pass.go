@@ -108,6 +108,8 @@ func (p *SSAOPass) Draw(scene *Scene) {
 
 	// run blur pass
 	p.Gaussian.DrawPass(scene)
+
+	render.DepthOutput(true)
 }
 
 func createSSAOKernel(samples int) []vec3.T {

@@ -10,7 +10,6 @@ import (
 type LightPass struct {
 	GBuffer        *render.GeometryBuffer
 	Output         *render.ColorBuffer
-	SSAO           *SSAOPass
 	Shadows        *ShadowPass
 	Ambient        render.Color
 	ShadowStrength float32
@@ -26,13 +25,6 @@ type LightPass struct {
 func NewLightPass(input *render.GeometryBuffer) *LightPass {
 	// child passes
 	shadowPass := NewShadowPass(input)
-	ssaoPass := NewSSAOPass(input, &SSAOSettings{
-		Samples: 16,
-		Radius:  0.5,
-		Bias:    0.03,
-		Power:   2.0,
-		Scale:   8,
-	})
 
 	// instantiate light pass shader
 	shader := render.CompileShader(
@@ -46,13 +38,12 @@ func NewLightPass(input *render.GeometryBuffer) *LightPass {
 	tx.Add("tex_normal", input.Normal)
 	tx.Add("tex_depth", input.Depth)
 	tx.Add("tex_shadow", shadowPass.Output)
-	tx.Add("tex_occlusion", ssaoPass.Gaussian.Output)
+	// tx.Add("tex_occlusion", ssaoPass.Gaussian.Output)
 
 	p := &LightPass{
 		GBuffer:        input,
 		Output:         render.NewColorBuffer(input.Width, input.Height),
 		Shadows:        shadowPass,
-		SSAO:           ssaoPass,
 		Ambient:        render.Color4(0.25, 0.25, 0.25, 1),
 		ShadowStrength: 0.3,
 		ShadowBias:     0.0001,
@@ -67,7 +58,7 @@ func NewLightPass(input *render.GeometryBuffer) *LightPass {
 	shader.Use()
 	shader.Float("shadow_bias", p.ShadowBias)
 	shader.Float("shadow_strength", p.ShadowStrength)
-	shader.Float("ssao_amount", p.SSAOAmount)
+	// shader.Float("ssao_amount", p.SSAOAmount)
 
 	return p
 }
@@ -103,9 +94,6 @@ func (p *LightPass) setLightUniforms(light *Light) {
 
 // Draw executes the deferred lighting pass.
 func (p *LightPass) Draw(scene *Scene) {
-	// ssao pass
-	p.SSAO.Draw(scene)
-
 	// compute camera view projection inverse
 	vp := scene.Camera.Projection.Mul(&scene.Camera.View)
 	vpInv := vp.Invert()

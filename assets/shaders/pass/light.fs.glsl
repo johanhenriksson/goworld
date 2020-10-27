@@ -23,7 +23,7 @@ uniform sampler2D tex_diffuse;  // diffuse
 uniform sampler2D tex_shadow;  // shadow map
 uniform sampler2D tex_normal; // normal
 uniform sampler2D tex_depth; // depth
-uniform sampler2D tex_occlusion; // ssao
+// uniform sampler2D tex_occlusion; // ssao
 uniform mat4 cameraInverse; // inverse view projection matrix
 uniform mat4 light_vp;     // world to light space
 uniform mat4 viewInverse;     // projection matrix
@@ -31,7 +31,7 @@ uniform mat4 viewInverse;     // projection matrix
 uniform Light light;     // uniform light data
 uniform float shadow_strength;
 uniform float shadow_bias;
-uniform float ssao_amount = 1.0;
+// uniform float ssao_amount = 1.0;
 
 in vec2 texcoord0;
 
@@ -93,12 +93,12 @@ void main() {
     float depth = texture(tex_depth, texcoord0).r;
 
     // avoids lighting the backdrop.
-    // probably inefficient though, consider another solution.
+    // perform this check early to avoid unnecessary work
     if (depth == 1.0) {
         discard;
     }
 
-    /* unpack data from geometry buffer */
+    // unpack data from geometry buffer
     vec4 t = texture(tex_diffuse, texcoord0);
     vec3 diffuseColor = t.rgb;
     float occlusion = t.a;
@@ -113,14 +113,14 @@ void main() {
     // why do we do this when we have a position buffer? :/
     vec3 position = positionFromDepth(depth);
 
-    float ssao = texture(tex_occlusion, texcoord0).r;
+    // float ssao = texture(tex_occlusion, texcoord0).r;
 
     // now we should be able to calculate the position in light space!
     // since the directional light matrix is orthographic the z value will
     // correspond to depth, so we can test Z against the shadow map depth buffer
     // from the shadow pass! woop
 
-    /* calculate contribution from the light source */
+    // calculate contribution from the light source
     float contrib = 0.0;
     float shadow = 1.0;
     if (light.Type == AMBIENT_LIGHT) {
@@ -135,22 +135,22 @@ void main() {
         shadow = sampleShadowmap(tex_shadow, position);
     }
     else if (light.Type == POINT_LIGHT) {
-        /* calculate light vector & distance */
+        // calculate light vector & distance
         vec3 surfaceToLight = light.Position - position;
         float distanceToLight = length(surfaceToLight);
         surfaceToLight = normalize(surfaceToLight);
         contrib = calculatePointLightContrib(surfaceToLight, distanceToLight, normal);
     }
 
-    /* calculate light color */
+    // calculate light color
     vec3 lightColor = light.Color * light.Intensity * contrib * shadow * occlusion;
 
-    /* mix with diffuse */
+    // mix with diffuse
     lightColor *= diffuseColor;
 
-    lightColor *= mix(1, ssao, ssao_amount);
+    // lightColor *= mix(1, ssao, ssao_amount);
 
-    /* write fragment color & restore depth buffer */
+    // write fragment color & restore depth buffer
     color = vec4(lightColor,  1.0);
 
     gl_FragDepth = depth;

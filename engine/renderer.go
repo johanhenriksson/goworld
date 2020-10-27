@@ -25,6 +25,7 @@ type Renderer struct {
 	Geometry  *GeometryPass
 	Light     *LightPass
 	Forward   *ForwardPass
+	SSAO      *SSAOPass
 	Particles *ParticlePass
 	Colors    *ColorPass
 	Lines     *LinePass
@@ -44,7 +45,15 @@ func NewRenderer() *Renderer {
 
 	r.Forward = NewForwardPass(r.Geometry.Buffer, r.Light.Output)
 
-	r.Colors = NewColorPass(r.Light.Output, "saturated")
+	r.SSAO = NewSSAOPass(r.Geometry.Buffer, &SSAOSettings{
+		Samples: 16,
+		Radius:  0.1,
+		Bias:    0.03,
+		Power:   2.0,
+		Scale:   2,
+	})
+
+	r.Colors = NewColorPass(r.Light.Output, "saturated", r.SSAO.Gaussian.Output)
 	r.Output = NewOutputPass(r.Colors.Output, r.Geometry.Buffer)
 
 	r.Lines = NewLinePass()
@@ -100,6 +109,7 @@ func (r *Renderer) Draw(scene *Scene) {
 	r.Geometry.Draw(scene)
 	r.Light.Draw(scene)
 	r.Forward.Draw(scene)
+	r.SSAO.Draw(scene)
 	r.Colors.Draw(scene)
 	r.Output.Draw(scene)
 	r.Lines.Draw(scene)

@@ -11,6 +11,7 @@ import (
 type ColorPass struct {
 	Input    *render.ColorBuffer
 	Output   *render.ColorBuffer
+	AO       *render.Texture
 	Lut      *render.Texture
 	Gamma    float32
 	shader   *render.Shader
@@ -19,7 +20,7 @@ type ColorPass struct {
 }
 
 // NewColorPass instantiates a new color correction pass.
-func NewColorPass(input *render.ColorBuffer, filter string) *ColorPass {
+func NewColorPass(input *render.ColorBuffer, filter string, ssao *render.Texture) *ColorPass {
 	// load lookup table
 	lutName := fmt.Sprintf("textures/color_grading/%s.png", filter)
 	lut := assets.GetTexture(lutName)
@@ -31,6 +32,7 @@ func NewColorPass(input *render.ColorBuffer, filter string) *ColorPass {
 	tx := render.NewTextureMap(shader)
 
 	tx.Add("tex_input", input.Texture)
+	tx.Add("tex_ssao", ssao)
 	tx.Add("tex_lut", lut)
 
 	return &ColorPass{

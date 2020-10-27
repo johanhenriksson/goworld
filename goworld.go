@@ -78,7 +78,7 @@ func main() {
 	// buffer debug windows
 	uim.Attach(editor.DebugBufferWindows(app))
 
-	gizmo := geometry.NewGizmo(vec3.New(3, 9, 3))
+	gizmo := geometry.NewGizmo(vec3.New(3, 9.05, 3))
 	scene.Add(gizmo)
 
 	// particles := engine.NewParticleSystem(vec3.New(3, 9, 3))
