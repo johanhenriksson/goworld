@@ -48,15 +48,6 @@ func (m *Mesh) Name() string {
 	return m.name
 }
 
-// Buffer mesh data to GPU memory
-// func (m *Mesh) Buffer(name string, data render.VertexData) error {
-// 	m.vao.Buffer(name, data)
-// 	for _, buffer := range m.material.Buffers {
-// 		m.material.SetupBufferPointers(buffer)
-// 	}
-// 	return nil
-// }
-
 func (m *Mesh) SetIndexType(t render.GLType) {
 	// get rid of this later
 	m.vao.SetIndexType(t)
@@ -70,7 +61,7 @@ func (m *Mesh) Collect(pass DrawPass, args DrawArgs) {
 
 func (m *Mesh) DrawDeferred(args DrawArgs) {
 	m.Material.Use()
-	shader := m.Material.Shader // UsePass(render.Geometry)
+	shader := m.Material.Shader
 
 	// set up uniforms
 	shader.Mat4("model", &args.Transform)
@@ -84,7 +75,7 @@ func (m *Mesh) DrawDeferred(args DrawArgs) {
 
 func (m *Mesh) DrawForward(args DrawArgs) {
 	m.Material.Use()
-	shader := m.Material.Shader // UsePass(render.Geometry)
+	shader := m.Material.Shader
 
 	// set up uniforms
 	shader.Mat4("model", &args.Transform)
@@ -107,7 +98,7 @@ func (m Mesh) Buffer(data interface{}) {
 
 	// compatibility hack
 	if len(pointers) == 0 {
-		fmt.Println("error buffering mesh", m.Name, "- no pointers")
+		panic(fmt.Errorf("error buffering mesh %s - no pointers", m.Name()))
 	} else {
 		m.vao.BufferTo(pointers, data)
 	}

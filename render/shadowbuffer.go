@@ -17,6 +17,6 @@ func NewShadowBuffer(width, height int) *ShadowBuffer {
 		FrameBuffer: f,
 
 		// add a depth buffer
-		Depth: f.AttachBuffer(gl.DEPTH_ATTACHMENT, gl.DEPTH_COMPONENT24, gl.DEPTH_COMPONENT, gl.FLOAT),
+		Depth: f.NewBuffer(gl.DEPTH_ATTACHMENT, gl.DEPTH_COMPONENT24, gl.DEPTH_COMPONENT, gl.FLOAT),
 	}
 }

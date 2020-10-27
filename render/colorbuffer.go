@@ -15,6 +15,6 @@ func NewColorBuffer(width, height int) *ColorBuffer {
 	fbo := CreateFrameBuffer(width, height)
 	return &ColorBuffer{
 		FrameBuffer: fbo,
-		Texture:     fbo.AttachBuffer(gl.COLOR_ATTACHMENT0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE),
+		Texture:     fbo.NewBuffer(gl.COLOR_ATTACHMENT0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE),
 	}
 }

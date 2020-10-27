@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/johanhenriksson/goworld/render"
 )
 
@@ -41,12 +42,21 @@ func (p *OutputPass) Type() render.Pass {
 func (p *OutputPass) Draw(scene *Scene) {
 	// camera settings
 	scene.Camera.Use()
+
 	render.ClearWith(scene.Camera.Clear)
+
+	render.Blend(true)
+	render.BlendMultiply()
+
+	// ensures we dont fail depth tests while restoring the depth buffer
+	gl.DepthFunc(gl.ALWAYS)
 
 	// draw
 	p.shader.Use()
 	p.textures.Use()
 	p.quad.Draw()
+
+	gl.DepthFunc(gl.LESS)
 }
 
 func (p *OutputPass) Visible(c Component, args DrawArgs) bool {

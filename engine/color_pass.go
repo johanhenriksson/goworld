@@ -60,6 +60,8 @@ func (p *ColorPass) Draw(scene *Scene) {
 	p.shader.Float("gamma", p.Gamma)
 
 	render.Clear()
+	render.Blend(true)
+	render.BlendMultiply()
 	p.quad.Draw()
 }
 

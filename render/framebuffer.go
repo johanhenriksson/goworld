@@ -32,9 +32,9 @@ var ScreenBuffer = FrameBuffer{
 	targets: []uint32{gl.COLOR_ATTACHMENT0},
 }
 
-// AttachBuffer creates a new frame buffer texture and attaches it to the given target.
+// NewBuffer creates a new frame buffer texture and attaches it to the given target.
 // Returns a pointer to the created texture object. FBO must be bound first.
-func (f *FrameBuffer) AttachBuffer(target, internalFormat, format, datatype uint32) *Texture {
+func (f *FrameBuffer) NewBuffer(target, internalFormat, format, datatype uint32) *Texture {
 	// Create texture object
 	texture := CreateTexture(f.Width, f.Height)
 	texture.Format = format
@@ -42,6 +42,14 @@ func (f *FrameBuffer) AttachBuffer(target, internalFormat, format, datatype uint
 	texture.DataType = datatype
 	texture.Clear()
 
+	// attach texture
+	f.AttachBuffer(target, texture)
+
+	return texture
+}
+
+// AttachBuffer attaches a texture to the given frame buffer target
+func (f *FrameBuffer) AttachBuffer(target uint32, texture *Texture) {
 	// Set texture as frame buffer target
 	texture.FrameBufferTarget(target)
 
@@ -55,8 +63,6 @@ func (f *FrameBuffer) AttachBuffer(target, internalFormat, format, datatype uint
 		// add the target to the list of enabled draw buffers
 		f.targets = append(f.targets, target)
 	}
-
-	return texture
 }
 
 // CreateFrameBuffer creates a new frame buffer object with a given size
@@ -88,6 +94,7 @@ func (f *FrameBuffer) Unbind() {
 
 	// unbind
 	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
+	// gl.DrawBuffer(gl.COLOR_ATTACHMENT0)
 }
 
 // Delete the frame buffer object

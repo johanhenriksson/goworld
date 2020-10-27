@@ -113,7 +113,7 @@ func (p *LightPass) Draw(scene *Scene) {
 
 	// clear output buffer
 	p.Output.Bind()
-	render.ClearWith(render.Black)
+	render.ClearWith(scene.Camera.Clear.WithAlpha(0))
 
 	// enable back face culling
 	render.CullFace(render.CullBack)
@@ -125,6 +125,8 @@ func (p *LightPass) Draw(scene *Scene) {
 	p.textures.Use()
 	p.shader.Mat4("cameraInverse", &vpInv)
 	p.shader.Mat4("viewInverse", &vInv)
+
+	render.DepthOutput(true)
 
 	// ambient light pass
 	ambient := Light{
@@ -154,6 +156,7 @@ func (p *LightPass) Draw(scene *Scene) {
 		p.textures.Use()
 		p.setLightUniforms(&light)
 
+		render.DepthOutput(true)
 		// render light
 		// todo: draw light volumes instead of a fullscreen quad
 		p.quad.Draw()

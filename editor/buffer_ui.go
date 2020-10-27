@@ -15,7 +15,7 @@ func DebugBufferWindows(app *engine.Application) ui.Component {
 		newBufferWindow("Normal", geoPass.Buffer.Normal, false),
 		newBufferWindow("Position", geoPass.Buffer.Position, false),
 		newBufferWindow("Occlusion", lightPass.SSAO.Gaussian.Output, true),
-		newBufferWindow("Shadowmap", lightPass.Shadows.Output, true))
+		newBufferWindow("Light", lightPass.Output.Texture, false))
 	bufferWindows.SetPosition(vec2.New(10, 10))
 	bufferWindows.Flow(vec2.New(500, 1000))
 	return bufferWindows

@@ -19,7 +19,7 @@ type VertexArray struct {
 }
 
 // CreateVertexArray creates a new vertex array object. Default primitive is GL_TRIANGLES
-func CreateVertexArray(primitive GLPrimitive, buffers ...string) *VertexArray {
+func CreateVertexArray(primitive GLPrimitive) *VertexArray {
 	vao := &VertexArray{
 		Type: primitive,
 		vbos: BufferMap{},

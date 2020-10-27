@@ -146,7 +146,7 @@ func NewParticleSystem(position vec3.T) *ParticleSystem {
 		MaxDur: 3,
 
 		mat:       mat,
-		vao:       render.CreateVertexArray(render.Points, "geometry"),
+		vao:       render.CreateVertexArray(render.Points),
 		positions: make(vec3.Array, count),
 	}
 

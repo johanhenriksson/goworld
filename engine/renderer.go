@@ -41,12 +41,15 @@ func NewRenderer() *Renderer {
 
 	r.Geometry = NewGeometryPass(width, height)
 	r.Light = NewLightPass(r.Geometry.Buffer)
-	r.Forward = NewForwardPass(r.Light.Output)
+
+	r.Forward = NewForwardPass(r.Geometry.Buffer, r.Light.Output)
 
 	r.Colors = NewColorPass(r.Light.Output, "saturated")
 	r.Output = NewOutputPass(r.Colors.Output, r.Geometry.Buffer)
+
 	r.Lines = NewLinePass()
-	r.Particles = NewParticlePass()
+	// r.Particles = NewParticlePass()
+
 	return r
 }
 
@@ -100,7 +103,7 @@ func (r *Renderer) Draw(scene *Scene) {
 	r.Colors.Draw(scene)
 	r.Output.Draw(scene)
 	r.Lines.Draw(scene)
-	r.Particles.Draw(scene)
+	// r.Particles.Draw(scene)
 	for _, pass := range r.Passes {
 		pass.Draw(scene)
 	}

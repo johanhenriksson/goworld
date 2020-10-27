@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/johanhenriksson/goworld/render"
 )
 
@@ -10,15 +11,25 @@ type ForwardDrawable interface {
 
 // ForwardPass holds information required to perform a forward rendering pass.
 type ForwardPass struct {
-	Output *render.ColorBuffer
-	queue  *DrawQueue
+	output  *render.ColorBuffer
+	gbuffer *render.GeometryBuffer
+	queue   *DrawQueue
+	fbo     *render.FrameBuffer
 }
 
 // NewForwardPass sets up a forward pass.
-func NewForwardPass(output *render.ColorBuffer) *ForwardPass {
+func NewForwardPass(gbuffer *render.GeometryBuffer, output *render.ColorBuffer) *ForwardPass {
+	fbo := render.CreateFrameBuffer(gbuffer.Width, gbuffer.Height)
+	fbo.AttachBuffer(gl.COLOR_ATTACHMENT0, output.Texture)
+	fbo.AttachBuffer(gl.COLOR_ATTACHMENT1, gbuffer.Normal)
+	fbo.AttachBuffer(gl.COLOR_ATTACHMENT2, gbuffer.Position)
+	fbo.AttachBuffer(gl.DEPTH_ATTACHMENT, gbuffer.Depth)
+
 	return &ForwardPass{
-		Output: output,
-		queue:  NewDrawQueue(),
+		fbo:     fbo,
+		output:  output,
+		gbuffer: gbuffer,
+		queue:   NewDrawQueue(),
 	}
 }
 
@@ -31,7 +42,6 @@ func (p *ForwardPass) Resize(width, height int) {}
 // DrawPass executes the forward pass
 func (p *ForwardPass) Draw(scene *Scene) {
 	scene.Camera.Use()
-	p.Output.Bind()
 
 	// setup rendering
 	render.Blend(true)
@@ -51,10 +61,22 @@ func (p *ForwardPass) Draw(scene *Scene) {
 	// lets not draw stuff thats behind us at the very least
 	// ... things need bounding boxes though.
 
+	p.fbo.Bind()
+	defer p.fbo.Unbind()
+	p.fbo.DrawBuffers()
+
+	// disable depth testing
+	// todo: should be disabled for transparent things, not everything
+	// render.DepthOutput(false)
+
 	for _, cmd := range p.queue.items {
 		drawable := cmd.Component.(ForwardDrawable)
 		drawable.DrawForward(cmd.Args)
 	}
+
+	render.DepthOutput(true)
+
+	render.CullFace(render.CullNone)
 }
 
 func (p *ForwardPass) Visible(c Component, args DrawArgs) bool {

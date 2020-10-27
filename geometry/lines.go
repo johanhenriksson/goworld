@@ -27,7 +27,7 @@ func CreateLines(name string, lines ...Line) *Lines {
 		// Object:   parent,
 		Lines:    lines,
 		Material: assets.GetMaterialShared("lines"),
-		vao:      render.CreateVertexArray(render.Lines, "geometry"),
+		vao:      render.CreateVertexArray(render.Lines),
 		name:     name,
 	}
 	l.Compute()

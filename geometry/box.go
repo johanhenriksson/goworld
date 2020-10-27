@@ -1,8 +1,6 @@
 package geometry
 
 import (
-	"fmt"
-
 	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
@@ -60,6 +58,5 @@ func (b *Box) compute() {
 		{P: vec3.New(x+w, y, z+d), C: c},
 		{P: vec3.New(x+w, y+h, z+d), C: c},
 	}
-	fmt.Println("box")
 	b.Buffer(vertices)
 }

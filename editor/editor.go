@@ -44,17 +44,16 @@ func NewEditor(chunk *game.Chunk, camera *engine.Camera, gbuffer *render.Geometr
 		SampleTool:  NewSampleTool(),
 		ReplaceTool: NewReplaceTool(),
 
-		XPlane: geometry.NewPlane(16, render.Red),
+		XPlane: geometry.NewPlane(16, render.Red.WithAlpha(0.25)),
 
 		mesh:    game.NewChunkMesh(chunk),
-		bounds:  geometry.NewBox(vec3.NewI(16, 16, 16), render.Red),
+		bounds:  geometry.NewBox(vec3.NewI(16, 16, 16), render.Color4(0.3, 0.3, 0.3, 1)),
 		gbuffer: gbuffer,
 	}
 
-	e.XPlane.Pass = render.Geometry
 	e.XPlane.Rotation.X = -90
 	e.XPlane.Rotation.Z = 180
-	e.XPlane.Position = vec3.New(8, 8, 0.01)
+	e.XPlane.Position = vec3.New(8, 8, 7.0)
 
 	e.Tool = e.PlaceTool
 

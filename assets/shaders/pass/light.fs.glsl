@@ -90,6 +90,14 @@ float sampleShadowmap(sampler2D shadowmap, vec3 position) {
 }
 
 void main() {
+    float depth = texture(tex_depth, texcoord0).r;
+
+    // avoids lighting the backdrop.
+    // probably inefficient though, consider another solution.
+    if (depth == 1.0) {
+        discard;
+    }
+
     /* unpack data from geometry buffer */
     vec4 t = texture(tex_diffuse, texcoord0);
     vec3 diffuseColor = t.rgb;
@@ -101,9 +109,8 @@ void main() {
     vec4 worldNormal = viewInverse * vec4(viewNormal, 0);
     vec3 normal = normalize(worldNormal.xyz);
 
-    /* calculate world position from depth map and the inverse camera view projection */
+    // calculate world position from depth map and the inverse camera view projection
     // why do we do this when we have a position buffer? :/
-    float depth = texture(tex_depth, texcoord0).r;
     vec3 position = positionFromDepth(depth);
 
     float ssao = texture(tex_occlusion, texcoord0).r;
@@ -133,12 +140,6 @@ void main() {
         float distanceToLight = length(surfaceToLight);
         surfaceToLight = normalize(surfaceToLight);
         contrib = calculatePointLightContrib(surfaceToLight, distanceToLight, normal);
-    }
-
-    // avoids lighting the backdrop.
-    // probably inefficient though, consider another solution.
-    if (depth == 1.0) {
-        contrib = 0;
     }
 
     /* calculate light color */
