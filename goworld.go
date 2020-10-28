@@ -39,7 +39,7 @@ func main() {
 
 	// create a camera
 	camera := engine.CreateCamera(&render.ScreenBuffer, vec3.New(1, 22, 1), 55.0, 0.1, 600.0)
-	camera.Clear = render.Color4(0.973, 0.945, 0.876, 1.0) // light gray
+	camera.Clear = render.Hex("#eddaab")
 	camera.Rotation.X = 22
 	camera.Rotation.Y = 135
 
@@ -78,7 +78,7 @@ func main() {
 	// buffer debug windows
 	uim.Attach(editor.DebugBufferWindows(app))
 
-	gizmo := geometry.NewGizmo(vec3.New(3, 9.05, 3))
+	gizmo := geometry.NewGizmo(vec3.New(-1, 0, -1))
 	scene.Add(gizmo)
 
 	// particles := engine.NewParticleSystem(vec3.New(3, 9, 3))

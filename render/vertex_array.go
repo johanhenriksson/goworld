@@ -58,7 +58,7 @@ func (vao *VertexArray) Delete() {
 // Bind this vertex array object
 func (vao VertexArray) Bind() {
 	if vao.ID == 0 {
-		fmt.Println("Warning: Attempt to bind Vertex Array with ID 0")
+		fmt.Println("warning: attempt to bind Vertex Array with ID 0")
 	}
 	gl.BindVertexArray(uint32(vao.ID))
 }
@@ -71,7 +71,7 @@ func (vao VertexArray) Unbind() {
 // Draw all elements in the vertex array
 func (vao VertexArray) Draw() {
 	if vao.Length == 0 {
-		fmt.Println("Warning: Attempt to draw VAO with length 0")
+		// fmt.Println("warning: attempt to draw VAO with length 0")
 		return
 	}
 

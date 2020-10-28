@@ -71,3 +71,36 @@ func (c Color) WithAlpha(a float32) Color {
 	c.A = a
 	return c
 }
+
+func Hex(s string) Color {
+	if s[0] != '#' {
+		panic("invalid color value")
+	}
+
+	hexToByte := func(b byte) byte {
+		switch {
+		case b >= '0' && b <= '9':
+			return b - '0'
+		case b >= 'a' && b <= 'f':
+			return b - 'a' + 10
+		case b >= 'A' && b <= 'F':
+			return b - 'A' + 10
+		}
+		panic("invalid color value")
+	}
+
+	c := Color{A: 1}
+	switch len(s) {
+	case 7:
+		c.R = float32(hexToByte(s[1])<<4+hexToByte(s[2])) / 255
+		c.G = float32(hexToByte(s[3])<<4+hexToByte(s[4])) / 255
+		c.B = float32(hexToByte(s[5])<<4+hexToByte(s[6])) / 255
+	case 4:
+		c.R = float32(hexToByte(s[1])*17) / 255
+		c.G = float32(hexToByte(s[2])*17) / 255
+		c.B = float32(hexToByte(s[3])*17) / 255
+	default:
+		panic("invalid color value")
+	}
+	return c
+}

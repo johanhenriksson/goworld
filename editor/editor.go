@@ -48,23 +48,25 @@ func NewEditor(chunk *game.Chunk, camera *engine.Camera, gbuffer *render.Geometr
 		SampleTool:  NewSampleTool(),
 		ReplaceTool: NewReplaceTool(),
 
-		XPlane: geometry.NewPlane(16, render.Red.WithAlpha(0.25)),
-		YPlane: geometry.NewPlane(16, render.Green.WithAlpha(0.25)),
-		ZPlane: geometry.NewPlane(16, render.Blue.WithAlpha(0.25)),
+		XPlane: geometry.NewPlane(float32(chunk.Sx), render.Red.WithAlpha(0.25)),
+		YPlane: geometry.NewPlane(float32(chunk.Sy), render.Green.WithAlpha(0.25)),
+		ZPlane: geometry.NewPlane(float32(chunk.Sz), render.Blue.WithAlpha(0.25)),
 
 		mesh:    game.NewChunkMesh(chunk),
-		bounds:  geometry.NewBox(vec3.NewI(16, 16, 16), render.Color4(0.3, 0.3, 0.3, 1)),
+		bounds:  geometry.NewBox(vec3.NewI(chunk.Sx, chunk.Sy, chunk.Sz), render.DarkGrey),
 		gbuffer: gbuffer,
 	}
 
+	e.xp = chunk.Sx
 	e.XPlane.Rotation.X = -90
 	e.XPlane.Rotation.Z = 90
-	e.XPlane.Position = vec3.New(float32(e.xp), 8, 8)
+	e.XPlane.Position = vec3.New(float32(e.xp), float32(chunk.Sy)/2, float32(chunk.Sz)/2)
 
-	e.YPlane.Position = vec3.New(8, float32(e.yp), 8)
+	e.YPlane.Position = vec3.New(float32(chunk.Sx)/2, float32(e.yp), float32(chunk.Sz)/2)
 
+	e.zp = chunk.Sz
 	e.ZPlane.Rotation.X = -90
-	e.ZPlane.Position = vec3.New(8, 8, float32(e.zp))
+	e.ZPlane.Position = vec3.New(float32(chunk.Sx)/2, float32(chunk.Sy)/2, float32(e.zp))
 
 	e.Tool = e.PlaceTool
 
@@ -121,8 +123,14 @@ func (e *Editor) Update(dt float32) {
 		e.Tool = e.SampleTool
 	}
 
+	if keys.Pressed(keys.N) && keys.Ctrl() {
+		e.Chunk.Clear()
+		e.Chunk.Light.Calculate()
+		e.mesh.Compute()
+	}
+
 	m := 1
-	if keys.Down(keys.LeftShift) {
+	if keys.Shift() {
 		m = -1
 	}
 

@@ -36,6 +36,7 @@ func (c *Chunk) Clear() {
 	for i := 0; i < len(c.Data); i++ {
 		c.Data[i] = EmptyVoxel
 	}
+	c.Light.Clear()
 }
 
 /* Returns the slice offset for a given set of coordinates, as
@@ -66,6 +67,7 @@ func (c *Chunk) Set(x, y, z int, voxel Voxel) {
 		return
 	}
 	c.Data[pos] = voxel
+	c.Light.Block(x, y, z, voxel != EmptyVoxel)
 }
 
 // Free returns true if the given position is open
@@ -74,6 +76,7 @@ func (c *Chunk) Free(x, y, z int) bool {
 	if !ok {
 		return true
 	}
+	c.Light.Block(x, y, z, false)
 	return c.Data[v] == EmptyVoxel
 }
 

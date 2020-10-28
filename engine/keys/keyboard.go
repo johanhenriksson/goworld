@@ -42,6 +42,18 @@ func Down(key Code) bool {
 	return false
 }
 
+func Shift() bool {
+	return Down(LeftShift) || Down(RightShift)
+}
+
+func Ctrl() bool {
+	return Down(LeftControl) || Down(RightControl)
+}
+
+func Alt() bool {
+	return Down(LeftAlt) || Down(RightAlt)
+}
+
 // KeyCallback handles GLFW key callbacks to update the key state map.
 func KeyCallback(w *glfw.Window, key glfw.Key, scancode int, action glfw.Action, mods glfw.ModifierKey) {
 	code := Code(key)

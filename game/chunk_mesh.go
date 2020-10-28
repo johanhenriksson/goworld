@@ -168,7 +168,7 @@ func (cm *ChunkMesh) computeVertexData() []VoxelVertex {
 					lxnzn := light(x-1, y, z-1)
 
 					if ypf {
-						n := byte(3) // YN
+						n := byte(4) // YN
 						v1 := VoxelVertex{
 							X: byte(x + 1), Y: byte(y + 1), Z: byte(z + 1), N: n,
 							R: yp.R, G: yp.G, B: yp.B,
