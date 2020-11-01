@@ -35,5 +35,5 @@ func (pt *SampleTool) Use(e *Editor, position, normal vec3.T) {
 }
 
 func (pt *SampleTool) Hover(editor *Editor, position, normal vec3.T) {
-	pt.box.Position = position.Sub(normal.Scaled(0.5)).Floor()
+	pt.box.SetPosition(position.Sub(normal.Scaled(0.5)).Floor())
 }

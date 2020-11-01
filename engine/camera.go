@@ -59,13 +59,13 @@ func (cam *Camera) Update(dt float32) {
 	/* Mouse look */
 	if mouse.Down(mouse.Button1) {
 		sensitivity := vec2.New(0.08, 0.09)
-		rot := cam.Rotation.XY().Sub(mouse.Delta.Swap().Mul(sensitivity))
+		rot := cam.Rotation().XY().Sub(mouse.Delta.Swap().Mul(sensitivity))
 
 		// camera angle limits
 		rot.X = math.Clamp(rot.X, -89.9, 89.9)
 		rot.Y = math.Mod(rot.Y, 360)
 
-		cam.Rotation = vec3.Extend(rot, 0)
+		cam.SetRotation(vec3.Extend(rot, 0))
 	}
 
 	// Update transform with new position & rotation
@@ -76,8 +76,8 @@ func (cam *Camera) Update(dt float32) {
 	cam.Projection = mat4.Perspective(math.DegToRad(cam.Fov), ratio, cam.Near, cam.Far)
 
 	// Calculate new view matrix based on forward vector
-	lookAt := cam.Position.Add(cam.Forward)
-	cam.View = mat4.LookAt(cam.Position, lookAt)
+	lookAt := cam.Position().Add(cam.Forward())
+	cam.View = mat4.LookAt(cam.Position(), lookAt)
 }
 
 // Use this camera for output.
@@ -93,6 +93,6 @@ func (cam *Camera) DrawArgs() DrawArgs {
 		VP:         vp,
 		MVP:        vp,
 		Transform:  mat4.Ident(),
-		Position:   cam.Position,
+		Position:   cam.Position(),
 	}
 }

@@ -71,15 +71,14 @@ func NewEditor(chunk *game.Chunk, camera *engine.Camera, gbuffer *render.Geometr
 	}
 
 	e.xp = chunk.Sx
-	e.XPlane.Rotation.X = -90
-	e.XPlane.Rotation.Z = 90
-	e.XPlane.Position = vec3.New(float32(e.xp), float32(chunk.Sy)/2, float32(chunk.Sz)/2)
+	e.XPlane.SetRotation(vec3.New(-90, 0, 90))
+	e.XPlane.SetPosition(vec3.New(float32(e.xp), float32(chunk.Sy)/2, float32(chunk.Sz)/2))
 
-	e.YPlane.Position = vec3.New(float32(chunk.Sx)/2, float32(e.yp), float32(chunk.Sz)/2)
+	e.YPlane.SetPosition(vec3.New(float32(chunk.Sx)/2, float32(e.yp), float32(chunk.Sz)/2))
 
 	e.zp = chunk.Sz
-	e.ZPlane.Rotation.X = -90
-	e.ZPlane.Position = vec3.New(float32(chunk.Sx)/2, float32(chunk.Sy)/2, float32(e.zp))
+	e.ZPlane.SetRotation(vec3.New(-90, 0, 0))
+	e.ZPlane.SetPosition(vec3.New(float32(chunk.Sx)/2, float32(chunk.Sy)/2, float32(e.zp)))
 
 	e.Tool = e.PlaceTool
 
@@ -161,17 +160,17 @@ func (e *Editor) Update(dt float32) {
 
 	if keys.Pressed(keys.Key1) {
 		e.xp = (e.xp + e.Chunk.Sx + m + 1) % (e.Chunk.Sx + 1)
-		e.XPlane.Position.X = float32(e.xp)
+		e.XPlane.SetPosition(vec3.New(float32(e.xp), 0, 0))
 	}
 
 	if keys.Pressed(keys.Key2) {
 		e.yp = (e.yp + e.Chunk.Sy + m + 1) % (e.Chunk.Sy + 1)
-		e.YPlane.Position.Y = float32(e.yp)
+		e.YPlane.SetPosition(vec3.New(0, float32(e.yp), 0))
 	}
 
 	if keys.Pressed(keys.Key3) {
 		e.zp = (e.zp + e.Chunk.Sz + m + 1) % (e.Chunk.Sz + 1)
-		e.ZPlane.Position.Z = float32(e.zp)
+		e.ZPlane.SetPosition(vec3.New(0, 0, float32(e.zp)))
 	}
 }
 

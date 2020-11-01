@@ -40,8 +40,7 @@ func main() {
 	// create a camera
 	camera := engine.CreateCamera(&render.ScreenBuffer, vec3.New(1, 22, 1), 55.0, 0.1, 600.0)
 	camera.Clear = render.Hex("#eddaab")
-	camera.Rotation.X = 22
-	camera.Rotation.Y = 135
+	camera.SetRotation(vec3.New(22, 135, 0))
 
 	// scene & lighting setup
 	scene := engine.NewScene()

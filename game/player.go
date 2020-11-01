@@ -39,7 +39,7 @@ func NewPlayer(camera *engine.Camera, collide CollisionCheck) *Player {
 		CamHeight:   vec3.New(0, 1.75, 0),
 		Flying:      false,
 	}
-	p.position = camera.Position.Sub(p.CamHeight)
+	p.position = camera.Position().Sub(p.CamHeight)
 	return p
 }
 
@@ -75,8 +75,8 @@ func (p *Player) Update(dt float32) {
 	}
 
 	if moving {
-		right := p.Camera.Right.Scaled(move.X)
-		forward := p.Camera.Forward.Scaled(move.Z)
+		right := p.Camera.Right().Scaled(move.X)
+		forward := p.Camera.Forward().Scaled(move.Z)
 		up := vec3.New(0, move.Y, 0)
 
 		move = right.Add(forward)
@@ -152,5 +152,5 @@ func (p *Player) Update(dt float32) {
 	p.position = p.position.Add(step)
 
 	// update camera position
-	p.Camera.Position = p.position.Add(p.CamHeight)
+	p.Camera.SetPosition(p.position.Add(p.CamHeight))
 }

@@ -9,8 +9,8 @@ func TestObjectTransforms(t *testing.T) {
 	a := New("A")
 	b := New("B")
 
-	a.Position.X = 1
-	b.Position.X = 1
+	a.SetPosition(vec3.New(1, 0, 0))
+	b.SetPosition(vec3.New(1, 0, 0))
 
 	a.Attach(b)
 	// a.Update(0)

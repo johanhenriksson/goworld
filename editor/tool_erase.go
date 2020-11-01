@@ -39,5 +39,5 @@ func (pt *EraseTool) Use(e *Editor, position, normal vec3.T) {
 }
 
 func (pt *EraseTool) Hover(editor *Editor, position, normal vec3.T) {
-	pt.Position = position.Sub(normal.Scaled(0.5)).Floor()
+	pt.SetPosition(position.Sub(normal.Scaled(0.5)).Floor())
 }

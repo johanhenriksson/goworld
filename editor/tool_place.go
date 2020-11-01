@@ -35,5 +35,5 @@ func (pt *PlaceTool) Use(e *Editor, position, normal vec3.T) {
 }
 
 func (pt *PlaceTool) Hover(editor *Editor, position, normal vec3.T) {
-	pt.Position = position.Add(normal.Scaled(0.5)).Floor()
+	pt.SetPosition(position.Add(normal.Scaled(0.5)).Floor())
 }
