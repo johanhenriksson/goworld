@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/johanhenriksson/goworld/assets"
+	"github.com/johanhenriksson/goworld/engine/object"
 	"github.com/johanhenriksson/goworld/render"
 )
 
@@ -12,12 +13,11 @@ type MeshBufferMap map[string]*render.VertexBuffer
 
 // Mesh base
 type Mesh struct {
-	*Transform
+	*object.Link
 	Pass     render.Pass
 	Material *render.Material
 
-	name string
-	vao  *render.VertexArray
+	vao *render.VertexArray
 }
 
 // NewMesh creates a new mesh object
@@ -34,18 +34,12 @@ func NewLineMesh(name string) *Mesh {
 // NewPrimitiveMesh creates a new mesh composed of a given GL primitive
 func NewPrimitiveMesh(name string, primitive render.GLPrimitive, pass render.Pass, material *render.Material) *Mesh {
 	m := &Mesh{
-		Transform: Identity(),
-		Pass:      pass,
-		name:      name,
-		Material:  material,
-		vao:       render.CreateVertexArray(primitive),
+		Link:     object.NewLink(name),
+		Pass:     pass,
+		Material: material,
+		vao:      render.CreateVertexArray(primitive),
 	}
 	return m
-}
-
-// Returns the name of the mesh
-func (m *Mesh) Name() string {
-	return m.name
 }
 
 func (m *Mesh) SetIndexType(t render.GLType) {
@@ -53,13 +47,11 @@ func (m *Mesh) SetIndexType(t render.GLType) {
 	m.vao.SetIndexType(t)
 }
 
-func (m *Mesh) Collect(pass DrawPass, args DrawArgs) {
-	if m.Pass == pass.Type() && pass.Visible(m, args) {
-		pass.Queue(m, args.Apply(m.Transform))
-	}
-}
-
 func (m *Mesh) DrawDeferred(args DrawArgs) {
+	if m.Pass != render.Geometry {
+		return
+	}
+
 	m.Material.Use()
 	shader := m.Material.Shader
 
@@ -74,6 +66,10 @@ func (m *Mesh) DrawDeferred(args DrawArgs) {
 }
 
 func (m *Mesh) DrawForward(args DrawArgs) {
+	if m.Pass != render.Forward {
+		return
+	}
+
 	m.Material.Use()
 	shader := m.Material.Shader
 
@@ -87,6 +83,10 @@ func (m *Mesh) DrawForward(args DrawArgs) {
 }
 
 func (m *Mesh) DrawLines(args DrawArgs) {
+	if m.Pass != render.Line {
+		return
+	}
+
 	m.Material.Use()
 	m.Material.Mat4("mvp", &args.MVP)
 
@@ -98,7 +98,7 @@ func (m Mesh) Buffer(data interface{}) {
 
 	// compatibility hack
 	if len(pointers) == 0 {
-		panic(fmt.Errorf("error buffering mesh %s - no pointers", m.Name()))
+		panic(fmt.Errorf("error buffering mesh %s - no pointers", m.String()))
 	} else {
 		m.vao.BufferTo(pointers, data)
 	}

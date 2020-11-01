@@ -3,6 +3,7 @@ package engine
 import (
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/johanhenriksson/goworld/assets"
+	"github.com/johanhenriksson/goworld/engine/transform"
 	"github.com/johanhenriksson/goworld/math/random"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
@@ -14,19 +15,11 @@ type ParticleDrawable interface {
 
 // ParticlePass represents the particle system draw pass
 type ParticlePass struct {
-	queue *DrawQueue
 }
 
 // NewParticlePass creates a new particle system draw pass
 func NewParticlePass() *ParticlePass {
-	return &ParticlePass{
-		queue: NewDrawQueue(),
-	}
-}
-
-// Type returns the render pass type identifier
-func (p *ParticlePass) Type() render.Pass {
-	return render.Particles
+	return &ParticlePass{}
 }
 
 // Resize is called on window resize. Should update any window size-dependent buffers
@@ -34,21 +27,7 @@ func (p *ParticlePass) Resize(width, height int) {}
 
 // DrawPass executes the particle pass
 func (p *ParticlePass) Draw(scene *Scene) {
-	p.queue.Clear()
-	scene.Collect(p)
-	for _, cmd := range p.queue.items {
-		drawable := cmd.Component.(ParticleDrawable)
-		drawable.DrawParticles(cmd.Args)
-	}
-}
 
-func (p *ParticlePass) Visible(c Component, args DrawArgs) bool {
-	_, ok := c.(ParticleDrawable)
-	return ok
-}
-
-func (p *ParticlePass) Queue(c Component, args DrawArgs) {
-	p.queue.Add(c, args)
 }
 
 // Particle holds data about a single particle
@@ -60,7 +39,7 @@ type Particle struct {
 
 // ParticleSystem holds the properties of a particle system effect
 type ParticleSystem struct {
-	*Transform
+	*transform.T
 
 	Particles []Particle
 	Count     int
@@ -116,7 +95,7 @@ func (ps *ParticleSystem) Draw(args DrawArgs) {
 		return
 	}
 
-	args = args.Apply(ps.Transform)
+	args = args.Apply(ps.T)
 
 	render.Blend(true)
 	render.BlendFunc(gl.ONE, gl.ONE)
@@ -136,7 +115,7 @@ func NewParticleSystem(position vec3.T) *ParticleSystem {
 	count := 8
 	mat := assets.GetMaterial("billboard")
 	ps := &ParticleSystem{
-		Transform: NewTransform(position, vec3.Zero, vec3.One),
+		T: transform.New(position, vec3.Zero, vec3.One),
 
 		Count:  count,
 		Chance: 0.08,

@@ -23,7 +23,7 @@ import (
 	"github.com/johanhenriksson/goworld/editor"
 	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/game"
-	"github.com/johanhenriksson/goworld/geometry"
+	// "github.com/johanhenriksson/goworld/geometry"
 	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
@@ -73,13 +73,20 @@ func main() {
 
 	// create editor
 	edit := editor.NewEditor(chunk, camera, app.Pipeline.Geometry.Buffer)
-	scene.Add(edit)
+	scene.Attach(edit)
 
 	// buffer debug windows
 	uim.Attach(editor.DebugBufferWindows(app))
 
-	gizmo := geometry.NewGizmo(vec3.New(-1, 0, -1))
-	scene.Add(gizmo)
+	// gizmo := geometry.NewGizmo(vec3.New(-1, 0, -1))
+	// scene.Attach(gizmo)
+
+	// cube := geometry.NewColorCube(render.Blue, 3)
+	// cube.Position = vec3.New(-2, -2, -2)
+
+	// THIS DOES NOT ATTACH THE OBJECT
+	// IT ATTACHES THE COMPONENT DIRECTLY!
+	// scene.Attach(cube)
 
 	// particles := engine.NewParticleSystem(vec3.New(3, 9, 3))
 	// scene.Add(particles)

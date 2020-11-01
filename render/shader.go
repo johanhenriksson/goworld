@@ -297,7 +297,7 @@ func (shader *Shader) VertexPointers(data interface{}) Pointers {
 		}
 		tag, err := vertex.ParseTag(tagstr)
 		if err != nil {
-			fmt.Printf("tag error on %s.%s: %s\n", el.Name(), f.Name, err)
+			fmt.Printf("tag error on %s.%s: %s\n", el.String(), f.Name, err)
 			continue
 		}
 

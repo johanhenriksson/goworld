@@ -75,8 +75,8 @@ func (p *Player) Update(dt float32) {
 	}
 
 	if moving {
-		right := p.Camera.Transform.Right.Scaled(move.X)
-		forward := p.Camera.Transform.Forward.Scaled(move.Z)
+		right := p.Camera.Right.Scaled(move.X)
+		forward := p.Camera.Forward.Scaled(move.Z)
 		up := vec3.New(0, move.Y, 0)
 
 		move = right.Add(forward)

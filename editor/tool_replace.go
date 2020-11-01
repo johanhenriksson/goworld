@@ -1,7 +1,7 @@
 package editor
 
 import (
-	"github.com/johanhenriksson/goworld/engine"
+	"github.com/johanhenriksson/goworld/engine/object"
 	"github.com/johanhenriksson/goworld/game"
 	"github.com/johanhenriksson/goworld/geometry"
 	"github.com/johanhenriksson/goworld/math/vec3"
@@ -9,16 +9,20 @@ import (
 )
 
 type ReplaceTool struct {
+	*object.T
 	box *geometry.Box
 }
 
 func NewReplaceTool() *ReplaceTool {
-	return &ReplaceTool{
+	rt := &ReplaceTool{
+		T:   object.New("ReplaceTool"),
 		box: geometry.NewBox(vec3.One, render.Yellow),
 	}
+	rt.Attach(rt.box)
+	return rt
 }
 
-func (pt *ReplaceTool) Name() string {
+func (pt *ReplaceTool) String() string {
 	return "ReplaceTool"
 }
 
@@ -36,12 +40,4 @@ func (pt *ReplaceTool) Use(e *Editor, position, normal vec3.T) {
 
 func (pt *ReplaceTool) Hover(editor *Editor, position, normal vec3.T) {
 	pt.box.Position = position.Sub(normal.Scaled(0.5)).Floor()
-}
-
-func (pt *ReplaceTool) Update(dt float32) {
-	engine.Update(dt, pt.box)
-}
-
-func (pt *ReplaceTool) Collect(pass engine.DrawPass, args engine.DrawArgs) {
-	engine.Collect(pass, args, pt.box)
 }

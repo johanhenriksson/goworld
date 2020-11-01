@@ -34,10 +34,6 @@ func NewOutputPass(input *render.ColorBuffer, gbuffer *render.GeometryBuffer) *O
 	}
 }
 
-func (p *OutputPass) Type() render.Pass {
-	return render.Postprocess
-}
-
 // DrawPass draws the input texture to the scene camera buffer.
 func (p *OutputPass) Draw(scene *Scene) {
 	// camera settings
@@ -58,11 +54,5 @@ func (p *OutputPass) Draw(scene *Scene) {
 
 	gl.DepthFunc(gl.LESS)
 }
-
-func (p *OutputPass) Visible(c Component, args DrawArgs) bool {
-	return false
-}
-
-func (p *OutputPass) Queue(c Component, args DrawArgs) {}
 
 func (p *OutputPass) Resize(width, height int) {}

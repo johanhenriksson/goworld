@@ -116,7 +116,7 @@ func (vao *VertexArray) Buffer(name string, data interface{}) {
 }
 
 func (vao *VertexArray) BufferTo(pointers Pointers, data interface{}) {
-	name := pointers.BufferName()
+	name := pointers.BufferString()
 
 	vao.Bind()
 

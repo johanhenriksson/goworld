@@ -149,10 +149,4 @@ func (m *Manager) glfwInputCallback(w *glfw.Window, char rune) {
 	}
 }
 
-func (m *Manager) Visible(c engine.Component, args engine.DrawArgs) bool {
-	return false
-}
-
-func (m *Manager) Queue(c engine.Component, args engine.DrawArgs) {}
-
 func (m *Manager) Resize(width, height int) {}

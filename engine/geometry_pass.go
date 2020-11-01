@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"github.com/johanhenriksson/goworld/engine/object"
 	"github.com/johanhenriksson/goworld/render"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
@@ -13,11 +14,6 @@ type DeferredDrawable interface {
 // GeometryPass draws the scene geometry to a G-buffer
 type GeometryPass struct {
 	Buffer *render.GeometryBuffer
-	queue  *DrawQueue
-}
-
-func (p *GeometryPass) Type() render.Pass {
-	return render.Geometry
 }
 
 // Resize is called on window resize. Should update any window size-dependent buffers
@@ -30,7 +26,6 @@ func (p *GeometryPass) Resize(width, height int) {
 func NewGeometryPass(bufferWidth, bufferHeight int) *GeometryPass {
 	p := &GeometryPass{
 		Buffer: render.CreateGeometryBuffer(bufferWidth, bufferHeight),
-		queue:  NewDrawQueue(),
 	}
 	return p
 }
@@ -53,22 +48,17 @@ func (p *GeometryPass) Draw(scene *Scene) {
 	render.CullFace(render.CullBack)
 	render.DepthOutput(true)
 
-	p.queue.Clear()
-	scene.Collect(p)
+	query := object.NewQuery(func(c object.Component) bool {
+		_, ok := c.(DeferredDrawable)
+		return ok
+	})
+	scene.Collect(&query)
 
-	for _, cmd := range p.queue.items {
-		drawable := cmd.Component.(DeferredDrawable)
-		drawable.DrawDeferred(cmd.Args)
+	args := scene.Camera.DrawArgs()
+	for _, component := range query.Results {
+		drawable := component.(DeferredDrawable)
+		drawable.DrawDeferred(args.Set(component.Parent().T))
 	}
 
 	p.Buffer.Unbind()
-}
-
-func (p *GeometryPass) Visible(c Component, args DrawArgs) bool {
-	_, ok := c.(DeferredDrawable)
-	return ok
-}
-
-func (p *GeometryPass) Queue(c Component, args DrawArgs) {
-	p.queue.Add(c, args)
 }

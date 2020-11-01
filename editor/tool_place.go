@@ -1,7 +1,7 @@
 package editor
 
 import (
-	"github.com/johanhenriksson/goworld/engine"
+	"github.com/johanhenriksson/goworld/engine/object"
 	"github.com/johanhenriksson/goworld/game"
 	"github.com/johanhenriksson/goworld/geometry"
 	"github.com/johanhenriksson/goworld/math/vec3"
@@ -9,17 +9,17 @@ import (
 )
 
 type PlaceTool struct {
+	*object.T
 	box *geometry.Box
 }
 
 func NewPlaceTool() *PlaceTool {
-	return &PlaceTool{
+	pt := &PlaceTool{
+		T:   object.New("PlaceTool"),
 		box: geometry.NewBox(vec3.One, render.Blue),
 	}
-}
-
-func (pt *PlaceTool) Name() string {
-	return "PlaceTool"
+	pt.Attach(pt.box)
+	return pt
 }
 
 func (pt *PlaceTool) Use(e *Editor, position, normal vec3.T) {
@@ -35,13 +35,5 @@ func (pt *PlaceTool) Use(e *Editor, position, normal vec3.T) {
 }
 
 func (pt *PlaceTool) Hover(editor *Editor, position, normal vec3.T) {
-	pt.box.Position = position.Add(normal.Scaled(0.5)).Floor()
-}
-
-func (pt *PlaceTool) Update(dt float32) {
-	engine.Update(dt, pt.box)
-}
-
-func (pt *PlaceTool) Collect(pass engine.DrawPass, args engine.DrawArgs) {
-	engine.Collect(pass, args, pt.box)
+	pt.Position = position.Add(normal.Scaled(0.5)).Floor()
 }

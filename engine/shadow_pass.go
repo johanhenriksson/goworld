@@ -3,8 +3,8 @@ package engine
 import (
 	"github.com/go-gl/gl/v4.1-core/gl"
 
-	"github.com/johanhenriksson/goworld/math/mat4"
-	"github.com/johanhenriksson/goworld/math/vec3"
+	// "github.com/johanhenriksson/goworld/math/mat4"
+	// "github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
 )
 
@@ -15,7 +15,6 @@ type ShadowPass struct {
 	Height int
 
 	shadowmap *render.FrameBuffer
-	queue     *DrawQueue
 }
 
 // NewShadowPass creates a new shadow pass
@@ -37,13 +36,8 @@ func NewShadowPass(input *render.GeometryBuffer) *ShadowPass {
 		Height: size,
 
 		shadowmap: fbo,
-		queue:     NewDrawQueue(),
 	}
 	return p
-}
-
-func (p *ShadowPass) Type() render.Pass {
-	return render.Geometry
 }
 
 // Resize is called on window resize. Should update any window size-dependent buffers
@@ -72,33 +66,24 @@ func (p *ShadowPass) DrawLight(scene *Scene, light *Light) {
 
 	// compute world to lightspace (light's view projection) matrix
 	// todo: move to light object
-	lp := light.Projection
-	lv := mat4.LookAt(light.Position, vec3.Zero)
-	lvp := lp.Mul(&lv)
+	// lp := light.Projection
+	// lv := mat4.LookAt(light.Position, vec3.Zero)
+	// lvp := lp.Mul(&lv)
 
 	// draw shadow casters
-	scene.CollectWithArgs(p, DrawArgs{
-		Projection: lp,
-		View:       lv,
-		VP:         lvp,
-		MVP:        lvp,
-		Transform:  mat4.Ident(),
-		Pass:       render.Geometry,
-	})
+	// scene.CollectWithArgs(p, DrawArgs{
+	// 	Projection: lp,
+	// 	View:       lv,
+	// 	VP:         lvp,
+	// 	MVP:        lvp,
+	// 	Transform:  mat4.Ident(),
+	// 	Pass:       render.Geometry,
+	// })
 
-	for _, cmd := range p.queue.items {
-		drawable := cmd.Component.(DeferredDrawable)
-		drawable.DrawDeferred(cmd.Args)
-	}
+	// for _, cmd := range p.queue.items {
+	// 	drawable := cmd.Component.(DeferredDrawable)
+	// 	drawable.DrawDeferred(cmd.Args)
+	// }
 
 	render.DepthOutput(false)
-}
-
-func (p *ShadowPass) Visible(c Component, args DrawArgs) bool {
-	_, ok := c.(DeferredDrawable)
-	return ok
-}
-
-func (p *ShadowPass) Queue(c Component, args DrawArgs) {
-	p.queue.Add(c, args)
 }

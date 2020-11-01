@@ -154,11 +154,3 @@ func (p *LightPass) Draw(scene *Scene) {
 	render.DepthOutput(true)
 	render.Blend(false)
 }
-
-func (p *LightPass) Visible(c Component, args DrawArgs) bool {
-	// todo: use the collect/queue pattern to find lights to draw
-	return false
-}
-
-func (p *LightPass) Queue(c Component, args DrawArgs) {
-}

@@ -1,23 +1,27 @@
 package editor
 
 import (
-	"github.com/johanhenriksson/goworld/engine"
+	"github.com/johanhenriksson/goworld/engine/object"
 	"github.com/johanhenriksson/goworld/geometry"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
 )
 
 type SampleTool struct {
+	*object.T
 	box *geometry.Box
 }
 
 func NewSampleTool() *SampleTool {
-	return &SampleTool{
+	st := &SampleTool{
+		T:   object.New("SampleTool"),
 		box: geometry.NewBox(vec3.One, render.Purple),
 	}
+	st.Attach(st.box)
+	return st
 }
 
-func (pt *SampleTool) Name() string {
+func (pt *SampleTool) String() string {
 	return "SampleTool"
 }
 
@@ -32,12 +36,4 @@ func (pt *SampleTool) Use(e *Editor, position, normal vec3.T) {
 
 func (pt *SampleTool) Hover(editor *Editor, position, normal vec3.T) {
 	pt.box.Position = position.Sub(normal.Scaled(0.5)).Floor()
-}
-
-func (pt *SampleTool) Update(dt float32) {
-	engine.Update(dt, pt.box)
-}
-
-func (pt *SampleTool) Collect(pass engine.DrawPass, args engine.DrawArgs) {
-	engine.Collect(pass, args, pt.box)
 }

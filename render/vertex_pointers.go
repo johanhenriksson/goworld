@@ -6,7 +6,7 @@ import (
 
 type Pointers []Pointer
 
-func (ps Pointers) BufferName() string {
+func (ps Pointers) BufferString() string {
 	names := make([]string, len(ps))
 	for i, p := range ps {
 		names[i] = p.Name

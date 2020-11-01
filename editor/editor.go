@@ -1,18 +1,22 @@
 package editor
 
 import (
+	"fmt"
+
 	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/engine/keys"
 	"github.com/johanhenriksson/goworld/engine/mouse"
+	"github.com/johanhenriksson/goworld/engine/object"
 	"github.com/johanhenriksson/goworld/game"
 	"github.com/johanhenriksson/goworld/geometry"
+	"github.com/johanhenriksson/goworld/geometry/plane"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
 )
 
 // Editor base struct
 type Editor struct {
-	*engine.Group
+	*object.T
 
 	Chunk   *game.Chunk
 	Camera  *engine.Camera
@@ -24,9 +28,9 @@ type Editor struct {
 	SampleTool  *SampleTool
 	ReplaceTool *ReplaceTool
 
-	XPlane *geometry.Plane
-	YPlane *geometry.Plane
-	ZPlane *geometry.Plane
+	XPlane *plane.T
+	YPlane *plane.T
+	ZPlane *plane.T
 
 	xp, yp, zp int
 
@@ -38,7 +42,7 @@ type Editor struct {
 // NewEditor creates a new editor application
 func NewEditor(chunk *game.Chunk, camera *engine.Camera, gbuffer *render.GeometryBuffer) *Editor {
 	e := &Editor{
-		Group:   engine.NewGroup("Editor", vec3.Zero, vec3.Zero),
+		T:       object.New("Editor"),
 		Chunk:   chunk,
 		Camera:  camera,
 		Palette: NewPaletteWindow(render.DefaultPalette),
@@ -48,9 +52,18 @@ func NewEditor(chunk *game.Chunk, camera *engine.Camera, gbuffer *render.Geometr
 		SampleTool:  NewSampleTool(),
 		ReplaceTool: NewReplaceTool(),
 
-		XPlane: geometry.NewPlane(float32(chunk.Sx), render.Red.WithAlpha(0.25)),
-		YPlane: geometry.NewPlane(float32(chunk.Sy), render.Green.WithAlpha(0.25)),
-		ZPlane: geometry.NewPlane(float32(chunk.Sz), render.Blue.WithAlpha(0.25)),
+		XPlane: plane.New(plane.Args{
+			Size:  float32(chunk.Sx),
+			Color: render.Red.WithAlpha(0.25),
+		}),
+		YPlane: plane.New(plane.Args{
+			Size:  float32(chunk.Sy),
+			Color: render.Green.WithAlpha(0.25),
+		}),
+		ZPlane: plane.New(plane.Args{
+			Size:  float32(chunk.Sz),
+			Color: render.Blue.WithAlpha(0.25),
+		}),
 
 		mesh:    game.NewChunkMesh(chunk),
 		bounds:  geometry.NewBox(vec3.NewI(chunk.Sx, chunk.Sy, chunk.Sz), render.DarkGrey),
@@ -70,19 +83,31 @@ func NewEditor(chunk *game.Chunk, camera *engine.Camera, gbuffer *render.Geometr
 
 	e.Tool = e.PlaceTool
 
-	e.Attach(e.mesh, e.bounds, e.XPlane, e.YPlane, e.ZPlane)
+	// could we avoid this somehow?
+	e.Attach(e.mesh, e.bounds,
+		e.XPlane, e.YPlane, e.ZPlane,
+		e.PlaceTool, e.EraseTool)
 
 	return e
 }
 
-func (e *Editor) Collect(pass engine.DrawPass, args engine.DrawArgs) {
-	e.Group.Collect(pass, args)
-	engine.Collect(pass, args, e.Tool)
+func (e *Editor) DeselectTool() {
+	if e.Tool != nil {
+		fmt.Println("Disable", e.Tool)
+		e.Tool.SetActive(false)
+		e.Tool = nil
+	}
+}
+
+func (e *Editor) SelectTool(tool Tool) {
+	e.DeselectTool()
+	e.Tool = tool
+	e.Tool.SetActive(true)
 }
 
 func (e *Editor) Update(dt float32) {
-	e.Group.Update(dt)
-	engine.Update(dt, e.Tool)
+	e.T.Update(dt)
+	// engine.Update(dt, e.Tool)
 
 	exists, position, normal := e.cursorPositionNormal()
 	if !exists {
@@ -100,27 +125,27 @@ func (e *Editor) Update(dt float32) {
 
 	// deselect tool
 	if keys.Pressed(keys.Escape) {
-		e.Tool = nil
+		e.DeselectTool()
 	}
 
 	// place tool
 	if keys.Pressed(keys.F) {
-		e.Tool = e.PlaceTool
+		e.SelectTool(e.PlaceTool)
 	}
 
 	// erase tool
 	if keys.Pressed(keys.C) {
-		e.Tool = e.EraseTool
+		e.SelectTool(e.EraseTool)
 	}
 
 	// replace tool
 	if keys.Pressed(keys.R) {
-		e.Tool = e.ReplaceTool
+		e.SelectTool(e.ReplaceTool)
 	}
 
 	// eyedropper tool
 	if keys.Pressed(keys.T) {
-		e.Tool = e.SampleTool
+		e.SelectTool(e.SampleTool)
 	}
 
 	if keys.Pressed(keys.N) && keys.Ctrl() {

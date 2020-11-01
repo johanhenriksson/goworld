@@ -47,10 +47,6 @@ func NewColorPass(input *render.ColorBuffer, filter string, ssao *render.Texture
 	}
 }
 
-func (p *ColorPass) Type() render.Pass {
-	return render.Postprocess
-}
-
 // DrawPass applies color correction to the scene
 func (p *ColorPass) Draw(scene *Scene) {
 	p.Output.Bind()
@@ -66,12 +62,6 @@ func (p *ColorPass) Draw(scene *Scene) {
 	render.BlendMultiply()
 	p.quad.Draw()
 }
-
-func (p *ColorPass) Visible(c Component, args DrawArgs) bool {
-	return false
-}
-
-func (p *ColorPass) Queue(c Component, args DrawArgs) {}
 
 func (p *ColorPass) Resize(width, height int) {
 	p.Output.Resize(width, height)

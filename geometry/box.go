@@ -24,7 +24,7 @@ func NewBox(size vec3.T, color render.Color) *Box {
 }
 
 func (b *Box) compute() {
-	x, y, z := b.Position.X, b.Position.Y, b.Position.Z
+	var x, y, z float32
 	w, h, d := b.Size.X, b.Size.Y, b.Size.Z
 	c := b.Color.Vec4()
 	vertices := []vertex.C{

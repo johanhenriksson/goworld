@@ -1,16 +1,14 @@
 package engine
 
 import (
+	"github.com/johanhenriksson/goworld/engine/transform"
 	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
 )
 
 type DrawPass interface {
-	Type() render.Pass
 	Draw(*Scene)
-	Visible(Component, DrawArgs) bool
-	Queue(Component, DrawArgs)
 	Resize(int, int)
 }
 
@@ -27,8 +25,14 @@ type DrawArgs struct {
 }
 
 // Apply the effects of a transform
-func (d DrawArgs) Apply(t *Transform) DrawArgs {
-	d.Transform = d.Transform.Mul(&t.Matrix)
+func (d DrawArgs) Apply(t *transform.T) DrawArgs {
+	d.Transform = d.Transform.Mul(&t.Local)
 	d.MVP = d.VP.Mul(&d.Transform)
+	return d
+}
+
+func (d DrawArgs) Set(t *transform.T) DrawArgs {
+	d.Transform = t.World
+	d.MVP = d.VP.Mul(&t.World)
 	return d
 }

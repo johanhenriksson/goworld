@@ -2,6 +2,7 @@ package engine
 
 import (
 	"github.com/go-gl/gl/v4.1-core/gl"
+	"github.com/johanhenriksson/goworld/engine/object"
 	"github.com/johanhenriksson/goworld/render"
 )
 
@@ -13,7 +14,6 @@ type ForwardDrawable interface {
 type ForwardPass struct {
 	output  *render.ColorBuffer
 	gbuffer *render.GeometryBuffer
-	queue   *DrawQueue
 	fbo     *render.FrameBuffer
 }
 
@@ -29,12 +29,7 @@ func NewForwardPass(gbuffer *render.GeometryBuffer, output *render.ColorBuffer) 
 		fbo:     fbo,
 		output:  output,
 		gbuffer: gbuffer,
-		queue:   NewDrawQueue(),
 	}
-}
-
-func (p *ForwardPass) Type() render.Pass {
-	return render.Forward
 }
 
 func (p *ForwardPass) Resize(width, height int) {}
@@ -48,10 +43,6 @@ func (p *ForwardPass) Draw(scene *Scene) {
 	render.BlendMultiply()
 	render.CullFace(render.CullBack)
 
-	// draw scene
-	p.queue.Clear()
-	scene.Collect(p)
-
 	// todo: depth sorting
 	// there is finally a decent way of doing it!!
 	// now we just need a way to compute the distance from an object to the camera
@@ -64,30 +55,24 @@ func (p *ForwardPass) Draw(scene *Scene) {
 	p.fbo.Bind()
 	defer p.fbo.Unbind()
 	p.fbo.DrawBuffers()
-	// gl.Disablei(gl.BLEND, gl.COLOR_ATTACHMENT1)
-	// gl.Disablei(gl.BLEND, gl.COLOR_ATTACHMENT2)
-	// gl.BlendFuncSeparatei(gl.COLOR_ATTACHMENT1, gl.ZERO, gl.ONE, gl.ZERO, gl.ONE)
-	// gl.BlendFuncSeparatei(gl.COLOR_ATTACHMENT2, gl.ZERO, gl.ONE, gl.ZERO, gl.ONE)
 
 	// disable depth testing
 	// todo: should be disabled for transparent things, not everything
 	// render.DepthOutput(false)
 
-	for _, cmd := range p.queue.items {
-		drawable := cmd.Component.(ForwardDrawable)
-		drawable.DrawForward(cmd.Args)
+	query := object.NewQuery(func(c object.Component) bool {
+		_, ok := c.(ForwardDrawable)
+		return ok
+	})
+	scene.Collect(&query)
+
+	args := scene.Camera.DrawArgs()
+	for _, component := range query.Results {
+		drawable := component.(ForwardDrawable)
+		drawable.DrawForward(args.Set(component.Parent().T))
 	}
 
 	render.DepthOutput(true)
 
 	render.CullFace(render.CullNone)
-}
-
-func (p *ForwardPass) Visible(c Component, args DrawArgs) bool {
-	_, ok := c.(ForwardDrawable)
-	return ok
-}
-
-func (p *ForwardPass) Queue(c Component, args DrawArgs) {
-	p.queue.Add(c, args)
 }
