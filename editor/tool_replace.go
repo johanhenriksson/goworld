@@ -39,5 +39,5 @@ func (pt *ReplaceTool) Use(e *Editor, position, normal vec3.T) {
 }
 
 func (pt *ReplaceTool) Hover(editor *Editor, position, normal vec3.T) {
-	pt.box.SetPosition(position.Sub(normal.Scaled(0.5)).Floor())
+	pt.SetPosition(position.Sub(normal.Scaled(0.5)).Floor())
 }

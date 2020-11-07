@@ -2,7 +2,7 @@ package object
 
 // Link behaviours to objects
 type Link struct {
-	*T
+	parent  *T
 	name    string
 	enabled bool
 }
@@ -17,10 +17,10 @@ func NewLink(name string) *Link {
 func (b *Link) String() string { return b.name }
 
 // Parent refers to the parent object
-func (b *Link) Parent() *T { return b.T }
+func (b *Link) Parent() *T { return b.parent }
 
 // SetParent sets the parent object
-func (b *Link) SetParent(o *T) { b.T = o }
+func (b *Link) SetParent(o *T) { b.parent = o }
 
 // Active returns true if the object is active
 func (b *Link) Active() bool { return b.enabled }

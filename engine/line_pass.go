@@ -30,6 +30,6 @@ func (p *LinePass) Draw(scene *Scene) {
 	args := scene.Camera.DrawArgs()
 	for _, component := range query.Results {
 		drawable := component.(LineDrawable)
-		drawable.DrawLines(args.Set(component.Parent().T))
+		drawable.DrawLines(args.Apply(component.Parent().Transform()))
 	}
 }

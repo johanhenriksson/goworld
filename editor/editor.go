@@ -71,21 +71,22 @@ func NewEditor(chunk *game.Chunk, camera *engine.Camera, gbuffer *render.Geometr
 	}
 
 	e.xp = chunk.Sx
-	e.XPlane.SetRotation(vec3.New(-90, 0, 90))
-	e.XPlane.SetPosition(vec3.New(float32(e.xp), float32(chunk.Sy)/2, float32(chunk.Sz)/2))
+	e.XPlane.Parent().SetRotation(vec3.New(-90, 0, 90))
+	e.XPlane.Parent().SetPosition(vec3.New(float32(e.xp), float32(chunk.Sy)/2, float32(chunk.Sz)/2))
 
-	e.YPlane.SetPosition(vec3.New(float32(chunk.Sx)/2, float32(e.yp), float32(chunk.Sz)/2))
+	e.YPlane.Parent().SetPosition(vec3.New(float32(chunk.Sx)/2, float32(e.yp), float32(chunk.Sz)/2))
 
 	e.zp = chunk.Sz
-	e.ZPlane.SetRotation(vec3.New(-90, 0, 0))
-	e.ZPlane.SetPosition(vec3.New(float32(chunk.Sx)/2, float32(chunk.Sy)/2, float32(e.zp)))
+	e.ZPlane.Parent().SetRotation(vec3.New(-90, 0, 0))
+	e.ZPlane.Parent().SetPosition(vec3.New(float32(chunk.Sx)/2, float32(chunk.Sy)/2, float32(e.zp)))
 
 	e.Tool = e.PlaceTool
 
 	// could we avoid this somehow?
 	e.Attach(e.mesh, e.bounds,
 		e.XPlane, e.YPlane, e.ZPlane,
-		e.PlaceTool, e.EraseTool)
+		object.New("Place", e.PlaceTool))
+	// e.PlaceTool, e.EraseTool)
 
 	return e
 }
@@ -107,20 +108,6 @@ func (e *Editor) SelectTool(tool Tool) {
 func (e *Editor) Update(dt float32) {
 	e.T.Update(dt)
 	// engine.Update(dt, e.Tool)
-
-	exists, position, normal := e.cursorPositionNormal()
-	if !exists {
-		return
-	}
-
-	if e.Tool != nil {
-		e.Tool.Hover(e, position, normal)
-
-		// use active tool
-		if mouse.Pressed(mouse.Button2) {
-			e.Tool.Use(e, position, normal)
-		}
-	}
 
 	// deselect tool
 	if keys.Pressed(keys.Escape) {
@@ -160,17 +147,37 @@ func (e *Editor) Update(dt float32) {
 
 	if keys.Pressed(keys.Key1) {
 		e.xp = (e.xp + e.Chunk.Sx + m + 1) % (e.Chunk.Sx + 1)
-		e.XPlane.SetPosition(vec3.New(float32(e.xp), 0, 0))
+		p := e.XPlane.Parent().Position()
+		p.X = float32(e.xp)
+		e.XPlane.Parent().SetPosition(p)
 	}
 
 	if keys.Pressed(keys.Key2) {
 		e.yp = (e.yp + e.Chunk.Sy + m + 1) % (e.Chunk.Sy + 1)
-		e.YPlane.SetPosition(vec3.New(0, float32(e.yp), 0))
+		p := e.YPlane.Parent().Position()
+		p.Y = float32(e.yp)
+		e.YPlane.Parent().SetPosition(p)
 	}
 
 	if keys.Pressed(keys.Key3) {
 		e.zp = (e.zp + e.Chunk.Sz + m + 1) % (e.Chunk.Sz + 1)
-		e.ZPlane.SetPosition(vec3.New(0, 0, float32(e.zp)))
+		p := e.ZPlane.Parent().Position()
+		p.Z = float32(e.zp)
+		e.ZPlane.Parent().SetPosition(p)
+	}
+
+	exists, position, normal := e.cursorPositionNormal()
+	if !exists {
+		return
+	}
+
+	if e.Tool != nil {
+		e.Tool.Hover(e, position, normal)
+
+		// use active tool
+		if mouse.Pressed(mouse.Button2) {
+			e.Tool.Use(e, position, normal)
+		}
 	}
 }
 

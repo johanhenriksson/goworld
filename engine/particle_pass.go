@@ -95,7 +95,7 @@ func (ps *ParticleSystem) Draw(args DrawArgs) {
 		return
 	}
 
-	args = args.Apply(ps.T)
+	args = args.Apply(ps.T.World)
 
 	render.Blend(true)
 	render.BlendFunc(gl.ONE, gl.ONE)

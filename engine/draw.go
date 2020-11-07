@@ -25,8 +25,8 @@ type DrawArgs struct {
 }
 
 // Apply the effects of a transform
-func (d DrawArgs) Apply(t *transform.T) DrawArgs {
-	d.Transform = d.Transform.Mul(&t.Local)
+func (d DrawArgs) Apply(t mat4.T) DrawArgs {
+	d.Transform = d.Transform.Mul(&t)
 	d.MVP = d.VP.Mul(&d.Transform)
 	return d
 }
