@@ -7,6 +7,7 @@ type Query struct {
 	Results []Component
 }
 
+// NewQuery returns a new component query.
 func NewQuery(predicate ComponentPredicate) Query {
 	return Query{
 		Match:   predicate,
@@ -14,10 +15,12 @@ func NewQuery(predicate ComponentPredicate) Query {
 	}
 }
 
+// Append a component to the query results.
 func (q *Query) Append(result Component) {
 	q.Results = append(q.Results, result)
 }
 
+// Clear the query results, without freeing the memory.
 func (q *Query) Clear() {
 	// clear slice, but keep the memory
 	q.Results = q.Results[:0]

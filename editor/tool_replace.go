@@ -19,6 +19,7 @@ func NewReplaceTool() *ReplaceTool {
 		box: geometry.NewBox(vec3.One, render.Yellow),
 	}
 	rt.Attach(rt.box)
+	rt.SetActive(false)
 	return rt
 }
 

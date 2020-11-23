@@ -163,3 +163,18 @@ func (v T) YZ() vec2.T {
 func (v T) Div(v2 T) T {
 	return T{v.X / v2.X, v.Y / v2.Y, v.Z / v2.Z}
 }
+
+// WithX returns a new vector with the X component set to a given value
+func (v T) WithX(x float32) T {
+	return T{x, v.Y, v.Z}
+}
+
+// WithY returns a new vector with the Y component set to a given value
+func (v T) WithY(y float32) T {
+	return T{v.X, y, v.Z}
+}
+
+// WithZ returns a new vector with the Z component set to a given value
+func (v T) WithZ(z float32) T {
+	return T{v.X, v.Y, z}
+}

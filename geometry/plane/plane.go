@@ -26,10 +26,16 @@ func NewObject(args Args) *T {
 	return Attach(parent, args)
 }
 
+func Builder(out **T, args Args) *object.Builder {
+	b := object.Build("Plane")
+	*out = New(args)
+	return b.Attach(*out)
+}
+
 func New(args Args) *T {
 	mat := assets.GetMaterialShared("color.f")
 	plane := &T{
-		Mesh: engine.NewMesh("Plane", mat),
+		Mesh: engine.NewMesh(mat),
 		Args: args,
 	}
 	plane.Pass = render.Forward

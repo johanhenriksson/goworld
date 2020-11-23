@@ -18,6 +18,7 @@ func NewSampleTool() *SampleTool {
 		box: geometry.NewBox(vec3.One, render.Purple),
 	}
 	st.Attach(st.box)
+	st.SetActive(false)
 	return st
 }
 
@@ -31,7 +32,7 @@ func (pt *SampleTool) Use(e *Editor, position, normal vec3.T) {
 	e.Palette.Selected = render.Color4(float32(voxel.R)/255, float32(voxel.G)/255, float32(voxel.B)/255, 1)
 
 	// select placement tool
-	e.Tool = e.PlaceTool
+	e.SelectTool(e.PlaceTool)
 }
 
 func (pt *SampleTool) Hover(editor *Editor, position, normal vec3.T) {

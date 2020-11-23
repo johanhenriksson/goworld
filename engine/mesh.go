@@ -21,20 +21,20 @@ type Mesh struct {
 }
 
 // NewMesh creates a new mesh object
-func NewMesh(name string, material *render.Material) *Mesh {
-	return NewPrimitiveMesh(name, render.Triangles, render.Geometry, material)
+func NewMesh(material *render.Material) *Mesh {
+	return NewPrimitiveMesh(render.Triangles, render.Geometry, material)
 }
 
 // NewLineMesh creates a new mesh for drawing lines
-func NewLineMesh(name string) *Mesh {
+func NewLineMesh() *Mesh {
 	material := assets.GetMaterialShared("lines")
-	return NewPrimitiveMesh(name, render.Lines, render.Line, material)
+	return NewPrimitiveMesh(render.Lines, render.Line, material)
 }
 
 // NewPrimitiveMesh creates a new mesh composed of a given GL primitive
-func NewPrimitiveMesh(name string, primitive render.GLPrimitive, pass render.Pass, material *render.Material) *Mesh {
+func NewPrimitiveMesh(primitive render.GLPrimitive, pass render.Pass, material *render.Material) *Mesh {
 	m := &Mesh{
-		Link:     object.NewLink(name),
+		Link:     object.NewLink(nil),
 		Pass:     pass,
 		Material: material,
 		vao:      render.CreateVertexArray(primitive),

@@ -12,7 +12,7 @@ type ChunkMesh struct {
 }
 
 func NewChunkMesh(chunk *Chunk) *ChunkMesh {
-	mesh := engine.NewMesh("ChunkMesh", assets.GetMaterialShared("color_voxels"))
+	mesh := engine.NewMesh(assets.GetMaterialShared("color_voxels"))
 	chk := &ChunkMesh{
 		Mesh:         mesh,
 		Chunk:        chunk,

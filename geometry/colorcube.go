@@ -19,7 +19,7 @@ type ColorCube struct {
 func NewColorCube(color render.Color, size float32) *ColorCube {
 	mat := assets.GetMaterialShared("color.f")
 	cube := &ColorCube{
-		Mesh:  engine.NewMesh("ColorCube", mat),
+		Mesh:  engine.NewMesh(mat),
 		Size:  size,
 		Color: color,
 	}

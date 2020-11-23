@@ -22,7 +22,7 @@ type Cone struct {
 func NewCone(radius, height float32, segments int, color render.Color) *Cone {
 	mat := assets.GetMaterialShared("color.f")
 	cone := &Cone{
-		Mesh:     engine.NewMesh("Cone", mat),
+		Mesh:     engine.NewMesh(mat),
 		Radius:   radius,
 		Height:   height,
 		Segments: segments,

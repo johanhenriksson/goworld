@@ -1,8 +1,6 @@
 package editor
 
 import (
-	"fmt"
-
 	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/engine/keys"
 	"github.com/johanhenriksson/goworld/engine/mouse"
@@ -52,55 +50,52 @@ func NewEditor(chunk *game.Chunk, camera *engine.Camera, gbuffer *render.Geometr
 		SampleTool:  NewSampleTool(),
 		ReplaceTool: NewReplaceTool(),
 
-		XPlane: plane.NewObject(plane.Args{
-			Size:  float32(chunk.Sx),
-			Color: render.Red.WithAlpha(0.25),
-		}),
-		YPlane: plane.NewObject(plane.Args{
-			Size:  float32(chunk.Sy),
-			Color: render.Green.WithAlpha(0.25),
-		}),
-		ZPlane: plane.NewObject(plane.Args{
-			Size:  float32(chunk.Sz),
-			Color: render.Blue.WithAlpha(0.25),
-		}),
-
 		mesh:    game.NewChunkMesh(chunk),
 		bounds:  geometry.NewBox(vec3.NewI(chunk.Sx, chunk.Sy, chunk.Sz), render.DarkGrey),
 		gbuffer: gbuffer,
 	}
 
-	// e.XPlane = object.Builder("XPlane").
-	// 	Attach(plane.New(plane.Args{})).
-	// 	Rotation(vec3.New(-90, 0, 90)).
-	// 	Position(vec3.New(float32(e.xp), float32(chunk.Sy)/2, float32(chunk.Sz)/2)).
-	// 	Create()
-	// XPlane = plane.New()
+	center := vec3.NewI(chunk.Sx, chunk.Sy, chunk.Sz).Scaled(0.5)
 
-	// e.xp = chunk.Sx
-	e.XPlane.SetRotation(vec3.New(-90, 0, 90))
-	e.XPlane.SetPosition(vec3.New(float32(e.xp), float32(chunk.Sy)/2, float32(chunk.Sz)/2))
+	// X Construction Plane
+	plane.Builder(&e.XPlane, plane.Args{
+		Size:  float32(chunk.Sx),
+		Color: render.Red.WithAlpha(0.25),
+	}).
+		Position(center.WithX(0)).
+		Rotation(vec3.New(-90, 0, 90)).
+		Active(false).
+		Create(e.T)
 
-	e.YPlane.SetPosition(vec3.New(float32(chunk.Sx)/2, float32(e.yp), float32(chunk.Sz)/2))
+	// Y Construction Plane
+	plane.Builder(&e.YPlane, plane.Args{
+		Size:  float32(chunk.Sy),
+		Color: render.Green.WithAlpha(0.25),
+	}).
+		Position(center.WithY(0)).
+		Active(false).
+		Create(e.T)
 
-	// e.zp = chunk.Sz
-	e.ZPlane.SetRotation(vec3.New(-90, 0, 0))
-	e.ZPlane.SetPosition(vec3.New(float32(chunk.Sx)/2, float32(chunk.Sy)/2, float32(e.zp)))
+	// Z Construction Plane
+	plane.Builder(&e.ZPlane, plane.Args{
+		Size:  float32(chunk.Sz),
+		Color: render.Blue.WithAlpha(0.25),
+	}).
+		Position(center.WithZ(0)).
+		Rotation(vec3.New(-90, 0, 0)).
+		Active(false).
+		Create(e.T)
 
-	e.Tool = e.PlaceTool
+	e.SelectTool(e.PlaceTool)
 
 	// could we avoid this somehow?
-	e.Attach(e.mesh, e.bounds,
-		e.XPlane, e.YPlane, e.ZPlane,
-		object.New("Place", e.PlaceTool))
-	// e.PlaceTool, e.EraseTool)
+	e.Attach(e.mesh, e.bounds, e.PlaceTool, e.ReplaceTool, e.EraseTool, e.SampleTool)
 
 	return e
 }
 
 func (e *Editor) DeselectTool() {
 	if e.Tool != nil {
-		fmt.Println("Disable", e.Tool)
 		e.Tool.SetActive(false)
 		e.Tool = nil
 	}
@@ -116,6 +111,19 @@ func (e *Editor) Update(dt float32) {
 	e.T.Update(dt)
 	// engine.Update(dt, e.Tool)
 
+	e.updateToolSelection()
+	e.updateConstructPlanes()
+	e.updateTool()
+
+	// clear chunk
+	if keys.Pressed(keys.N) && keys.Ctrl() {
+		e.Chunk.Clear()
+		e.Chunk.Light.Calculate()
+		e.mesh.Compute()
+	}
+}
+
+func (e *Editor) updateToolSelection() {
 	// deselect tool
 	if keys.Pressed(keys.Escape) {
 		e.DeselectTool()
@@ -140,11 +148,21 @@ func (e *Editor) Update(dt float32) {
 	if keys.Pressed(keys.T) {
 		e.SelectTool(e.SampleTool)
 	}
+}
 
-	if keys.Pressed(keys.N) && keys.Ctrl() {
-		e.Chunk.Clear()
-		e.Chunk.Light.Calculate()
-		e.mesh.Compute()
+func (e *Editor) updateConstructPlanes() {
+	// toggle construction planes
+	if keys.Ctrl() {
+		if keys.Pressed(keys.X) {
+			e.XPlane.SetActive(!e.XPlane.Active())
+		}
+		if keys.Pressed(keys.Y) {
+			e.YPlane.SetActive(!e.YPlane.Active())
+		}
+		if keys.Pressed(keys.Z) {
+			e.ZPlane.SetActive(!e.ZPlane.Active())
+		}
+		return
 	}
 
 	m := 1
@@ -152,27 +170,26 @@ func (e *Editor) Update(dt float32) {
 		m = -1
 	}
 
-	if keys.Pressed(keys.X) {
+	if keys.Pressed(keys.X) && e.XPlane.Active() {
 		e.xp = (e.xp + e.Chunk.Sx + m + 1) % (e.Chunk.Sx + 1)
-		p := e.XPlane.Position()
-		p.X = float32(e.xp)
+		p := e.XPlane.Position().WithX(float32(e.xp))
 		e.XPlane.SetPosition(p)
 	}
 
-	if keys.Pressed(keys.Y) {
+	if keys.Pressed(keys.Y) && e.YPlane.Active() {
 		e.yp = (e.yp + e.Chunk.Sy + m + 1) % (e.Chunk.Sy + 1)
-		p := e.YPlane.Position()
-		p.Y = float32(e.yp)
+		p := e.YPlane.Position().WithY(float32(e.yp))
 		e.YPlane.SetPosition(p)
 	}
 
-	if keys.Pressed(keys.Z) {
+	if keys.Pressed(keys.Z) && e.ZPlane.Active() {
 		e.zp = (e.zp + e.Chunk.Sz + m + 1) % (e.Chunk.Sz + 1)
-		p := e.ZPlane.Position()
-		p.Z = float32(e.zp)
+		p := e.ZPlane.Position().WithZ(float32(e.zp))
 		e.ZPlane.SetPosition(p)
 	}
+}
 
+func (e *Editor) updateTool() {
 	exists, position, normal := e.cursorPositionNormal()
 	if !exists {
 		return

@@ -45,13 +45,17 @@ func (o *T) String() string { return o.name }
 func (o *T) Parent() *T { return o.parent }
 
 // SetParent sets the parent object pointer
-func (o *T) SetParent(p *T) {
+func (o *T) SetParent(p *T) Component {
 	o.parent = p
 	o.updateTransform()
+	return o
 }
 
 // SetActive sets the objects active state
-func (o *T) SetActive(active bool) { o.enabled = active }
+func (o *T) SetActive(active bool) Component {
+	o.enabled = active
+	return o
+}
 
 // Active indicates whether the object is currently enabled
 func (o *T) Active() bool { return o.enabled }
@@ -142,21 +146,28 @@ func (o *T) Rotation() vec3.T { return o.rotation }
 // Scale returns the objects scale relative to its parent
 func (o *T) Scale() vec3.T { return o.scale }
 
-func (o *T) SetPosition(p vec3.T) {
+// SetPosition sets the objects position.
+func (o *T) SetPosition(p vec3.T) Component {
 	o.position = p
 	o.updateTransform()
+	return o
 }
 
-func (o *T) SetRotation(r vec3.T) {
+// SetRotation sets the objects rotation.
+func (o *T) SetRotation(r vec3.T) Component {
 	o.rotation = r
 	o.updateTransform()
+	return o
 }
 
-func (o *T) SetScale(s vec3.T) {
+// SetScale sets the objects scale.
+func (o *T) SetScale(s vec3.T) Component {
 	o.scale = s
 	o.updateTransform()
+	return o
 }
 
+// Transform returns the affine transformation matrix of the object.
 func (o *T) Transform() mat4.T {
 	return o.world
 }

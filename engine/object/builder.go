@@ -2,55 +2,66 @@ package object
 
 import "github.com/johanhenriksson/goworld/math/vec3"
 
-type builder struct {
+// Builder API for game objects
+type Builder struct {
 	name     string
 	position vec3.T
 	rotation vec3.T
 	scale    vec3.T
+	active   bool
 	children []Component
 }
 
-func Builder(name string) *builder {
-	return &builder{
+// Build instantiates a new object builder.
+func Build(name string) *Builder {
+	return &Builder{
 		name:     name,
 		position: vec3.Zero,
 		rotation: vec3.Zero,
 		scale:    vec3.One,
+		active:   true,
 	}
 }
 
-func (b *builder) Attach(c Component) *builder {
+// Attach a component to the object.
+func (b *Builder) Attach(c Component) *Builder {
 	b.children = append(b.children, c)
 	return b
 }
 
-func (b *builder) Position(p vec3.T) *builder {
+// Position sets the intial position of the object.
+func (b *Builder) Position(p vec3.T) *Builder {
 	b.position = p
 	return b
 }
 
-func (b *builder) Rotation(r vec3.T) *builder {
+// Rotation sets the intial rotation of the object.
+func (b *Builder) Rotation(r vec3.T) *Builder {
 	b.rotation = r
 	return b
 }
 
-func (b *builder) Scale(s vec3.T) *builder {
+// Scale sets the intial scale of the object.
+func (b *Builder) Scale(s vec3.T) *Builder {
 	b.scale = s
 	return b
 }
 
-func (b *builder) Create() *T {
+// Active sets the objects active flag.
+func (b *Builder) Active(active bool) *Builder {
+	b.active = active
+	return b
+}
+
+// Create instantiates a new object with the current builder settings.
+func (b *Builder) Create(parent *T) *T {
 	obj := New(b.name, b.children...)
 	obj.SetPosition(b.position)
 	obj.SetRotation(b.rotation)
 	obj.SetScale(b.scale)
-	return obj
-}
-
-func testbuild() {
-	obj := Builder("NewObject").
-		Position(vec3.New(1, 2, 3)).
-		Create()
-	if obj.enabled {
+	obj.SetActive(b.active)
+	if parent != nil {
+		parent.Attach(obj)
 	}
+	return obj
 }

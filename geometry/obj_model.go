@@ -16,7 +16,7 @@ type ObjModel struct {
 
 func NewObjModel(mat *render.Material, path string) *ObjModel {
 	obj := &ObjModel{
-		Mesh: engine.NewMesh(fmt.Sprintf("Mesh:%s", path), mat),
+		Mesh: engine.NewMesh(mat),
 		Path: path,
 	}
 	obj.SetIndexType(render.UInt32)

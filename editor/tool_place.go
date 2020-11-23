@@ -19,6 +19,7 @@ func NewPlaceTool() *PlaceTool {
 		box: geometry.NewBox(vec3.One, render.Blue),
 	}
 	pt.Attach(pt.box)
+	pt.SetActive(false)
 	return pt
 }
 

@@ -19,6 +19,7 @@ func NewEraseTool() *EraseTool {
 		box: geometry.NewBox(vec3.One, render.Red),
 	}
 	et.Attach(et.box)
+	et.SetActive(false)
 	return et
 }
 
