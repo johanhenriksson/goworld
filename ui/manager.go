@@ -25,8 +25,8 @@ type Manager struct {
 // NewManager creates a new UI manager.
 func NewManager(app *engine.Application) *Manager {
 	// grab UI dimensions from application window
-	width := float32(app.Window.Width) * app.Window.Scale()
-	height := float32(app.Window.Height) * app.Window.Scale()
+	width := float32(app.Window.Width)   // * app.Window.Scale
+	height := float32(app.Window.Height) // * app.Window.Scale
 
 	m := &Manager{
 		Width:    width,
@@ -41,7 +41,14 @@ func NewManager(app *engine.Application) *Manager {
 	app.Window.Wnd.SetMouseButtonCallback(m.glfwMouseButtonCallback)
 	app.Window.Wnd.SetCharCallback(m.glfwInputCallback)
 
+	// watermark / fps text
+	m.Attach(NewWatermark(app.Window))
+
 	return m
+}
+
+func (m *Manager) Type() render.Pass {
+	return render.UI
 }
 
 // Attach a child component
@@ -50,12 +57,12 @@ func (m *Manager) Attach(child Component) {
 }
 
 // DrawPass draws the UI
-func (m *Manager) DrawPass(scene *engine.Scene) {
+func (m *Manager) Draw(scene *engine.Scene) {
 	p := m.Viewport
 	v := mat4.Ident() // unused by UI
 	vp := p           // unused by UI
 
-	args := render.DrawArgs{
+	args := engine.DrawArgs{
 		Projection: p,
 		View:       v,
 		VP:         vp,
@@ -141,3 +148,5 @@ func (m *Manager) glfwInputCallback(w *glfw.Window, char rune) {
 		m.Focused.HandleInput(char)
 	}
 }
+
+func (m *Manager) Resize(width, height int) {}

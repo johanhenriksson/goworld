@@ -13,29 +13,12 @@ func NewApplication(title string, width, height int) *Application {
 	highDpiEnabled := false
 	wnd := CreateWindow(title, width, height, highDpiEnabled)
 
-	// figure out render resolution if we're on a high dpi screen
-	scale := float32(1.0)
-	if highDpiEnabled {
-		scale = wnd.Scale()
-	}
-	renderWidth, renderHeight := int(float32(width)*scale), int(float32(height)*scale)
-
 	// set upp renderer
 	// this belongs somewhere else probably
 	// actually, the entire application concept is pretty much rendundant at this point.
 	// perhaps the window should be passed directly to a renderer?
 	// or the other way around?
 	renderer := NewRenderer()
-	geoPass := NewGeometryPass(renderWidth, renderHeight)
-	lightPass := NewLightPass(geoPass.Buffer)
-	colorPass := NewColorPass(lightPass.Output, "saturated")
-	renderer.Append("geometry", geoPass)
-	renderer.Append("light", lightPass)
-	renderer.Append("postprocess", colorPass)
-	renderer.Append("output", NewOutputPass(colorPass.Output, geoPass.Buffer.Depth))
-	renderer.Append("forward", NewForwardPass())
-	renderer.Append("lines", NewLinePass())
-	renderer.Append("particles", NewParticlePass())
 
 	app := &Application{
 		Window:   wnd,
@@ -54,6 +37,10 @@ func NewApplication(title string, width, height int) *Application {
 		if app.Draw != nil {
 			app.Draw(wnd, dt)
 		}
+	})
+
+	app.Window.SetResizeCallback(func(wnd *Window, width, height int) {
+		renderer.Resize(width, height)
 	})
 
 	return app

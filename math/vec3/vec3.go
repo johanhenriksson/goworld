@@ -6,11 +6,29 @@ import (
 )
 
 var (
-	Zero  = T{0, 0, 0}
-	One   = T{1, 1, 1}
+	// Zero is the zero vector
+	Zero = T{0, 0, 0}
+
+	// One is the unit vector
+	One = T{1, 1, 1}
+
+	// UnitX is the unit vector in the X direction
 	UnitX = T{1, 0, 0}
+
+	// UnitXN is the unit vector in the negative X direction
+	UnitXN = T{-1, 0, 0}
+
+	// UnitY is the unit vector in the Y direction
 	UnitY = T{0, 1, 0}
+
+	// UnitYN is the unit vector in the negative Y direction
+	UnitYN = T{0, -1, 0}
+
+	// UnitZ is the unit vector in the Z direction
 	UnitZ = T{0, 0, 1}
+
+	// UnitZN is the unit vector in the negative Z direction
+	UnitZN = T{0, 0, -1}
 )
 
 // T holds a 3-component vector of 32-bit floats
@@ -18,24 +36,25 @@ type T struct {
 	X, Y, Z float32
 }
 
+// Slice converts the vector into a 3-element slice of float32
 func (v T) Slice() [3]float32 {
 	return [3]float32{v.X, v.Y, v.Z}
 }
 
 // Length returns the length of the vector.
 // See also LengthSqr and Normalize.
-func (v *T) Length() float32 {
+func (v T) Length() float32 {
 	return math.Sqrt(v.LengthSqr())
 }
 
 // LengthSqr returns the squared length of the vector.
 // See also Length and Normalize.
-func (v *T) LengthSqr() float32 {
+func (v T) LengthSqr() float32 {
 	return v.X*v.X + v.Y*v.Y + v.Z*v.Z
 }
 
-// Absed returns a copy of the vector containing the absolute values.
-func (v *T) Abs() T {
+// Abs returns a copy containing the absolute values of the vector components.
+func (v T) Abs() T {
 	return T{math.Abs(v.X), math.Abs(v.Y), math.Abs(v.Z)}
 }
 
@@ -69,7 +88,7 @@ func (v T) Scaled(f float32) T {
 	return T{v.X * f, v.Y * f, v.Z * f}
 }
 
-// Scaled returns a scaled vector
+// ScaleI returns a vector scaled by an integer factor
 func (v T) ScaleI(i int) T {
 	return v.Scaled(float32(i))
 }
@@ -86,6 +105,16 @@ func (v *T) Inverted() T {
 	i := *v
 	i.Invert()
 	return i
+}
+
+// Floor each components of the vector
+func (v T) Floor() T {
+	return T{math.Floor(v.X), math.Floor(v.Y), math.Floor(v.Z)}
+}
+
+// Ceil each component of the vector
+func (v T) Ceil() T {
+	return T{math.Ceil(v.X), math.Ceil(v.Y), math.Ceil(v.Z)}
 }
 
 // Add each element of the vector with the corresponding element of another vector

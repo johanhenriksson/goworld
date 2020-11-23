@@ -109,3 +109,13 @@ func (lv *LightVolume) Calculate() {
 	}
 	fmt.Println("Light volume calculation finished in", i, "iterations")
 }
+
+func (lv *LightVolume) Clear() {
+	for z := 0; z < lv.Sz; z++ {
+		for x := 0; x < lv.Sx; x++ {
+			for y := 0; y < lv.Sy; y++ {
+				lv.Data[z][x][y] = LightVoxel{}
+			}
+		}
+	}
+}

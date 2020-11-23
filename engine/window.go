@@ -28,6 +28,9 @@ type UpdateCallback func(float32)
 // RenderCallback defines the window render callback function
 type RenderCallback func(*Window, float32)
 
+// ResizeCallback defines the window resize callback function
+type ResizeCallback func(*Window, int, int)
+
 // Window represents the main engine window
 type Window struct {
 	Wnd           *glfw.Window
@@ -35,9 +38,11 @@ type Window struct {
 	Height        int
 	HighDPI       bool
 	FPS           float32
+	Scale         float32
 	focused       bool
 	updateCb      UpdateCallback
 	renderCb      RenderCallback
+	resizeCb      ResizeCallback
 	maxFrameTime  float64
 	lastFrameTime float64
 }
@@ -49,7 +54,7 @@ func CreateWindow(title string, width int, height int, highDPI bool) *Window {
 	glfw.WindowHint(glfw.ContextVersionMinor, 1)
 	glfw.WindowHint(glfw.OpenGLProfile, glfw.OpenGLCoreProfile)
 	glfw.WindowHint(glfw.OpenGLForwardCompatible, glfw.True)
-	glfw.WindowHint(glfw.Samples, 4)
+	glfw.WindowHint(glfw.Samples, 1)
 	glfw.WindowHint(glfw.OpenGLDebugContext, glfw.True)
 
 	window, err := glfw.CreateWindow(width, height, title, nil, nil)
@@ -63,6 +68,9 @@ func CreateWindow(title string, width int, height int, highDPI bool) *Window {
 	if err := gl.Init(); err != nil {
 		panic(err)
 	}
+
+	// get actual window size
+	width, height = window.GetSize()
 
 	w := &Window{
 		Wnd:           window,
@@ -78,16 +86,35 @@ func CreateWindow(title string, width int, height int, highDPI bool) *Window {
 	buffw, buffh := w.GetBufferSize()
 	render.ScreenBuffer.Width = buffw
 	render.ScreenBuffer.Height = buffh
+	w.Scale = float32(buffw) / float32(width)
 
-	log.Println("Created window of size", width, "x", height, "scale:", w.Scale())
+	log.Printf("Created window of size %dx%d, framebuffer %dx%d, scale: %.2f", width, height, buffw, buffh, w.Scale)
 
 	window.SetKeyCallback(keys.KeyCallback)
 	window.SetMouseButtonCallback(mouse.ButtonCallback)
 	window.SetCursorPosCallback(func(wnd *glfw.Window, x, y float64) {
-		mouse.MoveCallback(wnd, x, y, w.Scale())
+		mouse.MoveCallback(wnd, x, y, w.Scale)
 	})
 	window.SetFocusCallback(func(wnd *glfw.Window, focused bool) {
 		w.focused = focused
+	})
+
+	window.SetSizeCallback(func(wnd *glfw.Window, width, height int) {
+		log.Printf("window resized to %dx%d\n", width, height)
+		w.Width = width
+		w.Height = height
+		w.Scale = float32(render.ScreenBuffer.Width) / float32(width)
+	})
+
+	window.SetFramebufferSizeCallback(func(wnd *glfw.Window, width, height int) {
+		render.ScreenBuffer.Width = width
+		render.ScreenBuffer.Height = height
+		w.Scale = float32(width) / float32(w.Width)
+		log.Printf("framebuffer resized to %dx%d\n", width, height)
+
+		if w.resizeCb != nil {
+			w.resizeCb(w, width, height)
+		}
 	})
 
 	w.LockCursor()
@@ -124,6 +151,11 @@ func (wnd *Window) SetUpdateCallback(cb UpdateCallback) {
 	wnd.updateCb = cb
 }
 
+// SetResizeCallback sets the window resize callback.
+func (wnd *Window) SetResizeCallback(cb ResizeCallback) {
+	wnd.resizeCb = cb
+}
+
 // Loop runs the main engine loop.
 func (wnd *Window) Loop() {
 	fps := FpsCounter{}
@@ -146,10 +178,6 @@ func (wnd *Window) Loop() {
 		if wnd.updateCb != nil {
 			wnd.updateCb(dt)
 		}
-
-		buffw, buffh := wnd.GetBufferSize()
-		render.ScreenBuffer.Width = buffw
-		render.ScreenBuffer.Height = buffh
 
 		// render scene
 		if wnd.focused {
@@ -189,15 +217,6 @@ func (wnd *Window) Terminate() {
 // GetBufferSize returns the window framebuffer size.
 func (wnd *Window) GetBufferSize() (int, int) {
 	return wnd.Wnd.GetFramebufferSize()
-}
-
-// Scale returns the window DPI scale relative to the framebuffer.
-func (wnd *Window) Scale() float32 {
-	if !wnd.HighDPI {
-		return 1.0
-	}
-	fw, _ := wnd.Wnd.GetFramebufferSize()
-	return float32(fw) / float32(wnd.Width)
 }
 
 // FpsCounter keeps a ring buffer of frame times to compute frames per second.

@@ -47,6 +47,7 @@ func Max(a, b float32) float32 {
 	return b
 }
 
+// Clamp a value between a minimum and a maximum value
 func Clamp(v, min, max float32) float32 {
 	if v > max {
 		return max
@@ -67,6 +68,7 @@ func Floor(x float32) float32 {
 	return float32(math.Floor(float64(x)))
 }
 
+// Mod returns the remainder of a floating point division
 func Mod(x, y float32) float32 {
 	return float32(math.Mod(float64(x), float64(y)))
 }
@@ -76,18 +78,22 @@ func Sqrt(x float32) float32 {
 	return float32(math.Sqrt(float64(x)))
 }
 
+// Sin computes the sine of x
 func Sin(x float32) float32 {
 	return float32(math.Sin(float64(x)))
 }
 
+// Cos computes the cosine of x
 func Cos(x float32) float32 {
 	return float32(math.Cos(float64(x)))
 }
 
+// Tan computes the tangent of x
 func Tan(x float32) float32 {
 	return float32(math.Tan(float64(x)))
 }
 
+// Sign returns the sign of x (-1 or 1)
 func Sign(x float32) float32 {
 	if x > 0 {
 		return 1
@@ -95,14 +101,17 @@ func Sign(x float32) float32 {
 	return -1
 }
 
+// DegToRad converts degrees to radians
 func DegToRad(deg float32) float32 {
 	return Pi * deg / 180.0
 }
 
+// RadToDeg converts radians to degrees
 func RadToDeg(rad float32) float32 {
 	return 180.0 * rad / Pi
 }
 
+// Equal checks two floats for (approximate) equality
 func Equal(a, b float32) bool {
 	return EqualThreshold(a, b, Epsilon)
 }
@@ -125,4 +134,9 @@ func EqualThreshold(a, b, epsilon float32) bool {
 
 	// Else compare difference
 	return diff/(Abs(a)+Abs(b)) < epsilon
+}
+
+// Lerp performs linear interpolation between a and b
+func Lerp(a, b, f float32) float32 {
+	return a + f*(b-a)
 }

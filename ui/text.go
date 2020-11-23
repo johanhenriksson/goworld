@@ -37,7 +37,7 @@ func NewText(text string, style Style) *Text {
 	texture := render.CreateTexture(int(bounds.X), int(bounds.Y))
 
 	element := &Text{
-		Image: NewImage(texture, bounds, true, style),
+		Image: NewImage(texture, bounds, false, style),
 		Font:  font,
 		Style: style,
 	}

@@ -3,32 +3,44 @@ package engine
 import (
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/johanhenriksson/goworld/assets"
+	"github.com/johanhenriksson/goworld/engine/transform"
 	"github.com/johanhenriksson/goworld/math/random"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
 )
 
+type ParticleDrawable interface {
+	DrawParticles(DrawArgs)
+}
+
+// ParticlePass represents the particle system draw pass
 type ParticlePass struct {
 }
 
+// NewParticlePass creates a new particle system draw pass
 func NewParticlePass() *ParticlePass {
 	return &ParticlePass{}
 }
 
+// Resize is called on window resize. Should update any window size-dependent buffers
+func (p *ParticlePass) Resize(width, height int) {}
+
 // DrawPass executes the particle pass
-func (p *ParticlePass) DrawPass(scene *Scene) {
-	// kind of awkward
-	scene.DrawPass(render.ParticlePass)
+func (p *ParticlePass) Draw(scene *Scene) {
+
 }
 
+// Particle holds data about a single particle
 type Particle struct {
 	Position vec3.T
 	Velocity vec3.T
 	Duration float32
 }
 
+// ParticleSystem holds the properties of a particle system effect
 type ParticleSystem struct {
-	*Object
+	*transform.T
+
 	Particles []Particle
 	Count     int
 	Chance    float32
@@ -42,6 +54,7 @@ type ParticleSystem struct {
 	vao       *render.VertexArray
 }
 
+// Update the particle system
 func (ps *ParticleSystem) Update(dt float32) {
 	if len(ps.Particles) < ps.Count && random.Chance(ps.Chance) {
 		// add particle
@@ -76,14 +89,17 @@ func (ps *ParticleSystem) remove(i int) {
 	ps.Particles = ps.Particles[:len(ps.Particles)-1]
 }
 
-func (ps *ParticleSystem) Draw(args render.DrawArgs) {
-	if args.Pass != render.ParticlePass {
+// Draw the particle system
+func (ps *ParticleSystem) Draw(args DrawArgs) {
+	if args.Pass != render.Particles {
 		return
 	}
 
+	args = args.Apply(ps.T.World)
+
 	render.Blend(true)
 	render.BlendFunc(gl.ONE, gl.ONE)
-	render.DepthMask(false)
+	render.DepthOutput(false)
 
 	ps.mat.Use()
 	ps.mat.Vec3("eye", &args.Position)
@@ -91,14 +107,16 @@ func (ps *ParticleSystem) Draw(args render.DrawArgs) {
 	ps.mat.Mat4("vp", &args.VP)
 	ps.vao.Draw()
 
-	render.DepthMask(true)
+	render.DepthOutput(true)
 }
 
-func NewParticleSystem(parent *Object) *ParticleSystem {
+// NewParticleSystem creates a new particle system
+func NewParticleSystem(position vec3.T) *ParticleSystem {
 	count := 8
 	mat := assets.GetMaterial("billboard")
 	ps := &ParticleSystem{
-		Object: parent,
+		T: transform.New(position, vec3.Zero, vec3.One),
+
 		Count:  count,
 		Chance: 0.08,
 		MinVel: vec3.New(-0.05, 0.4, -0.05),
@@ -107,13 +125,11 @@ func NewParticleSystem(parent *Object) *ParticleSystem {
 		MaxDur: 3,
 
 		mat:       mat,
-		vao:       render.CreateVertexArray(render.Points, "geometry"),
+		vao:       render.CreateVertexArray(render.Points),
 		positions: make(vec3.Array, count),
 	}
-	parent.Attach(ps)
 
-	// ps.vao.Buffer("geometry", ps.positions)
-	mat.SetupVertexPointers()
+	//mat.SetupVertexPointers()
 
 	return ps
 }

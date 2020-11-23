@@ -79,16 +79,27 @@ func (tx *Texture) SetWrapMode(mode WrapMode) {
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, int32(mode))
 }
 
-// Use binds this texture to the given texture slot */
-func (tx *Texture) Use(slot uint32) {
-	gl.ActiveTexture(gl.TEXTURE0 + slot)
-	gl.Enable(gl.TEXTURE_2D)
+// Use binds this texture to the given texture slot
+func (tx *Texture) Use(slot int) {
+	texture := gl.TEXTURE0 + uint32(slot)
+	gl.ActiveTexture(texture)
+	if gl.GetError() == gl.INVALID_ENUM {
+		panic("invalid texture unit")
+	}
 	tx.Bind()
 }
 
 // Bind texture to the currently active texture slot
 func (tx *Texture) Bind() {
 	gl.BindTexture(gl.TEXTURE_2D, tx.ID)
+	switch gl.GetError() {
+	case gl.INVALID_ENUM:
+		panic("texture target is not one of the allowable values")
+	case gl.INVALID_VALUE:
+		panic("texture is not a name returned from a previous call to glGenTextures")
+	case gl.INVALID_OPERATION:
+		panic("texture was previously created with a target that doesn't match that of target.")
+	}
 }
 
 // FrameBufferTarget attaches this texture to the current frame buffer object
@@ -108,6 +119,12 @@ func (tx *Texture) Clear() {
 		tx.Format,   //gl.RGBA,
 		tx.DataType, // gl.UNSIGNED_BYTE,
 		nil)         // null ptr
+}
+
+func (tx *Texture) Resize(width, height int) {
+	tx.Width = width
+	tx.Height = height
+	tx.Clear()
 }
 
 // Buffer buffers texture data from an image object

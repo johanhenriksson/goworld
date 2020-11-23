@@ -14,29 +14,27 @@ type DrawBuffer struct {
 
 // FrameBuffer holds information about an OpenGL frame buffer object
 type FrameBuffer struct {
-	Buffers    []DrawBuffer
-	ClearColor Color
-	Width      int
-	Height     int
-	id         uint32
-	mipLvl     int32
-	targets    []uint32
+	Buffers []DrawBuffer
+	Width   int
+	Height  int
+	id      uint32
+	mipLvl  int32
+	targets []uint32
 }
 
 // ScreenBuffer is the frame buffer of the screen
 var ScreenBuffer = FrameBuffer{
-	Buffers:    []DrawBuffer{},
-	ClearColor: Color{0, 0, 0, 1},
-	Width:      0,
-	Height:     0,
-	id:         0,
-	mipLvl:     0,
-	targets:    []uint32{gl.COLOR_ATTACHMENT0},
+	Buffers: []DrawBuffer{},
+	Width:   0,
+	Height:  0,
+	id:      0,
+	mipLvl:  0,
+	targets: []uint32{gl.COLOR_ATTACHMENT0},
 }
 
-// AttachBuffer creates a new frame buffer texture and attaches it to the given target.
+// NewBuffer creates a new frame buffer texture and attaches it to the given target.
 // Returns a pointer to the created texture object. FBO must be bound first.
-func (f *FrameBuffer) AttachBuffer(target, internalFormat, format, datatype uint32) *Texture {
+func (f *FrameBuffer) NewBuffer(target, internalFormat, format, datatype uint32) *Texture {
 	// Create texture object
 	texture := CreateTexture(f.Width, f.Height)
 	texture.Format = format
@@ -44,31 +42,36 @@ func (f *FrameBuffer) AttachBuffer(target, internalFormat, format, datatype uint
 	texture.DataType = datatype
 	texture.Clear()
 
+	// attach texture
+	f.AttachBuffer(target, texture)
+
+	return texture
+}
+
+// AttachBuffer attaches a texture to the given frame buffer target
+func (f *FrameBuffer) AttachBuffer(target uint32, texture *Texture) {
 	// Set texture as frame buffer target
 	texture.FrameBufferTarget(target)
 
-	if target != gl.DEPTH_ATTACHMENT {
-		// Attach to frame buffer
-		f.Buffers = append(f.Buffers, DrawBuffer{
-			Target:  target,
-			Texture: texture,
-		})
+	// Attach to frame buffer
+	f.Buffers = append(f.Buffers, DrawBuffer{
+		Target:  target,
+		Texture: texture,
+	})
 
+	if target != gl.DEPTH_ATTACHMENT {
 		// add the target to the list of enabled draw buffers
 		f.targets = append(f.targets, target)
 	}
-
-	return texture
 }
 
 // CreateFrameBuffer creates a new frame buffer object with a given size
 func CreateFrameBuffer(width, height int) *FrameBuffer {
 	f := &FrameBuffer{
-		Width:      width,
-		Height:     height,
-		Buffers:    []DrawBuffer{},
-		ClearColor: Color4(0, 0, 0, 1),
-		targets:    make([]uint32, 0, 8),
+		Width:   width,
+		Height:  height,
+		Buffers: []DrawBuffer{},
+		targets: make([]uint32, 0, 8),
 	}
 	gl.GenFramebuffers(1, &f.id)
 	gl.BindFramebuffer(gl.FRAMEBUFFER, f.id)
@@ -79,8 +82,6 @@ func CreateFrameBuffer(width, height int) *FrameBuffer {
 func (f *FrameBuffer) Bind() {
 	// set viewport size equal to buffer size
 	Viewport(0, 0, f.Width, f.Height)
-
-	gl.BindTexture(gl.TEXTURE_2D, 0) // why?
 
 	// bind this frame buffer
 	gl.BindFramebuffer(gl.FRAMEBUFFER, f.id)
@@ -93,12 +94,7 @@ func (f *FrameBuffer) Unbind() {
 
 	// unbind
 	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
-}
-
-// Clear the frame buffer. Make sure its bound first
-func (f *FrameBuffer) Clear() {
-	gl.ClearColor(f.ClearColor.R, f.ClearColor.G, f.ClearColor.B, f.ClearColor.A)
-	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+	// gl.DrawBuffer(gl.COLOR_ATTACHMENT0)
 }
 
 // Delete the frame buffer object
@@ -128,4 +124,12 @@ func (f *FrameBuffer) SampleDepth(x, y int) float32 {
 // DrawBuffers sets up all the attached buffers for drawing
 func (f *FrameBuffer) DrawBuffers() {
 	gl.DrawBuffers(int32(len(f.targets)), &f.targets[0])
+}
+
+func (f *FrameBuffer) Resize(width, height int) {
+	f.Width = width
+	f.Height = height
+	for _, buffer := range f.Buffers {
+		buffer.Texture.Resize(width, height)
+	}
 }

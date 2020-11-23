@@ -1,17 +1,13 @@
 package engine
 
-import (
-	"github.com/johanhenriksson/goworld/math/mat4"
-	"github.com/johanhenriksson/goworld/render"
-)
+import "github.com/johanhenriksson/goworld/engine/object"
 
 // Scene graph root
 type Scene struct {
+	*object.T
+
 	// Active camera
 	Camera *Camera
-
-	// Root Objects
-	Objects []Component
 
 	// List of all lights in the scene
 	Lights []Light
@@ -20,51 +16,9 @@ type Scene struct {
 // NewScene creates a new scene.
 func NewScene() *Scene {
 	return &Scene{
-		Camera:  nil,
-		Objects: []Component{},
-		Lights:  []Light{},
-	}
-}
-
-// Add an object to the scene
-func (s *Scene) Add(object Component) {
-	// TODO: keep track of lights
-	s.Objects = append(s.Objects, object)
-}
-
-// DrawPass draws the scene using the default camera and a specific render pass
-func (s *Scene) DrawPass(pass render.DrawPass) {
-	if s.Camera == nil {
-		return
-	}
-
-	p := s.Camera.Projection
-	v := s.Camera.View
-	m := mat4.Ident()
-	vp := p.Mul(&v)
-
-	/* DrawArgs will be copied down recursively into the scene graph.
-	 * Each object adds its transformation matrix before passing
-	 * it on to their children */
-	args := render.DrawArgs{
-		Projection: p,
-		View:       v,
-		VP:         vp,
-		MVP:        vp,
-		Transform:  m,
-		Position:   s.Camera.Position,
-
-		Pass: pass,
-	}
-
-	s.Draw(args)
-}
-
-// Draw the scene using the provided render arguments
-func (s *Scene) Draw(args render.DrawArgs) {
-	// draw root objects
-	for _, obj := range s.Objects {
-		obj.Draw(args)
+		T:      object.New("Scene"),
+		Camera: nil,
+		Lights: []Light{},
 	}
 }
 
@@ -74,9 +28,5 @@ func (s *Scene) Update(dt float32) {
 		// update camera first
 		s.Camera.Update(dt)
 	}
-
-	// update root objects
-	for _, obj := range s.Objects {
-		obj.Update(dt)
-	}
+	s.T.Update(dt)
 }

@@ -8,24 +8,25 @@ import (
 type ChunkMesh struct {
 	*engine.Mesh
 	*Chunk
-	meshComputed chan VoxelVertices
+	meshComputed chan []VoxelVertex
 }
 
-func NewChunkMesh(parent *engine.Object, chunk *Chunk) *ChunkMesh {
-	mesh := engine.NewMesh(parent, assets.GetMaterialCached("color_voxels"))
+func NewChunkMesh(chunk *Chunk) *ChunkMesh {
+	mesh := engine.NewMesh("ChunkMesh", assets.GetMaterialShared("color_voxels"))
 	chk := &ChunkMesh{
 		Mesh:         mesh,
 		Chunk:        chunk,
-		meshComputed: make(chan VoxelVertices),
+		meshComputed: make(chan []VoxelVertex),
 	}
-	parent.Attach(chk)
+	chk.Compute()
 	return chk
 }
 
 func (cm *ChunkMesh) Update(dt float32) {
+	cm.Mesh.Update(dt)
 	select {
 	case newMesh := <-cm.meshComputed:
-		cm.Buffer("geometry", newMesh)
+		cm.Buffer(newMesh)
 	default:
 	}
 }
@@ -38,8 +39,8 @@ func (cm *ChunkMesh) Compute() {
 	}()
 }
 
-func (cm *ChunkMesh) computeVertexData() VoxelVertices {
-	data := make(VoxelVertices, 0, 64)
+func (cm *ChunkMesh) computeVertexData() []VoxelVertex {
+	data := make([]VoxelVertex, 0, 64)
 	light := cm.Light.Brightness
 	Omax := float32(220)
 
@@ -165,7 +166,7 @@ func (cm *ChunkMesh) computeVertexData() VoxelVertices {
 					lxnzn := light(x-1, y, z-1)
 
 					if ypf {
-						n := byte(3) // YN
+						n := byte(4) // YN
 						v1 := VoxelVertex{
 							X: byte(x + 1), Y: byte(y + 1), Z: byte(z + 1), N: n,
 							R: yp.R, G: yp.G, B: yp.B,

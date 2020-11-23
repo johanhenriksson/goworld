@@ -10,8 +10,6 @@ import (
 )
 
 type PlacementGrid struct {
-	*engine.Object
-
 	ChunkMesh *ChunkMesh
 	Color     render.Color
 
@@ -23,10 +21,8 @@ type PlacementGrid struct {
 
 func NewPlacementGrid(chunk *ChunkMesh) *PlacementGrid {
 	pg := &PlacementGrid{
-		Object:    chunk.Object,
 		ChunkMesh: chunk,
 		Color:     render.Black,
-		mesh:      geometry.CreateLines(chunk.Object),
 	}
 
 	// compute grid mesh
@@ -34,7 +30,6 @@ func NewPlacementGrid(chunk *ChunkMesh) *PlacementGrid {
 	pg.Y = 9
 	pg.Compute()
 
-	pg.Object.Attach(pg)
 	return pg
 }
 
@@ -63,8 +58,8 @@ func (grid *PlacementGrid) Update(dt float32) {
 	}
 }
 
-func (grid *PlacementGrid) Draw(args render.DrawArgs) {
-	grid.mesh.Draw(args)
+func (grid *PlacementGrid) DrawLines(args engine.DrawArgs) {
+	grid.mesh.DrawLines(args)
 }
 
 /* Compute grid mesh - draw an empty box for every empty

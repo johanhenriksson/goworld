@@ -7,38 +7,47 @@ import (
 
 // GaussianPass represents a gaussian blur pass.
 type GaussianPass struct {
+	Output *render.Texture
+
 	fbo      *render.FrameBuffer
-	material *render.Material
-	quad     *render.Quad
-	Output   *render.Texture
+	shader   *render.Shader
+	textures *render.TextureMap
+	quad     *Quad
 }
 
 // NewGaussianPass creates a new Gaussian Blur pass.
 func NewGaussianPass(input *render.Texture) *GaussianPass {
 	fbo := render.CreateFrameBuffer(input.Width, input.Height)
-	fbo.ClearColor = render.Color4(1, 1, 1, 1)
-	texture := fbo.AttachBuffer(gl.COLOR_ATTACHMENT0, gl.RED, gl.RGB, gl.FLOAT)
+	output := fbo.NewBuffer(gl.COLOR_ATTACHMENT0, gl.RED, gl.RGB, gl.FLOAT)
 
-	mat := render.CreateMaterial(render.CompileShader("/assets/shaders/gaussian"))
-	mat.AddDescriptors(render.F32_XYZUV)
-	mat.AddTexture("tex_input", input)
+	shader := render.CompileShader(
+		"gaussian_pass",
+		"/assets/shaders/pass/postprocess.vs",
+		"/assets/shaders/pass/gaussian.fs")
 
-	quad := render.NewQuad(mat)
+	tx := render.NewTextureMap(shader)
+	tx.Add("tex_input", input)
 
 	return &GaussianPass{
+		Output:   output,
+		quad:     NewQuad(shader),
 		fbo:      fbo,
-		material: mat,
-		quad:     quad,
-		Output:   texture,
+		shader:   shader,
+		textures: tx,
 	}
 }
 
 // DrawPass draws the gaussian blurred output to the frame buffer.
 func (p *GaussianPass) DrawPass(scene *Scene) {
+	render.Blend(false)
+	render.DepthOutput(false)
+
 	p.fbo.Bind()
-	p.fbo.Clear()
+	defer p.fbo.Unbind()
 
+	p.shader.Use()
+	p.textures.Use()
+
+	render.ClearWith(render.White)
 	p.quad.Draw()
-
-	p.fbo.Unbind()
 }

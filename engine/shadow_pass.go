@@ -3,16 +3,17 @@ package engine
 import (
 	"github.com/go-gl/gl/v4.1-core/gl"
 
-	"github.com/johanhenriksson/goworld/math/mat4"
-	"github.com/johanhenriksson/goworld/math/vec3"
+	// "github.com/johanhenriksson/goworld/math/mat4"
+	// "github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
 )
 
 // ShadowPass renders shadow maps for lights.
 type ShadowPass struct {
-	Output    *render.Texture
-	Width     int
-	Height    int
+	Output *render.Texture
+	Width  int
+	Height int
+
 	shadowmap *render.FrameBuffer
 }
 
@@ -20,8 +21,7 @@ type ShadowPass struct {
 func NewShadowPass(input *render.GeometryBuffer) *ShadowPass {
 	size := 4096
 	fbo := render.CreateFrameBuffer(size, size)
-	fbo.ClearColor = render.Color4(1, 1, 1, 1)
-	texture := fbo.AttachBuffer(gl.DEPTH_ATTACHMENT, gl.DEPTH_COMPONENT24, gl.DEPTH_COMPONENT, gl.FLOAT)
+	texture := fbo.NewBuffer(gl.DEPTH_ATTACHMENT, gl.DEPTH_COMPONENT24, gl.DEPTH_COMPONENT, gl.FLOAT)
 
 	// set the shadow buffer texture to clamp to a white border so that samples
 	// outside the map do not fall in shadow.
@@ -31,47 +31,59 @@ func NewShadowPass(input *render.GeometryBuffer) *ShadowPass {
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_BORDER)
 
 	p := &ShadowPass{
+		Output: texture,
+		Width:  size,
+		Height: size,
+
 		shadowmap: fbo,
-		Output:    texture,
-		Width:     size,
-		Height:    size,
 	}
 	return p
 }
 
-// DrawPass draws a shadow pass for the given light.
-func (sp *ShadowPass) DrawPass(scene *Scene, light *Light) {
+// Resize is called on window resize. Should update any window size-dependent buffers
+func (p *ShadowPass) Resize(width, height int) {}
+
+func (p *ShadowPass) Draw(scene *Scene) {}
+
+// DrawLight draws a shadow pass for the given light.
+func (p *ShadowPass) DrawLight(scene *Scene, light *Light) {
+	if !light.Shadows {
+		return
+	}
 	if light.Type != DirectionalLight {
 		// only directional lights support shadows atm
 		return
 	}
 
-	/* bind shadow map depth render target */
+	// bind shadow map depth render target
 	// todo: each light needs its own shadow buffer?
-	sp.shadowmap.Bind()
-	sp.shadowmap.Clear()
+	p.shadowmap.Bind()
+	defer p.shadowmap.Unbind()
 
-	if !light.Shadows {
-		return
-	}
+	render.DepthOutput(true)
+	render.ClearWith(render.White)
+	render.ClearDepth()
 
-	gl.DepthMask(true)
-
-	/* compute world to lightspace (light view projection) matrix */
+	// compute world to lightspace (light's view projection) matrix
 	// todo: move to light object
-	p := light.Projection
-	v := mat4.LookAt(light.Position, vec3.One)
-	vp := p.Mul(&v)
+	// lp := light.Projection
+	// lv := mat4.LookAt(light.Position, vec3.Zero)
+	// lvp := lp.Mul(&lv)
 
-	args := render.DrawArgs{
-		Projection: p,
-		View:       v,
-		VP:         vp,
-		MVP:        vp,
-		Transform:  mat4.Ident(),
-		Pass:       render.GeometryPass,
-	}
-	scene.Draw(args)
+	// draw shadow casters
+	// scene.CollectWithArgs(p, DrawArgs{
+	// 	Projection: lp,
+	// 	View:       lv,
+	// 	VP:         lvp,
+	// 	MVP:        lvp,
+	// 	Transform:  mat4.Ident(),
+	// 	Pass:       render.Geometry,
+	// })
 
-	sp.shadowmap.Unbind()
+	// for _, cmd := range p.queue.items {
+	// 	drawable := cmd.Component.(DeferredDrawable)
+	// 	drawable.DrawDeferred(cmd.Args)
+	// }
+
+	render.DepthOutput(false)
 }

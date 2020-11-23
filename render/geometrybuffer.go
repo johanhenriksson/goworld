@@ -23,10 +23,10 @@ func CreateGeometryBuffer(width, height int) *GeometryBuffer {
 	g := &GeometryBuffer{
 		FrameBuffer: fbo,
 
-		Depth:    fbo.AttachBuffer(gl.DEPTH_ATTACHMENT, gl.DEPTH_COMPONENT24, gl.DEPTH_COMPONENT, gl.FLOAT), // depth
-		Diffuse:  fbo.AttachBuffer(gl.COLOR_ATTACHMENT0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE),                  // diffuse (rgb)
-		Normal:   fbo.AttachBuffer(gl.COLOR_ATTACHMENT1, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE),                  // world normal (rgb)
-		Position: fbo.AttachBuffer(gl.COLOR_ATTACHMENT2, gl.RGB32F, gl.RGB, gl.FLOAT),                       // world position (rgb)
+		Depth:    fbo.NewBuffer(gl.DEPTH_ATTACHMENT, gl.DEPTH_COMPONENT24, gl.DEPTH_COMPONENT, gl.FLOAT), // depth
+		Diffuse:  fbo.NewBuffer(gl.COLOR_ATTACHMENT0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE),                  // diffuse (rgb)
+		Normal:   fbo.NewBuffer(gl.COLOR_ATTACHMENT1, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE),                  // world normal (rgb)
+		Position: fbo.NewBuffer(gl.COLOR_ATTACHMENT2, gl.RGB32F, gl.RGB, gl.FLOAT),                       // world position (rgb)
 		// todo: specular & smoothness buffer maybe
 	}
 

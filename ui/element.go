@@ -1,9 +1,9 @@
 package ui
 
 import (
+	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/math/vec3"
-	"github.com/johanhenriksson/goworld/render"
 )
 
 type Element struct {
@@ -15,6 +15,7 @@ type Element struct {
 	parent        Component
 	children      []Component
 	mouseHandlers []MouseHandler
+	z             float32
 }
 
 func NewElement(name string, position, size vec2.T, style Style) *Element {
@@ -26,6 +27,7 @@ func NewElement(name string, position, size vec2.T, style Style) *Element {
 
 		children:      []Component{},
 		mouseHandlers: []MouseHandler{},
+		z:             1,
 	}
 	return e
 }
@@ -34,9 +36,15 @@ func (e *Element) ZIndex() float32 {
 	// not sure how this is going to work yet
 	// parents must be drawn underneath children (?)
 	if e.parent != nil {
-		return e.parent.ZIndex() + 1
+		return e.parent.ZIndex() - e.z
 	}
-	return 0
+	return -e.z
+}
+
+func (e *Element) SetZIndex(z float32) {
+	e.z = z
+	e.Transform.Position = vec3.Extend(e.Transform.Position.XY(), e.ZIndex())
+	e.Transform.Update(0)
 }
 
 // Parent peturns the parent element
@@ -86,7 +94,7 @@ func (e *Element) Attach(child Component) {
 }
 
 // Draw this element and its children
-func (e *Element) Draw(args render.DrawArgs) {
+func (e *Element) Draw(args engine.DrawArgs) {
 	/* Multiply transform to args */
 	args.Transform = e.Transform.Matrix.Mul(&args.Transform)
 	for _, el := range e.children {

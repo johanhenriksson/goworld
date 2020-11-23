@@ -2,6 +2,7 @@ package assets
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/johanhenriksson/goworld/render"
 )
@@ -38,7 +39,19 @@ func GetShader(name string) *render.Shader {
 
 	// attempt to load
 	fmt.Println("+ shader", name)
-	shader := render.CompileShader("assets/shaders/" + name)
+
+	files := []string{
+		fmt.Sprintf("assets/shaders/%s.vs", name),
+		fmt.Sprintf("assets/shaders/%s.fs", name),
+	}
+
+	// optional geometry shader
+	gsPath := fmt.Sprintf("assets/shaders/%s.gs", name)
+	if _, err := os.Stat(gsPath); err == nil {
+		files = append(files, gsPath)
+	}
+
+	shader := render.CompileShader(name, files...)
 	cache.Shaders[name] = shader
 
 	return shader

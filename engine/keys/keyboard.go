@@ -42,6 +42,18 @@ func Down(key Code) bool {
 	return false
 }
 
+func Shift() bool {
+	return Down(LeftShift) || Down(RightShift)
+}
+
+func Ctrl() bool {
+	return Down(LeftControl) || Down(RightControl)
+}
+
+func Alt() bool {
+	return Down(LeftAlt) || Down(RightAlt)
+}
+
 // KeyCallback handles GLFW key callbacks to update the key state map.
 func KeyCallback(w *glfw.Window, key glfw.Key, scancode int, action glfw.Action, mods glfw.ModifierKey) {
 	code := Code(key)
@@ -63,40 +75,3 @@ func Update(dt float32) {
 		keyState[k] = v
 	}
 }
-
-// GLFW Keycodes
-const (
-	A Code = 65
-	B Code = 66
-	C Code = 67
-	D Code = 68
-	E Code = 69
-	F Code = 70
-	G Code = 71
-	H Code = 72
-	I Code = 73
-	J Code = 74
-	K Code = 75
-	L Code = 76
-	M Code = 77
-	N Code = 78
-	O Code = 79
-	P Code = 80
-	Q Code = 81
-	R Code = 82
-	S Code = 83
-	T Code = 84
-	U Code = 85
-	V Code = 86
-	W Code = 87
-	X Code = 88
-	Y Code = 89
-	Z Code = 90
-
-	Enter       = Code(glfw.KeyEnter)
-	Escape      = Code(glfw.KeyEscape)
-	Backspace   = Code(glfw.KeyBackspace)
-	Space       = Code(glfw.KeySpace)
-	LeftShift   = Code(glfw.KeyLeftShift)
-	LeftControl = Code(glfw.KeyLeftControl)
-)

@@ -2,6 +2,7 @@ package engine
 
 import (
 	"github.com/johanhenriksson/goworld/engine/mouse"
+	"github.com/johanhenriksson/goworld/engine/transform"
 	"github.com/johanhenriksson/goworld/math"
 	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/math/vec2"
@@ -11,7 +12,7 @@ import (
 
 // Camera represents a 3D camera and its transform.
 type Camera struct {
-	*Transform
+	*transform.T
 	Fov        float32
 	Ratio      float32
 	Near       float32
@@ -26,7 +27,7 @@ type Camera struct {
 func CreateCamera(buffer *render.FrameBuffer, position vec3.T, fov, near, far float32) *Camera {
 	ratio := float32(buffer.Width) / float32(buffer.Height)
 	cam := &Camera{
-		Transform:  CreateTransform(position),
+		T:          transform.New(position, vec3.Zero, vec3.One),
 		Buffer:     buffer,
 		Ratio:      ratio,
 		Fov:        fov,
@@ -58,24 +59,40 @@ func (cam *Camera) Update(dt float32) {
 	/* Mouse look */
 	if mouse.Down(mouse.Button1) {
 		sensitivity := vec2.New(0.08, 0.09)
-		rot := cam.Transform.Rotation.XY().Sub(mouse.Delta.Swap().Mul(sensitivity))
+		rot := cam.Rotation().XY().Sub(mouse.Delta.Swap().Mul(sensitivity))
 
 		// camera angle limits
 		rot.X = math.Clamp(rot.X, -89.9, 89.9)
 		rot.Y = math.Mod(rot.Y, 360)
 
-		cam.Transform.Rotation = vec3.Extend(rot, 0)
+		cam.SetRotation(vec3.Extend(rot, 0))
 	}
 
 	// Update transform with new position & rotation
-	cam.Transform.Update(dt)
+	cam.T.Update(nil)
+
+	// update projection matrix in case aspect ratio changed
+	ratio := float32(cam.Buffer.Width) / float32(cam.Buffer.Height)
+	cam.Projection = mat4.Perspective(math.DegToRad(cam.Fov), ratio, cam.Near, cam.Far)
 
 	// Calculate new view matrix based on forward vector
-	lookAt := cam.Transform.Position.Add(cam.Transform.Forward)
-	cam.View = mat4.LookAt(cam.Transform.Position, lookAt)
+	lookAt := cam.Position().Add(cam.Forward())
+	cam.View = mat4.LookAt(cam.Position(), lookAt)
 }
 
 // Use this camera for output.
 func (cam *Camera) Use() {
 	cam.Buffer.Bind()
+}
+
+func (cam *Camera) DrawArgs() DrawArgs {
+	vp := cam.Projection.Mul(&cam.View)
+	return DrawArgs{
+		Projection: cam.Projection,
+		View:       cam.View,
+		VP:         vp,
+		MVP:        vp,
+		Transform:  mat4.Ident(),
+		Position:   cam.Position(),
+	}
 }

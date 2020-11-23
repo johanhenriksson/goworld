@@ -1,6 +1,10 @@
 package engine
 
 import (
+	"fmt"
+
+	"github.com/johanhenriksson/goworld/assets"
+	"github.com/johanhenriksson/goworld/engine/object"
 	"github.com/johanhenriksson/goworld/render"
 )
 
@@ -9,58 +13,93 @@ type MeshBufferMap map[string]*render.VertexBuffer
 
 // Mesh base
 type Mesh struct {
-	*Object
-	Pass render.DrawPass
+	*object.Link
+	Pass     render.Pass
+	Material *render.Material
 
-	material *render.Material
-	vao      *render.VertexArray
+	vao *render.VertexArray
 }
 
 // NewMesh creates a new mesh object
-func NewMesh(parent *Object, material *render.Material) *Mesh {
+func NewMesh(name string, material *render.Material) *Mesh {
+	return NewPrimitiveMesh(name, render.Triangles, render.Geometry, material)
+}
+
+// NewLineMesh creates a new mesh for drawing lines
+func NewLineMesh(name string) *Mesh {
+	material := assets.GetMaterialShared("lines")
+	return NewPrimitiveMesh(name, render.Lines, render.Line, material)
+}
+
+// NewPrimitiveMesh creates a new mesh composed of a given GL primitive
+func NewPrimitiveMesh(name string, primitive render.GLPrimitive, pass render.Pass, material *render.Material) *Mesh {
 	m := &Mesh{
-		Object:   parent,
-		Pass:     render.GeometryPass,
-		material: material,
-		vao:      render.CreateVertexArray(render.Triangles),
+		Link:     object.NewLink(name),
+		Pass:     pass,
+		Material: material,
+		vao:      render.CreateVertexArray(primitive),
 	}
-	for _, buffer := range m.material.Buffers {
-		m.vao.AddBuffer(buffer)
-		m.material.SetupBufferPointers(buffer)
-	}
-	parent.Attach(m)
 	return m
 }
 
-// Buffer mesh data to the GPU
-func (m *Mesh) Buffer(name string, data render.VertexData) error {
-	return m.vao.Buffer(name, data)
+func (m *Mesh) SetIndexType(t render.GLType) {
+	// get rid of this later
+	m.vao.SetIndexType(t)
 }
 
-func (m *Mesh) AddIndex(datatype render.GLType) {
-	m.vao.AddIndexBuffer(datatype)
-}
-
-// Update the mesh.
-func (m *Mesh) Update(dt float32) {}
-
-// Draw the mesh.
-func (m *Mesh) Draw(args render.DrawArgs) {
-	if m.Pass == render.GeometryPass && args.Pass != render.GeometryPass && args.Pass != render.LightPass {
-		return
-	}
-	if m.Pass == render.ForwardPass && args.Pass != render.ForwardPass {
+func (m *Mesh) DrawDeferred(args DrawArgs) {
+	if m.Pass != render.Geometry {
 		return
 	}
 
-	m.material.Use()
+	m.Material.Use()
+	shader := m.Material.Shader
 
 	// set up uniforms
-	m.material.Mat4("model", &args.Transform)
-	m.material.Mat4("view", &args.View)
-	m.material.Mat4("projection", &args.Projection)
-	m.material.Mat4("mvp", &args.MVP)
-	m.material.Vec3("eye", &args.Position)
+	shader.Mat4("model", &args.Transform)
+	shader.Mat4("view", &args.View)
+	shader.Mat4("projection", &args.Projection)
+	shader.Mat4("mvp", &args.MVP)
+	shader.Vec3("eye", &args.Position)
 
 	m.vao.Draw()
+}
+
+func (m *Mesh) DrawForward(args DrawArgs) {
+	if m.Pass != render.Forward {
+		return
+	}
+
+	m.Material.Use()
+	shader := m.Material.Shader
+
+	// set up uniforms
+	shader.Mat4("model", &args.Transform)
+	shader.Mat4("view", &args.View)
+	shader.Mat4("projection", &args.Projection)
+	shader.Mat4("mvp", &args.MVP)
+
+	m.vao.Draw()
+}
+
+func (m *Mesh) DrawLines(args DrawArgs) {
+	if m.Pass != render.Line {
+		return
+	}
+
+	m.Material.Use()
+	m.Material.Mat4("mvp", &args.MVP)
+
+	m.vao.Draw()
+}
+
+func (m Mesh) Buffer(data interface{}) {
+	pointers := m.Material.VertexPointers(data)
+
+	// compatibility hack
+	if len(pointers) == 0 {
+		panic(fmt.Errorf("error buffering mesh %s - no pointers", m.String()))
+	} else {
+		m.vao.BufferTo(pointers, data)
+	}
 }

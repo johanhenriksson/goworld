@@ -6,7 +6,7 @@ import (
 	"os"
 )
 
-/* Chunks are smallest renderable units of voxel geometry */
+// Chunk is the smallest individually renderable unit of voxel geometry
 type Chunk struct {
 	Seed       int
 	Cx, Cz     int
@@ -18,24 +18,25 @@ type Chunk struct {
 
 func NewChunk(size, seed, cx, cz int) *Chunk {
 	return &Chunk{
-		Data:  make(Voxels, size*size*128),
-		Light: NewLightVolume(size, 129, size),
+		Data:  make(Voxels, size*size*size),
+		Light: NewLightVolume(size, size+1, size),
 		Seed:  seed,
 		Cx:    cx,
 		Cz:    cz,
 		Ox:    cx * size,
 		Oz:    cz * size,
 		Sx:    size,
-		Sy:    128,
+		Sy:    size,
 		Sz:    size,
 	}
 }
 
-/* Clears all voxel data in this chunk */
+// Clear all voxel data in this chunk
 func (c *Chunk) Clear() {
 	for i := 0; i < len(c.Data); i++ {
 		c.Data[i] = EmptyVoxel
 	}
+	c.Light.Clear()
 }
 
 /* Returns the slice offset for a given set of coordinates, as
@@ -59,23 +60,27 @@ func (c *Chunk) At(x, y, z int) Voxel {
 	return c.Data[pos]
 }
 
-/* Sets a voxel. If it is outside bounds, nothing happens */
+// Set a voxel. If it's out of bounds, nothing happens
 func (c *Chunk) Set(x, y, z int, voxel Voxel) {
 	pos, ok := c.offset(x, y, z)
 	if !ok {
 		return
 	}
 	c.Data[pos] = voxel
+	c.Light.Block(x, y, z, voxel != EmptyVoxel)
 }
 
+// Free returns true if the given position is open
 func (c *Chunk) Free(x, y, z int) bool {
 	v, ok := c.offset(x, y, z)
 	if !ok {
 		return true
 	}
+	c.Light.Block(x, y, z, false)
 	return c.Data[v] == EmptyVoxel
 }
 
+// Write the chunk to disk
 func (c *Chunk) Write(path string) error {
 	filepath := fmt.Sprintf("%s/c_%d_%d.bin", path, c.Cx, c.Cz)
 	file, err := os.Create(filepath)

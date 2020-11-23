@@ -69,31 +69,48 @@ func GeometryShader(path string) *ShaderStage {
 	return s
 }
 
+func CompileShaderStage(fileName string) *ShaderStage {
+	if len(fileName) < 3 {
+		panic(fmt.Errorf("invalid shader filename: %s", fileName))
+	}
+	kind := fileName[len(fileName)-3:]
+	switch kind {
+	case ".fs":
+		return FragmentShader(fmt.Sprintf("%s.glsl", fileName))
+	case ".vs":
+		return VertexShader(fmt.Sprintf("%s.glsl", fileName))
+	case ".gs":
+		return GeometryShader(fmt.Sprintf("%s.glsl", fileName))
+	default:
+		panic(fmt.Errorf("invalid shader type %s: %s", kind, fileName))
+	}
+}
+
 // CompileFile loads and compiles source code from the given file path
-func (shader *ShaderStage) CompileFile(path string) error {
+func (stage *ShaderStage) CompileFile(path string) error {
 	source, err := ioutil.ReadFile(util.ExePath + path)
 	if err != nil {
 		return err
 	}
-	return shader.Compile(string(source), path)
+	return stage.Compile(string(source), path)
 }
 
 // Compile a shader from a source string
-func (shader *ShaderStage) Compile(source, path string) error {
+func (stage *ShaderStage) Compile(source, path string) error {
 	csource, free := util.GLString(source)
-	gl.ShaderSource(shader.ID, 1, csource, nil)
-	gl.CompileShader(shader.ID)
+	gl.ShaderSource(stage.ID, 1, csource, nil)
+	gl.CompileShader(stage.ID)
 	free()
 
 	/* Check compilation status */
 	var status int32
-	gl.GetShaderiv(shader.ID, gl.COMPILE_STATUS, &status)
+	gl.GetShaderiv(stage.ID, gl.COMPILE_STATUS, &status)
 	if status == gl.FALSE {
 		var logLength int32
-		gl.GetShaderiv(shader.ID, gl.INFO_LOG_LENGTH, &logLength)
+		gl.GetShaderiv(stage.ID, gl.INFO_LOG_LENGTH, &logLength)
 
 		log := strings.Repeat("\x00", int(logLength+1))
-		gl.GetShaderInfoLog(shader.ID, logLength, nil, gl.Str(log))
+		gl.GetShaderInfoLog(stage.ID, logLength, nil, gl.Str(log))
 
 		return fmt.Errorf("shader compilation failed.\n** Source: %s**\n%v\n** Log: **\n%v", path, source, log)
 	}

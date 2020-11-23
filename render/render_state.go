@@ -4,20 +4,31 @@ import "github.com/go-gl/gl/v4.1-core/gl"
 
 type CullMode int
 
+// Culling modes
 const (
 	CullNone CullMode = iota
 	CullBack
 	CullFront
 )
 
+type BlendValue uint32
+
+// Blend Functions
+const (
+	One              = BlendValue(gl.ONE)
+	Zero             = BlendValue(gl.ZERO)
+	SrcAlpha         = BlendValue(gl.SRC_ALPHA)
+	OneMinusSrcAlpha = BlendValue(gl.ONE_MINUS_SRC_ALPHA)
+)
+
 type State struct {
-	Blend      bool
-	BlendSrc   uint32
-	BlendDst   uint32
-	DepthTest  bool
-	DepthMask  bool
-	ClearColor Color
-	CullMode   CullMode
+	Blend       bool
+	BlendSrc    BlendValue
+	BlendDst    BlendValue
+	DepthTest   bool
+	DepthOutput bool
+	ClearColor  Color
+	CullMode    CullMode
 
 	// Viewport dimensions
 	Y      int
@@ -26,7 +37,9 @@ type State struct {
 	Height int
 }
 
-var state = State{}
+var state = State{
+	ClearColor: Black,
+}
 
 func (s *State) Enable() {
 	// blending
@@ -37,11 +50,25 @@ func (s *State) Enable() {
 
 	// depth
 	DepthTest(s.DepthTest)
-	DepthMask(s.DepthMask)
+	DepthOutput(s.DepthOutput)
 
 	ClearColor(s.ClearColor)
 	Viewport(s.X, s.Y, s.Width, s.Height)
 	CullFace(s.CullMode)
+}
+
+type RenderFunc func()
+
+func (s *State) Use(scope RenderFunc) {
+	// copy current state
+	previous := state
+	s.Enable()
+
+	// run render
+	scope()
+
+	// reset render state
+	previous.Enable()
 }
 
 func Blend(enabled bool) {
@@ -57,24 +84,33 @@ func Blend(enabled bool) {
 	state.Blend = enabled
 }
 
-func BlendFunc(src, dst uint32) {
+func BlendFunc(src, dst BlendValue) {
 	if state.BlendSrc != src || state.BlendDst != dst {
-		gl.BlendFunc(src, dst)
+		gl.BlendFunc(uint32(src), uint32(dst))
 		state.BlendSrc = src
 		state.BlendDst = dst
 	}
 }
 
-func DepthMask(enabled bool) {
-	if state.DepthMask == enabled {
+func BlendAdditive() {
+	Blend(true)
+	BlendFunc(One, One)
+}
+
+func BlendMultiply() {
+	BlendFunc(SrcAlpha, OneMinusSrcAlpha)
+}
+
+func DepthOutput(enabled bool) {
+	if state.DepthOutput == enabled {
 		return
 	}
 	gl.DepthMask(enabled)
-	state.DepthMask = enabled
+	state.DepthOutput = enabled
 }
 
 func DepthTest(enabled bool) {
-	if state.DepthMask == enabled {
+	if state.DepthTest == enabled {
 		return
 	}
 	if enabled {
@@ -82,22 +118,24 @@ func DepthTest(enabled bool) {
 	} else {
 		gl.Disable(gl.DEPTH_TEST)
 	}
+	state.DepthTest = enabled
 }
 
 func ClearColor(color Color) {
 	color = color.WithAlpha(1)
 	if color != state.ClearColor {
 		gl.ClearColor(color.R, color.G, color.B, 1)
+		state.ClearColor = color
 	}
 }
 
 func Viewport(x, y, w, h int) {
 	if state.Width != w || state.Height != h || state.Y != y || state.X != x {
+		gl.Viewport(int32(x), int32(y), int32(w), int32(h))
 		state.Width = w
 		state.Height = h
 		state.X = x
 		state.Y = y
-		gl.Viewport(int32(x), int32(y), int32(w), int32(h))
 	}
 }
 

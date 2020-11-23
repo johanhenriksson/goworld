@@ -2,6 +2,7 @@ package geometry
 
 import (
 	"fmt"
+	"unsafe"
 
 	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/render"
@@ -13,12 +14,12 @@ type ObjModel struct {
 	Path string
 }
 
-func NewObjModel(parent *engine.Object, mat *render.Material, path string) *ObjModel {
+func NewObjModel(mat *render.Material, path string) *ObjModel {
 	obj := &ObjModel{
-		Mesh: engine.NewMesh(parent, mat),
+		Mesh: engine.NewMesh(fmt.Sprintf("Mesh:%s", path), mat),
 		Path: path,
 	}
-	obj.AddIndex(render.UInt32)
+	obj.SetIndexType(render.UInt32)
 	if err := obj.load(); err != nil {
 		fmt.Println("Error loading model", path, ":", err)
 	}
@@ -46,12 +47,26 @@ func (obj *ObjModel) load() error {
 	}
 
 	// index data
-	indices := make(render.UInt32Buffer, len(file.Indices))
+	indices := make(UInt32Buffer, len(file.Indices))
 	for i, index := range file.Indices {
 		indices[i] = uint32(index)
 	}
 
-	obj.Buffer("geometry", meshdata)
-	obj.Buffer("index", indices)
+	obj.Buffer(meshdata)
+	// obj.Buffer("index", indices)
 	return nil
+}
+
+type UInt32Buffer []uint32
+
+func (a UInt32Buffer) Elements() int {
+	return len(a)
+}
+
+func (a UInt32Buffer) Size() int {
+	return 4
+}
+
+func (a UInt32Buffer) Pointer() unsafe.Pointer {
+	return unsafe.Pointer(&a[0])
 }

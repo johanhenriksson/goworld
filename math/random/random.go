@@ -2,7 +2,13 @@ package random
 
 import (
 	"math/rand"
+	"time"
 )
+
+func init() {
+	s := int64(time.Now().Nanosecond())
+	rand.Seed(s)
+}
 
 func Range(min, max float32) float32 {
 	return min + rand.Float32()*(max-min)

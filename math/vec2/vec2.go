@@ -5,9 +5,16 @@ import (
 )
 
 var (
-	Zero  = T{0, 0}
-	One   = T{1, 1}
+	// Zero is the zero vector
+	Zero = T{0, 0}
+
+	// One is the one vector
+	One = T{1, 1}
+
+	// UnitX is the unit vector in the X direction
 	UnitX = T{1, 0}
+
+	// UnitY is the unit vector in the Y direction
 	UnitY = T{0, 1}
 )
 
@@ -16,19 +23,20 @@ type T struct {
 	X, Y float32
 }
 
+// Slice converts the vector into a 2-element slice of float32
 func (v T) Slice() [2]float32 {
 	return [2]float32{v.X, v.Y}
 }
 
 // Length returns the length of the vector.
 // See also LengthSqr and Normalize.
-func (v *T) Length() float32 {
+func (v T) Length() float32 {
 	return math.Sqrt(v.LengthSqr())
 }
 
 // LengthSqr returns the squared length of the vector.
 // See also Length and Normalize.
-func (v *T) LengthSqr() float32 {
+func (v T) LengthSqr() float32 {
 	return v.X*v.X + v.Y*v.Y
 }
 
@@ -54,6 +62,7 @@ func (v T) Normalized() T {
 	return v
 }
 
+// Scaled returns a scaled copy of the vector.
 func (v T) Scaled(f float32) T {
 	return T{v.X * f, v.Y * f}
 }
@@ -64,15 +73,18 @@ func (v *T) Scale(f float32) {
 	v.Y *= f
 }
 
-func (v *T) Swap() T {
+// Swap returns a new vector with components swapped.
+func (v T) Swap() T {
 	return T{v.Y, v.X}
 }
 
+// Invert components in place
 func (v *T) Invert() {
 	v.X = -v.X
 	v.Y = -v.Y
 }
 
+// Inverted returns a new vector with inverted components
 func (v T) Inverted() T {
 	return T{-v.X, -v.Y}
 }

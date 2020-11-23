@@ -49,52 +49,12 @@ func LoadMaterialDefinition(file string) (*MaterialDefinition, error) {
 	return matf, nil
 }
 
-func LoadMaterial(shader *render.Shader, matf *MaterialDefinition) (*render.Material, error) {
-	mat := render.CreateMaterial(shader)
+func LoadMaterial(name string, matf *MaterialDefinition) (*render.Material, error) {
+	shader := GetShader(matf.Shader)
 
-	/* Load vertex pointers */
-	for buffer, pointers := range matf.Buffers {
-		stride := 0
-		for _, ptr := range pointers {
-			if ptr.Count <= 0 {
-				return nil, fmt.Errorf("Expected count >0 for pointer %s", ptr.Name)
-			}
+	mat := render.CreateMaterial(name, shader)
 
-			// padding
-			if ptr.Type == "skip" {
-				stride += ptr.Count
-				continue
-			}
-
-			// convert GL data type
-			gltype, err := render.GLTypeFromString(ptr.Type)
-			if err != nil {
-				return nil, err
-			}
-
-			ptr.GlType = gltype
-			ptr.Size = gltype.Size() * ptr.Count
-			ptr.Offset = stride
-			stride += ptr.Size
-		}
-		for _, ptr := range pointers {
-			if ptr.Type == "skip" {
-				continue
-			}
-			mat.AddDescriptor(render.BufferDescriptor{
-				Buffer:    buffer,
-				Name:      ptr.Name,
-				Type:      ptr.GlType,
-				Elements:  ptr.Count,
-				Stride:    stride,
-				Offset:    ptr.Offset,
-				Normalize: ptr.Normalize,
-				Integer:   ptr.Integer,
-			})
-		}
-	}
-
-	/* Load textures */
+	// load textures
 	for name, txtf := range matf.Textures {
 		texture, err := render.TextureFromFile(txtf.File)
 		if err != nil {
@@ -103,37 +63,34 @@ func LoadMaterial(shader *render.Shader, matf *MaterialDefinition) (*render.Mate
 		if txtf.Filter == "nearest" {
 			texture.SetFilter(render.NearestFilter)
 		}
-		mat.AddTexture(name, texture)
+		mat.Textures.Add(name, texture)
 	}
 
 	return mat, nil
 }
 
+// GetMaterial returns a new instance of a material
 func GetMaterial(name string) *render.Material {
 	path := fmt.Sprintf("assets/materials/%s.json", name)
 	def, err := LoadMaterialDefinition(path)
 	if err != nil {
-		panic(err)
+		panic(fmt.Errorf("failed to load material definition %s: %s", name, err))
 	}
 
-	// use configured shader name if provided
-	// otherwise fall back to material name
-	shaderName := def.Shader
-	if shaderName == "" {
-		shaderName = name
+	if def.Shader == "" {
+		def.Shader = name
 	}
 
-	shader := GetShader(shaderName)
-
-	mat, err := LoadMaterial(shader, def)
+	mat, err := LoadMaterial(name, def)
 	if err != nil {
-		panic(err)
+		panic(fmt.Errorf("failed to load material %s: %s", name, err))
 	}
 
 	return mat
 }
 
-func GetMaterialCached(name string) *render.Material {
+// GetMaterialShared returns a shared instance of a material
+func GetMaterialShared(name string) *render.Material {
 	if mat, exists := cache.Materials[name]; exists {
 		return mat
 	}
