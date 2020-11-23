@@ -20,13 +20,13 @@ type Args struct {
 	Color render.Color
 }
 
-// New creates a new 3D plane of a given size and color.
-func New(args Args) *T {
+// NewObject creates a new 3D plane of a given size and color.
+func NewObject(args Args) *T {
 	parent := object.New("Plane")
 	return Attach(parent, args)
 }
 
-func Attach(parent *object.T, args Args) *T {
+func New(args Args) *T {
 	mat := assets.GetMaterialShared("color.f")
 	plane := &T{
 		Mesh: engine.NewMesh("Plane", mat),
@@ -34,6 +34,11 @@ func Attach(parent *object.T, args Args) *T {
 	}
 	plane.Pass = render.Forward
 	plane.generate()
+	return plane
+}
+
+func Attach(parent *object.T, args Args) *T {
+	plane := New(args)
 	parent.Attach(plane)
 	return plane
 }

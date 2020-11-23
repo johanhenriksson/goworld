@@ -52,15 +52,15 @@ func NewEditor(chunk *game.Chunk, camera *engine.Camera, gbuffer *render.Geometr
 		SampleTool:  NewSampleTool(),
 		ReplaceTool: NewReplaceTool(),
 
-		XPlane: plane.New(plane.Args{
+		XPlane: plane.NewObject(plane.Args{
 			Size:  float32(chunk.Sx),
 			Color: render.Red.WithAlpha(0.25),
 		}),
-		YPlane: plane.New(plane.Args{
+		YPlane: plane.NewObject(plane.Args{
 			Size:  float32(chunk.Sy),
 			Color: render.Green.WithAlpha(0.25),
 		}),
-		ZPlane: plane.New(plane.Args{
+		ZPlane: plane.NewObject(plane.Args{
 			Size:  float32(chunk.Sz),
 			Color: render.Blue.WithAlpha(0.25),
 		}),
@@ -70,15 +70,22 @@ func NewEditor(chunk *game.Chunk, camera *engine.Camera, gbuffer *render.Geometr
 		gbuffer: gbuffer,
 	}
 
-	e.xp = chunk.Sx
-	e.XPlane.Parent().SetRotation(vec3.New(-90, 0, 90))
-	e.XPlane.Parent().SetPosition(vec3.New(float32(e.xp), float32(chunk.Sy)/2, float32(chunk.Sz)/2))
+	// e.XPlane = object.Builder("XPlane").
+	// 	Attach(plane.New(plane.Args{})).
+	// 	Rotation(vec3.New(-90, 0, 90)).
+	// 	Position(vec3.New(float32(e.xp), float32(chunk.Sy)/2, float32(chunk.Sz)/2)).
+	// 	Create()
+	// XPlane = plane.New()
 
-	e.YPlane.Parent().SetPosition(vec3.New(float32(chunk.Sx)/2, float32(e.yp), float32(chunk.Sz)/2))
+	// e.xp = chunk.Sx
+	e.XPlane.SetRotation(vec3.New(-90, 0, 90))
+	e.XPlane.SetPosition(vec3.New(float32(e.xp), float32(chunk.Sy)/2, float32(chunk.Sz)/2))
 
-	e.zp = chunk.Sz
-	e.ZPlane.Parent().SetRotation(vec3.New(-90, 0, 0))
-	e.ZPlane.Parent().SetPosition(vec3.New(float32(chunk.Sx)/2, float32(chunk.Sy)/2, float32(e.zp)))
+	e.YPlane.SetPosition(vec3.New(float32(chunk.Sx)/2, float32(e.yp), float32(chunk.Sz)/2))
+
+	// e.zp = chunk.Sz
+	e.ZPlane.SetRotation(vec3.New(-90, 0, 0))
+	e.ZPlane.SetPosition(vec3.New(float32(chunk.Sx)/2, float32(chunk.Sy)/2, float32(e.zp)))
 
 	e.Tool = e.PlaceTool
 
@@ -145,25 +152,25 @@ func (e *Editor) Update(dt float32) {
 		m = -1
 	}
 
-	if keys.Pressed(keys.Key1) {
+	if keys.Pressed(keys.X) {
 		e.xp = (e.xp + e.Chunk.Sx + m + 1) % (e.Chunk.Sx + 1)
-		p := e.XPlane.Parent().Position()
+		p := e.XPlane.Position()
 		p.X = float32(e.xp)
-		e.XPlane.Parent().SetPosition(p)
+		e.XPlane.SetPosition(p)
 	}
 
-	if keys.Pressed(keys.Key2) {
+	if keys.Pressed(keys.Y) {
 		e.yp = (e.yp + e.Chunk.Sy + m + 1) % (e.Chunk.Sy + 1)
-		p := e.YPlane.Parent().Position()
+		p := e.YPlane.Position()
 		p.Y = float32(e.yp)
-		e.YPlane.Parent().SetPosition(p)
+		e.YPlane.SetPosition(p)
 	}
 
-	if keys.Pressed(keys.Key3) {
+	if keys.Pressed(keys.Z) {
 		e.zp = (e.zp + e.Chunk.Sz + m + 1) % (e.Chunk.Sz + 1)
-		p := e.ZPlane.Parent().Position()
+		p := e.ZPlane.Position()
 		p.Z = float32(e.zp)
-		e.ZPlane.Parent().SetPosition(p)
+		e.ZPlane.SetPosition(p)
 	}
 
 	exists, position, normal := e.cursorPositionNormal()
