@@ -3,22 +3,21 @@ package editor
 import (
 	"github.com/johanhenriksson/goworld/engine/object"
 	"github.com/johanhenriksson/goworld/game"
-	"github.com/johanhenriksson/goworld/geometry"
+	"github.com/johanhenriksson/goworld/geometry/box"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
 )
 
 type EraseTool struct {
 	*object.T
-	box *geometry.Box
+	box *box.T
 }
 
 func NewEraseTool() *EraseTool {
 	et := &EraseTool{
-		T:   object.New("EraseTool"),
-		box: geometry.NewBox(vec3.One, render.Red),
+		T: object.New("EraseTool"),
 	}
-	et.Attach(et.box)
+	et.box = box.Attach(et.T, box.Args{Size: vec3.One, Color: render.Red})
 	et.SetActive(false)
 	return et
 }

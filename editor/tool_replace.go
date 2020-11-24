@@ -3,22 +3,21 @@ package editor
 import (
 	"github.com/johanhenriksson/goworld/engine/object"
 	"github.com/johanhenriksson/goworld/game"
-	"github.com/johanhenriksson/goworld/geometry"
+	"github.com/johanhenriksson/goworld/geometry/box"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
 )
 
 type ReplaceTool struct {
 	*object.T
-	box *geometry.Box
+	box *box.T
 }
 
 func NewReplaceTool() *ReplaceTool {
 	rt := &ReplaceTool{
-		T:   object.New("ReplaceTool"),
-		box: geometry.NewBox(vec3.One, render.Yellow),
+		T: object.New("ReplaceTool"),
 	}
-	rt.Attach(rt.box)
+	rt.box = box.Attach(rt.T, box.Args{Size: vec3.One, Color: render.Yellow})
 	rt.SetActive(false)
 	return rt
 }

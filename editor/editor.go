@@ -6,7 +6,7 @@ import (
 	"github.com/johanhenriksson/goworld/engine/mouse"
 	"github.com/johanhenriksson/goworld/engine/object"
 	"github.com/johanhenriksson/goworld/game"
-	"github.com/johanhenriksson/goworld/geometry"
+	"github.com/johanhenriksson/goworld/geometry/box"
 	"github.com/johanhenriksson/goworld/geometry/plane"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
@@ -32,7 +32,7 @@ type Editor struct {
 
 	xp, yp, zp int
 
-	bounds  *geometry.Box
+	bounds  *box.T
 	mesh    *game.ChunkMesh
 	gbuffer *render.GeometryBuffer
 }
@@ -51,11 +51,16 @@ func NewEditor(chunk *game.Chunk, camera *engine.Camera, gbuffer *render.Geometr
 		ReplaceTool: NewReplaceTool(),
 
 		mesh:    game.NewChunkMesh(chunk),
-		bounds:  geometry.NewBox(vec3.NewI(chunk.Sx, chunk.Sy, chunk.Sz), render.DarkGrey),
 		gbuffer: gbuffer,
 	}
 
-	center := vec3.NewI(chunk.Sx, chunk.Sy, chunk.Sz).Scaled(0.5)
+	dimensions := vec3.NewI(chunk.Sx, chunk.Sy, chunk.Sz)
+	center := dimensions.Scaled(0.5)
+
+	box.Builder(&e.bounds, box.Args{
+		Size:  dimensions,
+		Color: render.DarkGrey,
+	}).Create(e.T)
 
 	// X Construction Plane
 	plane.Builder(&e.XPlane, plane.Args{
@@ -89,7 +94,7 @@ func NewEditor(chunk *game.Chunk, camera *engine.Camera, gbuffer *render.Geometr
 	e.SelectTool(e.PlaceTool)
 
 	// could we avoid this somehow?
-	e.Attach(e.mesh, e.bounds, e.PlaceTool, e.ReplaceTool, e.EraseTool, e.SampleTool)
+	e.Attach(e.mesh, e.PlaceTool, e.ReplaceTool, e.EraseTool, e.SampleTool)
 
 	return e
 }

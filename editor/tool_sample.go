@@ -2,22 +2,21 @@ package editor
 
 import (
 	"github.com/johanhenriksson/goworld/engine/object"
-	"github.com/johanhenriksson/goworld/geometry"
+	"github.com/johanhenriksson/goworld/geometry/box"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
 )
 
 type SampleTool struct {
 	*object.T
-	box *geometry.Box
+	box *box.T
 }
 
 func NewSampleTool() *SampleTool {
 	st := &SampleTool{
-		T:   object.New("SampleTool"),
-		box: geometry.NewBox(vec3.One, render.Purple),
+		T: object.New("SampleTool"),
 	}
-	st.Attach(st.box)
+	st.box = box.Attach(st.T, box.Args{Size: vec3.One, Color: render.Purple})
 	st.SetActive(false)
 	return st
 }

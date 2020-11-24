@@ -1,29 +1,50 @@
-package geometry
+package box
 
 import (
 	"github.com/johanhenriksson/goworld/engine"
+	"github.com/johanhenriksson/goworld/engine/object"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/vertex"
 )
 
-type Box struct {
+type T struct {
 	*engine.Mesh
+	Args
+}
+
+type Args struct {
 	Size  vec3.T
 	Color render.Color
 }
 
-func NewBox(size vec3.T, color render.Color) *Box {
-	b := &Box{
-		Mesh:  engine.NewLineMesh(),
-		Size:  size,
-		Color: color,
+func New(args Args) *T {
+	b := &T{
+		Mesh: engine.NewLineMesh(),
+		Args: args,
 	}
 	b.compute()
 	return b
 }
 
-func (b *Box) compute() {
+func Attach(parent *object.T, args Args) *T {
+	box := New(args)
+	parent.Attach(box)
+	return box
+}
+
+func NewObject(args Args) *T {
+	parent := object.New("Box")
+	return Attach(parent, args)
+}
+
+func Builder(out **T, args Args) *object.Builder {
+	b := object.Build("Box")
+	*out = New(args)
+	return b.Attach(*out)
+}
+
+func (b *T) compute() {
 	var x, y, z float32
 	w, h, d := b.Size.X, b.Size.Y, b.Size.Z
 	c := b.Color.Vec4()

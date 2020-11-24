@@ -3,22 +3,21 @@ package editor
 import (
 	"github.com/johanhenriksson/goworld/engine/object"
 	"github.com/johanhenriksson/goworld/game"
-	"github.com/johanhenriksson/goworld/geometry"
+	"github.com/johanhenriksson/goworld/geometry/box"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
 )
 
 type PlaceTool struct {
 	*object.T
-	box *geometry.Box
+	box *box.T
 }
 
 func NewPlaceTool() *PlaceTool {
 	pt := &PlaceTool{
-		T:   object.New("PlaceTool"),
-		box: geometry.NewBox(vec3.One, render.Blue),
+		T: object.New("PlaceTool"),
 	}
-	pt.Attach(pt.box)
+	pt.box = box.Attach(pt.T, box.Args{Size: vec3.One, Color: render.Blue})
 	pt.SetActive(false)
 	return pt
 }
