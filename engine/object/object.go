@@ -107,7 +107,7 @@ func (o *T) updateTransform() {
 
 	// Update local -> world matrix
 	if o.parent != nil {
-		o.world = o.local.Mul(&o.parent.world)
+		o.world = o.parent.world.Mul(&o.local)
 	} else {
 		o.world = o.local
 	}
