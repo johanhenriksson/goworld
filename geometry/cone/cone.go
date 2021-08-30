@@ -1,39 +1,62 @@
-package geometry
+package cone
 
 import (
 	"github.com/johanhenriksson/goworld/assets"
 	"github.com/johanhenriksson/goworld/engine"
+	"github.com/johanhenriksson/goworld/engine/object"
 	"github.com/johanhenriksson/goworld/math"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/vertex"
 )
 
-// Cone mesh
-type Cone struct {
+// A Cone is a forward rendered colored cone mesh
+type T struct {
 	*engine.Mesh
+	Args
+}
+
+type Args struct {
 	Radius   float32
 	Height   float32
 	Segments int
 	Color    render.Color
 }
 
-// NewCone generates a new parameterized cone mesh
-func NewCone(radius, height float32, segments int, color render.Color) *Cone {
+// NewObject creates a new Cone attached to a Game Object
+func NewObject(args Args) *T {
+	parent := object.New("Cone")
+	return Attach(parent, args)
+}
+
+func Builder(out **T, args Args) *object.Builder {
+	var tmp *T = nil
+	if out == nil {
+		out = &tmp
+	}
+	b := object.Build("Cone")
+	*out = New(args)
+	return b.Attach(*out)
+}
+
+func New(args Args) *T {
 	mat := assets.GetMaterialShared("color.f")
-	cone := &Cone{
-		Mesh:     engine.NewMesh(mat),
-		Radius:   radius,
-		Height:   height,
-		Segments: segments,
-		Color:    color,
+	cone := &T{
+		Mesh: engine.NewMesh(mat),
+		Args: args,
 	}
 	cone.Pass = render.Forward
 	cone.generate()
 	return cone
 }
 
-func (c *Cone) generate() {
+func Attach(parent *object.T, args Args) *T {
+	plane := New(args)
+	parent.Attach(plane)
+	return plane
+}
+
+func (c *T) generate() {
 	data := make([]vertex.C, 6*c.Segments)
 
 	// cone
