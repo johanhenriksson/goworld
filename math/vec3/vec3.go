@@ -178,3 +178,10 @@ func (v T) WithY(y float32) T {
 func (v T) WithZ(z float32) T {
 	return T{v.X, v.Y, z}
 }
+
+func (v T) ApproxEqual(v2 T) bool {
+	epsilon := float32(0.00001)
+	return math.EqualThreshold(v.X, v2.X, epsilon) &&
+		math.EqualThreshold(v.Y, v2.Y, epsilon) &&
+		math.EqualThreshold(v.Z, v2.Z, epsilon)
+}

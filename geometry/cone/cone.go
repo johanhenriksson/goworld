@@ -50,7 +50,7 @@ func New(args Args) *T {
 	return cone
 }
 
-func Attach(parent *object.T, args Args) *T {
+func Attach(parent object.T, args Args) *T {
 	plane := New(args)
 	parent.Attach(plane)
 	return plane

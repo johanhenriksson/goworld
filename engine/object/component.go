@@ -1,28 +1,36 @@
 package object
 
-import "github.com/johanhenriksson/goworld/math/vec3"
+import (
+	"github.com/johanhenriksson/goworld/engine/transform"
+)
 
 type Component interface {
 	String() string
 	Update(float32)
 
 	Active() bool
-	SetActive(bool) Component
+	SetActive(bool)
 
-	Parent() *T
-	SetParent(*T) Component
+	Parent() T
+	SetParent(T)
+}
+
+type T interface {
+	String() string
+	Update(float32)
+
+	Active() bool
+	SetActive(bool)
+
+	Parent() T
+	SetParent(T)
+
+	Transform() transform.T
+
+	Attach(...Component)
+
 	Collect(*Query)
 
-	Forward() vec3.T
-	Right() vec3.T
-	Up() vec3.T
-
-	Position() vec3.T
-	SetPosition(vec3.T) Component
-
-	Rotation() vec3.T
-	SetRotation(vec3.T) Component
-
-	Scale() vec3.T
-	SetScale(vec3.T) Component
+	Adopt(...T)
+	Children() []T
 }

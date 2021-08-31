@@ -8,13 +8,14 @@ import (
 	"github.com/johanhenriksson/goworld/game"
 	"github.com/johanhenriksson/goworld/geometry/box"
 	"github.com/johanhenriksson/goworld/geometry/plane"
+	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
 )
 
 // Editor base struct
 type Editor struct {
-	*object.T
+	object.T
 
 	Chunk   *game.Chunk
 	Camera  *engine.Camera
@@ -62,6 +63,8 @@ func NewEditor(chunk *game.Chunk, camera *engine.Camera, gbuffer *render.Geometr
 		Color: render.DarkGrey,
 	}).Create(e.T)
 
+	e.Palette.SetPosition(vec2.New(300, 20))
+
 	// X Construction Plane
 	plane.Builder(&e.XPlane, plane.Args{
 		Size:  float32(chunk.Sx),
@@ -94,7 +97,9 @@ func NewEditor(chunk *game.Chunk, camera *engine.Camera, gbuffer *render.Geometr
 	e.SelectTool(e.PlaceTool)
 
 	// could we avoid this somehow?
-	e.Attach(e.mesh, e.PlaceTool, e.ReplaceTool, e.EraseTool, e.SampleTool)
+	e.Adopt(e.PlaceTool, e.ReplaceTool, e.EraseTool, e.SampleTool)
+
+	e.Attach(e.mesh)
 
 	return e
 }
@@ -177,20 +182,20 @@ func (e *Editor) updateConstructPlanes() {
 
 	if keys.Pressed(keys.X) && e.XPlane.Active() {
 		e.xp = (e.xp + e.Chunk.Sx + m + 1) % (e.Chunk.Sx + 1)
-		p := e.XPlane.Position().WithX(float32(e.xp))
-		e.XPlane.SetPosition(p)
+		p := e.XPlane.Transform().Position().WithX(float32(e.xp))
+		e.XPlane.Transform().SetPosition(p)
 	}
 
 	if keys.Pressed(keys.Y) && e.YPlane.Active() {
 		e.yp = (e.yp + e.Chunk.Sy + m + 1) % (e.Chunk.Sy + 1)
-		p := e.YPlane.Position().WithY(float32(e.yp))
-		e.YPlane.SetPosition(p)
+		p := e.YPlane.Transform().Position().WithY(float32(e.yp))
+		e.YPlane.Transform().SetPosition(p)
 	}
 
 	if keys.Pressed(keys.Z) && e.ZPlane.Active() {
 		e.zp = (e.zp + e.Chunk.Sz + m + 1) % (e.Chunk.Sz + 1)
-		p := e.ZPlane.Position().WithZ(float32(e.zp))
-		e.ZPlane.SetPosition(p)
+		p := e.ZPlane.Transform().Position().WithZ(float32(e.zp))
+		e.ZPlane.Transform().SetPosition(p)
 	}
 }
 

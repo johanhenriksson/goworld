@@ -9,7 +9,7 @@ import (
 )
 
 type EraseTool struct {
-	*object.T
+	object.T
 	box *box.T
 }
 
@@ -42,5 +42,5 @@ func (pt *EraseTool) Hover(editor *Editor, position, normal vec3.T) {
 	// parent actually refers to the editor right now
 	// tools should be attached to their own object
 	// they could potentially share positioning logic
-	pt.SetPosition(position.Sub(normal.Scaled(0.5)).Floor())
+	pt.Transform().SetPosition(position.Sub(normal.Scaled(0.5)).Floor())
 }

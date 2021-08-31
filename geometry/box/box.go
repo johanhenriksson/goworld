@@ -27,7 +27,7 @@ func New(args Args) *T {
 	return b
 }
 
-func Attach(parent *object.T, args Args) *T {
+func Attach(parent object.T, args Args) *T {
 	box := New(args)
 	parent.Attach(box)
 	return box

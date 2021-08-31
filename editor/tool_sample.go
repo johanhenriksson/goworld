@@ -8,7 +8,7 @@ import (
 )
 
 type SampleTool struct {
-	*object.T
+	object.T
 	box *box.T
 }
 
@@ -35,5 +35,5 @@ func (pt *SampleTool) Use(e *Editor, position, normal vec3.T) {
 }
 
 func (pt *SampleTool) Hover(editor *Editor, position, normal vec3.T) {
-	pt.SetPosition(position.Sub(normal.Scaled(0.5)).Floor())
+	pt.Transform().SetPosition(position.Sub(normal.Scaled(0.5)).Floor())
 }

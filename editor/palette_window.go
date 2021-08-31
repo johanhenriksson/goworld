@@ -1,6 +1,7 @@
 package editor
 
 import (
+	"fmt"
 	"github.com/johanhenriksson/goworld/engine/mouse"
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/render"
@@ -32,8 +33,10 @@ func NewPaletteWindow(palette render.Palette) *PaletteWindow {
 		swatch := ui.NewRect(ui.Style{"color": ui.Color(color), "layout": ui.String("fixed")})
 		swatch.Resize(vec2.New(20, 20))
 		swatch.OnClick(func(ev ui.MouseEvent) {
+			fmt.Println("click")
 			if ev.Button == mouse.Button1 {
 				wnd.Selected = color
+				fmt.Println("Selected", color)
 			}
 		})
 

@@ -57,7 +57,7 @@ func (p *GeometryPass) Draw(scene *Scene) {
 	args := scene.Camera.DrawArgs()
 	for _, component := range query.Results {
 		drawable := component.(DeferredDrawable)
-		drawable.DrawDeferred(args.Apply(component.Parent().Transform()))
+		drawable.DrawDeferred(args.Apply(component.Parent().Transform().World()))
 	}
 
 	p.Buffer.Unbind()

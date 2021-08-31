@@ -9,7 +9,7 @@ import (
 )
 
 type ReplaceTool struct {
-	*object.T
+	object.T
 	box *box.T
 }
 
@@ -39,5 +39,5 @@ func (pt *ReplaceTool) Use(e *Editor, position, normal vec3.T) {
 }
 
 func (pt *ReplaceTool) Hover(editor *Editor, position, normal vec3.T) {
-	pt.SetPosition(position.Sub(normal.Scaled(0.5)).Floor())
+	pt.Transform().SetPosition(position.Sub(normal.Scaled(0.5)).Floor())
 }

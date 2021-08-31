@@ -9,7 +9,7 @@ import (
 )
 
 type PlaceTool struct {
-	*object.T
+	object.T
 	box *box.T
 }
 
@@ -35,5 +35,5 @@ func (pt *PlaceTool) Use(e *Editor, position, normal vec3.T) {
 }
 
 func (pt *PlaceTool) Hover(editor *Editor, position, normal vec3.T) {
-	pt.SetPosition(position.Add(normal.Scaled(0.5)).Floor())
+	pt.Transform().SetPosition(position.Add(normal.Scaled(0.5)).Floor())
 }

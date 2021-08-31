@@ -4,7 +4,7 @@ import "github.com/johanhenriksson/goworld/engine/object"
 
 // Scene graph root
 type Scene struct {
-	*object.T
+	object.T
 
 	// Active camera
 	Camera *Camera

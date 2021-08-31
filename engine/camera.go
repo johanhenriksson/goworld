@@ -12,7 +12,7 @@ import (
 
 // Camera represents a 3D camera and its transform.
 type Camera struct {
-	*transform.T
+	transform.T
 	Fov        float32
 	Ratio      float32
 	Near       float32
@@ -69,7 +69,7 @@ func (cam *Camera) Update(dt float32) {
 	}
 
 	// Update transform with new position & rotation
-	cam.T.Update(nil)
+	cam.T.Recalculate(nil)
 
 	// update projection matrix in case aspect ratio changed
 	ratio := float32(cam.Buffer.Width) / float32(cam.Buffer.Height)

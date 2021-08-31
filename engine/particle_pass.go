@@ -39,7 +39,7 @@ type Particle struct {
 
 // ParticleSystem holds the properties of a particle system effect
 type ParticleSystem struct {
-	*transform.T
+	transform.T
 
 	Particles []Particle
 	Count     int
@@ -95,7 +95,7 @@ func (ps *ParticleSystem) Draw(args DrawArgs) {
 		return
 	}
 
-	args = args.Apply(ps.T.World)
+	args = args.Apply(ps.World())
 
 	render.Blend(true)
 	render.BlendFunc(gl.ONE, gl.ONE)

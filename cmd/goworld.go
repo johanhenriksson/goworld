@@ -1,7 +1,7 @@
 package main
 
 /*
- * Copyright (C) 2016-2020 Johan Henriksson
+ * Copyright (C) 2016-2021 Johan Henriksson
  *
  * goworld is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,8 @@ import (
 	"github.com/johanhenriksson/goworld/editor"
 	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/game"
-	// "github.com/johanhenriksson/goworld/geometry"
+
+	"github.com/johanhenriksson/goworld/geometry/gizmo/mover"
 	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
@@ -56,6 +57,10 @@ func main() {
 		},
 	}
 
+	gizmo := mover.New(mover.Args{})
+	gizmo.Transform().SetPosition(vec3.New(-1, 0, -1))
+	scene.Adopt(gizmo)
+
 	// create chunk
 	world := game.NewWorld(31481234, 16)
 	chunk := world.AddChunk(0, 0)
@@ -72,13 +77,11 @@ func main() {
 
 	// create editor
 	edit := editor.NewEditor(chunk, camera, app.Pipeline.Geometry.Buffer)
-	scene.Attach(edit)
+	scene.Adopt(edit)
+	uim.Attach(edit.Palette)
 
 	// buffer debug windows
 	uim.Attach(editor.DebugBufferWindows(app))
-
-	// gizmo := geometry.NewGizmo(vec3.New(-1, 0, -1))
-	// scene.Attach(gizmo)
 
 	// cube := geometry.NewColorCube(render.Blue, 3)
 	// cube.Position = vec3.New(-2, -2, -2)

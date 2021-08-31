@@ -69,7 +69,7 @@ func (p *ForwardPass) Draw(scene *Scene) {
 	args := scene.Camera.DrawArgs()
 	for _, component := range query.Results {
 		drawable := component.(ForwardDrawable)
-		drawable.DrawForward(args.Apply(component.Parent().Transform()))
+		drawable.DrawForward(args.Apply(component.Parent().Transform().World()))
 	}
 
 	render.DepthOutput(true)

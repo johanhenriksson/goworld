@@ -31,8 +31,8 @@ func (d DrawArgs) Apply(t mat4.T) DrawArgs {
 	return d
 }
 
-func (d DrawArgs) Set(t *transform.T) DrawArgs {
-	d.Transform = t.World
-	d.MVP = d.VP.Mul(&t.World)
+func (d DrawArgs) Set(t transform.T) DrawArgs {
+	d.Transform = t.World()
+	d.MVP = d.VP.Mul(&d.Transform)
 	return d
 }
