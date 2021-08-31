@@ -90,7 +90,11 @@ func (o *T) Attach(components ...Component) {
 
 // Update this object and its child components
 func (o *T) Update(dt float32) {
-	// o.updateTransform()
+	// update transformation matrix
+	// by placing the call here we can avoid the problem of recursively updating
+	// child transforms when the parent changes. we also guarantee that the transform
+	// is only recalculated once per frame, instead of every call to SetPosition/Rot etc
+	o.updateTransform()
 
 	// update components
 	for _, component := range o.components {
@@ -106,6 +110,8 @@ func (o *T) updateTransform() {
 	o.local = mat4.Transform(o.position, o.rotation, o.scale)
 
 	// Update local -> world matrix
+	// if we have a parent, apply its transforms to our local-to-world matrix
+	// otherwise, the world transform is equal to the local transform
 	if o.parent != nil {
 		o.world = o.parent.world.Mul(&o.local)
 	} else {
@@ -149,21 +155,18 @@ func (o *T) Scale() vec3.T { return o.scale }
 // SetPosition sets the objects position.
 func (o *T) SetPosition(p vec3.T) Component {
 	o.position = p
-	o.updateTransform()
 	return o
 }
 
 // SetRotation sets the objects rotation.
 func (o *T) SetRotation(r vec3.T) Component {
 	o.rotation = r
-	o.updateTransform()
 	return o
 }
 
 // SetScale sets the objects scale.
 func (o *T) SetScale(s vec3.T) Component {
 	o.scale = s
-	o.updateTransform()
 	return o
 }
 
