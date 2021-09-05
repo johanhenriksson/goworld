@@ -101,7 +101,7 @@ func (p *LightPass) Draw(scene scene.T) {
 
 	// clear output buffer
 	p.Output.Bind()
-	render.ClearWith(render.Black)
+	render.ClearWith(scene.Camera().ClearColor())
 
 	// enable back face culling
 	render.CullFace(render.CullBack)

@@ -1,7 +1,6 @@
 package render
 
 import (
-	"github.com/johanhenriksson/goworld/core/camera"
 	"github.com/johanhenriksson/goworld/core/transform"
 	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/math/vec3"
@@ -30,15 +29,4 @@ func (d Args) Set(t transform.T) Args {
 	d.Transform = t.World()
 	d.MVP = d.VP.Mul(&d.Transform)
 	return d
-}
-
-func ArgsFromCamera(cam camera.T) Args {
-	return Args{
-		Projection: cam.Projection(),
-		View:       cam.View(),
-		VP:         cam.ViewProj(),
-		MVP:        cam.ViewProj(),
-		Transform:  mat4.Ident(),
-		Position:   cam.Transform().WorldPosition(),
-	}
 }

@@ -4,8 +4,6 @@ import (
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/core/scene"
 	"github.com/johanhenriksson/goworld/render"
-
-	"github.com/go-gl/gl/v4.1-core/gl"
 )
 
 type DeferredDrawable interface {
@@ -36,13 +34,6 @@ func (p *GeometryPass) Draw(scene scene.T) {
 	p.Buffer.Bind()
 	render.ClearWith(render.Black)
 	render.ClearDepth()
-
-	// kind-of hack to clear the diffuse buffer separately
-	// allows us to clear with the camera background color
-	// other buffers need to be zeroed. or???
-	gl.DrawBuffer(gl.COLOR_ATTACHMENT0) // use only diffuse buffer
-
-	p.Buffer.DrawBuffers()
 
 	// setup rendering
 	render.Blend(false)

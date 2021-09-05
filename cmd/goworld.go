@@ -64,9 +64,7 @@ func main() {
 	renderer.Append("ui", uim)
 
 	// create a cam
-	// cam := engine.CreateCamera(&render.ScreenBuffer, vec3.New(1, 22, 1), 55.0, 0.1, 600.0)
-	// cam.Clear = render.Hex("#eddaab")
-	cam := camera.New(aspect, 55.0, 0.1, 600)
+	cam := camera.New(aspect, 55.0, 0.1, 600, render.Hex("#eddaab"))
 	scene.SetCamera(cam)
 
 	gizmo := mover.New(mover.Args{})
