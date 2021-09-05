@@ -91,8 +91,6 @@ func New(args Args) (T, error) {
 		window.SetInputHandler(args.InputHandler)
 	}
 
-	wnd.SetInputMode(glfw.CursorMode, glfw.CursorHidden)
-
 	return window, nil
 }
 
