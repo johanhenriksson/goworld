@@ -64,5 +64,8 @@ func ColumnLayout(c Component, sz vec2.T) vec2.T {
 }
 
 func FixedLayout(c Component, sz vec2.T) vec2.T {
-	return vec2.T{c.Width(), c.Height()}
+	return vec2.T{
+		X: c.Width(),
+		Y: c.Height(),
+	}
 }

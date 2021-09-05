@@ -2,7 +2,7 @@ package editor
 
 import (
 	"fmt"
-	"github.com/johanhenriksson/goworld/engine/mouse"
+	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/ui"

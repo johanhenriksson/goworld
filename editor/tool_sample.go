@@ -1,7 +1,7 @@
 package editor
 
 import (
-	"github.com/johanhenriksson/goworld/engine/object"
+	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/geometry/box"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
@@ -16,8 +16,14 @@ func NewSampleTool() *SampleTool {
 	st := &SampleTool{
 		T: object.New("SampleTool"),
 	}
-	st.box = box.Attach(st.T, box.Args{Size: vec3.One, Color: render.Purple})
-	st.SetActive(false)
+
+	box.Builder(&st.box, box.Args{
+		Size:  vec3.One,
+		Color: render.Purple,
+	}).
+		Parent(st).
+		Create()
+
 	return st
 }
 
@@ -35,5 +41,11 @@ func (pt *SampleTool) Use(e *Editor, position, normal vec3.T) {
 }
 
 func (pt *SampleTool) Hover(editor *Editor, position, normal vec3.T) {
-	pt.Transform().SetPosition(position.Sub(normal.Scaled(0.5)).Floor())
+	p := position.Sub(normal.Scaled(0.5))
+	if editor.InBounds(p) {
+		pt.box.SetActive(true)
+		pt.Transform().SetPosition(p.Floor())
+	} else {
+		pt.box.SetActive(false)
+	}
 }

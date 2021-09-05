@@ -1,7 +1,7 @@
 package editor
 
 import (
-	"github.com/johanhenriksson/goworld/engine/object"
+	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/game"
 	"github.com/johanhenriksson/goworld/geometry/box"
 	"github.com/johanhenriksson/goworld/math/vec3"
@@ -17,8 +17,14 @@ func NewEraseTool() *EraseTool {
 	et := &EraseTool{
 		T: object.New("EraseTool"),
 	}
-	et.box = box.Attach(et.T, box.Args{Size: vec3.One, Color: render.Red})
-	et.SetActive(false)
+
+	box.Builder(&et.box, box.Args{
+		Size:  vec3.One,
+		Color: render.Red,
+	}).
+		Parent(et).
+		Create()
+
 	return et
 }
 
@@ -42,5 +48,8 @@ func (pt *EraseTool) Hover(editor *Editor, position, normal vec3.T) {
 	// parent actually refers to the editor right now
 	// tools should be attached to their own object
 	// they could potentially share positioning logic
-	pt.Transform().SetPosition(position.Sub(normal.Scaled(0.5)).Floor())
+	p := position.Sub(normal.Scaled(0.5))
+	if editor.InBounds(p) {
+		pt.Transform().SetPosition(p.Floor())
+	}
 }

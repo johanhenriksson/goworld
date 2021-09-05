@@ -1,7 +1,7 @@
 package editor
 
 import (
-	"github.com/johanhenriksson/goworld/engine/object"
+	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/game"
 	"github.com/johanhenriksson/goworld/geometry/box"
 	"github.com/johanhenriksson/goworld/math/vec3"
@@ -17,13 +17,22 @@ func NewPlaceTool() *PlaceTool {
 	pt := &PlaceTool{
 		T: object.New("PlaceTool"),
 	}
-	pt.box = box.Attach(pt.T, box.Args{Size: vec3.One, Color: render.Blue})
-	pt.SetActive(false)
+
+	box.Builder(&pt.box, box.Args{
+		Size:  vec3.One,
+		Color: render.Blue,
+	}).
+		Parent(pt).
+		Create()
+
 	return pt
 }
 
 func (pt *PlaceTool) Use(e *Editor, position, normal vec3.T) {
 	target := position.Add(normal.Scaled(0.5))
+	if e.Chunk.At(int(target.X), int(target.Y), int(target.Z)) != game.EmptyVoxel {
+		return
+	}
 	e.Chunk.Set(int(target.X), int(target.Y), int(target.Z), game.NewVoxel(e.Palette.Selected))
 
 	// recompute mesh
@@ -35,5 +44,8 @@ func (pt *PlaceTool) Use(e *Editor, position, normal vec3.T) {
 }
 
 func (pt *PlaceTool) Hover(editor *Editor, position, normal vec3.T) {
-	pt.Transform().SetPosition(position.Add(normal.Scaled(0.5)).Floor())
+	p := position.Add(normal.Scaled(0.5))
+	if editor.InBounds(p) {
+		pt.Transform().SetPosition(p.Floor())
+	}
 }

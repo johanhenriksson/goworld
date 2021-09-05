@@ -2,8 +2,8 @@ package plane
 
 import (
 	"github.com/johanhenriksson/goworld/assets"
+	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/engine"
-	"github.com/johanhenriksson/goworld/engine/object"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/vertex"

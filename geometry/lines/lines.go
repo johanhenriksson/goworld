@@ -1,8 +1,8 @@
 package lines
 
 import (
+	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/engine"
-	"github.com/johanhenriksson/goworld/engine/object"
 	"github.com/johanhenriksson/goworld/render/vertex"
 )
 

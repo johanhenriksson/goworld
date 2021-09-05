@@ -4,6 +4,9 @@ import (
 	"github.com/go-gl/glfw/v3.1/glfw"
 )
 
+// Code represents a keyboard key
+type Code glfw.Key
+
 // GLFW Keycodes
 const (
 	A Code = 65
@@ -54,4 +57,6 @@ const (
 	RightControl = Code(glfw.KeyRightControl)
 	LeftAlt      = Code(glfw.KeyLeftAlt)
 	RightAlt     = Code(glfw.KeyRightAlt)
+	LeftSuper    = Code(glfw.KeyLeftSuper)
+	RightSuper   = Code(glfw.KeyRightSuper)
 )

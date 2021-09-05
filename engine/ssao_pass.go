@@ -95,7 +95,8 @@ func (p *SSAOPass) Draw(scene *Scene) {
 
 	// update projection
 	p.shader.Use()
-	p.shader.Mat4("projection", &scene.Camera.Projection)
+	proj := scene.Camera.Projection()
+	p.shader.Mat4("projection", &proj)
 	p.textures.Use()
 
 	// run occlusion pass

@@ -1,7 +1,9 @@
 package object
 
 import (
-	"github.com/johanhenriksson/goworld/engine/transform"
+	"github.com/johanhenriksson/goworld/core/input/keys"
+	"github.com/johanhenriksson/goworld/core/input/mouse"
+	"github.com/johanhenriksson/goworld/core/transform"
 )
 
 // object is the basic building block of the scene graph
@@ -26,7 +28,7 @@ func New(name string, components ...Component) T {
 	return obj
 }
 
-func (o *object) String() string { return o.name }
+func (o *object) Name() string { return o.name }
 
 // Parent returns a pointer to the parent object (or nil)
 func (o *object) Parent() T { return o.parent }
@@ -68,7 +70,7 @@ func (o *object) Attach(components ...Component) {
 	for _, component := range components {
 		// attach it
 		o.components = append(o.components, component)
-		component.SetParent(o)
+		component.SetObject(o)
 	}
 }
 
@@ -90,11 +92,17 @@ func (o *object) Update(dt float32) {
 }
 
 func (o *object) Transform() transform.T {
+	// this might need to be optimized
+	// we are currently recalculating the entire transformation hierarchy every time the transform is accessed
+	// pros - always up to date
+	// cons - its dumb
+
 	var pt transform.T = nil
 	if o.Parent() != nil {
 		pt = o.parent.Transform()
 	}
 	o.transform.Recalculate(pt)
+
 	return o.transform
 }
 
@@ -108,4 +116,42 @@ func (o *object) Adopt(children ...T) {
 
 func (o *object) Children() []T {
 	return o.children
+}
+
+func (o *object) KeyEvent(e keys.Event) {
+	for _, component := range o.components {
+		// propagate the event to components if they implement keys.Handler
+		if handler, ok := component.(keys.Handler); ok {
+			handler.KeyEvent(e)
+			if e.Handled() {
+				return
+			}
+		}
+	}
+
+	for _, child := range o.children {
+		child.KeyEvent(e)
+		if e.Handled() {
+			return
+		}
+	}
+}
+
+func (o *object) MouseEvent(e mouse.Event) {
+	for _, component := range o.components {
+		// propagate the event to components if they implement mouse.Handler
+		if handler, ok := component.(mouse.Handler); ok {
+			handler.MouseEvent(e)
+			if e.Handled() {
+				return
+			}
+		}
+	}
+
+	for _, child := range o.children {
+		child.MouseEvent(e)
+		if e.Handled() {
+			return
+		}
+	}
 }

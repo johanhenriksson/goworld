@@ -1,7 +1,7 @@
 package engine
 
 import (
-	"github.com/johanhenriksson/goworld/engine/object"
+	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/render"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
@@ -48,17 +48,21 @@ func (p *GeometryPass) Draw(scene *Scene) {
 	render.CullFace(render.CullBack)
 	render.DepthOutput(true)
 
-	query := object.NewQuery(func(c object.Component) bool {
-		_, ok := c.(DeferredDrawable)
-		return ok
-	})
+	query := object.NewQuery(DeferredDrawableQuery)
 	scene.Collect(&query)
 
-	args := scene.Camera.DrawArgs()
+	args := ArgsFromCamera(scene.Camera)
 	for _, component := range query.Results {
 		drawable := component.(DeferredDrawable)
-		drawable.DrawDeferred(args.Apply(component.Parent().Transform().World()))
+		drawable.DrawDeferred(args.Apply(component.Object().Transform().World()))
 	}
 
 	p.Buffer.Unbind()
+}
+
+// DeferedDrawableQuery is an object query predicate that matches any component
+// that implements the DeferredDrawable interface.
+func DeferredDrawableQuery(c object.Component) bool {
+	_, ok := c.(DeferredDrawable)
+	return ok
 }

@@ -1,7 +1,7 @@
 package mover
 
 import (
-	"github.com/johanhenriksson/goworld/engine/object"
+	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/geometry/cone"
 	"github.com/johanhenriksson/goworld/geometry/lines"
 	"github.com/johanhenriksson/goworld/geometry/plane"
@@ -47,9 +47,10 @@ func New(args Args) *T {
 		Segments: segments,
 		Color:    render.Red,
 	}).
+		Parent(g).
 		Position(vec3.UnitX).
 		Rotation(vec3.New(0, 0, -90)).
-		Create(g.T)
+		Create()
 
 	// Y arrow
 	cone.Builder(&g.Y, cone.Args{
@@ -58,8 +59,9 @@ func New(args Args) *T {
 		Segments: segments,
 		Color:    render.Green,
 	}).
+		Parent(g).
 		Position(vec3.New(0, 1, 0)).
-		Create(g.T)
+		Create()
 
 	// Z arrow
 	cone.Builder(&g.Z, cone.Args{
@@ -68,36 +70,40 @@ func New(args Args) *T {
 		Segments: segments,
 		Color:    render.Blue,
 	}).
+		Parent(g).
 		Position(vec3.UnitZ).
 		Rotation(vec3.New(90, 0, 0)).
-		Create(g.T)
+		Create()
 
 	// XY plane
 	plane.Builder(&g.XY, plane.Args{
 		Size:  side,
 		Color: render.Blue.WithAlpha(planeAlpha),
 	}).
+		Parent(g).
 		Position(vec3.New(s, s, 0)).
 		Rotation(vec3.New(90, 0, 0)).
-		Create(g.T)
+		Create()
 
 	// XZ plane
 	plane.Builder(&g.XZ, plane.Args{
 		Size:  side,
 		Color: render.Green.WithAlpha(planeAlpha),
 	}).
+		Parent(g).
 		Rotation(vec3.New(0, 90, 0)).
 		Position(vec3.New(s, 0, s)).
-		Create(g.T)
+		Create()
 
 	// YZ plane
 	plane.Builder(&g.YZ, plane.Args{
 		Size:  side,
 		Color: render.Red.WithAlpha(planeAlpha),
 	}).
+		Parent(g).
 		Position(vec3.New(0, s, s)).
 		Rotation(vec3.New(0, 0, 90)).
-		Create(g.T)
+		Create()
 
 	lines.Builder(&g.Lines, lines.Args{
 		Lines: []lines.Line{
@@ -118,14 +124,16 @@ func New(args Args) *T {
 			lines.L(vec3.New(0, side, 0), vec3.New(0, side, side), render.Red),
 			lines.L(vec3.New(0, 0, side), vec3.New(0, side, side), render.Red),
 		},
-	}).Create(g.T)
+	}).
+		Parent(g).
+		Create()
 
 	return g
 }
 
 func Attach(parent object.T, args Args) *T {
 	box := New(args)
-	parent.Attach(box)
+	parent.Adopt(box)
 	return box
 }
 
@@ -137,5 +145,5 @@ func NewObject(args Args) *T {
 func Builder(out **T, args Args) *object.Builder {
 	b := object.Build("MoveGizmo")
 	*out = New(args)
-	return b.Attach(*out)
+	return b.Adopt(*out)
 }

@@ -71,7 +71,7 @@ func (r *Renderer) Resize(width, height int) {
 // Append a new render pass
 func (r *Renderer) Append(name string, pass DrawPass) {
 	if len(name) == 0 {
-		panic(fmt.Errorf("Render passes must have names"))
+		panic(fmt.Errorf("render passes must have names"))
 	}
 
 	r.Passes = append(r.Passes, pass)
@@ -114,6 +114,7 @@ func (r *Renderer) Draw(scene *Scene) {
 	r.Output.Draw(scene)
 	r.Lines.Draw(scene)
 	// r.Particles.Draw(scene)
+
 	for _, pass := range r.Passes {
 		pass.Draw(scene)
 	}

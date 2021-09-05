@@ -4,11 +4,13 @@ import "github.com/johanhenriksson/goworld/math/vec3"
 
 // Builder API for game objects
 type Builder struct {
-	name       string
-	position   vec3.T
-	rotation   vec3.T
-	scale      vec3.T
-	active     bool
+	name     string
+	position vec3.T
+	rotation vec3.T
+	scale    vec3.T
+	active   bool
+
+	parent     T
 	components []Component
 	children   []T
 }
@@ -32,6 +34,11 @@ func (b *Builder) Attach(comp Component) *Builder {
 
 func (b *Builder) Adopt(child T) *Builder {
 	b.children = append(b.children, child)
+	return b
+}
+
+func (b *Builder) Parent(parent T) *Builder {
+	b.parent = parent
 	return b
 }
 
@@ -60,14 +67,14 @@ func (b *Builder) Active(active bool) *Builder {
 }
 
 // Create instantiates a new object with the current builder settings.
-func (b *Builder) Create(parent T) T {
+func (b *Builder) Create() T {
 	obj := New(b.name, b.components...)
 	obj.Transform().SetPosition(b.position)
 	obj.Transform().SetRotation(b.rotation)
 	obj.Transform().SetScale(b.scale)
 	obj.SetActive(b.active)
-	if parent != nil {
-		parent.Adopt(obj)
+	if b.parent != nil {
+		b.parent.Adopt(obj)
 	}
 	for _, child := range b.children {
 		obj.Adopt(child)

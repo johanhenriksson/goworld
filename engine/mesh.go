@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/johanhenriksson/goworld/assets"
-	"github.com/johanhenriksson/goworld/engine/object"
+	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/render"
 )
 
@@ -13,7 +13,8 @@ type MeshBufferMap map[string]*render.VertexBuffer
 
 // Mesh base
 type Mesh struct {
-	*object.Link
+	object.Component
+
 	Pass     render.Pass
 	Material *render.Material
 
@@ -34,10 +35,10 @@ func NewLineMesh() *Mesh {
 // NewPrimitiveMesh creates a new mesh composed of a given GL primitive
 func NewPrimitiveMesh(primitive render.GLPrimitive, pass render.Pass, material *render.Material) *Mesh {
 	m := &Mesh{
-		Link:     object.NewLink(nil),
-		Pass:     pass,
-		Material: material,
-		vao:      render.CreateVertexArray(primitive),
+		Component: object.NewComponent(),
+		Pass:      pass,
+		Material:  material,
+		vao:       render.CreateVertexArray(primitive),
 	}
 	return m
 }
@@ -45,6 +46,10 @@ func NewPrimitiveMesh(primitive render.GLPrimitive, pass render.Pass, material *
 func (m *Mesh) SetIndexType(t render.GLType) {
 	// get rid of this later
 	m.vao.SetIndexType(t)
+}
+
+func (m Mesh) Name() string {
+	return "Mesh"
 }
 
 func (m *Mesh) DrawDeferred(args DrawArgs) {
@@ -97,9 +102,11 @@ func (m Mesh) Buffer(data interface{}) {
 	pointers := m.Material.VertexPointers(data)
 
 	// compatibility hack
+	// ... but for what? this never seems to happen
+	// more like a sanity check
 	if len(pointers) == 0 {
-		panic(fmt.Errorf("error buffering mesh %s - no pointers", m.String()))
-	} else {
-		m.vao.BufferTo(pointers, data)
+		panic(fmt.Errorf("error buffering mesh %s - no pointers", m.Name()))
 	}
+
+	m.vao.BufferTo(pointers, data)
 }

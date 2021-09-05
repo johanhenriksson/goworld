@@ -95,13 +95,12 @@ func (p *LightPass) setLightUniforms(light *Light) {
 // Draw executes the deferred lighting pass.
 func (p *LightPass) Draw(scene *Scene) {
 	// compute camera view projection inverse
-	vp := scene.Camera.Projection.Mul(&scene.Camera.View)
-	vpInv := vp.Invert()
-	vInv := scene.Camera.View.Invert()
+	vInv := scene.Camera.ViewInv()
+	vpInv := scene.Camera.ViewProjInv()
 
 	// clear output buffer
 	p.Output.Bind()
-	render.ClearWith(scene.Camera.Clear.WithAlpha(0))
+	render.ClearWith(render.Black)
 
 	// enable back face culling
 	render.CullFace(render.CullBack)

@@ -2,7 +2,7 @@ package engine
 
 import (
 	"github.com/go-gl/gl/v4.1-core/gl"
-	"github.com/johanhenriksson/goworld/engine/object"
+	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/render"
 )
 
@@ -36,7 +36,8 @@ func (p *ForwardPass) Resize(width, height int) {}
 
 // DrawPass executes the forward pass
 func (p *ForwardPass) Draw(scene *Scene) {
-	scene.Camera.Use()
+	//scene.Camera.Use()
+	render.ScreenBuffer.Bind()
 
 	// setup rendering
 	render.Blend(true)
@@ -66,10 +67,10 @@ func (p *ForwardPass) Draw(scene *Scene) {
 	})
 	scene.Collect(&query)
 
-	args := scene.Camera.DrawArgs()
+	args := ArgsFromCamera(scene.Camera)
 	for _, component := range query.Results {
 		drawable := component.(ForwardDrawable)
-		drawable.DrawForward(args.Apply(component.Parent().Transform().World()))
+		drawable.DrawForward(args.Apply(component.Object().Transform().World()))
 	}
 
 	render.DepthOutput(true)

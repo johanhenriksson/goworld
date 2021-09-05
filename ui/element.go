@@ -1,6 +1,8 @@
 package ui
 
 import (
+	"fmt"
+
 	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/math/vec3"
@@ -113,6 +115,10 @@ func (e *Element) HandleMouse(ev MouseEvent) bool {
 	// transform the point into our local coordinate system
 	invTransform := e.Transform.Matrix.Invert()
 	projected := invTransform.TransformPoint(vec3.Extend(ev.Point, 0))
+
+	fmt.Println(ev.Point)
+	fmt.Println(e.Name, e.Size, "at", e.Transform.Position, "->", projected.XY())
+
 	ev.Point = projected.XY()
 
 	// check if we're inside element bounds

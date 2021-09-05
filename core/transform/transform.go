@@ -26,6 +26,7 @@ type T interface {
 
 	TransformDir(point vec3.T) vec3.T
 	TransformPoint(point vec3.T) vec3.T
+	WorldPosition() vec3.T
 }
 
 // Transform represents a 3D transformation
@@ -97,6 +98,10 @@ func (t *transform) TransformPoint(point vec3.T) vec3.T {
 // TransformDir transforms a world direction vector into this coordinate system
 func (t *transform) TransformDir(dir vec3.T) vec3.T {
 	return t.world.TransformDir(dir)
+}
+
+func (t *transform) WorldPosition() vec3.T {
+	return t.TransformPoint(vec3.Zero)
 }
 
 func (t *transform) World() mat4.T        { return t.world }

@@ -1,13 +1,16 @@
 package engine
 
-import "github.com/johanhenriksson/goworld/engine/object"
+import (
+	"github.com/johanhenriksson/goworld/core/camera"
+	"github.com/johanhenriksson/goworld/core/object"
+)
 
 // Scene graph root
 type Scene struct {
 	object.T
 
 	// Active camera
-	Camera *Camera
+	Camera camera.T
 
 	// List of all lights in the scene
 	Lights []Light

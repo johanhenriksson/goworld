@@ -1,8 +1,8 @@
 package ui
 
 import (
-	"github.com/johanhenriksson/goworld/engine/keys"
-	"github.com/johanhenriksson/goworld/engine/mouse"
+	"github.com/johanhenriksson/goworld/core/input/keys"
+	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/math/vec2"
 )
 
