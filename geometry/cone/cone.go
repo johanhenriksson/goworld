@@ -2,8 +2,8 @@ package cone
 
 import (
 	"github.com/johanhenriksson/goworld/assets"
+	"github.com/johanhenriksson/goworld/core/mesh"
 	"github.com/johanhenriksson/goworld/core/object"
-	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/math"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
@@ -12,7 +12,7 @@ import (
 
 // A Cone is a forward rendered colored cone mesh
 type T struct {
-	*engine.Mesh
+	mesh.T
 	Args
 }
 
@@ -42,10 +42,10 @@ func Builder(out **T, args Args) *object.Builder {
 func New(args Args) *T {
 	mat := assets.GetMaterialShared("color.f")
 	cone := &T{
-		Mesh: engine.NewMesh(mat),
+		T:    mesh.New(mat),
 		Args: args,
 	}
-	cone.Pass = render.Forward
+	cone.SetPass(render.Forward)
 	cone.generate()
 	return cone
 }

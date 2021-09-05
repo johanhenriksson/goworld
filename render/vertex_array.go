@@ -93,7 +93,7 @@ func (vao *VertexArray) SetIndexType(t GLType) {
 // Buffer vertex data to the GPU
 func (vao *VertexArray) Buffer(name string, data interface{}) {
 	if name == "index" {
-		// set index type
+		// todo: set index type
 		// then get rid of SetIndexType
 	}
 

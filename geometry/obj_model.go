@@ -4,19 +4,19 @@ import (
 	"fmt"
 	"unsafe"
 
-	"github.com/johanhenriksson/goworld/engine"
+	"github.com/johanhenriksson/goworld/core/mesh"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/udhos/gwob"
 )
 
 type ObjModel struct {
-	*engine.Mesh
+	mesh.T
 	Path string
 }
 
 func NewObjModel(mat *render.Material, path string) *ObjModel {
 	obj := &ObjModel{
-		Mesh: engine.NewMesh(mat),
+		T:    mesh.New(mat),
 		Path: path,
 	}
 	obj.SetIndexType(render.UInt32)
@@ -34,17 +34,15 @@ func (obj *ObjModel) load() error {
 		return fmt.Errorf("parse error input=%s: %v", obj.Path, err)
 	}
 
-	// vertex data
-	meshdata := &engine.MeshData{
-		Items:  file.NumberOfElements(),
-		Buffer: file.Coord,
+	// flip texcoord Y
+	elsize := len(file.Coord) / file.NumberOfElements()
+	for i := 0; i < file.NumberOfElements(); i++ {
+		vOffset := i*elsize + 4
+		file.Coord[vOffset] = 1.0 - file.Coord[vOffset]
 	}
 
-	// flip texcoord Y
-	for i := 0; i < meshdata.Items; i++ {
-		vOffset := i*meshdata.Size()/4 + 4
-		meshdata.Buffer[vOffset] = 1.0 - meshdata.Buffer[vOffset]
-	}
+	// vertex data
+	meshdata := mesh.NewData(file.NumberOfElements(), file.Coord)
 
 	// index data
 	indices := make(UInt32Buffer, len(file.Indices))

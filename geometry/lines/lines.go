@@ -1,13 +1,13 @@
 package lines
 
 import (
+	"github.com/johanhenriksson/goworld/core/mesh"
 	"github.com/johanhenriksson/goworld/core/object"
-	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/render/vertex"
 )
 
 type T struct {
-	*engine.Mesh
+	mesh.T
 	Args
 }
 
@@ -17,7 +17,7 @@ type Args struct {
 
 func New(args Args) *T {
 	b := &T{
-		Mesh: engine.NewLineMesh(),
+		T:    mesh.NewLines(),
 		Args: args,
 	}
 	b.compute()

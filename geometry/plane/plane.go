@@ -2,8 +2,8 @@ package plane
 
 import (
 	"github.com/johanhenriksson/goworld/assets"
+	"github.com/johanhenriksson/goworld/core/mesh"
 	"github.com/johanhenriksson/goworld/core/object"
-	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/vertex"
@@ -11,7 +11,7 @@ import (
 
 // Plane is a colored, one segment, one-sided 3D plane
 type T struct {
-	*engine.Mesh
+	mesh.T
 	Args
 }
 
@@ -35,10 +35,10 @@ func Builder(out **T, args Args) *object.Builder {
 func New(args Args) *T {
 	mat := assets.GetMaterialShared("color.f")
 	plane := &T{
-		Mesh: engine.NewMesh(mat),
+		T:    mesh.New(mat),
 		Args: args,
 	}
-	plane.Pass = render.Forward
+	plane.SetPass(render.Forward)
 	plane.generate()
 	return plane
 }
@@ -69,8 +69,4 @@ func (p *T) generate() {
 		x2, z2, o2, d2, z2, x2,
 	}
 	p.Buffer(data)
-}
-
-func (p *T) DrawForward(args render.Args) {
-	p.Mesh.DrawForward(args)
 }

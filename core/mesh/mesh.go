@@ -1,4 +1,4 @@
-package engine
+package mesh
 
 import (
 	"fmt"
@@ -11,54 +11,65 @@ import (
 // MeshBufferMap maps buffer names to vertex buffer objects
 type MeshBufferMap map[string]*render.VertexBuffer
 
-// Mesh base
-type Mesh struct {
+type T interface {
 	object.Component
 
-	Pass     render.Pass
-	Material *render.Material
+	Pass() render.Pass
+	SetPass(render.Pass)
+	DrawDeferred(render.Args)
+	DrawLines(render.Args)
 
-	vao *render.VertexArray
+	SetIndexType(t render.GLType)
+	Buffer(data interface{})
 }
 
-// NewMesh creates a new mesh object
-func NewMesh(material *render.Material) *Mesh {
+// mesh base
+type mesh struct {
+	object.Component
+
+	pass     render.Pass
+	material *render.Material
+	vao      *render.VertexArray
+}
+
+// New creates a new mesh component
+func New(material *render.Material) T {
 	return NewPrimitiveMesh(render.Triangles, render.Geometry, material)
 }
 
-// NewLineMesh creates a new mesh for drawing lines
-func NewLineMesh() *Mesh {
+// NewLines creates a new line mesh component
+func NewLines() T {
 	material := assets.GetMaterialShared("lines")
 	return NewPrimitiveMesh(render.Lines, render.Line, material)
 }
 
 // NewPrimitiveMesh creates a new mesh composed of a given GL primitive
-func NewPrimitiveMesh(primitive render.GLPrimitive, pass render.Pass, material *render.Material) *Mesh {
-	m := &Mesh{
+func NewPrimitiveMesh(primitive render.GLPrimitive, pass render.Pass, material *render.Material) *mesh {
+	m := &mesh{
 		Component: object.NewComponent(),
-		Pass:      pass,
-		Material:  material,
+		pass:      pass,
+		material:  material,
 		vao:       render.CreateVertexArray(primitive),
 	}
 	return m
 }
 
-func (m *Mesh) SetIndexType(t render.GLType) {
+func (m *mesh) SetIndexType(t render.GLType) {
 	// get rid of this later
 	m.vao.SetIndexType(t)
 }
 
-func (m Mesh) Name() string {
+func (m mesh) Name() string {
 	return "Mesh"
 }
 
-func (m *Mesh) DrawDeferred(args render.Args) {
-	if m.Pass != render.Geometry {
+func (m *mesh) DrawDeferred(args render.Args) {
+	if m.pass != render.Geometry {
 		return
 	}
 
-	m.Material.Use()
-	shader := m.Material.Shader
+	m.material.Use()
+	shader := m.material.Shader
 
 	// set up uniforms
 	shader.Mat4("model", &args.Transform)
@@ -70,13 +81,13 @@ func (m *Mesh) DrawDeferred(args render.Args) {
 	m.vao.Draw()
 }
 
-func (m *Mesh) DrawForward(args render.Args) {
-	if m.Pass != render.Forward {
+func (m *mesh) DrawForward(args render.Args) {
+	if m.pass != render.Forward {
 		return
 	}
 
-	m.Material.Use()
-	shader := m.Material.Shader
+	m.material.Use()
+	shader := m.material.Shader
 
 	// set up uniforms
 	shader.Mat4("model", &args.Transform)
@@ -87,19 +98,19 @@ func (m *Mesh) DrawForward(args render.Args) {
 	m.vao.Draw()
 }
 
-func (m *Mesh) DrawLines(args render.Args) {
-	if m.Pass != render.Line {
+func (m *mesh) DrawLines(args render.Args) {
+	if m.pass != render.Line {
 		return
 	}
 
-	m.Material.Use()
-	m.Material.Mat4("mvp", &args.MVP)
+	m.material.Use()
+	m.material.Mat4("mvp", &args.MVP)
 
 	m.vao.Draw()
 }
 
-func (m Mesh) Buffer(data interface{}) {
-	pointers := m.Material.VertexPointers(data)
+func (m *mesh) Buffer(data interface{}) {
+	pointers := m.material.VertexPointers(data)
 
 	// compatibility hack
 	// ... but for what? this never seems to happen
@@ -109,4 +120,12 @@ func (m Mesh) Buffer(data interface{}) {
 	}
 
 	m.vao.BufferTo(pointers, data)
+}
+
+func (m *mesh) Pass() render.Pass {
+	return m.pass
+}
+
+func (m *mesh) SetPass(pass render.Pass) {
+	m.pass = pass
 }
