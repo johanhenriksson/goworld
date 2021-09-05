@@ -2,12 +2,13 @@ package engine
 
 import (
 	"github.com/johanhenriksson/goworld/core/camera"
+	"github.com/johanhenriksson/goworld/core/scene"
 	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/render"
 )
 
 type DrawPass interface {
-	Draw(*Scene)
+	Draw(scene.T)
 	Resize(int, int)
 }
 

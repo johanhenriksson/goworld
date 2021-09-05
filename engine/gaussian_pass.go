@@ -2,6 +2,7 @@ package engine
 
 import (
 	"github.com/go-gl/gl/v4.1-core/gl"
+	"github.com/johanhenriksson/goworld/core/scene"
 	"github.com/johanhenriksson/goworld/render"
 )
 
@@ -38,7 +39,7 @@ func NewGaussianPass(input *render.Texture) *GaussianPass {
 }
 
 // DrawPass draws the gaussian blurred output to the frame buffer.
-func (p *GaussianPass) DrawPass(scene *Scene) {
+func (p *GaussianPass) DrawPass(scene scene.T) {
 	render.Blend(false)
 	render.DepthOutput(false)
 

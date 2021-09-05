@@ -3,6 +3,7 @@ package engine
 import (
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/johanhenriksson/goworld/core/object"
+	"github.com/johanhenriksson/goworld/core/scene"
 	"github.com/johanhenriksson/goworld/render"
 )
 
@@ -35,7 +36,7 @@ func NewForwardPass(gbuffer *render.GeometryBuffer, output *render.ColorBuffer) 
 func (p *ForwardPass) Resize(width, height int) {}
 
 // DrawPass executes the forward pass
-func (p *ForwardPass) Draw(scene *Scene) {
+func (p *ForwardPass) Draw(scene scene.T) {
 	//scene.Camera.Use()
 	render.ScreenBuffer.Bind()
 
@@ -67,7 +68,7 @@ func (p *ForwardPass) Draw(scene *Scene) {
 	})
 	scene.Collect(&query)
 
-	args := ArgsFromCamera(scene.Camera)
+	args := ArgsFromCamera(scene.Camera())
 	for _, component := range query.Results {
 		drawable := component.(ForwardDrawable)
 		drawable.DrawForward(args.Apply(component.Object().Transform().World()))

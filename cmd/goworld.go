@@ -21,6 +21,7 @@ import (
 	"fmt"
 
 	"github.com/johanhenriksson/goworld/core/camera"
+	"github.com/johanhenriksson/goworld/core/scene"
 	"github.com/johanhenriksson/goworld/core/window"
 	"github.com/johanhenriksson/goworld/editor"
 	"github.com/johanhenriksson/goworld/engine"
@@ -28,7 +29,6 @@ import (
 	"github.com/lsfn/ode"
 
 	"github.com/johanhenriksson/goworld/geometry/gizmo/mover"
-	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/ui"
@@ -40,7 +40,7 @@ func main() {
 	w := ode.NewWorld()
 	w.SetGravity(ode.Vector3{0, -9.82, 0})
 
-	scene := engine.NewScene()
+	scene := scene.New()
 
 	wnd, err := window.New(window.Args{
 		Title:        "goworld2",
@@ -67,19 +67,7 @@ func main() {
 	// cam := engine.CreateCamera(&render.ScreenBuffer, vec3.New(1, 22, 1), 55.0, 0.1, 600.0)
 	// cam.Clear = render.Hex("#eddaab")
 	cam := camera.New(aspect, 55.0, 0.1, 600)
-
-	// scene & lighting setup
-	scene.Camera = cam
-	scene.Lights = []render.Light{
-		{ // directional light
-			Intensity:  1.6,
-			Color:      vec3.New(0.9*0.973, 0.9*0.945, 0.9*0.776),
-			Type:       render.DirectionalLight,
-			Projection: mat4.Orthographic(-71, 120, -20, 140, -10, 140),
-			Position:   vec3.New(-2, 2, -1),
-			Shadows:    false,
-		},
-	}
+	scene.SetCamera(cam)
 
 	gizmo := mover.New(mover.Args{})
 	gizmo.Transform().SetPosition(vec3.New(-1, 0, -1))

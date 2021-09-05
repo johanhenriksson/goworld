@@ -6,7 +6,7 @@ import (
 
 	"github.com/johanhenriksson/goworld/core/input/keys"
 	"github.com/johanhenriksson/goworld/core/input/mouse"
-	"github.com/johanhenriksson/goworld/engine"
+	"github.com/johanhenriksson/goworld/core/scene"
 	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/render"
@@ -57,7 +57,7 @@ func (m *Manager) Attach(child Component) {
 }
 
 // DrawPass draws the UI
-func (m *Manager) Draw(scene *engine.Scene) {
+func (m *Manager) Draw(scene scene.T) {
 	p := m.Viewport
 	v := mat4.Ident() // unused by UI
 	vp := p           // unused by UI

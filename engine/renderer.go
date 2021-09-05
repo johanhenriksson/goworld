@@ -5,6 +5,7 @@ import (
 
 	"github.com/go-gl/gl/v4.1-core/gl"
 
+	"github.com/johanhenriksson/goworld/core/scene"
 	"github.com/johanhenriksson/goworld/render"
 )
 
@@ -92,7 +93,7 @@ func (r *Renderer) Reset() {
 }
 
 // Draw the world.
-func (r *Renderer) Draw(scene *Scene) {
+func (r *Renderer) Draw(scene scene.T) {
 	// clear screen buffer
 	render.ScreenBuffer.Bind()
 	gl.ClearColor(0.9, 0.9, 0.9, 1.0)

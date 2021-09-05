@@ -3,6 +3,7 @@ package engine
 import (
 	"github.com/go-gl/gl/v4.1-core/gl"
 
+	"github.com/johanhenriksson/goworld/core/scene"
 	"github.com/johanhenriksson/goworld/math"
 	"github.com/johanhenriksson/goworld/math/random"
 	"github.com/johanhenriksson/goworld/math/vec3"
@@ -89,13 +90,13 @@ func NewSSAOPass(gbuff *render.GeometryBuffer, settings *SSAOSettings) *SSAOPass
 }
 
 // DrawPass draws the SSAO texture.
-func (p *SSAOPass) Draw(scene *Scene) {
+func (p *SSAOPass) Draw(scene scene.T) {
 	render.Blend(false)
 	render.DepthOutput(false)
 
 	// update projection
 	p.shader.Use()
-	proj := scene.Camera.Projection()
+	proj := scene.Camera().Projection()
 	p.shader.Mat4("projection", &proj)
 	p.textures.Use()
 

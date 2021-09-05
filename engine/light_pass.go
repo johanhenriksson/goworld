@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"github.com/johanhenriksson/goworld/core/scene"
 	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
@@ -93,10 +94,10 @@ func (p *LightPass) setLightUniforms(light *render.Light) {
 }
 
 // Draw executes the deferred lighting pass.
-func (p *LightPass) Draw(scene *Scene) {
+func (p *LightPass) Draw(scene scene.T) {
 	// compute camera view projection inverse
-	vInv := scene.Camera.ViewInv()
-	vpInv := scene.Camera.ViewProjInv()
+	vInv := scene.Camera().ViewInv()
+	vpInv := scene.Camera().ViewProjInv()
 
 	// clear output buffer
 	p.Output.Bind()
@@ -129,9 +130,9 @@ func (p *LightPass) Draw(scene *Scene) {
 	render.DepthOutput(false)
 
 	// draw lights one by one
-	for _, light := range scene.Lights {
+	for _, light := range scene.Lights() {
 		// draw shadow pass for this light into shadow map
-		p.Shadows.DrawLight(scene, &light)
+		p.Shadows.DrawLight(&light)
 
 		// first light pass we want the shader to restore the depth buffer
 		// then, disable depth masking so that multiple lights can be drawn

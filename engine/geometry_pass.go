@@ -2,6 +2,7 @@ package engine
 
 import (
 	"github.com/johanhenriksson/goworld/core/object"
+	"github.com/johanhenriksson/goworld/core/scene"
 	"github.com/johanhenriksson/goworld/render"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
@@ -31,7 +32,7 @@ func NewGeometryPass(bufferWidth, bufferHeight int) *GeometryPass {
 }
 
 // DrawPass executes the geometry pass
-func (p *GeometryPass) Draw(scene *Scene) {
+func (p *GeometryPass) Draw(scene scene.T) {
 	p.Buffer.Bind()
 	render.ClearWith(render.Black)
 	render.ClearDepth()
@@ -51,7 +52,7 @@ func (p *GeometryPass) Draw(scene *Scene) {
 	query := object.NewQuery(DeferredDrawableQuery)
 	scene.Collect(&query)
 
-	args := ArgsFromCamera(scene.Camera)
+	args := ArgsFromCamera(scene.Camera())
 	for _, component := range query.Results {
 		drawable := component.(DeferredDrawable)
 		drawable.DrawDeferred(args.Apply(component.Object().Transform().World()))
