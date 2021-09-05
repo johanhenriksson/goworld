@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/math/vec2"
+	"github.com/johanhenriksson/goworld/render"
 )
 
 type Watermark struct {
@@ -21,7 +21,7 @@ func NewWatermark() *Watermark {
 	return w
 }
 
-func (w *Watermark) Draw(args engine.DrawArgs) {
-	w.Set(fmt.Sprintf("goworld | %s | %.0f fps", time.Now().Format("2006-01-02 15:04"), 0))
+func (w *Watermark) Draw(args render.Args) {
+	w.Set(fmt.Sprintf("goworld | %s | %.0f fps", time.Now().Format("2006-01-02 15:04"), 0.0))
 	w.Text.Draw(args)
 }

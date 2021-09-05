@@ -52,7 +52,7 @@ func (m Mesh) Name() string {
 	return "Mesh"
 }
 
-func (m *Mesh) DrawDeferred(args DrawArgs) {
+func (m *Mesh) DrawDeferred(args render.Args) {
 	if m.Pass != render.Geometry {
 		return
 	}
@@ -70,7 +70,7 @@ func (m *Mesh) DrawDeferred(args DrawArgs) {
 	m.vao.Draw()
 }
 
-func (m *Mesh) DrawForward(args DrawArgs) {
+func (m *Mesh) DrawForward(args render.Args) {
 	if m.Pass != render.Forward {
 		return
 	}
@@ -87,7 +87,7 @@ func (m *Mesh) DrawForward(args DrawArgs) {
 	m.vao.Draw()
 }
 
-func (m *Mesh) DrawLines(args DrawArgs) {
+func (m *Mesh) DrawLines(args render.Args) {
 	if m.Pass != render.Line {
 		return
 	}

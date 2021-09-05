@@ -3,7 +3,6 @@ package ui
 import (
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/johanhenriksson/goworld/assets"
-	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/geometry"
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/render"
@@ -50,7 +49,7 @@ func NewRect(style Style, children ...Component) *Rect {
 	return r
 }
 
-func (r *Rect) Draw(args engine.DrawArgs) {
+func (r *Rect) Draw(args render.Args) {
 	// this is sort of ugly. we dont really want to duplicate the transform
 	// multiplication to every element. on the other hand, most elements
 	// will need to apply the transform before they draw themselves

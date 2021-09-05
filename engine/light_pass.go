@@ -73,7 +73,7 @@ func (p *LightPass) Resize(width, height int) {
 	p.Output.Resize(width, height)
 }
 
-func (p *LightPass) setLightUniforms(light *Light) {
+func (p *LightPass) setLightUniforms(light *render.Light) {
 	// compute world to lightspace (light view projection) matrix
 	// note: this is only for directional lights
 	lp := light.Projection
@@ -116,7 +116,7 @@ func (p *LightPass) Draw(scene *Scene) {
 	render.DepthOutput(true)
 
 	// ambient light pass
-	ambient := Light{
+	ambient := render.Light{
 		Color:     p.Ambient.Vec3(),
 		Intensity: 1.3,
 	}

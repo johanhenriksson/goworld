@@ -62,7 +62,7 @@ func (m *Manager) Draw(scene *engine.Scene) {
 	v := mat4.Ident() // unused by UI
 	vp := p           // unused by UI
 
-	args := engine.DrawArgs{
+	args := render.Args{
 		Projection: p,
 		View:       v,
 		VP:         vp,

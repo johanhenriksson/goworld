@@ -10,7 +10,7 @@ import (
 )
 
 type ParticleDrawable interface {
-	DrawParticles(DrawArgs)
+	DrawParticles(render.Args)
 }
 
 // ParticlePass represents the particle system draw pass
@@ -90,7 +90,7 @@ func (ps *ParticleSystem) remove(i int) {
 }
 
 // Draw the particle system
-func (ps *ParticleSystem) Draw(args DrawArgs) {
+func (ps *ParticleSystem) Draw(args render.Args) {
 	if args.Pass != render.Particles {
 		return
 	}

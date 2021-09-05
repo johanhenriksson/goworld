@@ -8,7 +8,7 @@ import (
 )
 
 type DeferredDrawable interface {
-	DrawDeferred(args DrawArgs)
+	DrawDeferred(render.Args)
 }
 
 // GeometryPass draws the scene geometry to a G-buffer

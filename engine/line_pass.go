@@ -6,7 +6,7 @@ import (
 )
 
 type LineDrawable interface {
-	DrawLines(DrawArgs)
+	DrawLines(render.Args)
 }
 
 // LinePass draws line geometry

@@ -71,6 +71,6 @@ func (p *T) generate() {
 	p.Buffer(data)
 }
 
-func (p *T) DrawForward(args engine.DrawArgs) {
+func (p *T) DrawForward(args render.Args) {
 	p.Mesh.DrawForward(args)
 }

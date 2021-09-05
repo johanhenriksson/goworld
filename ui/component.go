@@ -1,8 +1,8 @@
 package ui
 
 import (
-	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/math/vec2"
+	"github.com/johanhenriksson/goworld/render"
 )
 
 type Component interface {
@@ -16,7 +16,7 @@ type Component interface {
 	SetPosition(vec2.T)
 	Children() []Component
 
-	Draw(engine.DrawArgs)
+	Draw(render.Args)
 
 	HandleMouse(MouseEvent) bool
 	HandleKey(KeyEvent)

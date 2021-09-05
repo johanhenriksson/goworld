@@ -70,11 +70,11 @@ func main() {
 
 	// scene & lighting setup
 	scene.Camera = cam
-	scene.Lights = []engine.Light{
+	scene.Lights = []render.Light{
 		{ // directional light
 			Intensity:  1.6,
 			Color:      vec3.New(0.9*0.973, 0.9*0.945, 0.9*0.776),
-			Type:       engine.DirectionalLight,
+			Type:       render.DirectionalLight,
 			Projection: mat4.Orthographic(-71, 120, -20, 140, -10, 140),
 			Position:   vec3.New(-2, 2, -1),
 			Shadows:    false,

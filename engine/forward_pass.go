@@ -7,7 +7,7 @@ import (
 )
 
 type ForwardDrawable interface {
-	DrawForward(DrawArgs)
+	DrawForward(render.Args)
 }
 
 // ForwardPass holds information required to perform a forward rendering pass.

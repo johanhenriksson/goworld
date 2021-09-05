@@ -1,9 +1,8 @@
-package engine
+package render
 
 import (
 	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/math/vec3"
-	"github.com/johanhenriksson/goworld/render"
 )
 
 // Attenuation properties for point lights
@@ -26,7 +25,7 @@ type Light struct {
 	Projection mat4.T // Shadow projection matrix
 	ProjWidth  float32
 	ProjHeight float32
-	ShadowMap  *render.Texture
+	ShadowMap  *Texture
 }
 
 // LightType indicates which kind of light. Point, Directional etc

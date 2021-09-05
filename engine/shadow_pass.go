@@ -46,11 +46,11 @@ func (p *ShadowPass) Resize(width, height int) {}
 func (p *ShadowPass) Draw(scene *Scene) {}
 
 // DrawLight draws a shadow pass for the given light.
-func (p *ShadowPass) DrawLight(scene *Scene, light *Light) {
+func (p *ShadowPass) DrawLight(scene *Scene, light *render.Light) {
 	if !light.Shadows {
 		return
 	}
-	if light.Type != DirectionalLight {
+	if light.Type != render.DirectionalLight {
 		// only directional lights support shadows atm
 		return
 	}
