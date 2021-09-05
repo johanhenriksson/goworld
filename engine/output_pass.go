@@ -37,11 +37,7 @@ func NewOutputPass(input *render.ColorBuffer, gbuffer *render.GeometryBuffer) *O
 
 // DrawPass draws the input texture to the scene camera buffer.
 func (p *OutputPass) Draw(scene scene.T) {
-	// camera settings
-	// scene.Camera.Use()
 	render.ScreenBuffer.Bind()
-
-	render.ClearWith(render.Black) // scene.Camera.Clear)
 
 	render.Blend(true)
 	render.BlendMultiply()

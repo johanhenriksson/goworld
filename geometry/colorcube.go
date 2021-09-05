@@ -23,7 +23,6 @@ func NewColorCube(color render.Color, size float32) *ColorCube {
 		Size:  size,
 		Color: color,
 	}
-	cube.SetPass(render.Forward)
 	cube.generate()
 	return cube
 }

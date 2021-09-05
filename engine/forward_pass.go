@@ -37,9 +37,6 @@ func (p *ForwardPass) Resize(width, height int) {}
 
 // DrawPass executes the forward pass
 func (p *ForwardPass) Draw(scene scene.T) {
-	//scene.Camera.Use()
-	render.ScreenBuffer.Bind()
-
 	// setup rendering
 	render.Blend(true)
 	render.BlendMultiply()

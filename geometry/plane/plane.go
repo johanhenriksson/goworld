@@ -38,7 +38,6 @@ func New(args Args) *T {
 		T:    mesh.New(mat),
 		Args: args,
 	}
-	plane.SetPass(render.Forward)
 	plane.generate()
 	return plane
 }
@@ -69,4 +68,8 @@ func (p *T) generate() {
 		x2, z2, o2, d2, z2, x2,
 	}
 	p.Buffer(data)
+}
+
+func (p *T) DrawForward(args render.Args) {
+	p.T.DrawForward(args)
 }

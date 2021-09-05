@@ -45,7 +45,6 @@ func New(args Args) *T {
 		T:    mesh.New(mat),
 		Args: args,
 	}
-	cone.SetPass(render.Forward)
 	cone.generate()
 	return cone
 }

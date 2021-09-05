@@ -11,6 +11,7 @@ import (
 // MaterialDefinition file json representation
 type MaterialDefinition struct {
 	Shader   string
+	Pass     string
 	Buffers  map[string][]*VertexPointerDefinition
 	Textures map[string]*TextureDefinition
 }
@@ -52,7 +53,7 @@ func LoadMaterialDefinition(file string) (*MaterialDefinition, error) {
 func LoadMaterial(name string, matf *MaterialDefinition) (*render.Material, error) {
 	shader := GetShader(matf.Shader)
 
-	mat := render.CreateMaterial(name, shader)
+	mat := render.CreateMaterial(name, render.Pass(matf.Pass), shader)
 
 	// load textures
 	for name, txtf := range matf.Textures {

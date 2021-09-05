@@ -14,8 +14,7 @@ type MeshBufferMap map[string]*render.VertexBuffer
 type T interface {
 	object.Component
 
-	Pass() render.Pass
-	SetPass(render.Pass)
+	DrawForward(render.Args)
 	DrawDeferred(render.Args)
 	DrawLines(render.Args)
 
@@ -27,7 +26,6 @@ type T interface {
 type mesh struct {
 	object.Component
 
-	pass     render.Pass
 	material *render.Material
 	vao      *render.VertexArray
 }
@@ -47,7 +45,6 @@ func NewLines() T {
 func NewPrimitiveMesh(primitive render.GLPrimitive, pass render.Pass, material *render.Material) *mesh {
 	m := &mesh{
 		Component: object.NewComponent(),
-		pass:      pass,
 		material:  material,
 		vao:       render.CreateVertexArray(primitive),
 	}
@@ -64,7 +61,7 @@ func (m mesh) Name() string {
 }
 
 func (m *mesh) DrawDeferred(args render.Args) {
-	if m.pass != render.Geometry {
+	if m.material.Pass() != render.Geometry {
 		return
 	}
 
@@ -82,7 +79,7 @@ func (m *mesh) DrawDeferred(args render.Args) {
 }
 
 func (m *mesh) DrawForward(args render.Args) {
-	if m.pass != render.Forward {
+	if m.material.Pass() != render.Forward {
 		return
 	}
 
@@ -99,7 +96,7 @@ func (m *mesh) DrawForward(args render.Args) {
 }
 
 func (m *mesh) DrawLines(args render.Args) {
-	if m.pass != render.Line {
+	if m.material.Pass() != render.Line {
 		return
 	}
 
@@ -120,12 +117,4 @@ func (m *mesh) Buffer(data interface{}) {
 	}
 
 	m.vao.BufferTo(pointers, data)
-}
-
-func (m *mesh) Pass() render.Pass {
-	return m.pass
-}
-
-func (m *mesh) SetPass(pass render.Pass) {
-	m.pass = pass
 }
