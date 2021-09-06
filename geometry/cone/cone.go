@@ -67,7 +67,7 @@ func (c *T) generate() {
 		v1 := vec3.New(math.Cos(a1), 0, -math.Sin(a1)).Scaled(c.Radius)
 		v2 := vec3.New(math.Cos(a2), 0, -math.Sin(a2)).Scaled(c.Radius)
 		v1t, v2t := top.Sub(v1), top.Sub(v2)
-		n := vec3.Cross(&v1t, &v2t).Normalized()
+		n := vec3.Cross(v1t, v2t).Normalized()
 
 		o := 3 * i
 		data[o+0] = vertex.C{P: v2, N: n, C: c.Color.Vec4()}

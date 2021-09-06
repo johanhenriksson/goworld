@@ -16,6 +16,6 @@ func Dot(a, b T) float32 {
 }
 
 // Distance returns the euclidian distance between two points.
-func Distance(a, b *T) float32 {
-	return a.Sub(*b).Length()
+func Distance(a, b T) float32 {
+	return a.Sub(b).Length()
 }

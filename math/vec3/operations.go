@@ -26,7 +26,7 @@ func Dot(a, b T) float32 {
 }
 
 // Cross returns the cross product of two vectors.
-func Cross(a, b *T) T {
+func Cross(a, b T) T {
 	return T{
 		a.Y*b.Z - a.Z*b.Y,
 		a.Z*b.X - a.X*b.Z,
@@ -35,8 +35,8 @@ func Cross(a, b *T) T {
 }
 
 // Distance returns the euclidian distance between two points.
-func Distance(a, b *T) float32 {
-	return a.Sub(*b).Length()
+func Distance(a, b T) float32 {
+	return a.Sub(b).Length()
 }
 
 // Random vector, not normalized.

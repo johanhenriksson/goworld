@@ -39,3 +39,21 @@ Only tested on OSX 10.10+. It should *theoretically* work on Windows and Linux.
    * Spot Light
    * Spot Light shadows
  * Bloom Post-Process Effect
+
+## Building
+
+### Open Dynamics Engine
+- Download ODE 0.16.2
+- Extract tarball
+- Configure
+  ```
+  $ ./configure --enable-double-precision --enable-shared
+  ```
+- Compile
+  ```
+  make
+  ```
+- Install Shared Library
+  ```
+  make install
+  ```

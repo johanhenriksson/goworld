@@ -46,7 +46,7 @@ func (g *Group) ClosestIntersect(ray *Ray) (bool, Hit) {
 		return false, best
 	}
 	for _, hit := range hits {
-		dist := vec3.Distance(&hit.Point, &ray.Origin)
+		dist := vec3.Distance(hit.Point, ray.Origin)
 		if dist < bestDist {
 			bestDist = dist
 			best = hit

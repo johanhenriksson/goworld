@@ -17,7 +17,7 @@ type T f32.Mat4
 
 // Add performs an element-wise addition of two matrices, this is
 // equivalent to iterating over every element of m and adding the corresponding value of m2.
-func (m T) Add(m2 T) T {
+func (m *T) Add(m2 *T) T {
 	return T{
 		m[0] + m2[0], m[1] + m2[1], m[2] + m2[2], m[3] + m2[3],
 		m[4] + m2[4], m[5] + m2[5], m[6] + m2[6], m[7] + m2[7],
@@ -28,7 +28,7 @@ func (m T) Add(m2 T) T {
 
 // Sub performs an element-wise subtraction of two matrices, this is
 // equivalent to iterating over every element of m and subtracting the corresponding value of m2.
-func (m T) Sub(m2 T) T {
+func (m *T) Sub(m2 *T) T {
 	return T{
 		m[0] - m2[0], m[1] - m2[1], m[2] - m2[2], m[3] - m2[3],
 		m[4] - m2[4], m[5] - m2[5], m[6] - m2[6], m[7] - m2[7],
