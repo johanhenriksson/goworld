@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/johanhenriksson/goworld/assets"
+	"github.com/johanhenriksson/goworld/core/scene"
 	"github.com/johanhenriksson/goworld/render"
 )
 
@@ -48,7 +49,7 @@ func NewColorPass(input *render.ColorBuffer, filter string, ssao *render.Texture
 }
 
 // DrawPass applies color correction to the scene
-func (p *ColorPass) Draw(scene *Scene) {
+func (p *ColorPass) Draw(scene scene.T) {
 	p.Output.Bind()
 	defer p.Output.Unbind()
 

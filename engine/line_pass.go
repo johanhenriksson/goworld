@@ -1,9 +1,13 @@
 package engine
 
-import "github.com/johanhenriksson/goworld/engine/object"
+import (
+	"github.com/johanhenriksson/goworld/core/object"
+	"github.com/johanhenriksson/goworld/core/scene"
+	"github.com/johanhenriksson/goworld/render"
+)
 
 type LineDrawable interface {
-	DrawLines(DrawArgs)
+	DrawLines(render.Args)
 }
 
 // LinePass draws line geometry
@@ -18,8 +22,9 @@ func NewLinePass() *LinePass {
 func (p *LinePass) Resize(width, height int) {}
 
 // DrawPass executes the line pass
-func (p *LinePass) Draw(scene *Scene) {
-	scene.Camera.Use()
+func (p *LinePass) Draw(scene scene.T) {
+	// scene.Camera.Use()
+	render.ScreenBuffer.Bind()
 
 	query := object.NewQuery(func(c object.Component) bool {
 		_, ok := c.(LineDrawable)
@@ -27,9 +32,9 @@ func (p *LinePass) Draw(scene *Scene) {
 	})
 	scene.Collect(&query)
 
-	args := scene.Camera.DrawArgs()
+	args := ArgsFromCamera(scene.Camera())
 	for _, component := range query.Results {
 		drawable := component.(LineDrawable)
-		drawable.DrawLines(args.Apply(component.Parent().Transform()))
+		drawable.DrawLines(args.Apply(component.Object().Transform().World()))
 	}
 }

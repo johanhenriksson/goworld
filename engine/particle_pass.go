@@ -3,14 +3,15 @@ package engine
 import (
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/johanhenriksson/goworld/assets"
-	"github.com/johanhenriksson/goworld/engine/transform"
+	"github.com/johanhenriksson/goworld/core/scene"
+	"github.com/johanhenriksson/goworld/core/transform"
 	"github.com/johanhenriksson/goworld/math/random"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
 )
 
 type ParticleDrawable interface {
-	DrawParticles(DrawArgs)
+	DrawParticles(render.Args)
 }
 
 // ParticlePass represents the particle system draw pass
@@ -26,7 +27,7 @@ func NewParticlePass() *ParticlePass {
 func (p *ParticlePass) Resize(width, height int) {}
 
 // DrawPass executes the particle pass
-func (p *ParticlePass) Draw(scene *Scene) {
+func (p *ParticlePass) Draw(scene scene.T) {
 
 }
 
@@ -39,7 +40,7 @@ type Particle struct {
 
 // ParticleSystem holds the properties of a particle system effect
 type ParticleSystem struct {
-	*transform.T
+	transform.T
 
 	Particles []Particle
 	Count     int
@@ -90,12 +91,12 @@ func (ps *ParticleSystem) remove(i int) {
 }
 
 // Draw the particle system
-func (ps *ParticleSystem) Draw(args DrawArgs) {
+func (ps *ParticleSystem) Draw(args render.Args) {
 	if args.Pass != render.Particles {
 		return
 	}
 
-	args = args.Apply(ps.T.World)
+	args = args.Apply(ps.World())
 
 	render.Blend(true)
 	render.BlendFunc(gl.ONE, gl.ONE)

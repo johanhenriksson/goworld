@@ -2,6 +2,7 @@ package engine
 
 import (
 	"github.com/go-gl/gl/v4.1-core/gl"
+	"github.com/johanhenriksson/goworld/core/scene"
 	"github.com/johanhenriksson/goworld/render"
 )
 
@@ -35,11 +36,8 @@ func NewOutputPass(input *render.ColorBuffer, gbuffer *render.GeometryBuffer) *O
 }
 
 // DrawPass draws the input texture to the scene camera buffer.
-func (p *OutputPass) Draw(scene *Scene) {
-	// camera settings
-	scene.Camera.Use()
-
-	render.ClearWith(scene.Camera.Clear)
+func (p *OutputPass) Draw(scene scene.T) {
+	render.ScreenBuffer.Bind()
 
 	render.Blend(true)
 	render.BlendMultiply()

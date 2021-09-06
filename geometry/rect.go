@@ -1,7 +1,6 @@
 package geometry
 
 import (
-	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/math"
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/math/vec3"
@@ -194,7 +193,7 @@ func (q *Rect) compute() {
 	q.vao.BufferTo(ptr, vtx)
 }
 
-func (q *Rect) Draw(args engine.DrawArgs) {
+func (q *Rect) Draw(args render.Args) {
 	q.Material.Use()
 	q.Material.Mat4("model", &args.Transform)
 	q.Material.Mat4("viewport", &args.Projection)

@@ -72,10 +72,7 @@ func (m *T) TransformDir(v vec3.T) vec3.T {
 	return vt.XYZ()
 }
 
-// Mul performs a "matrix product" between this matrix
-// and another of the given dimension. For any two matrices of dimensionality
-// MxN and NxO, the result will be MxO. For instance, T multiplied using
-// Mul4x2 will result in a Tx2.
+// Mul performs a "matrix product" between this matrix and another of the same dimension
 func (m *T) Mul(m2 *T) T {
 	return T{
 		m[0]*m2[0] + m[4]*m2[1] + m[8]*m2[2] + m[12]*m2[3],

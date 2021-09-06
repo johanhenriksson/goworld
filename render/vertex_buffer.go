@@ -88,13 +88,21 @@ func (vbo *VertexBuffer) BufferFrom(elements, size int, ptr unsafe.Pointer) {
 
 // Buffer data to GPU memory
 func (vbo *VertexBuffer) Buffer(data interface{}) int {
+	// make sure we've been passed a slice
 	t := reflect.TypeOf(data)
 	if t.Kind() != reflect.Slice {
 		panic(fmt.Errorf("buffered data must be a slice"))
 	}
+
 	v := reflect.ValueOf(data)
+
+	// the length of the slice is the number of buffer elements
 	elements := v.Len()
+
+	// get byte size of each element, e.g. sizeof(element)
 	size := int(t.Elem().Size())
+
+	// get a pointer to the beginning of the array
 	ptr := unsafe.Pointer(v.Pointer())
 
 	vbo.BufferFrom(elements, size, ptr)

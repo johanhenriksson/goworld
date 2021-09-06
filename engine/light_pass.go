@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"github.com/johanhenriksson/goworld/core/scene"
 	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
@@ -73,7 +74,7 @@ func (p *LightPass) Resize(width, height int) {
 	p.Output.Resize(width, height)
 }
 
-func (p *LightPass) setLightUniforms(light *Light) {
+func (p *LightPass) setLightUniforms(light *render.Light) {
 	// compute world to lightspace (light view projection) matrix
 	// note: this is only for directional lights
 	lp := light.Projection
@@ -93,15 +94,14 @@ func (p *LightPass) setLightUniforms(light *Light) {
 }
 
 // Draw executes the deferred lighting pass.
-func (p *LightPass) Draw(scene *Scene) {
+func (p *LightPass) Draw(scene scene.T) {
 	// compute camera view projection inverse
-	vp := scene.Camera.Projection.Mul(&scene.Camera.View)
-	vpInv := vp.Invert()
-	vInv := scene.Camera.View.Invert()
+	vInv := scene.Camera().ViewInv()
+	vpInv := scene.Camera().ViewProjInv()
 
 	// clear output buffer
 	p.Output.Bind()
-	render.ClearWith(scene.Camera.Clear.WithAlpha(0))
+	render.ClearWith(scene.Camera().ClearColor())
 
 	// enable back face culling
 	render.CullFace(render.CullBack)
@@ -117,7 +117,7 @@ func (p *LightPass) Draw(scene *Scene) {
 	render.DepthOutput(true)
 
 	// ambient light pass
-	ambient := Light{
+	ambient := render.Light{
 		Color:     p.Ambient.Vec3(),
 		Intensity: 1.3,
 	}
@@ -130,9 +130,9 @@ func (p *LightPass) Draw(scene *Scene) {
 	render.DepthOutput(false)
 
 	// draw lights one by one
-	for _, light := range scene.Lights {
+	for _, light := range scene.Lights() {
 		// draw shadow pass for this light into shadow map
-		p.Shadows.DrawLight(scene, &light)
+		p.Shadows.DrawLight(&light)
 
 		// first light pass we want the shader to restore the depth buffer
 		// then, disable depth masking so that multiple lights can be drawn

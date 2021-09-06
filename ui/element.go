@@ -1,9 +1,11 @@
 package ui
 
 import (
-	"github.com/johanhenriksson/goworld/engine"
+	"fmt"
+
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/math/vec3"
+	"github.com/johanhenriksson/goworld/render"
 )
 
 type Element struct {
@@ -94,7 +96,7 @@ func (e *Element) Attach(child Component) {
 }
 
 // Draw this element and its children
-func (e *Element) Draw(args engine.DrawArgs) {
+func (e *Element) Draw(args render.Args) {
 	/* Multiply transform to args */
 	args.Transform = e.Transform.Matrix.Mul(&args.Transform)
 	for _, el := range e.children {
@@ -113,6 +115,10 @@ func (e *Element) HandleMouse(ev MouseEvent) bool {
 	// transform the point into our local coordinate system
 	invTransform := e.Transform.Matrix.Invert()
 	projected := invTransform.TransformPoint(vec3.Extend(ev.Point, 0))
+
+	fmt.Println(ev.Point)
+	fmt.Println(e.Name, e.Size, "at", e.Transform.Position, "->", projected.XY())
+
 	ev.Point = projected.XY()
 
 	// check if we're inside element bounds

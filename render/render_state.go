@@ -123,10 +123,10 @@ func DepthTest(enabled bool) {
 
 func ClearColor(color Color) {
 	color = color.WithAlpha(1)
-	if color != state.ClearColor {
-		gl.ClearColor(color.R, color.G, color.B, 1)
-		state.ClearColor = color
-	}
+	// if color != state.ClearColor {
+	gl.ClearColor(color.R, color.G, color.B, 1)
+	state.ClearColor = color
+	// }
 }
 
 func Viewport(x, y, w, h int) {

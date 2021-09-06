@@ -2,19 +2,18 @@ package game
 
 import (
 	"github.com/johanhenriksson/goworld/assets"
-	"github.com/johanhenriksson/goworld/engine"
+	"github.com/johanhenriksson/goworld/core/mesh"
 )
 
 type ChunkMesh struct {
-	*engine.Mesh
+	mesh.T
 	*Chunk
 	meshComputed chan []VoxelVertex
 }
 
 func NewChunkMesh(chunk *Chunk) *ChunkMesh {
-	mesh := engine.NewMesh(assets.GetMaterialShared("color_voxels"))
 	chk := &ChunkMesh{
-		Mesh:         mesh,
+		T:            mesh.New(assets.GetMaterialShared("color_voxels")),
 		Chunk:        chunk,
 		meshComputed: make(chan []VoxelVertex),
 	}
@@ -23,7 +22,7 @@ func NewChunkMesh(chunk *Chunk) *ChunkMesh {
 }
 
 func (cm *ChunkMesh) Update(dt float32) {
-	cm.Mesh.Update(dt)
+	cm.T.Update(dt)
 	select {
 	case newMesh := <-cm.meshComputed:
 		cm.Buffer(newMesh)

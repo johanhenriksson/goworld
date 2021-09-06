@@ -7,10 +7,10 @@ import (
 	"github.com/johanhenriksson/goworld/ui"
 )
 
-func DebugBufferWindows(app *engine.Application) ui.Component {
-	light := app.Pipeline.Light
-	geom := app.Pipeline.Geometry
-	ssao := app.Pipeline.SSAO
+func DebugBufferWindows(renderer *engine.Renderer) ui.Component {
+	light := renderer.Light
+	geom := renderer.Geometry
+	ssao := renderer.SSAO
 	bufferWindows := ui.NewRect(ui.Style{"spacing": ui.Float(10)},
 		newBufferWindow("Diffuse", geom.Buffer.Diffuse, false),
 		newBufferWindow("Normal", geom.Buffer.Normal, false),

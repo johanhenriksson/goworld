@@ -5,6 +5,7 @@ import (
 
 	"github.com/go-gl/gl/v4.1-core/gl"
 
+	"github.com/johanhenriksson/goworld/core/scene"
 	"github.com/johanhenriksson/goworld/render"
 )
 
@@ -71,7 +72,7 @@ func (r *Renderer) Resize(width, height int) {
 // Append a new render pass
 func (r *Renderer) Append(name string, pass DrawPass) {
 	if len(name) == 0 {
-		panic(fmt.Errorf("Render passes must have names"))
+		panic(fmt.Errorf("render passes must have names"))
 	}
 
 	r.Passes = append(r.Passes, pass)
@@ -92,7 +93,7 @@ func (r *Renderer) Reset() {
 }
 
 // Draw the world.
-func (r *Renderer) Draw(scene *Scene) {
+func (r *Renderer) Draw(scene scene.T) {
 	// clear screen buffer
 	render.ScreenBuffer.Bind()
 	gl.ClearColor(0.9, 0.9, 0.9, 1.0)
@@ -114,6 +115,7 @@ func (r *Renderer) Draw(scene *Scene) {
 	r.Output.Draw(scene)
 	r.Lines.Draw(scene)
 	// r.Particles.Draw(scene)
+
 	for _, pass := range r.Passes {
 		pass.Draw(scene)
 	}

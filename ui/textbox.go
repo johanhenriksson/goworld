@@ -5,7 +5,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/johanhenriksson/goworld/assets"
-	"github.com/johanhenriksson/goworld/engine/keys"
+	"github.com/johanhenriksson/goworld/core/input/keys"
 	"github.com/johanhenriksson/goworld/render"
 )
 

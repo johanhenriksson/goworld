@@ -4,9 +4,9 @@ import (
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/glfw/v3.1/glfw"
 
-	"github.com/johanhenriksson/goworld/engine"
-	"github.com/johanhenriksson/goworld/engine/keys"
-	"github.com/johanhenriksson/goworld/engine/mouse"
+	"github.com/johanhenriksson/goworld/core/input/keys"
+	"github.com/johanhenriksson/goworld/core/input/mouse"
+	"github.com/johanhenriksson/goworld/core/scene"
 	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/render"
@@ -23,10 +23,10 @@ type Manager struct {
 }
 
 // NewManager creates a new UI manager.
-func NewManager(app *engine.Application) *Manager {
+func NewManager(width, height float32) *Manager {
 	// grab UI dimensions from application window
-	width := float32(app.Window.Width)   // * app.Window.Scale
-	height := float32(app.Window.Height) // * app.Window.Scale
+	// width := float32(app.Window.Width)   // * app.Window.Scale
+	// height := float32(app.Window.Height) // * app.Window.Scale
 
 	m := &Manager{
 		Width:    width,
@@ -37,12 +37,12 @@ func NewManager(app *engine.Application) *Manager {
 
 	// hook GLFW input event callbacks - this allows the UI to capture events
 	// not very elegant, would be cool to do this in a cleaner way
-	app.Window.Wnd.SetKeyCallback(m.glfwKeyCallback)
-	app.Window.Wnd.SetMouseButtonCallback(m.glfwMouseButtonCallback)
-	app.Window.Wnd.SetCharCallback(m.glfwInputCallback)
+	// app.Window.Wnd.SetKeyCallback(m.glfwKeyCallback)
+	// app.Window.Wnd.SetMouseButtonCallback(m.glfwMouseButtonCallback)
+	// app.Window.Wnd.SetCharCallback(m.glfwInputCallback)
 
 	// watermark / fps text
-	m.Attach(NewWatermark(app.Window))
+	// m.Attach(NewWatermark(app.Window))
 
 	return m
 }
@@ -57,12 +57,12 @@ func (m *Manager) Attach(child Component) {
 }
 
 // DrawPass draws the UI
-func (m *Manager) Draw(scene *engine.Scene) {
+func (m *Manager) Draw(scene scene.T) {
 	p := m.Viewport
 	v := mat4.Ident() // unused by UI
 	vp := p           // unused by UI
 
-	args := engine.DrawArgs{
+	args := render.Args{
 		Projection: p,
 		View:       v,
 		VP:         vp,
@@ -99,13 +99,10 @@ func (m *Manager) glfwMouseButtonCallback(w *glfw.Window, button glfw.MouseButto
 	// we're only interested in mouse down events at this time
 	if action != glfw.Release {
 		// supress if the event was handled by an element
-		if m.handleMouse(mouse.Position, mouse.Button(button)) {
-			return
-		}
+		// if m.handleMouse(mouse.Position, mouse.Button(button)) {
+		// 	return
+		// }
 	}
-
-	// pass event to the engine
-	mouse.ButtonCallback(w, button, action, mod)
 }
 
 func (m *Manager) handleMouse(position vec2.T, button mouse.Button) bool {
@@ -136,9 +133,6 @@ func (m *Manager) glfwKeyCallback(w *glfw.Window, key glfw.Key, scancode int, ac
 			Press: action == glfw.Press,
 		}
 		m.Focused.HandleKey(ev)
-	} else {
-		// pass event to the engine
-		keys.KeyCallback(w, key, scancode, action, mods)
 	}
 }
 

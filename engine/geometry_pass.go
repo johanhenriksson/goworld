@@ -1,14 +1,13 @@
 package engine
 
 import (
-	"github.com/johanhenriksson/goworld/engine/object"
+	"github.com/johanhenriksson/goworld/core/object"
+	"github.com/johanhenriksson/goworld/core/scene"
 	"github.com/johanhenriksson/goworld/render"
-
-	"github.com/go-gl/gl/v4.1-core/gl"
 )
 
 type DeferredDrawable interface {
-	DrawDeferred(args DrawArgs)
+	DrawDeferred(render.Args)
 }
 
 // GeometryPass draws the scene geometry to a G-buffer
@@ -31,34 +30,31 @@ func NewGeometryPass(bufferWidth, bufferHeight int) *GeometryPass {
 }
 
 // DrawPass executes the geometry pass
-func (p *GeometryPass) Draw(scene *Scene) {
+func (p *GeometryPass) Draw(scene scene.T) {
 	p.Buffer.Bind()
 	render.ClearWith(render.Black)
 	render.ClearDepth()
-
-	// kind-of hack to clear the diffuse buffer separately
-	// allows us to clear with the camera background color
-	// other buffers need to be zeroed. or???
-	gl.DrawBuffer(gl.COLOR_ATTACHMENT0) // use only diffuse buffer
-
-	p.Buffer.DrawBuffers()
 
 	// setup rendering
 	render.Blend(false)
 	render.CullFace(render.CullBack)
 	render.DepthOutput(true)
 
-	query := object.NewQuery(func(c object.Component) bool {
-		_, ok := c.(DeferredDrawable)
-		return ok
-	})
+	query := object.NewQuery(DeferredDrawableQuery)
 	scene.Collect(&query)
 
-	args := scene.Camera.DrawArgs()
+	args := ArgsFromCamera(scene.Camera())
 	for _, component := range query.Results {
 		drawable := component.(DeferredDrawable)
-		drawable.DrawDeferred(args.Apply(component.Parent().Transform()))
+		drawable.DrawDeferred(args.Apply(component.Object().Transform().World()))
 	}
 
 	p.Buffer.Unbind()
+}
+
+// DeferedDrawableQuery is an object query predicate that matches any component
+// that implements the DeferredDrawable interface.
+func DeferredDrawableQuery(c object.Component) bool {
+	_, ok := c.(DeferredDrawable)
+	return ok
 }

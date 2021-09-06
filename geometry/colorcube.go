@@ -2,7 +2,7 @@ package geometry
 
 import (
 	"github.com/johanhenriksson/goworld/assets"
-	"github.com/johanhenriksson/goworld/engine"
+	"github.com/johanhenriksson/goworld/core/mesh"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/vertex"
@@ -10,7 +10,7 @@ import (
 
 // ColorCube is a vertex colored cube mesh
 type ColorCube struct {
-	*engine.Mesh
+	mesh.T
 	Size  float32
 	Color render.Color
 }
@@ -19,11 +19,10 @@ type ColorCube struct {
 func NewColorCube(color render.Color, size float32) *ColorCube {
 	mat := assets.GetMaterialShared("color.f")
 	cube := &ColorCube{
-		Mesh:  engine.NewMesh(mat),
+		T:     mesh.New(mat),
 		Size:  size,
 		Color: color,
 	}
-	cube.Pass = render.Forward
 	cube.generate()
 	return cube
 }

@@ -2,7 +2,7 @@ package geometry
 
 import (
 	"github.com/johanhenriksson/goworld/assets"
-	"github.com/johanhenriksson/goworld/engine"
+	"github.com/johanhenriksson/goworld/core/mesh"
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render/vertex"
@@ -10,7 +10,7 @@ import (
 
 // Cube mesh, textured
 type Cube struct {
-	*engine.Mesh
+	mesh.T
 	Size float32
 }
 
@@ -18,7 +18,7 @@ type Cube struct {
 func NewCube(size float32) *Cube {
 	mat := assets.GetMaterialShared("default")
 	cube := &Cube{
-		Mesh: engine.NewMesh(mat),
+		T:    mesh.New(mat),
 		Size: size,
 	}
 	cube.generate()
