@@ -15,6 +15,7 @@ type T interface {
 	widget.T
 
 	Children() []widget.T
+	SetChildren([]widget.T)
 }
 
 type rect struct {
@@ -85,11 +86,27 @@ func (f *rect) Resize(s vec2.T) {
 	f.Reflow()
 }
 
+func (f *rect) Children() []widget.T     { return f.children }
+func (f *rect) SetChildren(c []widget.T) { f.children = c }
+
+func (f *rect) Width() dimension.T  { return f.props.Width }
+func (f *rect) Height() dimension.T { return f.props.Height }
+
+//
+// LifecyclE
+//
+
 func (f *rect) Props() widget.Props {
 	return f.props
 }
 
-func (f *rect) Children() []widget.T { return f.children }
+func (f *rect) Update(p widget.Props) {
+	f.props = p.(*Props)
+}
 
-func (f *rect) Width() dimension.T  { return f.props.Width }
-func (f *rect) Height() dimension.T { return f.props.Height }
+func (f *rect) Destroy() {
+	f.renderer.Destroy()
+	for _, child := range f.children {
+		child.Destroy()
+	}
+}

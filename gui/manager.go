@@ -1,4 +1,4 @@
-package manager
+package gui
 
 import (
 	"github.com/go-gl/gl/v4.1-core/gl"
@@ -25,35 +25,38 @@ type manager struct {
 	scene rect.T
 }
 
-func MyCustomUI(pad float32) widget.T {
+func MyCustomUI(gut float32) widget.T {
 	return rect.New(
 		"frame",
 		&rect.Props{
 			Color:  color.Hex("#000000"),
 			Border: 5,
-			Width:  dimension.Percent(50),
+			Width:  dimension.Fixed(250),
 			Height: dimension.Fixed(150),
 			Layout: layout.Column{
-				Padding: pad,
+				Padding: 5,
 				Gutter:  5,
 			},
 		},
 		rect.New(
 			"r1",
 			&rect.Props{
+				Height: dimension.Percent(150),
 				Layout: layout.Row{
-					Gutter: 5,
+					Gutter:   5,
+					Relative: true,
 				},
 			},
-			rect.New("1st", &rect.Props{Color: color.Blue}),
-			rect.New("2nd", &rect.Props{Color: color.Green}),
-			rect.New("3nd", &rect.Props{Color: color.Red}),
+			rect.New("1st", &rect.Props{Color: color.Blue, Width: dimension.Fixed(1)}),
+			rect.New("2nd", &rect.Props{Color: color.Green, Width: dimension.Fixed(1)}),
+			rect.New("3nd", &rect.Props{Color: color.Red, Width: dimension.Fixed(2)}),
 		),
 		rect.New(
 			"r2",
 			&rect.Props{
+				Height: dimension.Percent(50),
 				Layout: layout.Row{
-					Gutter: 5,
+					Gutter: gut,
 				},
 			},
 			rect.New("1st", &rect.Props{Color: color.Red}),
@@ -68,14 +71,12 @@ func New() Manager {
 	f.Move(vec2.New(400, 300))
 
 	b := MyCustomUI(6)
-	compare(f, b)
+	reconcile(f, b, 0)
 
 	scene := rect.New("GUI", &rect.Props{
-		Layout: layout.Absolute{
-			Width:  1600,
-			Height: 900,
-		},
+		Layout: layout.Absolute{},
 	}, f)
+	scene.Resize(vec2.New(1600, 900))
 
 	return &manager{
 		T:     object.New("GUI Manager"),

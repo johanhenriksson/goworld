@@ -26,7 +26,7 @@ import (
 	"github.com/johanhenriksson/goworld/editor"
 	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/game"
-	"github.com/johanhenriksson/goworld/gui/manager"
+	"github.com/johanhenriksson/goworld/gui"
 	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/lsfn/ode"
 
@@ -109,7 +109,7 @@ func main() {
 
 	fmt.Println("Ok")
 
-	guim := manager.New()
+	guim := gui.New()
 
 	for !wnd.ShouldClose() {
 		scene.Update(0.030)

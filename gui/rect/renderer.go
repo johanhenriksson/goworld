@@ -12,6 +12,7 @@ import (
 
 type Renderer interface {
 	Draw(render.Args, T, *Props)
+	Destroy()
 }
 
 type renderer struct {
@@ -50,5 +51,5 @@ func (r *renderer) Draw(args render.Args, frame T, props *Props) {
 }
 
 func (r *renderer) Destroy() {
-
+	//  todo: clean up mesh, texture
 }

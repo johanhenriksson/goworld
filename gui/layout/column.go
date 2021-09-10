@@ -1,12 +1,14 @@
 package layout
 
 import (
+	"github.com/johanhenriksson/goworld/math"
 	"github.com/johanhenriksson/goworld/math/vec2"
 )
 
 type Column struct {
-	Padding float32
-	Gutter  float32
+	Padding  float32
+	Gutter   float32
+	Relative bool
 }
 
 func (c Column) Flow(w Layoutable) {
@@ -19,11 +21,20 @@ func (c Column) Flow(w Layoutable) {
 	inner := bounds.Sub(vec2.New(2*c.Padding, 2*c.Padding))
 	inner.Y -= c.Gutter * float32(len(items)-1)
 
-	itemSize := vec2.New(inner.X, inner.Y/float32(len(items)))
+	// calculate total desired height
+	totalWeight := float32(0)
 	for _, item := range items {
-		item.Resize(itemSize)
+		totalWeight += item.Height().Resolve(inner.Y)
+	}
+
+	if !c.Relative {
+		totalWeight = math.Max(totalWeight, inner.Y)
+	}
+
+	for _, item := range items {
+		height := inner.Y * item.Height().Resolve(inner.Y) / totalWeight
+		item.Resize(vec2.New(inner.X, height))
 		item.Move(vec2.New(x, y))
-		sz := item.Size()
-		y += sz.Y + c.Gutter
+		y += height + c.Gutter
 	}
 }

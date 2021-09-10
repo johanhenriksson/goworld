@@ -11,6 +11,8 @@ type Props interface{}
 type T interface {
 	Key() string
 	Props() Props
+	Update(Props)
+	Destroy()
 
 	Size() vec2.T
 	Resize(vec2.T)
@@ -53,3 +55,6 @@ func (w *widget) Width() dimension.T {
 func (w *widget) Height() dimension.T {
 	return dimension.Auto()
 }
+
+func (w *widget) Update(Props) {}
+func (w *widget) Destroy()     {}
