@@ -5,6 +5,7 @@ import (
 
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/core/object"
+	"github.com/johanhenriksson/goworld/gui/dimension"
 	"github.com/johanhenriksson/goworld/gui/layout"
 	"github.com/johanhenriksson/goworld/gui/rect"
 	"github.com/johanhenriksson/goworld/gui/widget"
@@ -20,7 +21,7 @@ type Manager interface {
 
 type manager struct {
 	object.T
-	items []widget.T
+	scene rect.T
 }
 
 func MyCustomUI(pad float32) widget.T {
@@ -29,6 +30,8 @@ func MyCustomUI(pad float32) widget.T {
 		&rect.Props{
 			Color:  render.Hex("#000000"),
 			Border: 5,
+			Width:  dimension.Percent(50),
+			Height: dimension.Fixed(150),
 			Layout: layout.Column{
 				Padding: pad,
 				Gutter:  5,
@@ -61,17 +64,21 @@ func MyCustomUI(pad float32) widget.T {
 
 func New() Manager {
 	f := MyCustomUI(5)
-	f.Resize(vec2.New(200, 100))
 	f.Move(vec2.New(400, 300))
 
 	b := MyCustomUI(6)
 	compare(f, b)
 
-	return &manager{
-		T: object.New("GUI Manager"),
-		items: []widget.T{
-			f,
+	scene := rect.New("GUI", &rect.Props{
+		Layout: layout.Absolute{
+			Width:  1600,
+			Height: 900,
 		},
+	}, f)
+
+	return &manager{
+		T:     object.New("GUI Manager"),
+		scene: scene,
 	}
 }
 
@@ -92,13 +99,11 @@ func (m *manager) DrawPass() {
 		Transform:  mat4.Ident(),
 	}
 
-	for _, frame := range m.items {
-		frame.Draw(args)
-	}
+	m.scene.Draw(args)
 }
 
 func (m *manager) MouseEvent(e mouse.Event) {
-	for _, frame := range m.items {
+	for _, frame := range m.scene.Children() {
 		if handler, ok := frame.(mouse.Handler); ok {
 			handler.MouseEvent(e)
 			if e.Handled() {

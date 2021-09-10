@@ -5,9 +5,7 @@ import (
 
 	"github.com/johanhenriksson/goworld/assets"
 	"github.com/johanhenriksson/goworld/geometry"
-	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/math/vec2"
-	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
 )
 
@@ -32,12 +30,6 @@ func (r *renderer) Draw(args render.Args, frame T, props *Props) {
 		r.mesh = geometry.NewRect(r.mat, vec2.Zero)
 	}
 
-	// update local tranasform
-	pos := vec3.Extend(frame.Position(), 0)
-	transform := mat4.Translate(pos)
-	args.Transform = transform.Mul(&args.Transform)
-	args.Position = pos
-
 	// set correct blending
 	// perhaps this belongs somewhere else
 	render.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
@@ -54,11 +46,6 @@ func (r *renderer) Draw(args render.Args, frame T, props *Props) {
 	r.mesh.Material.RGBA("tint", props.Color)
 	r.mesh.Material.Textures.Set("image", r.tex)
 	r.mesh.Draw(args)
-
-	args.Position = vec3.Extend(frame.Position(), -1)
-	for _, child := range frame.Children() {
-		child.Draw(args)
-	}
 }
 
 func (r *renderer) Destroy() {

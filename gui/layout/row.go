@@ -1,7 +1,6 @@
 package layout
 
 import (
-	"github.com/johanhenriksson/goworld/gui/widget"
 	"github.com/johanhenriksson/goworld/math/vec2"
 )
 
@@ -10,7 +9,7 @@ type Row struct {
 	Gutter  float32
 }
 
-func (r Row) Flow(w widget.T) {
+func (r Row) Flow(w Layoutable) {
 	// row layouts share the width
 	x := float32(r.Padding)
 	y := float32(r.Padding)

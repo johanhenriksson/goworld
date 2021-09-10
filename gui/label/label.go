@@ -2,15 +2,10 @@ package label
 
 import (
 	"github.com/johanhenriksson/goworld/gui/widget"
-	"github.com/johanhenriksson/goworld/math/vec2"
 )
 
 type T interface {
 	widget.T
-}
-
-type TextMeasurer interface {
-	Measure(string) vec2.T
 }
 
 type Props struct {
@@ -26,6 +21,10 @@ type label struct {
 }
 
 func NewLabel(key string, props *Props) T {
+	if props.Size == 0 {
+		props.Size = 12
+	}
+
 	return &label{
 		T:        widget.New(key),
 		props:    props,

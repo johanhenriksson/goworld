@@ -1,7 +1,6 @@
 package layout
 
 import (
-	"github.com/johanhenriksson/goworld/gui/widget"
 	"github.com/johanhenriksson/goworld/math/vec2"
 )
 
@@ -10,7 +9,7 @@ type Column struct {
 	Gutter  float32
 }
 
-func (c Column) Flow(w widget.T) {
+func (c Column) Flow(w Layoutable) {
 	// column layouts share the height
 	x := float32(c.Padding)
 	y := float32(c.Padding)
