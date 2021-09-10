@@ -1,6 +1,7 @@
 package rect
 
 import (
+	"github.com/johanhenriksson/goworld/gui/layout"
 	"github.com/johanhenriksson/goworld/gui/widget"
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/render"
@@ -17,17 +18,15 @@ type rect struct {
 }
 
 type Props struct {
-	Border  float32
-	Padding float32
-	Gutter  float32
-	Color   render.Color
-	Layout  Layout
+	Border float32
+	Color  render.Color
+	Layout layout.T
 }
 
 func New(key string, props *Props, items ...widget.T) T {
 	// defaults
 	if props.Layout == nil {
-		props.Layout = Column{}
+		props.Layout = layout.Column{}
 	}
 
 	f := &rect{
@@ -45,7 +44,7 @@ func (f *rect) Draw(args render.Args) {
 }
 
 func (f *rect) Reflow() {
-	f.props.Layout.Flow(f, f.props)
+	f.props.Layout.Flow(f)
 	f.T.Reflow()
 }
 

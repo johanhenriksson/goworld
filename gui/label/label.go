@@ -5,28 +5,32 @@ import (
 	"github.com/johanhenriksson/goworld/math/vec2"
 )
 
-type Label interface {
+type T interface {
 	widget.T
-
-	Text() string
-	SetText(string)
 }
 
 type TextMeasurer interface {
 	Measure(string) vec2.T
 }
 
+type Props struct {
+	Text string
+	Size float32
+}
+
 type label struct {
 	widget.T
 
-	text string
+	renderer Renderer
+	props    *Props
 }
 
-func NewLabel() Label {
+func NewLabel(key string, props *Props) T {
 	return &label{
-		// Widget: NewWidget(),
+		T:        widget.New(key),
+		props:    props,
+		renderer: &renderer{},
 	}
 }
 
-func (l *label) Text() string        { return l.text }
-func (l *label) SetText(text string) { l.text = text }
+func (l *label) Props() widget.Props { return l.props }

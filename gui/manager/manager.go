@@ -2,8 +2,10 @@ package manager
 
 import (
 	"github.com/go-gl/gl/v4.1-core/gl"
+
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/core/object"
+	"github.com/johanhenriksson/goworld/gui/layout"
 	"github.com/johanhenriksson/goworld/gui/rect"
 	"github.com/johanhenriksson/goworld/gui/widget"
 	"github.com/johanhenriksson/goworld/math/mat4"
@@ -25,17 +27,19 @@ func MyCustomUI(pad float32) widget.T {
 	return rect.New(
 		"frame",
 		&rect.Props{
-			Color:   render.Hex("#000000"),
-			Padding: pad,
-			Gutter:  5,
-			Border:  5,
-			Layout:  rect.Column{},
+			Color:  render.Hex("#000000"),
+			Border: 5,
+			Layout: layout.Column{
+				Padding: pad,
+				Gutter:  5,
+			},
 		},
 		rect.New(
 			"r1",
 			&rect.Props{
-				Layout: rect.Row{},
-				Gutter: 5,
+				Layout: layout.Row{
+					Gutter: 5,
+				},
 			},
 			rect.New("1st", &rect.Props{Color: render.Blue}),
 			rect.New("2nd", &rect.Props{Color: render.Green}),
@@ -44,8 +48,9 @@ func MyCustomUI(pad float32) widget.T {
 		rect.New(
 			"r2",
 			&rect.Props{
-				Layout: rect.Row{},
-				Gutter: 5,
+				Layout: layout.Row{
+					Gutter: 5,
+				},
 			},
 			rect.New("1st", &rect.Props{Color: render.Red}),
 			rect.New("2nd", &rect.Props{Color: render.Green}),
