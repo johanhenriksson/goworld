@@ -26,6 +26,7 @@ import (
 	"github.com/johanhenriksson/goworld/editor"
 	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/game"
+	"github.com/johanhenriksson/goworld/gui/manager"
 	"github.com/lsfn/ode"
 
 	"github.com/johanhenriksson/goworld/geometry/gizmo/mover"
@@ -107,10 +108,13 @@ func main() {
 
 	fmt.Println("Ok")
 
+	guim := manager.New()
+
 	for !wnd.ShouldClose() {
 		scene.Update(0.030)
 
 		renderer.Draw(scene)
+		guim.DrawPass()
 
 		wnd.SwapBuffers()
 	}

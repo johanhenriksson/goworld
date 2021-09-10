@@ -308,7 +308,7 @@ func (shader *Shader) VertexPointers(data interface{}) Pointers {
 
 		attr, exists := shader.Attribute(tag.Name)
 		if !exists {
-			fmt.Printf("attribute %s does not exist on %s\n", tag.Name, shader.Name)
+			// fmt.Printf("attribute %s does not exist on %s\n", tag.Name, shader.Name)
 			offset += gltype.Size() * tag.Count
 			continue
 		}

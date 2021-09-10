@@ -196,7 +196,7 @@ func (q *Rect) compute() {
 func (q *Rect) Draw(args render.Args) {
 	q.Material.Use()
 	q.Material.Mat4("model", &args.Transform)
-	q.Material.Mat4("viewport", &args.Projection)
+	q.Material.Mat4("viewport", &args.VP)
 	q.Material.Bool("invert", q.Invert)
 	q.Material.Bool("depth", q.Depth)
 	q.vao.Draw()
