@@ -1,6 +1,8 @@
 package vec2
 
 import (
+	"fmt"
+
 	"github.com/johanhenriksson/goworld/math"
 )
 
@@ -107,4 +109,13 @@ func (v T) Mul(v2 T) T {
 // Div divides each element of the vector with the corresponding element of another vector
 func (v T) Div(v2 T) T {
 	return T{v.X / v2.X, v.Y / v2.Y}
+}
+
+func (v T) ApproxEqual(v2 T) bool {
+	epsilon := float32(0.0001)
+	return Distance(v, v2) < epsilon
+}
+
+func (v T) String() string {
+	return fmt.Sprintf("%.3f,%.3f", v.X, v.Y)
 }
