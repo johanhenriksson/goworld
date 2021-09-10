@@ -4,6 +4,7 @@ import (
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/johanhenriksson/goworld/core/scene"
 	"github.com/johanhenriksson/goworld/render"
+	"github.com/johanhenriksson/goworld/render/color"
 )
 
 // GaussianPass represents a gaussian blur pass.
@@ -49,6 +50,6 @@ func (p *GaussianPass) DrawPass(scene scene.T) {
 	p.shader.Use()
 	p.textures.Use()
 
-	render.ClearWith(render.White)
+	render.ClearWith(color.White)
 	p.quad.Draw()
 }

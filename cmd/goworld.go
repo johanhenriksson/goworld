@@ -27,6 +27,7 @@ import (
 	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/game"
 	"github.com/johanhenriksson/goworld/gui/manager"
+	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/lsfn/ode"
 
 	"github.com/johanhenriksson/goworld/geometry/gizmo/mover"
@@ -65,7 +66,7 @@ func main() {
 	renderer.Append("ui", uim)
 
 	// create a cam
-	cam := camera.New(aspect, 55.0, 0.1, 600, render.Hex("#eddaab"))
+	cam := camera.New(aspect, 55.0, 0.1, 600, color.Hex("#eddaab"))
 	scene.SetCamera(cam)
 
 	gizmo := mover.New(mover.Args{})

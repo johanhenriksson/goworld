@@ -7,6 +7,7 @@ import (
 	// "github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/core/scene"
 	"github.com/johanhenriksson/goworld/render"
+	"github.com/johanhenriksson/goworld/render/color"
 )
 
 // ShadowPass renders shadow maps for lights.
@@ -62,7 +63,7 @@ func (p *ShadowPass) DrawLight(light *render.Light) {
 	defer p.shadowmap.Unbind()
 
 	render.DepthOutput(true)
-	render.ClearWith(render.White)
+	render.ClearWith(color.White)
 	render.ClearDepth()
 
 	// compute world to lightspace (light's view projection) matrix

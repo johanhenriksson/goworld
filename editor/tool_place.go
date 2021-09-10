@@ -5,7 +5,7 @@ import (
 	"github.com/johanhenriksson/goworld/game"
 	"github.com/johanhenriksson/goworld/geometry/box"
 	"github.com/johanhenriksson/goworld/math/vec3"
-	"github.com/johanhenriksson/goworld/render"
+	"github.com/johanhenriksson/goworld/render/color"
 )
 
 type PlaceTool struct {
@@ -20,7 +20,7 @@ func NewPlaceTool() *PlaceTool {
 
 	box.Builder(&pt.box, box.Args{
 		Size:  vec3.One,
-		Color: render.Blue,
+		Color: color.Blue,
 	}).
 		Parent(pt).
 		Create()

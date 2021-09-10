@@ -9,6 +9,7 @@ import (
 	"github.com/go-gl/gl/v4.1-core/gl"
 
 	"github.com/johanhenriksson/goworld/math/vec2"
+	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/util"
 )
 
@@ -197,7 +198,7 @@ func TextureFromFile(file string) (*Texture, error) {
 }
 
 // TextureFromColor creates a 1x1 texture from a color
-func TextureFromColor(color Color) *Texture {
+func TextureFromColor(color color.T) *Texture {
 	tx := CreateTexture(1, 1)
 	tx.BufferFloats([]float32{color.R, color.G, color.B, color.A})
 	return tx

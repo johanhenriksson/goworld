@@ -1,4 +1,4 @@
-package render
+package color
 
 import (
 	"fmt"
@@ -11,31 +11,43 @@ import (
 
 // Predefined Colors
 var (
-	White       = Color{1, 1, 1, 1}
-	Black       = Color{0, 0, 0, 1}
-	Red         = Color{1, 0, 0, 1}
-	Green       = Color{0, 1, 0, 1}
-	Blue        = Color{0, 0, 1, 1}
-	Purple      = Color{1, 0, 1, 1}
-	Yellow      = Color{1, 1, 0, 1}
-	Cyan        = Color{0, 1, 1, 1}
-	Transparent = Color{0, 0, 0, 0}
+	White       = T{1, 1, 1, 1}
+	Black       = T{0, 0, 0, 1}
+	Red         = T{1, 0, 0, 1}
+	Green       = T{0, 1, 0, 1}
+	Blue        = T{0, 0, 1, 1}
+	Purple      = T{1, 0, 1, 1}
+	Yellow      = T{1, 1, 0, 1}
+	Cyan        = T{0, 1, 1, 1}
+	Transparent = T{0, 0, 0, 0}
 
-	DarkGrey = Color{0.2, 0.2, 0.2, 1}
+	DarkGrey = T{0.2, 0.2, 0.2, 1}
 )
 
-// Color holds 32-bit RGBA colors
-type Color struct {
+// T holds 32-bit RGBA colors
+type T struct {
 	R, G, B, A float32
 }
 
 // Color4 creates a color struct from its RGBA components
-func Color4(r, g, b, a float32) Color {
-	return Color{r, g, b, a}
+func RGBA(r, g, b, a float32) T {
+	return T{r, g, b, a}
+}
+
+func RGB(r, g, b float32) T {
+	return T{r, g, b, 1}
+}
+
+func RGBA8(r, g, b, a uint8) T {
+	return RGBA(float32(r)/255, float32(g)/255, float32(b)/255, float32(a)/255)
+}
+
+func RGB8(r, g, b uint8) T {
+	return RGBA8(r, g, b, 255)
 }
 
 // RGBA returns an 8-bit RGBA image/color
-func (c Color) RGBA() color.RGBA {
+func (c T) RGBA() color.RGBA {
 	return color.RGBA{
 		uint8(255.0 * c.R),
 		uint8(255.0 * c.G),
@@ -45,16 +57,16 @@ func (c Color) RGBA() color.RGBA {
 }
 
 // Vec3 returns a vec3 containing the RGB components of the color
-func (c Color) Vec3() vec3.T {
+func (c T) Vec3() vec3.T {
 	return vec3.New(c.R, c.G, c.B)
 }
 
 // Vec4 returns a vec4 containing the RGBA components of the color
-func (c Color) Vec4() vec4.T {
+func (c T) Vec4() vec4.T {
 	return vec4.New(c.R, c.G, c.B, c.A)
 }
 
-func (c Color) Byte4() byte4.T {
+func (c T) Byte4() byte4.T {
 	return byte4.New(
 		byte(255.0*c.R),
 		byte(255.0*c.G),
@@ -62,17 +74,17 @@ func (c Color) Byte4() byte4.T {
 		byte(255.0*c.A))
 }
 
-func (c Color) String() string {
+func (c T) String() string {
 	return fmt.Sprintf("(R:%.2f G:%.2f B:%.2f A:%.2f)", c.R, c.G, c.B, c.A)
 }
 
 // WithAlpha returns a new color with a modified alpha value
-func (c Color) WithAlpha(a float32) Color {
+func (c T) WithAlpha(a float32) T {
 	c.A = a
 	return c
 }
 
-func Hex(s string) Color {
+func Hex(s string) T {
 	if s[0] != '#' {
 		panic("invalid color value")
 	}
@@ -89,7 +101,7 @@ func Hex(s string) Color {
 		panic("invalid color value")
 	}
 
-	c := Color{A: 1}
+	c := T{A: 1}
 	switch len(s) {
 	case 7:
 		c.R = float32(hexToByte(s[1])<<4+hexToByte(s[2])) / 255

@@ -2,19 +2,20 @@ package editor
 
 import (
 	"fmt"
+
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/math/vec2"
-	"github.com/johanhenriksson/goworld/render"
+	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/ui"
 )
 
 type PaletteWindow struct {
 	*ui.Rect
-	Palette  render.Palette
-	Selected render.Color
+	Palette  color.Palette
+	Selected color.T
 }
 
-func NewPaletteWindow(palette render.Palette) *PaletteWindow {
+func NewPaletteWindow(palette color.Palette) *PaletteWindow {
 	cols := 5
 	gridStyle := ui.Style{"layout": ui.String("column"), "spacing": ui.Float(2)}
 	rowStyle := ui.Style{"layout": ui.String("row"), "spacing": ui.Float(2)}

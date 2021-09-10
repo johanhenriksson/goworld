@@ -11,6 +11,7 @@ import (
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/math/vec4"
+	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/vertex"
 	"github.com/johanhenriksson/goworld/util"
 )
@@ -254,7 +255,7 @@ func (shader *Shader) Float(name string, val float32) {
 }
 
 // RGB sets a uniform to a color RGB value
-func (shader *Shader) RGB(name string, color Color) {
+func (shader *Shader) RGB(name string, color color.T) {
 	if input, ok := shader.Uniform(name); ok {
 		if input.Type != Vec3f {
 			panic(fmt.Errorf("cant assign RGB color to uniform %s, expected %s", name, input.Type))
@@ -264,7 +265,7 @@ func (shader *Shader) RGB(name string, color Color) {
 }
 
 // RGBA sets a uniform to a color RGBA value
-func (shader *Shader) RGBA(name string, color Color) {
+func (shader *Shader) RGBA(name string, color color.T) {
 	if input, ok := shader.Uniform(name); ok {
 		if input.Type != Vec4f {
 			panic(fmt.Errorf("cant assign RGBA color to uniform %s, expected %s", name, input.Type))

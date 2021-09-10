@@ -8,6 +8,7 @@ import (
 	"github.com/johanhenriksson/goworld/math/random"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
+	"github.com/johanhenriksson/goworld/render/color"
 )
 
 // SSAOSettings holds parameters for SSAO.
@@ -103,7 +104,7 @@ func (p *SSAOPass) Draw(scene scene.T) {
 	// run occlusion pass
 	p.fbo.Bind()
 
-	render.ClearWith(render.White)
+	render.ClearWith(color.White)
 	p.quad.Draw()
 
 	p.fbo.Unbind()

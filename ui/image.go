@@ -6,6 +6,7 @@ import (
 	"github.com/johanhenriksson/goworld/geometry"
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/render"
+	"github.com/johanhenriksson/goworld/render/color"
 )
 
 type Image struct {
@@ -52,7 +53,7 @@ func (r *Image) Draw(args render.Args) {
 		render.BlendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA)
 	}
 	r.mesh.Material.Use()
-	r.mesh.Material.RGBA("tint", r.Style.Color("color", render.White))
+	r.mesh.Material.RGBA("tint", r.Style.Color("color", color.White))
 	r.mesh.Material.Textures.Set("image", r.Texture)
 	r.mesh.Draw(args)
 

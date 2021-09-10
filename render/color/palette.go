@@ -1,16 +1,16 @@
-package render
+package color
 
 // A Palette is a list of colors
-type Palette []Color
+type Palette []T
 
 // RawPalette creates a palette from a list of hex integers
 func RawPalette(colors ...int) Palette {
 	palette := make(Palette, len(colors))
-	for i, color := range colors {
-		palette[i] = Color4(
-			float32((color>>16)&0xFF)/255.0,
-			float32((color>>8)&0xFF)/255.0,
-			float32((color>>0)&0xFF)/255.0,
+	for i, clr := range colors {
+		palette[i] = RGBA(
+			float32((clr>>16)&0xFF)/255.0,
+			float32((clr>>8)&0xFF)/255.0,
+			float32((clr>>0)&0xFF)/255.0,
 			1.0)
 	}
 	return palette

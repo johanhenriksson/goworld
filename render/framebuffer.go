@@ -4,6 +4,7 @@ import (
 	"unsafe"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
+	"github.com/johanhenriksson/goworld/render/color"
 )
 
 // DrawBuffer holds a target texture of a frame buffer object
@@ -107,11 +108,11 @@ func (f *FrameBuffer) Delete() {
 }
 
 // Sample the color buffer at a given coordinate.
-func (f *FrameBuffer) Sample(target uint32, x, y int) Color {
+func (f *FrameBuffer) Sample(target uint32, x, y int) color.T {
 	pixel := make([]float32, 4)
 	gl.ReadBuffer(target)
 	gl.ReadPixels(int32(x), int32(y), 1, 1, gl.RGBA, gl.FLOAT, unsafe.Pointer(&pixel[0]))
-	return Color4(pixel[0], pixel[1], pixel[2], pixel[3])
+	return color.RGBA(pixel[0], pixel[1], pixel[2], pixel[3])
 }
 
 // SampleDepth samples the depth buffer at a given coordinate.

@@ -12,6 +12,7 @@ import (
 	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/render"
+	"github.com/johanhenriksson/goworld/render/color"
 )
 
 type Manager interface {
@@ -28,7 +29,7 @@ func MyCustomUI(pad float32) widget.T {
 	return rect.New(
 		"frame",
 		&rect.Props{
-			Color:  render.Hex("#000000"),
+			Color:  color.Hex("#000000"),
 			Border: 5,
 			Width:  dimension.Percent(50),
 			Height: dimension.Fixed(150),
@@ -44,9 +45,9 @@ func MyCustomUI(pad float32) widget.T {
 					Gutter: 5,
 				},
 			},
-			rect.New("1st", &rect.Props{Color: render.Blue}),
-			rect.New("2nd", &rect.Props{Color: render.Green}),
-			rect.New("3nd", &rect.Props{Color: render.Red}),
+			rect.New("1st", &rect.Props{Color: color.Blue}),
+			rect.New("2nd", &rect.Props{Color: color.Green}),
+			rect.New("3nd", &rect.Props{Color: color.Red}),
 		),
 		rect.New(
 			"r2",
@@ -55,9 +56,9 @@ func MyCustomUI(pad float32) widget.T {
 					Gutter: 5,
 				},
 			},
-			rect.New("1st", &rect.Props{Color: render.Red}),
-			rect.New("2nd", &rect.Props{Color: render.Green}),
-			rect.New("3nd", &rect.Props{Color: render.Blue}),
+			rect.New("1st", &rect.Props{Color: color.Red}),
+			rect.New("2nd", &rect.Props{Color: color.Green}),
+			rect.New("3nd", &rect.Props{Color: color.Blue}),
 		),
 	)
 }

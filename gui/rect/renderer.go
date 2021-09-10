@@ -7,6 +7,7 @@ import (
 	"github.com/johanhenriksson/goworld/geometry"
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/render"
+	"github.com/johanhenriksson/goworld/render/color"
 )
 
 type Renderer interface {
@@ -22,7 +23,7 @@ type renderer struct {
 
 func (r *renderer) Draw(args render.Args, frame T, props *Props) {
 	if r.mesh == nil {
-		r.tex = render.TextureFromColor(render.White)
+		r.tex = render.TextureFromColor(color.White)
 
 		r.mat = assets.GetMaterial("ui_texture")
 		r.mat.Textures.Add("image", r.tex)

@@ -7,6 +7,7 @@ import (
 	"github.com/golang/freetype/truetype"
 	"github.com/johanhenriksson/goworld/math"
 	"github.com/johanhenriksson/goworld/math/vec2"
+	"github.com/johanhenriksson/goworld/render/color"
 	"golang.org/x/image/font"
 	"golang.org/x/image/math/fixed"
 )
@@ -16,7 +17,7 @@ type Font struct {
 	Size    float32
 	DPI     float32
 	Spacing float32
-	Color   Color
+	Color   color.T
 
 	fnt    *truetype.Font
 	drawer *font.Drawer
@@ -65,14 +66,14 @@ func (f *Font) Measure(text string) vec2.T {
 	return vec2.NewI(width, height)
 }
 
-func (f *Font) RenderNew(text string, color Color) *Texture {
+func (f *Font) RenderNew(text string, color color.T) *Texture {
 	size := f.Measure(text)
 	texture := CreateTexture(int(size.X), int(size.Y))
 	f.Render(texture, text, color)
 	return texture
 }
 
-func (f *Font) Render(tx *Texture, text string, color Color) {
+func (f *Font) Render(tx *Texture, text string, color color.T) {
 	f.drawer.Src = image.NewUniform(color.RGBA())
 
 	size := f.Measure(text)

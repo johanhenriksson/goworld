@@ -5,6 +5,7 @@ import (
 	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
+	"github.com/johanhenriksson/goworld/render/color"
 )
 
 // LightPass draws the deferred lighting pass
@@ -12,7 +13,7 @@ type LightPass struct {
 	GBuffer        *render.GeometryBuffer
 	Output         *render.ColorBuffer
 	Shadows        *ShadowPass
-	Ambient        render.Color
+	Ambient        color.T
 	ShadowStrength float32
 	ShadowBias     float32
 	SSAOAmount     float32
@@ -45,7 +46,7 @@ func NewLightPass(input *render.GeometryBuffer) *LightPass {
 		GBuffer:        input,
 		Output:         render.NewColorBuffer(input.Width, input.Height),
 		Shadows:        shadowPass,
-		Ambient:        render.Color4(0.25, 0.25, 0.25, 1),
+		Ambient:        color.RGB(0.25, 0.25, 0.25),
 		ShadowStrength: 0.3,
 		ShadowBias:     0.0001,
 		SSAOAmount:     0.5,

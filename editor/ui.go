@@ -1,12 +1,12 @@
 package editor
 
 import (
-	"github.com/johanhenriksson/goworld/render"
+	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/ui"
 )
 
-var WindowColor = render.Color4(0.15, 0.15, 0.15, 0.85)
-var TextColor = render.Color4(1, 1, 1, 1)
+var WindowColor = color.RGBA(0.15, 0.15, 0.15, 0.85)
+var TextColor = color.RGBA(1, 1, 1, 1)
 
 var WindowStyle = ui.Style{
 	"color":   ui.Color(WindowColor),

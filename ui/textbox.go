@@ -7,6 +7,7 @@ import (
 	"github.com/johanhenriksson/goworld/assets"
 	"github.com/johanhenriksson/goworld/core/input/keys"
 	"github.com/johanhenriksson/goworld/render"
+	"github.com/johanhenriksson/goworld/render/color"
 )
 
 type Textbox struct {
@@ -22,7 +23,7 @@ func (t *Textbox) Set(text string) {
 	if t.focused {
 		text += "_"
 	}
-	t.Font.Render(t.Texture, text, t.Style.Color("color", render.White))
+	t.Font.Render(t.Texture, text, t.Style.Color("color", color.White))
 }
 
 func NewTextbox(text string, style Style) *Textbox {

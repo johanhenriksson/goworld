@@ -8,6 +8,7 @@ import (
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
+	"github.com/johanhenriksson/goworld/render/color"
 )
 
 type T interface {
@@ -25,7 +26,7 @@ type rect struct {
 
 type Props struct {
 	Border float32
-	Color  render.Color
+	Color  color.T
 	Layout layout.T
 	Width  dimension.T
 	Height dimension.T

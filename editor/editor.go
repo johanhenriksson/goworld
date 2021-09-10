@@ -11,6 +11,7 @@ import (
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
+	"github.com/johanhenriksson/goworld/render/color"
 )
 
 // Editor base struct
@@ -47,7 +48,7 @@ func NewEditor(chunk *game.Chunk, cam camera.T, gbuffer *render.GeometryBuffer) 
 		T:       object.New("Editor"),
 		Chunk:   chunk,
 		Camera:  cam,
-		Palette: NewPaletteWindow(render.DefaultPalette),
+		Palette: NewPaletteWindow(color.DefaultPalette),
 
 		PlaceTool:   NewPlaceTool(),
 		EraseTool:   NewEraseTool(),
@@ -63,7 +64,7 @@ func NewEditor(chunk *game.Chunk, cam camera.T, gbuffer *render.GeometryBuffer) 
 
 	box.Builder(&e.bounds, box.Args{
 		Size:  dimensions,
-		Color: render.DarkGrey,
+		Color: color.DarkGrey,
 	}).
 		Parent(e).
 		Create()
@@ -73,7 +74,7 @@ func NewEditor(chunk *game.Chunk, cam camera.T, gbuffer *render.GeometryBuffer) 
 	// X Construction Plane
 	plane.Builder(&e.XPlane, plane.Args{
 		Size:  float32(chunk.Sx),
-		Color: render.Red.WithAlpha(0.25),
+		Color: color.Red.WithAlpha(0.25),
 	}).
 		Parent(e).
 		Position(center.WithX(0)).
@@ -84,7 +85,7 @@ func NewEditor(chunk *game.Chunk, cam camera.T, gbuffer *render.GeometryBuffer) 
 	// Y Construction Plane
 	plane.Builder(&e.YPlane, plane.Args{
 		Size:  float32(chunk.Sy),
-		Color: render.Green.WithAlpha(0.25),
+		Color: color.Green.WithAlpha(0.25),
 	}).
 		Parent(e).
 		Position(center.WithY(0)).
@@ -94,7 +95,7 @@ func NewEditor(chunk *game.Chunk, cam camera.T, gbuffer *render.GeometryBuffer) 
 	// Z Construction Plane
 	plane.Builder(&e.ZPlane, plane.Args{
 		Size:  float32(chunk.Sz),
-		Color: render.Blue.WithAlpha(0.25),
+		Color: color.Blue.WithAlpha(0.25),
 	}).
 		Parent(e).
 		Position(center.WithZ(0)).

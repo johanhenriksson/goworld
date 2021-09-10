@@ -5,6 +5,7 @@ import (
 	"github.com/johanhenriksson/goworld/math"
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/render"
+	"github.com/johanhenriksson/goworld/render/color"
 )
 
 type Text struct {
@@ -21,7 +22,7 @@ func (t *Text) Set(text string) {
 
 	size := t.Font.Measure(text)
 
-	t.Font.Render(t.Texture, text, render.White)
+	t.Font.Render(t.Texture, text, color.White)
 	t.Text = text
 	t.Resize(size)
 }

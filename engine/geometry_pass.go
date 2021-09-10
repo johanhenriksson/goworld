@@ -4,6 +4,7 @@ import (
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/core/scene"
 	"github.com/johanhenriksson/goworld/render"
+	"github.com/johanhenriksson/goworld/render/color"
 )
 
 type DeferredDrawable interface {
@@ -32,7 +33,7 @@ func NewGeometryPass(bufferWidth, bufferHeight int) *GeometryPass {
 // DrawPass executes the geometry pass
 func (p *GeometryPass) Draw(scene scene.T) {
 	p.Buffer.Bind()
-	render.ClearWith(render.Black)
+	render.ClearWith(color.Black)
 	render.ClearDepth()
 
 	// setup rendering

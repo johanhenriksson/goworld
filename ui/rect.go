@@ -6,6 +6,7 @@ import (
 	"github.com/johanhenriksson/goworld/geometry"
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/render"
+	"github.com/johanhenriksson/goworld/render/color"
 )
 
 // Rect is a rectangle with support for borders & rounded corners.
@@ -28,7 +29,7 @@ func NewRect(style Style, children ...Component) *Rect {
 		Element: NewElement("Rect", position, size, style),
 		mesh:    geometry.NewRect(mat, size),
 		layout:  ColumnLayout,
-		tex:     render.TextureFromColor(render.White),
+		tex:     render.TextureFromColor(color.White),
 	}
 	mat.Textures.Add("image", r.tex)
 
@@ -63,7 +64,7 @@ func (r *Rect) Draw(args render.Args) {
 	// avoid GL calls outside of the "core" packages render/engine/geometry
 	render.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 
-	color := r.Style.Color("color", render.Transparent)
+	color := r.Style.Color("color", color.Transparent)
 	image := r.Style.Texture("image", r.tex)
 	r.mesh.Material.Use()
 	r.mesh.Material.RGBA("tint", color)

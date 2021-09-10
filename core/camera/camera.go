@@ -5,7 +5,7 @@ import (
 	"github.com/johanhenriksson/goworld/math"
 	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/math/vec3"
-	"github.com/johanhenriksson/goworld/render"
+	"github.com/johanhenriksson/goworld/render/color"
 )
 
 type T interface {
@@ -17,7 +17,7 @@ type T interface {
 	Projection() mat4.T
 	ViewProj() mat4.T
 	ViewProjInv() mat4.T
-	ClearColor() render.Color
+	ClearColor() color.T
 }
 
 // camera represents a 3D camera and its transform.
@@ -28,7 +28,7 @@ type camera struct {
 	aspect float32
 	near   float32
 	far    float32
-	clear  render.Color
+	clear  color.T
 
 	proj  mat4.T
 	view  mat4.T
@@ -38,7 +38,7 @@ type camera struct {
 }
 
 // New creates a new camera component.
-func New(aspect, fov, near, far float32, clear render.Color) T {
+func New(aspect, fov, near, far float32, clear color.T) T {
 	return &camera{
 		Component: object.NewComponent(),
 
@@ -84,4 +84,4 @@ func (cam *camera) Projection() mat4.T  { return cam.proj }
 func (cam *camera) ViewProj() mat4.T    { return cam.vp }
 func (cam *camera) ViewProjInv() mat4.T { return cam.vpi }
 
-func (cam *camera) ClearColor() render.Color { return cam.clear }
+func (cam *camera) ClearColor() color.T { return cam.clear }
