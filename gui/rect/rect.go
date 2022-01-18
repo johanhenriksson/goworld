@@ -57,6 +57,8 @@ func New(key string, props *Props, children ...widget.T) T {
 }
 
 func (f *rect) Draw(args render.Args) {
+	f.T.Draw(args)
+
 	f.renderer.Draw(args, f, f.props)
 
 	for _, child := range f.children {
@@ -93,7 +95,7 @@ func (f *rect) Width() dimension.T  { return f.props.Width }
 func (f *rect) Height() dimension.T { return f.props.Height }
 
 //
-// LifecyclE
+// Lifecycle
 //
 
 func (f *rect) Props() widget.Props {
@@ -105,7 +107,9 @@ func (f *rect) Update(p widget.Props) {
 }
 
 func (f *rect) Destroy() {
+	f.T.Destroy()
 	f.renderer.Destroy()
+
 	for _, child := range f.children {
 		child.Destroy()
 	}
