@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/johanhenriksson/goworld/render"
+	"github.com/johanhenriksson/goworld/render/color"
 )
 
 type ShaderMap map[string]*render.Shader
@@ -70,6 +71,21 @@ func GetTexture(name string) *render.Texture {
 		panic(fmt.Sprintf("Error loading texture %s: %s", name, error))
 	}
 
+	cache.Textures[name] = texture
+	return texture
+}
+
+func GetColorTexture(color color.T) *render.Texture {
+	name := fmt.Sprintf("Color%s", color)
+
+	// check texture cache
+	if texture, exists := cache.Textures[name]; exists {
+		return texture
+	}
+
+	// otherwise, instantiate a new one
+	fmt.Println("+ texture", name)
+	texture := render.TextureFromColor(color)
 	cache.Textures[name] = texture
 	return texture
 }

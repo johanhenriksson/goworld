@@ -24,7 +24,7 @@ type renderer struct {
 
 func (r *renderer) Draw(args render.Args, frame T, props *Props) {
 	if r.mesh == nil {
-		r.tex = render.TextureFromColor(color.White)
+		r.tex = assets.GetColorTexture(color.White)
 
 		r.mat = assets.GetMaterial("ui_texture")
 		r.mat.Textures.Add("image", r.tex)

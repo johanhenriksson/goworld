@@ -29,7 +29,7 @@ func NewRect(style Style, children ...Component) *Rect {
 		Element: NewElement("Rect", position, size, style),
 		mesh:    geometry.NewRect(mat, size),
 		layout:  ColumnLayout,
-		tex:     render.TextureFromColor(color.White),
+		tex:     assets.GetColorTexture(color.White),
 	}
 	mat.Textures.Add("image", r.tex)
 

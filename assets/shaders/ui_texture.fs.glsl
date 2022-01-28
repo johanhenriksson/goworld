@@ -15,10 +15,17 @@ void main() {
     }
 
     vec4 color = texture(image, uv);
+
+    // depth map/single channel/grayscale images
+    // todo: rename this parameter
     if (depth) {
         color = vec4(vec3(color.r), 1);
     }
 
+    // uv's outside 0.0-1.0 should be transparent/discarded
+    if (all(lessThan(uv, vec2(0.0))) && all(greaterThan(uv, vec2(1.0)))) {
+        discard;
+    }
 
     frag_color = color * tint;
 }
