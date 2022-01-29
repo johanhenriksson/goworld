@@ -5,7 +5,10 @@ import (
 	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
+	glshader "github.com/johanhenriksson/goworld/render/backend/gl/shader"
 	"github.com/johanhenriksson/goworld/render/color"
+	"github.com/johanhenriksson/goworld/render/material"
+	"github.com/johanhenriksson/goworld/render/shader"
 )
 
 // LightPass draws the deferred lighting pass
@@ -18,9 +21,9 @@ type LightPass struct {
 	ShadowBias     float32
 	SSAOAmount     float32
 
-	quad     *Quad
-	shader   *render.Shader
-	textures *render.TextureMap
+	quad   *Quad
+	shader shader.T
+	mat    material.T
 }
 
 // NewLightPass creates a new deferred lighting pass
@@ -29,18 +32,17 @@ func NewLightPass(input *render.GeometryBuffer) *LightPass {
 	shadowPass := NewShadowPass(input)
 
 	// instantiate light pass shader
-	shader := render.CompileShader(
+	shader := glshader.CompileShader(
 		"light_pass",
 		"/assets/shaders/pass/postprocess.vs",
 		"/assets/shaders/pass/light.fs")
 
 	// add gbuffer, shadow and ssao pass inputs
-	tx := render.NewTextureMap(shader)
-	tx.Add("tex_diffuse", input.Diffuse)
-	tx.Add("tex_normal", input.Normal)
-	tx.Add("tex_depth", input.Depth)
-	tx.Add("tex_shadow", shadowPass.Output)
-	// tx.Add("tex_occlusion", ssaoPass.Gaussian.Output)
+	mat := material.New("light_pass", shader)
+	mat.Texture("tex_diffuse", input.Diffuse)
+	mat.Texture("tex_normal", input.Normal)
+	mat.Texture("tex_depth", input.Depth)
+	mat.Texture("tex_shadow", shadowPass.Output)
 
 	p := &LightPass{
 		GBuffer:        input,
@@ -51,9 +53,9 @@ func NewLightPass(input *render.GeometryBuffer) *LightPass {
 		ShadowBias:     0.0001,
 		SSAOAmount:     0.5,
 
-		quad:     NewQuad(shader),
-		shader:   shader,
-		textures: tx,
+		quad:   NewQuad(shader),
+		shader: shader,
+		mat:    mat,
 	}
 
 	// set up static uniforms
@@ -71,11 +73,11 @@ func (p *LightPass) setLightUniforms(light *render.Light) {
 	lp := light.Projection
 	lv := mat4.LookAt(light.Position, vec3.Zero)
 	lvp := lp.Mul(&lv)
-	p.shader.Mat4("light_vp", &lvp)
+	p.shader.Mat4("light_vp", lvp)
 
 	/* set light uniform attributes */
-	p.shader.Vec3("light.Position", &light.Position)
-	p.shader.Vec3("light.Color", &light.Color)
+	p.shader.Vec3("light.Position", light.Position)
+	p.shader.Vec3("light.Color", light.Color)
 	p.shader.Int32("light.Type", int(light.Type))
 	p.shader.Float("light.Range", light.Range)
 	p.shader.Float("light.Intensity", light.Intensity)
@@ -101,10 +103,9 @@ func (p *LightPass) Draw(args render.Args, scene scene.T) {
 	// enable blending
 	render.Blend(false)
 
-	p.shader.Use()
-	p.textures.Use()
-	p.shader.Mat4("cameraInverse", &vpInv)
-	p.shader.Mat4("viewInverse", &vInv)
+	p.mat.Use()
+	p.shader.Mat4("cameraInverse", vpInv)
+	p.shader.Mat4("viewInverse", vInv)
 
 	render.DepthOutput(true)
 
@@ -132,8 +133,7 @@ func (p *LightPass) Draw(args render.Args, scene scene.T) {
 		p.Output.Bind()
 
 		// use light shader again
-		p.shader.Use()
-		p.textures.Use()
+		p.mat.Use()
 		p.setLightUniforms(&light)
 
 		render.DepthOutput(true)

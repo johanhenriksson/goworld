@@ -1,36 +1,40 @@
 package engine
 
 import (
-	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/johanhenriksson/goworld/core/scene"
 	"github.com/johanhenriksson/goworld/render"
+	glshader "github.com/johanhenriksson/goworld/render/backend/gl/shader"
+	"github.com/johanhenriksson/goworld/render/material"
+	"github.com/johanhenriksson/goworld/render/shader"
+
+	"github.com/go-gl/gl/v4.1-core/gl"
 )
 
 // OutputPass is the final pass that writes to a camera frame buffer.
 type OutputPass struct {
 	Input    *render.ColorBuffer
 	Geometry *render.GeometryBuffer
-	shader   *render.Shader
-	textures *render.TextureMap
+	shader   shader.T
 	quad     *Quad
+	mat      material.T
 }
 
 // NewOutputPass creates a new output pass for the given input texture.
 func NewOutputPass(input *render.ColorBuffer, gbuffer *render.GeometryBuffer) *OutputPass {
-	shader := render.CompileShader(
+	shader := glshader.CompileShader(
 		"output_pass",
 		"/assets/shaders/pass/postprocess.vs",
 		"/assets/shaders/pass/output.fs")
 
-	tx := render.NewTextureMap(shader)
-	tx.Add("tex_input", input.Texture)
-	tx.Add("tex_depth", gbuffer.Depth)
+	mat := material.New("output_pass", shader)
+	mat.Texture("tex_input", input.Texture)
+	mat.Texture("tex_depth", gbuffer.Depth)
 
 	return &OutputPass{
 		Input:    input,
 		Geometry: gbuffer,
 		shader:   shader,
-		textures: tx,
+		mat:      mat,
 		quad:     NewQuad(shader),
 	}
 }
@@ -47,8 +51,7 @@ func (p *OutputPass) Draw(args render.Args, scene scene.T) {
 	gl.DepthFunc(gl.ALWAYS)
 
 	// draw
-	p.shader.Use()
-	p.textures.Use()
+	p.mat.Use()
 	p.quad.Draw()
 
 	gl.DepthFunc(gl.LESS)

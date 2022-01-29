@@ -1,12 +1,16 @@
 package texture
 
 import (
+	"errors"
+
 	"github.com/go-gl/gl/v4.1-core/gl"
 )
 
+var ErrInvalidTextureUnit = errors.New("invalid texture unit")
+
 type Filter int32
 type WrapMode int32
-type Format uint32
+type Format int32
 
 const (
 	LinearFilter  = Filter(gl.LINEAR)
@@ -21,4 +25,5 @@ const (
 const (
 	RGB  = Format(gl.RGB)
 	RGBA = Format(gl.RGBA)
+	Red  = Format(gl.RED)
 )

@@ -15,7 +15,7 @@ func DebugBufferWindows(renderer *engine.Renderer) ui.Component {
 		newBufferWindow("Diffuse", geom.Buffer.Diffuse, false),
 		newBufferWindow("Normal", geom.Buffer.Normal, false),
 		newBufferWindow("Position", geom.Buffer.Position, false),
-		newBufferWindow("Occlusion", ssao.Gaussian.Output, true),
+		newBufferWindow("Occlusion", ssao.Output, true),
 		newBufferWindow("Light", light.Output.Texture, false))
 	bufferWindows.SetPosition(vec2.New(10, 10))
 	bufferWindows.Flow(vec2.New(500, 1000))

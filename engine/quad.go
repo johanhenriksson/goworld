@@ -4,6 +4,7 @@ import (
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
+	"github.com/johanhenriksson/goworld/render/shader"
 	"github.com/johanhenriksson/goworld/render/vertex"
 )
 
@@ -13,7 +14,7 @@ type Quad struct {
 }
 
 // NewQuad creates a new quad with a given material
-func NewQuad(shader *render.Shader) *Quad {
+func NewQuad(shader shader.T) *Quad {
 	q := &Quad{
 		vao: render.CreateVertexArray(render.Triangles),
 	}

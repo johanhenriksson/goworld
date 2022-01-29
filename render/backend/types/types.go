@@ -15,6 +15,7 @@ type Type uint32
 
 // GL Type Constants
 const (
+	Bool      = Type(gl.BOOL)
 	Int8      = Type(gl.BYTE)
 	UInt8     = Type(gl.UNSIGNED_BYTE)
 	Int16     = Type(gl.SHORT)
@@ -56,6 +57,8 @@ func (t Type) Size() int {
 
 func (t Type) String() string {
 	switch t {
+	case Bool:
+		return "bool"
 	case Int8:
 		return "int8"
 	case UInt8:
@@ -110,6 +113,9 @@ func (t Type) Integer() bool {
 // TypeFromString returns the GL identifier & size of a data type name
 func TypeFromString(name string) (Type, error) {
 	switch name {
+	case "bool":
+		return Bool, nil
+
 	case "byte":
 		fallthrough
 	case "int8":

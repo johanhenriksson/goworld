@@ -32,7 +32,7 @@ func NewRect(style Style, children ...Component) *Rect {
 		layout:  ColumnLayout,
 		tex:     assets.GetColorTexture(color.White),
 	}
-	mat.Textures.Add("image", r.tex)
+	mat.Texture("image", r.tex)
 
 	layout := style.String("layout", "column")
 	if layout == "row" {
@@ -69,7 +69,7 @@ func (r *Rect) Draw(args render.Args) {
 	image := r.Style.Texture("image", r.tex)
 	r.mesh.Material.Use()
 	r.mesh.Material.RGBA("tint", color)
-	r.mesh.Material.Textures.Set("image", image)
+	r.mesh.Material.Texture("image", image)
 	r.mesh.Draw(local)
 
 	/* call parent - draw children etc */

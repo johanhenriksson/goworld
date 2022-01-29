@@ -10,6 +10,7 @@ import (
 	"github.com/johanhenriksson/goworld/math/vec4"
 	"github.com/johanhenriksson/goworld/render/backend/types"
 	"github.com/johanhenriksson/goworld/render/shader"
+	"github.com/johanhenriksson/goworld/render/texture"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
 )
@@ -90,7 +91,7 @@ func UniformVec3fArray(id shader.ShaderID, uniform shader.UniformDesc, vecs []ve
 	if uniform.Size == 1 {
 		return fmt.Errorf("%w: %s is not an array", shader.ErrUniformType, uniform.Name)
 	}
-	if len(vecs) >= int(uniform.Size) {
+	if len(vecs) >= uniform.Size {
 		return fmt.Errorf("%w: array is too long for %s, max length: %d", shader.ErrUniformType, uniform.Name, uniform.Size)
 	}
 	for i, vec := range vecs {
@@ -120,5 +121,25 @@ func UniformVec1i(id shader.ShaderID, uniform shader.UniformDesc, value int) err
 		return uniformTypeError(uniform, types.Int32)
 	}
 	gl.ProgramUniform1i(uint32(id), int32(uniform.Index), int32(value))
+	return uniformUpdateErrorCheck()
+}
+
+func UniformBool(id shader.ShaderID, uniform shader.UniformDesc, value bool) error {
+	if uniform.Type != types.Bool {
+		return uniformTypeError(uniform, types.Bool)
+	}
+	iv := int32(0)
+	if value {
+		iv = 1
+	}
+	gl.ProgramUniform1i(uint32(id), int32(uniform.Index), iv)
+	return uniformUpdateErrorCheck()
+}
+
+func UniformTexture2D(id shader.ShaderID, uniform shader.UniformDesc, slot texture.Slot) error {
+	if uniform.Type != types.Texture2D {
+		return uniformTypeError(uniform, types.Bool)
+	}
+	gl.ProgramUniform1i(uint32(id), int32(uniform.Index), int32(slot))
 	return uniformUpdateErrorCheck()
 }

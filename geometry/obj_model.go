@@ -6,6 +6,7 @@ import (
 
 	"github.com/johanhenriksson/goworld/core/mesh"
 	"github.com/johanhenriksson/goworld/render"
+	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/udhos/gwob"
 )
 
@@ -14,7 +15,7 @@ type ObjModel struct {
 	Path string
 }
 
-func NewObjModel(mat *render.Material, path string) *ObjModel {
+func NewObjModel(mat material.T, path string) *ObjModel {
 	obj := &ObjModel{
 		T:    mesh.New(mat),
 		Path: path,

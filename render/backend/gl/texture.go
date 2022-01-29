@@ -1,22 +1,16 @@
 package gl
 
 import (
-	"errors"
-
 	"github.com/johanhenriksson/goworld/render/texture"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
 )
 
-var ErrInvalidTextureUnit = errors.New("invalid texture unit")
-
-type TextureSlot int
-
-func ActiveTexture(slot TextureSlot) error {
-	texture := gl.TEXTURE0 + uint32(slot)
-	gl.ActiveTexture(texture)
+func ActiveTexture(slot texture.Slot) error {
+	tex := gl.TEXTURE0 + uint32(slot)
+	gl.ActiveTexture(tex)
 	if gl.GetError() == gl.INVALID_ENUM {
-		return ErrInvalidTextureUnit
+		return texture.ErrInvalidTextureUnit
 	}
 	return nil
 }

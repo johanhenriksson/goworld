@@ -8,6 +8,7 @@ import (
 	"github.com/johanhenriksson/goworld/math/random"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
+	"github.com/johanhenriksson/goworld/render/material"
 )
 
 type ParticleDrawable interface {
@@ -51,7 +52,7 @@ type ParticleSystem struct {
 	MaxDur    float32
 
 	positions vec3.Array
-	mat       *render.Material
+	mat       material.T
 	vao       *render.VertexArray
 }
 
@@ -99,9 +100,9 @@ func (ps *ParticleSystem) Draw(args render.Args) {
 	render.DepthOutput(false)
 
 	ps.mat.Use()
-	ps.mat.Vec3("eye", &args.Position)
-	ps.mat.Mat4("model", &args.Transform)
-	ps.mat.Mat4("vp", &args.VP)
+	ps.mat.Vec3("eye", args.Position)
+	ps.mat.Mat4("model", args.Transform)
+	ps.mat.Mat4("vp", args.VP)
 	ps.vao.Draw()
 
 	render.DepthOutput(true)

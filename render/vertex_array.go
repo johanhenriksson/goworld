@@ -3,6 +3,8 @@ package render
 import (
 	"fmt"
 
+	"github.com/johanhenriksson/goworld/render/shader"
+
 	"github.com/go-gl/gl/v4.1-core/gl"
 )
 
@@ -115,7 +117,7 @@ func (vao *VertexArray) Buffer(name string, data interface{}) {
 	}
 }
 
-func (vao *VertexArray) BufferTo(pointers Pointers, data interface{}) {
+func (vao *VertexArray) BufferTo(pointers shader.Pointers, data interface{}) {
 	name := pointers.BufferString()
 
 	vao.Bind()

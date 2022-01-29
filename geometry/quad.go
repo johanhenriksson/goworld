@@ -4,6 +4,7 @@ import (
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
+	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/vertex"
 )
 
@@ -13,13 +14,13 @@ type Quad struct {
 	Height   float32
 	Invert   bool
 	Depth    bool
-	Material *render.Material
+	Material material.T
 
 	size vec2.T
 	vao  *render.VertexArray
 }
 
-func NewQuad(mat *render.Material, size vec2.T) *Quad {
+func NewQuad(mat material.T, size vec2.T) *Quad {
 	q := &Quad{
 		Material: mat,
 		Invert:   false,
@@ -76,8 +77,8 @@ func (q *Quad) compute() {
 
 func (q *Quad) Draw(args render.Args) {
 	q.Material.Use()
-	q.Material.Mat4("model", &args.Transform)
-	q.Material.Mat4("viewport", &args.VP)
+	q.Material.Mat4("model", args.Transform)
+	q.Material.Mat4("viewport", args.VP)
 	q.Material.Bool("invert", q.Invert)
 	q.Material.Bool("depth", q.Depth)
 	q.vao.Draw()

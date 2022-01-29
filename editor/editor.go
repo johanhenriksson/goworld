@@ -154,8 +154,7 @@ func (e *Editor) cursorPositionNormal(cursor vec2.T) (bool, vec3.T, vec3.T) {
 		depth,
 	))
 
-	view := e.Camera.View()
-	viewInv := view.Invert()
+	viewInv := e.Camera.ViewInv()
 	normal := viewInv.TransformDir(viewNormal)
 
 	return true, position, normal

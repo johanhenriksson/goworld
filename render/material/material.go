@@ -10,8 +10,8 @@ import (
 type T interface {
 	shader.T
 
-	GetTexture(name string) texture.T
-	SetTexture(name string, tex texture.T)
+	Texture(name string, tex texture.T)
+	TextureSlot(slot int) texture.T
 }
 
 // material contains a shader reference and all resources required to draw a vertex buffer array
@@ -28,7 +28,7 @@ func New(name string, shader shader.T) T {
 	return &material{
 		T:        shader,
 		name:     name,
-		textures: make(map[string]texture.T),
+		textures: make(map[string]texture.T, 8),
 		slots:    make([]string, 0, 8),
 	}
 }
@@ -41,24 +41,27 @@ func (mat *material) String() string {
 func (mat *material) Use() {
 	mat.T.Use()
 	for i, name := range mat.slots {
+		slot := texture.Slot(i)
 		tex := mat.textures[name]
-		tex.Use(i)
-		mat.T.Int32(name, i)
+		tex.Use(slot)
+		if err := mat.T.Texture2D(name, slot); err != nil {
+			panic(err)
+		}
 	}
 }
 
-func (mat *material) GetTexture(name string) texture.T {
-	if tx, exists := mat.textures[name]; exists {
-		return tx
-	}
-	return nil
-}
-
-func (mat *material) SetTexture(name string, tex texture.T) {
+func (mat *material) Texture(name string, tex texture.T) {
 	if _, exists := mat.textures[name]; exists {
 		mat.textures[name] = tex
 		return
 	}
 	mat.textures[name] = tex
 	mat.slots = append(mat.slots, name)
+}
+
+func (mat *material) TextureSlot(slot int) texture.T {
+	if slot < 0 || slot >= len(mat.slots) {
+		return nil
+	}
+	return mat.textures[mat.slots[slot]]
 }

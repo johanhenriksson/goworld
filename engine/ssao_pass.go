@@ -8,9 +8,12 @@ import (
 	"github.com/johanhenriksson/goworld/math/random"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
+	glshader "github.com/johanhenriksson/goworld/render/backend/gl/shader"
 	gltex "github.com/johanhenriksson/goworld/render/backend/gl/texture"
 	"github.com/johanhenriksson/goworld/render/backend/types"
 	"github.com/johanhenriksson/goworld/render/color"
+	"github.com/johanhenriksson/goworld/render/material"
+	"github.com/johanhenriksson/goworld/render/shader"
 	"github.com/johanhenriksson/goworld/render/texture"
 )
 
@@ -33,10 +36,10 @@ type SSAOPass struct {
 	Noise    texture.T
 	Kernel   []vec3.T
 
-	fbo      *render.FrameBuffer
-	shader   *render.Shader
-	textures *render.TextureMap
-	quad     *Quad
+	fbo    *render.FrameBuffer
+	shader shader.T
+	mat    material.T
+	quad   *Quad
 }
 
 // NewSSAOPass creates a new SSAO pass from a gbuffer and SSAO settings.
@@ -53,15 +56,15 @@ func NewSSAOPass(gbuff *render.GeometryBuffer, settings *SSAOSettings) *SSAOPass
 	// generate noise texture
 	noise := createHemisphereNoiseTexture(4)
 
-	shader := render.CompileShader(
+	shader := glshader.CompileShader(
 		"ssao_pass",
 		"/assets/shaders/pass/postprocess.vs",
 		"/assets/shaders/pass/ssao.fs")
 
-	tx := render.NewTextureMap(shader)
-	tx.Add("tex_normal", gbuff.Normal)
-	tx.Add("tex_position", gbuff.Position)
-	tx.Add("tex_noise", noise)
+	mat := material.New("ssao_pass", shader)
+	mat.Texture("tex_normal", gbuff.Normal)
+	mat.Texture("tex_position", gbuff.Position)
+	mat.Texture("tex_noise", noise)
 
 	// create a render quad
 
@@ -76,19 +79,10 @@ func NewSSAOPass(gbuff *render.GeometryBuffer, settings *SSAOSettings) *SSAOPass
 
 		Gaussian: gaussian,
 
-		fbo:      fbo,
-		shader:   shader,
-		textures: tx,
+		fbo:    fbo,
+		shader: shader,
+		mat:    mat,
 	}
-
-	// set up shader uniforms
-	shader.Use()
-	shader.Int32("kernel_size", len(p.Kernel))
-	shader.Float("bias", p.Bias)
-	shader.Float("radius", p.Radius)
-	shader.Float("power", p.Power)
-	shader.Int32("scale", p.Scale)
-	shader.Vec3Array("samples", p.Kernel)
 
 	return p
 }
@@ -99,10 +93,22 @@ func (p *SSAOPass) Draw(args render.Args, scene scene.T) {
 	render.DepthOutput(false)
 
 	// update projection
-	p.shader.Use()
-	proj := scene.Camera().Projection()
-	p.shader.Mat4("projection", &proj)
-	p.textures.Use()
+	p.mat.Use()
+	if err := p.mat.Int32("kernel_size", len(p.Kernel)); err != nil {
+		panic(err)
+	}
+	if err := p.mat.Float("bias", p.Bias); err != nil {
+		panic(err)
+	}
+	p.mat.Float("radius", p.Radius)
+	p.mat.Float("power", p.Power)
+	if err := p.mat.Int32("scale", p.Scale); err != nil {
+		panic(err)
+	}
+	if err := p.mat.Vec3Array("samples", p.Kernel); err != nil {
+		panic(err)
+	}
+	p.mat.Mat4("projection", scene.Camera().Projection())
 
 	// run occlusion pass
 	p.fbo.Bind()

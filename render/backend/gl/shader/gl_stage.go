@@ -1,7 +1,6 @@
 package shader
 
 import (
-	"fmt"
 	"io/ioutil"
 
 	"github.com/johanhenriksson/goworld/render/backend/gl"
@@ -16,41 +15,13 @@ type stage struct {
 	compiled bool
 }
 
-// CreateStage creates a new empty shader
-func CreateStage(shaderType shader.StageType) shader.Stage {
+// NewStage creates a new empty shader
+func NewStage(shaderType shader.StageType) shader.Stage {
 	id := gl.CreateShader(uint32(shaderType))
 	return &stage{
 		id:       id,
 		stype:    shaderType,
 		compiled: false,
-	}
-}
-
-// VertexShader compiles and returns a vertex shader from the given source file
-// Panics on compilation errors
-func CompileStageFromFile(kind shader.StageType, path string) shader.Stage {
-	s := CreateStage(kind)
-	err := s.CompileFile(path)
-	if err != nil {
-		panic(err)
-	}
-	return s
-}
-
-func StageFromFile(fileName string) shader.Stage {
-	if len(fileName) < 3 {
-		panic(fmt.Errorf("invalid shader filename: %s", fileName))
-	}
-	kind := fileName[len(fileName)-3:]
-	switch kind {
-	case ".fs":
-		return CompileStageFromFile(shader.FragmentShader, fmt.Sprintf("%s.glsl", fileName))
-	case ".vs":
-		return CompileStageFromFile(shader.VertexShader, fmt.Sprintf("%s.glsl", fileName))
-	case ".gs":
-		return CompileStageFromFile(shader.GeometryShader, fmt.Sprintf("%s.glsl", fileName))
-	default:
-		panic(fmt.Errorf("invalid shader type %s: %s", kind, fileName))
 	}
 }
 

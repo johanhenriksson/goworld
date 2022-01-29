@@ -4,7 +4,10 @@ import (
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/johanhenriksson/goworld/core/scene"
 	"github.com/johanhenriksson/goworld/render"
+	glshader "github.com/johanhenriksson/goworld/render/backend/gl/shader"
 	"github.com/johanhenriksson/goworld/render/color"
+	"github.com/johanhenriksson/goworld/render/material"
+	"github.com/johanhenriksson/goworld/render/shader"
 	"github.com/johanhenriksson/goworld/render/texture"
 )
 
@@ -12,10 +15,10 @@ import (
 type GaussianPass struct {
 	Output texture.T
 
-	fbo      *render.FrameBuffer
-	shader   *render.Shader
-	textures *render.TextureMap
-	quad     *Quad
+	fbo    *render.FrameBuffer
+	shader shader.T
+	mat    material.T
+	quad   *Quad
 }
 
 // NewGaussianPass creates a new Gaussian Blur pass.
@@ -23,20 +26,20 @@ func NewGaussianPass(input texture.T) *GaussianPass {
 	fbo := render.CreateFrameBuffer(input.Width(), input.Height())
 	output := fbo.NewBuffer(gl.COLOR_ATTACHMENT0, gl.RED, texture.RGB, gl.FLOAT)
 
-	shader := render.CompileShader(
+	shader := glshader.CompileShader(
 		"gaussian_pass",
 		"/assets/shaders/pass/postprocess.vs",
 		"/assets/shaders/pass/gaussian.fs")
 
-	tx := render.NewTextureMap(shader)
-	tx.Add("tex_input", input)
+	mat := material.New("gaussian_pass", shader)
+	mat.Texture("tex_input", input)
 
 	return &GaussianPass{
-		Output:   output,
-		quad:     NewQuad(shader),
-		fbo:      fbo,
-		shader:   shader,
-		textures: tx,
+		Output: output,
+		quad:   NewQuad(shader),
+		fbo:    fbo,
+		shader: shader,
+		mat:    mat,
 	}
 }
 
@@ -49,8 +52,7 @@ func (p *GaussianPass) DrawPass(args render.Args, scene scene.T) {
 	defer p.fbo.Unbind()
 	p.fbo.Resize(args.Viewport.FrameWidth, args.Viewport.FrameHeight)
 
-	p.shader.Use()
-	p.textures.Use()
+	p.mat.Use()
 
 	render.ClearWith(color.White)
 	p.quad.Draw()

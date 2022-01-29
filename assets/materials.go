@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 
 	"github.com/johanhenriksson/goworld/render"
+	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/texture"
 )
 
@@ -50,10 +51,10 @@ func LoadMaterialDefinition(file string) (*MaterialDefinition, error) {
 	return matf, nil
 }
 
-func LoadMaterial(name string, matf *MaterialDefinition) (*render.Material, error) {
+func LoadMaterial(name string, matf *MaterialDefinition) (material.T, error) {
 	shader := GetShader(matf.Shader)
 
-	mat := render.CreateMaterial(name, shader)
+	mat := material.New(name, shader)
 
 	// load textures
 	for name, txtf := range matf.Textures {
@@ -64,14 +65,14 @@ func LoadMaterial(name string, matf *MaterialDefinition) (*render.Material, erro
 		if txtf.Filter == "nearest" {
 			tex.SetFilter(texture.NearestFilter)
 		}
-		mat.Textures.Add(name, tex)
+		mat.Texture(name, tex)
 	}
 
 	return mat, nil
 }
 
 // GetMaterial returns a new instance of a material
-func GetMaterial(name string) *render.Material {
+func GetMaterial(name string) material.T {
 	path := fmt.Sprintf("assets/materials/%s.json", name)
 	def, err := LoadMaterialDefinition(path)
 	if err != nil {
@@ -91,7 +92,7 @@ func GetMaterial(name string) *render.Material {
 }
 
 // GetMaterialShared returns a shared instance of a material
-func GetMaterialShared(name string) *render.Material {
+func GetMaterialShared(name string) material.T {
 	if mat, exists := cache.Materials[name]; exists {
 		return mat
 	}

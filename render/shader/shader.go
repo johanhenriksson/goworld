@@ -7,6 +7,7 @@ import (
 	"github.com/johanhenriksson/goworld/math/vec4"
 	"github.com/johanhenriksson/goworld/render/backend/types"
 	"github.com/johanhenriksson/goworld/render/color"
+	"github.com/johanhenriksson/goworld/render/texture"
 )
 
 type ShaderID uint32
@@ -29,6 +30,7 @@ type T interface {
 	Bool(string, bool) error
 	RGB(string, color.T) error
 	RGBA(string, color.T) error
+	Texture2D(string, texture.Slot) error
 
 	VertexPointers(interface{}) Pointers
 }

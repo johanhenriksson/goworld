@@ -6,19 +6,22 @@ import (
 	"github.com/johanhenriksson/goworld/assets"
 	"github.com/johanhenriksson/goworld/core/scene"
 	"github.com/johanhenriksson/goworld/render"
+	glshader "github.com/johanhenriksson/goworld/render/backend/gl/shader"
+	"github.com/johanhenriksson/goworld/render/material"
+	"github.com/johanhenriksson/goworld/render/shader"
 	"github.com/johanhenriksson/goworld/render/texture"
 )
 
 // ColorPass represents a color correction pass and its settings.
 type ColorPass struct {
-	Input    *render.ColorBuffer
-	Output   *render.ColorBuffer
-	AO       texture.T
-	Lut      texture.T
-	Gamma    float32
-	shader   *render.Shader
-	textures *render.TextureMap
-	quad     *Quad
+	Input  *render.ColorBuffer
+	Output *render.ColorBuffer
+	AO     texture.T
+	Lut    texture.T
+	Gamma  float32
+	shader shader.T
+	mat    material.T
+	quad   *Quad
 }
 
 // NewColorPass instantiates a new color correction pass.
@@ -27,15 +30,15 @@ func NewColorPass(input *render.ColorBuffer, filter string, ssao texture.T) *Col
 	lutName := fmt.Sprintf("textures/color_grading/%s.png", filter)
 	lut := assets.GetTexture(lutName)
 
-	shader := render.CompileShader(
+	shader := glshader.CompileShader(
 		"color_pass",
 		"/assets/shaders/pass/postprocess.vs",
 		"/assets/shaders/pass/color.fs")
-	tx := render.NewTextureMap(shader)
 
-	tx.Add("tex_input", input.Texture)
-	tx.Add("tex_ssao", ssao)
-	tx.Add("tex_lut", lut)
+	mat := material.New("color_pass", shader)
+	mat.Texture("tex_input", input.Texture)
+	mat.Texture("tex_ssao", ssao)
+	mat.Texture("tex_lut", lut)
 
 	return &ColorPass{
 		Input:  input,
@@ -43,9 +46,9 @@ func NewColorPass(input *render.ColorBuffer, filter string, ssao texture.T) *Col
 		Lut:    lut,
 		Gamma:  1.8,
 
-		quad:     NewQuad(shader),
-		textures: tx,
-		shader:   shader,
+		quad:   NewQuad(shader),
+		mat:    mat,
+		shader: shader,
 	}
 }
 
@@ -56,9 +59,8 @@ func (p *ColorPass) Draw(args render.Args, scene scene.T) {
 	p.Output.Resize(args.Viewport.FrameWidth, args.Viewport.FrameHeight)
 
 	// pass shader settings
-	p.shader.Use()
-	p.textures.Use()
-	p.shader.Float("gamma", p.Gamma)
+	p.mat.Use()
+	p.mat.Float("gamma", p.Gamma)
 
 	render.Clear()
 	render.Blend(true)

@@ -5,6 +5,7 @@ import (
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
+	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/texture"
 	"github.com/johanhenriksson/goworld/render/vertex"
 )
@@ -15,14 +16,14 @@ type Rect struct {
 	Height   float32
 	Invert   bool
 	Depth    bool
-	Material *render.Material
+	Material material.T
 
 	segments int
 	border   float32
 	vao      *render.VertexArray
 }
 
-func NewRect(mat *render.Material, size vec2.T) *Rect {
+func NewRect(mat material.T, size vec2.T) *Rect {
 	q := &Rect{
 		Material: mat,
 		Width:    size.X,
@@ -114,7 +115,7 @@ func (q *Rect) SetSize(size vec2.T) {
 }
 
 func (q *Rect) texture() texture.T {
-	return q.Material.Textures.Slot(0)
+	return q.Material.TextureSlot(0)
 }
 
 func (q *Rect) compute() {
@@ -196,8 +197,8 @@ func (q *Rect) compute() {
 
 func (q *Rect) Draw(args render.Args) {
 	q.Material.Use()
-	q.Material.Mat4("model", &args.Transform)
-	q.Material.Mat4("viewport", &args.VP)
+	q.Material.Mat4("model", args.Transform)
+	q.Material.Mat4("viewport", args.VP)
 	q.Material.Bool("invert", q.Invert)
 	q.Material.Bool("depth", q.Depth)
 	q.vao.Draw()

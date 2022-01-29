@@ -7,9 +7,12 @@ import (
 	"github.com/johanhenriksson/goworld/render/backend/types"
 )
 
+type ID uint32
+type Slot uint32
+
 type T interface {
 	Bind()
-	Use(slot int)
+	Use(slot Slot)
 	FrameBufferTarget(attachment uint32)
 	Resize(width, heigt int)
 	Clear()

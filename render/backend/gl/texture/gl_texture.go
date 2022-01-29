@@ -35,14 +35,14 @@ func New(width, height int) texture.T {
 		id:       id,
 		width:    width,
 		height:   height,
-		format:   ogl.RGBA,
-		internal: ogl.RGBA,
+		format:   texture.RGBA,
+		internal: texture.RGBA,
 		datatype: gl.UInt8,
 		border:   0,
 	}
 	tx.Bind()
 
-	/* Texture parameters - pass as parameters? */
+	// texture parameters
 	tx.SetFilter(texture.LinearFilter)
 	tx.SetWrapMode(texture.ClampWrap)
 
@@ -84,8 +84,8 @@ func (tx *gltexture) SetDataType(t types.Type) {
 }
 
 // Use binds this texture to the given texture slot
-func (tx *gltexture) Use(slot int) {
-	if err := gl.ActiveTexture(gl.TextureSlot(slot)); err != nil {
+func (tx *gltexture) Use(slot texture.Slot) {
+	if err := gl.ActiveTexture(slot); err != nil {
 		panic(err)
 	}
 	tx.Bind()

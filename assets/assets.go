@@ -5,13 +5,16 @@ import (
 	"os"
 
 	"github.com/johanhenriksson/goworld/render"
+	glshader "github.com/johanhenriksson/goworld/render/backend/gl/shader"
 	"github.com/johanhenriksson/goworld/render/color"
+	"github.com/johanhenriksson/goworld/render/material"
+	"github.com/johanhenriksson/goworld/render/shader"
 	"github.com/johanhenriksson/goworld/render/texture"
 )
 
-type ShaderMap map[string]*render.Shader
+type ShaderMap map[string]shader.T
 type TextureMap map[string]texture.T
-type MaterialMap map[string]*render.Material
+type MaterialMap map[string]material.T
 type FontMap map[string]*render.Font
 
 type ResourceCache struct {
@@ -33,7 +36,7 @@ func init() {
 	}
 }
 
-func GetShader(name string) *render.Shader {
+func GetShader(name string) shader.T {
 	// check shader cache
 	if shader, exists := cache.Shaders[name]; exists {
 		return shader
@@ -53,7 +56,7 @@ func GetShader(name string) *render.Shader {
 		files = append(files, gsPath)
 	}
 
-	shader := render.CompileShader(name, files...)
+	shader := glshader.CompileShader(name, files...)
 	cache.Shaders[name] = shader
 
 	return shader

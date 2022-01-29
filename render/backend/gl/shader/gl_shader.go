@@ -11,6 +11,7 @@ import (
 	"github.com/johanhenriksson/goworld/math/vec4"
 	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/shader"
+	"github.com/johanhenriksson/goworld/render/texture"
 	"github.com/johanhenriksson/goworld/render/vertex"
 
 	"github.com/johanhenriksson/goworld/render/backend/gl"
@@ -54,46 +55,46 @@ func Compile(name string, fileNames ...string) shader.T {
 }
 
 // Use binds the program for use in rendering
-func (shader *glshader) Use() {
-	if !shader.linked {
-		panic(fmt.Sprintf("shader %s is not linked", shader.Name))
+func (s *glshader) Use() {
+	if !s.linked {
+		panic(fmt.Sprintf("shader %s is not linked", s.Name))
 	}
-	gl.UseProgram(shader.ID)
-	if shader.Debug {
-		fmt.Println("use shader", shader.Name)
+	gl.UseProgram(s.ID)
+	if s.Debug {
+		fmt.Println("use shader", s.Name)
 	}
 }
 
 // SetFragmentData sets the name of the fragment color output variable
-func (shader *glshader) SetFragmentData(fragVariable string) {
-	if err := gl.BindFragDataLocation(shader.ID, fragVariable); err != nil {
+func (s *glshader) SetFragmentData(fragVariable string) {
+	if err := gl.BindFragDataLocation(s.ID, fragVariable); err != nil {
 		panic(err)
 	}
 }
 
 // Attach a shader to the program. Panics if the program is already linked
-func (shader *glshader) Attach(stage shader.Stage) {
-	if shader.linked {
-		panic(fmt.Sprintf("cant attach, shader %s is already linked", shader.Name))
+func (s *glshader) Attach(stage shader.Stage) {
+	if s.linked {
+		panic(fmt.Sprintf("cant attach, shader %s is already linked", s.Name))
 	}
-	gl.AttachShader(shader.ID, stage.ID())
-	shader.shaders = append(shader.shaders, stage)
+	gl.AttachShader(s.ID, stage.ID())
+	s.shaders = append(s.shaders, stage)
 }
 
 // Link the currently attached shaders into a program. Panics on failure
-func (shader *glshader) Link() {
-	if shader.linked {
+func (s *glshader) Link() {
+	if s.linked {
 		return
 	}
 
-	if err := gl.LinkProgram(shader.ID); err != nil {
-		panic(fmt.Sprintf("failed to compile %s: %s", shader.Name, err))
+	if err := gl.LinkProgram(s.ID); err != nil {
+		panic(fmt.Sprintf("failed to compile %s: %s", s.Name, err))
 	}
 
-	shader.readAttributes()
-	shader.readUniforms()
+	s.readAttributes()
+	s.readUniforms()
 
-	shader.linked = true
+	s.linked = true
 }
 
 // Uniform returns a GLSL uniform location, and a bool indicating whether it exists or not
@@ -148,7 +149,7 @@ func (s *glshader) Vec3(name string, vec vec3.T) error {
 }
 
 func (s *glshader) Vec3Array(name string, vecs []vec3.T) error {
-	if uniform, err := s.Uniform(name); err == nil {
+	if uniform, err := s.Uniform(fmt.Sprintf("%s[0]", name)); err == nil {
 		return gl.UniformVec3fArray(s.ID, uniform, vecs)
 	} else {
 		return err
@@ -167,6 +168,9 @@ func (shader *glshader) Vec4(name string, vec vec4.T) error {
 // Int32 sets an integer 32 uniform value
 func (s *glshader) Int32(name string, value int) error {
 	if uniform, err := s.Uniform(name); err == nil {
+		if name == "depth" {
+			fmt.Println(uniform)
+		}
 		return gl.UniformVec1i(s.ID, uniform, value)
 	} else {
 		return err
@@ -174,20 +178,20 @@ func (s *glshader) Int32(name string, value int) error {
 }
 
 // Uint32 sets an unsigned integer 32 uniform value
-func (shader *glshader) Uint32(name string, value int) error {
-	if uniform, err := shader.Uniform(name); err == nil {
-		return gl.UniformVec1ui(shader.ID, uniform, value)
+func (s *glshader) Uint32(name string, value int) error {
+	if uniform, err := s.Uniform(name); err == nil {
+		return gl.UniformVec1ui(s.ID, uniform, value)
 	} else {
 		return err
 	}
 }
 
-func (shader *glshader) Bool(name string, value bool) error {
-	i := 0
-	if value {
-		i = 1
+func (s *glshader) Bool(name string, value bool) error {
+	if uniform, err := s.Uniform(name); err == nil {
+		return gl.UniformBool(s.ID, uniform, value)
+	} else {
+		return err
 	}
-	return shader.Int32(name, i)
 }
 
 // Float sets a float uniform value
@@ -213,14 +217,22 @@ func (s *glshader) RGB(name string, color color.T) error {
 }
 
 // RGBA sets a uniform to a color RGBA value
-func (shader *glshader) RGBA(name string, color color.T) error {
-	if uniform, err := shader.Uniform(name); err == nil {
-		return gl.UniformVec4f(shader.ID, uniform, vec4.T{
+func (s *glshader) RGBA(name string, color color.T) error {
+	if uniform, err := s.Uniform(name); err == nil {
+		return gl.UniformVec4f(s.ID, uniform, vec4.T{
 			X: color.R,
 			Y: color.G,
 			Z: color.B,
 			W: color.A,
 		})
+	} else {
+		return err
+	}
+}
+
+func (s *glshader) Texture2D(name string, slot texture.Slot) error {
+	if uniform, err := s.Uniform(name); err == nil {
+		return gl.UniformTexture2D(s.ID, uniform, slot)
 	} else {
 		return err
 	}

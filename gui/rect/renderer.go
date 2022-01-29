@@ -8,6 +8,7 @@ import (
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/color"
+	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/texture"
 )
 
@@ -17,7 +18,7 @@ type Renderer interface {
 }
 
 type renderer struct {
-	mat   *render.Material
+	mat   material.T
 	tex   texture.T
 	mesh  *geometry.Rect
 	mesh2 *geometry.Quad
@@ -29,7 +30,7 @@ func (r *renderer) Draw(args render.Args, frame T, props *Props) {
 		r.tex = assets.GetColorTexture(color.White)
 
 		r.mat = assets.GetMaterial("ui_texture")
-		r.mat.Textures.Add("image", r.tex)
+		r.mat.Texture("image", r.tex)
 
 		r.mesh = geometry.NewRect(r.mat, vec2.Zero)
 	}
@@ -52,7 +53,7 @@ func (r *renderer) Draw(args render.Args, frame T, props *Props) {
 
 	r.mat.Use()
 	r.mat.RGBA("tint", props.Color)
-	r.mat.Textures.Set("image", r.tex)
+	r.mat.Texture("image", r.tex)
 	//r.mesh.Draw(args)
 	r.mesh2.Draw(args)
 }
