@@ -8,10 +8,12 @@ import (
 	"github.com/johanhenriksson/goworld/math/random"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
+	glframebuf "github.com/johanhenriksson/goworld/render/backend/gl/framebuffer"
 	glshader "github.com/johanhenriksson/goworld/render/backend/gl/shader"
 	gltex "github.com/johanhenriksson/goworld/render/backend/gl/texture"
 	"github.com/johanhenriksson/goworld/render/backend/types"
 	"github.com/johanhenriksson/goworld/render/color"
+	"github.com/johanhenriksson/goworld/render/framebuffer"
 	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/shader"
 	"github.com/johanhenriksson/goworld/render/texture"
@@ -30,25 +32,25 @@ type SSAOSettings struct {
 type SSAOPass struct {
 	SSAOSettings
 
-	GBuffer  *render.GeometryBuffer
+	GBuffer  framebuffer.Geometry
 	Gaussian *GaussianPass
 	Output   texture.T
 	Noise    texture.T
 	Kernel   []vec3.T
 
-	fbo    *render.FrameBuffer
+	fbo    framebuffer.T
 	shader shader.T
 	mat    material.T
 	quad   *Quad
 }
 
 // NewSSAOPass creates a new SSAO pass from a gbuffer and SSAO settings.
-func NewSSAOPass(gbuff *render.GeometryBuffer, settings *SSAOSettings) *SSAOPass {
-	fbo := render.CreateFrameBuffer(gbuff.Width/settings.Scale, gbuff.Height/settings.Scale)
-	texture := fbo.NewBuffer(gl.COLOR_ATTACHMENT0, gl.RED, gl.RGB, gl.FLOAT) // diffuse (rgb)
+func NewSSAOPass(gbuff framebuffer.Geometry, settings *SSAOSettings) *SSAOPass {
+	fbo := glframebuf.New(gbuff.Width()/settings.Scale, gbuff.Height()/settings.Scale)
+	output := fbo.NewBuffer(gl.COLOR_ATTACHMENT0, gl.RED, gl.RGB, gl.FLOAT)
 
 	// gaussian blur pass
-	gaussian := NewGaussianPass(texture)
+	gaussian := NewGaussianPass(output)
 
 	// generate sample kernel
 	kernel := createSSAOKernel(settings.Samples)
@@ -62,8 +64,8 @@ func NewSSAOPass(gbuff *render.GeometryBuffer, settings *SSAOSettings) *SSAOPass
 		"/assets/shaders/pass/ssao.fs")
 
 	mat := material.New("ssao_pass", shader)
-	mat.Texture("tex_normal", gbuff.Normal)
-	mat.Texture("tex_position", gbuff.Position)
+	mat.Texture("tex_normal", gbuff.Normal())
+	mat.Texture("tex_position", gbuff.Position())
 	mat.Texture("tex_noise", noise)
 
 	// create a render quad
@@ -75,7 +77,7 @@ func NewSSAOPass(gbuff *render.GeometryBuffer, settings *SSAOSettings) *SSAOPass
 
 		Noise:  noise,
 		Kernel: kernel,
-		Output: texture,
+		Output: output,
 
 		Gaussian: gaussian,
 
@@ -113,7 +115,7 @@ func (p *SSAOPass) Draw(args render.Args, scene scene.T) {
 	// run occlusion pass
 	p.fbo.Bind()
 	defer p.fbo.Unbind()
-	p.fbo.Resize(p.GBuffer.Width/p.Scale, p.GBuffer.Height/p.Scale)
+	p.fbo.Resize(p.GBuffer.Width()/p.Scale, p.GBuffer.Height()/p.Scale)
 
 	render.ClearWith(color.White)
 	p.quad.Draw()

@@ -22,7 +22,7 @@ func NewLinePass() *LinePass {
 // DrawPass executes the line pass
 func (p *LinePass) Draw(args render.Args, scene scene.T) {
 	// scene.Camera.Use()
-	render.ScreenBuffer.Bind()
+	render.BindScreenBuffer()
 	render.SetViewport(0, 0, args.Viewport.FrameWidth, args.Viewport.FrameHeight)
 
 	query := object.NewQuery(func(c object.Component) bool {

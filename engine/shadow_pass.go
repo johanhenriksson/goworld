@@ -3,11 +3,11 @@ package engine
 import (
 	"github.com/go-gl/gl/v4.1-core/gl"
 
-	// "github.com/johanhenriksson/goworld/math/mat4"
-	// "github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/core/scene"
 	"github.com/johanhenriksson/goworld/render"
+	glframebuf "github.com/johanhenriksson/goworld/render/backend/gl/framebuffer"
 	"github.com/johanhenriksson/goworld/render/color"
+	"github.com/johanhenriksson/goworld/render/framebuffer"
 	"github.com/johanhenriksson/goworld/render/texture"
 )
 
@@ -17,24 +17,24 @@ type ShadowPass struct {
 	Width  int
 	Height int
 
-	shadowmap *render.FrameBuffer
+	shadowmap framebuffer.Depth
 }
 
 // NewShadowPass creates a new shadow pass
-func NewShadowPass(input *render.GeometryBuffer) *ShadowPass {
+func NewShadowPass() *ShadowPass {
 	size := 4096
-	fbo := render.CreateFrameBuffer(size, size)
-	texture := fbo.NewBuffer(gl.DEPTH_ATTACHMENT, gl.DEPTH_COMPONENT24, gl.DEPTH_COMPONENT, gl.FLOAT)
+	fbo := glframebuf.NewDepth(size, size)
 
 	// set the shadow buffer texture to clamp to a white border so that samples
 	// outside the map do not fall in shadow.
+	fbo.Depth().Bind()
 	border := []float32{1, 1, 1, 1}
 	gl.TexParameterfv(gl.TEXTURE_2D, gl.TEXTURE_BORDER_COLOR, &border[0])
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_BORDER)
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_BORDER)
 
 	p := &ShadowPass{
-		Output: texture,
+		Output: fbo.Depth(),
 		Width:  size,
 		Height: size,
 

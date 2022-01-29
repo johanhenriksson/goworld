@@ -59,7 +59,7 @@ func NewRenderer(window window.T) *Renderer {
 	})
 
 	r.Colors = NewColorPass(r.Light.Output, "saturated", r.SSAO.Gaussian.Output)
-	r.Output = NewOutputPass(r.Colors.Output, r.Geometry.Buffer)
+	r.Output = NewOutputPass(r.Colors.Output.Texture(), r.Geometry.Buffer.Depth())
 
 	r.Lines = NewLinePass()
 	// r.Particles = NewParticlePass()
@@ -92,8 +92,12 @@ func (r *Renderer) Reset() {
 
 // Draw the world.
 func (r *Renderer) Draw(scene scene.T) {
+	args := ArgsFromWindow(r.window)
+
 	// clear screen buffer
-	render.ScreenBuffer.Bind()
+	render.BindScreenBuffer()
+	render.SetViewport(0, 0, args.Viewport.FrameWidth, args.Viewport.FrameHeight)
+
 	gl.ClearColor(0.9, 0.9, 0.9, 1.0)
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
@@ -104,8 +108,6 @@ func (r *Renderer) Draw(scene scene.T) {
 	// enable depth test
 	render.DepthTest(true)
 	gl.DepthFunc(gl.LESS)
-
-	args := ArgsFromWindow(r.window)
 
 	r.Pre.Draw(args, scene)
 	r.Geometry.Draw(args, scene)

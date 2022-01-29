@@ -72,7 +72,8 @@ func (m *Manager) Draw(args render.Args, scene scene.T) {
 	// clear depth buffer
 	gl.Clear(gl.DEPTH_BUFFER_BIT)
 
-	render.ScreenBuffer.Bind()
+	render.BindScreenBuffer()
+	render.SetViewport(0, 0, args.Viewport.FrameWidth, args.Viewport.FrameHeight)
 	for _, el := range m.Children {
 		el.Draw(args)
 	}

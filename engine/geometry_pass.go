@@ -4,7 +4,9 @@ import (
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/core/scene"
 	"github.com/johanhenriksson/goworld/render"
+	glframebuf "github.com/johanhenriksson/goworld/render/backend/gl/framebuffer"
 	"github.com/johanhenriksson/goworld/render/color"
+	"github.com/johanhenriksson/goworld/render/framebuffer"
 )
 
 type DeferredDrawable interface {
@@ -13,13 +15,13 @@ type DeferredDrawable interface {
 
 // GeometryPass draws the scene geometry to a G-buffer
 type GeometryPass struct {
-	Buffer *render.GeometryBuffer
+	Buffer framebuffer.Geometry
 }
 
 // NewGeometryPass sets up a geometry pass.
 func NewGeometryPass(bufferWidth, bufferHeight int) *GeometryPass {
 	p := &GeometryPass{
-		Buffer: render.CreateGeometryBuffer(bufferWidth, bufferHeight),
+		Buffer: glframebuf.NewGeometry(bufferWidth, bufferHeight),
 	}
 	return p
 }

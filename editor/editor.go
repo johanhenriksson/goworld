@@ -10,8 +10,8 @@ import (
 	"github.com/johanhenriksson/goworld/geometry/plane"
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/math/vec3"
-	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/color"
+	"github.com/johanhenriksson/goworld/render/framebuffer"
 )
 
 // Editor base struct
@@ -36,14 +36,14 @@ type Editor struct {
 
 	bounds  *box.T
 	mesh    *game.ChunkMesh
-	gbuffer *render.GeometryBuffer
+	gbuffer framebuffer.Geometry
 
 	cursorPos    vec3.T
 	cursorNormal vec3.T
 }
 
 // NewEditor creates a new editor application
-func NewEditor(chunk *game.Chunk, cam camera.T, gbuffer *render.GeometryBuffer) *Editor {
+func NewEditor(chunk *game.Chunk, cam camera.T, gbuffer framebuffer.Geometry) *Editor {
 	e := &Editor{
 		T:       object.New("Editor"),
 		Chunk:   chunk,
@@ -149,10 +149,8 @@ func (e *Editor) cursorPositionNormal(cursor vec2.T) (bool, vec3.T, vec3.T) {
 		return false, vec3.Zero, vec3.Zero
 	}
 
-	position := e.Camera.Unproject(vec3.Extend(
-		cursor.Div(e.gbuffer.Depth.Size()),
-		depth,
-	))
+	point := vec3.Extend(cursor.Div(e.gbuffer.Size()), depth)
+	position := e.Camera.Unproject(point)
 
 	viewInv := e.Camera.ViewInv()
 	normal := viewInv.TransformDir(viewNormal)

@@ -13,10 +13,11 @@ type Slot uint32
 type T interface {
 	Bind()
 	Use(slot Slot)
-	FrameBufferTarget(attachment uint32)
 	Resize(width, heigt int)
 	Clear()
 
+	ID() ID
+	MipLevel() int
 	Size() vec2.T
 	Width() int
 	Height() int

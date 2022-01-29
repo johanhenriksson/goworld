@@ -49,6 +49,7 @@ func New(width, height int) texture.T {
 	return tx
 }
 
+func (tx *gltexture) ID() texture.ID                 { return texture.ID(tx.id) }
 func (tx *gltexture) Filter() texture.Filter         { return tx.filter }
 func (tx *gltexture) WrapMode() texture.WrapMode     { return tx.wrap }
 func (tx *gltexture) Format() texture.Format         { return tx.format }
@@ -56,6 +57,7 @@ func (tx *gltexture) InternalFormat() texture.Format { return tx.internal }
 func (tx *gltexture) Width() int                     { return tx.width }
 func (tx *gltexture) Height() int                    { return tx.height }
 func (tx *gltexture) DataType() types.Type           { return tx.datatype.Cast() }
+func (tx *gltexture) MipLevel() int                  { return int(tx.miplevel) }
 
 func (tx *gltexture) Size() vec2.T {
 	return vec2.New(float32(tx.width), float32(tx.height))
@@ -102,11 +104,6 @@ func (tx *gltexture) Bind() {
 	case ogl.INVALID_OPERATION:
 		panic("texture was previously created with a target that doesn't match that of target.")
 	}
-}
-
-// FrameBufferTarget attaches this texture to the current frame buffer object
-func (tx *gltexture) FrameBufferTarget(attachment uint32) {
-	ogl.FramebufferTexture(ogl.FRAMEBUFFER, attachment, tx.id, tx.miplevel)
 }
 
 // Clear the texture

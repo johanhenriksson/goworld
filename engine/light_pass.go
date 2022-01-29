@@ -5,16 +5,18 @@ import (
 	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
+	glframebuf "github.com/johanhenriksson/goworld/render/backend/gl/framebuffer"
 	glshader "github.com/johanhenriksson/goworld/render/backend/gl/shader"
 	"github.com/johanhenriksson/goworld/render/color"
+	"github.com/johanhenriksson/goworld/render/framebuffer"
 	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/shader"
 )
 
 // LightPass draws the deferred lighting pass
 type LightPass struct {
-	GBuffer        *render.GeometryBuffer
-	Output         *render.ColorBuffer
+	GBuffer        framebuffer.Geometry
+	Output         framebuffer.Color
 	Shadows        *ShadowPass
 	Ambient        color.T
 	ShadowStrength float32
@@ -27,9 +29,9 @@ type LightPass struct {
 }
 
 // NewLightPass creates a new deferred lighting pass
-func NewLightPass(input *render.GeometryBuffer) *LightPass {
+func NewLightPass(input framebuffer.Geometry) *LightPass {
 	// child passes
-	shadowPass := NewShadowPass(input)
+	shadowPass := NewShadowPass()
 
 	// instantiate light pass shader
 	shader := glshader.CompileShader(
@@ -39,14 +41,14 @@ func NewLightPass(input *render.GeometryBuffer) *LightPass {
 
 	// add gbuffer, shadow and ssao pass inputs
 	mat := material.New("light_pass", shader)
-	mat.Texture("tex_diffuse", input.Diffuse)
-	mat.Texture("tex_normal", input.Normal)
-	mat.Texture("tex_depth", input.Depth)
+	mat.Texture("tex_diffuse", input.Diffuse())
+	mat.Texture("tex_normal", input.Normal())
+	mat.Texture("tex_depth", input.Depth())
 	mat.Texture("tex_shadow", shadowPass.Output)
 
 	p := &LightPass{
 		GBuffer:        input,
-		Output:         render.NewColorBuffer(input.Width, input.Height),
+		Output:         glframebuf.NewColor(input.Width(), input.Height()),
 		Shadows:        shadowPass,
 		Ambient:        color.RGB(0.25, 0.25, 0.25),
 		ShadowStrength: 0.3,

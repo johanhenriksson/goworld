@@ -1,10 +1,13 @@
 package engine
 
 import (
-	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/core/scene"
 	"github.com/johanhenriksson/goworld/render"
+	glframebuf "github.com/johanhenriksson/goworld/render/backend/gl/framebuffer"
+	"github.com/johanhenriksson/goworld/render/framebuffer"
+
+	"github.com/go-gl/gl/v4.1-core/gl"
 )
 
 type ForwardDrawable interface {
@@ -13,18 +16,18 @@ type ForwardDrawable interface {
 
 // ForwardPass holds information required to perform a forward rendering pass.
 type ForwardPass struct {
-	output  *render.ColorBuffer
-	gbuffer *render.GeometryBuffer
-	fbo     *render.FrameBuffer
+	output  framebuffer.Color
+	gbuffer framebuffer.Geometry
+	fbo     framebuffer.T
 }
 
 // NewForwardPass sets up a forward pass.
-func NewForwardPass(gbuffer *render.GeometryBuffer, output *render.ColorBuffer) *ForwardPass {
-	fbo := render.CreateFrameBuffer(gbuffer.Width, gbuffer.Height)
-	fbo.AttachBuffer(gl.COLOR_ATTACHMENT0, output.Texture)
-	fbo.AttachBuffer(gl.COLOR_ATTACHMENT1, gbuffer.Normal)
-	fbo.AttachBuffer(gl.COLOR_ATTACHMENT2, gbuffer.Position)
-	fbo.AttachBuffer(gl.DEPTH_ATTACHMENT, gbuffer.Depth)
+func NewForwardPass(gbuffer framebuffer.Geometry, output framebuffer.Color) *ForwardPass {
+	fbo := glframebuf.NewGeometry(gbuffer.Width(), gbuffer.Height())
+	fbo.AttachBuffer(gl.COLOR_ATTACHMENT0, output.Texture())
+	fbo.AttachBuffer(gl.COLOR_ATTACHMENT1, gbuffer.Normal())
+	fbo.AttachBuffer(gl.COLOR_ATTACHMENT2, gbuffer.Position())
+	fbo.AttachBuffer(gl.DEPTH_ATTACHMENT, gbuffer.Depth())
 
 	return &ForwardPass{
 		fbo:     fbo,

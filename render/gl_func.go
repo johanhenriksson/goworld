@@ -19,3 +19,7 @@ func ClearWith(color color.T) {
 func ClearDepth() {
 	gl.Clear(gl.DEPTH_BUFFER_BIT)
 }
+
+func BindScreenBuffer() {
+	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
+}

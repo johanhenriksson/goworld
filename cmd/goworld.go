@@ -20,19 +20,16 @@ package main
 import (
 	"fmt"
 
-	"github.com/johanhenriksson/goworld/core/camera"
 	"github.com/johanhenriksson/goworld/core/scene"
 	"github.com/johanhenriksson/goworld/core/window"
 	"github.com/johanhenriksson/goworld/editor"
 	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/game"
 	"github.com/johanhenriksson/goworld/gui"
-	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/lsfn/ode"
 
 	"github.com/johanhenriksson/goworld/geometry/gizmo/mover"
 	"github.com/johanhenriksson/goworld/math/vec3"
-	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/ui"
 )
 
@@ -54,18 +51,11 @@ func main() {
 		panic(err)
 	}
 
-	// dirty hack
-	fwidth, fheight := wnd.BufferSize()
-	render.ScreenBuffer.Width, render.ScreenBuffer.Height = fwidth, fheight
-
 	// app := engine.NewApplication("goworld", 1400, 1000)
 	renderer := engine.NewRenderer(wnd)
 
 	uim := ui.NewManager(1600, 900)
 	renderer.Append("ui", uim)
-
-	// create a cam
-	cam := camera.New(55.0, 0.1, 600, color.Hex("#eddaab"))
 
 	gizmo := mover.New(mover.Args{})
 	gizmo.Transform().SetPosition(vec3.New(-1, 0, -1))
@@ -89,7 +79,7 @@ func main() {
 	scene.Adopt(player)
 
 	// create editor
-	edit := editor.NewEditor(chunk, cam, renderer.Geometry.Buffer)
+	edit := editor.NewEditor(chunk, player.Camera, renderer.Geometry.Buffer)
 	scene.Adopt(edit)
 	uim.Attach(edit.Palette)
 
