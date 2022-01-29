@@ -32,17 +32,17 @@ type mesh struct {
 
 // New creates a new mesh component
 func New(material *render.Material) T {
-	return NewPrimitiveMesh(render.Triangles, render.Geometry, material)
+	return NewPrimitiveMesh(render.Triangles, material)
 }
 
 // NewLines creates a new line mesh component
 func NewLines() T {
 	material := assets.GetMaterialShared("lines")
-	return NewPrimitiveMesh(render.Lines, render.Line, material)
+	return NewPrimitiveMesh(render.Lines, material)
 }
 
 // NewPrimitiveMesh creates a new mesh composed of a given GL primitive
-func NewPrimitiveMesh(primitive render.GLPrimitive, pass render.Pass, material *render.Material) *mesh {
+func NewPrimitiveMesh(primitive render.GLPrimitive, material *render.Material) *mesh {
 	m := &mesh{
 		Component: object.NewComponent(),
 		material:  material,
@@ -61,10 +61,6 @@ func (m mesh) Name() string {
 }
 
 func (m *mesh) DrawDeferred(args render.Args) {
-	if m.material.Pass() != render.Geometry {
-		return
-	}
-
 	m.material.Use()
 	shader := m.material.Shader
 
@@ -79,10 +75,6 @@ func (m *mesh) DrawDeferred(args render.Args) {
 }
 
 func (m *mesh) DrawForward(args render.Args) {
-	if m.material.Pass() != render.Forward {
-		return
-	}
-
 	m.material.Use()
 	shader := m.material.Shader
 
@@ -96,10 +88,6 @@ func (m *mesh) DrawForward(args render.Args) {
 }
 
 func (m *mesh) DrawLines(args render.Args) {
-	if m.material.Pass() != render.Line {
-		return
-	}
-
 	m.material.Use()
 	m.material.Mat4("mvp", &args.MVP)
 

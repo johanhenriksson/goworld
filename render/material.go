@@ -10,16 +10,14 @@ type Material struct {
 	Textures *TextureMap
 
 	name string
-	pass Pass
 }
 
 // CreateMaterial instantiates a new empty material
-func CreateMaterial(name string, pass Pass, shader *Shader) *Material {
+func CreateMaterial(name string, shader *Shader) *Material {
 	return &Material{
 		Shader:   shader,
 		Textures: NewTextureMap(shader),
 		name:     name,
-		pass:     pass,
 	}
 }
 
@@ -31,8 +29,4 @@ func (mat *Material) String() string {
 func (mat *Material) Use() {
 	mat.Shader.Use()
 	mat.Textures.Use()
-}
-
-func (mat *Material) Pass() Pass {
-	return mat.pass
 }

@@ -92,10 +92,6 @@ func (ps *ParticleSystem) remove(i int) {
 
 // Draw the particle system
 func (ps *ParticleSystem) Draw(args render.Args) {
-	if args.Pass != render.Particles {
-		return
-	}
-
 	args = args.Apply(ps.World())
 
 	render.Blend(true)

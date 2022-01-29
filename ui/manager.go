@@ -47,10 +47,6 @@ func NewManager(width, height float32) *Manager {
 	return m
 }
 
-func (m *Manager) Type() render.Pass {
-	return render.UI
-}
-
 // Attach a child component
 func (m *Manager) Attach(child Component) {
 	m.Children = append(m.Children, child)

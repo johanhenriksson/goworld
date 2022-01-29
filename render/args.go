@@ -16,8 +16,6 @@ type Args struct {
 	Transform  mat4.T
 	Position   vec3.T
 	Viewport   Viewport
-
-	Pass Pass
 }
 
 type Viewport struct {

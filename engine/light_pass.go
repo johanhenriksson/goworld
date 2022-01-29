@@ -65,10 +65,6 @@ func NewLightPass(input *render.GeometryBuffer) *LightPass {
 	return p
 }
 
-func (p *LightPass) Type() render.Pass {
-	return render.Lights
-}
-
 func (p *LightPass) setLightUniforms(light *render.Light) {
 	// compute world to lightspace (light view projection) matrix
 	// note: this is only for directional lights
