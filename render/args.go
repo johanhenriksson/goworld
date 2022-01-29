@@ -15,7 +15,17 @@ type Args struct {
 	View       mat4.T
 	Transform  mat4.T
 	Position   vec3.T
-	Pass       Pass
+	Viewport   Viewport
+
+	Pass Pass
+}
+
+type Viewport struct {
+	Width       int
+	Height      int
+	FrameWidth  int
+	FrameHeight int
+	Scale       float32
 }
 
 // Apply the effects of a transform

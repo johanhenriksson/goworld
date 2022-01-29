@@ -49,9 +49,10 @@ func NewColorPass(input *render.ColorBuffer, filter string, ssao *render.Texture
 }
 
 // DrawPass applies color correction to the scene
-func (p *ColorPass) Draw(scene scene.T) {
+func (p *ColorPass) Draw(args render.Args, scene scene.T) {
 	p.Output.Bind()
 	defer p.Output.Unbind()
+	p.Output.Resize(args.Viewport.FrameWidth, args.Viewport.FrameHeight)
 
 	// pass shader settings
 	p.shader.Use()

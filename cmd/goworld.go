@@ -54,20 +54,18 @@ func main() {
 		panic(err)
 	}
 
+	// dirty hack
 	fwidth, fheight := wnd.BufferSize()
 	render.ScreenBuffer.Width, render.ScreenBuffer.Height = fwidth, fheight
-	fmt.Printf("buffer %+v\n", render.ScreenBuffer)
-	aspect := float32(fwidth) / float32(fheight)
 
 	// app := engine.NewApplication("goworld", 1400, 1000)
-	renderer := engine.NewRenderer()
+	renderer := engine.NewRenderer(wnd)
 
 	uim := ui.NewManager(1600, 900)
 	renderer.Append("ui", uim)
 
 	// create a cam
-	cam := camera.New(aspect, 55.0, 0.1, 600, color.Hex("#eddaab"))
-	scene.SetCamera(cam)
+	cam := camera.New(55.0, 0.1, 600, color.Hex("#eddaab"))
 
 	gizmo := mover.New(mover.Args{})
 	gizmo.Transform().SetPosition(vec3.New(-1, 0, -1))
@@ -78,7 +76,7 @@ func main() {
 	chunk := world.AddChunk(0, 0)
 
 	// first person controls
-	player := game.NewPlayer(vec3.New(1, 22, 1), cam, func(player *game.Player, target vec3.T) (bool, vec3.T) {
+	player := game.NewPlayer(vec3.New(1, 22, 1), func(player *game.Player, target vec3.T) (bool, vec3.T) {
 		height := world.HeightAt(target)
 		if target.Y < height {
 			return true, vec3.New(target.X, height, target.Z)
@@ -87,6 +85,7 @@ func main() {
 	})
 	player.Flying = true
 	player.Eye.Transform().SetRotation(vec3.New(22, 135, 0))
+	scene.SetCamera(player.Camera)
 	scene.Adopt(player)
 
 	// create editor

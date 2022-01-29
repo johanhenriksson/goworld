@@ -57,18 +57,16 @@ func (m *Manager) Attach(child Component) {
 }
 
 // DrawPass draws the UI
-func (m *Manager) Draw(scene scene.T) {
+func (m *Manager) Draw(args render.Args, scene scene.T) {
 	p := m.Viewport
 	v := mat4.Ident() // unused by UI
 	vp := p           // unused by UI
 
-	args := render.Args{
-		Projection: p,
-		View:       v,
-		VP:         vp,
-		MVP:        vp,
-		Transform:  mat4.Ident(),
-	}
+	args.Projection = p
+	args.View = v
+	args.VP = vp
+	args.MVP = vp
+	args.Transform = mat4.Ident()
 
 	// ensure back face culling is disabled
 	// since UI is scaled by Y-1, we only want back faces

@@ -82,7 +82,7 @@ func CreateFrameBuffer(width, height int) *FrameBuffer {
 // Bind the frame buffer for drawing
 func (f *FrameBuffer) Bind() {
 	// set viewport size equal to buffer size
-	Viewport(0, 0, f.Width, f.Height)
+	SetViewport(0, 0, f.Width, f.Height)
 
 	// bind this frame buffer
 	gl.BindFramebuffer(gl.FRAMEBUFFER, f.id)
@@ -128,6 +128,11 @@ func (f *FrameBuffer) DrawBuffers() {
 }
 
 func (f *FrameBuffer) Resize(width, height int) {
+	// ensure that the size has actually changed first
+	if f.Width == width && f.Height == height {
+		return
+	}
+
 	f.Width = width
 	f.Height = height
 	for _, buffer := range f.Buffers {

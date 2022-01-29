@@ -33,10 +33,9 @@ func NewForwardPass(gbuffer *render.GeometryBuffer, output *render.ColorBuffer) 
 	}
 }
 
-func (p *ForwardPass) Resize(width, height int) {}
-
 // DrawPass executes the forward pass
-func (p *ForwardPass) Draw(scene scene.T) {
+func (p *ForwardPass) Draw(args render.Args, scene scene.T) {
+
 	// setup rendering
 	render.Blend(true)
 	render.BlendMultiply()
@@ -54,6 +53,7 @@ func (p *ForwardPass) Draw(scene scene.T) {
 	p.fbo.Bind()
 	defer p.fbo.Unbind()
 	p.fbo.DrawBuffers()
+	p.fbo.Resize(args.Viewport.FrameWidth, args.Viewport.FrameHeight)
 
 	// disable depth testing
 	// todo: should be disabled for transparent things, not everything
@@ -65,7 +65,7 @@ func (p *ForwardPass) Draw(scene scene.T) {
 	})
 	scene.Collect(&query)
 
-	args := ArgsFromCamera(scene.Camera())
+	args = ArgsWithCamera(args, scene.Camera())
 	for _, component := range query.Results {
 		drawable := component.(ForwardDrawable)
 		drawable.DrawForward(args.Apply(component.Object().Transform().World()))

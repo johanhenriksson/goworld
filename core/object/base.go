@@ -24,7 +24,7 @@ func (b *base) Name() string { return "Component" }
 func (b *base) Object() T { return b.parent }
 
 // SetObject sets the parent object
-func (b *base) SetObject(o T) {
+func (b *base) AttachTo(o T) {
 	b.parent = o
 }
 

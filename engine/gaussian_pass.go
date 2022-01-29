@@ -40,12 +40,13 @@ func NewGaussianPass(input *render.Texture) *GaussianPass {
 }
 
 // DrawPass draws the gaussian blurred output to the frame buffer.
-func (p *GaussianPass) DrawPass(scene scene.T) {
+func (p *GaussianPass) DrawPass(args render.Args, scene scene.T) {
 	render.Blend(false)
 	render.DepthOutput(false)
 
 	p.fbo.Bind()
 	defer p.fbo.Unbind()
+	p.fbo.Resize(args.Viewport.FrameWidth, args.Viewport.FrameHeight)
 
 	p.shader.Use()
 	p.textures.Use()

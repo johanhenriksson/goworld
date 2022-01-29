@@ -16,12 +16,6 @@ type GeometryPass struct {
 	Buffer *render.GeometryBuffer
 }
 
-// Resize is called on window resize. Should update any window size-dependent buffers
-func (p *GeometryPass) Resize(width, height int) {
-	// recreate gbuffer
-	p.Buffer.Resize(width, height)
-}
-
 // NewGeometryPass sets up a geometry pass.
 func NewGeometryPass(bufferWidth, bufferHeight int) *GeometryPass {
 	p := &GeometryPass{
@@ -31,8 +25,11 @@ func NewGeometryPass(bufferWidth, bufferHeight int) *GeometryPass {
 }
 
 // DrawPass executes the geometry pass
-func (p *GeometryPass) Draw(scene scene.T) {
+func (p *GeometryPass) Draw(args render.Args, scene scene.T) {
 	p.Buffer.Bind()
+	defer p.Buffer.Unbind()
+	p.Buffer.Resize(args.Viewport.FrameWidth, args.Viewport.FrameHeight)
+
 	render.ClearWith(color.Black)
 	render.ClearDepth()
 
@@ -44,13 +41,11 @@ func (p *GeometryPass) Draw(scene scene.T) {
 	query := object.NewQuery(DeferredDrawableQuery)
 	scene.Collect(&query)
 
-	args := ArgsFromCamera(scene.Camera())
+	args = ArgsWithCamera(args, scene.Camera())
 	for _, component := range query.Results {
 		drawable := component.(DeferredDrawable)
 		drawable.DrawDeferred(args.Apply(component.Object().Transform().World()))
 	}
-
-	p.Buffer.Unbind()
 }
 
 // DeferedDrawableQuery is an object query predicate that matches any component

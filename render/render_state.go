@@ -56,7 +56,7 @@ func (s *State) Enable() {
 	DepthOutput(s.DepthOutput)
 
 	ClearColor(s.ClearColor)
-	Viewport(s.X, s.Y, s.Width, s.Height)
+	SetViewport(s.X, s.Y, s.Width, s.Height)
 	CullFace(s.CullMode)
 }
 
@@ -132,7 +132,7 @@ func ClearColor(color color.T) {
 	// }
 }
 
-func Viewport(x, y, w, h int) {
+func SetViewport(x, y, w, h int) {
 	if state.Width != w || state.Height != h || state.Y != y || state.X != x {
 		gl.Viewport(int32(x), int32(y), int32(w), int32(h))
 		state.Width = w

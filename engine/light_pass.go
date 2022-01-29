@@ -69,12 +69,6 @@ func (p *LightPass) Type() render.Pass {
 	return render.Lights
 }
 
-// Resize is called on window resize. Should update any window size-dependent buffers
-func (p *LightPass) Resize(width, height int) {
-	// p.SSAO.Resize(width, height)
-	p.Output.Resize(width, height)
-}
-
 func (p *LightPass) setLightUniforms(light *render.Light) {
 	// compute world to lightspace (light view projection) matrix
 	// note: this is only for directional lights
@@ -95,13 +89,14 @@ func (p *LightPass) setLightUniforms(light *render.Light) {
 }
 
 // Draw executes the deferred lighting pass.
-func (p *LightPass) Draw(scene scene.T) {
+func (p *LightPass) Draw(args render.Args, scene scene.T) {
 	// compute camera view projection inverse
 	vInv := scene.Camera().ViewInv()
 	vpInv := scene.Camera().ViewProjInv()
 
 	// clear output buffer
 	p.Output.Bind()
+	p.Output.Resize(args.Viewport.FrameWidth, args.Viewport.FrameHeight)
 	render.ClearWith(scene.Camera().ClearColor())
 
 	// enable back face culling

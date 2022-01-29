@@ -123,6 +123,11 @@ func (tx *Texture) Clear() {
 }
 
 func (tx *Texture) Resize(width, height int) {
+	// ensure that the size has actually changed first
+	if tx.Width == width && tx.Height == height {
+		return
+	}
+
 	tx.Width = width
 	tx.Height = height
 	tx.Clear()

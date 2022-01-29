@@ -91,7 +91,7 @@ func NewSSAOPass(gbuff *render.GeometryBuffer, settings *SSAOSettings) *SSAOPass
 }
 
 // DrawPass draws the SSAO texture.
-func (p *SSAOPass) Draw(scene scene.T) {
+func (p *SSAOPass) Draw(args render.Args, scene scene.T) {
 	render.Blend(false)
 	render.DepthOutput(false)
 
@@ -103,14 +103,14 @@ func (p *SSAOPass) Draw(scene scene.T) {
 
 	// run occlusion pass
 	p.fbo.Bind()
+	defer p.fbo.Unbind()
+	p.fbo.Resize(p.GBuffer.Width/p.Scale, p.GBuffer.Height/p.Scale)
 
 	render.ClearWith(color.White)
 	p.quad.Draw()
 
-	p.fbo.Unbind()
-
 	// run blur pass
-	p.Gaussian.DrawPass(scene)
+	p.Gaussian.DrawPass(args, scene)
 
 	render.DepthOutput(true)
 }

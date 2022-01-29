@@ -8,13 +8,15 @@ import (
 	"github.com/johanhenriksson/goworld/math"
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/math/vec3"
+	"github.com/johanhenriksson/goworld/render/color"
 )
 
 type CollisionCheck func(*Player, vec3.T) (bool, vec3.T)
 
 type Player struct {
 	object.T
-	Eye object.T
+	Eye    object.T
+	Camera camera.T
 
 	Gravity     float32
 	Speed       float32
@@ -26,18 +28,18 @@ type Player struct {
 	Flying      bool
 	Grounded    bool
 
-	camera    camera.T
 	collide   CollisionCheck
 	velocity  vec3.T
 	keys      keys.State
 	mouselook bool
 }
 
-func NewPlayer(position vec3.T, cam camera.T, collide CollisionCheck) *Player {
+func NewPlayer(position vec3.T, collide CollisionCheck) *Player {
+	cam := camera.New(55.0, 0.1, 600, color.Hex("#eddaab"))
 	p := &Player{
 		T:           object.New("Player"),
 		Eye:         object.New("Eye"),
-		camera:      cam,
+		Camera:      cam,
 		collide:     collide,
 		Gravity:     float32(53),
 		Speed:       float32(60),

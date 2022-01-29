@@ -27,7 +27,7 @@ func NewParticlePass() *ParticlePass {
 func (p *ParticlePass) Resize(width, height int) {}
 
 // DrawPass executes the particle pass
-func (p *ParticlePass) Draw(scene scene.T) {
+func (p *ParticlePass) Draw(args render.Args, scene scene.T) {
 
 }
 

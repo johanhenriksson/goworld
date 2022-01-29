@@ -6,6 +6,7 @@ import (
 	"github.com/go-gl/gl/v4.1-core/gl"
 
 	"github.com/johanhenriksson/goworld/core/scene"
+	"github.com/johanhenriksson/goworld/core/window"
 	"github.com/johanhenriksson/goworld/render"
 )
 
@@ -21,7 +22,9 @@ type PostPass interface {
 type Renderer struct {
 	Passes  []DrawPass
 	passMap PassMap
+	window  window.T
 
+	Pre       *PrePass
 	Output    *OutputPass
 	Geometry  *GeometryPass
 	Light     *LightPass
@@ -33,14 +36,14 @@ type Renderer struct {
 }
 
 // NewRenderer instantiates a new rendering pipeline.
-func NewRenderer() *Renderer {
+func NewRenderer(window window.T) *Renderer {
 	r := &Renderer{
 		Passes:  []DrawPass{},
 		passMap: make(PassMap),
+		window:  window,
 	}
 
-	width, height := render.ScreenBuffer.Width, render.ScreenBuffer.Height
-
+	width, height := window.BufferSize()
 	r.Geometry = NewGeometryPass(width, height)
 	r.Light = NewLightPass(r.Geometry.Buffer)
 
@@ -61,12 +64,6 @@ func NewRenderer() *Renderer {
 	// r.Particles = NewParticlePass()
 
 	return r
-}
-
-func (r *Renderer) Resize(width, height int) {
-	r.Geometry.Resize(width, height)
-	r.Light.Resize(width, height)
-	r.Colors.Resize(width, height)
 }
 
 // Append a new render pass
@@ -107,16 +104,19 @@ func (r *Renderer) Draw(scene scene.T) {
 	render.DepthTest(true)
 	gl.DepthFunc(gl.LESS)
 
-	r.Geometry.Draw(scene)
-	r.Light.Draw(scene)
-	r.Forward.Draw(scene)
-	r.SSAO.Draw(scene)
-	r.Colors.Draw(scene)
-	r.Output.Draw(scene)
-	r.Lines.Draw(scene)
+	args := ArgsFromWindow(r.window)
+
+	r.Pre.Draw(args, scene)
+	r.Geometry.Draw(args, scene)
+	r.Light.Draw(args, scene)
+	r.Forward.Draw(args, scene)
+	r.SSAO.Draw(args, scene)
+	r.Colors.Draw(args, scene)
+	r.Output.Draw(args, scene)
+	r.Lines.Draw(args, scene)
 	// r.Particles.Draw(scene)
 
 	for _, pass := range r.Passes {
-		pass.Draw(scene)
+		pass.Draw(args, scene)
 	}
 }

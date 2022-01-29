@@ -70,7 +70,7 @@ func (o *object) Attach(components ...Component) {
 	for _, component := range components {
 		// attach it
 		o.components = append(o.components, component)
-		component.SetObject(o)
+		component.AttachTo(o)
 	}
 }
 

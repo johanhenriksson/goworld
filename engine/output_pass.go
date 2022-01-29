@@ -36,8 +36,9 @@ func NewOutputPass(input *render.ColorBuffer, gbuffer *render.GeometryBuffer) *O
 }
 
 // DrawPass draws the input texture to the scene camera buffer.
-func (p *OutputPass) Draw(scene scene.T) {
+func (p *OutputPass) Draw(args render.Args, scene scene.T) {
 	render.ScreenBuffer.Bind()
+	render.SetViewport(0, 0, args.Viewport.FrameWidth, args.Viewport.FrameHeight)
 
 	render.Blend(true)
 	render.BlendMultiply()
@@ -52,5 +53,3 @@ func (p *OutputPass) Draw(scene scene.T) {
 
 	gl.DepthFunc(gl.LESS)
 }
-
-func (p *OutputPass) Resize(width, height int) {}
