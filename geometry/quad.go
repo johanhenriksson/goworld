@@ -4,8 +4,10 @@ import (
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
+	"github.com/johanhenriksson/goworld/render/backend/gl/gl_vertex_array"
 	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/vertex"
+	"github.com/johanhenriksson/goworld/render/vertex_array"
 )
 
 // Quad with support for centered backgrounds
@@ -17,7 +19,7 @@ type Quad struct {
 	Material material.T
 
 	size vec2.T
-	vao  *render.VertexArray
+	vao  vertex_array.T
 }
 
 func NewQuad(mat material.T, size vec2.T) *Quad {
@@ -27,7 +29,7 @@ func NewQuad(mat material.T, size vec2.T) *Quad {
 		Depth:    false,
 
 		size: size,
-		vao:  render.CreateVertexArray(render.Triangles),
+		vao:  gl_vertex_array.New(render.Triangles),
 	}
 	q.compute()
 	return q

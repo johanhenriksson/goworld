@@ -4,7 +4,7 @@ import (
 	"github.com/johanhenriksson/goworld/assets"
 	"github.com/johanhenriksson/goworld/math"
 	"github.com/johanhenriksson/goworld/math/vec2"
-	gltex "github.com/johanhenriksson/goworld/render/backend/gl/texture"
+	gltex "github.com/johanhenriksson/goworld/render/backend/gl/gl_texture"
 	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/font"
 )

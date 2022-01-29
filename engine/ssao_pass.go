@@ -8,9 +8,9 @@ import (
 	"github.com/johanhenriksson/goworld/math/random"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
-	glframebuf "github.com/johanhenriksson/goworld/render/backend/gl/framebuffer"
-	glshader "github.com/johanhenriksson/goworld/render/backend/gl/shader"
-	gltex "github.com/johanhenriksson/goworld/render/backend/gl/texture"
+	"github.com/johanhenriksson/goworld/render/backend/gl/gl_framebuffer"
+	"github.com/johanhenriksson/goworld/render/backend/gl/gl_shader"
+	"github.com/johanhenriksson/goworld/render/backend/gl/gl_texture"
 	"github.com/johanhenriksson/goworld/render/backend/types"
 	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/framebuffer"
@@ -46,7 +46,7 @@ type SSAOPass struct {
 
 // NewSSAOPass creates a new SSAO pass from a gbuffer and SSAO settings.
 func NewSSAOPass(gbuff framebuffer.Geometry, settings *SSAOSettings) *SSAOPass {
-	fbo := glframebuf.New(gbuff.Width()/settings.Scale, gbuff.Height()/settings.Scale)
+	fbo := gl_framebuffer.New(gbuff.Width()/settings.Scale, gbuff.Height()/settings.Scale)
 	output := fbo.NewBuffer(gl.COLOR_ATTACHMENT0, gl.RED, gl.RGB, gl.FLOAT)
 
 	// gaussian blur pass
@@ -58,7 +58,7 @@ func NewSSAOPass(gbuff framebuffer.Geometry, settings *SSAOSettings) *SSAOPass {
 	// generate noise texture
 	noise := createHemisphereNoiseTexture(4)
 
-	shader := glshader.CompileShader(
+	shader := gl_shader.CompileShader(
 		"ssao_pass",
 		"/assets/shaders/pass/postprocess.vs",
 		"/assets/shaders/pass/ssao.fs")
@@ -144,7 +144,7 @@ func createSSAOKernel(samples int) []vec3.T {
 }
 
 func createHemisphereNoiseTexture(size int) texture.T {
-	noise := gltex.New(size, size)
+	noise := gl_texture.New(size, size)
 	noise.SetInternalFormat(gl.RGB16F)
 	noise.SetFormat(texture.RGB)
 	noise.SetDataType(types.Float)

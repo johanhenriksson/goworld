@@ -3,8 +3,8 @@ package engine
 import (
 	"github.com/johanhenriksson/goworld/core/scene"
 	"github.com/johanhenriksson/goworld/render"
-	glframebuf "github.com/johanhenriksson/goworld/render/backend/gl/framebuffer"
-	glshader "github.com/johanhenriksson/goworld/render/backend/gl/shader"
+	"github.com/johanhenriksson/goworld/render/backend/gl/gl_framebuffer"
+	"github.com/johanhenriksson/goworld/render/backend/gl/gl_shader"
 	"github.com/johanhenriksson/goworld/render/backend/types"
 	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/framebuffer"
@@ -27,10 +27,10 @@ type GaussianPass struct {
 
 // NewGaussianPass creates a new Gaussian Blur pass.
 func NewGaussianPass(input texture.T) *GaussianPass {
-	fbo := glframebuf.New(input.Width(), input.Height())
+	fbo := gl_framebuffer.New(input.Width(), input.Height())
 	output := fbo.NewBuffer(gl.COLOR_ATTACHMENT0, texture.Red, texture.RGB, types.Float)
 
-	shader := glshader.CompileShader(
+	shader := gl_shader.CompileShader(
 		"gaussian_pass",
 		"/assets/shaders/pass/postprocess.vs",
 		"/assets/shaders/pass/gaussian.fs")

@@ -1,4 +1,4 @@
-package render
+package gl_vertex_buffer
 
 import (
 	"fmt"
@@ -6,10 +6,11 @@ import (
 	"unsafe"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
+	"github.com/johanhenriksson/goworld/render/vertex_buffer"
 )
 
-// VertexBuffer represents an OpenGL Vertex Buffer object
-type VertexBuffer struct {
+// glvertexbuf represents an OpenGL Vertex Buffer object
+type glvertexbuf struct {
 	ID       uint32 /* OpenGL Buffer Identifier */
 	Target   uint32 /* Target buffer type, defaults to GL_ARRAY_BUFFER */
 	Usage    uint32 /* Buffer usage flag, defaults to GL_STATIC_DRAW */
@@ -17,9 +18,9 @@ type VertexBuffer struct {
 	Size     int    /* Element size in bytes */
 }
 
-// CreateVertexBuffer creates a new GL vertex buffer object
-func CreateVertexBuffer() *VertexBuffer {
-	vbo := &VertexBuffer{
+// New creates a new GL vertex buffer object
+func New() vertex_buffer.T {
+	vbo := &glvertexbuf{
 		Target: gl.ARRAY_BUFFER,
 		Usage:  gl.STATIC_DRAW,
 	}
@@ -27,9 +28,9 @@ func CreateVertexBuffer() *VertexBuffer {
 	return vbo
 }
 
-// CreateIndexBuffer creates a new GL index buffer object
-func CreateIndexBuffer() *VertexBuffer {
-	vbo := &VertexBuffer{
+// NewIndex creates a new GL index buffer object
+func NewIndex() *glvertexbuf {
+	vbo := &glvertexbuf{
 		Target: gl.ELEMENT_ARRAY_BUFFER,
 		Usage:  gl.STATIC_DRAW,
 	}
@@ -38,7 +39,7 @@ func CreateIndexBuffer() *VertexBuffer {
 }
 
 // Bind the vertex buffer object
-func (vbo *VertexBuffer) Bind() {
+func (vbo *glvertexbuf) Bind() {
 	if vbo.ID == 0 {
 		panic(fmt.Errorf("cant bind vbo id 0"))
 	}
@@ -46,12 +47,12 @@ func (vbo *VertexBuffer) Bind() {
 }
 
 // Unbind the vertex buffer object
-func (vbo *VertexBuffer) Unbind() {
+func (vbo *glvertexbuf) Unbind() {
 	gl.BindBuffer(vbo.Target, 0)
 }
 
 // Delete frees the GPU memory allocated by this vertex buffer. Resets ID and Size to 0
-func (vbo *VertexBuffer) Delete() {
+func (vbo *glvertexbuf) Delete() {
 	if vbo.ID != 0 {
 		gl.DeleteBuffers(1, &vbo.ID)
 		vbo.ID = 0
@@ -59,13 +60,7 @@ func (vbo *VertexBuffer) Delete() {
 	}
 }
 
-type BufferCommand struct {
-	Elements int
-	Size     int
-	Source   unsafe.Pointer
-}
-
-func (vbo *VertexBuffer) BufferFrom(elements, size int, ptr unsafe.Pointer) {
+func (vbo *glvertexbuf) BufferFrom(elements, size int, ptr unsafe.Pointer) {
 	vbo.Elements = elements
 	vbo.Size = size * elements
 
@@ -87,7 +82,7 @@ func (vbo *VertexBuffer) BufferFrom(elements, size int, ptr unsafe.Pointer) {
 }
 
 // Buffer data to GPU memory
-func (vbo *VertexBuffer) Buffer(data interface{}) int {
+func (vbo *glvertexbuf) Buffer(data interface{}) int {
 	// make sure we've been passed a slice
 	t := reflect.TypeOf(data)
 	if t.Kind() != reflect.Slice {

@@ -1,4 +1,4 @@
-package shader
+package gl_shader
 
 import (
 	"fmt"

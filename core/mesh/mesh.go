@@ -6,11 +6,15 @@ import (
 	"github.com/johanhenriksson/goworld/assets"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/render"
+	"github.com/johanhenriksson/goworld/render/backend/gl/gl_vertex_array"
+	"github.com/johanhenriksson/goworld/render/backend/types"
 	"github.com/johanhenriksson/goworld/render/material"
+	"github.com/johanhenriksson/goworld/render/vertex_array"
+	"github.com/johanhenriksson/goworld/render/vertex_buffer"
 )
 
 // MeshBufferMap maps buffer names to vertex buffer objects
-type MeshBufferMap map[string]*render.VertexBuffer
+type MeshBufferMap map[string]vertex_buffer.T
 
 type T interface {
 	object.Component
@@ -19,7 +23,7 @@ type T interface {
 	DrawDeferred(render.Args)
 	DrawLines(render.Args)
 
-	SetIndexType(t render.GLType)
+	SetIndexType(t types.Type)
 	Buffer(data interface{})
 }
 
@@ -28,7 +32,7 @@ type mesh struct {
 	object.Component
 
 	mat material.T
-	vao *render.VertexArray
+	vao vertex_array.T
 }
 
 // New creates a new mesh component
@@ -43,16 +47,16 @@ func NewLines() T {
 }
 
 // NewPrimitiveMesh creates a new mesh composed of a given GL primitive
-func NewPrimitiveMesh(primitive render.GLPrimitive, mat material.T) *mesh {
+func NewPrimitiveMesh(primitive render.Primitive, mat material.T) *mesh {
 	m := &mesh{
 		Component: object.NewComponent(),
 		mat:       mat,
-		vao:       render.CreateVertexArray(primitive),
+		vao:       gl_vertex_array.New(primitive),
 	}
 	return m
 }
 
-func (m *mesh) SetIndexType(t render.GLType) {
+func (m *mesh) SetIndexType(t types.Type) {
 	// get rid of this later
 	m.vao.SetIndexType(t)
 }

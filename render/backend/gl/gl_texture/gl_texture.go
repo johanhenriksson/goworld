@@ -1,4 +1,4 @@
-package texture
+package gl_texture
 
 import (
 	"image"

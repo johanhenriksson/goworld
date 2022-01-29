@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 
 	"github.com/johanhenriksson/goworld/render"
+	"github.com/johanhenriksson/goworld/render/backend/types"
 	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/texture"
 )
@@ -21,7 +22,7 @@ type MaterialDefinition struct {
 type VertexPointerDefinition struct {
 	Name      string
 	Type      string
-	GlType    render.GLType `json:"-"`
+	GlType    types.Type `json:"-"`
 	Size      int
 	Offset    int
 	Count     int

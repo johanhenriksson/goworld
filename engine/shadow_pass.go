@@ -5,9 +5,10 @@ import (
 
 	"github.com/johanhenriksson/goworld/core/scene"
 	"github.com/johanhenriksson/goworld/render"
-	glframebuf "github.com/johanhenriksson/goworld/render/backend/gl/framebuffer"
+	"github.com/johanhenriksson/goworld/render/backend/gl/gl_framebuffer"
 	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/framebuffer"
+	"github.com/johanhenriksson/goworld/render/light"
 	"github.com/johanhenriksson/goworld/render/texture"
 )
 
@@ -23,7 +24,7 @@ type ShadowPass struct {
 // NewShadowPass creates a new shadow pass
 func NewShadowPass() *ShadowPass {
 	size := 4096
-	fbo := glframebuf.NewDepth(size, size)
+	fbo := gl_framebuffer.NewDepth(size, size)
 
 	// set the shadow buffer texture to clamp to a white border so that samples
 	// outside the map do not fall in shadow.
@@ -49,11 +50,11 @@ func (p *ShadowPass) Resize(width, height int) {}
 func (p *ShadowPass) Draw(scene scene.T) {}
 
 // DrawLight draws a shadow pass for the given light.
-func (p *ShadowPass) DrawLight(light *render.Light) {
-	if !light.Shadows {
+func (p *ShadowPass) DrawLight(lit *light.T) {
+	if !lit.Shadows {
 		return
 	}
-	if light.Type != render.DirectionalLight {
+	if lit.Type != light.Directional {
 		// only directional lights support shadows atm
 		return
 	}

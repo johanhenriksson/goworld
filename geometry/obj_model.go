@@ -5,7 +5,7 @@ import (
 	"unsafe"
 
 	"github.com/johanhenriksson/goworld/core/mesh"
-	"github.com/johanhenriksson/goworld/render"
+	"github.com/johanhenriksson/goworld/render/backend/types"
 	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/udhos/gwob"
 )
@@ -20,7 +20,7 @@ func NewObjModel(mat material.T, path string) *ObjModel {
 		T:    mesh.New(mat),
 		Path: path,
 	}
-	obj.SetIndexType(render.UInt32)
+	obj.SetIndexType(types.UInt32)
 	if err := obj.load(); err != nil {
 		fmt.Println("Error loading model", path, ":", err)
 	}

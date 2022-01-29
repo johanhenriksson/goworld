@@ -1,4 +1,4 @@
-package framebuffer
+package gl_framebuffer
 
 import (
 	"github.com/johanhenriksson/goworld/render/framebuffer"

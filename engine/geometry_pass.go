@@ -4,7 +4,7 @@ import (
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/core/scene"
 	"github.com/johanhenriksson/goworld/render"
-	glframebuf "github.com/johanhenriksson/goworld/render/backend/gl/framebuffer"
+	"github.com/johanhenriksson/goworld/render/backend/gl/gl_framebuffer"
 	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/framebuffer"
 )
@@ -21,7 +21,7 @@ type GeometryPass struct {
 // NewGeometryPass sets up a geometry pass.
 func NewGeometryPass(bufferWidth, bufferHeight int) *GeometryPass {
 	p := &GeometryPass{
-		Buffer: glframebuf.NewGeometry(bufferWidth, bufferHeight),
+		Buffer: gl_framebuffer.NewGeometry(bufferWidth, bufferHeight),
 	}
 	return p
 }

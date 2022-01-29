@@ -6,8 +6,8 @@ import (
 	"github.com/johanhenriksson/goworld/assets"
 	"github.com/johanhenriksson/goworld/core/scene"
 	"github.com/johanhenriksson/goworld/render"
-	glframebuf "github.com/johanhenriksson/goworld/render/backend/gl/framebuffer"
-	glshader "github.com/johanhenriksson/goworld/render/backend/gl/shader"
+	"github.com/johanhenriksson/goworld/render/backend/gl/gl_framebuffer"
+	"github.com/johanhenriksson/goworld/render/backend/gl/gl_shader"
 	"github.com/johanhenriksson/goworld/render/framebuffer"
 	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/shader"
@@ -32,7 +32,7 @@ func NewColorPass(input framebuffer.Color, filter string, ssao texture.T) *Color
 	lutName := fmt.Sprintf("textures/color_grading/%s.png", filter)
 	lut := assets.GetTexture(lutName)
 
-	shader := glshader.CompileShader(
+	shader := gl_shader.CompileShader(
 		"color_pass",
 		"/assets/shaders/pass/postprocess.vs",
 		"/assets/shaders/pass/color.fs")
@@ -44,7 +44,7 @@ func NewColorPass(input framebuffer.Color, filter string, ssao texture.T) *Color
 
 	return &ColorPass{
 		Input:  input,
-		Output: glframebuf.NewColor(input.Width(), input.Height()),
+		Output: gl_framebuffer.NewColor(input.Width(), input.Height()),
 		Lut:    lut,
 		Gamma:  1.8,
 

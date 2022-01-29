@@ -5,7 +5,7 @@ import (
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/math/vec3"
-	"github.com/johanhenriksson/goworld/render"
+	"github.com/johanhenriksson/goworld/render/light"
 )
 
 type T interface {
@@ -14,7 +14,7 @@ type T interface {
 	Camera() camera.T
 	SetCamera(camera.T)
 
-	Lights() []render.Light
+	Lights() []light.T
 }
 
 // Scene graph root
@@ -25,7 +25,7 @@ type scene struct {
 	camera camera.T
 
 	// List of all lights in the scene
-	lights []render.Light
+	lights []light.T
 }
 
 // NewScene creates a new scene.
@@ -33,11 +33,11 @@ func New() T {
 	return &scene{
 		T:      object.New("Scene"),
 		camera: nil,
-		lights: []render.Light{
+		lights: []light.T{
 			{ // directional light
 				Intensity:  1.6,
 				Color:      vec3.New(0.9*0.973, 0.9*0.945, 0.9*0.776),
-				Type:       render.DirectionalLight,
+				Type:       light.Directional,
 				Projection: mat4.Orthographic(-71, 120, -20, 140, -10, 140),
 				Position:   vec3.New(-2, 2, -1),
 				Shadows:    false,
@@ -46,7 +46,7 @@ func New() T {
 	}
 }
 
-func (s *scene) Lights() []render.Light {
+func (s *scene) Lights() []light.T {
 	return s.lights
 }
 

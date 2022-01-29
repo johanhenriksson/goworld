@@ -1,4 +1,4 @@
-package shader
+package gl_shader
 
 import (
 	"github.com/johanhenriksson/goworld/render/backend/gl"

@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/johanhenriksson/goworld/render"
-	glshader "github.com/johanhenriksson/goworld/render/backend/gl/shader"
+	glshader "github.com/johanhenriksson/goworld/render/backend/gl/gl_shader"
 	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/font"
 	"github.com/johanhenriksson/goworld/render/material"

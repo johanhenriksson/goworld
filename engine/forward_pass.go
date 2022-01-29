@@ -4,7 +4,7 @@ import (
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/core/scene"
 	"github.com/johanhenriksson/goworld/render"
-	glframebuf "github.com/johanhenriksson/goworld/render/backend/gl/framebuffer"
+	"github.com/johanhenriksson/goworld/render/backend/gl/gl_framebuffer"
 	"github.com/johanhenriksson/goworld/render/framebuffer"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
@@ -23,7 +23,7 @@ type ForwardPass struct {
 
 // NewForwardPass sets up a forward pass.
 func NewForwardPass(gbuffer framebuffer.Geometry, output framebuffer.Color) *ForwardPass {
-	fbo := glframebuf.NewGeometry(gbuffer.Width(), gbuffer.Height())
+	fbo := gl_framebuffer.NewGeometry(gbuffer.Width(), gbuffer.Height())
 	fbo.AttachBuffer(gl.COLOR_ATTACHMENT0, output.Texture())
 	fbo.AttachBuffer(gl.COLOR_ATTACHMENT1, gbuffer.Normal())
 	fbo.AttachBuffer(gl.COLOR_ATTACHMENT2, gbuffer.Position())

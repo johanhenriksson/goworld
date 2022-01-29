@@ -5,10 +5,11 @@ import (
 	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
-	glframebuf "github.com/johanhenriksson/goworld/render/backend/gl/framebuffer"
-	glshader "github.com/johanhenriksson/goworld/render/backend/gl/shader"
+	"github.com/johanhenriksson/goworld/render/backend/gl/gl_framebuffer"
+	"github.com/johanhenriksson/goworld/render/backend/gl/gl_shader"
 	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/framebuffer"
+	"github.com/johanhenriksson/goworld/render/light"
 	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/shader"
 )
@@ -34,7 +35,7 @@ func NewLightPass(input framebuffer.Geometry) *LightPass {
 	shadowPass := NewShadowPass()
 
 	// instantiate light pass shader
-	shader := glshader.CompileShader(
+	shader := gl_shader.CompileShader(
 		"light_pass",
 		"/assets/shaders/pass/postprocess.vs",
 		"/assets/shaders/pass/light.fs")
@@ -48,7 +49,7 @@ func NewLightPass(input framebuffer.Geometry) *LightPass {
 
 	p := &LightPass{
 		GBuffer:        input,
-		Output:         glframebuf.NewColor(input.Width(), input.Height()),
+		Output:         gl_framebuffer.NewColor(input.Width(), input.Height()),
 		Shadows:        shadowPass,
 		Ambient:        color.RGB(0.25, 0.25, 0.25),
 		ShadowStrength: 0.3,
@@ -69,7 +70,7 @@ func NewLightPass(input framebuffer.Geometry) *LightPass {
 	return p
 }
 
-func (p *LightPass) setLightUniforms(light *render.Light) {
+func (p *LightPass) setLightUniforms(light *light.T) {
 	// compute world to lightspace (light view projection) matrix
 	// note: this is only for directional lights
 	lp := light.Projection
@@ -112,7 +113,8 @@ func (p *LightPass) Draw(args render.Args, scene scene.T) {
 	render.DepthOutput(true)
 
 	// ambient light pass
-	ambient := render.Light{
+	ambient := light.T{
+		Type:      light.Ambient,
 		Color:     p.Ambient.Vec3(),
 		Intensity: 1.3,
 	}

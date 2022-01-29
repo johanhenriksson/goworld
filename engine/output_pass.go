@@ -3,7 +3,7 @@ package engine
 import (
 	"github.com/johanhenriksson/goworld/core/scene"
 	"github.com/johanhenriksson/goworld/render"
-	glshader "github.com/johanhenriksson/goworld/render/backend/gl/shader"
+	"github.com/johanhenriksson/goworld/render/backend/gl/gl_shader"
 	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/shader"
 	"github.com/johanhenriksson/goworld/render/texture"
@@ -22,7 +22,7 @@ type OutputPass struct {
 
 // NewOutputPass creates a new output pass for the given input texture.
 func NewOutputPass(color texture.T, depth texture.T) *OutputPass {
-	shader := glshader.CompileShader(
+	shader := gl_shader.CompileShader(
 		"output_pass",
 		"/assets/shaders/pass/postprocess.vs",
 		"/assets/shaders/pass/output.fs")
