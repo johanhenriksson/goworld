@@ -6,15 +6,15 @@ import (
 
 	"github.com/johanhenriksson/goworld/assets"
 	"github.com/johanhenriksson/goworld/core/input/keys"
-	"github.com/johanhenriksson/goworld/render"
 	gltex "github.com/johanhenriksson/goworld/render/backend/gl/texture"
 	"github.com/johanhenriksson/goworld/render/color"
+	"github.com/johanhenriksson/goworld/render/font"
 )
 
 type Textbox struct {
 	*Image
 	Text string
-	Font *render.Font
+	Font font.T
 
 	focused bool
 }
@@ -24,7 +24,9 @@ func (t *Textbox) Set(text string) {
 	if t.focused {
 		text += "_"
 	}
-	t.Font.Render(t.Texture, text, t.Style.Color("color", color.White))
+
+	img := t.Font.Render(text, t.Style.Color("color", color.White))
+	t.Texture.BufferImage(img)
 }
 
 func NewTextbox(text string, style Style) *Textbox {

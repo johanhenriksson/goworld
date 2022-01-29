@@ -7,6 +7,7 @@ import (
 	"github.com/johanhenriksson/goworld/render"
 	glshader "github.com/johanhenriksson/goworld/render/backend/gl/shader"
 	"github.com/johanhenriksson/goworld/render/color"
+	"github.com/johanhenriksson/goworld/render/font"
 	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/shader"
 	"github.com/johanhenriksson/goworld/render/texture"
@@ -15,7 +16,7 @@ import (
 type ShaderMap map[string]shader.T
 type TextureMap map[string]texture.T
 type MaterialMap map[string]material.T
-type FontMap map[string]*render.Font
+type FontMap map[string]font.T
 
 type ResourceCache struct {
 	Shaders   ShaderMap
@@ -94,7 +95,7 @@ func GetColorTexture(color color.T) texture.T {
 	return texture
 }
 
-func GetFont(name string, size, spacing float32) *render.Font {
+func GetFont(name string, size, spacing float32) font.T {
 	key := fmt.Sprintf("%s-%.1f-%.1f", name, size, spacing)
 	if font, exists := cache.Fonts[key]; exists {
 		return font
@@ -102,7 +103,7 @@ func GetFont(name string, size, spacing float32) *render.Font {
 
 	dpi := float32(1.0)
 	fmt.Printf("+ font %s (%.1fpt, %.1f, %dx)\n", name, size, spacing, int(dpi))
-	font := render.LoadFont(name, dpi, size, spacing)
+	font := font.Load(name, dpi, size, spacing)
 	cache.Fonts[key] = font
 
 	return font

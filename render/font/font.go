@@ -1,4 +1,4 @@
-package render
+package font
 
 import (
 	"image"
@@ -7,40 +7,50 @@ import (
 	"github.com/golang/freetype/truetype"
 	"github.com/johanhenriksson/goworld/math"
 	"github.com/johanhenriksson/goworld/math/vec2"
-	gltex "github.com/johanhenriksson/goworld/render/backend/gl/texture"
 	"github.com/johanhenriksson/goworld/render/color"
-	"github.com/johanhenriksson/goworld/render/texture"
 
-	"golang.org/x/image/font"
+	fontlib "golang.org/x/image/font"
 	"golang.org/x/image/math/fixed"
 )
 
-type Font struct {
-	File    string
-	Size    float32
-	DPI     float32
-	Spacing float32
-	Color   color.T
-
-	fnt    *truetype.Font
-	drawer *font.Drawer
+type T interface {
+	Measure(string) vec2.T
+	Render(text string, color color.T) *image.RGBA
+	LineHeight() float32
+	Size() float32
+	Spacing() float32
+	DPI() float32
 }
 
-func (f *Font) setup() {
-	f.drawer = &font.Drawer{
+type font struct {
+	file    string
+	size    float32
+	dpi     float32
+	spacing float32
+
+	fnt    *truetype.Font
+	drawer *fontlib.Drawer
+}
+
+func (f *font) setup() {
+	f.drawer = &fontlib.Drawer{
 		Face: truetype.NewFace(f.fnt, &truetype.Options{
-			Size:    float64(f.Size),
-			DPI:     float64(72 * f.DPI),
-			Hinting: font.HintingFull,
+			Size:    float64(f.size),
+			DPI:     float64(72 * f.dpi),
+			Hinting: fontlib.HintingFull,
 		}),
 	}
 }
 
-func (f *Font) LineHeight() float32 {
-	return math.Ceil(f.Size * f.Spacing * f.DPI)
+func (f *font) Spacing() float32 { return f.spacing }
+func (f *font) Size() float32    { return f.size }
+func (f *font) DPI() float32     { return f.dpi }
+
+func (f *font) LineHeight() float32 {
+	return math.Ceil(f.size * f.spacing * f.dpi)
 }
 
-func (f *Font) Measure(text string) vec2.T {
+func (f *font) Measure(text string) vec2.T {
 	lines := 1
 	width := 0
 	s := 0
@@ -69,22 +79,15 @@ func (f *Font) Measure(text string) vec2.T {
 	return vec2.NewI(width, height)
 }
 
-func (f *Font) RenderNew(text string, color color.T) texture.T {
-	size := f.Measure(text)
-	texture := gltex.New(int(size.X), int(size.Y))
-	f.Render(texture, text, color)
-	return texture
-}
-
-func (f *Font) Render(tx texture.T, text string, color color.T) {
+func (f *font) Render(text string, color color.T) *image.RGBA {
 	f.drawer.Src = image.NewUniform(color.RGBA())
 
 	size := f.Measure(text)
 
 	// todo: its probably not a great idea to allocate an image on every draw
 	// perhaps textures should always have a backing image ?
-	rgba := image.NewRGBA(image.Rect(0, 0, int(math.Ceil(size.X)), int(math.Ceil(size.Y))))
-	f.drawer.Dst = rgba
+	output := image.NewRGBA(image.Rect(0, 0, int(math.Ceil(size.X)), int(math.Ceil(size.Y))))
+	f.drawer.Dst = output
 
 	s := 0
 	line := 1
@@ -105,12 +108,11 @@ func (f *Font) Render(tx texture.T, text string, color color.T) {
 		f.drawer.DrawString(text[s:])
 	}
 
-	tx.Bind()
-	tx.BufferImage(rgba)
+	return output
 }
 
-/** Load a truetype font */
-func LoadFont(filename string, size, dpi, spacing float32) *Font {
+// Load a truetype font
+func Load(filename string, size, dpi, spacing float32) T {
 	fontBytes, err := ioutil.ReadFile(filename)
 	if err != nil {
 		panic(err)
@@ -120,10 +122,11 @@ func LoadFont(filename string, size, dpi, spacing float32) *Font {
 		panic(err)
 	}
 
-	fnt := &Font{
-		Size:    size,
-		DPI:     dpi,
-		Spacing: spacing,
+	fnt := &font{
+		file:    filename,
+		size:    size,
+		dpi:     dpi,
+		spacing: spacing,
 		fnt:     f,
 	}
 	fnt.setup()

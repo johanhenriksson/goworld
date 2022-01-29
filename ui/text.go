@@ -4,15 +4,15 @@ import (
 	"github.com/johanhenriksson/goworld/assets"
 	"github.com/johanhenriksson/goworld/math"
 	"github.com/johanhenriksson/goworld/math/vec2"
-	"github.com/johanhenriksson/goworld/render"
 	gltex "github.com/johanhenriksson/goworld/render/backend/gl/texture"
 	"github.com/johanhenriksson/goworld/render/color"
+	"github.com/johanhenriksson/goworld/render/font"
 )
 
 type Text struct {
 	*Image
 	Text  string
-	Font  *render.Font
+	Font  font.T
 	Style Style
 }
 
@@ -23,7 +23,9 @@ func (t *Text) Set(text string) {
 
 	size := t.Font.Measure(text)
 
-	t.Font.Render(t.Texture, text, color.White)
+	img := t.Font.Render(text, color.White)
+	t.Texture.BufferImage(img)
+
 	t.Text = text
 	t.Resize(size)
 }
