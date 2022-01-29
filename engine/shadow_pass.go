@@ -8,11 +8,12 @@ import (
 	"github.com/johanhenriksson/goworld/core/scene"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/color"
+	"github.com/johanhenriksson/goworld/render/texture"
 )
 
 // ShadowPass renders shadow maps for lights.
 type ShadowPass struct {
-	Output *render.Texture
+	Output texture.T
 	Width  int
 	Height int
 

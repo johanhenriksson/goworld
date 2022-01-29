@@ -1,13 +1,15 @@
 package render
 
 import (
+	"github.com/johanhenriksson/goworld/render/texture"
+
 	"github.com/go-gl/gl/v4.1-core/gl"
 )
 
 // ShadowBuffer is a frame buffer containing only a depth texture
 type ShadowBuffer struct {
 	*FrameBuffer
-	Depth *Texture
+	Depth texture.T
 }
 
 // NewShadowBuffer creates a new shadow buffer

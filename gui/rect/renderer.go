@@ -8,6 +8,7 @@ import (
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/color"
+	"github.com/johanhenriksson/goworld/render/texture"
 )
 
 type Renderer interface {
@@ -16,10 +17,11 @@ type Renderer interface {
 }
 
 type renderer struct {
-	mat  *render.Material
-	tex  *render.Texture
-	mesh *geometry.Rect
-	size vec2.T
+	mat   *render.Material
+	tex   texture.T
+	mesh  *geometry.Rect
+	mesh2 *geometry.Quad
+	size  vec2.T
 }
 
 func (r *renderer) Draw(args render.Args, frame T, props *Props) {
@@ -31,6 +33,9 @@ func (r *renderer) Draw(args render.Args, frame T, props *Props) {
 
 		r.mesh = geometry.NewRect(r.mat, vec2.Zero)
 	}
+	if r.mesh2 == nil {
+		r.mesh2 = geometry.NewQuad(r.mat, vec2.Zero)
+	}
 
 	// set correct blending
 	// perhaps this belongs somewhere else
@@ -39,15 +44,17 @@ func (r *renderer) Draw(args render.Args, frame T, props *Props) {
 	// resize if needed
 	if !frame.Size().ApproxEqual(r.size) {
 		r.mesh.SetSize(frame.Size())
+		r.mesh2.SetSize(frame.Size())
 	}
 	if props.Border != r.mesh.BorderWidth() {
 		r.mesh.SetBorderWidth(props.Border)
 	}
 
-	r.mesh.Material.Use()
-	r.mesh.Material.RGBA("tint", props.Color)
-	r.mesh.Material.Textures.Set("image", r.tex)
-	r.mesh.Draw(args)
+	r.mat.Use()
+	r.mat.RGBA("tint", props.Color)
+	r.mat.Textures.Set("image", r.tex)
+	//r.mesh.Draw(args)
+	r.mesh2.Draw(args)
 }
 
 func (r *renderer) Destroy() {

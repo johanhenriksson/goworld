@@ -8,7 +8,10 @@ import (
 	"github.com/johanhenriksson/goworld/math/random"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
+	gltex "github.com/johanhenriksson/goworld/render/backend/gl/texture"
+	"github.com/johanhenriksson/goworld/render/backend/types"
 	"github.com/johanhenriksson/goworld/render/color"
+	"github.com/johanhenriksson/goworld/render/texture"
 )
 
 // SSAOSettings holds parameters for SSAO.
@@ -26,8 +29,8 @@ type SSAOPass struct {
 
 	GBuffer  *render.GeometryBuffer
 	Gaussian *GaussianPass
-	Output   *render.Texture
-	Noise    *render.Texture
+	Output   texture.T
+	Noise    texture.T
 	Kernel   []vec3.T
 
 	fbo      *render.FrameBuffer
@@ -132,14 +135,14 @@ func createSSAOKernel(samples int) []vec3.T {
 	return kernel
 }
 
-func createHemisphereNoiseTexture(size int) *render.Texture {
-	noise := render.CreateTexture(size, size)
-	noise.InternalFormat = gl.RGB16F
-	noise.Format = gl.RGB
-	noise.DataType = gl.FLOAT
+func createHemisphereNoiseTexture(size int) texture.T {
+	noise := gltex.New(size, size)
+	noise.SetInternalFormat(gl.RGB16F)
+	noise.SetFormat(texture.RGB)
+	noise.SetDataType(types.Float)
 
-	noise.SetFilter(render.NearestFilter)
-	noise.SetWrapMode(render.RepeatWrap)
+	noise.SetFilter(texture.NearestFilter)
+	noise.SetWrapMode(texture.RepeatWrap)
 
 	noiseData := make([]float32, 3*size*size)
 	for i := 0; i < len(noiseData); i += 3 {

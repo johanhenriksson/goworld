@@ -3,14 +3,18 @@ package render
 import (
 	"unsafe"
 
-	"github.com/go-gl/gl/v4.1-core/gl"
+	gltex "github.com/johanhenriksson/goworld/render/backend/gl/texture"
+	"github.com/johanhenriksson/goworld/render/backend/types"
 	"github.com/johanhenriksson/goworld/render/color"
+	"github.com/johanhenriksson/goworld/render/texture"
+
+	"github.com/go-gl/gl/v4.1-core/gl"
 )
 
 // DrawBuffer holds a target texture of a frame buffer object
 type DrawBuffer struct {
 	Target  uint32 // GL attachment enum (DEPTH_ATTACHMENT, COLOR_ATTACHMENT etc)
-	Texture *Texture
+	Texture texture.T
 }
 
 // FrameBuffer holds information about an OpenGL frame buffer object
@@ -35,12 +39,12 @@ var ScreenBuffer = FrameBuffer{
 
 // NewBuffer creates a new frame buffer texture and attaches it to the given target.
 // Returns a pointer to the created texture object. FBO must be bound first.
-func (f *FrameBuffer) NewBuffer(target, internalFormat, format, datatype uint32) *Texture {
+func (f *FrameBuffer) NewBuffer(target uint32, internalFormat, format texture.Format, datatype types.Type) texture.T {
 	// Create texture object
-	texture := CreateTexture(f.Width, f.Height)
-	texture.Format = format
-	texture.InternalFormat = internalFormat
-	texture.DataType = datatype
+	texture := gltex.New(f.Width, f.Height)
+	texture.SetFormat(format)
+	texture.SetInternalFormat(internalFormat)
+	texture.SetDataType(datatype)
 	texture.Clear()
 
 	// attach texture
@@ -50,7 +54,7 @@ func (f *FrameBuffer) NewBuffer(target, internalFormat, format, datatype uint32)
 }
 
 // AttachBuffer attaches a texture to the given frame buffer target
-func (f *FrameBuffer) AttachBuffer(target uint32, texture *Texture) {
+func (f *FrameBuffer) AttachBuffer(target uint32, texture texture.T) {
 	// Set texture as frame buffer target
 	texture.FrameBufferTarget(target)
 

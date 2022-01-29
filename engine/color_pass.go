@@ -6,14 +6,15 @@ import (
 	"github.com/johanhenriksson/goworld/assets"
 	"github.com/johanhenriksson/goworld/core/scene"
 	"github.com/johanhenriksson/goworld/render"
+	"github.com/johanhenriksson/goworld/render/texture"
 )
 
 // ColorPass represents a color correction pass and its settings.
 type ColorPass struct {
 	Input    *render.ColorBuffer
 	Output   *render.ColorBuffer
-	AO       *render.Texture
-	Lut      *render.Texture
+	AO       texture.T
+	Lut      texture.T
 	Gamma    float32
 	shader   *render.Shader
 	textures *render.TextureMap
@@ -21,7 +22,7 @@ type ColorPass struct {
 }
 
 // NewColorPass instantiates a new color correction pass.
-func NewColorPass(input *render.ColorBuffer, filter string, ssao *render.Texture) *ColorPass {
+func NewColorPass(input *render.ColorBuffer, filter string, ssao texture.T) *ColorPass {
 	// load lookup table
 	lutName := fmt.Sprintf("textures/color_grading/%s.png", filter)
 	lut := assets.GetTexture(lutName)

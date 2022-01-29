@@ -68,7 +68,7 @@ func MyCustomUI(gut float32) widget.T {
 
 func New() Manager {
 	f := MyCustomUI(5)
-	f.Move(vec2.New(400, 300))
+	f.Move(vec2.New(400, 200))
 
 	b := MyCustomUI(6)
 	reconcile(f, b, 0)

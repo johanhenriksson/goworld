@@ -5,6 +5,7 @@ import (
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
+	"github.com/johanhenriksson/goworld/render/texture"
 	"github.com/johanhenriksson/goworld/render/vertex"
 )
 
@@ -12,12 +13,12 @@ import (
 type Rect struct {
 	Width    float32
 	Height   float32
+	Invert   bool
+	Depth    bool
 	Material *render.Material
 
 	segments int
 	border   float32
-	Invert   bool
-	Depth    bool
 	vao      *render.VertexArray
 }
 
@@ -49,8 +50,8 @@ func (q *Rect) appendCorner(vtx *[]vertex.T, origin vertex.T, offset float32) {
 
 	bw, bh := float32(0), float32(0)
 	if tex := q.texture(); tex != nil {
-		b := float32(tex.Border)
-		bw, bh = b/float32(tex.Width), b/float32(tex.Height)
+		b := float32(0) // float32(tex.Border)
+		bw, bh = b/float32(tex.Width()), b/float32(tex.Height())
 	}
 	bw, bh = float32(128.0/1024.0), float32(128.0/1024.0)
 
@@ -112,7 +113,7 @@ func (q *Rect) SetSize(size vec2.T) {
 	q.compute()
 }
 
-func (q *Rect) texture() *render.Texture {
+func (q *Rect) texture() texture.T {
 	return q.Material.Textures.Slot(0)
 }
 
@@ -122,8 +123,8 @@ func (q *Rect) compute() {
 	w, h := q.Width, q.Height
 	bw, bh := float32(0), float32(0)
 	if tex := q.texture(); tex != nil {
-		tb := float32(tex.Border)
-		bw, bh = tb/float32(tex.Width), tb/float32(tex.Height)
+		tb := float32(0.0) // float32(tex.Border)
+		bw, bh = tb/float32(tex.Width()), tb/float32(tex.Height())
 	}
 
 	// bw, bh = float32(128.0/1024.0), float32(128.0/1024.0)

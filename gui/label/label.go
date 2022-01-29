@@ -2,6 +2,7 @@ package label
 
 import (
 	"github.com/johanhenriksson/goworld/gui/widget"
+	"github.com/johanhenriksson/goworld/render/color"
 )
 
 type T interface {
@@ -9,8 +10,9 @@ type T interface {
 }
 
 type Props struct {
-	Text string
-	Size float32
+	Text  string
+	Color color.T
+	Size  float32
 }
 
 type label struct {

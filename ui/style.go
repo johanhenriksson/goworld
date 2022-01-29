@@ -3,15 +3,15 @@ package ui
 import (
 	"fmt"
 
-	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/color"
+	"github.com/johanhenriksson/goworld/render/texture"
 )
 
 type Styled interface {
 	Float(string, float32) float32
 	String(string, string) string
 	Color(string, color.T) color.T
-	Texture(string, *render.Texture) *render.Texture
+	Texture(string, texture.T) texture.T
 }
 
 // ErrIllegalCast occurs when attempting to cast a style variable to an incompatible type
@@ -70,7 +70,7 @@ func (s Style) String(name string, def string) string {
 	return def
 }
 
-func (s Style) Texture(name string, def *render.Texture) *render.Texture {
+func (s Style) Texture(name string, def texture.T) texture.T {
 	if value, set := s[name]; set {
 		tex, err := value.Texture()
 		if err != nil {
@@ -89,42 +89,42 @@ type Variable interface {
 	Float() (float32, error)
 	Color() (color.T, error)
 	String() (string, error)
-	Texture() (*render.Texture, error)
+	Texture() (texture.T, error)
 }
 
 type ColorValue color.T
 
-func (c ColorValue) Float() (float32, error)           { return 0, ErrIllegalCast }
-func (c ColorValue) Color() (color.T, error)           { return color.T(c), nil }
-func (c ColorValue) String() (string, error)           { return color.T(c).String(), nil }
-func (c ColorValue) Texture() (*render.Texture, error) { return nil, ErrIllegalCast }
-func Color(color color.T) Variable                     { return ColorValue(color) }
+func (c ColorValue) Float() (float32, error)     { return 0, ErrIllegalCast }
+func (c ColorValue) Color() (color.T, error)     { return color.T(c), nil }
+func (c ColorValue) String() (string, error)     { return color.T(c).String(), nil }
+func (c ColorValue) Texture() (texture.T, error) { return nil, ErrIllegalCast }
+func Color(color color.T) Variable               { return ColorValue(color) }
 
 type FloatValue float32
 
-func (f FloatValue) Float() (float32, error)           { return float32(f), nil }
-func (f FloatValue) Color() (color.T, error)           { return color.Black, ErrIllegalCast }
-func (f FloatValue) String() (string, error)           { return fmt.Sprintf("%f", f), nil }
-func (f FloatValue) Texture() (*render.Texture, error) { return nil, ErrIllegalCast }
-func Float(f float32) Variable                         { return FloatValue(f) }
+func (f FloatValue) Float() (float32, error)     { return float32(f), nil }
+func (f FloatValue) Color() (color.T, error)     { return color.Black, ErrIllegalCast }
+func (f FloatValue) String() (string, error)     { return fmt.Sprintf("%f", f), nil }
+func (f FloatValue) Texture() (texture.T, error) { return nil, ErrIllegalCast }
+func Float(f float32) Variable                   { return FloatValue(f) }
 
 type StringValue string
 
-func (s StringValue) Float() (float32, error)           { return 0, ErrIllegalCast }
-func (s StringValue) Color() (color.T, error)           { return color.Black, ErrIllegalCast }
-func (s StringValue) String() (string, error)           { return string(s), nil }
-func (s StringValue) Texture() (*render.Texture, error) { return nil, ErrIllegalCast }
-func String(str string) Variable                        { return StringValue(str) }
+func (s StringValue) Float() (float32, error)     { return 0, ErrIllegalCast }
+func (s StringValue) Color() (color.T, error)     { return color.Black, ErrIllegalCast }
+func (s StringValue) String() (string, error)     { return string(s), nil }
+func (s StringValue) Texture() (texture.T, error) { return nil, ErrIllegalCast }
+func String(str string) Variable                  { return StringValue(str) }
 
 type TextureValue struct {
-	ref *render.Texture
+	ref texture.T
 }
 
-func (t TextureValue) Float() (float32, error)           { return 0, ErrIllegalCast }
-func (t TextureValue) Color() (color.T, error)           { return color.Black, ErrIllegalCast }
-func (t TextureValue) String() (string, error)           { return "", ErrIllegalCast }
-func (t TextureValue) Texture() (*render.Texture, error) { return t.ref, nil }
-func Texture(tex *render.Texture) Variable               { return TextureValue{tex} }
+func (t TextureValue) Float() (float32, error)     { return 0, ErrIllegalCast }
+func (t TextureValue) Color() (color.T, error)     { return color.Black, ErrIllegalCast }
+func (t TextureValue) String() (string, error)     { return "", ErrIllegalCast }
+func (t TextureValue) Texture() (texture.T, error) { return t.ref, nil }
+func Texture(tex texture.T) Variable               { return TextureValue{tex} }
 
 type FloatRef struct {
 	style Style

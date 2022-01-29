@@ -6,10 +6,11 @@ import (
 
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/color"
+	"github.com/johanhenriksson/goworld/render/texture"
 )
 
 type ShaderMap map[string]*render.Shader
-type TextureMap map[string]*render.Texture
+type TextureMap map[string]texture.T
 type MaterialMap map[string]*render.Material
 type FontMap map[string]*render.Font
 
@@ -58,7 +59,7 @@ func GetShader(name string) *render.Shader {
 	return shader
 }
 
-func GetTexture(name string) *render.Texture {
+func GetTexture(name string) texture.T {
 	// check texture cache
 	if texture, exists := cache.Textures[name]; exists {
 		return texture
@@ -75,7 +76,7 @@ func GetTexture(name string) *render.Texture {
 	return texture
 }
 
-func GetColorTexture(color color.T) *render.Texture {
+func GetColorTexture(color color.T) texture.T {
 	name := fmt.Sprintf("Color%s", color)
 
 	// check texture cache

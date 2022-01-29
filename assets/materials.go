@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 
 	"github.com/johanhenriksson/goworld/render"
+	"github.com/johanhenriksson/goworld/render/texture"
 )
 
 // MaterialDefinition file json representation
@@ -56,14 +57,14 @@ func LoadMaterial(name string, matf *MaterialDefinition) (*render.Material, erro
 
 	// load textures
 	for name, txtf := range matf.Textures {
-		texture, err := render.TextureFromFile(txtf.File)
+		tex, err := render.TextureFromFile(txtf.File)
 		if err != nil {
 			return nil, err
 		}
 		if txtf.Filter == "nearest" {
-			texture.SetFilter(render.NearestFilter)
+			tex.SetFilter(texture.NearestFilter)
 		}
-		mat.Textures.Add(name, texture)
+		mat.Textures.Add(name, tex)
 	}
 
 	return mat, nil

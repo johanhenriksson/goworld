@@ -5,6 +5,7 @@ import (
 	"github.com/johanhenriksson/goworld/math"
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/render"
+	gltex "github.com/johanhenriksson/goworld/render/backend/gl/texture"
 	"github.com/johanhenriksson/goworld/render/color"
 )
 
@@ -35,7 +36,7 @@ func NewText(text string, style Style) *Text {
 
 	// create opengl texture
 	bounds := font.Measure(text)
-	texture := render.CreateTexture(int(bounds.X), int(bounds.Y))
+	texture := gltex.New(int(bounds.X), int(bounds.Y))
 
 	element := &Text{
 		Image: NewImage(texture, bounds, false, style),

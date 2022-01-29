@@ -5,15 +5,16 @@ import (
 
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/math/vec3"
+	"github.com/johanhenriksson/goworld/render/texture"
 )
 
 // GeometryBuffer is a frame buffer for defered shading
 type GeometryBuffer struct {
 	*FrameBuffer
-	Diffuse  *Texture
-	Normal   *Texture
-	Position *Texture
-	Depth    *Texture
+	Diffuse  texture.T
+	Normal   texture.T
+	Position texture.T
+	Depth    texture.T
 }
 
 // CreateGeometryBuffer creates a frame buffer suitable for storing geometry data in defered shading
@@ -42,7 +43,7 @@ func (g *GeometryBuffer) SampleNormal(p vec2.T) (vec3.T, bool) {
 	g.Bind()
 	x, y := int(p.X), int(p.Y)
 	// sample normal buffer (COLOR_ATTACHMENT1)
-	normalEncoded := g.FrameBuffer.Sample(gl.COLOR_ATTACHMENT1, x, int(g.Normal.Height)-y-1)
+	normalEncoded := g.FrameBuffer.Sample(gl.COLOR_ATTACHMENT1, x, g.Normal.Height()-y-1)
 	if normalEncoded.R == 0 && normalEncoded.G == 0 && normalEncoded.B == 0 {
 		return vec3.Zero, false // normal does not exist
 	}
@@ -56,6 +57,6 @@ func (g *GeometryBuffer) SampleNormal(p vec2.T) (vec3.T, bool) {
 func (g *GeometryBuffer) SampleDepth(p vec2.T) (float32, bool) {
 	g.Bind()
 	x, y := int(p.X), int(p.Y)
-	depth := g.FrameBuffer.SampleDepth(x, int(g.Depth.Height)-y-1)
+	depth := g.FrameBuffer.SampleDepth(x, g.Depth.Height()-y-1)
 	return depth, depth != 0.0
 }

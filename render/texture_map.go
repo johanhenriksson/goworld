@@ -1,8 +1,12 @@
 package render
 
+import (
+	"github.com/johanhenriksson/goworld/render/texture"
+)
+
 type TextureMap struct {
 	shader   *Shader
-	textures map[string]*Texture
+	textures map[string]texture.T
 	slots    []string
 }
 
@@ -10,12 +14,12 @@ func NewTextureMap(shader *Shader) *TextureMap {
 	return &TextureMap{
 		shader:   shader,
 		slots:    make([]string, 0, 8),
-		textures: make(map[string]*Texture, 8),
+		textures: make(map[string]texture.T, 8),
 	}
 }
 
 // AddTexture attaches a new texture to this material, and assings it to the next available texture slot.
-func (tm *TextureMap) Add(name string, tex *Texture) {
+func (tm *TextureMap) Add(name string, tex texture.T) {
 	if _, exists := tm.textures[name]; exists {
 		tm.Set(name, tex)
 		return
@@ -25,7 +29,7 @@ func (tm *TextureMap) Add(name string, tex *Texture) {
 }
 
 // Set changes a bound texture
-func (tm *TextureMap) Set(name string, tex *Texture) {
+func (tm *TextureMap) Set(name string, tex texture.T) {
 	if _, exists := tm.textures[name]; !exists {
 		panic("no such texture")
 	}
@@ -36,14 +40,14 @@ func (tm *TextureMap) Length() int {
 	return len(tm.slots)
 }
 
-func (tm *TextureMap) Get(name string) *Texture {
+func (tm *TextureMap) Get(name string) texture.T {
 	if tx, exists := tm.textures[name]; exists {
 		return tx
 	}
 	return nil
 }
 
-func (tm *TextureMap) Slot(i int) *Texture {
+func (tm *TextureMap) Slot(i int) texture.T {
 	if i < 0 || i >= len(tm.slots) {
 		return nil
 	}

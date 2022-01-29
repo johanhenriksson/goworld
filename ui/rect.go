@@ -7,6 +7,7 @@ import (
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/color"
+	"github.com/johanhenriksson/goworld/render/texture"
 )
 
 // Rect is a rectangle with support for borders & rounded corners.
@@ -15,7 +16,7 @@ type Rect struct {
 	*Element
 	layout RectLayout
 	mesh   *geometry.Rect
-	tex    *render.Texture
+	tex    texture.T
 }
 
 type RectLayout func(Component, vec2.T) vec2.T

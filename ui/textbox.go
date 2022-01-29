@@ -7,6 +7,7 @@ import (
 	"github.com/johanhenriksson/goworld/assets"
 	"github.com/johanhenriksson/goworld/core/input/keys"
 	"github.com/johanhenriksson/goworld/render"
+	gltex "github.com/johanhenriksson/goworld/render/backend/gl/texture"
 	"github.com/johanhenriksson/goworld/render/color"
 )
 
@@ -31,7 +32,7 @@ func NewTextbox(text string, style Style) *Textbox {
 	spacing := style.Float("spacing", 1.5)
 	font := assets.GetFont("assets/fonts/SourceCodeProRegular.ttf", size, spacing)
 	bounds := font.Measure(text)
-	texture := render.CreateTexture(int(bounds.X), int(bounds.Y))
+	texture := gltex.New(int(bounds.X), int(bounds.Y))
 
 	t := &Textbox{
 		Image: NewImage(texture, bounds, true, style),

@@ -8,14 +8,15 @@ import (
 	"github.com/johanhenriksson/goworld/core/scene"
 	"github.com/johanhenriksson/goworld/core/window"
 	"github.com/johanhenriksson/goworld/render"
+	"github.com/johanhenriksson/goworld/render/texture"
 )
 
 // PassMap maps names to Render Passes
 type PassMap map[string]DrawPass
 
 type PostPass interface {
-	Input(*render.Texture)
-	Output() *render.Texture
+	Input(texture.T)
+	Output() texture.T
 }
 
 // Renderer holds references to the Scene and is responsible for executing render passes in order

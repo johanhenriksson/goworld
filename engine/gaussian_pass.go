@@ -5,11 +5,12 @@ import (
 	"github.com/johanhenriksson/goworld/core/scene"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/color"
+	"github.com/johanhenriksson/goworld/render/texture"
 )
 
 // GaussianPass represents a gaussian blur pass.
 type GaussianPass struct {
-	Output *render.Texture
+	Output texture.T
 
 	fbo      *render.FrameBuffer
 	shader   *render.Shader
@@ -18,9 +19,9 @@ type GaussianPass struct {
 }
 
 // NewGaussianPass creates a new Gaussian Blur pass.
-func NewGaussianPass(input *render.Texture) *GaussianPass {
-	fbo := render.CreateFrameBuffer(input.Width, input.Height)
-	output := fbo.NewBuffer(gl.COLOR_ATTACHMENT0, gl.RED, gl.RGB, gl.FLOAT)
+func NewGaussianPass(input texture.T) *GaussianPass {
+	fbo := render.CreateFrameBuffer(input.Width(), input.Height())
+	output := fbo.NewBuffer(gl.COLOR_ATTACHMENT0, gl.RED, texture.RGB, gl.FLOAT)
 
 	shader := render.CompileShader(
 		"gaussian_pass",

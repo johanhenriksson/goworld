@@ -3,7 +3,7 @@ package editor
 import (
 	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/math/vec2"
-	"github.com/johanhenriksson/goworld/render"
+	"github.com/johanhenriksson/goworld/render/texture"
 	"github.com/johanhenriksson/goworld/ui"
 )
 
@@ -22,7 +22,7 @@ func DebugBufferWindows(renderer *engine.Renderer) ui.Component {
 	return bufferWindows
 }
 
-func newBufferWindow(title string, texture *render.Texture, depth bool) ui.Component {
+func newBufferWindow(title string, texture texture.T, depth bool) ui.Component {
 	var img *ui.Image
 	size := vec2.New(240, 160)
 	if depth {
