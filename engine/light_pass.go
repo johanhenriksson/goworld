@@ -1,6 +1,8 @@
 package engine
 
 import (
+	"github.com/johanhenriksson/goworld/core/light"
+	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/core/scene"
 	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/math/vec3"
@@ -9,7 +11,6 @@ import (
 	"github.com/johanhenriksson/goworld/render/backend/gl/gl_shader"
 	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/framebuffer"
-	"github.com/johanhenriksson/goworld/render/light"
 	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/shader"
 )
@@ -70,23 +71,23 @@ func NewLightPass(input framebuffer.Geometry) *LightPass {
 	return p
 }
 
-func (p *LightPass) setLightUniforms(light *light.T) {
+func (p *LightPass) setLightUniforms(desc *light.Descriptor) {
 	// compute world to lightspace (light view projection) matrix
 	// note: this is only for directional lights
-	lp := light.Projection
-	lv := mat4.LookAt(light.Position, vec3.Zero)
+	lp := desc.Projection
+	lv := mat4.LookAt(desc.Position, vec3.Zero)
 	lvp := lp.Mul(&lv)
 	p.shader.Mat4("light_vp", lvp)
 
 	/* set light uniform attributes */
-	p.shader.Vec3("light.Position", light.Position)
-	p.shader.RGB("light.Color", light.Color)
-	p.shader.Int32("light.Type", int(light.Type))
-	p.shader.Float("light.Range", light.Range)
-	p.shader.Float("light.Intensity", light.Intensity)
-	p.shader.Float("light.attenuation.Constant", light.Attenuation.Constant)
-	p.shader.Float("light.attenuation.Linear", light.Attenuation.Linear)
-	p.shader.Float("light.attenuation.Quadratic", light.Attenuation.Quadratic)
+	p.shader.Vec3("light.Position", desc.Position)
+	p.shader.RGB("light.Color", desc.Color)
+	p.shader.Int32("light.Type", int(desc.Type))
+	p.shader.Float("light.Range", desc.Range)
+	p.shader.Float("light.Intensity", desc.Intensity)
+	p.shader.Float("light.attenuation.Constant", desc.Attenuation.Constant)
+	p.shader.Float("light.attenuation.Linear", desc.Attenuation.Linear)
+	p.shader.Float("light.attenuation.Quadratic", desc.Attenuation.Quadratic)
 }
 
 // Draw executes the deferred lighting pass.
@@ -114,7 +115,7 @@ func (p *LightPass) Draw(args render.Args, scene scene.T) {
 	render.DepthOutput(true)
 
 	// ambient light pass
-	ambient := light.T{
+	ambient := light.Descriptor{
 		Type:      light.Ambient,
 		Color:     p.Ambient,
 		Intensity: 1.3,
@@ -127,10 +128,14 @@ func (p *LightPass) Draw(args render.Args, scene scene.T) {
 
 	render.DepthOutput(false)
 
-	// draw lights one by one
-	for _, light := range scene.Lights() {
+	query := object.NewQuery(LightQuery)
+	scene.Collect(&query)
+	for _, component := range query.Results {
+		light := component.(light.T)
+		desc := light.LightDescriptor()
+
 		// draw shadow pass for this light into shadow map
-		p.Shadows.DrawLight(&light)
+		p.Shadows.DrawLight(&desc)
 
 		// first light pass we want the shader to restore the depth buffer
 		// then, disable depth masking so that multiple lights can be drawn
@@ -139,7 +144,7 @@ func (p *LightPass) Draw(args render.Args, scene scene.T) {
 
 		// use light shader again
 		p.mat.Use()
-		p.setLightUniforms(&light)
+		p.setLightUniforms(&desc)
 
 		render.DepthOutput(true)
 		// render light
@@ -150,4 +155,9 @@ func (p *LightPass) Draw(args render.Args, scene scene.T) {
 	// reset GL state
 	render.DepthOutput(true)
 	render.Blend(false)
+}
+
+func LightQuery(c object.Component) bool {
+	_, ok := c.(light.T)
+	return ok
 }

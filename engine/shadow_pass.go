@@ -3,12 +3,12 @@ package engine
 import (
 	"github.com/go-gl/gl/v4.1-core/gl"
 
+	"github.com/johanhenriksson/goworld/core/light"
 	"github.com/johanhenriksson/goworld/core/scene"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/backend/gl/gl_framebuffer"
 	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/framebuffer"
-	"github.com/johanhenriksson/goworld/render/light"
 	"github.com/johanhenriksson/goworld/render/texture"
 )
 
@@ -50,7 +50,7 @@ func (p *ShadowPass) Resize(width, height int) {}
 func (p *ShadowPass) Draw(scene scene.T) {}
 
 // DrawLight draws a shadow pass for the given light.
-func (p *ShadowPass) DrawLight(lit *light.T) {
+func (p *ShadowPass) DrawLight(lit *light.Descriptor) {
 	if !lit.Shadows {
 		return
 	}

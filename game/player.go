@@ -4,6 +4,7 @@ import (
 	"github.com/johanhenriksson/goworld/core/camera"
 	"github.com/johanhenriksson/goworld/core/input/keys"
 	"github.com/johanhenriksson/goworld/core/input/mouse"
+	"github.com/johanhenriksson/goworld/core/light"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/math"
 	"github.com/johanhenriksson/goworld/math/vec2"
@@ -55,6 +56,12 @@ func NewPlayer(position vec3.T, collide CollisionCheck) *Player {
 	p.Eye.Transform().SetPosition(p.CamHeight)
 	p.Adopt(p.Eye)
 	p.Eye.Attach(cam)
+	p.Eye.Attach(light.NewPoint(light.PointArgs{
+		Attenuation: light.DefaultAttenuation,
+		Range:       20,
+		Intensity:   2.5,
+		Color:       color.White,
+	}))
 	return p
 }
 

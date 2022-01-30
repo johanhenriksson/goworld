@@ -1,7 +1,7 @@
 package main
 
 /*
- * Copyright (C) 2016-2021 Johan Henriksson
+ * Copyright (C) 2016-2022 Johan Henriksson
  *
  * goworld is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,17 +20,19 @@ package main
 import (
 	"fmt"
 
+	"github.com/johanhenriksson/goworld/core/light"
 	"github.com/johanhenriksson/goworld/core/scene"
 	"github.com/johanhenriksson/goworld/core/window"
 	"github.com/johanhenriksson/goworld/editor"
 	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/game"
-	"github.com/johanhenriksson/goworld/gui"
-	"github.com/lsfn/ode"
-
 	"github.com/johanhenriksson/goworld/geometry/gizmo/mover"
+	"github.com/johanhenriksson/goworld/gui"
 	"github.com/johanhenriksson/goworld/math/vec3"
+	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/ui"
+
+	"github.com/lsfn/ode"
 )
 
 func main() {
@@ -56,6 +58,13 @@ func main() {
 
 	uim := ui.NewManager(1600, 1200)
 	renderer.Append("ui", uim)
+
+	scene.Attach(light.NewDirectional(light.DirectionalArgs{
+		Intensity: 0.8,
+		Color:     color.RGB(0.9*0.973, 0.9*0.945, 0.9*0.776),
+		Direction: vec3.New(-2, 2, -1),
+		Shadows:   false,
+	}))
 
 	gizmo := mover.New(mover.Args{})
 	gizmo.Transform().SetPosition(vec3.New(-1, 0, -1))
