@@ -84,9 +84,11 @@ func (p *LightPass) Draw(args render.Args, scene scene.T) {
 
 	render.DepthOutput(false)
 
-	query := object.NewQuery(LightQuery)
-	scene.Collect(&query)
-	for _, component := range query.Results {
+	lights := object.NewQuery().
+		Where(IsLight).
+		Collect(scene)
+
+	for _, component := range lights {
 		light := component.(light.T)
 		desc := light.LightDescriptor()
 
@@ -113,7 +115,7 @@ func (p *LightPass) drawLight(desc light.Descriptor) {
 	p.quad.Draw()
 }
 
-func LightQuery(c object.Component) bool {
+func IsLight(c object.Component) bool {
 	_, ok := c.(light.T)
 	return ok
 }

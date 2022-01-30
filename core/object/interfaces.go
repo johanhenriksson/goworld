@@ -51,5 +51,5 @@ type T interface {
 	Children() []T
 
 	Attach(...Component)
-	Collect(*Query)
+	Components() []Component
 }

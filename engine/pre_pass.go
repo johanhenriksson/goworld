@@ -13,14 +13,17 @@ type PreDrawable interface {
 }
 
 func (p *PrePass) Draw(args render.Args, scene scene.T) {
-	query := object.NewQuery(func(c object.Component) bool {
-		_, ok := c.(PreDrawable)
-		return ok
-	})
-	scene.Collect(&query)
+	objects := object.NewQuery().
+		Where(RequiresPreDraw).
+		Collect(scene)
 
-	for _, component := range query.Results {
+	for _, component := range objects {
 		drawable := component.(PreDrawable)
 		drawable.PreDraw(args.Apply(component.Object().Transform().World()))
 	}
+}
+
+func RequiresPreDraw(c object.Component) bool {
+	_, ok := c.(PreDrawable)
+	return ok
 }

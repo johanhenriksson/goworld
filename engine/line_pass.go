@@ -24,14 +24,17 @@ func (p *LinePass) Draw(args render.Args, scene scene.T) {
 	render.BindScreenBuffer()
 	render.SetViewport(0, 0, args.Viewport.FrameWidth, args.Viewport.FrameHeight)
 
-	query := object.NewQuery(func(c object.Component) bool {
-		_, ok := c.(LineDrawable)
-		return ok
-	})
-	scene.Collect(&query)
+	objects := object.NewQuery().
+		Where(IsLineDrawable).
+		Collect(scene)
 
-	for _, component := range query.Results {
+	for _, component := range objects {
 		drawable := component.(LineDrawable)
 		drawable.DrawLines(args.Apply(component.Object().Transform().World()))
 	}
+}
+
+func IsLineDrawable(c object.Component) bool {
+	_, ok := c.(LineDrawable)
+	return ok
 }

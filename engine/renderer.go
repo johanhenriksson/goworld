@@ -43,7 +43,7 @@ func NewRenderer(window window.T) *Renderer {
 	// forward pass
 	r.Forward = NewForwardPass(r.Geometry.Buffer, r.Light.Output)
 
-	// output and postprocess
+	// postprocess and output
 	r.SSAO = effect.NewSSAOPass(r.Geometry.Buffer, effect.SSAOSettings{
 		Samples: 16,
 		Radius:  0.1,

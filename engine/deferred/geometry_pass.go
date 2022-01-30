@@ -41,10 +41,11 @@ func (p *GeometryPass) Draw(args render.Args, scene scene.T) {
 	// lets not draw stuff thats behind us at the very least
 	// ... things need bounding boxes though.
 
-	query := object.NewQuery(DeferredDrawableQuery)
-	scene.Collect(&query)
+	objects := object.NewQuery().
+		Where(IsDeferredDrawable).
+		Collect(scene)
 
-	for _, component := range query.Results {
+	for _, component := range objects {
 		drawable := component.(DeferredDrawable)
 		drawable.DrawDeferred(args.Apply(component.Object().Transform().World()))
 	}
@@ -52,7 +53,7 @@ func (p *GeometryPass) Draw(args render.Args, scene scene.T) {
 
 // DeferedDrawableQuery is an object query predicate that matches any component
 // that implements the DeferredDrawable interface.
-func DeferredDrawableQuery(c object.Component) bool {
+func IsDeferredDrawable(c object.Component) bool {
 	_, ok := c.(DeferredDrawable)
 	return ok
 }

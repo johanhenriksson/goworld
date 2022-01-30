@@ -47,23 +47,7 @@ func (o *object) SetActive(active bool) {
 // Active indicates whether the object is currently enabled
 func (o *object) Active() bool { return o.enabled }
 
-// Collect performs a query against this objects child components
-func (o *object) Collect(query *Query) {
-	for _, component := range o.components {
-		if !component.Active() {
-			continue
-		}
-		if query.Match(component) {
-			query.Append(component)
-		}
-	}
-	for _, child := range o.children {
-		if !child.Active() {
-			continue
-		}
-		child.Collect(query)
-	}
-}
+func (o *object) Components() []Component { return o.components }
 
 // Attach a component to this object
 func (o *object) Attach(components ...Component) {

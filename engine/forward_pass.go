@@ -65,13 +65,11 @@ func (p *ForwardPass) Draw(args render.Args, scene scene.T) {
 	// todo: should be disabled for transparent things, not everything
 	// render.DepthOutput(false)
 
-	query := object.NewQuery(func(c object.Component) bool {
-		_, ok := c.(ForwardDrawable)
-		return ok
-	})
-	scene.Collect(&query)
+	objects := object.NewQuery().
+		Where(IsForwardDrawable).
+		Collect(scene)
 
-	for _, component := range query.Results {
+	for _, component := range objects {
 		drawable := component.(ForwardDrawable)
 		drawable.DrawForward(args.Apply(component.Object().Transform().World()))
 	}
@@ -79,4 +77,9 @@ func (p *ForwardPass) Draw(args render.Args, scene scene.T) {
 	render.DepthOutput(true)
 
 	render.CullFace(render.CullNone)
+}
+
+func IsForwardDrawable(c object.Component) bool {
+	_, ok := c.(ForwardDrawable)
+	return ok
 }
