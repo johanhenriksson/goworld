@@ -50,7 +50,7 @@ func NewColorPass(input framebuffer.Color, filter string, occlusion texture.T) *
 		Output:    gl_framebuffer.NewColor(input.Width(), input.Height()),
 		Lut:       lut,
 		Occlusion: occlusion,
-		Gamma:     1.8,
+		Gamma:     1.0,
 
 		quad:   screen_quad.New(shader),
 		mat:    mat,

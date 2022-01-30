@@ -1,15 +1,17 @@
 package deferred
 
 import (
-	"github.com/go-gl/gl/v4.1-core/gl"
-
 	"github.com/johanhenriksson/goworld/core/light"
+	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/core/scene"
+	"github.com/johanhenriksson/goworld/math/mat4"
+	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/backend/gl/gl_framebuffer"
-	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/framebuffer"
 	"github.com/johanhenriksson/goworld/render/texture"
+
+	"github.com/go-gl/gl/v4.1-core/gl"
 )
 
 // ShadowPass renders shadow maps for lights.
@@ -44,13 +46,8 @@ func NewShadowPass() *ShadowPass {
 	return p
 }
 
-// Resize is called on window resize. Should update any window size-dependent buffers
-func (p *ShadowPass) Resize(width, height int) {}
-
-func (p *ShadowPass) Draw(scene scene.T) {}
-
 // DrawLight draws a shadow pass for the given light.
-func (p *ShadowPass) DrawLight(lit *light.Descriptor) {
+func (p *ShadowPass) DrawLight(scene scene.T, lit *light.Descriptor) {
 	if !lit.Shadows {
 		return
 	}
@@ -60,34 +57,34 @@ func (p *ShadowPass) DrawLight(lit *light.Descriptor) {
 	}
 
 	// bind shadow map depth render target
-	// todo: each light needs its own shadow buffer?
 	p.shadowmap.Bind()
 	defer p.shadowmap.Unbind()
 
 	render.DepthOutput(true)
-	render.ClearWith(color.White)
 	render.ClearDepth()
 
 	// compute world to lightspace (light's view projection) matrix
 	// todo: move to light object
-	// lp := light.Projection
-	// lv := mat4.LookAt(light.Position, vec3.Zero)
-	// lvp := lp.Mul(&lv)
+	lp := lit.Projection
+	lv := mat4.LookAt(lit.Position, vec3.Zero)
+	lvp := lp.Mul(&lv)
 
-	// draw shadow casters
-	// scene.CollectWithArgs(p, DrawArgs{
-	// 	Projection: lp,
-	// 	View:       lv,
-	// 	VP:         lvp,
-	// 	MVP:        lvp,
-	// 	Transform:  mat4.Ident(),
-	// 	Pass:       render.Geometry,
-	// })
+	args := render.Args{
+		Projection: lp,
+		View:       lv,
+		VP:         lvp,
+		MVP:        lvp,
+		Transform:  mat4.Ident(),
+	}
 
-	// for _, cmd := range p.queue.items {
-	// 	drawable := cmd.Component.(DeferredDrawable)
-	// 	drawable.DrawDeferred(cmd.Args)
-	// }
+	objects := object.NewQuery().
+		Where(IsDeferredDrawable).
+		Collect(scene)
 
-	render.DepthOutput(false)
+	for _, component := range objects {
+		drawable := component.(DeferredDrawable)
+		drawable.DrawDeferred(args.Apply(component.Object().Transform().World()))
+	}
+
+	// render.DepthOutput(false)
 }

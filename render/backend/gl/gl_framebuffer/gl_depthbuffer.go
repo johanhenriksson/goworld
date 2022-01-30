@@ -14,9 +14,14 @@ type gldepthbuf struct {
 	depth texture.T
 }
 
-// NewShadowBuffer creates a new shadow buffer
+// NewDepthBuffer creates a new depth-only framebuffer
 func NewDepth(width, height int) framebuffer.Depth {
 	f := New(width, height)
+
+	// disable color buffers
+	gl.DrawBuffer(gl.NONE)
+	gl.ReadBuffer(gl.NONE)
+
 	return &gldepthbuf{
 		T:     f,
 		depth: f.NewBuffer(gl.DEPTH_ATTACHMENT, gl.DEPTH_COMPONENT24, gl.DEPTH_COMPONENT, gl.FLOAT),

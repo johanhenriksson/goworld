@@ -60,10 +60,10 @@ func main() {
 	renderer.Append("ui", uim)
 
 	scene.Attach(light.NewDirectional(light.DirectionalArgs{
-		Intensity: 0.8,
+		Intensity: 1.8,
 		Color:     color.RGB(0.9*0.973, 0.9*0.945, 0.9*0.776),
 		Direction: vec3.New(-2, 2, -1),
-		Shadows:   false,
+		Shadows:   true,
 	}))
 
 	gizmo := mover.New(mover.Args{})

@@ -2,6 +2,7 @@ package light
 
 import (
 	"github.com/johanhenriksson/goworld/core/object"
+	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render/color"
 )
@@ -28,10 +29,12 @@ func NewDirectional(args DirectionalArgs) T {
 
 func (lit *dirlight) LightDescriptor() Descriptor {
 	desc := Descriptor{
-		Type:      Directional,
-		Position:  lit.Direction,
-		Color:     lit.Color,
-		Intensity: lit.Intensity,
+		Type:       Directional,
+		Position:   lit.Direction,
+		Color:      lit.Color,
+		Intensity:  lit.Intensity,
+		Shadows:    lit.Shadows,
+		Projection: mat4.Orthographic(-31, 60, -20, 40, -10, 50),
 	}
 	return desc
 }

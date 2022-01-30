@@ -5,7 +5,6 @@ import (
 	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render/color"
-	"github.com/johanhenriksson/goworld/render/texture"
 )
 
 type T interface {
@@ -23,9 +22,7 @@ type Descriptor struct {
 	Intensity   float32
 	Type        Type
 	Shadows     bool
-
-	Projection mat4.T // Shadow projection matrix
-	ShadowMap  texture.T
+	Projection  mat4.T // Light projection matrix
 }
 
 // Attenuation properties for point lights

@@ -3,10 +3,12 @@ package engine
 import (
 	"fmt"
 
+	"github.com/johanhenriksson/goworld/assets"
 	"github.com/johanhenriksson/goworld/core/scene"
 	"github.com/johanhenriksson/goworld/core/window"
 	"github.com/johanhenriksson/goworld/engine/deferred"
 	"github.com/johanhenriksson/goworld/engine/effect"
+	"github.com/johanhenriksson/goworld/render/color"
 )
 
 // PassMap maps names to Render Passes
@@ -51,7 +53,9 @@ func NewRenderer(window window.T) *Renderer {
 		Power:   2.0,
 		Scale:   2,
 	})
-	r.Colors = effect.NewColorPass(r.Light.Output, "saturated", r.SSAO.Gaussian.Output)
+
+	white := assets.GetColorTexture(color.White)
+	r.Colors = effect.NewColorPass(r.Light.Output, "saturated", white) // r.SSAO.Gaussian.Output)
 	r.Output = NewOutputPass(r.Colors.Output.Texture(), r.Geometry.Buffer.Depth())
 
 	// lines

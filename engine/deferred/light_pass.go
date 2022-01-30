@@ -38,7 +38,7 @@ func NewLightPass(input framebuffer.Geometry) *LightPass {
 		Shadows:        shadowPass,
 		Ambient:        color.RGB(0.25, 0.25, 0.25),
 		ShadowStrength: 0.3,
-		ShadowBias:     0.0001,
+		ShadowBias:     0.00001,
 
 		quad:   screen_quad.New(shader),
 		shader: shader,
@@ -64,13 +64,14 @@ func (p *LightPass) Draw(args render.Args, scene scene.T) {
 	// enable back face culling
 	render.CullFace(render.CullBack)
 
-	// enable blending
-	render.Blend(false)
-
 	p.shader.Use()
 	p.shader.SetCamera(scene.Camera())
 
-	render.DepthOutput(true)
+	// disable blending for the first light
+	// we are drawing on a non-black background (camera clear color)
+	// so we dont want to add to it. perhaps the clear color should be added later
+	// this only works when the first light is the ambient light pass, since it lights everything
+	render.Blend(false)
 
 	// ambient light pass
 	p.drawLight(light.Descriptor{
@@ -79,10 +80,8 @@ func (p *LightPass) Draw(args render.Args, scene scene.T) {
 		Intensity: 1.3,
 	})
 
-	// set blending mode to additive
+	// accumulate the light from the non-ambient light sources
 	render.BlendAdditive()
-
-	render.DepthOutput(false)
 
 	lights := object.NewQuery().
 		Where(IsLight).
@@ -92,23 +91,17 @@ func (p *LightPass) Draw(args render.Args, scene scene.T) {
 		light := component.(light.T)
 		desc := light.LightDescriptor()
 
-		// draw shadow pass for this light into shadow map
-		p.Shadows.DrawLight(&desc)
+		// draw shadow pass for this light into the shadow map
+		p.Shadows.DrawLight(scene, &desc)
 
-		// perhaps depth output should be toggled for multiple lights?
-		// old code indicates so, but everything seems to work ok
-
-		p.Output.Bind()
-
+		// accumulate light from this source
 		p.drawLight(desc)
 	}
-
-	// reset GL state
-	render.DepthOutput(true)
-	render.Blend(false)
 }
 
 func (p *LightPass) drawLight(desc light.Descriptor) {
+	p.Output.Bind()
+	p.shader.Use()
 	p.shader.SetLightDescriptor(desc)
 
 	// todo: draw light volumes instead of a fullscreen quad
