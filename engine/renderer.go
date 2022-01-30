@@ -5,6 +5,8 @@ import (
 
 	"github.com/johanhenriksson/goworld/core/scene"
 	"github.com/johanhenriksson/goworld/core/window"
+	"github.com/johanhenriksson/goworld/engine/deferred"
+	"github.com/johanhenriksson/goworld/engine/effect"
 )
 
 // PassMap maps names to Render Passes
@@ -16,11 +18,11 @@ type Renderer struct {
 
 	Pre      *PrePass
 	Output   *OutputPass
-	Geometry *GeometryPass
-	Light    *LightPass
+	Geometry *deferred.GeometryPass
+	Light    *deferred.LightPass
 	Forward  *ForwardPass
-	SSAO     *SSAOPass
-	Colors   *ColorPass
+	SSAO     *effect.SSAOPass
+	Colors   *effect.ColorPass
 	Lines    *LinePass
 
 	passMap PassMap
@@ -34,23 +36,25 @@ func NewRenderer(window window.T) *Renderer {
 		window:  window,
 	}
 
-	width, height := window.BufferSize()
-	r.Geometry = NewGeometryPass(width, height)
-	r.Light = NewLightPass(r.Geometry.Buffer)
+	// deferred rendering pass
+	r.Geometry = deferred.NewGeometryPass()
+	r.Light = deferred.NewLightPass(r.Geometry.Buffer)
 
+	// forward pass
 	r.Forward = NewForwardPass(r.Geometry.Buffer, r.Light.Output)
 
-	r.SSAO = NewSSAOPass(r.Geometry.Buffer, &SSAOSettings{
+	// output and postprocess
+	r.SSAO = effect.NewSSAOPass(r.Geometry.Buffer, effect.SSAOSettings{
 		Samples: 16,
 		Radius:  0.1,
 		Bias:    0.03,
 		Power:   2.0,
 		Scale:   2,
 	})
-
-	r.Colors = NewColorPass(r.Light.Output, "saturated", r.SSAO.Gaussian.Output)
+	r.Colors = effect.NewColorPass(r.Light.Output, "saturated", r.SSAO.Gaussian.Output)
 	r.Output = NewOutputPass(r.Colors.Output.Texture(), r.Geometry.Buffer.Depth())
 
+	// lines
 	r.Lines = NewLinePass()
 
 	r.Passes = []DrawPass{
@@ -86,8 +90,7 @@ func (r *Renderer) Get(name string) DrawPass {
 
 // Draw the world.
 func (r *Renderer) Draw(scene scene.T) {
-	args := ArgsFromWindow(r.window)
-
+	args := CreateRenderArgs(r.window, scene.Camera())
 	for _, pass := range r.Passes {
 		pass.Draw(args, scene)
 	}

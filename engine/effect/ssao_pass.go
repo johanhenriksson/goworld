@@ -1,9 +1,10 @@
-package engine
+package effect
 
 import (
 	"github.com/go-gl/gl/v4.1-core/gl"
 
 	"github.com/johanhenriksson/goworld/core/scene"
+	"github.com/johanhenriksson/goworld/engine/screen_quad"
 	"github.com/johanhenriksson/goworld/math"
 	"github.com/johanhenriksson/goworld/math/random"
 	"github.com/johanhenriksson/goworld/math/vec3"
@@ -41,13 +42,13 @@ type SSAOPass struct {
 	fbo    framebuffer.T
 	shader shader.T
 	mat    material.T
-	quad   *Quad
+	quad   screen_quad.T
 }
 
 // NewSSAOPass creates a new SSAO pass from a gbuffer and SSAO settings.
-func NewSSAOPass(gbuff framebuffer.Geometry, settings *SSAOSettings) *SSAOPass {
+func NewSSAOPass(gbuff framebuffer.Geometry, settings SSAOSettings) *SSAOPass {
 	fbo := gl_framebuffer.New(gbuff.Width()/settings.Scale, gbuff.Height()/settings.Scale)
-	output := fbo.NewBuffer(gl.COLOR_ATTACHMENT0, gl.RED, gl.RGB, gl.FLOAT)
+	output := fbo.NewBuffer(gl.COLOR_ATTACHMENT0, texture.Red, texture.RGB, types.Float)
 
 	// gaussian blur pass
 	gaussian := NewGaussianPass(output)
@@ -68,12 +69,10 @@ func NewSSAOPass(gbuff framebuffer.Geometry, settings *SSAOSettings) *SSAOPass {
 	mat.Texture("tex_position", gbuff.Position())
 	mat.Texture("tex_noise", noise)
 
-	// create a render quad
-
 	p := &SSAOPass{
-		SSAOSettings: *settings,
+		SSAOSettings: settings,
 		GBuffer:      gbuff,
-		quad:         NewQuad(shader),
+		quad:         screen_quad.New(shader),
 
 		Noise:  noise,
 		Kernel: kernel,
@@ -94,34 +93,25 @@ func (p *SSAOPass) Draw(args render.Args, scene scene.T) {
 	render.Blend(false)
 	render.DepthOutput(false)
 
-	// update projection
 	p.mat.Use()
-	if err := p.mat.Int32("kernel_size", len(p.Kernel)); err != nil {
-		panic(err)
-	}
-	if err := p.mat.Float("bias", p.Bias); err != nil {
-		panic(err)
-	}
+	p.mat.Int32("kernel_size", len(p.Kernel))
+	p.mat.Float("bias", p.Bias)
 	p.mat.Float("radius", p.Radius)
 	p.mat.Float("power", p.Power)
-	if err := p.mat.Int32("scale", p.Scale); err != nil {
-		panic(err)
-	}
-	if err := p.mat.Vec3Array("samples", p.Kernel); err != nil {
-		panic(err)
-	}
-	p.mat.Mat4("projection", scene.Camera().Projection())
+	p.mat.Int32("scale", p.Scale)
+	p.mat.Vec3Array("samples", p.Kernel)
+	p.mat.Mat4("projection", args.Projection)
 
-	// run occlusion pass
 	p.fbo.Bind()
 	defer p.fbo.Unbind()
 	p.fbo.Resize(p.GBuffer.Width()/p.Scale, p.GBuffer.Height()/p.Scale)
 
+	// run occlusion pass
 	render.ClearWith(color.White)
 	p.quad.Draw()
 
 	// run blur pass
-	p.Gaussian.DrawPass(args, scene)
+	p.Gaussian.Draw(args, scene)
 
 	render.DepthOutput(true)
 }

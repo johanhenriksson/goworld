@@ -1,4 +1,4 @@
-package engine
+package deferred
 
 import (
 	"github.com/johanhenriksson/goworld/core/object"
@@ -9,19 +9,15 @@ import (
 	"github.com/johanhenriksson/goworld/render/framebuffer"
 )
 
-type DeferredDrawable interface {
-	DrawDeferred(render.Args)
-}
-
 // GeometryPass draws the scene geometry to a G-buffer
 type GeometryPass struct {
 	Buffer framebuffer.Geometry
 }
 
 // NewGeometryPass sets up a geometry pass.
-func NewGeometryPass(bufferWidth, bufferHeight int) *GeometryPass {
+func NewGeometryPass() *GeometryPass {
 	p := &GeometryPass{
-		Buffer: gl_framebuffer.NewGeometry(bufferWidth, bufferHeight),
+		Buffer: gl_framebuffer.NewGeometry(1, 1),
 	}
 	return p
 }
@@ -41,10 +37,13 @@ func (p *GeometryPass) Draw(args render.Args, scene scene.T) {
 	render.ClearWith(color.Black)
 	render.ClearDepth()
 
+	// todo: frustum culling
+	// lets not draw stuff thats behind us at the very least
+	// ... things need bounding boxes though.
+
 	query := object.NewQuery(DeferredDrawableQuery)
 	scene.Collect(&query)
 
-	args = ArgsWithCamera(args, scene.Camera())
 	for _, component := range query.Results {
 		drawable := component.(DeferredDrawable)
 		drawable.DrawDeferred(args.Apply(component.Object().Transform().World()))

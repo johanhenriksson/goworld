@@ -30,7 +30,6 @@ func (p *LinePass) Draw(args render.Args, scene scene.T) {
 	})
 	scene.Collect(&query)
 
-	args = ArgsWithCamera(args, scene.Camera())
 	for _, component := range query.Results {
 		drawable := component.(LineDrawable)
 		drawable.DrawLines(args.Apply(component.Object().Transform().World()))

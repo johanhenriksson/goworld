@@ -1,4 +1,4 @@
-package engine
+package screen_quad
 
 import (
 	"github.com/johanhenriksson/goworld/math/vec2"
@@ -10,14 +10,18 @@ import (
 	"github.com/johanhenriksson/goworld/render/vertex_array"
 )
 
-// Quad is a fullscreen quad used for render passes
-type Quad struct {
+type T interface {
+	Draw()
+}
+
+// quad is a fullscreen quad used for render passes
+type quad struct {
 	vao vertex_array.T
 }
 
 // NewQuad creates a new quad with a given material
-func NewQuad(shader shader.T) *Quad {
-	q := &Quad{
+func New(shader shader.T) T {
+	q := &quad{
 		vao: gl_vertex_array.New(render.Triangles),
 	}
 
@@ -37,6 +41,6 @@ func NewQuad(shader shader.T) *Quad {
 	return q
 }
 
-func (q *Quad) Draw() {
+func (q *quad) Draw() {
 	q.vao.Draw()
 }

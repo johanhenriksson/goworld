@@ -1,10 +1,11 @@
-package engine
+package effect
 
 import (
 	"fmt"
 
 	"github.com/johanhenriksson/goworld/assets"
 	"github.com/johanhenriksson/goworld/core/scene"
+	"github.com/johanhenriksson/goworld/engine/screen_quad"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/backend/gl/gl_framebuffer"
 	"github.com/johanhenriksson/goworld/render/backend/gl/gl_shader"
@@ -16,18 +17,20 @@ import (
 
 // ColorPass represents a color correction pass and its settings.
 type ColorPass struct {
-	Input  framebuffer.Color
-	Output framebuffer.Color
-	AO     texture.T
-	Lut    texture.T
-	Gamma  float32
+	Input     framebuffer.Color
+	Output    framebuffer.Color
+	Lut       texture.T
+	Occlusion texture.T
+	Gamma     float32
+
 	shader shader.T
 	mat    material.T
-	quad   *Quad
+	quad   screen_quad.T
 }
 
 // NewColorPass instantiates a new color correction pass.
-func NewColorPass(input framebuffer.Color, filter string, ssao texture.T) *ColorPass {
+// this pass also mixes in occlusion output to save an additional full screen pass. a little bit gross
+func NewColorPass(input framebuffer.Color, filter string, occlusion texture.T) *ColorPass {
 	// load lookup table
 	lutName := fmt.Sprintf("textures/color_grading/%s.png", filter)
 	lut := assets.GetTexture(lutName)
@@ -39,16 +42,17 @@ func NewColorPass(input framebuffer.Color, filter string, ssao texture.T) *Color
 
 	mat := material.New("color_pass", shader)
 	mat.Texture("tex_input", input.Texture())
-	mat.Texture("tex_ssao", ssao)
+	mat.Texture("tex_ssao", occlusion)
 	mat.Texture("tex_lut", lut)
 
 	return &ColorPass{
-		Input:  input,
-		Output: gl_framebuffer.NewColor(input.Width(), input.Height()),
-		Lut:    lut,
-		Gamma:  1.8,
+		Input:     input,
+		Output:    gl_framebuffer.NewColor(input.Width(), input.Height()),
+		Lut:       lut,
+		Occlusion: occlusion,
+		Gamma:     1.8,
 
-		quad:   NewQuad(shader),
+		quad:   screen_quad.New(shader),
 		mat:    mat,
 		shader: shader,
 	}
@@ -58,15 +62,12 @@ func NewColorPass(input framebuffer.Color, filter string, ssao texture.T) *Color
 func (p *ColorPass) Draw(args render.Args, scene scene.T) {
 	p.Output.Bind()
 	defer p.Output.Unbind()
-	p.Output.Resize(args.Viewport.FrameWidth, args.Viewport.FrameHeight)
+	p.Output.Resize(p.Input.Width(), p.Input.Height())
 
 	// pass shader settings
 	p.mat.Use()
 	p.mat.Float("gamma", p.Gamma)
 
-	render.Clear()
-	render.Blend(true)
-	render.BlendMultiply()
 	p.quad.Draw()
 }
 

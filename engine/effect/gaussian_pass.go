@@ -1,7 +1,8 @@
-package engine
+package effect
 
 import (
 	"github.com/johanhenriksson/goworld/core/scene"
+	"github.com/johanhenriksson/goworld/engine/screen_quad"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/backend/gl/gl_framebuffer"
 	"github.com/johanhenriksson/goworld/render/backend/gl/gl_shader"
@@ -19,10 +20,11 @@ import (
 type GaussianPass struct {
 	Output texture.T
 
+	input  texture.T
 	fbo    framebuffer.T
 	shader shader.T
 	mat    material.T
-	quad   *Quad
+	quad   screen_quad.T
 }
 
 // NewGaussianPass creates a new Gaussian Blur pass.
@@ -40,21 +42,23 @@ func NewGaussianPass(input texture.T) *GaussianPass {
 
 	return &GaussianPass{
 		Output: output,
-		quad:   NewQuad(shader),
+		input:  input,
+		quad:   screen_quad.New(shader),
 		fbo:    fbo,
 		shader: shader,
 		mat:    mat,
 	}
 }
 
-// DrawPass draws the gaussian blurred output to the frame buffer.
-func (p *GaussianPass) DrawPass(args render.Args, scene scene.T) {
+// Draw draws the gaussian blurred output to the output frame buffer.
+func (p *GaussianPass) Draw(args render.Args, scene scene.T) {
 	render.Blend(false)
 	render.DepthOutput(false)
 
 	p.fbo.Bind()
 	defer p.fbo.Unbind()
-	p.fbo.Resize(args.Viewport.FrameWidth, args.Viewport.FrameHeight)
+	// make sure output matches input size
+	p.fbo.Resize(p.input.Width(), p.input.Height())
 
 	p.mat.Use()
 

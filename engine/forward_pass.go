@@ -23,6 +23,9 @@ type ForwardPass struct {
 
 // NewForwardPass sets up a forward pass.
 func NewForwardPass(gbuffer framebuffer.Geometry, output framebuffer.Color) *ForwardPass {
+	// the forward pass renders into the output of the final deferred pass.
+	// it reuses the normal, position and depth buffers and writes new data according to what is rendered
+	// this ensures that we have complete information in those buffers for later passes
 	fbo := gl_framebuffer.NewGeometry(gbuffer.Width(), gbuffer.Height())
 	fbo.AttachBuffer(gl.COLOR_ATTACHMENT0, output.Texture())
 	fbo.AttachBuffer(gl.COLOR_ATTACHMENT1, gbuffer.Normal())
@@ -55,8 +58,8 @@ func (p *ForwardPass) Draw(args render.Args, scene scene.T) {
 
 	p.fbo.Bind()
 	defer p.fbo.Unbind()
-	p.fbo.DrawBuffers()
 	p.fbo.Resize(args.Viewport.FrameWidth, args.Viewport.FrameHeight)
+	p.fbo.DrawBuffers()
 
 	// disable depth testing
 	// todo: should be disabled for transparent things, not everything
@@ -68,7 +71,6 @@ func (p *ForwardPass) Draw(args render.Args, scene scene.T) {
 	})
 	scene.Collect(&query)
 
-	args = ArgsWithCamera(args, scene.Camera())
 	for _, component := range query.Results {
 		drawable := component.(ForwardDrawable)
 		drawable.DrawForward(args.Apply(component.Object().Transform().World()))

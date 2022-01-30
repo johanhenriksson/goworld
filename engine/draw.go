@@ -13,20 +13,18 @@ type DrawPass interface {
 	Draw(render.Args, scene.T)
 }
 
-func ArgsWithCamera(args render.Args, cam camera.T) render.Args {
-	args.Projection = cam.Projection()
-	args.View = cam.View()
-	args.VP = cam.ViewProj()
-	args.MVP = cam.ViewProj()
-	args.Transform = mat4.Ident()
-	args.Position = cam.Transform().WorldPosition()
-	return args
-}
-
-func ArgsFromWindow(window window.T) render.Args {
+func CreateRenderArgs(window window.T, cam camera.T) render.Args {
 	w, h := window.Size()
 	fw, fh := window.BufferSize()
+
 	return render.Args{
+		Projection: cam.Projection(),
+		View:       cam.View(),
+		VP:         cam.ViewProj(),
+		MVP:        cam.ViewProj(),
+		Transform:  mat4.Ident(),
+		Position:   cam.Transform().WorldPosition(),
+
 		Viewport: render.Viewport{
 			Width:       w,
 			Height:      h,

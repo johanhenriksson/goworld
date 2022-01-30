@@ -2,6 +2,7 @@ package engine
 
 import (
 	"github.com/johanhenriksson/goworld/core/scene"
+	"github.com/johanhenriksson/goworld/engine/screen_quad"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/backend/gl/gl_shader"
 	"github.com/johanhenriksson/goworld/render/material"
@@ -16,11 +17,12 @@ type OutputPass struct {
 	Color  texture.T
 	Depth  texture.T
 	shader shader.T
-	quad   *Quad
+	quad   screen_quad.T
 	mat    material.T
 }
 
 // NewOutputPass creates a new output pass for the given input texture.
+// The output pass writes a full screen texture to the screen, and restores the depth buffer.
 func NewOutputPass(color texture.T, depth texture.T) *OutputPass {
 	shader := gl_shader.CompileShader(
 		"output_pass",
@@ -36,7 +38,7 @@ func NewOutputPass(color texture.T, depth texture.T) *OutputPass {
 		Depth:  depth,
 		shader: shader,
 		mat:    mat,
-		quad:   NewQuad(shader),
+		quad:   screen_quad.New(shader),
 	}
 }
 
@@ -44,9 +46,6 @@ func NewOutputPass(color texture.T, depth texture.T) *OutputPass {
 func (p *OutputPass) Draw(args render.Args, scene scene.T) {
 	render.BindScreenBuffer()
 	render.SetViewport(0, 0, args.Viewport.FrameWidth, args.Viewport.FrameHeight)
-
-	render.Blend(true)
-	render.BlendMultiply()
 
 	// ensures we dont fail depth tests while restoring the depth buffer
 	gl.DepthFunc(gl.ALWAYS)
