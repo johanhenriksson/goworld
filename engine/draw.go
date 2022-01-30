@@ -9,6 +9,7 @@ import (
 )
 
 type DrawPass interface {
+	// Prepare()
 	Draw(render.Args, scene.T)
 }
 

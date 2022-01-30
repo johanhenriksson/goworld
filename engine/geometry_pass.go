@@ -32,13 +32,14 @@ func (p *GeometryPass) Draw(args render.Args, scene scene.T) {
 	defer p.Buffer.Unbind()
 	p.Buffer.Resize(args.Viewport.FrameWidth, args.Viewport.FrameHeight)
 
-	render.ClearWith(color.Black)
-	render.ClearDepth()
-
 	// setup rendering
 	render.Blend(false)
 	render.CullFace(render.CullBack)
 	render.DepthOutput(true)
+	render.DepthTest(true)
+
+	render.ClearWith(color.Black)
+	render.ClearDepth()
 
 	query := object.NewQuery(DeferredDrawableQuery)
 	scene.Collect(&query)

@@ -31,25 +31,27 @@ type T interface {
 type mesh struct {
 	object.Component
 
-	mat material.T
-	vao vertex_array.T
+	mat  material.T
+	vao  vertex_array.T
+	mode DrawMode
 }
 
 // New creates a new mesh component
-func New(mat material.T) T {
-	return NewPrimitiveMesh(render.Triangles, mat)
+func New(mat material.T, mode DrawMode) T {
+	return NewPrimitiveMesh(render.Triangles, mat, mode)
 }
 
 // NewLines creates a new line mesh component
 func NewLines() T {
 	material := assets.GetMaterialShared("lines")
-	return NewPrimitiveMesh(render.Lines, material)
+	return NewPrimitiveMesh(render.Lines, material, Lines)
 }
 
 // NewPrimitiveMesh creates a new mesh composed of a given GL primitive
-func NewPrimitiveMesh(primitive render.Primitive, mat material.T) *mesh {
+func NewPrimitiveMesh(primitive render.Primitive, mat material.T, mode DrawMode) *mesh {
 	m := &mesh{
 		Component: object.NewComponent(),
+		mode:      mode,
 		mat:       mat,
 		vao:       gl_vertex_array.New(primitive),
 	}
@@ -66,6 +68,10 @@ func (m mesh) Name() string {
 }
 
 func (m *mesh) DrawDeferred(args render.Args) {
+	if m.mode != Deferred {
+		return
+	}
+
 	m.mat.Use()
 
 	// set up uniforms
@@ -79,6 +85,10 @@ func (m *mesh) DrawDeferred(args render.Args) {
 }
 
 func (m *mesh) DrawForward(args render.Args) {
+	if m.mode != Forward {
+		return
+	}
+
 	m.mat.Use()
 
 	// set up uniforms
@@ -91,6 +101,10 @@ func (m *mesh) DrawForward(args render.Args) {
 }
 
 func (m *mesh) DrawLines(args render.Args) {
+	if m.mode != Lines {
+		return
+	}
+
 	m.mat.Use()
 	m.mat.Mat4("mvp", args.MVP)
 

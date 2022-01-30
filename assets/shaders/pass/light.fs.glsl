@@ -23,7 +23,6 @@ uniform sampler2D tex_diffuse;  // diffuse
 uniform sampler2D tex_shadow;  // shadow map
 uniform sampler2D tex_normal; // normal
 uniform sampler2D tex_depth; // depth
-// uniform sampler2D tex_occlusion; // ssao
 uniform mat4 cameraInverse; // inverse view projection matrix
 uniform mat4 light_vp;     // world to light space
 uniform mat4 viewInverse;     // projection matrix
@@ -31,7 +30,6 @@ uniform mat4 viewInverse;     // projection matrix
 uniform Light light;     // uniform light data
 uniform float shadow_strength;
 uniform float shadow_bias;
-// uniform float ssao_amount = 1.0;
 
 in vec2 texcoord0;
 
@@ -54,6 +52,10 @@ vec3 positionFromDepth(float depth) {
 
 /* calculates lighting contribution from a point light source */
 float calculatePointLightContrib(vec3 surfaceToLight, float distanceToLight, vec3 normal) {
+    if (distanceToLight > light.Range) {
+        return 0.0;
+    }
+
     /* calculate normal coefficient */
     float normalCoef = max(0.0, dot(normal, surfaceToLight));
 
@@ -61,7 +63,7 @@ float calculatePointLightContrib(vec3 surfaceToLight, float distanceToLight, vec
     float attenuation = light.attenuation.Constant +
                         light.attenuation.Linear * distanceToLight +
                         light.attenuation.Quadratic * pow(distanceToLight, 2);
-    attenuation = light.Range / attenuation;
+    attenuation = 1.0 / attenuation;
 
     /* multiply and return light contribution */
     return normalCoef * attenuation;

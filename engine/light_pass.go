@@ -80,7 +80,7 @@ func (p *LightPass) setLightUniforms(light *light.T) {
 
 	/* set light uniform attributes */
 	p.shader.Vec3("light.Position", light.Position)
-	p.shader.Vec3("light.Color", light.Color)
+	p.shader.RGB("light.Color", light.Color)
 	p.shader.Int32("light.Type", int(light.Type))
 	p.shader.Float("light.Range", light.Range)
 	p.shader.Float("light.Intensity", light.Intensity)
@@ -97,6 +97,7 @@ func (p *LightPass) Draw(args render.Args, scene scene.T) {
 
 	// clear output buffer
 	p.Output.Bind()
+	defer p.Output.Unbind()
 	p.Output.Resize(args.Viewport.FrameWidth, args.Viewport.FrameHeight)
 	render.ClearWith(scene.Camera().ClearColor())
 
@@ -115,7 +116,7 @@ func (p *LightPass) Draw(args render.Args, scene scene.T) {
 	// ambient light pass
 	ambient := light.T{
 		Type:      light.Ambient,
-		Color:     p.Ambient.Vec3(),
+		Color:     p.Ambient,
 		Intensity: 1.3,
 	}
 	p.setLightUniforms(&ambient)

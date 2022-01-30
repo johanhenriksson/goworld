@@ -42,7 +42,7 @@ func Builder(out **T, args Args) *object.Builder {
 func New(args Args) *T {
 	mat := assets.GetMaterialShared("color.f")
 	cone := &T{
-		T:    mesh.New(mat),
+		T:    mesh.New(mat, mesh.Forward),
 		Args: args,
 	}
 	cone.generate()

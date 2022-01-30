@@ -44,7 +44,7 @@ func main() {
 	wnd, err := window.New(window.Args{
 		Title:        "goworld2",
 		Width:        1600,
-		Height:       900,
+		Height:       1200,
 		InputHandler: scene,
 	})
 	if err != nil {
@@ -54,7 +54,7 @@ func main() {
 	// app := engine.NewApplication("goworld", 1400, 1000)
 	renderer := engine.NewRenderer(wnd)
 
-	uim := ui.NewManager(1600, 900)
+	uim := ui.NewManager(1600, 1200)
 	renderer.Append("ui", uim)
 
 	gizmo := mover.New(mover.Args{})

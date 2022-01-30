@@ -13,7 +13,7 @@ type ChunkMesh struct {
 
 func NewChunkMesh(chunk *Chunk) *ChunkMesh {
 	chk := &ChunkMesh{
-		T:            mesh.New(assets.GetMaterialShared("color_voxels")),
+		T:            mesh.New(assets.GetMaterialShared("color_voxels"), mesh.Deferred),
 		Chunk:        chunk,
 		meshComputed: make(chan []VoxelVertex),
 	}
