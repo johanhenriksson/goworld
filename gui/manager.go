@@ -6,6 +6,7 @@ import (
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/gui/dimension"
+	"github.com/johanhenriksson/goworld/gui/label"
 	"github.com/johanhenriksson/goworld/gui/layout"
 	"github.com/johanhenriksson/goworld/gui/rect"
 	"github.com/johanhenriksson/goworld/gui/widget"
@@ -38,6 +39,16 @@ func MyCustomUI(gut float32) widget.T {
 				Gutter:  5,
 			},
 		},
+		label.New("title", &label.Props{
+			Text:  "Hello GUI",
+			Size:  16.0,
+			Color: color.White,
+		}),
+		label.New("title2", &label.Props{
+			Text:  "Hello GUI",
+			Size:  16.0,
+			Color: color.White,
+		}),
 		rect.New(
 			"r1",
 			&rect.Props{

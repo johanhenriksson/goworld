@@ -21,36 +21,51 @@ func (t *Text) Set(text string) {
 		return
 	}
 
-	size := t.Font.Measure(text)
+	args := font.Args{
+		LineHeight: t.Spacing(),
+		Color:      color.White,
+	}
 
-	img := t.Font.Render(text, color.White)
+	size := t.Font.Measure(text, args)
+	img := t.Font.Render(text, args)
 	t.Texture.BufferImage(img)
 
 	t.Text = text
-	t.Resize(size)
+	t.Resize(size.Scaled(0.5))
 }
 
 func NewText(text string, style Style) *Text {
 	// create font
-	size := style.Float("size", 16.0)
+	size := int(style.Float("size", 16.0))
 	spacing := style.Float("spacing", 1.0)
-	font := assets.GetFont("assets/fonts/SourceCodeProRegular.ttf", size, spacing)
+	fnt := assets.GetFont("assets/fonts/SourceCodeProRegular.ttf", size*2)
 
 	// create opengl texture
-	bounds := font.Measure(text)
+	bounds := fnt.Measure(text, font.Args{
+		LineHeight: spacing,
+	})
 	texture := gltex.New(int(bounds.X), int(bounds.Y))
 
 	element := &Text{
-		Image: NewImage(texture, bounds, false, style),
-		Font:  font,
+		Image: NewImage(texture, bounds.Scaled(0.5), false, style),
+		Font:  fnt,
 		Style: style,
 	}
 	element.Set(text)
 	return element
 }
 
+func (t *Text) Spacing() float32 {
+	return t.Style.Float("spacing", 1.0)
+}
+func (t *Text) Size() int {
+	return int(t.Style.Float("size", 1.0))
+}
+
 func (t *Text) Flow(size vec2.T) vec2.T {
-	desired := t.Font.Measure(t.Text)
+	desired := t.Font.Measure(t.Text, font.Args{
+		LineHeight: t.Spacing(),
+	}).Scaled(0.5)
 	desired.X = math.Min(size.X, desired.X)
 	desired.Y = math.Min(size.Y, desired.Y)
 	return desired

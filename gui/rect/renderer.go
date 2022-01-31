@@ -46,6 +46,7 @@ func (r *renderer) Draw(args render.Args, frame T, props *Props) {
 	if !frame.Size().ApproxEqual(r.size) {
 		r.mesh.SetSize(frame.Size())
 		r.mesh2.SetSize(frame.Size())
+		r.size = frame.Size()
 	}
 	if props.Border != r.mesh.BorderWidth() {
 		r.mesh.SetBorderWidth(props.Border)

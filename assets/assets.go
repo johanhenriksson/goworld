@@ -95,15 +95,14 @@ func GetColorTexture(color color.T) texture.T {
 	return texture
 }
 
-func GetFont(name string, size, spacing float32) font.T {
-	key := fmt.Sprintf("%s-%.1f-%.1f", name, size, spacing)
+func GetFont(name string, size int) font.T {
+	key := fmt.Sprintf("%s-%d", name, size)
 	if font, exists := cache.Fonts[key]; exists {
 		return font
 	}
 
-	dpi := float32(1.0)
-	fmt.Printf("+ font %s (%.1fpt, %.1f, %dx)\n", name, size, spacing, int(dpi))
-	font := font.Load(name, dpi, size, spacing)
+	fmt.Printf("+ font %s %.1fpt\n", name, size)
+	font := font.Load(name, size)
 	cache.Fonts[key] = font
 
 	return font

@@ -14,20 +14,19 @@ import (
 )
 
 type T interface {
-	Measure(string) vec2.T
-	Render(text string, color color.T) *image.RGBA
-	LineHeight() float32
+	Measure(string, Args) vec2.T
+	Render(string, Args) *image.RGBA
 	Size() float32
-	Spacing() float32
-	DPI() float32
+}
+
+type Args struct {
+	Color      color.T
+	LineHeight float32
 }
 
 type font struct {
-	file    string
-	size    float32
-	dpi     float32
-	spacing float32
-
+	file   string
+	size   float32
 	fnt    *truetype.Font
 	drawer *fontlib.Drawer
 }
@@ -36,21 +35,18 @@ func (f *font) setup() {
 	f.drawer = &fontlib.Drawer{
 		Face: truetype.NewFace(f.fnt, &truetype.Options{
 			Size:    float64(f.size),
-			DPI:     float64(72 * f.dpi),
 			Hinting: fontlib.HintingFull,
 		}),
 	}
 }
 
-func (f *font) Spacing() float32 { return f.spacing }
-func (f *font) Size() float32    { return f.size }
-func (f *font) DPI() float32     { return f.dpi }
+func (f *font) Size() float32 { return f.size }
 
-func (f *font) LineHeight() float32 {
-	return math.Ceil(f.size * f.spacing * f.dpi)
-}
+func (f *font) Measure(text string, args Args) vec2.T {
+	if args.LineHeight == 0 {
+		args.LineHeight = 1
+	}
 
-func (f *font) Measure(text string) vec2.T {
 	lines := 1
 	width := 0
 	s := 0
@@ -74,15 +70,19 @@ func (f *font) Measure(text string) vec2.T {
 		}
 	}
 
-	lineHeight := int(f.LineHeight())
+	lineHeight := int(math.Ceil(f.size * args.LineHeight))
 	height := lineHeight*lines + (lineHeight / 2)
 	return vec2.NewI(width, height)
 }
 
-func (f *font) Render(text string, color color.T) *image.RGBA {
-	f.drawer.Src = image.NewUniform(color.RGBA())
+func (f *font) Render(text string, args Args) *image.RGBA {
+	if args.LineHeight == 0 {
+		args.LineHeight = 1
+	}
 
-	size := f.Measure(text)
+	f.drawer.Src = image.NewUniform(args.Color.RGBA())
+
+	size := f.Measure(text, args)
 
 	// todo: its probably not a great idea to allocate an image on every draw
 	// perhaps textures should always have a backing image ?
@@ -91,7 +91,8 @@ func (f *font) Render(text string, color color.T) *image.RGBA {
 
 	s := 0
 	line := 1
-	lineHeight := int(f.LineHeight())
+	lineHeight := int(math.Ceil(f.size * args.LineHeight))
+
 	for i, c := range text {
 		if c == '\n' {
 			if i == s {
@@ -112,7 +113,7 @@ func (f *font) Render(text string, color color.T) *image.RGBA {
 }
 
 // Load a truetype font
-func Load(filename string, size, dpi, spacing float32) T {
+func Load(filename string, size int) T {
 	fontBytes, err := ioutil.ReadFile(filename)
 	if err != nil {
 		panic(err)
@@ -123,11 +124,9 @@ func Load(filename string, size, dpi, spacing float32) T {
 	}
 
 	fnt := &font{
-		file:    filename,
-		size:    size,
-		dpi:     dpi,
-		spacing: spacing,
-		fnt:     f,
+		file: filename,
+		size: float32(size),
+		fnt:  f,
 	}
 	fnt.setup()
 	return fnt
