@@ -19,16 +19,18 @@ type T interface {
 	ViewProj() mat4.T
 	ViewProjInv() mat4.T
 	ClearColor() color.T
+	Frustum() Frustum
 }
 
 // camera represents a 3D camera and its transform.
 type camera struct {
 	object.Component
 
-	fov   float32
-	near  float32
-	far   float32
-	clear color.T
+	aspect float32
+	fov    float32
+	near   float32
+	far    float32
+	clear  color.T
 
 	proj  mat4.T
 	view  mat4.T
@@ -42,10 +44,11 @@ func New(fov, near, far float32, clear color.T) T {
 	return &camera{
 		Component: object.NewComponent(),
 
-		fov:   fov,
-		near:  near,
-		far:   far,
-		clear: clear,
+		aspect: 1,
+		fov:    fov,
+		near:   near,
+		far:    far,
+		clear:  clear,
 	}
 }
 
@@ -86,3 +89,25 @@ func (cam *camera) ViewProj() mat4.T    { return cam.vp }
 func (cam *camera) ViewProjInv() mat4.T { return cam.vpi }
 
 func (cam *camera) ClearColor() color.T { return cam.clear }
+
+// Visible returns true if the given point is within the cameras view frustum
+func (cam *camera) Visible(point vec3.T) bool {
+	clip := cam.vp.TransformPoint(point)
+	if clip.Z < -1 || clip.Z > 1 || clip.X > 1 || clip.X < -1 || clip.Y > 1 || clip.Y < -1 {
+		return false
+	}
+	return true
+}
+
+func (cam *camera) Frustum() Frustum {
+	return Frustum{
+		NTL: cam.vpi.TransformPoint(vec3.New(-1, 1, -1)),
+		NTR: cam.vpi.TransformPoint(vec3.New(1, 1, -1)),
+		NBL: cam.vpi.TransformPoint(vec3.New(-1, -1, -1)),
+		NBR: cam.vpi.TransformPoint(vec3.New(1, -1, -1)),
+		FTL: cam.vpi.TransformPoint(vec3.New(-1, 1, 1)),
+		FTR: cam.vpi.TransformPoint(vec3.New(1, 1, 1)),
+		FBL: cam.vpi.TransformPoint(vec3.New(-1, -1, 1)),
+		FBR: cam.vpi.TransformPoint(vec3.New(1, -1, 1)),
+	}
+}

@@ -23,6 +23,8 @@ type Descriptor struct {
 	Type        Type
 	Shadows     bool
 	Projection  mat4.T // Light projection matrix
+	View        mat4.T // Light view matrix
+	ViewProj    mat4.T
 }
 
 // Attenuation properties for point lights

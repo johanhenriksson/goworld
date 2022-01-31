@@ -4,8 +4,6 @@ import (
 	"github.com/johanhenriksson/goworld/assets"
 	"github.com/johanhenriksson/goworld/core/camera"
 	"github.com/johanhenriksson/goworld/core/light"
-	"github.com/johanhenriksson/goworld/math/mat4"
-	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render/backend/gl/gl_shader"
 	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/framebuffer"
@@ -52,6 +50,7 @@ func (sh *lightshader) SetShadowBias(bias float32) {
 }
 
 func (sh *lightshader) SetCamera(cam camera.T) {
+	// why is this not equal to args.View/args.VP
 	vInv := cam.ViewInv()
 	vpInv := cam.ViewProjInv()
 	sh.Mat4("cameraInverse", vpInv)
@@ -68,13 +67,8 @@ func (sh *lightshader) SetLightDescriptor(desc light.Descriptor) {
 	sh.RGB("light.Color", desc.Color)
 	sh.Float("light.Intensity", desc.Intensity)
 
-	// compute world to lightspace (light view projection) matrix
 	if desc.Type == light.Directional {
-		// this does not seem to change unless the light is updated?
-		lp := desc.Projection
-		lv := mat4.LookAt(desc.Position, vec3.Zero)
-		lvp := lp.Mul(&lv)
-		sh.Mat4("light_vp", lvp)
+		sh.Mat4("light_vp", desc.ViewProj)
 	}
 
 	if desc.Type == light.Point {

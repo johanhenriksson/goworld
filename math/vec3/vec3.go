@@ -189,3 +189,19 @@ func (v T) ApproxEqual(v2 T) bool {
 func (v T) String() string {
 	return fmt.Sprintf("%.3f,%.3f,%.3f", v.X, v.Y, v.Z)
 }
+
+func Min(a, b T) T {
+	return T{
+		X: math.Min(a.X, b.X),
+		Y: math.Min(a.Y, b.Y),
+		Z: math.Min(a.Z, b.Z),
+	}
+}
+
+func Max(a, b T) T {
+	return T{
+		X: math.Max(a.X, b.X),
+		Y: math.Max(a.Y, b.Y),
+		Z: math.Max(a.Z, b.Z),
+	}
+}

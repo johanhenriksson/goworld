@@ -36,7 +36,7 @@ type Player struct {
 }
 
 func NewPlayer(position vec3.T, collide CollisionCheck) *Player {
-	cam := camera.New(55.0, 0.1, 600, color.Hex("#eddaab"))
+	cam := camera.New(55.0, 0.1, 70, color.Hex("#eddaab"))
 	p := &Player{
 		T:           object.New("Player"),
 		Eye:         object.New("Eye"),

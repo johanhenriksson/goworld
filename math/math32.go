@@ -140,3 +140,11 @@ func EqualThreshold(a, b, epsilon float32) bool {
 func Lerp(a, b, f float32) float32 {
 	return a + f*(b-a)
 }
+
+func Round(f float32) float32 {
+	return float32(math.Round(float64(f)))
+}
+
+func Snap(f, multiple float32) float32 {
+	return Round(f/multiple) * multiple
+}

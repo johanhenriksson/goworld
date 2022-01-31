@@ -5,7 +5,6 @@ import (
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/core/scene"
 	"github.com/johanhenriksson/goworld/math/mat4"
-	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/backend/gl/gl_framebuffer"
 	"github.com/johanhenriksson/goworld/render/framebuffer"
@@ -24,8 +23,7 @@ type ShadowPass struct {
 }
 
 // NewShadowPass creates a new shadow pass
-func NewShadowPass() *ShadowPass {
-	size := 4096
+func NewShadowPass(size int) *ShadowPass {
 	fbo := gl_framebuffer.NewDepth(size, size)
 
 	// set the shadow buffer texture to clamp to a white border so that samples
@@ -63,17 +61,11 @@ func (p *ShadowPass) DrawLight(scene scene.T, lit *light.Descriptor) {
 	render.DepthOutput(true)
 	render.ClearDepth()
 
-	// compute world to lightspace (light's view projection) matrix
-	// todo: move to light object
-	lp := lit.Projection
-	lv := mat4.LookAt(lit.Position, vec3.Zero)
-	lvp := lp.Mul(&lv)
-
 	args := render.Args{
-		Projection: lp,
-		View:       lv,
-		VP:         lvp,
-		MVP:        lvp,
+		Projection: lit.Projection,
+		View:       lit.View,
+		VP:         lit.ViewProj,
+		MVP:        lit.ViewProj,
 		Transform:  mat4.Ident(),
 	}
 

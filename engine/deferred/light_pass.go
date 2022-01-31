@@ -1,10 +1,13 @@
 package deferred
 
 import (
+	"github.com/johanhenriksson/goworld/core/camera"
 	"github.com/johanhenriksson/goworld/core/light"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/core/scene"
 	"github.com/johanhenriksson/goworld/engine/screen_quad"
+	"github.com/johanhenriksson/goworld/math"
+	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/backend/gl/gl_framebuffer"
 	"github.com/johanhenriksson/goworld/render/color"
@@ -19,6 +22,7 @@ type LightPass struct {
 	Ambient        color.T
 	ShadowStrength float32
 	ShadowBias     float32
+	ShadowSize     int
 
 	quad   screen_quad.T
 	shader LightShader
@@ -26,8 +30,10 @@ type LightPass struct {
 
 // NewLightPass creates a new deferred lighting pass
 func NewLightPass(input framebuffer.Geometry) *LightPass {
+	shadowsize := 2048
+
 	// child passes
-	shadowPass := NewShadowPass()
+	shadowPass := NewShadowPass(shadowsize)
 
 	// instantiate light pass shader
 	shader := NewLightShader(input)
@@ -37,8 +43,9 @@ func NewLightPass(input framebuffer.Geometry) *LightPass {
 		Output:         gl_framebuffer.NewColor(input.Width(), input.Height()),
 		Shadows:        shadowPass,
 		Ambient:        color.RGB(0.25, 0.25, 0.25),
-		ShadowStrength: 0.3,
-		ShadowBias:     0.00001,
+		ShadowStrength: 0.8,
+		ShadowBias:     0.0001,
+		ShadowSize:     shadowsize,
 
 		quad:   screen_quad.New(shader),
 		shader: shader,
@@ -55,6 +62,8 @@ func NewLightPass(input framebuffer.Geometry) *LightPass {
 
 // Draw executes the deferred lighting pass.
 func (p *LightPass) Draw(args render.Args, scene scene.T) {
+	// fmt.Println(cmin, cmax)
+
 	// clear output buffer
 	p.Output.Bind()
 	defer p.Output.Unbind()
@@ -65,7 +74,9 @@ func (p *LightPass) Draw(args render.Args, scene scene.T) {
 	render.CullFace(render.CullBack)
 
 	p.shader.Use()
-	p.shader.SetCamera(scene.Camera())
+	//p.shader.SetCamera(scene.Camera())
+	p.shader.Mat4("cameraInverse", args.VP.Invert())
+	p.shader.Mat4("viewInverse", args.View.Invert())
 
 	// disable blending for the first light
 	// we are drawing on a non-black background (camera clear color)
@@ -91,6 +102,9 @@ func (p *LightPass) Draw(args render.Args, scene scene.T) {
 		light := component.(light.T)
 		desc := light.LightDescriptor()
 
+		// fit light projection matrix to the current camera frustum
+		p.FitLightToCamera(scene.Camera(), &desc)
+
 		// draw shadow pass for this light into the shadow map
 		p.Shadows.DrawLight(scene, &desc)
 
@@ -111,4 +125,50 @@ func (p *LightPass) drawLight(desc light.Descriptor) {
 func IsLight(c object.Component) bool {
 	_, ok := c.(light.T)
 	return ok
+}
+
+var maxExtent = float32(0)
+
+func (p *LightPass) FitLightToCamera(cam camera.T, desc *light.Descriptor) {
+	if desc.Type != light.Directional {
+		return
+	}
+
+	fst := cam.Frustum()
+
+	// view matrix
+	target := fst.NTL.Add(fst.NTR).Add(fst.NBL).Add(fst.NBR).Add(fst.FTL).Add(fst.FTR).Add(fst.FBL).Add(fst.FBR).Scaled(1 / 8.0)
+
+	// projection
+
+	fst.NTL = desc.View.TransformPoint(fst.NTL)
+	fst.NTR = desc.View.TransformPoint(fst.NTR)
+	fst.NBL = desc.View.TransformPoint(fst.NBL)
+	fst.NBR = desc.View.TransformPoint(fst.NBR)
+	fst.FTL = desc.View.TransformPoint(fst.FTL)
+	fst.FTR = desc.View.TransformPoint(fst.FTR)
+	fst.FBL = desc.View.TransformPoint(fst.FBL)
+	fst.FBR = desc.View.TransformPoint(fst.FBR)
+	lmin, lmax := fst.Bounds()
+
+	extent := math.Max(lmax.X-lmin.X, lmax.Y-lmin.Y) * 0.5
+	maxExtent = math.Max(maxExtent, extent)
+
+	center := lmax.Add(lmin).Scaled(0.5)
+
+	// snap to avoid shadow swimming
+	// does not seem to work
+	snap := 2.0 * maxExtent / float32(p.ShadowSize)
+	center.X = math.Snap(center.X, snap)
+	center.Y = math.Snap(center.Y, snap)
+	center.Z = math.Snap(center.Z, snap)
+
+	desc.Projection = mat4.Orthographic(
+		center.X-maxExtent, center.X+maxExtent,
+		center.Y-maxExtent, center.Y+maxExtent,
+		lmin.Z, lmax.Z)
+
+	desc.View = mat4.LookAt(target.Add(desc.Position.Normalized()), target)
+
+	desc.ViewProj = desc.Projection.Mul(&desc.View)
 }

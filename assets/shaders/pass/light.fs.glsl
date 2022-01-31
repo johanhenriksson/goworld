@@ -24,8 +24,8 @@ uniform sampler2D tex_shadow;  // shadow map
 uniform sampler2D tex_normal; // normal
 uniform sampler2D tex_depth; // depth
 uniform mat4 cameraInverse; // inverse view projection matrix
+uniform mat4 viewInverse;     // inverse view matrix
 uniform mat4 light_vp;     // world to light space
-uniform mat4 viewInverse;     // projection matrix
 
 uniform Light light;     // uniform light data
 uniform float shadow_strength;
@@ -115,8 +115,6 @@ void main() {
     // why do we do this when we have a position buffer? :/
     vec3 position = positionFromDepth(depth);
 
-    // float ssao = texture(tex_occlusion, texcoord0).r;
-
     // now we should be able to calculate the position in light space!
     // since the directional light matrix is orthographic the z value will
     // correspond to depth, so we can test Z against the shadow map depth buffer
@@ -130,8 +128,9 @@ void main() {
     }
     else if (light.Type == DIRECTIONAL_LIGHT) {
         // directional lights store the direction in the position uniform
-        vec3 dir = normalize(light.Position);
-        contrib = max(dot(dir, normal), 0.0);
+        // i.e. the light coming from the position, shining towards the origin
+        vec3 surfaceToLight = normalize(light.Position);
+        contrib = max(dot(surfaceToLight, normal), 0.0);
 
         // experimental shadows
         shadow = sampleShadowmap(tex_shadow, position);
