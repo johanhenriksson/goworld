@@ -60,9 +60,15 @@ func main() {
 	renderer.Append("ui", uim)
 
 	scene.Attach(light.NewDirectional(light.DirectionalArgs{
-		Intensity: 1.8,
+		Intensity: 1.2,
 		Color:     color.RGB(0.9*0.973, 0.9*0.945, 0.9*0.776),
-		Direction: vec3.New(1, -1, 1),
+		Direction: vec3.New(0.95, -1.6, 1.05),
+		Shadows:   true,
+	}))
+	scene.Attach(light.NewDirectional(light.DirectionalArgs{
+		Intensity: 0.4,
+		Color:     color.RGB(0.9*0.973, 0.9*0.945, 0.9*0.776),
+		Direction: vec3.New(-1.2, -1.05, 1.12),
 		Shadows:   true,
 	}))
 

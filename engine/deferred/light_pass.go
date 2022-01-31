@@ -23,6 +23,7 @@ type LightPass struct {
 	ShadowStrength float32
 	ShadowBias     float32
 	ShadowSize     int
+	ShadowSoft     bool
 
 	quad   screen_quad.T
 	shader LightShader
@@ -42,10 +43,11 @@ func NewLightPass(input framebuffer.Geometry) *LightPass {
 		GBuffer:        input,
 		Output:         gl_framebuffer.NewColor(input.Width(), input.Height()),
 		Shadows:        shadowPass,
-		Ambient:        color.RGB(0.25, 0.25, 0.25),
+		Ambient:        color.RGB(0.15, 0.15, 0.15),
 		ShadowStrength: 0.8,
 		ShadowBias:     0.0001,
 		ShadowSize:     shadowsize,
+		ShadowSoft:     true,
 
 		quad:   screen_quad.New(shader),
 		shader: shader,
@@ -56,14 +58,13 @@ func NewLightPass(input framebuffer.Geometry) *LightPass {
 	shader.SetShadowMap(shadowPass.Output)
 	shader.SetShadowStrength(p.ShadowStrength)
 	shader.SetShadowBias(p.ShadowBias)
+	shader.SetShadowSoft(p.ShadowSoft)
 
 	return p
 }
 
 // Draw executes the deferred lighting pass.
 func (p *LightPass) Draw(args render.Args, scene scene.T) {
-	// fmt.Println(cmin, cmax)
-
 	// clear output buffer
 	p.Output.Bind()
 	defer p.Output.Unbind()
@@ -103,7 +104,7 @@ func (p *LightPass) Draw(args render.Args, scene scene.T) {
 		desc := light.LightDescriptor()
 
 		// fit light projection matrix to the current camera frustum
-		p.FitLightToCamera(scene.Camera(), &desc)
+		p.FitLightToCamera(args.VP.Invert(), &desc)
 
 		// draw shadow pass for this light into the shadow map
 		p.Shadows.DrawLight(scene, &desc)
@@ -129,46 +130,44 @@ func IsLight(c object.Component) bool {
 
 var maxExtent = float32(0)
 
-func (p *LightPass) FitLightToCamera(cam camera.T, desc *light.Descriptor) {
+func (p *LightPass) FitLightToCamera(vpi mat4.T, desc *light.Descriptor) {
 	if desc.Type != light.Directional {
 		return
 	}
 
-	fst := cam.Frustum()
+	// ideally this should be moved into the directional light
+	// however, it does depend on several awkward things:
+	//  - camera view projection
+	//  - shadow map dimensions
+	//  - scene bounds/AABB (later)
+	//
+	// might not be worth fixing this until we have proper cascading shadow maps
 
-	// view matrix
-	target := fst.NTL.Add(fst.NTR).Add(fst.NBL).Add(fst.NBR).Add(fst.FTL).Add(fst.FTR).Add(fst.FBL).Add(fst.FBR).Scaled(1 / 8.0)
+	// projection matrix
+	// create a frustum in light view space
+	cameraClipToLightView := desc.View.Mul(&vpi)
+	lfst := camera.NewFrustum(cameraClipToLightView)
 
-	// projection
-
-	fst.NTL = desc.View.TransformPoint(fst.NTL)
-	fst.NTR = desc.View.TransformPoint(fst.NTR)
-	fst.NBL = desc.View.TransformPoint(fst.NBL)
-	fst.NBR = desc.View.TransformPoint(fst.NBR)
-	fst.FTL = desc.View.TransformPoint(fst.FTL)
-	fst.FTR = desc.View.TransformPoint(fst.FTR)
-	fst.FBL = desc.View.TransformPoint(fst.FBL)
-	fst.FBR = desc.View.TransformPoint(fst.FBR)
-	lmin, lmax := fst.Bounds()
-
-	extent := math.Max(lmax.X-lmin.X, lmax.Y-lmin.Y) * 0.5
+	// calculate the max extent in X/Y, so that we can create a square projection
+	// additionally, this number should be stable over time, use the historical maximum
+	// this avoids shimmering
+	extent := math.Max(lfst.Max.X-lfst.Min.X, lfst.Max.Y-lfst.Min.Y) * 0.5
 	maxExtent = math.Max(maxExtent, extent)
 
-	center := lmax.Add(lmin).Scaled(0.5)
+	// snap the orthogonal bounds to the shadowmap texel size avoid shadow shimmering
+	snap := 2 * maxExtent / float32(p.ShadowSize)
 
-	// snap to avoid shadow swimming
-	// does not seem to work
-	snap := 2.0 * maxExtent / float32(p.ShadowSize)
-	center.X = math.Snap(center.X, snap)
-	center.Y = math.Snap(center.Y, snap)
-	center.Z = math.Snap(center.Z, snap)
+	// todo: we can further optimize the Z bounds
+	// project the scenes AABB into light space and use the min/max Z values
+	// lsft.Min.Z / lfst.Max.Z should work but doesnt?
+	zmin := float32(-100)
+	zmax := float32(100)
 
 	desc.Projection = mat4.Orthographic(
-		center.X-maxExtent, center.X+maxExtent,
-		center.Y-maxExtent, center.Y+maxExtent,
-		lmin.Z, lmax.Z)
+		math.Snap(lfst.Center.X-maxExtent, snap), math.Snap(lfst.Center.X+maxExtent, snap),
+		math.Snap(lfst.Center.Y-maxExtent, snap), math.Snap(lfst.Center.Y+maxExtent, snap),
+		zmin, zmax)
 
-	desc.View = mat4.LookAt(target.Add(desc.Position.Normalized()), target)
-
+	// finally, update light view projection
 	desc.ViewProj = desc.Projection.Mul(&desc.View)
 }

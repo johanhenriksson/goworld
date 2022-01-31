@@ -18,6 +18,7 @@ type LightShader interface {
 	SetShadowMap(texture.T)
 	SetShadowStrength(float32)
 	SetShadowBias(float32)
+	SetShadowSoft(bool)
 }
 
 type lightshader struct {
@@ -47,6 +48,10 @@ func (sh *lightshader) SetShadowStrength(strength float32) {
 
 func (sh *lightshader) SetShadowBias(bias float32) {
 	sh.Float("shadow_bias", bias)
+}
+
+func (sh *lightshader) SetShadowSoft(soft bool) {
+	sh.Bool("soft_shadows", soft)
 }
 
 func (sh *lightshader) SetCamera(cam camera.T) {

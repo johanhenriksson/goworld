@@ -19,7 +19,6 @@ type T interface {
 	ViewProj() mat4.T
 	ViewProjInv() mat4.T
 	ClearColor() color.T
-	Frustum() Frustum
 }
 
 // camera represents a 3D camera and its transform.
@@ -97,17 +96,4 @@ func (cam *camera) Visible(point vec3.T) bool {
 		return false
 	}
 	return true
-}
-
-func (cam *camera) Frustum() Frustum {
-	return Frustum{
-		NTL: cam.vpi.TransformPoint(vec3.New(-1, 1, -1)),
-		NTR: cam.vpi.TransformPoint(vec3.New(1, 1, -1)),
-		NBL: cam.vpi.TransformPoint(vec3.New(-1, -1, -1)),
-		NBR: cam.vpi.TransformPoint(vec3.New(1, -1, -1)),
-		FTL: cam.vpi.TransformPoint(vec3.New(-1, 1, 1)),
-		FTR: cam.vpi.TransformPoint(vec3.New(1, 1, 1)),
-		FBL: cam.vpi.TransformPoint(vec3.New(-1, -1, 1)),
-		FBR: cam.vpi.TransformPoint(vec3.New(1, -1, 1)),
-	}
 }

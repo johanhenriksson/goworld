@@ -61,6 +61,10 @@ func (p *ShadowPass) DrawLight(scene scene.T, lit *light.Descriptor) {
 	render.DepthOutput(true)
 	render.ClearDepth()
 
+	// use front-face culling while rendering shadows to mitigate panning
+	// but it seems to cause problems??
+	//render.CullFace(render.CullFront)
+
 	args := render.Args{
 		Projection: lit.Projection,
 		View:       lit.View,
@@ -69,14 +73,19 @@ func (p *ShadowPass) DrawLight(scene scene.T, lit *light.Descriptor) {
 		Transform:  mat4.Ident(),
 	}
 
+	// todo: select only objects that cast shadows
+	// todo: view frustum culling based on the lights view projection
+
 	objects := object.NewQuery().
 		Where(IsDeferredDrawable).
 		Collect(scene)
+
+	// todo: draw objects with a simplified shader that only outputs depth information
 
 	for _, component := range objects {
 		drawable := component.(DeferredDrawable)
 		drawable.DrawDeferred(args.Apply(component.Object().Transform().World()))
 	}
 
-	// render.DepthOutput(false)
+	render.CullFace(render.CullBack)
 }

@@ -7,7 +7,6 @@ import (
 	"github.com/johanhenriksson/goworld/render/backend/gl/gl_framebuffer"
 	"github.com/johanhenriksson/goworld/render/backend/gl/gl_shader"
 	"github.com/johanhenriksson/goworld/render/backend/types"
-	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/framebuffer"
 	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/shader"
@@ -61,7 +60,5 @@ func (p *GaussianPass) Draw(args render.Args, scene scene.T) {
 	p.fbo.Resize(p.input.Width(), p.input.Height())
 
 	p.mat.Use()
-
-	render.ClearWith(color.White)
 	p.quad.Draw()
 }

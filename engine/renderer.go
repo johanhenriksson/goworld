@@ -55,7 +55,10 @@ func NewRenderer(window window.T) *Renderer {
 	})
 
 	white := assets.GetColorTexture(color.White)
-	r.Colors = effect.NewColorPass(r.Light.Output, "saturated", white) // r.SSAO.Gaussian.Output)
+	white.Height()
+
+	// r.Colors = effect.NewColorPass(r.Light.Output, "saturated", white)
+	r.Colors = effect.NewColorPass(r.Light.Output, "saturated", r.SSAO.Gaussian.Output)
 	r.Output = NewOutputPass(r.Colors.Output.Texture(), r.Geometry.Buffer.Depth())
 
 	// lines
