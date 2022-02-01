@@ -1,6 +1,7 @@
 package rect
 
 import (
+	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/gui/dimension"
 	"github.com/johanhenriksson/goworld/gui/layout"
 	"github.com/johanhenriksson/goworld/gui/widget"
@@ -94,17 +95,20 @@ func (f *rect) SetChildren(c []widget.T) { f.children = c }
 func (f *rect) Width() dimension.T  { return f.props.Width }
 func (f *rect) Height() dimension.T { return f.props.Height }
 
+func (f *rect) DesiredHeight(width float32) float32 {
+	height := float32(0)
+	for _, c := range f.children {
+		height += c.DesiredHeight(width)
+	}
+	return height
+}
+
 //
 // Lifecycle
 //
 
-func (f *rect) Props() widget.Props {
-	return f.props
-}
-
-func (f *rect) Update(p widget.Props) {
-	f.props = p.(*Props)
-}
+func (f *rect) Props() widget.Props   { return f.props }
+func (f *rect) Update(p widget.Props) { f.props = p.(*Props) }
 
 func (f *rect) Destroy() {
 	f.T.Destroy()
@@ -112,5 +116,29 @@ func (f *rect) Destroy() {
 
 	for _, child := range f.children {
 		child.Destroy()
+	}
+}
+
+//
+// Events
+//
+
+func (f *rect) MouseEvent(e mouse.Event) {
+	for _, frame := range f.children {
+		if handler, ok := frame.(mouse.Handler); ok {
+			ev := e.Project(frame.Position())
+			target := ev.Position()
+			size := frame.Size()
+			if target.X < 0 || target.X > size.X || target.Y < 0 || target.Y > size.Y {
+				// outside
+				continue
+			}
+
+			handler.MouseEvent(ev)
+			if ev.Handled() {
+				e.StopPropagation()
+				break
+			}
+		}
 	}
 }

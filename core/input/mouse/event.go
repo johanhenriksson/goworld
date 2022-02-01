@@ -14,6 +14,7 @@ type Event interface {
 	Delta() vec2.T
 	Scroll() vec2.T
 	Modifier() keys.Modifier
+	Project(vec2.T) Event
 
 	Handled() bool
 	StopPropagation()
@@ -39,6 +40,12 @@ func (e event) Handled() bool           { return e.handled }
 
 func (e *event) StopPropagation() {
 	e.handled = true
+}
+
+func (e *event) Project(relativePos vec2.T) Event {
+	projected := *e
+	projected.position = projected.position.Sub(relativePos)
+	return &projected
 }
 
 func (e event) String() string {

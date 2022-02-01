@@ -1,8 +1,12 @@
 package label
 
 import (
+	"fmt"
+
+	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/gui/dimension"
 	"github.com/johanhenriksson/goworld/gui/widget"
+	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/color"
 )
@@ -16,13 +20,13 @@ type Props struct {
 	Color      color.T
 	Size       float32
 	LineHeight float32
+	OnClick    mouse.Callback
 }
 
 type label struct {
 	widget.T
-
-	renderer Renderer
 	props    *Props
+	renderer Renderer
 }
 
 func New(key string, props *Props) T {
@@ -40,7 +44,10 @@ func New(key string, props *Props) T {
 	}
 }
 
-func (l *label) Props() widget.Props { return l.props }
+func (l *label) Size() vec2.T { return l.T.Size() }
+
+func (l *label) Props() widget.Props       { return l.props }
+func (l *label) Update(props widget.Props) { l.props = props.(*Props) }
 
 func (l *label) Draw(args render.Args) {
 	l.T.Draw(args)
@@ -50,4 +57,24 @@ func (l *label) Draw(args render.Args) {
 
 func (l *label) Height() dimension.T {
 	return dimension.Fixed(l.props.Size * 1.3333 * 2)
+}
+
+func (l *label) Measure(available vec2.T) vec2.T {
+	// what is the available space?
+	// is that the total space divided by the number of items?
+	return vec2.Zero
+}
+
+//
+// Events
+//
+
+func (l *label) MouseEvent(e mouse.Event) {
+	e = e.Project(l.Position())
+	if e.Action() == mouse.Press {
+		fmt.Println(e)
+		if l.props.OnClick != nil {
+			l.props.OnClick(e)
+		}
+	}
 }

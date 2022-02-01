@@ -13,7 +13,7 @@ type Props interface{}
 type T interface {
 	Key() string
 
-	// Props returns a pointer to the components property struct.
+	// Properties returns a pointer to the components property struct.
 	// The pointer is used to compare the states when deciding if the component needs to be updated.
 	Props() Props
 
@@ -37,6 +37,7 @@ type T interface {
 	Move(vec2.T)
 	Width() dimension.T
 	Height() dimension.T
+	DesiredHeight(float32) float32
 
 	Reflow()
 
@@ -61,7 +62,6 @@ func New(key string) T {
 }
 
 func (w *widget) Key() string         { return w.key }
-func (w *widget) Props() Props        { return nil }
 func (w *widget) Position() vec2.T    { return w.position }
 func (w *widget) Size() vec2.T        { return w.size }
 func (w *widget) Width() dimension.T  { return dimension.Auto() }
@@ -71,7 +71,17 @@ func (w *widget) Move(p vec2.T)       { w.position = p }
 func (w *widget) Resize(s vec2.T)     { w.size = s }
 func (w *widget) Destroy()            { w.destroyed = true }
 
-func (w *widget) Update(Props) {}
+func (w *widget) DesiredHeight(width float32) float32 {
+	return 0
+}
+
+func (w *widget) Props() Props {
+	panic("widget.Props() must be implemented")
+}
+
+func (w *widget) Update(Props) {
+	panic("widget.Update() must be implemented")
+}
 
 func (w *widget) Reflow() {}
 

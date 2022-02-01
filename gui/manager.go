@@ -1,139 +1,118 @@
 package gui
 
 import (
-	"github.com/go-gl/gl/v4.1-core/gl"
+	"fmt"
 
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/core/object"
-	"github.com/johanhenriksson/goworld/gui/dimension"
-	"github.com/johanhenriksson/goworld/gui/label"
+	"github.com/johanhenriksson/goworld/core/scene"
+	"github.com/johanhenriksson/goworld/gui/hooks"
 	"github.com/johanhenriksson/goworld/gui/layout"
 	"github.com/johanhenriksson/goworld/gui/rect"
-	"github.com/johanhenriksson/goworld/gui/widget"
 	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/math/vec2"
+	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
-	"github.com/johanhenriksson/goworld/render/color"
+
+	"github.com/go-gl/gl/v4.1-core/gl"
 )
 
 type Manager interface {
 	object.T
-	DrawPass()
+	Draw(render.Args, scene.T)
 }
 
 type manager struct {
 	object.T
-	scene rect.T
-}
+	scale float32
 
-func MyCustomUI(gut float32) widget.T {
-	return rect.New(
-		"frame",
-		&rect.Props{
-			Color:  color.Hex("#000000"),
-			Border: 5,
-			Width:  dimension.Fixed(250),
-			Height: dimension.Fixed(150),
-			Layout: layout.Column{
-				Padding: 5,
-				Gutter:  5,
-			},
-		},
-		label.New("title", &label.Props{
-			Text:  "Hello GUI",
-			Size:  16.0,
-			Color: color.White,
-		}),
-		label.New("title2", &label.Props{
-			Text:  "Hello GUI",
-			Size:  16.0,
-			Color: color.White,
-		}),
-		rect.New(
-			"r1",
-			&rect.Props{
-				Height: dimension.Percent(150),
-				Layout: layout.Row{
-					Gutter:   5,
-					Relative: true,
-				},
-			},
-			rect.New("1st", &rect.Props{Color: color.Blue, Width: dimension.Fixed(1)}),
-			rect.New("2nd", &rect.Props{Color: color.Green, Width: dimension.Fixed(1)}),
-			rect.New("3nd", &rect.Props{Color: color.Red, Width: dimension.Fixed(2)}),
-		),
-		rect.New(
-			"r2",
-			&rect.Props{
-				Height: dimension.Percent(50),
-				Layout: layout.Row{
-					Gutter: gut,
-				},
-			},
-			rect.New("1st", &rect.Props{Color: color.Red}),
-			rect.New("2nd", &rect.Props{Color: color.Green}),
-			rect.New("3nd", &rect.Props{Color: color.Blue}),
-		),
-	)
+	dirty bool
+	tree  rect.T
+	root  func() rect.T
 }
 
 func New() Manager {
-	f := MyCustomUI(5)
-	f.Move(vec2.New(400, 200))
-
-	b := MyCustomUI(6)
-	reconcile(f, b, 0)
-
-	scene := rect.New("GUI", &rect.Props{
-		Layout: layout.Absolute{},
-	}, f)
-	scene.Resize(vec2.New(1600, 900))
-
-	return &manager{
-		T:     object.New("GUI Manager"),
-		scene: scene,
+	root := func() rect.T {
+		f := TestUI(5)
+		f.Move(vec2.New(500, 300))
+		scene := rect.New("GUI", &rect.Props{
+			Layout: layout.Absolute{},
+		}, f)
+		scene.Resize(vec2.New(1600, 900))
+		return scene
 	}
+
+	mgr := &manager{
+		T:     object.New("GUI Manager"),
+		root:  root,
+		dirty: true,
+		scale: 1,
+	}
+
+	hooks.SetCallback(func() {
+		mgr.dirty = true
+	})
+
+	return mgr
 }
 
-func (m *manager) DrawPass() {
-	width, height := float32(1600), float32(900)
+func (m *manager) Draw(args render.Args, scene scene.T) {
+	width, height := float32(args.Viewport.FrameWidth), float32(args.Viewport.FrameHeight)
+	m.scale = width / float32(args.Viewport.Width)
 
-	viewport := mat4.Orthographic(0, width, height, 0, 1000, -1000)
-	scale := mat4.Ident() // todo: ui scaling
-	vp := scale.Mul(&viewport)
+	// todo: resize if changed
+	// perhaps the root component always accepts screen size etc
+
+	if m.dirty {
+		fmt.Println("GUI render!")
+		newtree := Render(m.root)
+		if !reconcile(m.tree, newtree, 0) {
+			m.tree = newtree
+		}
+		m.dirty = false
+	}
+
+	proj := mat4.Orthographic(0, width, height, 0, 1000, -1000)
+	view := mat4.Scale(vec3.New(m.scale, m.scale, 1)) // todo: ui scaling
+	vp := proj.Mul(&view)
 
 	gl.DepthFunc(gl.LEQUAL)
 
-	args := render.Args{
-		Projection: viewport,
-		View:       scale,
-		VP:         viewport,
+	uiArgs := render.Args{
+		Projection: proj,
+		View:       view,
+		VP:         vp,
 		MVP:        vp,
 		Transform:  mat4.Ident(),
+		Viewport:   args.Viewport,
 	}
 
-	m.scene.Draw(args)
+	m.tree.Draw(uiArgs)
 }
 
 func (m *manager) MouseEvent(e mouse.Event) {
-	for _, frame := range m.scene.Children() {
+	// scale down to low dpi.
+	e = e.Project(e.Position().Scaled(1 / m.scale))
+
+	for _, frame := range m.tree.Children() {
 		if handler, ok := frame.(mouse.Handler); ok {
-			handler.MouseEvent(e)
-			if e.Handled() {
-				break
+			ev := e.Project(frame.Position())
+			target := ev.Position()
+			size := frame.Size()
+			if target.X < 0 || target.X > size.X || target.Y < 0 || target.Y > size.Y {
+				// outside
+				continue
 			}
 
-			// mouse enter
-			// mouse exit
-			// mouse move
-			// click
-
-			// focus
-			// blur
-
-			// keydown
-			// keyup
-			// keychar
+			handler.MouseEvent(ev)
+			if ev.Handled() {
+				e.StopPropagation()
+				break
+			}
 		}
 	}
+}
+
+func (m *manager) OnStateChanged() {
+	m.dirty = true
 }

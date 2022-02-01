@@ -6,6 +6,8 @@ import (
 	"github.com/johanhenriksson/goworld/math/vec2"
 )
 
+type Callback func(Event)
+
 type Handler interface {
 	MouseEvent(Event)
 }

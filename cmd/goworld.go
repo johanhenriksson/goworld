@@ -114,13 +114,12 @@ func main() {
 	fmt.Println("Ok")
 
 	guim := gui.New()
+	renderer.Append("gui", guim)
+	scene.Adopt(guim)
 
 	for !wnd.ShouldClose() {
 		scene.Update(0.030)
-
 		renderer.Draw(scene)
-		guim.DrawPass()
-
 		wnd.SwapBuffers()
 	}
 }

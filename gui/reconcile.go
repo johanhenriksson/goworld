@@ -12,6 +12,10 @@ func Reconcile(src, dst widget.T) bool {
 }
 
 func reconcile(src, dst widget.T, depth int) bool {
+	if src == nil {
+		return false
+	}
+
 	// compare element type
 	srcType, dstType := reflect.TypeOf(src), reflect.TypeOf(dst)
 	if srcType != dstType {
@@ -55,6 +59,8 @@ func reconcile(src, dst widget.T, depth int) bool {
 		}
 
 		for idx, child := range children {
+			// todo: handle nil children
+
 			if existing, ok := previous[child.Key()]; ok {
 				// since each key can only appear once, we can remove the child from the mapping
 				delete(previous, child.Key())
