@@ -136,9 +136,12 @@ func (f *rect) MouseEvent(e mouse.Event) {
 
 			handler.MouseEvent(ev)
 			if ev.Handled() {
-				e.StopPropagation()
-				break
+				e.Consume()
+				return
 			}
 		}
 	}
+
+	// how to do mouse enter/exit events?
+	// we wont get any event when the mouse is outside
 }

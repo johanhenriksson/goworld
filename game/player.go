@@ -191,11 +191,13 @@ func (p *Player) Update(dt float32) {
 func (p *Player) MouseEvent(e mouse.Event) {
 	if e.Action() == mouse.Press && e.Button() == mouse.Button1 {
 		p.mouselook = true
-		// mouse.Lock()
+		mouse.Lock()
+		e.Consume()
 	}
 	if e.Action() == mouse.Release && e.Button() == mouse.Button1 {
 		p.mouselook = false
-		// mouse.Show()
+		mouse.Show()
+		e.Consume()
 	}
 
 	if e.Action() == mouse.Move && p.mouselook {
@@ -213,5 +215,7 @@ func (p *Player) MouseEvent(e mouse.Event) {
 
 		p.Eye.Transform().SetRotation(vec3.New(xrot, yrot, 0))
 		// p.Transform().SetRotation(vec3.New(0, yrot, 0))
+
+		e.Consume()
 	}
 }

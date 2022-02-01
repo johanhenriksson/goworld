@@ -15,9 +15,10 @@ type Event interface {
 	Scroll() vec2.T
 	Modifier() keys.Modifier
 	Project(vec2.T) Event
+	Locked() bool
 
 	Handled() bool
-	StopPropagation()
+	Consume()
 }
 
 type event struct {
@@ -28,6 +29,7 @@ type event struct {
 	scroll   vec2.T
 	mods     keys.Modifier
 	handled  bool
+	locked   bool
 }
 
 func (e event) Action() Action          { return e.action }
@@ -37,8 +39,9 @@ func (e event) Delta() vec2.T           { return e.delta }
 func (e event) Scroll() vec2.T          { return e.scroll }
 func (e event) Modifier() keys.Modifier { return e.mods }
 func (e event) Handled() bool           { return e.handled }
+func (e event) Locked() bool            { return e.locked }
 
-func (e *event) StopPropagation() {
+func (e *event) Consume() {
 	e.handled = true
 }
 

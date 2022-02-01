@@ -56,8 +56,14 @@ func main() {
 	// app := engine.NewApplication("goworld", 1400, 1000)
 	renderer := engine.NewRenderer(wnd)
 
+	// attach GUI manager first.
+	// this will give it input priority
+	guim := gui.New()
+	scene.Adopt(guim)
+
 	uim := ui.NewManager(1600, 1200)
 	renderer.Append("ui", uim)
+	renderer.Append("gui", guim)
 
 	scene.Attach(light.NewDirectional(light.DirectionalArgs{
 		Intensity: 1.2,
@@ -112,10 +118,6 @@ func main() {
 	// scene.Add(particles)
 
 	fmt.Println("Ok")
-
-	guim := gui.New()
-	renderer.Append("gui", guim)
-	scene.Adopt(guim)
 
 	for !wnd.ShouldClose() {
 		scene.Update(0.030)

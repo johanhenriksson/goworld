@@ -75,6 +75,7 @@ func (l *label) MouseEvent(e mouse.Event) {
 		fmt.Println(e)
 		if l.props.OnClick != nil {
 			l.props.OnClick(e)
+			e.Consume()
 		}
 	}
 }

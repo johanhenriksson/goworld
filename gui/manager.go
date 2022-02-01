@@ -91,25 +91,38 @@ func (m *manager) Draw(args render.Args, scene scene.T) {
 }
 
 func (m *manager) MouseEvent(e mouse.Event) {
-	// scale down to low dpi.
-	e = e.Project(e.Position().Scaled(1 / m.scale))
+	// if the cursor is locked, we consider the game to have focus
+	if e.Locked() {
+		return
+	}
 
+	// scale down to low dpi.
+	ev := e.Project(e.Position().Scaled(1 / m.scale))
+
+	hit := false
 	for _, frame := range m.tree.Children() {
 		if handler, ok := frame.(mouse.Handler); ok {
-			ev := e.Project(frame.Position())
-			target := ev.Position()
+			fev := ev.Project(frame.Position())
+			target := fev.Position()
 			size := frame.Size()
 			if target.X < 0 || target.X > size.X || target.Y < 0 || target.Y > size.Y {
 				// outside
 				continue
 			}
 
-			handler.MouseEvent(ev)
-			if ev.Handled() {
-				e.StopPropagation()
+			hit = true
+
+			handler.MouseEvent(fev)
+			if fev.Handled() {
+				e.Consume()
 				break
 			}
 		}
+	}
+
+	// consume the event if it hits any UI element
+	if hit {
+		e.Consume()
 	}
 }
 
