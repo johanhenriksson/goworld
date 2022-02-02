@@ -1,7 +1,7 @@
 package game
 
 import (
-	"github.com/johanhenriksson/goworld/render"
+	"github.com/johanhenriksson/goworld/render/color"
 )
 
 // EmptyVoxel is an empty color voxel
@@ -16,7 +16,7 @@ type Voxel struct {
 }
 
 // NewVoxel creates a new Color Voxel from a given color
-func NewVoxel(color render.Color) Voxel {
+func NewVoxel(color color.T) Voxel {
 	return Voxel{
 		R: byte(255 * color.R),
 		G: byte(255 * color.G),

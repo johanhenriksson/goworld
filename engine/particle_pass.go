@@ -8,6 +8,9 @@ import (
 	"github.com/johanhenriksson/goworld/math/random"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
+	"github.com/johanhenriksson/goworld/render/backend/gl/gl_vertex_array"
+	"github.com/johanhenriksson/goworld/render/material"
+	"github.com/johanhenriksson/goworld/render/vertex_array"
 )
 
 type ParticleDrawable interface {
@@ -27,7 +30,7 @@ func NewParticlePass() *ParticlePass {
 func (p *ParticlePass) Resize(width, height int) {}
 
 // DrawPass executes the particle pass
-func (p *ParticlePass) Draw(scene scene.T) {
+func (p *ParticlePass) Draw(args render.Args, scene scene.T) {
 
 }
 
@@ -51,8 +54,8 @@ type ParticleSystem struct {
 	MaxDur    float32
 
 	positions vec3.Array
-	mat       *render.Material
-	vao       *render.VertexArray
+	mat       material.T
+	vao       vertex_array.T
 }
 
 // Update the particle system
@@ -92,10 +95,6 @@ func (ps *ParticleSystem) remove(i int) {
 
 // Draw the particle system
 func (ps *ParticleSystem) Draw(args render.Args) {
-	if args.Pass != render.Particles {
-		return
-	}
-
 	args = args.Apply(ps.World())
 
 	render.Blend(true)
@@ -103,9 +102,9 @@ func (ps *ParticleSystem) Draw(args render.Args) {
 	render.DepthOutput(false)
 
 	ps.mat.Use()
-	ps.mat.Vec3("eye", &args.Position)
-	ps.mat.Mat4("model", &args.Transform)
-	ps.mat.Mat4("vp", &args.VP)
+	ps.mat.Vec3("eye", args.Position)
+	ps.mat.Mat4("model", args.Transform)
+	ps.mat.Mat4("vp", args.VP)
 	ps.vao.Draw()
 
 	render.DepthOutput(true)
@@ -126,7 +125,7 @@ func NewParticleSystem(position vec3.T) *ParticleSystem {
 		MaxDur: 3,
 
 		mat:       mat,
-		vao:       render.CreateVertexArray(render.Points),
+		vao:       gl_vertex_array.New(render.Points),
 		positions: make(vec3.Array, count),
 	}
 

@@ -5,7 +5,8 @@ import (
 	"unsafe"
 
 	"github.com/johanhenriksson/goworld/core/mesh"
-	"github.com/johanhenriksson/goworld/render"
+	"github.com/johanhenriksson/goworld/render/backend/types"
+	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/udhos/gwob"
 )
 
@@ -14,12 +15,12 @@ type ObjModel struct {
 	Path string
 }
 
-func NewObjModel(mat *render.Material, path string) *ObjModel {
+func NewObjModel(mat material.T, path string) *ObjModel {
 	obj := &ObjModel{
-		T:    mesh.New(mat),
+		T:    mesh.New(mat, mesh.Deferred),
 		Path: path,
 	}
-	obj.SetIndexType(render.UInt32)
+	obj.SetIndexType(types.UInt32)
 	if err := obj.load(); err != nil {
 		fmt.Println("Error loading model", path, ":", err)
 	}

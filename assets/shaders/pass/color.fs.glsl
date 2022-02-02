@@ -36,12 +36,13 @@ vec3 lookup_color(sampler2D lut, vec3 clr) {
 void main() {
     // get input color
     vec3 src = texture(tex_input, texcoord0.xy).rgb;
-    float ssao = texture(tex_ssao, texcoord0.xy).r;
 
-    src *= ssao;
 
     // color grading
     vec3 graded = lookup_color(tex_lut, src);
+
+    float ssao = texture(tex_ssao, texcoord0.xy).r;
+    graded *= ssao;
 
     // gamma correction
     vec3 corrected = pow(graded, vec3(1/gamma));

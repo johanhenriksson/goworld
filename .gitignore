@@ -3,6 +3,7 @@ chunks/
 .vscode/
 .idea/*
 .DS_Store
+TODO.md
 
 # temproarily ignore models
 assets/models/

@@ -6,7 +6,7 @@ import (
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/math"
 	"github.com/johanhenriksson/goworld/math/vec3"
-	"github.com/johanhenriksson/goworld/render"
+	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/vertex"
 )
 
@@ -20,7 +20,7 @@ type Args struct {
 	Radius   float32
 	Height   float32
 	Segments int
-	Color    render.Color
+	Color    color.T
 }
 
 // NewObject creates a new Cone attached to a Game Object
@@ -42,7 +42,7 @@ func Builder(out **T, args Args) *object.Builder {
 func New(args Args) *T {
 	mat := assets.GetMaterialShared("color.f")
 	cone := &T{
-		T:    mesh.New(mat),
+		T:    mesh.New(mat, mesh.Forward),
 		Args: args,
 	}
 	cone.generate()

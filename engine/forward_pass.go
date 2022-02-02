@@ -1,10 +1,13 @@
 package engine
 
 import (
-	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/core/scene"
 	"github.com/johanhenriksson/goworld/render"
+	"github.com/johanhenriksson/goworld/render/backend/gl/gl_framebuffer"
+	"github.com/johanhenriksson/goworld/render/framebuffer"
+
+	"github.com/go-gl/gl/v4.1-core/gl"
 )
 
 type ForwardDrawable interface {
@@ -13,18 +16,21 @@ type ForwardDrawable interface {
 
 // ForwardPass holds information required to perform a forward rendering pass.
 type ForwardPass struct {
-	output  *render.ColorBuffer
-	gbuffer *render.GeometryBuffer
-	fbo     *render.FrameBuffer
+	output  framebuffer.Color
+	gbuffer framebuffer.Geometry
+	fbo     framebuffer.T
 }
 
 // NewForwardPass sets up a forward pass.
-func NewForwardPass(gbuffer *render.GeometryBuffer, output *render.ColorBuffer) *ForwardPass {
-	fbo := render.CreateFrameBuffer(gbuffer.Width, gbuffer.Height)
-	fbo.AttachBuffer(gl.COLOR_ATTACHMENT0, output.Texture)
-	fbo.AttachBuffer(gl.COLOR_ATTACHMENT1, gbuffer.Normal)
-	fbo.AttachBuffer(gl.COLOR_ATTACHMENT2, gbuffer.Position)
-	fbo.AttachBuffer(gl.DEPTH_ATTACHMENT, gbuffer.Depth)
+func NewForwardPass(gbuffer framebuffer.Geometry, output framebuffer.Color) *ForwardPass {
+	// the forward pass renders into the output of the final deferred pass.
+	// it reuses the normal, position and depth buffers and writes new data according to what is rendered
+	// this ensures that we have complete information in those buffers for later passes
+	fbo := gl_framebuffer.NewGeometry(gbuffer.Width(), gbuffer.Height())
+	fbo.AttachBuffer(gl.COLOR_ATTACHMENT0, output.Texture())
+	fbo.AttachBuffer(gl.COLOR_ATTACHMENT1, gbuffer.Normal())
+	fbo.AttachBuffer(gl.COLOR_ATTACHMENT2, gbuffer.Position())
+	fbo.AttachBuffer(gl.DEPTH_ATTACHMENT, gbuffer.Depth())
 
 	return &ForwardPass{
 		fbo:     fbo,
@@ -33,10 +39,9 @@ func NewForwardPass(gbuffer *render.GeometryBuffer, output *render.ColorBuffer) 
 	}
 }
 
-func (p *ForwardPass) Resize(width, height int) {}
-
 // DrawPass executes the forward pass
-func (p *ForwardPass) Draw(scene scene.T) {
+func (p *ForwardPass) Draw(args render.Args, scene scene.T) {
+
 	// setup rendering
 	render.Blend(true)
 	render.BlendMultiply()
@@ -53,20 +58,18 @@ func (p *ForwardPass) Draw(scene scene.T) {
 
 	p.fbo.Bind()
 	defer p.fbo.Unbind()
+	p.fbo.Resize(args.Viewport.FrameWidth, args.Viewport.FrameHeight)
 	p.fbo.DrawBuffers()
 
 	// disable depth testing
 	// todo: should be disabled for transparent things, not everything
 	// render.DepthOutput(false)
 
-	query := object.NewQuery(func(c object.Component) bool {
-		_, ok := c.(ForwardDrawable)
-		return ok
-	})
-	scene.Collect(&query)
+	objects := object.NewQuery().
+		Where(IsForwardDrawable).
+		Collect(scene)
 
-	args := ArgsFromCamera(scene.Camera())
-	for _, component := range query.Results {
+	for _, component := range objects {
 		drawable := component.(ForwardDrawable)
 		drawable.DrawForward(args.Apply(component.Object().Transform().World()))
 	}
@@ -74,4 +77,9 @@ func (p *ForwardPass) Draw(scene scene.T) {
 	render.DepthOutput(true)
 
 	render.CullFace(render.CullNone)
+}
+
+func IsForwardDrawable(c object.Component) bool {
+	_, ok := c.(ForwardDrawable)
+	return ok
 }

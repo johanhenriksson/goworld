@@ -23,15 +23,14 @@ uniform sampler2D tex_diffuse;  // diffuse
 uniform sampler2D tex_shadow;  // shadow map
 uniform sampler2D tex_normal; // normal
 uniform sampler2D tex_depth; // depth
-// uniform sampler2D tex_occlusion; // ssao
 uniform mat4 cameraInverse; // inverse view projection matrix
+uniform mat4 viewInverse;     // inverse view matrix
 uniform mat4 light_vp;     // world to light space
-uniform mat4 viewInverse;     // projection matrix
 
 uniform Light light;     // uniform light data
 uniform float shadow_strength;
 uniform float shadow_bias;
-// uniform float ssao_amount = 1.0;
+uniform bool soft_shadows = true;
 
 in vec2 texcoord0;
 
@@ -54,6 +53,10 @@ vec3 positionFromDepth(float depth) {
 
 /* calculates lighting contribution from a point light source */
 float calculatePointLightContrib(vec3 surfaceToLight, float distanceToLight, vec3 normal) {
+    if (distanceToLight > light.Range) {
+        return 0.0;
+    }
+
     /* calculate normal coefficient */
     float normalCoef = max(0.0, dot(normal, surfaceToLight));
 
@@ -61,14 +64,14 @@ float calculatePointLightContrib(vec3 surfaceToLight, float distanceToLight, vec
     float attenuation = light.attenuation.Constant +
                         light.attenuation.Linear * distanceToLight +
                         light.attenuation.Quadratic * pow(distanceToLight, 2);
-    attenuation = light.Range / attenuation;
+    attenuation = 1.0 / attenuation;
 
     /* multiply and return light contribution */
     return normalCoef * attenuation;
 }
 
 /* samples the shadow map at the given world space coordinates */
-float sampleShadowmap(sampler2D shadowmap, vec3 position) {
+float sampleShadowmap(sampler2D shadowmap, vec3 position, float bias) {
     /* world -> light clip coords */
     vec4 light_clip_pos = light_vp * vec4(position, 1);
 
@@ -77,16 +80,33 @@ float sampleShadowmap(sampler2D shadowmap, vec3 position) {
 
     /* depth of position in light space */
     float z = light_ndc_pos.z;
-
-    /* sample shadow map depth */
-    float depth = texture(shadowmap, light_ndc_pos.xy).r;
-
-    /* shadow test */
-    if (depth < (z - shadow_bias)) {
-        return 1.0 - shadow_strength;
+    if (z > 1) {
+        return 0;
     }
 
-    return 1.0;
+    // todo: implement angle-dependent bias
+    // float bias = max(0.05 * (1.0 - dot(normal, lightDir)), 0.005);  
+
+    float shadow = 0.0;
+    if (soft_shadows) {
+        vec2 texelSize = 1.0 / textureSize(shadowmap, 0);
+        for(int x = -1; x <= 1; ++x) {
+            for(int y = -1; y <= 1; ++y) {
+                float pcf_depth = texture(shadowmap, light_ndc_pos.xy + vec2(x, y) * texelSize).r; 
+                shadow += z - bias > pcf_depth ? 1.0 : 0.0;        
+            }    
+        }
+        shadow /= 9.0;
+    }
+    else {
+        /* sample shadow map depth */
+        float depth = texture(shadowmap, light_ndc_pos.xy).r;
+        if (depth < (z - shadow_bias)) {
+            shadow = 1.0; 
+        }
+    }
+
+    return 1.0 - shadow * shadow_strength;
 }
 
 void main() {
@@ -113,8 +133,6 @@ void main() {
     // why do we do this when we have a position buffer? :/
     vec3 position = positionFromDepth(depth);
 
-    // float ssao = texture(tex_occlusion, texcoord0).r;
-
     // now we should be able to calculate the position in light space!
     // since the directional light matrix is orthographic the z value will
     // correspond to depth, so we can test Z against the shadow map depth buffer
@@ -128,11 +146,15 @@ void main() {
     }
     else if (light.Type == DIRECTIONAL_LIGHT) {
         // directional lights store the direction in the position uniform
-        vec3 dir = normalize(light.Position);
-        contrib = max(dot(dir, normal), 0.0);
+        // i.e. the light coming from the position, shining towards the origin
+        vec3 surfaceToLight = normalize(light.Position);
+        contrib = max(dot(surfaceToLight, normal), 0.0);
+
+        //float bias = max(0.05 * (1.0 - contrib), 0.005);  
+        float bias = contrib * shadow_bias;
 
         // experimental shadows
-        shadow = sampleShadowmap(tex_shadow, position);
+        shadow = sampleShadowmap(tex_shadow, position, bias);
     }
     else if (light.Type == POINT_LIGHT) {
         // calculate light vector & distance

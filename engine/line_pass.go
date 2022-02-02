@@ -19,22 +19,22 @@ func NewLinePass() *LinePass {
 	return &LinePass{}
 }
 
-func (p *LinePass) Resize(width, height int) {}
-
 // DrawPass executes the line pass
-func (p *LinePass) Draw(scene scene.T) {
-	// scene.Camera.Use()
-	render.ScreenBuffer.Bind()
+func (p *LinePass) Draw(args render.Args, scene scene.T) {
+	render.BindScreenBuffer()
+	render.SetViewport(0, 0, args.Viewport.FrameWidth, args.Viewport.FrameHeight)
 
-	query := object.NewQuery(func(c object.Component) bool {
-		_, ok := c.(LineDrawable)
-		return ok
-	})
-	scene.Collect(&query)
+	objects := object.NewQuery().
+		Where(IsLineDrawable).
+		Collect(scene)
 
-	args := ArgsFromCamera(scene.Camera())
-	for _, component := range query.Results {
+	for _, component := range objects {
 		drawable := component.(LineDrawable)
 		drawable.DrawLines(args.Apply(component.Object().Transform().World()))
 	}
+}
+
+func IsLineDrawable(c object.Component) bool {
+	_, ok := c.(LineDrawable)
+	return ok
 }

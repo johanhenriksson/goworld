@@ -6,6 +6,8 @@ import (
 	"github.com/johanhenriksson/goworld/geometry"
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/render"
+	"github.com/johanhenriksson/goworld/render/color"
+	"github.com/johanhenriksson/goworld/render/texture"
 )
 
 // Rect is a rectangle with support for borders & rounded corners.
@@ -14,7 +16,7 @@ type Rect struct {
 	*Element
 	layout RectLayout
 	mesh   *geometry.Rect
-	tex    *render.Texture
+	tex    texture.T
 }
 
 type RectLayout func(Component, vec2.T) vec2.T
@@ -28,9 +30,9 @@ func NewRect(style Style, children ...Component) *Rect {
 		Element: NewElement("Rect", position, size, style),
 		mesh:    geometry.NewRect(mat, size),
 		layout:  ColumnLayout,
-		tex:     render.TextureFromColor(render.White),
+		tex:     assets.GetColorTexture(color.White),
 	}
-	mat.Textures.Add("image", r.tex)
+	mat.Texture("image", r.tex)
 
 	layout := style.String("layout", "column")
 	if layout == "row" {
@@ -63,11 +65,11 @@ func (r *Rect) Draw(args render.Args) {
 	// avoid GL calls outside of the "core" packages render/engine/geometry
 	render.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 
-	color := r.Style.Color("color", render.Transparent)
+	color := r.Style.Color("color", color.Transparent)
 	image := r.Style.Texture("image", r.tex)
 	r.mesh.Material.Use()
 	r.mesh.Material.RGBA("tint", color)
-	r.mesh.Material.Textures.Set("image", image)
+	r.mesh.Material.Texture("image", image)
 	r.mesh.Draw(local)
 
 	/* call parent - draw children etc */

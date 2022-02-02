@@ -6,7 +6,7 @@ import (
 	"github.com/johanhenriksson/goworld/geometry/lines"
 	"github.com/johanhenriksson/goworld/geometry/plane"
 	"github.com/johanhenriksson/goworld/math/vec3"
-	"github.com/johanhenriksson/goworld/render"
+	"github.com/johanhenriksson/goworld/render/color"
 )
 
 // Mover Gizmo is the visual representation of the 3D positioning tool
@@ -45,7 +45,7 @@ func New(args Args) *T {
 		Radius:   radius,
 		Height:   height,
 		Segments: segments,
-		Color:    render.Red,
+		Color:    color.Red,
 	}).
 		Parent(g).
 		Position(vec3.UnitX).
@@ -57,7 +57,7 @@ func New(args Args) *T {
 		Radius:   radius,
 		Height:   height,
 		Segments: segments,
-		Color:    render.Green,
+		Color:    color.Green,
 	}).
 		Parent(g).
 		Position(vec3.New(0, 1, 0)).
@@ -68,17 +68,17 @@ func New(args Args) *T {
 		Radius:   radius,
 		Height:   height,
 		Segments: segments,
-		Color:    render.Blue,
+		Color:    color.Blue,
 	}).
 		Parent(g).
-		Position(vec3.UnitZ).
-		Rotation(vec3.New(90, 0, 0)).
+		Position(vec3.UnitZN).
+		Rotation(vec3.New(90, 180, 0)).
 		Create()
 
 	// XY plane
 	plane.Builder(&g.XY, plane.Args{
 		Size:  side,
-		Color: render.Blue.WithAlpha(planeAlpha),
+		Color: color.Blue.WithAlpha(planeAlpha),
 	}).
 		Parent(g).
 		Position(vec3.New(s, s, 0)).
@@ -88,7 +88,7 @@ func New(args Args) *T {
 	// XZ plane
 	plane.Builder(&g.XZ, plane.Args{
 		Size:  side,
-		Color: render.Green.WithAlpha(planeAlpha),
+		Color: color.Green.WithAlpha(planeAlpha),
 	}).
 		Parent(g).
 		Rotation(vec3.New(0, 90, 0)).
@@ -98,7 +98,7 @@ func New(args Args) *T {
 	// YZ plane
 	plane.Builder(&g.YZ, plane.Args{
 		Size:  side,
-		Color: render.Red.WithAlpha(planeAlpha),
+		Color: color.Red.WithAlpha(planeAlpha),
 	}).
 		Parent(g).
 		Position(vec3.New(0, s, s)).
@@ -108,21 +108,21 @@ func New(args Args) *T {
 	lines.Builder(&g.Lines, lines.Args{
 		Lines: []lines.Line{
 			// axis lines
-			lines.L(vec3.Zero, vec3.UnitX, render.Red),
-			lines.L(vec3.Zero, vec3.UnitY, render.Green),
-			lines.L(vec3.Zero, vec3.UnitZ, render.Blue),
+			lines.L(vec3.Zero, vec3.UnitX, color.Red),
+			lines.L(vec3.Zero, vec3.UnitY, color.Green),
+			lines.L(vec3.Zero, vec3.UnitZN, color.Blue),
 
 			// xz lines
-			lines.L(vec3.New(side, 0, 0), vec3.New(side, 0, side), render.Green),
-			lines.L(vec3.New(side, 0, side), vec3.New(0, 0, side), render.Green),
+			lines.L(vec3.New(side, 0, 0), vec3.New(side, 0, side), color.Green),
+			lines.L(vec3.New(side, 0, side), vec3.New(0, 0, side), color.Green),
 
 			// xy lines
-			lines.L(vec3.New(0, side, 0), vec3.New(side, side, 0), render.Blue),
-			lines.L(vec3.New(side, 0, 0), vec3.New(side, side, 0), render.Blue),
+			lines.L(vec3.New(0, side, 0), vec3.New(side, side, 0), color.Blue),
+			lines.L(vec3.New(side, 0, 0), vec3.New(side, side, 0), color.Blue),
 
 			// yz lines
-			lines.L(vec3.New(0, side, 0), vec3.New(0, side, side), render.Red),
-			lines.L(vec3.New(0, 0, side), vec3.New(0, side, side), render.Red),
+			lines.L(vec3.New(0, side, 0), vec3.New(0, side, side), color.Red),
+			lines.L(vec3.New(0, 0, side), vec3.New(0, side, side), color.Red),
 		},
 	}).
 		Parent(g).

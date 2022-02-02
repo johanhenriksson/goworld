@@ -10,18 +10,32 @@ import (
 	"github.com/johanhenriksson/goworld/geometry/plane"
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/math/vec3"
-	"github.com/johanhenriksson/goworld/render"
+	"github.com/johanhenriksson/goworld/render/color"
+	"github.com/johanhenriksson/goworld/render/framebuffer"
 )
 
+type T interface {
+	object.Component
+
+	SelectedColor() color.T
+	GetVoxel(x, y, z int) game.Voxel
+	SetVoxel(x, y, z int, v game.Voxel)
+	SelectTool(Tool)
+	SelectColor(color.T)
+	Recalculate()
+	InBounds(p vec3.T) bool
+}
+
 // Editor base struct
-type Editor struct {
-	object.T
+type editor struct {
+	object.Component
 
 	Chunk   *game.Chunk
 	Camera  camera.T
 	Palette *PaletteWindow
 	Tool    Tool
 
+	color       color.T
 	PlaceTool   *PlaceTool
 	EraseTool   *EraseTool
 	SampleTool  *SampleTool
@@ -35,19 +49,22 @@ type Editor struct {
 
 	bounds  *box.T
 	mesh    *game.ChunkMesh
-	gbuffer *render.GeometryBuffer
+	gbuffer framebuffer.Geometry
 
 	cursorPos    vec3.T
 	cursorNormal vec3.T
 }
 
 // NewEditor creates a new editor application
-func NewEditor(chunk *game.Chunk, cam camera.T, gbuffer *render.GeometryBuffer) *Editor {
-	e := &Editor{
-		T:       object.New("Editor"),
+func NewEditor(chunk *game.Chunk, cam camera.T, gbuffer framebuffer.Geometry) T {
+	parent := object.New("Editor")
+
+	e := &editor{
+		Component: object.NewComponent(),
+
 		Chunk:   chunk,
 		Camera:  cam,
-		Palette: NewPaletteWindow(render.DefaultPalette),
+		Palette: NewPaletteWindow(color.DefaultPalette),
 
 		PlaceTool:   NewPlaceTool(),
 		EraseTool:   NewEraseTool(),
@@ -63,9 +80,9 @@ func NewEditor(chunk *game.Chunk, cam camera.T, gbuffer *render.GeometryBuffer) 
 
 	box.Builder(&e.bounds, box.Args{
 		Size:  dimensions,
-		Color: render.DarkGrey,
+		Color: color.DarkGrey,
 	}).
-		Parent(e).
+		Parent(parent).
 		Create()
 
 	e.Palette.SetPosition(vec2.New(300, 20))
@@ -73,9 +90,9 @@ func NewEditor(chunk *game.Chunk, cam camera.T, gbuffer *render.GeometryBuffer) 
 	// X Construction Plane
 	plane.Builder(&e.XPlane, plane.Args{
 		Size:  float32(chunk.Sx),
-		Color: render.Red.WithAlpha(0.25),
+		Color: color.Red.WithAlpha(0.25),
 	}).
-		Parent(e).
+		Parent(parent).
 		Position(center.WithX(0)).
 		Rotation(vec3.New(-90, 0, 90)).
 		Active(false).
@@ -84,9 +101,9 @@ func NewEditor(chunk *game.Chunk, cam camera.T, gbuffer *render.GeometryBuffer) 
 	// Y Construction Plane
 	plane.Builder(&e.YPlane, plane.Args{
 		Size:  float32(chunk.Sy),
-		Color: render.Green.WithAlpha(0.25),
+		Color: color.Green.WithAlpha(0.25),
 	}).
-		Parent(e).
+		Parent(parent).
 		Position(center.WithY(0)).
 		Active(false).
 		Create()
@@ -94,38 +111,59 @@ func NewEditor(chunk *game.Chunk, cam camera.T, gbuffer *render.GeometryBuffer) 
 	// Z Construction Plane
 	plane.Builder(&e.ZPlane, plane.Args{
 		Size:  float32(chunk.Sz),
-		Color: render.Blue.WithAlpha(0.25),
+		Color: color.Blue.WithAlpha(0.25),
 	}).
-		Parent(e).
+		Parent(parent).
 		Position(center.WithZ(0)).
 		Rotation(vec3.New(-90, 0, 0)).
 		Active(false).
 		Create()
 
-	e.Adopt(e.PlaceTool, e.ReplaceTool, e.EraseTool, e.SampleTool)
+	parent.Adopt(e.PlaceTool, e.ReplaceTool, e.EraseTool, e.SampleTool)
 
 	e.SelectTool(e.PlaceTool)
 
-	e.Attach(e.mesh)
+	parent.Attach(e)
+	parent.Attach(e.mesh)
 
 	return e
 }
 
-func (e *Editor) DeselectTool() {
+func (e *editor) Name() string {
+	return "Editor"
+}
+
+func (e *editor) GetVoxel(x, y, z int) game.Voxel {
+	return e.Chunk.At(x, y, z)
+}
+
+func (e *editor) SetVoxel(x, y, z int, v game.Voxel) {
+	e.Chunk.Set(x, y, z, v)
+}
+
+func (e *editor) SelectColor(c color.T) {
+	e.color = c
+}
+
+func (e *editor) SelectedColor() color.T {
+	return e.color
+}
+
+func (e *editor) DeselectTool() {
 	if e.Tool != nil {
 		e.Tool.SetActive(false)
 		e.Tool = nil
 	}
 }
 
-func (e *Editor) SelectTool(tool Tool) {
+func (e *editor) SelectTool(tool Tool) {
 	e.DeselectTool()
 	e.Tool = tool
 	e.Tool.SetActive(true)
 }
 
-func (e *Editor) Update(dt float32) {
-	e.T.Update(dt)
+func (e *editor) Update(dt float32) {
+	// e.T.Update(dt)
 	// engine.Update(dt, e.Tool)
 
 	// clear chunk
@@ -137,7 +175,7 @@ func (e *Editor) Update(dt float32) {
 }
 
 // sample world position at current mouse coords
-func (e *Editor) cursorPositionNormal(cursor vec2.T) (bool, vec3.T, vec3.T) {
+func (e *editor) cursorPositionNormal(cursor vec2.T) (bool, vec3.T, vec3.T) {
 	depth, depthExists := e.gbuffer.SampleDepth(cursor)
 	if !depthExists {
 		return false, vec3.Zero, vec3.Zero
@@ -148,25 +186,22 @@ func (e *Editor) cursorPositionNormal(cursor vec2.T) (bool, vec3.T, vec3.T) {
 		return false, vec3.Zero, vec3.Zero
 	}
 
-	position := e.Camera.Unproject(vec3.Extend(
-		cursor.Div(e.gbuffer.Depth.Size()),
-		depth,
-	))
+	point := vec3.Extend(cursor.Div(e.gbuffer.Size()), depth)
+	position := e.Camera.Unproject(point)
 
-	view := e.Camera.View()
-	viewInv := view.Invert()
+	viewInv := e.Camera.ViewInv()
 	normal := viewInv.TransformDir(viewNormal)
 
 	return true, position, normal
 }
 
-func (e *Editor) InBounds(p vec3.T) bool {
+func (e *editor) InBounds(p vec3.T) bool {
 	p = p.Floor()
 	outside := p.X < 0 || p.Y < 0 || p.Z < 0 || int(p.X) >= e.Chunk.Sx || int(p.Y) >= e.Chunk.Sy || int(p.Z) >= e.Chunk.Sz
 	return !outside
 }
 
-func (e *Editor) KeyEvent(ev keys.Event) {
+func (e *editor) KeyEvent(ev keys.Event) {
 	// deselect tool
 	if keys.Pressed(ev, keys.Escape) {
 		e.DeselectTool()
@@ -227,7 +262,7 @@ func (e *Editor) KeyEvent(ev keys.Event) {
 	}
 }
 
-func (e *Editor) MouseEvent(ev mouse.Event) {
+func (e *editor) MouseEvent(ev mouse.Event) {
 	switch ev.Action() {
 	case mouse.Move:
 		if exists, pos, normal := e.cursorPositionNormal(ev.Position()); exists {
@@ -241,4 +276,9 @@ func (e *Editor) MouseEvent(ev mouse.Event) {
 			e.Tool.Use(e, e.cursorPos, e.cursorNormal)
 		}
 	}
+}
+
+func (e *editor) Recalculate() {
+	e.Chunk.Light.Calculate()
+	e.mesh.Compute()
 }

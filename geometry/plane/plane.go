@@ -6,6 +6,7 @@ import (
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
+	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/vertex"
 )
 
@@ -17,7 +18,7 @@ type T struct {
 
 type Args struct {
 	Size  float32
-	Color render.Color
+	Color color.T
 }
 
 // NewObject creates a new 3D plane of a given size and color.
@@ -35,7 +36,7 @@ func Builder(out **T, args Args) *object.Builder {
 func New(args Args) *T {
 	mat := assets.GetMaterialShared("color.f")
 	plane := &T{
-		T:    mesh.New(mat),
+		T:    mesh.New(mat, mesh.Forward),
 		Args: args,
 	}
 	plane.generate()

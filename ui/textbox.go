@@ -6,13 +6,15 @@ import (
 
 	"github.com/johanhenriksson/goworld/assets"
 	"github.com/johanhenriksson/goworld/core/input/keys"
-	"github.com/johanhenriksson/goworld/render"
+	gltex "github.com/johanhenriksson/goworld/render/backend/gl/gl_texture"
+	"github.com/johanhenriksson/goworld/render/color"
+	"github.com/johanhenriksson/goworld/render/font"
 )
 
 type Textbox struct {
 	*Image
 	Text string
-	Font *render.Font
+	Font font.T
 
 	focused bool
 }
@@ -22,19 +24,25 @@ func (t *Textbox) Set(text string) {
 	if t.focused {
 		text += "_"
 	}
-	t.Font.Render(t.Texture, text, t.Style.Color("color", render.White))
+
+	img := t.Font.Render(text, font.Args{
+		Color: t.Style.Color("color", color.White),
+	})
+	t.Texture.BufferImage(img)
 }
 
 func NewTextbox(text string, style Style) *Textbox {
 	size := style.Float("size", 12.0)
 	spacing := style.Float("spacing", 1.5)
-	font := assets.GetFont("assets/fonts/SourceCodeProRegular.ttf", size, spacing)
-	bounds := font.Measure(text)
-	texture := render.CreateTexture(int(bounds.X), int(bounds.Y))
+	fnt := assets.GetFont("assets/fonts/SourceCodeProRegular.ttf", int(size))
+	bounds := fnt.Measure(text, font.Args{
+		LineHeight: spacing,
+	})
+	texture := gltex.New(int(bounds.X), int(bounds.Y))
 
 	t := &Textbox{
 		Image: NewImage(texture, bounds, true, style),
-		Font:  font,
+		Font:  fnt,
 		Text:  text,
 	}
 	t.OnClick(func(ev MouseEvent) {

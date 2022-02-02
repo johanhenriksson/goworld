@@ -6,6 +6,8 @@ import (
 	"github.com/johanhenriksson/goworld/math/vec2"
 )
 
+type Callback func(Event)
+
 type Handler interface {
 	MouseEvent(Event)
 }
@@ -33,6 +35,7 @@ func (mw *wrapper) Button(w *glfw.Window, button glfw.MouseButton, action glfw.A
 		button:   Button(button),
 		mods:     keys.Modifier(mod),
 		position: mw.position,
+		locked:   locked,
 	})
 }
 
@@ -57,6 +60,7 @@ func (mw *wrapper) Move(w *glfw.Window, x, y float64) {
 		action:   Move,
 		position: pos,
 		delta:    dt,
+		locked:   locked,
 	})
 }
 
@@ -64,5 +68,6 @@ func (mw *wrapper) Scroll(w *glfw.Window, x, y float64) {
 	mw.MouseEvent(&event{
 		action: Scroll,
 		scroll: vec2.New(float32(x), float32(y)),
+		locked: locked,
 	})
 }

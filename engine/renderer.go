@@ -3,50 +3,50 @@ package engine
 import (
 	"fmt"
 
-	"github.com/go-gl/gl/v4.1-core/gl"
-
+	"github.com/johanhenriksson/goworld/assets"
 	"github.com/johanhenriksson/goworld/core/scene"
-	"github.com/johanhenriksson/goworld/render"
+	"github.com/johanhenriksson/goworld/core/window"
+	"github.com/johanhenriksson/goworld/engine/deferred"
+	"github.com/johanhenriksson/goworld/engine/effect"
+	"github.com/johanhenriksson/goworld/render/color"
 )
 
 // PassMap maps names to Render Passes
 type PassMap map[string]DrawPass
 
-type PostPass interface {
-	Input(*render.Texture)
-	Output() *render.Texture
-}
-
 // Renderer holds references to the Scene and is responsible for executing render passes in order
 type Renderer struct {
-	Passes  []DrawPass
-	passMap PassMap
+	Passes []DrawPass
 
-	Output    *OutputPass
-	Geometry  *GeometryPass
-	Light     *LightPass
-	Forward   *ForwardPass
-	SSAO      *SSAOPass
-	Particles *ParticlePass
-	Colors    *ColorPass
-	Lines     *LinePass
+	Pre      *PrePass
+	Output   *OutputPass
+	Geometry *deferred.GeometryPass
+	Light    *deferred.LightPass
+	Forward  *ForwardPass
+	SSAO     *effect.SSAOPass
+	Colors   *effect.ColorPass
+	Lines    *LinePass
+
+	passMap PassMap
+	window  window.T
 }
 
 // NewRenderer instantiates a new rendering pipeline.
-func NewRenderer() *Renderer {
+func NewRenderer(window window.T) *Renderer {
 	r := &Renderer{
-		Passes:  []DrawPass{},
 		passMap: make(PassMap),
+		window:  window,
 	}
 
-	width, height := render.ScreenBuffer.Width, render.ScreenBuffer.Height
+	// deferred rendering pass
+	r.Geometry = deferred.NewGeometryPass()
+	r.Light = deferred.NewLightPass(r.Geometry.Buffer)
 
-	r.Geometry = NewGeometryPass(width, height)
-	r.Light = NewLightPass(r.Geometry.Buffer)
-
+	// forward pass
 	r.Forward = NewForwardPass(r.Geometry.Buffer, r.Light.Output)
 
-	r.SSAO = NewSSAOPass(r.Geometry.Buffer, &SSAOSettings{
+	// postprocess and output
+	r.SSAO = effect.NewSSAOPass(r.Geometry.Buffer, effect.SSAOSettings{
 		Samples: 16,
 		Radius:  0.1,
 		Bias:    0.03,
@@ -54,19 +54,28 @@ func NewRenderer() *Renderer {
 		Scale:   2,
 	})
 
-	r.Colors = NewColorPass(r.Light.Output, "saturated", r.SSAO.Gaussian.Output)
-	r.Output = NewOutputPass(r.Colors.Output, r.Geometry.Buffer)
+	white := assets.GetColorTexture(color.White)
+	white.Height()
 
+	// r.Colors = effect.NewColorPass(r.Light.Output, "saturated", white)
+	r.Colors = effect.NewColorPass(r.Light.Output, "saturated", r.SSAO.Gaussian.Output)
+	r.Output = NewOutputPass(r.Colors.Output.Texture(), r.Geometry.Buffer.Depth())
+
+	// lines
 	r.Lines = NewLinePass()
-	// r.Particles = NewParticlePass()
+
+	r.Passes = []DrawPass{
+		r.Pre,
+		r.Geometry,
+		r.Light,
+		r.Forward,
+		r.SSAO,
+		r.Colors,
+		r.Output,
+		r.Lines,
+	}
 
 	return r
-}
-
-func (r *Renderer) Resize(width, height int) {
-	r.Geometry.Resize(width, height)
-	r.Light.Resize(width, height)
-	r.Colors.Resize(width, height)
 }
 
 // Append a new render pass
@@ -86,37 +95,10 @@ func (r *Renderer) Get(name string) DrawPass {
 	return r.passMap[name]
 }
 
-// Reset the render pipeline.
-func (r *Renderer) Reset() {
-	r.Passes = []DrawPass{}
-	r.passMap = make(PassMap)
-}
-
 // Draw the world.
 func (r *Renderer) Draw(scene scene.T) {
-	// clear screen buffer
-	render.ScreenBuffer.Bind()
-	gl.ClearColor(0.9, 0.9, 0.9, 1.0)
-	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-
-	// enable blending
-	render.Blend(true)
-	render.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
-
-	// enable depth test
-	render.DepthTest(true)
-	gl.DepthFunc(gl.LESS)
-
-	r.Geometry.Draw(scene)
-	r.Light.Draw(scene)
-	r.Forward.Draw(scene)
-	r.SSAO.Draw(scene)
-	r.Colors.Draw(scene)
-	r.Output.Draw(scene)
-	r.Lines.Draw(scene)
-	// r.Particles.Draw(scene)
-
+	args := CreateRenderArgs(r.window, scene.Camera())
 	for _, pass := range r.Passes {
-		pass.Draw(scene)
+		pass.Draw(args, scene)
 	}
 }

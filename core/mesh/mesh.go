@@ -6,10 +6,15 @@ import (
 	"github.com/johanhenriksson/goworld/assets"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/render"
+	"github.com/johanhenriksson/goworld/render/backend/gl/gl_vertex_array"
+	"github.com/johanhenriksson/goworld/render/backend/types"
+	"github.com/johanhenriksson/goworld/render/material"
+	"github.com/johanhenriksson/goworld/render/vertex_array"
+	"github.com/johanhenriksson/goworld/render/vertex_buffer"
 )
 
 // MeshBufferMap maps buffer names to vertex buffer objects
-type MeshBufferMap map[string]*render.VertexBuffer
+type MeshBufferMap map[string]vertex_buffer.T
 
 type T interface {
 	object.Component
@@ -18,7 +23,7 @@ type T interface {
 	DrawDeferred(render.Args)
 	DrawLines(render.Args)
 
-	SetIndexType(t render.GLType)
+	SetIndexType(t types.Type)
 	Buffer(data interface{})
 }
 
@@ -26,32 +31,34 @@ type T interface {
 type mesh struct {
 	object.Component
 
-	material *render.Material
-	vao      *render.VertexArray
+	mat  material.T
+	vao  vertex_array.T
+	mode DrawMode
 }
 
 // New creates a new mesh component
-func New(material *render.Material) T {
-	return NewPrimitiveMesh(render.Triangles, render.Geometry, material)
+func New(mat material.T, mode DrawMode) T {
+	return NewPrimitiveMesh(render.Triangles, mat, mode)
 }
 
 // NewLines creates a new line mesh component
 func NewLines() T {
 	material := assets.GetMaterialShared("lines")
-	return NewPrimitiveMesh(render.Lines, render.Line, material)
+	return NewPrimitiveMesh(render.Lines, material, Lines)
 }
 
 // NewPrimitiveMesh creates a new mesh composed of a given GL primitive
-func NewPrimitiveMesh(primitive render.GLPrimitive, pass render.Pass, material *render.Material) *mesh {
+func NewPrimitiveMesh(primitive render.Primitive, mat material.T, mode DrawMode) *mesh {
 	m := &mesh{
 		Component: object.NewComponent(),
-		material:  material,
-		vao:       render.CreateVertexArray(primitive),
+		mode:      mode,
+		mat:       mat,
+		vao:       gl_vertex_array.New(primitive),
 	}
 	return m
 }
 
-func (m *mesh) SetIndexType(t render.GLType) {
+func (m *mesh) SetIndexType(t types.Type) {
 	// get rid of this later
 	m.vao.SetIndexType(t)
 }
@@ -61,53 +68,51 @@ func (m mesh) Name() string {
 }
 
 func (m *mesh) DrawDeferred(args render.Args) {
-	if m.material.Pass() != render.Geometry {
+	if m.mode != Deferred {
 		return
 	}
 
-	m.material.Use()
-	shader := m.material.Shader
+	m.mat.Use()
 
 	// set up uniforms
-	shader.Mat4("model", &args.Transform)
-	shader.Mat4("view", &args.View)
-	shader.Mat4("projection", &args.Projection)
-	shader.Mat4("mvp", &args.MVP)
-	shader.Vec3("eye", &args.Position)
+	m.mat.Mat4("model", args.Transform)
+	m.mat.Mat4("view", args.View)
+	m.mat.Mat4("projection", args.Projection)
+	m.mat.Mat4("mvp", args.MVP)
+	m.mat.Vec3("eye", args.Position)
 
 	m.vao.Draw()
 }
 
 func (m *mesh) DrawForward(args render.Args) {
-	if m.material.Pass() != render.Forward {
+	if m.mode != Forward {
 		return
 	}
 
-	m.material.Use()
-	shader := m.material.Shader
+	m.mat.Use()
 
 	// set up uniforms
-	shader.Mat4("model", &args.Transform)
-	shader.Mat4("view", &args.View)
-	shader.Mat4("projection", &args.Projection)
-	shader.Mat4("mvp", &args.MVP)
+	m.mat.Mat4("model", args.Transform)
+	m.mat.Mat4("view", args.View)
+	m.mat.Mat4("projection", args.Projection)
+	m.mat.Mat4("mvp", args.MVP)
 
 	m.vao.Draw()
 }
 
 func (m *mesh) DrawLines(args render.Args) {
-	if m.material.Pass() != render.Line {
+	if m.mode != Lines {
 		return
 	}
 
-	m.material.Use()
-	m.material.Mat4("mvp", &args.MVP)
+	m.mat.Use()
+	m.mat.Mat4("mvp", args.MVP)
 
 	m.vao.Draw()
 }
 
 func (m *mesh) Buffer(data interface{}) {
-	pointers := m.material.VertexPointers(data)
+	pointers := m.mat.VertexPointers(data)
 
 	// compatibility hack
 	// ... but for what? this never seems to happen

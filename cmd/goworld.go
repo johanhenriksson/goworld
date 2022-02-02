@@ -1,7 +1,7 @@
 package main
 
 /*
- * Copyright (C) 2016-2021 Johan Henriksson
+ * Copyright (C) 2016-2022 Johan Henriksson
  *
  * goworld is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,24 +18,42 @@ package main
  */
 
 import (
+	"flag"
 	"fmt"
+	"os"
+	"runtime/pprof"
 
-	"github.com/johanhenriksson/goworld/core/camera"
+	"github.com/johanhenriksson/goworld/core/light"
 	"github.com/johanhenriksson/goworld/core/scene"
 	"github.com/johanhenriksson/goworld/core/window"
 	"github.com/johanhenriksson/goworld/editor"
 	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/game"
-	"github.com/lsfn/ode"
-
 	"github.com/johanhenriksson/goworld/geometry/gizmo/mover"
+	"github.com/johanhenriksson/goworld/gui"
 	"github.com/johanhenriksson/goworld/math/vec3"
-	"github.com/johanhenriksson/goworld/render"
+	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/ui"
+
+	"github.com/lsfn/ode"
 )
+
+var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
 
 func main() {
 	fmt.Println("goworld")
+
+	// cpu profiling
+	flag.Parse()
+	if *cpuprofile != "" {
+		f, err := os.Create(*cpuprofile)
+		if err != nil {
+			panic(err)
+		}
+		fmt.Println("writing cpu profiling output to", *cpuprofile)
+		pprof.StartCPUProfile(f)
+		defer pprof.StopCPUProfile()
+	}
 
 	w := ode.NewWorld()
 	w.SetGravity(ode.Vector3{0, -9.82, 0})
@@ -45,27 +63,37 @@ func main() {
 	wnd, err := window.New(window.Args{
 		Title:        "goworld2",
 		Width:        1600,
-		Height:       900,
+		Height:       1200,
 		InputHandler: scene,
 	})
 	if err != nil {
 		panic(err)
 	}
 
-	fwidth, fheight := wnd.BufferSize()
-	render.ScreenBuffer.Width, render.ScreenBuffer.Height = fwidth, fheight
-	fmt.Printf("buffer %+v\n", render.ScreenBuffer)
-	aspect := float32(fwidth) / float32(fheight)
-
 	// app := engine.NewApplication("goworld", 1400, 1000)
-	renderer := engine.NewRenderer()
+	renderer := engine.NewRenderer(wnd)
 
-	uim := ui.NewManager(1600, 900)
+	// attach GUI manager first.
+	// this will give it input priority
+	guim := gui.New()
+	scene.Adopt(guim)
+
+	uim := ui.NewManager(1600, 1200)
 	renderer.Append("ui", uim)
+	renderer.Append("gui", guim)
 
-	// create a cam
-	cam := camera.New(aspect, 55.0, 0.1, 600, render.Hex("#eddaab"))
-	scene.SetCamera(cam)
+	scene.Attach(light.NewDirectional(light.DirectionalArgs{
+		Intensity: 1.2,
+		Color:     color.RGB(0.9*0.973, 0.9*0.945, 0.9*0.776),
+		Direction: vec3.New(0.95, -1.6, 1.05),
+		Shadows:   true,
+	}))
+	scene.Attach(light.NewDirectional(light.DirectionalArgs{
+		Intensity: 0.4,
+		Color:     color.RGB(0.9*0.973, 0.9*0.945, 0.9*0.776),
+		Direction: vec3.New(-1.2, -1.05, 1.12),
+		Shadows:   true,
+	}))
 
 	gizmo := mover.New(mover.Args{})
 	gizmo.Transform().SetPosition(vec3.New(-1, 0, -1))
@@ -76,7 +104,7 @@ func main() {
 	chunk := world.AddChunk(0, 0)
 
 	// first person controls
-	player := game.NewPlayer(vec3.New(1, 22, 1), cam, func(player *game.Player, target vec3.T) (bool, vec3.T) {
+	player := game.NewPlayer(vec3.New(1, 22, 1), func(player *game.Player, target vec3.T) (bool, vec3.T) {
 		height := world.HeightAt(target)
 		if target.Y < height {
 			return true, vec3.New(target.X, height, target.Z)
@@ -85,12 +113,13 @@ func main() {
 	})
 	player.Flying = true
 	player.Eye.Transform().SetRotation(vec3.New(22, 135, 0))
+	scene.SetCamera(player.Camera)
 	scene.Adopt(player)
 
 	// create editor
-	edit := editor.NewEditor(chunk, cam, renderer.Geometry.Buffer)
-	scene.Adopt(edit)
-	uim.Attach(edit.Palette)
+	edit := editor.NewEditor(chunk, player.Camera, renderer.Geometry.Buffer)
+	scene.Adopt(edit.Object())
+	// uim.Attach(edit.Palette)
 
 	// buffer debug windows
 	uim.Attach(editor.DebugBufferWindows(renderer))
@@ -109,9 +138,7 @@ func main() {
 
 	for !wnd.ShouldClose() {
 		scene.Update(0.030)
-
 		renderer.Draw(scene)
-
 		wnd.SwapBuffers()
 	}
 }

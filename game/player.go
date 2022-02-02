@@ -4,17 +4,20 @@ import (
 	"github.com/johanhenriksson/goworld/core/camera"
 	"github.com/johanhenriksson/goworld/core/input/keys"
 	"github.com/johanhenriksson/goworld/core/input/mouse"
+	"github.com/johanhenriksson/goworld/core/light"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/math"
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/math/vec3"
+	"github.com/johanhenriksson/goworld/render/color"
 )
 
 type CollisionCheck func(*Player, vec3.T) (bool, vec3.T)
 
 type Player struct {
 	object.T
-	Eye object.T
+	Eye    object.T
+	Camera camera.T
 
 	Gravity     float32
 	Speed       float32
@@ -26,18 +29,18 @@ type Player struct {
 	Flying      bool
 	Grounded    bool
 
-	camera    camera.T
 	collide   CollisionCheck
 	velocity  vec3.T
 	keys      keys.State
 	mouselook bool
 }
 
-func NewPlayer(position vec3.T, cam camera.T, collide CollisionCheck) *Player {
+func NewPlayer(position vec3.T, collide CollisionCheck) *Player {
+	cam := camera.New(55.0, 0.1, 60, color.Hex("#eddaab"))
 	p := &Player{
 		T:           object.New("Player"),
 		Eye:         object.New("Eye"),
-		camera:      cam,
+		Camera:      cam,
 		collide:     collide,
 		Gravity:     float32(53),
 		Speed:       float32(60),
@@ -53,6 +56,12 @@ func NewPlayer(position vec3.T, cam camera.T, collide CollisionCheck) *Player {
 	p.Eye.Transform().SetPosition(p.CamHeight)
 	p.Adopt(p.Eye)
 	p.Eye.Attach(cam)
+	p.Eye.Attach(light.NewPoint(light.PointArgs{
+		Attenuation: light.DefaultAttenuation,
+		Range:       20,
+		Intensity:   2.5,
+		Color:       color.White,
+	}))
 	return p
 }
 
@@ -182,11 +191,13 @@ func (p *Player) Update(dt float32) {
 func (p *Player) MouseEvent(e mouse.Event) {
 	if e.Action() == mouse.Press && e.Button() == mouse.Button1 {
 		p.mouselook = true
-		// mouse.Lock()
+		mouse.Lock()
+		e.Consume()
 	}
 	if e.Action() == mouse.Release && e.Button() == mouse.Button1 {
 		p.mouselook = false
-		// mouse.Show()
+		mouse.Show()
+		e.Consume()
 	}
 
 	if e.Action() == mouse.Move && p.mouselook {
@@ -204,5 +215,7 @@ func (p *Player) MouseEvent(e mouse.Event) {
 
 		p.Eye.Transform().SetRotation(vec3.New(xrot, yrot, 0))
 		// p.Transform().SetRotation(vec3.New(0, yrot, 0))
+
+		e.Consume()
 	}
 }

@@ -25,6 +25,7 @@ func init() {
 type T interface {
 	Size() (int, int)
 	BufferSize() (int, int)
+	Scale() float32
 
 	SwapBuffers()
 	ShouldClose() bool
@@ -41,6 +42,10 @@ type Args struct {
 type window struct {
 	*glfw.Window
 	mouse mouse.MouseWrapper
+
+	width, height   int
+	fwidth, fheight int
+	scale           float32
 }
 
 func New(args Args) (T, error) {
@@ -66,6 +71,12 @@ func New(args Args) (T, error) {
 
 	window := &window{
 		Window: wnd,
+
+		width:   width,
+		height:  height,
+		fwidth:  fwidth,
+		fheight: fheight,
+		scale:   scale,
 	}
 
 	if args.Vsync {
@@ -91,6 +102,9 @@ func New(args Args) (T, error) {
 		window.SetInputHandler(args.InputHandler)
 	}
 
+	// set resize callback
+	wnd.SetSizeCallback(window.onResize)
+
 	return window, nil
 }
 
@@ -100,8 +114,9 @@ func (w *window) SwapBuffers() {
 	glfw.PollEvents()
 }
 
-func (w *window) Size() (int, int)       { return w.GetSize() }
-func (w *window) BufferSize() (int, int) { return w.GetFramebufferSize() }
+func (w *window) Size() (int, int)       { return w.width, w.height }
+func (w *window) BufferSize() (int, int) { return w.fwidth, w.fheight }
+func (w *window) Scale() float32         { return w.scale }
 
 func (w *window) SetInputHandler(handler input.Handler) {
 	// keyboard events
@@ -116,5 +131,8 @@ func (w *window) SetInputHandler(handler input.Handler) {
 }
 
 func (w *window) onResize(_ *glfw.Window, width, height int) {
-
+	w.width = width
+	w.height = height
+	w.fwidth, w.fheight = w.GetFramebufferSize()
+	w.scale = float32(w.fwidth) / float32(w.width)
 }

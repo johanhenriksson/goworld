@@ -47,28 +47,22 @@ func NewManager(width, height float32) *Manager {
 	return m
 }
 
-func (m *Manager) Type() render.Pass {
-	return render.UI
-}
-
 // Attach a child component
 func (m *Manager) Attach(child Component) {
 	m.Children = append(m.Children, child)
 }
 
 // DrawPass draws the UI
-func (m *Manager) Draw(scene scene.T) {
+func (m *Manager) Draw(args render.Args, scene scene.T) {
 	p := m.Viewport
 	v := mat4.Ident() // unused by UI
 	vp := p           // unused by UI
 
-	args := render.Args{
-		Projection: p,
-		View:       v,
-		VP:         vp,
-		MVP:        vp,
-		Transform:  mat4.Ident(),
-	}
+	args.Projection = p
+	args.View = v
+	args.VP = vp
+	args.MVP = vp
+	args.Transform = mat4.Ident()
 
 	// ensure back face culling is disabled
 	// since UI is scaled by Y-1, we only want back faces
@@ -78,7 +72,8 @@ func (m *Manager) Draw(scene scene.T) {
 	// clear depth buffer
 	gl.Clear(gl.DEPTH_BUFFER_BIT)
 
-	render.ScreenBuffer.Bind()
+	render.BindScreenBuffer()
+	render.SetViewport(0, 0, args.Viewport.FrameWidth, args.Viewport.FrameHeight)
 	for _, el := range m.Children {
 		el.Draw(args)
 	}

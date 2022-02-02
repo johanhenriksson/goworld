@@ -1,6 +1,8 @@
 package vec4
 
 import (
+	"fmt"
+
 	"github.com/johanhenriksson/goworld/math"
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/math/vec3"
@@ -132,4 +134,8 @@ func (v T) XYZ() vec3.T {
 // Div divides each element of the vector with the corresponding element of another vector
 func (v T) Div(v2 T) T {
 	return T{v.X / v2.X, v.Y / v2.Y, v.Z / v2.Z, v.W / v2.W}
+}
+
+func (v T) String() string {
+	return fmt.Sprintf("%.3f,%.3f,%.3f,%.3f", v.X, v.Y, v.Z, v.W)
 }

@@ -1,6 +1,9 @@
 package render
 
-import "github.com/go-gl/gl/v4.1-core/gl"
+import (
+	"github.com/go-gl/gl/v4.1-core/gl"
+	"github.com/johanhenriksson/goworld/render/color"
+)
 
 type CullMode int
 
@@ -27,7 +30,7 @@ type State struct {
 	BlendDst    BlendValue
 	DepthTest   bool
 	DepthOutput bool
-	ClearColor  Color
+	ClearColor  color.T
 	CullMode    CullMode
 
 	// Viewport dimensions
@@ -38,7 +41,7 @@ type State struct {
 }
 
 var state = State{
-	ClearColor: Black,
+	ClearColor: color.Black,
 }
 
 func (s *State) Enable() {
@@ -53,7 +56,7 @@ func (s *State) Enable() {
 	DepthOutput(s.DepthOutput)
 
 	ClearColor(s.ClearColor)
-	Viewport(s.X, s.Y, s.Width, s.Height)
+	SetViewport(s.X, s.Y, s.Width, s.Height)
 	CullFace(s.CullMode)
 }
 
@@ -121,7 +124,7 @@ func DepthTest(enabled bool) {
 	state.DepthTest = enabled
 }
 
-func ClearColor(color Color) {
+func ClearColor(color color.T) {
 	color = color.WithAlpha(1)
 	// if color != state.ClearColor {
 	gl.ClearColor(color.R, color.G, color.B, 1)
@@ -129,7 +132,7 @@ func ClearColor(color Color) {
 	// }
 }
 
-func Viewport(x, y, w, h int) {
+func SetViewport(x, y, w, h int) {
 	if state.Width != w || state.Height != h || state.Y != y || state.X != x {
 		gl.Viewport(int32(x), int32(y), int32(w), int32(h))
 		state.Width = w

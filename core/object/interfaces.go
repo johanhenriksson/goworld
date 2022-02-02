@@ -30,8 +30,8 @@ type Component interface {
 	// Object returns the parent object the component is attached to, or nil
 	Object() T
 
-	// SetObject attaches the component to an object
-	SetObject(T)
+	// AttachTo attaches the component to an object
+	AttachTo(T)
 }
 
 // T is a object in the scene hierarchy
@@ -51,5 +51,5 @@ type T interface {
 	Children() []T
 
 	Attach(...Component)
-	Collect(*Query)
+	Components() []Component
 }
