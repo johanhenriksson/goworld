@@ -87,7 +87,7 @@ func (w *widget) Update(Props) {
 func (w *widget) Reflow() {}
 
 func (w *widget) Children() []T     { return nil }
-func (w *widget) SetChildren(c []T) { panic("widget.T cant have children") }
+func (w *widget) SetChildren(c []T) {}
 
 func (w *widget) Draw(render.Args) {
 	// base widget Draw() should be called ahead of overridden draws
