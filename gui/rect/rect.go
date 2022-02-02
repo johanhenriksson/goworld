@@ -14,9 +14,6 @@ import (
 
 type T interface {
 	widget.T
-
-	Children() []widget.T
-	SetChildren([]widget.T)
 }
 
 type rect struct {
@@ -27,11 +24,12 @@ type rect struct {
 }
 
 type Props struct {
-	Border float32
-	Color  color.T
-	Layout layout.T
-	Width  dimension.T
-	Height dimension.T
+	Border  float32
+	Color   color.T
+	Layout  layout.T
+	Width   dimension.T
+	Height  dimension.T
+	OnClick mouse.Callback
 }
 
 func New(key string, props *Props, children ...widget.T) T {
@@ -95,14 +93,6 @@ func (f *rect) SetChildren(c []widget.T) { f.children = c }
 func (f *rect) Width() dimension.T  { return f.props.Width }
 func (f *rect) Height() dimension.T { return f.props.Height }
 
-func (f *rect) DesiredHeight(width float32) float32 {
-	height := float32(0)
-	for _, c := range f.children {
-		height += c.DesiredHeight(width)
-	}
-	return height
-}
-
 //
 // Lifecycle
 //
@@ -144,4 +134,9 @@ func (f *rect) MouseEvent(e mouse.Event) {
 
 	// how to do mouse enter/exit events?
 	// we wont get any event when the mouse is outside
+
+	if e.Action() == mouse.Press && f.props.OnClick != nil {
+		f.props.OnClick(e)
+		e.Consume()
+	}
 }

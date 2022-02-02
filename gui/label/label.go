@@ -1,8 +1,6 @@
 package label
 
 import (
-	"fmt"
-
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/gui/dimension"
 	"github.com/johanhenriksson/goworld/gui/widget"
@@ -56,7 +54,7 @@ func (l *label) Draw(args render.Args) {
 }
 
 func (l *label) Height() dimension.T {
-	return dimension.Fixed(l.props.Size * 1.3333 * 2)
+	return dimension.Fixed(l.props.Size*1.3333 + 4)
 }
 
 func (l *label) Measure(available vec2.T) vec2.T {
@@ -70,12 +68,8 @@ func (l *label) Measure(available vec2.T) vec2.T {
 //
 
 func (l *label) MouseEvent(e mouse.Event) {
-	e = e.Project(l.Position())
-	if e.Action() == mouse.Press {
-		fmt.Println(e)
-		if l.props.OnClick != nil {
-			l.props.OnClick(e)
-			e.Consume()
-		}
+	if e.Action() == mouse.Press && l.props.OnClick != nil {
+		l.props.OnClick(e)
+		e.Consume()
 	}
 }

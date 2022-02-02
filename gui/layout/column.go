@@ -32,7 +32,8 @@ func (c Column) Flow(w Layoutable) {
 	}
 
 	for _, item := range items {
-		height := inner.Y * item.Height().Resolve(inner.Y) / totalWeight
+		desired := item.Height().Resolve(inner.Y)
+		height := inner.Y * desired / totalWeight
 		item.Resize(vec2.New(inner.X, height))
 		item.Move(vec2.New(x, y))
 		y += height + c.Gutter

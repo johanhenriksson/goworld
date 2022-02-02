@@ -3,7 +3,6 @@ package gui
 import (
 	"reflect"
 
-	"github.com/johanhenriksson/goworld/gui/rect"
 	"github.com/johanhenriksson/goworld/gui/widget"
 )
 
@@ -48,49 +47,46 @@ func reconcile(src, dst widget.T, depth int) bool {
 	}
 
 	// reconcile children - if src and dst are Rects
-	if dstRect, ok := dst.(rect.T); ok {
-		srcRect := src.(rect.T)
-		children := dstRect.Children()
+	children := dst.Children()
 
-		// create a key mapping for the existing child nodes
-		previous := map[string]widget.T{}
-		for _, child := range srcRect.Children() {
-			previous[child.Key()] = child
-		}
-
-		for idx, child := range children {
-			// todo: handle nil children
-
-			if existing, ok := previous[child.Key()]; ok {
-				// since each key can only appear once, we can remove the child from the mapping
-				delete(previous, child.Key())
-
-				if reconcile(existing, child, depth+1) {
-					// subtree reconciliation was successful!
-					// replace the new child with the existing one
-					children[idx] = existing
-				} else {
-					// unable to reconcile child!
-					// destroy the old one.
-					existing.Destroy()
-				}
-			}
-			// this key did not exist previously, so it must be a new element
-		}
-
-		// replace source children
-		srcRect.SetChildren(children)
-
-		// at this point, any child left in the previous map should be destroyed
-		for _, child := range previous {
-			child.Destroy()
-		}
-
-		// clear the child list of the dst rect
-		// we have manually destroyed the ones that we wont reuse
-		// if we dont, our reused children will be destroyed
-		dstRect.SetChildren([]widget.T{})
+	// create a key mapping for the existing child nodes
+	previous := map[string]widget.T{}
+	for _, child := range src.Children() {
+		previous[child.Key()] = child
 	}
+
+	for idx, child := range children {
+		// todo: handle nil children
+
+		if existing, ok := previous[child.Key()]; ok {
+			// since each key can only appear once, we can remove the child from the mapping
+			delete(previous, child.Key())
+
+			if reconcile(existing, child, depth+1) {
+				// subtree reconciliation was successful!
+				// replace the new child with the existing one
+				children[idx] = existing
+			} else {
+				// unable to reconcile child!
+				// destroy the old one.
+				existing.Destroy()
+			}
+		}
+		// this key did not exist previously, so it must be a new element
+	}
+
+	// replace source children
+	src.SetChildren(children)
+
+	// at this point, any child left in the previous map should be destroyed
+	for _, child := range previous {
+		child.Destroy()
+	}
+
+	// clear the child list of the dst rect
+	// we have manually destroyed the ones that we wont reuse
+	// if we dont, our reused children will be destroyed
+	dst.SetChildren(nil)
 
 	// destroy dst
 	dst.Destroy()

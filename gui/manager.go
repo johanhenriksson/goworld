@@ -1,14 +1,13 @@
 package gui
 
 import (
-	"fmt"
-
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/core/scene"
 	"github.com/johanhenriksson/goworld/gui/hooks"
 	"github.com/johanhenriksson/goworld/gui/layout"
 	"github.com/johanhenriksson/goworld/gui/rect"
+	"github.com/johanhenriksson/goworld/gui/widget"
 	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/math/vec3"
@@ -28,17 +27,17 @@ type manager struct {
 
 	dirty bool
 	tree  rect.T
-	root  func() rect.T
+	root  func() widget.T
 }
 
 func New() Manager {
-	root := func() rect.T {
-		f := TestUI(5)
+	root := func() widget.T {
+		f := TestUI()
 		f.Move(vec2.New(500, 300))
 		scene := rect.New("GUI", &rect.Props{
 			Layout: layout.Absolute{},
 		}, f)
-		scene.Resize(vec2.New(1600, 900))
+		scene.Resize(vec2.New(1600, 1200))
 		return scene
 	}
 
@@ -63,8 +62,7 @@ func (m *manager) Draw(args render.Args, scene scene.T) {
 	// todo: resize if changed
 	// perhaps the root component always accepts screen size etc
 
-	if m.dirty {
-		fmt.Println("GUI render!")
+	if true || m.dirty {
 		newtree := Render(m.root)
 		if !reconcile(m.tree, newtree, 0) {
 			m.tree = newtree
@@ -88,6 +86,8 @@ func (m *manager) Draw(args render.Args, scene scene.T) {
 	}
 
 	m.tree.Draw(uiArgs)
+
+	hooks.SetScene(scene)
 }
 
 func (m *manager) MouseEvent(e mouse.Event) {

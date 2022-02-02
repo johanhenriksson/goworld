@@ -32,19 +32,15 @@ func (pt *EraseTool) String() string {
 	return "EraseTool"
 }
 
-func (pt *EraseTool) Use(e *Editor, position, normal vec3.T) {
+func (pt *EraseTool) Use(e T, position, normal vec3.T) {
 	target := position.Sub(normal.Scaled(0.5))
-	e.Chunk.Set(int(target.X), int(target.Y), int(target.Z), game.EmptyVoxel)
+	e.SetVoxel(int(target.X), int(target.Y), int(target.Z), game.EmptyVoxel)
 
 	// recompute mesh
-	e.Chunk.Light.Calculate()
-	e.mesh.Compute()
-
-	// write to disk
-	go e.Chunk.Write("chunks")
+	e.Recalculate()
 }
 
-func (pt *EraseTool) Hover(editor *Editor, position, normal vec3.T) {
+func (pt *EraseTool) Hover(editor T, position, normal vec3.T) {
 	// parent actually refers to the editor right now
 	// tools should be attached to their own object
 	// they could potentially share positioning logic

@@ -4,67 +4,80 @@ import (
 	"fmt"
 
 	"github.com/johanhenriksson/goworld/core/input/mouse"
-	"github.com/johanhenriksson/goworld/gui/dimension"
+	"github.com/johanhenriksson/goworld/core/object"
+	"github.com/johanhenriksson/goworld/editor"
 	"github.com/johanhenriksson/goworld/gui/hooks"
 	"github.com/johanhenriksson/goworld/gui/label"
-	"github.com/johanhenriksson/goworld/gui/layout"
-	"github.com/johanhenriksson/goworld/gui/rect"
+	"github.com/johanhenriksson/goworld/gui/palette"
+	"github.com/johanhenriksson/goworld/gui/widget"
 	"github.com/johanhenriksson/goworld/render/color"
 )
 
-func TestUI(gut float32) rect.T {
+func CounterLabel(key, format string) widget.T {
 	count, setCount := hooks.UseInt(0)
-	onclick := func(e mouse.Event) {
-		setCount(count + 1)
-	}
 
-	return rect.New(
-		"frame",
-		&rect.Props{
-			Color:  color.Hex("#000000"),
-			Border: 5,
-			Width:  dimension.Fixed(250),
-			Height: dimension.Fixed(150),
-			Layout: layout.Column{
-				Padding: 5,
-				Gutter:  5,
-			},
+	return label.New(key, &label.Props{
+		Text:  fmt.Sprintf(format, count),
+		Size:  16.0,
+		Color: color.White,
+		OnClick: func(e mouse.Event) {
+			setCount(count + 1)
 		},
-		label.New("title", &label.Props{
-			Text:  "Hello GUI",
-			Size:  16.0,
-			Color: color.White,
-		}),
-		label.New("title2", &label.Props{
-			Text:    fmt.Sprintf("Clicks: %d", count),
-			Size:    16.0,
-			Color:   color.White,
-			OnClick: onclick,
-		}),
-		rect.New(
-			"r1",
-			&rect.Props{
-				Height: dimension.Percent(150),
-				Layout: layout.Row{
-					Gutter:   5,
-					Relative: true,
-				},
-			},
-			rect.New("1st", &rect.Props{Color: color.Blue, Width: dimension.Fixed(1)}),
-			rect.New("2nd", &rect.Props{Color: color.Green, Width: dimension.Fixed(1)}),
-			rect.New("3nd", &rect.Props{Color: color.Red, Width: dimension.Fixed(2)}),
-		),
-		rect.New(
-			"r2",
-			&rect.Props{
-				Height: dimension.Percent(50),
-				Layout: layout.Row{
-					Gutter: gut,
-				},
-			},
-			rect.New("1st", &rect.Props{Color: color.Red}),
-			rect.New("2nd", &rect.Props{Color: color.Green}),
-			rect.New("3nd", &rect.Props{Color: color.Blue}),
-		),
-	)
+	})
 }
+
+func TestUI() widget.T {
+	scene := hooks.UseScene()
+	return palette.New("palette", &palette.Props{
+		Palette: color.DefaultPalette,
+		OnPick: func(clr color.T) {
+			fmt.Println("pick callback:", clr)
+
+			editors := object.NewQuery().Where(func(c object.Component) bool {
+				_, ok := c.(editor.T)
+				return ok
+			}).Collect(scene)
+
+			fmt.Println("found", len(editors), "editors")
+
+			for _, cmp := range editors {
+				editor := cmp.(editor.T)
+				editor.SelectColor(clr)
+			}
+		},
+	})
+}
+
+/*
+type Node interface {
+	Render()
+	Props() any
+	Children() []Node
+}
+
+type node[T any] struct {
+	element func(T)
+	props T
+	children []Node
+}
+
+func (n node[T]) Render() {
+	n.element(n.props)
+}
+
+func (n node[T]) Props() any {
+	return n.props
+}
+
+func (n node[T]) Children() []Node {
+	return n.children
+}
+
+func CreateElement[T any](comp func(T), props T, children ...Node) Node {
+	return node[T] {
+		element: comp,
+		props: props,
+		children: children,
+	}
+}
+*/

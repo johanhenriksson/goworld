@@ -31,16 +31,16 @@ func (pt *SampleTool) String() string {
 	return "SampleTool"
 }
 
-func (pt *SampleTool) Use(e *Editor, position, normal vec3.T) {
+func (pt *SampleTool) Use(editor T, position, normal vec3.T) {
 	target := position.Sub(normal.Scaled(0.5))
-	voxel := e.Chunk.At(int(target.X), int(target.Y), int(target.Z))
-	e.Palette.Selected = color.RGB8(voxel.R, voxel.G, voxel.B)
+	voxel := editor.GetVoxel(int(target.X), int(target.Y), int(target.Z))
+	editor.SelectColor(color.RGB8(voxel.R, voxel.G, voxel.B))
 
 	// select placement tool
-	e.SelectTool(e.PlaceTool)
+	// e.SelectTool(e.PlaceTool())
 }
 
-func (pt *SampleTool) Hover(editor *Editor, position, normal vec3.T) {
+func (pt *SampleTool) Hover(editor T, position, normal vec3.T) {
 	p := position.Sub(normal.Scaled(0.5))
 	if editor.InBounds(p) {
 		pt.box.SetActive(true)

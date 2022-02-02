@@ -32,19 +32,15 @@ func (pt *ReplaceTool) String() string {
 	return "ReplaceTool"
 }
 
-func (pt *ReplaceTool) Use(e *Editor, position, normal vec3.T) {
+func (pt *ReplaceTool) Use(editor T, position, normal vec3.T) {
 	target := position.Sub(normal.Scaled(0.5))
-	e.Chunk.Set(int(target.X), int(target.Y), int(target.Z), game.NewVoxel(e.Palette.Selected))
+	editor.SetVoxel(int(target.X), int(target.Y), int(target.Z), game.NewVoxel(editor.SelectedColor()))
 
 	// recompute mesh
-	e.Chunk.Light.Calculate()
-	e.mesh.Compute()
-
-	// write to disk
-	go e.Chunk.Write("chunks")
+	editor.Recalculate()
 }
 
-func (pt *ReplaceTool) Hover(editor *Editor, position, normal vec3.T) {
+func (pt *ReplaceTool) Hover(editor T, position, normal vec3.T) {
 	p := position.Sub(normal.Scaled(0.5))
 	if editor.InBounds(p) {
 		pt.Transform().SetPosition(p.Floor())

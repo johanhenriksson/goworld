@@ -37,8 +37,9 @@ type T interface {
 	Move(vec2.T)
 	Width() dimension.T
 	Height() dimension.T
-	DesiredHeight(float32) float32
 
+	Children() []T
+	SetChildren([]T)
 	Reflow()
 
 	// Draw the widget. This should only be called by the GUI Draw Pass
@@ -84,6 +85,9 @@ func (w *widget) Update(Props) {
 }
 
 func (w *widget) Reflow() {}
+
+func (w *widget) Children() []T     { return nil }
+func (w *widget) SetChildren(c []T) { panic("widget.T cant have children") }
 
 func (w *widget) Draw(render.Args) {
 	// base widget Draw() should be called ahead of overridden draws

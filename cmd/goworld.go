@@ -18,7 +18,10 @@ package main
  */
 
 import (
+	"flag"
 	"fmt"
+	"os"
+	"runtime/pprof"
 
 	"github.com/johanhenriksson/goworld/core/light"
 	"github.com/johanhenriksson/goworld/core/scene"
@@ -35,8 +38,22 @@ import (
 	"github.com/lsfn/ode"
 )
 
+var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
+
 func main() {
 	fmt.Println("goworld")
+
+	// cpu profiling
+	flag.Parse()
+	if *cpuprofile != "" {
+		f, err := os.Create(*cpuprofile)
+		if err != nil {
+			panic(err)
+		}
+		fmt.Println("writing cpu profiling output to", *cpuprofile)
+		pprof.StartCPUProfile(f)
+		defer pprof.StopCPUProfile()
+	}
 
 	w := ode.NewWorld()
 	w.SetGravity(ode.Vector3{0, -9.82, 0})
@@ -101,8 +118,8 @@ func main() {
 
 	// create editor
 	edit := editor.NewEditor(chunk, player.Camera, renderer.Geometry.Buffer)
-	scene.Adopt(edit)
-	uim.Attach(edit.Palette)
+	scene.Adopt(edit.Object())
+	// uim.Attach(edit.Palette)
 
 	// buffer debug windows
 	uim.Attach(editor.DebugBufferWindows(renderer))

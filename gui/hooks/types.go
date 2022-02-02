@@ -3,6 +3,7 @@ package hooks
 import (
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/math/vec3"
+	"github.com/johanhenriksson/goworld/render/color"
 )
 
 func UseString(initial string) (string, func(string)) {
@@ -37,5 +38,12 @@ func UseVec3(initial vec3.T) (vec3.T, func(vec3.T)) {
 	state, setState := UseState(initial)
 	setter := func(new vec3.T) { setState(new) }
 	value := state.(vec3.T)
+	return value, setter
+}
+
+func UseColor(initial color.T) (color.T, func(color.T)) {
+	state, setState := UseState(initial)
+	setter := func(new color.T) { setState(new) }
+	value := state.(color.T)
 	return value, setter
 }
