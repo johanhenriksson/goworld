@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/johanhenriksson/goworld/core/input/mouse"
-	"github.com/johanhenriksson/goworld/core/object"
+	"github.com/johanhenriksson/goworld/core/object/query"
 	"github.com/johanhenriksson/goworld/editor"
 	"github.com/johanhenriksson/goworld/gui/hooks"
 	"github.com/johanhenriksson/goworld/gui/label"
@@ -33,51 +33,13 @@ func TestUI() widget.T {
 		OnPick: func(clr color.T) {
 			fmt.Println("pick callback:", clr)
 
-			editors := object.NewQuery().Where(func(c object.Component) bool {
-				_, ok := c.(editor.T)
-				return ok
-			}).Collect(scene)
-
-			fmt.Println("found", len(editors), "editors")
-
-			for _, cmp := range editors {
-				editor := cmp.(editor.T)
-				editor.SelectColor(clr)
+			editor := query.New[editor.T]().First(scene)
+			if editor == nil {
+				fmt.Println("could not find editor")
+				return
 			}
+
+			editor.SelectColor(clr)
 		},
 	})
 }
-
-/*
-type Node interface {
-	Render()
-	Props() any
-	Children() []Node
-}
-
-type node[T any] struct {
-	element func(T)
-	props T
-	children []Node
-}
-
-func (n node[T]) Render() {
-	n.element(n.props)
-}
-
-func (n node[T]) Props() any {
-	return n.props
-}
-
-func (n node[T]) Children() []Node {
-	return n.children
-}
-
-func CreateElement[T any](comp func(T), props T, children ...Node) Node {
-	return node[T] {
-		element: comp,
-		props: props,
-		children: children,
-	}
-}
-*/

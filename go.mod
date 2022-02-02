@@ -1,6 +1,6 @@
 module github.com/johanhenriksson/goworld
 
-go 1.14
+go 1.18
 
 require (
 	github.com/LSFN/ode v0.0.0-20190124011304-f87c61e84cd0 // indirect

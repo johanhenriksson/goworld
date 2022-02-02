@@ -2,11 +2,13 @@ package engine
 
 import (
 	"github.com/johanhenriksson/goworld/core/object"
+	"github.com/johanhenriksson/goworld/core/object/query"
 	"github.com/johanhenriksson/goworld/core/scene"
 	"github.com/johanhenriksson/goworld/render"
 )
 
 type LineDrawable interface {
+	object.Component
 	DrawLines(render.Args)
 }
 
@@ -24,17 +26,8 @@ func (p *LinePass) Draw(args render.Args, scene scene.T) {
 	render.BindScreenBuffer()
 	render.SetViewport(0, 0, args.Viewport.FrameWidth, args.Viewport.FrameHeight)
 
-	objects := object.NewQuery().
-		Where(IsLineDrawable).
-		Collect(scene)
-
-	for _, component := range objects {
-		drawable := component.(LineDrawable)
-		drawable.DrawLines(args.Apply(component.Object().Transform().World()))
+	objects := query.New[LineDrawable]().Collect(scene)
+	for _, drawable := range objects {
+		drawable.DrawLines(args.Apply(drawable.Object().Transform().World()))
 	}
-}
-
-func IsLineDrawable(c object.Component) bool {
-	_, ok := c.(LineDrawable)
-	return ok
 }

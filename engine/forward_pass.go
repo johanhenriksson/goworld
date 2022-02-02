@@ -2,6 +2,7 @@ package engine
 
 import (
 	"github.com/johanhenriksson/goworld/core/object"
+	"github.com/johanhenriksson/goworld/core/object/query"
 	"github.com/johanhenriksson/goworld/core/scene"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/backend/gl/gl_framebuffer"
@@ -11,6 +12,7 @@ import (
 )
 
 type ForwardDrawable interface {
+	object.Component
 	DrawForward(render.Args)
 }
 
@@ -65,21 +67,12 @@ func (p *ForwardPass) Draw(args render.Args, scene scene.T) {
 	// todo: should be disabled for transparent things, not everything
 	// render.DepthOutput(false)
 
-	objects := object.NewQuery().
-		Where(IsForwardDrawable).
-		Collect(scene)
-
-	for _, component := range objects {
-		drawable := component.(ForwardDrawable)
-		drawable.DrawForward(args.Apply(component.Object().Transform().World()))
+	objects := query.New[ForwardDrawable]().Collect(scene)
+	for _, drawable := range objects {
+		drawable.DrawForward(args.Apply(drawable.Object().Transform().World()))
 	}
 
 	render.DepthOutput(true)
 
 	render.CullFace(render.CullNone)
-}
-
-func IsForwardDrawable(c object.Component) bool {
-	_, ok := c.(ForwardDrawable)
-	return ok
 }

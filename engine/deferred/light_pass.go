@@ -3,7 +3,7 @@ package deferred
 import (
 	"github.com/johanhenriksson/goworld/core/camera"
 	"github.com/johanhenriksson/goworld/core/light"
-	"github.com/johanhenriksson/goworld/core/object"
+	"github.com/johanhenriksson/goworld/core/object/query"
 	"github.com/johanhenriksson/goworld/core/scene"
 	"github.com/johanhenriksson/goworld/engine/screen_quad"
 	"github.com/johanhenriksson/goworld/math"
@@ -95,12 +95,8 @@ func (p *LightPass) Draw(args render.Args, scene scene.T) {
 	// accumulate the light from the non-ambient light sources
 	render.BlendAdditive()
 
-	lights := object.NewQuery().
-		Where(IsLight).
-		Collect(scene)
-
-	for _, component := range lights {
-		light := component.(light.T)
+	lights := query.New[light.T]().Collect(scene)
+	for _, light := range lights {
 		desc := light.LightDescriptor()
 
 		// fit light projection matrix to the current camera frustum
@@ -121,11 +117,6 @@ func (p *LightPass) drawLight(desc light.Descriptor) {
 
 	// todo: draw light volumes instead of a fullscreen quad
 	p.quad.Draw()
-}
-
-func IsLight(c object.Component) bool {
-	_, ok := c.(light.T)
-	return ok
 }
 
 var maxExtent = float32(0)

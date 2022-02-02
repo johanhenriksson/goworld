@@ -2,7 +2,7 @@ package deferred
 
 import (
 	"github.com/johanhenriksson/goworld/core/light"
-	"github.com/johanhenriksson/goworld/core/object"
+	"github.com/johanhenriksson/goworld/core/object/query"
 	"github.com/johanhenriksson/goworld/core/scene"
 	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/render"
@@ -76,8 +76,8 @@ func (p *ShadowPass) DrawLight(scene scene.T, lit *light.Descriptor) {
 	// todo: select only objects that cast shadows
 	// todo: view frustum culling based on the lights view projection
 
-	objects := object.NewQuery().
-		Where(IsDeferredDrawable).
+	objects := query.Any().
+		Where(query.Is[DeferredDrawable]).
 		Collect(scene)
 
 	// todo: draw objects with a simplified shader that only outputs depth information
