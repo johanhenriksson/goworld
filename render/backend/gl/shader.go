@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/johanhenriksson/goworld/render/shader"
-	"github.com/johanhenriksson/goworld/util"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
 )
@@ -23,7 +22,7 @@ func AttachShader(shaderID shader.ShaderID, stageID shader.StageID) {
 }
 
 func CompileShader(id shader.StageID, source, path string) error {
-	csource, free := util.GLString(source)
+	csource, free := String(source)
 	gl.ShaderSource(uint32(id), 1, csource, nil)
 	gl.CompileShader(uint32(id))
 	free()

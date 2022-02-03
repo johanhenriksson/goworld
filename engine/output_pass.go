@@ -26,8 +26,8 @@ type OutputPass struct {
 func NewOutputPass(color texture.T, depth texture.T) *OutputPass {
 	shader := gl_shader.CompileShader(
 		"output_pass",
-		"/assets/shaders/pass/postprocess.vs",
-		"/assets/shaders/pass/output.fs")
+		"assets/shaders/pass/postprocess.vs",
+		"assets/shaders/pass/output.fs")
 
 	mat := material.New("output_pass", shader)
 	mat.Texture("tex_input", color)

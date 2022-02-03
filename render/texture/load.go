@@ -4,9 +4,7 @@ import (
 	"image"
 	"image/draw"
 	"os"
-
 	// "github.com/johanhenriksson/goworld/render/color"
-	"github.com/johanhenriksson/goworld/util"
 )
 
 // // TextureFromImage is a helper method to create an OpenGL texture from an image object */
@@ -38,7 +36,7 @@ import (
 func ImageFromFile(file string) (*image.RGBA, error) {
 	// todo: http support?
 
-	imgFile, err := os.Open(util.ExePath + file)
+	imgFile, err := os.Open(file)
 	if err != nil {
 		return nil, err
 	}

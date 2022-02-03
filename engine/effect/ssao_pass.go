@@ -61,8 +61,8 @@ func NewSSAOPass(gbuff framebuffer.Geometry, settings SSAOSettings) *SSAOPass {
 
 	shader := gl_shader.CompileShader(
 		"ssao_pass",
-		"/assets/shaders/pass/postprocess.vs",
-		"/assets/shaders/pass/ssao.fs")
+		"assets/shaders/pass/postprocess.vs",
+		"assets/shaders/pass/ssao.fs")
 
 	mat := material.New("ssao_pass", shader)
 	mat.Texture("tex_normal", gbuff.Normal())

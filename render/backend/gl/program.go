@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/johanhenriksson/goworld/render/shader"
-	"github.com/johanhenriksson/goworld/util"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
 )
@@ -49,7 +48,7 @@ func UseProgram(id shader.ShaderID) error {
 }
 
 func BindFragDataLocation(id shader.ShaderID, variableName string) error {
-	cstr, free := util.GLString(variableName)
+	cstr, free := String(variableName)
 	defer free()
 	gl.BindFragDataLocation(uint32(id), 0, *cstr)
 	if err := gl.GetError(); err != gl.NONE {

@@ -1,4 +1,4 @@
-package util
+package gl
 
 import (
 	"C"
@@ -9,7 +9,7 @@ import (
 
 // Converts a Go string to a uint8 array for use with OpenGL.
 // Returns a pointer to the char array and a function to free the memory associated with the array
-func GLString(str string) (**uint8, func()) {
+func String(str string) (**uint8, func()) {
 	if !strings.HasSuffix(str, "\x00") {
 		str += "\x00"
 	}

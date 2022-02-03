@@ -37,8 +37,8 @@ func NewColorPass(input framebuffer.Color, filter string, occlusion texture.T) *
 
 	shader := gl_shader.CompileShader(
 		"color_pass",
-		"/assets/shaders/pass/postprocess.vs",
-		"/assets/shaders/pass/color.fs")
+		"assets/shaders/pass/postprocess.vs",
+		"assets/shaders/pass/color.fs")
 
 	mat := material.New("color_pass", shader)
 	mat.Texture("tex_input", input.Texture())
