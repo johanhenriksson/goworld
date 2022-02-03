@@ -66,6 +66,11 @@ func (b *Builder) Active(active bool) *Builder {
 	return b
 }
 
+func (b *Builder) Name(name string) *Builder {
+	b.name = name
+	return b
+}
+
 // Create instantiates a new object with the current builder settings.
 func (b *Builder) Create() T {
 	obj := New(b.name, b.components...)

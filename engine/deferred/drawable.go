@@ -7,5 +7,5 @@ import (
 
 type DeferredDrawable interface {
 	object.Component
-	DrawDeferred(render.Args)
+	DrawDeferred(render.Args) error
 }

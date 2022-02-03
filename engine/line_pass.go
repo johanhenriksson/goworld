@@ -9,7 +9,7 @@ import (
 
 type LineDrawable interface {
 	object.Component
-	DrawLines(render.Args)
+	DrawLines(render.Args) error
 }
 
 // LinePass draws line geometry

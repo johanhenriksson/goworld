@@ -101,7 +101,7 @@ func GetFont(name string, size int) font.T {
 		return font
 	}
 
-	fmt.Printf("+ font %s %.1fpt\n", name, size)
+	fmt.Printf("+ font %s %dpt\n", name, size)
 	font := font.Load(name, size)
 	cache.Fonts[key] = font
 

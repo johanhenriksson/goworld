@@ -1,4 +1,9 @@
 package gl
 
-const None = 0
-const False = 0
+import (
+	"github.com/go-gl/gl/v4.1-core/gl"
+)
+
+const None = gl.NONE
+const True = gl.TRUE
+const False = gl.FALSE

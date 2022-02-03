@@ -1,9 +1,12 @@
 package deferred
 
 import (
+	"fmt"
+
 	"github.com/johanhenriksson/goworld/core/object/query"
 	"github.com/johanhenriksson/goworld/core/scene"
 	"github.com/johanhenriksson/goworld/render"
+	"github.com/johanhenriksson/goworld/render/backend/gl"
 	"github.com/johanhenriksson/goworld/render/backend/gl/gl_framebuffer"
 	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/framebuffer"
@@ -43,6 +46,12 @@ func (p *GeometryPass) Draw(args render.Args, scene scene.T) {
 
 	objects := query.New[DeferredDrawable]().Collect(scene)
 	for _, drawable := range objects {
-		drawable.DrawDeferred(args.Apply(drawable.Object().Transform().World()))
+		if err := drawable.DrawDeferred(args.Apply(drawable.Object().Transform().World())); err != nil {
+			fmt.Printf("deferred draw error in object %s: %s\n", drawable.Object().Name(), err)
+		}
+	}
+
+	if err := gl.GetError(); err != nil {
+		fmt.Println("uncaught GL error during geometry pass:", err)
 	}
 }

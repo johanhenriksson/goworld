@@ -1,6 +1,7 @@
 package gl_texture
 
 import (
+	"fmt"
 	"image"
 	"image/png" // png support
 	"os"
@@ -14,7 +15,7 @@ import (
 )
 
 type gltexture struct {
-	id       uint32
+	id       texture.ID
 	width    int
 	height   int
 	format   texture.Format
@@ -28,8 +29,10 @@ type gltexture struct {
 
 // New creates a new 2D texture and sets some sane defaults
 func New(width, height int) texture.T {
-	var id uint32
-	ogl.GenTextures(1, &id)
+	id, err := gl.GenTexture()
+	if err != nil {
+		panic(fmt.Errorf("failed to create texture: %s", err))
+	}
 
 	tx := &gltexture{
 		id:       id,
@@ -86,24 +89,16 @@ func (tx *gltexture) SetDataType(t types.Type) {
 }
 
 // Use binds this texture to the given texture slot
-func (tx *gltexture) Use(slot texture.Slot) {
+func (tx *gltexture) Use(slot texture.Slot) error {
 	if err := gl.ActiveTexture(slot); err != nil {
-		panic(err)
+		return err
 	}
-	tx.Bind()
+	return tx.Bind()
 }
 
 // Bind texture to the currently active texture slot
-func (tx *gltexture) Bind() {
-	ogl.BindTexture(ogl.TEXTURE_2D, tx.id)
-	switch ogl.GetError() {
-	case ogl.INVALID_ENUM:
-		panic("texture target is not one of the allowable values")
-	case ogl.INVALID_VALUE:
-		panic("texture is not a name returned from a previous call to glGenTextures")
-	case ogl.INVALID_OPERATION:
-		panic("texture was previously created with a target that doesn't match that of target.")
-	}
+func (tx *gltexture) Bind() error {
+	return gl.BindTexture2D(tx.id)
 }
 
 // Clear the texture

@@ -6,12 +6,12 @@ import (
 )
 
 type T interface {
-	Bind()
+	Bind() error
 	Unbind()
 	Delete()
 	SetIndexType(t types.Type)
 	Indexed() bool
-	Draw()
+	Draw() error
 	Buffer(name string, data interface{})
 	BufferTo(ptrs shader.Pointers, data interface{})
 }

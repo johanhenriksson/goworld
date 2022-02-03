@@ -11,7 +11,7 @@ type PrePass struct{}
 
 type PreDrawable interface {
 	object.Component
-	PreDraw(render.Args)
+	PreDraw(render.Args) error
 }
 
 func (p *PrePass) Draw(args render.Args, scene scene.T) {

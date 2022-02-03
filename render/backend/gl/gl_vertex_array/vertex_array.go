@@ -14,6 +14,8 @@ import (
 	ogl "github.com/go-gl/gl/v4.1-core/gl"
 )
 
+var activeVAO = 0
+
 type BufferMap map[string]vertex_buffer.T
 
 // glvertexarray represents an OpenGL Vertex Array Object (VAO)
@@ -64,33 +66,42 @@ func (vao *glvertexarray) Delete() {
 }
 
 // Bind this vertex array object
-func (vao glvertexarray) Bind() {
+func (vao glvertexarray) Bind() error {
 	if vao.ID == 0 {
-		fmt.Println("warning: attempt to bind Vertex Array with ID 0")
+		return fmt.Errorf("attempt to bind Vertex Array with ID 0")
 	}
-	ogl.BindVertexArray(uint32(vao.ID))
+	if activeVAO != vao.ID {
+		ogl.BindVertexArray(uint32(vao.ID))
+		activeVAO = vao.ID
+	}
+	return nil
 }
 
 // Unbind the vertex array
 func (vao glvertexarray) Unbind() {
 	ogl.BindVertexArray(0)
+	activeVAO = 0
 }
 
 // Draw all elements in the vertex array
-func (vao glvertexarray) Draw() {
+func (vao glvertexarray) Draw() error {
 	if vao.Length == 0 {
 		// fmt.Println("warning: attempt to draw VAO with length 0")
-		return
+		return nil
 	}
 
 	// draw call
-	vao.Bind()
+	if err := vao.Bind(); err != nil {
+		return err
+	}
 
 	if !vao.Indexed() {
 		ogl.DrawArrays(uint32(vao.Type), 0, int32(vao.Length))
 	} else {
 		ogl.DrawElements(uint32(vao.Type), int32(vao.Length), uint32(vao.index), nil)
 	}
+
+	return nil
 }
 
 func (vao *glvertexarray) SetIndexType(t types.Type) {

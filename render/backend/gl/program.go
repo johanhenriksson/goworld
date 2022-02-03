@@ -15,16 +15,22 @@ var ErrLinkFailed = errors.New("failed to link program")
 
 func CreateProgram() shader.ShaderID {
 	id := gl.CreateProgram()
+	if err := GetError(); err != nil {
+		panic(err)
+	}
 	return shader.ShaderID(id)
 }
 
 func LinkProgram(id shader.ShaderID) error {
 	gl.LinkProgram(uint32(id))
+	if err := GetError(); err != nil {
+		return err
+	}
 
 	// read status
 	var status int32
 	gl.GetProgramiv(uint32(id), gl.LINK_STATUS, &status)
-	if status == False {
+	if status == gl.FALSE {
 		var logLength int32
 		gl.GetProgramiv(uint32(id), gl.INFO_LOG_LENGTH, &logLength)
 
@@ -37,8 +43,9 @@ func LinkProgram(id shader.ShaderID) error {
 	return nil
 }
 
-func UseProgram(id shader.ShaderID) {
+func UseProgram(id shader.ShaderID) error {
 	gl.UseProgram(uint32(id))
+	return GetError()
 }
 
 func BindFragDataLocation(id shader.ShaderID, variableName string) error {

@@ -13,10 +13,11 @@ import (
 type ShaderID uint32
 
 type T interface {
-	Use()
+	Name() string
+	Use() error
 	SetFragmentData(string)
 	Attach(Stage)
-	Link()
+	Link() error
 	Uniform(string) (UniformDesc, error)
 	Attribute(string) (AttributeDesc, error)
 	Mat4(string, mat4.T) error
