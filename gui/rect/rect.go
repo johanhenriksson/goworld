@@ -25,15 +25,16 @@ type rect struct {
 }
 
 type Props struct {
-	Border  float32
-	Color   color.T
-	Layout  layout.T
-	Width   dimension.T
-	Height  dimension.T
-	OnClick mouse.Callback
+	Border   float32
+	Color    color.T
+	Layout   layout.T
+	Width    dimension.T
+	Height   dimension.T
+	OnClick  mouse.Callback
+	Children []node.T
 }
 
-func New(key string, props *Props, children ...node.T) node.T {
+func New(key string, props *Props) node.T {
 	// defaults
 	if props.Layout == nil {
 		props.Layout = layout.Column{}
@@ -44,7 +45,7 @@ func New(key string, props *Props, children ...node.T) node.T {
 	if props.Height == nil {
 		props.Height = dimension.Auto()
 	}
-	return node.Builtin(key, props, children, new)
+	return node.Builtin(key, props, props.Children, new)
 }
 
 func new(key string, props *Props) T {

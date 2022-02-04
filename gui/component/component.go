@@ -1,9 +1,8 @@
 package component
 
 import (
-	"fmt"
-
 	"github.com/johanhenriksson/goworld/core/input/mouse"
+	"github.com/johanhenriksson/goworld/gui/dimension"
 	"github.com/johanhenriksson/goworld/gui/widget"
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/render"
@@ -14,20 +13,29 @@ type T interface {
 }
 
 type component struct {
-	widget.T
-	props    any
+	key      string
+	wrap     widget.T
 	children []widget.T
+	props    any
 }
 
-func New(key string, props any) widget.T {
+func New(key string, props any) T {
 	return &component{
-		T:     widget.New(key),
+		key:   key,
 		props: props,
 	}
 }
 
+func (c *component) Key() string {
+	return c.key
+}
+
 func (c *component) Update(props widget.Props) {
 	c.props = props
+}
+
+func (c *component) Props() widget.Props {
+	return c.props
 }
 
 func (c *component) Children() []widget.T {
@@ -36,26 +44,77 @@ func (c *component) Children() []widget.T {
 
 func (c *component) SetChildren(children []widget.T) {
 	c.children = children
+	if len(children) > 0 {
+		c.wrap = children[0]
+	} else {
+		c.wrap = nil
+	}
 }
 
 func (c *component) Draw(args render.Args) {
-	for _, child := range c.children {
-		child.Draw(args)
-	}
-}
-func (c *component) Reflow() {
-	for _, child := range c.children {
-		child.Reflow()
-	}
-}
-func (c *component) Resize(s vec2.T) {
-	for _, child := range c.children {
-		child.Resize(s)
+	if c.wrap != nil {
+		c.wrap.Draw(args)
 	}
 }
 
+func (c *component) Reflow() {
+	if c.wrap != nil {
+		c.wrap.Reflow()
+	}
+}
+func (c *component) Resize(s vec2.T) {
+	if c.wrap != nil {
+		c.wrap.Resize(s)
+	}
+}
+
+func (c *component) Size() vec2.T {
+	if c.wrap != nil {
+		return c.wrap.Size()
+	}
+	return vec2.Zero
+}
+
+func (c *component) Move(t vec2.T) {
+	if c.wrap != nil {
+		c.wrap.Move(t)
+	}
+}
+func (c *component) Position() vec2.T {
+	if c.wrap != nil {
+		return c.wrap.Size()
+	}
+	return vec2.Zero
+}
+
+func (c *component) Width() dimension.T {
+	if c.wrap != nil {
+		return c.wrap.Width()
+	}
+	return dimension.Auto()
+}
+
+func (c *component) Height() dimension.T {
+	if c.wrap != nil {
+		return c.wrap.Height()
+	}
+	return dimension.Auto()
+}
+
+func (c *component) Destroy() {
+	if c.wrap != nil {
+		c.wrap.Destroy()
+	}
+}
+
+func (c *component) Destroyed() bool {
+	if c.wrap != nil {
+		return c.wrap.Destroyed()
+	}
+	return false
+}
+
 func (c *component) MouseEvent(e mouse.Event) {
-	fmt.Println("component mouse event")
 	for _, frame := range c.children {
 		if handler, ok := frame.(mouse.Handler); ok {
 			ev := e.Project(frame.Position())

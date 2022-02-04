@@ -36,8 +36,9 @@ func New() Manager {
 		f := TestUI()
 		// f.Move(vec2.New(500, 300))
 		scene := rect.New("GUI", &rect.Props{
-			Layout: layout.Absolute{},
-		}, f)
+			Layout:   layout.Absolute{},
+			Children: []node.T{f},
+		})
 		// scene.Resize(vec2.New(1600, 1200))
 		return scene
 	}
@@ -60,7 +61,7 @@ func (m *manager) Draw(args render.Args, scene scene.T) {
 
 	m.tree = node.Reconcile(m.tree, m.root())
 	m.gui = m.tree.Hydrate()
-	m.gui.Resize(vec2.New(width/2, height/2))
+	m.gui.Resize(vec2.NewI(args.Viewport.Width, args.Viewport.Height))
 
 	proj := mat4.Orthographic(0, width, height, 0, 1000, -1000)
 	view := mat4.Scale(vec3.New(m.scale, m.scale, 1)) // todo: ui scaling

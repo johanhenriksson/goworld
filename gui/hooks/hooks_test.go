@@ -21,7 +21,7 @@ func TestHooks(t *testing.T) {
 	}
 
 	// prepare for next render
-	hooks.Reset()
+	hooks.Disable()
 
 	click()
 

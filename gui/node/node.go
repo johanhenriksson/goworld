@@ -34,7 +34,7 @@ type node[K widget.T, P any] struct {
 	key      string
 	props    P
 	kind     reflect.Type
-	render   func(P, []T) T
+	render   func(P) T
 	hydrate  func(string, P) K
 	widget   widget.T
 	children []T
@@ -53,7 +53,7 @@ func Builtin[K widget.T, P any](key string, props P, children []T, hydrate func(
 	}
 }
 
-func Component[P any](key string, props P, children []T, render func(P, []T) T) T {
+func Component[P any](key string, props P, children []T, render func(P) T) T {
 	return &node[component.T, P]{
 		key:      key,
 		props:    props,
@@ -99,7 +99,7 @@ func (n *node[K, P]) Render() {
 	defer hooks.Disable()
 
 	n.children = []T{
-		n.render(n.props, n.children),
+		n.render(n.props),
 	}
 }
 
@@ -126,7 +126,9 @@ func (n *node[K, P]) Hooks() *hooks.State {
 }
 
 func (n *node[K, P]) Hydrate() widget.T {
-	n.widget = n.hydrate(n.key, n.props)
+	if n.widget == nil {
+		n.widget = n.hydrate(n.key, n.props)
+	}
 
 	// render children
 	children := make([]widget.T, len(n.children))

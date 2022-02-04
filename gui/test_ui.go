@@ -14,7 +14,7 @@ import (
 )
 
 func CounterLabel(key, format string) node.T {
-	count, setCount := hooks.UseState[int](0)
+	count, setCount := hooks.UseState(0)
 
 	return label.New(key, &label.Props{
 		Text:  fmt.Sprintf(format, count),
@@ -28,12 +28,10 @@ func CounterLabel(key, format string) node.T {
 
 func pickColor(clr color.T) {
 	scene := hooks.UseScene()
-	fmt.Println("pick callback:", clr)
 
 	editor := query.New[editor.T]().First(scene)
 	if editor == nil {
-		fmt.Println("could not find editor")
-		return
+		panic("could not find editor")
 	}
 
 	editor.SelectColor(clr)
