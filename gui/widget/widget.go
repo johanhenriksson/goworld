@@ -8,7 +8,7 @@ import (
 	"github.com/johanhenriksson/goworld/render"
 )
 
-type Props interface{}
+type Props any
 
 type T interface {
 	Key() string

@@ -8,13 +8,13 @@ import (
 	"github.com/johanhenriksson/goworld/editor"
 	"github.com/johanhenriksson/goworld/gui/hooks"
 	"github.com/johanhenriksson/goworld/gui/label"
+	"github.com/johanhenriksson/goworld/gui/node"
 	"github.com/johanhenriksson/goworld/gui/palette"
-	"github.com/johanhenriksson/goworld/gui/widget"
 	"github.com/johanhenriksson/goworld/render/color"
 )
 
-func CounterLabel(key, format string) widget.T {
-	count, setCount := hooks.UseInt(0)
+func CounterLabel(key, format string) node.T {
+	count, setCount := hooks.UseState[int](0)
 
 	return label.New(key, &label.Props{
 		Text:  fmt.Sprintf(format, count),
@@ -26,20 +26,22 @@ func CounterLabel(key, format string) widget.T {
 	})
 }
 
-func TestUI() widget.T {
+func pickColor(clr color.T) {
 	scene := hooks.UseScene()
+	fmt.Println("pick callback:", clr)
+
+	editor := query.New[editor.T]().First(scene)
+	if editor == nil {
+		fmt.Println("could not find editor")
+		return
+	}
+
+	editor.SelectColor(clr)
+}
+
+func TestUI() node.T {
 	return palette.New("palette", &palette.Props{
 		Palette: color.DefaultPalette,
-		OnPick: func(clr color.T) {
-			fmt.Println("pick callback:", clr)
-
-			editor := query.New[editor.T]().First(scene)
-			if editor == nil {
-				fmt.Println("could not find editor")
-				return
-			}
-
-			editor.SelectColor(clr)
-		},
+		OnPick:  pickColor,
 	})
 }

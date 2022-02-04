@@ -1,53 +1,63 @@
 package hooks
 
-type State interface{}
-type Setter func(State)
+type Setter func(any)
 type Effect func()
 
 type StateCallback func()
 
-var hookState = []State{}
+var hookState = []any{}
 var nextHook = 0
 
-var notify StateCallback
-
-func SetCallback(cb StateCallback) {
-	notify = cb
+type State struct {
+	data []any
+	next int
 }
 
-func Reset() {
-	nextHook = 0
+var state *State = nil
+
+func Enable(new *State) {
+	state = new
+	state.next = 0
 }
 
-func UseState(initial State) (State, Setter) {
-	index := nextHook
-	nextHook++
+func Disable() {
+	state = nil
+}
+
+func UseState[T any](initial T) (T, func(T)) {
+	if state == nil {
+		panic("no active hook state")
+	}
+
+	index := state.next
+	state.next++
 
 	// store state
-	state := initial
+	value := initial
 	if len(hookState) > index {
-		state = hookState[index]
+		value = state.data[index].(T)
 	} else {
-		hookState = append(hookState, state)
+		state.data = append(state.data, value)
 	}
 
-	setter := func(new State) {
-		hookState[index] = new
-		if notify != nil {
-			notify()
-		}
+	setter := func(new T) {
+		state.data[index] = new
 	}
-	return state, setter
+	return value, setter
 }
 
-func UseEffect(callback Effect, deps ...State) {
-	index := nextHook
-	nextHook++
+func UseEffect(callback Effect, deps ...any) {
+	if state == nil {
+		panic("no active hook state")
+	}
+
+	index := state.next
+	state.next++
 
 	noDeps := len(deps) == 0
 	changed := false
-	if len(hookState) > index {
-		prev := hookState[index].([]State)
+	if len(state.data) > index {
+		prev := state.data[index].([]any)
 		for i, dep := range deps {
 			if prev[i] != dep {
 				changed = true
@@ -55,7 +65,7 @@ func UseEffect(callback Effect, deps ...State) {
 			}
 		}
 	} else {
-		hookState[index] = deps
+		state.data[index] = deps
 	}
 
 	if noDeps || changed {

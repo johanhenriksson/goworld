@@ -6,6 +6,7 @@ import (
 	"github.com/johanhenriksson/goworld/core/scene"
 	"github.com/johanhenriksson/goworld/gui/hooks"
 	"github.com/johanhenriksson/goworld/gui/layout"
+	"github.com/johanhenriksson/goworld/gui/node"
 	"github.com/johanhenriksson/goworld/gui/rect"
 	"github.com/johanhenriksson/goworld/gui/widget"
 	"github.com/johanhenriksson/goworld/math/mat4"
@@ -25,32 +26,27 @@ type manager struct {
 	object.T
 	scale float32
 
-	dirty bool
-	tree  rect.T
-	root  func() widget.T
+	tree node.T
+	gui  widget.T
+	root func() node.T
 }
 
 func New() Manager {
-	root := func() widget.T {
+	root := func() node.T {
 		f := TestUI()
-		f.Move(vec2.New(500, 300))
+		// f.Move(vec2.New(500, 300))
 		scene := rect.New("GUI", &rect.Props{
 			Layout: layout.Absolute{},
 		}, f)
-		scene.Resize(vec2.New(1600, 1200))
+		// scene.Resize(vec2.New(1600, 1200))
 		return scene
 	}
 
 	mgr := &manager{
 		T:     object.New("GUI Manager"),
 		root:  root,
-		dirty: true,
 		scale: 1,
 	}
-
-	hooks.SetCallback(func() {
-		mgr.dirty = true
-	})
 
 	return mgr
 }
@@ -62,13 +58,9 @@ func (m *manager) Draw(args render.Args, scene scene.T) {
 	// todo: resize if changed
 	// perhaps the root component always accepts screen size etc
 
-	if true || m.dirty {
-		newtree := Render(m.root)
-		if !reconcile(m.tree, newtree, 0) {
-			m.tree = newtree
-		}
-		m.dirty = false
-	}
+	m.tree = node.Reconcile(m.tree, m.root())
+	m.gui = m.tree.Hydrate()
+	m.gui.Resize(vec2.New(width/2, height/2))
 
 	proj := mat4.Orthographic(0, width, height, 0, 1000, -1000)
 	view := mat4.Scale(vec3.New(m.scale, m.scale, 1)) // todo: ui scaling
@@ -85,7 +77,7 @@ func (m *manager) Draw(args render.Args, scene scene.T) {
 		Viewport:   args.Viewport,
 	}
 
-	m.tree.Draw(uiArgs)
+	m.gui.Draw(uiArgs)
 
 	hooks.SetScene(scene)
 }
@@ -100,7 +92,7 @@ func (m *manager) MouseEvent(e mouse.Event) {
 	ev := e.Project(e.Position().Scaled(1 / m.scale))
 
 	hit := false
-	for _, frame := range m.tree.Children() {
+	for _, frame := range m.gui.Children() {
 		if handler, ok := frame.(mouse.Handler); ok {
 			fev := ev.Project(frame.Position())
 			target := fev.Position()
@@ -124,8 +116,4 @@ func (m *manager) MouseEvent(e mouse.Event) {
 	if hit {
 		e.Consume()
 	}
-}
-
-func (m *manager) OnStateChanged() {
-	m.dirty = true
 }

@@ -8,99 +8,105 @@ import (
 	"github.com/johanhenriksson/goworld/gui/hooks"
 	"github.com/johanhenriksson/goworld/gui/label"
 	"github.com/johanhenriksson/goworld/gui/layout"
+	"github.com/johanhenriksson/goworld/gui/node"
 	"github.com/johanhenriksson/goworld/gui/rect"
-	"github.com/johanhenriksson/goworld/gui/widget"
 	"github.com/johanhenriksson/goworld/render/color"
 )
+
+type T interface {
+	rect.T
+}
 
 type Props struct {
 	Palette color.Palette
 	OnPick  func(color.T)
 }
 
-func New(key string, props *Props) rect.T {
-	perRow := 5
-	rows := make([]widget.T, 0, len(props.Palette)/perRow)
+func New(key string, props *Props) node.T {
+	return node.Component(key, props, nil, func(props *Props, children []node.T) node.T {
+		perRow := 5
+		rows := make([]node.T, 0, len(props.Palette)/perRow)
 
-	selected, setSelected := hooks.UseColor(props.Palette[0])
+		selected, setSelected := hooks.UseState(props.Palette[0])
 
-	items := make([]widget.T, 0, perRow)
-	for i, clr := range props.Palette {
-		index := i + 1
-		col := index % perRow
+		items := make([]node.T, 0, perRow)
+		for i, clr := range props.Palette {
+			index := i + 1
+			col := index % perRow
 
-		pickColor := clr
-		items = append(items, rect.New(fmt.Sprintf("col%d", col), &rect.Props{
-			Color: clr,
-			OnClick: func(e mouse.Event) {
-				setSelected(pickColor)
-				if props.OnPick != nil {
-					props.OnPick(pickColor)
-				}
-			},
-		}))
+			pickColor := clr
+			items = append(items, rect.New(fmt.Sprintf("col%d", col), &rect.Props{
+				Color: clr,
+				OnClick: func(e mouse.Event) {
+					setSelected(pickColor)
+					if props.OnPick != nil {
+						props.OnPick(pickColor)
+					}
+				},
+			}))
 
-		if index%perRow == 0 {
-			row := index / perRow
+			if index%perRow == 0 {
+				row := index / perRow
+				rows = append(rows, rect.New(fmt.Sprintf("row%d", row), &rect.Props{
+					Layout: layout.Row{
+						Padding: 1,
+						Gutter:  2,
+					},
+				}, items...))
+				items = make([]node.T, 0, perRow)
+			}
+		}
+
+		if len(items) > 0 {
+			row := len(rows)
 			rows = append(rows, rect.New(fmt.Sprintf("row%d", row), &rect.Props{
 				Layout: layout.Row{
 					Padding: 1,
 					Gutter:  2,
 				},
 			}, items...))
-			items = make([]widget.T, 0, perRow)
 		}
-	}
 
-	if len(items) > 0 {
-		row := len(rows)
-		rows = append(rows, rect.New(fmt.Sprintf("row%d", row), &rect.Props{
-			Layout: layout.Row{
-				Padding: 1,
-				Gutter:  2,
-			},
-		}, items...))
-	}
+		grid := rect.New("grid", &rect.Props{
+			Height: dimension.Fixed(200),
+		}, rows...)
 
-	grid := rect.New("grid", &rect.Props{
-		Height: dimension.Fixed(200),
-	}, rows...)
-
-	return rect.New(
-		key,
-		&rect.Props{
-			Border: 3.0,
-			Color:  color.Black.WithAlpha(0.8),
-			Width:  dimension.Fixed(140),
-			Height: dimension.Fixed(230),
-			Layout: layout.Column{
-				Padding: 4,
-			},
-		},
-		label.New("title", &label.Props{
-			Text:  "Palette",
-			Color: color.White,
-			Size:  16,
-		}),
-		rect.New(
-			"selected",
+		return rect.New(
+			"window",
 			&rect.Props{
-				Layout: layout.Row{},
-				Height: dimension.Fixed(16),
+				Border: 3.0,
+				Color:  color.Black.WithAlpha(0.8),
+				Width:  dimension.Fixed(140),
+				Height: dimension.Fixed(230),
+				Layout: layout.Column{
+					Padding: 4,
+				},
 			},
-			label.New("selected", &label.Props{
-				Text:  "Selected",
+			label.New("title", &label.Props{
+				Text:  "Palette",
 				Color: color.White,
+				Size:  16,
 			}),
 			rect.New(
-				"preview",
+				"selected",
 				&rect.Props{
-					Color:  selected,
-					Width:  dimension.Fixed(20),
-					Height: dimension.Fixed(10),
+					Layout: layout.Row{},
+					Height: dimension.Fixed(16),
 				},
+				label.New("selected", &label.Props{
+					Text:  "Selected",
+					Color: color.White,
+				}),
+				rect.New(
+					"preview",
+					&rect.Props{
+						Color:  selected,
+						Width:  dimension.Fixed(20),
+						Height: dimension.Fixed(10),
+					},
+				),
 			),
-		),
-		grid,
-	)
+			grid,
+		)
+	})
 }

@@ -4,12 +4,14 @@ import (
 	"fmt"
 	"log"
 	"runtime"
+	"unsafe"
 
-	"github.com/go-gl/gl/v4.1-core/gl"
-	"github.com/go-gl/glfw/v3.1/glfw"
 	"github.com/johanhenriksson/goworld/core/input"
 	"github.com/johanhenriksson/goworld/core/input/keys"
 	"github.com/johanhenriksson/goworld/core/input/mouse"
+
+	"github.com/go-gl/gl/v4.1-core/gl"
+	"github.com/go-gl/glfw/v3.1/glfw"
 )
 
 func init() {
@@ -23,6 +25,9 @@ func init() {
 }
 
 type T interface {
+	Title() string
+	SetTitle(string)
+
 	Size() (int, int)
 	BufferSize() (int, int)
 	Scale() float32
@@ -36,13 +41,15 @@ type Args struct {
 	Width        int
 	Height       int
 	Vsync        bool
+	Debug        bool
 	InputHandler input.Handler
 }
 
 type window struct {
-	*glfw.Window
+	wnd   *glfw.Window
 	mouse mouse.MouseWrapper
 
+	title           string
 	width, height   int
 	fwidth, fheight int
 	scale           float32
@@ -55,7 +62,10 @@ func New(args Args) (T, error) {
 	glfw.WindowHint(glfw.OpenGLProfile, glfw.OpenGLCoreProfile)
 	glfw.WindowHint(glfw.OpenGLForwardCompatible, glfw.True)
 	glfw.WindowHint(glfw.Samples, 1)
-	glfw.WindowHint(glfw.OpenGLDebugContext, glfw.True)
+
+	if args.Debug {
+		glfw.WindowHint(glfw.OpenGLDebugContext, glfw.True)
+	}
 
 	// create a new GLFW window
 	wnd, err := glfw.CreateWindow(args.Width, args.Height, args.Title, nil, nil)
@@ -63,6 +73,7 @@ func New(args Args) (T, error) {
 		return nil, fmt.Errorf("failed to create glfw window: %w", err)
 	}
 
+	// retrieve window & framebuffer size
 	width, height := wnd.GetSize()
 	fwidth, fheight := wnd.GetFramebufferSize()
 	scale := float32(fwidth) / float32(width)
@@ -70,8 +81,8 @@ func New(args Args) (T, error) {
 		width, height, fwidth, fheight, scale*100)
 
 	window := &window{
-		Window: wnd,
-
+		wnd:     wnd,
+		title:   args.Title,
 		width:   width,
 		height:  height,
 		fwidth:  fwidth,
@@ -91,12 +102,6 @@ func New(args Args) (T, error) {
 		return nil, fmt.Errorf("failed to initialize OpenGL: %w", err)
 	}
 
-	// ensure the frame buffer is properly cleared
-	gl.ClearColor(0, 0, 1, 1)
-	gl.Clear(gl.COLOR_BUFFER_BIT)
-	wnd.SwapBuffers()
-	gl.Clear(gl.COLOR_BUFFER_BIT)
-
 	// attach default input handler, if provided
 	if args.InputHandler != nil {
 		window.SetInputHandler(args.InputHandler)
@@ -105,34 +110,67 @@ func New(args Args) (T, error) {
 	// set resize callback
 	wnd.SetSizeCallback(window.onResize)
 
+	// set up debugging
+	if args.Debug {
+		var flags int32
+		gl.GetIntegerv(gl.CONTEXT_FLAGS, &flags)
+		if flags&gl.CONTEXT_FLAG_DEBUG_BIT == gl.CONTEXT_FLAG_DEBUG_BIT {
+			gl.Enable(gl.DEBUG_OUTPUT)
+			gl.Enable(gl.DEBUG_OUTPUT_SYNCHRONOUS)
+			gl.DebugMessageControl(gl.DONT_CARE, gl.DONT_CARE, gl.DONT_CARE, 0, nil, true)
+			gl.DebugMessageCallback(window.onDebugMessage, nil)
+		} else {
+			fmt.Println("warning: failed to enable opengl debugging")
+		}
+	}
+
 	return window, nil
 }
 
 func (w *window) SwapBuffers() {
-	w.Window.SwapBuffers()
-
+	w.wnd.SwapBuffers()
 	glfw.PollEvents()
 }
 
 func (w *window) Size() (int, int)       { return w.width, w.height }
 func (w *window) BufferSize() (int, int) { return w.fwidth, w.fheight }
 func (w *window) Scale() float32         { return w.scale }
+func (w *window) ShouldClose() bool      { return w.wnd.ShouldClose() }
+func (w *window) Title() string          { return w.title }
 
 func (w *window) SetInputHandler(handler input.Handler) {
 	// keyboard events
-	w.SetKeyCallback(keys.KeyCallbackWrapper(handler))
-	w.SetCharCallback(keys.CharCallbackWrapper(handler))
+	w.wnd.SetKeyCallback(keys.KeyCallbackWrapper(handler))
+	w.wnd.SetCharCallback(keys.CharCallbackWrapper(handler))
 
 	// mouse events
 	w.mouse = mouse.NewWrapper(handler)
-	w.SetMouseButtonCallback(w.mouse.Button)
-	w.SetCursorPosCallback(w.mouse.Move)
-	w.SetScrollCallback(w.mouse.Scroll)
+	w.wnd.SetMouseButtonCallback(w.mouse.Button)
+	w.wnd.SetCursorPosCallback(w.mouse.Move)
+	w.wnd.SetScrollCallback(w.mouse.Scroll)
 }
 
 func (w *window) onResize(_ *glfw.Window, width, height int) {
 	w.width = width
 	w.height = height
-	w.fwidth, w.fheight = w.GetFramebufferSize()
+	w.fwidth, w.fheight = w.wnd.GetFramebufferSize()
 	w.scale = float32(w.fwidth) / float32(w.width)
+}
+
+func (w *window) onDebugMessage(
+	source uint32,
+	gltype uint32,
+	id uint32,
+	severity uint32,
+	length int32,
+	message string,
+	userParam unsafe.Pointer) {
+	// todo: proper messages
+	// see https://learnopengl.com/In-Practice/Debugging
+	fmt.Println("GL Debug:", message)
+}
+
+func (w *window) SetTitle(title string) {
+	w.wnd.SetTitle(title)
+	w.title = title
 }
