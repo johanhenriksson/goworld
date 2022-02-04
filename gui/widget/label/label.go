@@ -1,6 +1,8 @@
 package label
 
 import (
+	"fmt"
+
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/gui/dimension"
 	"github.com/johanhenriksson/goworld/gui/node"
@@ -39,6 +41,7 @@ func New(key string, props *Props) node.T {
 }
 
 func new(key string, props *Props) T {
+	fmt.Println("new label", key)
 	return &label{
 		T:        widget.New(key),
 		props:    props,
@@ -48,8 +51,8 @@ func new(key string, props *Props) T {
 
 func (l *label) Size() vec2.T { return l.T.Size() }
 
-func (l *label) Props() widget.Props       { return l.props }
-func (l *label) Update(props widget.Props) { l.props = props.(*Props) }
+func (l *label) Props() any       { return l.props }
+func (l *label) Update(props any) { l.props = props.(*Props) }
 
 func (l *label) Draw(args render.Args) {
 	l.T.Draw(args)

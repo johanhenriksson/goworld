@@ -101,8 +101,10 @@ func (f *rect) Height() dimension.T { return f.props.Height }
 // Lifecycle
 //
 
-func (f *rect) Props() widget.Props   { return f.props }
-func (f *rect) Update(p widget.Props) { f.props = p.(*Props) }
+func (f *rect) Props() any { return f.props }
+func (f *rect) Update(p any) {
+	f.props = p.(*Props)
+}
 
 func (f *rect) Destroy() {
 	f.T.Destroy()

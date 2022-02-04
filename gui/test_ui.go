@@ -7,9 +7,9 @@ import (
 	"github.com/johanhenriksson/goworld/core/object/query"
 	"github.com/johanhenriksson/goworld/editor"
 	"github.com/johanhenriksson/goworld/gui/hooks"
-	"github.com/johanhenriksson/goworld/gui/label"
 	"github.com/johanhenriksson/goworld/gui/node"
-	"github.com/johanhenriksson/goworld/gui/palette"
+	"github.com/johanhenriksson/goworld/gui/widget/label"
+	"github.com/johanhenriksson/goworld/gui/widget/palette"
 	"github.com/johanhenriksson/goworld/render/color"
 )
 

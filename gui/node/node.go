@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/johanhenriksson/goworld/gui/component"
 	"github.com/johanhenriksson/goworld/gui/hooks"
 	"github.com/johanhenriksson/goworld/gui/widget"
+	"github.com/johanhenriksson/goworld/gui/widget/component"
 )
 
 type T interface {
@@ -18,7 +18,7 @@ type T interface {
 	Hooks() *hooks.State
 
 	Update(any)
-	Render()
+	Render(*hooks.State)
 	Destroy()
 	Hydrate() widget.T
 	Hydrated() bool
@@ -42,11 +42,10 @@ type node[K widget.T, P any] struct {
 }
 
 func Builtin[K widget.T, P any](key string, props P, children []T, hydrate func(string, P) K) T {
-	var empty K
 	return &node[K, P]{
 		key:      key,
 		props:    props,
-		kind:     reflect.TypeOf(empty),
+		kind:     reflect.TypeOf(props),
 		hydrate:  hydrate,
 		children: children,
 		render:   nil,
@@ -66,19 +65,19 @@ func Component[P any](key string, props P, children []T, render func(P) T) T {
 	}
 }
 
-func (n node[K, P]) Key() string {
+func (n *node[K, P]) Key() string {
 	return n.key
 }
 
-func (n node[K, P]) Type() reflect.Type {
+func (n *node[K, P]) Type() reflect.Type {
 	return n.kind
 }
 
-func (n node[K, P]) Props() any {
+func (n *node[K, P]) Props() any {
 	return n.props
 }
 
-func (n node[K, P]) Children() []T {
+func (n *node[K, P]) Children() []T {
 	return n.children
 }
 
@@ -86,16 +85,19 @@ func (n *node[K, P]) SetChildren(children []T) {
 	n.children = children
 }
 
-func (n node[K, P]) Hydrated() bool {
+func (n *node[K, P]) Hydrated() bool {
 	return n.widget != nil
 }
 
-func (n *node[K, P]) Render() {
+func (n *node[K, P]) Render(hook *hooks.State) {
 	if n.render == nil {
 		return
 	}
+	if hook == nil {
+		hook = &n.hooks
+	}
 
-	hooks.Enable(&n.hooks)
+	hooks.Enable(hook)
 	defer hooks.Disable()
 
 	n.children = []T{
@@ -106,10 +108,9 @@ func (n *node[K, P]) Render() {
 func (n *node[K, P]) Update(props any) {
 	n.props = props.(P)
 
-	n.Render()
 	if n.Hydrated() {
 		// we are a basic element, update my props
-		n.widget.Update(n.props)
+		n.widget.Update(props)
 	}
 }
 

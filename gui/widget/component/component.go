@@ -30,11 +30,11 @@ func (c *component) Key() string {
 	return c.key
 }
 
-func (c *component) Update(props widget.Props) {
+func (c *component) Update(props any) {
 	c.props = props
 }
 
-func (c *component) Props() widget.Props {
+func (c *component) Props() any {
 	return c.props
 }
 
@@ -82,7 +82,7 @@ func (c *component) Move(t vec2.T) {
 }
 func (c *component) Position() vec2.T {
 	if c.wrap != nil {
-		return c.wrap.Size()
+		return c.wrap.Position()
 	}
 	return vec2.Zero
 }

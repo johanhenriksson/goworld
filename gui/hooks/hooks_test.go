@@ -15,17 +15,19 @@ func SomeComponent() (string, func()) {
 }
 
 func TestHooks(t *testing.T) {
+	state := hooks.State{}
+	hooks.Enable(&state)
 	output, click := SomeComponent()
+	hooks.Disable()
 	if output != "hello!" {
 		t.Error("unexpected return value")
 	}
 
-	// prepare for next render
-	hooks.Disable()
-
 	click()
 
+	hooks.Enable(&state)
 	output, _ = SomeComponent()
+	hooks.Disable()
 	if output != "clicked" {
 		t.Error("expected state to be updated")
 	}

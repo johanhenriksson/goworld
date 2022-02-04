@@ -1,34 +1,34 @@
 package node
 
-func Reconcile(src, dst T) T {
+func Reconcile(target, new T) T {
 	// no source tree - just go with the new one
-	if src == nil {
-		return dst
+	if target == nil {
+		target = new
 	}
 
 	// element types are different - so we obviously can not reconcile
 	// if the keys dont match, reconcilation is not considered
-	if src.Type() != dst.Type() || src.Key() != dst.Key() {
-		src.Destroy()
-		return dst
+	if target.Type() != new.Type() || target.Key() != new.Key() {
+		target.Destroy()
+		target = new
 	}
 
-	// we can reuse the existing element!
-	// update source props
-	src.Update(dst.Props())
+	// update props
+	target.Update(new.Props())
 
-	// reconcile children - render the node so we can inspect them
-	dst.Render()
-	children := dst.Children()
+	// expand new node to look at its children
+	// use the existing hook state
+	new.Render(target.Hooks())
 
 	// create a key mapping for the existing child nodes
 	// this allows us to reuse nodes and keep track of deletions
 	previous := map[string]T{}
-	for _, child := range src.Children() {
+	for _, child := range target.Children() {
 		// todo: check for duplicate keys
 		previous[child.Key()] = child
 	}
 
+	children := new.Children()
 	for idx, child := range children {
 		// todo: handle nil children
 
@@ -44,12 +44,12 @@ func Reconcile(src, dst T) T {
 	}
 
 	// replace source children
-	src.SetChildren(children)
+	target.SetChildren(children)
 
 	// at this point, any child left in the previous map should be destroyed
 	for _, child := range previous {
 		child.Destroy()
 	}
 
-	return src
+	return target
 }

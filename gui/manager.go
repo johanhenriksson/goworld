@@ -1,14 +1,16 @@
 package gui
 
 import (
+	"fmt"
+
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/core/scene"
 	"github.com/johanhenriksson/goworld/gui/hooks"
 	"github.com/johanhenriksson/goworld/gui/layout"
 	"github.com/johanhenriksson/goworld/gui/node"
-	"github.com/johanhenriksson/goworld/gui/rect"
 	"github.com/johanhenriksson/goworld/gui/widget"
+	"github.com/johanhenriksson/goworld/gui/widget/rect"
 	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/math/vec3"
@@ -65,7 +67,9 @@ func (m *manager) Draw(args render.Args, scene scene.T) {
 
 	proj := mat4.Orthographic(0, width, height, 0, 1000, -1000)
 	view := mat4.Scale(vec3.New(m.scale, m.scale, 1)) // todo: ui scaling
+	model := mat4.Translate(vec3.New(0, 0, -100))
 	vp := proj.Mul(&view)
+	mvp := vp.Mul(&model)
 
 	gl.DepthFunc(gl.LEQUAL)
 
@@ -73,8 +77,8 @@ func (m *manager) Draw(args render.Args, scene scene.T) {
 		Projection: proj,
 		View:       view,
 		VP:         vp,
-		MVP:        vp,
-		Transform:  mat4.Ident(),
+		MVP:        mvp,
+		Transform:  model,
 		Viewport:   args.Viewport,
 	}
 
@@ -91,6 +95,10 @@ func (m *manager) MouseEvent(e mouse.Event) {
 
 	// scale down to low dpi.
 	ev := e.Project(e.Position().Scaled(1 / m.scale))
+
+	if e.Action() == mouse.Press {
+		fmt.Println(e.Position())
+	}
 
 	hit := false
 	for _, frame := range m.gui.Children() {
