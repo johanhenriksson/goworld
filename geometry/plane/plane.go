@@ -5,7 +5,6 @@ import (
 	"github.com/johanhenriksson/goworld/core/mesh"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/math/vec3"
-	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/vertex"
 )
@@ -69,8 +68,4 @@ func (p *T) generate() {
 		x2, z2, o2, d2, z2, x2,
 	}
 	p.Buffer(data)
-}
-
-func (p *T) DrawForward(args render.Args) {
-	p.T.DrawForward(args)
 }

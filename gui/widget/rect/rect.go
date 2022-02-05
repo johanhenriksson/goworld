@@ -4,6 +4,7 @@ import (
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/gui/dimension"
 	"github.com/johanhenriksson/goworld/gui/layout"
+	"github.com/johanhenriksson/goworld/gui/node"
 	"github.com/johanhenriksson/goworld/gui/widget"
 	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/math/vec2"
@@ -24,15 +25,16 @@ type rect struct {
 }
 
 type Props struct {
-	Border  float32
-	Color   color.T
-	Layout  layout.T
-	Width   dimension.T
-	Height  dimension.T
-	OnClick mouse.Callback
+	Border   float32
+	Color    color.T
+	Layout   layout.T
+	Width    dimension.T
+	Height   dimension.T
+	OnClick  mouse.Callback
+	Children []node.T
 }
 
-func New(key string, props *Props, children ...widget.T) T {
+func New(key string, props *Props) node.T {
 	// defaults
 	if props.Layout == nil {
 		props.Layout = layout.Column{}
@@ -43,11 +45,13 @@ func New(key string, props *Props, children ...widget.T) T {
 	if props.Height == nil {
 		props.Height = dimension.Auto()
 	}
+	return node.Builtin(key, props, props.Children, new)
+}
 
+func new(key string, props *Props) T {
 	f := &rect{
 		T:        widget.New(key),
 		props:    props,
-		children: children,
 		renderer: &renderer{},
 	}
 
@@ -97,8 +101,10 @@ func (f *rect) Height() dimension.T { return f.props.Height }
 // Lifecycle
 //
 
-func (f *rect) Props() widget.Props   { return f.props }
-func (f *rect) Update(p widget.Props) { f.props = p.(*Props) }
+func (f *rect) Props() any { return f.props }
+func (f *rect) Update(p any) {
+	f.props = p.(*Props)
+}
 
 func (f *rect) Destroy() {
 	f.T.Destroy()

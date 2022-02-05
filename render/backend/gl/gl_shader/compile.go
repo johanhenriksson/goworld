@@ -14,7 +14,9 @@ func CompileShader(name string, fileNames ...string) shader.T {
 		stage := StageFromFile(fileName)
 		shader.Attach(stage)
 	}
-	shader.Link()
+	if err := shader.Link(); err != nil {
+		panic(fmt.Errorf("failed to compile shader %s: %w", name, err))
+	}
 	return shader
 }
 
@@ -22,8 +24,7 @@ func CompileShader(name string, fileNames ...string) shader.T {
 // Panics on compilation errors
 func CompileStageFromFile(kind shader.StageType, path string) shader.Stage {
 	s := NewStage(kind)
-	err := s.CompileFile(path)
-	if err != nil {
+	if err := s.CompileFile(path); err != nil {
 		panic(err)
 	}
 	return s

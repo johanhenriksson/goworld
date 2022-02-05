@@ -11,8 +11,8 @@ type ID uint32
 type Slot uint32
 
 type T interface {
-	Bind()
-	Use(slot Slot)
+	Bind() error
+	Use(slot Slot) error
 	Resize(width, heigt int)
 	Clear()
 

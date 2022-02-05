@@ -8,17 +8,15 @@ import (
 	"github.com/johanhenriksson/goworld/render"
 )
 
-type Props interface{}
-
 type T interface {
 	Key() string
 
 	// Properties returns a pointer to the components property struct.
 	// The pointer is used to compare the states when deciding if the component needs to be updated.
-	Props() Props
+	Props() any
 
 	// Update replaces the components property struct.
-	Update(Props)
+	Update(any)
 
 	// Destroy releases any resources associated with the component.
 	// Attempting to draw a destroyed component will cause a panic.
@@ -76,11 +74,11 @@ func (w *widget) DesiredHeight(width float32) float32 {
 	return 0
 }
 
-func (w *widget) Props() Props {
+func (w *widget) Props() any {
 	panic("widget.Props() must be implemented")
 }
 
-func (w *widget) Update(Props) {
+func (w *widget) Update(any) {
 	panic("widget.Update() must be implemented")
 }
 

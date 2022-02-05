@@ -1,8 +1,6 @@
 package label
 
 import (
-	"fmt"
-
 	"github.com/johanhenriksson/goworld/assets"
 	"github.com/johanhenriksson/goworld/geometry"
 	"github.com/johanhenriksson/goworld/math/vec2"
@@ -52,8 +50,6 @@ func (r *renderer) Draw(args render.Args, label T, props *Props) {
 
 		r.text = props.Text
 		r.color = props.Color
-
-		fmt.Println("update label with text:", r.text, "bounds:", r.bounds)
 
 		img := r.font.Render(r.text, args)
 		img.SetRGBA(3, 3, color.Red.RGBA())

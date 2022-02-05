@@ -19,9 +19,9 @@ type MeshBufferMap map[string]vertex_buffer.T
 type T interface {
 	object.Component
 
-	DrawForward(render.Args)
-	DrawDeferred(render.Args)
-	DrawLines(render.Args)
+	DrawForward(render.Args) error
+	DrawDeferred(render.Args) error
+	DrawLines(render.Args) error
 
 	SetIndexType(t types.Type)
 	Buffer(data interface{})
@@ -67,12 +67,14 @@ func (m mesh) Name() string {
 	return "Mesh"
 }
 
-func (m *mesh) DrawDeferred(args render.Args) {
+func (m *mesh) DrawDeferred(args render.Args) error {
 	if m.mode != Deferred {
-		return
+		return nil
 	}
 
-	m.mat.Use()
+	if err := m.mat.Use(); err != nil {
+		return fmt.Errorf("failed to assign material %s in mesh %s: %w", m.mat.Name(), m.Name(), err)
+	}
 
 	// set up uniforms
 	m.mat.Mat4("model", args.Transform)
@@ -81,15 +83,17 @@ func (m *mesh) DrawDeferred(args render.Args) {
 	m.mat.Mat4("mvp", args.MVP)
 	m.mat.Vec3("eye", args.Position)
 
-	m.vao.Draw()
+	return m.vao.Draw()
 }
 
-func (m *mesh) DrawForward(args render.Args) {
+func (m *mesh) DrawForward(args render.Args) error {
 	if m.mode != Forward {
-		return
+		return nil
 	}
 
-	m.mat.Use()
+	if err := m.mat.Use(); err != nil {
+		return fmt.Errorf("failed to assign material %s in mesh %s: %w", m.mat.Name(), m.Name(), err)
+	}
 
 	// set up uniforms
 	m.mat.Mat4("model", args.Transform)
@@ -97,18 +101,21 @@ func (m *mesh) DrawForward(args render.Args) {
 	m.mat.Mat4("projection", args.Projection)
 	m.mat.Mat4("mvp", args.MVP)
 
-	m.vao.Draw()
+	return m.vao.Draw()
 }
 
-func (m *mesh) DrawLines(args render.Args) {
+func (m *mesh) DrawLines(args render.Args) error {
 	if m.mode != Lines {
-		return
+		return nil
 	}
 
-	m.mat.Use()
+	if err := m.mat.Use(); err != nil {
+		return fmt.Errorf("failed to assign material %s in mesh %s: %w", m.mat.Name(), m.Name(), err)
+	}
+
 	m.mat.Mat4("mvp", args.MVP)
 
-	m.vao.Draw()
+	return m.vao.Draw()
 }
 
 func (m *mesh) Buffer(data interface{}) {

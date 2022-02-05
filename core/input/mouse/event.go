@@ -64,3 +64,13 @@ func (e event) String() string {
 	}
 	return "MouseEvent: Invalid"
 }
+
+func NewButtonEvent(button Button, action Action, pos vec2.T, mod keys.Modifier, locked bool) Event {
+	return &event{
+		action:   action,
+		button:   button,
+		mods:     mod,
+		position: pos,
+		locked:   locked,
+	}
+}

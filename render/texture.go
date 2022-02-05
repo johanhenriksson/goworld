@@ -8,7 +8,6 @@ import (
 	gltex "github.com/johanhenriksson/goworld/render/backend/gl/gl_texture"
 	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/texture"
-	"github.com/johanhenriksson/goworld/util"
 )
 
 // TextureFromImage is a helper method to create an OpenGL texture from an image object */
@@ -40,7 +39,7 @@ func TextureFromColor(color color.T) texture.T {
 func ImageFromFile(file string) (*image.RGBA, error) {
 	// todo: http support?
 
-	imgFile, err := os.Open(util.ExePath + file)
+	imgFile, err := os.Open(file)
 	if err != nil {
 		return nil, err
 	}

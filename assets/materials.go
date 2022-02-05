@@ -74,7 +74,7 @@ func LoadMaterial(name string, matf *MaterialDefinition) (material.T, error) {
 
 // GetMaterial returns a new instance of a material
 func GetMaterial(name string) material.T {
-	path := fmt.Sprintf("assets/materials/%s.json", name)
+	path := fmt.Sprintf("./assets/materials/%s.json", name)
 	def, err := LoadMaterialDefinition(path)
 	if err != nil {
 		panic(fmt.Errorf("failed to load material definition %s: %s", name, err))

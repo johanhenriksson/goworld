@@ -1,13 +1,15 @@
 package gui
 
 import (
+	"fmt"
+
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/core/scene"
-	"github.com/johanhenriksson/goworld/gui/hooks"
 	"github.com/johanhenriksson/goworld/gui/layout"
-	"github.com/johanhenriksson/goworld/gui/rect"
+	"github.com/johanhenriksson/goworld/gui/node"
 	"github.com/johanhenriksson/goworld/gui/widget"
+	"github.com/johanhenriksson/goworld/gui/widget/rect"
 	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/math/vec3"
@@ -25,32 +27,23 @@ type manager struct {
 	object.T
 	scale float32
 
-	dirty bool
-	tree  rect.T
-	root  func() widget.T
+	renderer node.Renderer
+	gui      widget.T
 }
 
-func New() Manager {
-	root := func() widget.T {
-		f := TestUI()
-		f.Move(vec2.New(500, 300))
-		scene := rect.New("GUI", &rect.Props{
-			Layout: layout.Absolute{},
-		}, f)
-		scene.Resize(vec2.New(1600, 1200))
-		return scene
+func New(app node.RenderFunc) Manager {
+	root := func() node.T {
+		return rect.New("GUI", &rect.Props{
+			Layout:   layout.Absolute{},
+			Children: []node.T{app()},
+		})
 	}
 
 	mgr := &manager{
-		T:     object.New("GUI Manager"),
-		root:  root,
-		dirty: true,
-		scale: 1,
+		T:        object.New("GUI Manager"),
+		renderer: node.NewRenderer(root),
+		scale:    1,
 	}
-
-	hooks.SetCallback(func() {
-		mgr.dirty = true
-	})
 
 	return mgr
 }
@@ -62,17 +55,14 @@ func (m *manager) Draw(args render.Args, scene scene.T) {
 	// todo: resize if changed
 	// perhaps the root component always accepts screen size etc
 
-	if true || m.dirty {
-		newtree := Render(m.root)
-		if !reconcile(m.tree, newtree, 0) {
-			m.tree = newtree
-		}
-		m.dirty = false
-	}
+	m.gui = m.renderer.Render()
+	m.gui.Resize(vec2.NewI(args.Viewport.Width, args.Viewport.Height))
 
 	proj := mat4.Orthographic(0, width, height, 0, 1000, -1000)
 	view := mat4.Scale(vec3.New(m.scale, m.scale, 1)) // todo: ui scaling
+	model := mat4.Translate(vec3.New(0, 0, -100))
 	vp := proj.Mul(&view)
+	mvp := vp.Mul(&model)
 
 	gl.DepthFunc(gl.LEQUAL)
 
@@ -80,14 +70,12 @@ func (m *manager) Draw(args render.Args, scene scene.T) {
 		Projection: proj,
 		View:       view,
 		VP:         vp,
-		MVP:        vp,
-		Transform:  mat4.Ident(),
+		MVP:        mvp,
+		Transform:  model,
 		Viewport:   args.Viewport,
 	}
 
-	m.tree.Draw(uiArgs)
-
-	hooks.SetScene(scene)
+	m.gui.Draw(uiArgs)
 }
 
 func (m *manager) MouseEvent(e mouse.Event) {
@@ -99,8 +87,12 @@ func (m *manager) MouseEvent(e mouse.Event) {
 	// scale down to low dpi.
 	ev := e.Project(e.Position().Scaled(1 / m.scale))
 
+	if e.Action() == mouse.Press {
+		fmt.Println(e.Position())
+	}
+
 	hit := false
-	for _, frame := range m.tree.Children() {
+	for _, frame := range m.gui.Children() {
 		if handler, ok := frame.(mouse.Handler); ok {
 			fev := ev.Project(frame.Position())
 			target := fev.Position()
@@ -124,8 +116,4 @@ func (m *manager) MouseEvent(e mouse.Event) {
 	if hit {
 		e.Consume()
 	}
-}
-
-func (m *manager) OnStateChanged() {
-	m.dirty = true
 }

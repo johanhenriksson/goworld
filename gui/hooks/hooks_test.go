@@ -7,7 +7,7 @@ import (
 )
 
 func SomeComponent() (string, func()) {
-	title, setTitle := hooks.UseString("hello!")
+	title, setTitle := hooks.UseState("hello!")
 	click := func() {
 		setTitle("clicked")
 	}
@@ -15,25 +15,19 @@ func SomeComponent() (string, func()) {
 }
 
 func TestHooks(t *testing.T) {
-	dirty := false
-	hooks.SetCallback(func() {
-		dirty = true
-	})
-
+	state := hooks.State{}
+	hooks.Enable(&state)
 	output, click := SomeComponent()
+	hooks.Disable()
 	if output != "hello!" {
 		t.Error("unexpected return value")
 	}
 
-	// prepare for next render
-	hooks.Reset()
-
 	click()
-	if !dirty {
-		t.Error("state should be dirty")
-	}
 
+	hooks.Enable(&state)
 	output, _ = SomeComponent()
+	hooks.Disable()
 	if output != "clicked" {
 		t.Error("expected state to be updated")
 	}

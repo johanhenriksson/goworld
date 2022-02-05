@@ -1,9 +1,12 @@
 package deferred
 
 import (
-	"github.com/johanhenriksson/goworld/core/object"
+	"fmt"
+
+	"github.com/johanhenriksson/goworld/core/object/query"
 	"github.com/johanhenriksson/goworld/core/scene"
 	"github.com/johanhenriksson/goworld/render"
+	"github.com/johanhenriksson/goworld/render/backend/gl"
 	"github.com/johanhenriksson/goworld/render/backend/gl/gl_framebuffer"
 	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/framebuffer"
@@ -41,19 +44,14 @@ func (p *GeometryPass) Draw(args render.Args, scene scene.T) {
 	// lets not draw stuff thats behind us at the very least
 	// ... things need bounding boxes though.
 
-	objects := object.NewQuery().
-		Where(IsDeferredDrawable).
-		Collect(scene)
-
-	for _, component := range objects {
-		drawable := component.(DeferredDrawable)
-		drawable.DrawDeferred(args.Apply(component.Object().Transform().World()))
+	objects := query.New[DeferredDrawable]().Collect(scene)
+	for _, drawable := range objects {
+		if err := drawable.DrawDeferred(args.Apply(drawable.Object().Transform().World())); err != nil {
+			fmt.Printf("deferred draw error in object %s: %s\n", drawable.Object().Name(), err)
+		}
 	}
-}
 
-// DeferedDrawableQuery is an object query predicate that matches any component
-// that implements the DeferredDrawable interface.
-func IsDeferredDrawable(c object.Component) bool {
-	_, ok := c.(DeferredDrawable)
-	return ok
+	if err := gl.GetError(); err != nil {
+		fmt.Println("uncaught GL error during geometry pass:", err)
+	}
 }

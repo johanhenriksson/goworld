@@ -47,9 +47,10 @@ func New(args Args) *T {
 		Segments: segments,
 		Color:    color.Red,
 	}).
+		Name("X Cone").
 		Parent(g).
 		Position(vec3.UnitX).
-		Rotation(vec3.New(0, 0, -90)).
+		Rotation(vec3.New(0, 0, 270)).
 		Create()
 
 	// Y arrow
@@ -59,8 +60,9 @@ func New(args Args) *T {
 		Segments: segments,
 		Color:    color.Green,
 	}).
+		Name("Y Cone").
 		Parent(g).
-		Position(vec3.New(0, 1, 0)).
+		Position(vec3.UnitY).
 		Create()
 
 	// Z arrow
@@ -70,6 +72,7 @@ func New(args Args) *T {
 		Segments: segments,
 		Color:    color.Blue,
 	}).
+		Name("Z Cone").
 		Parent(g).
 		Position(vec3.UnitZN).
 		Rotation(vec3.New(90, 180, 0)).

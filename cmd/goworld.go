@@ -24,6 +24,7 @@ import (
 	"runtime/pprof"
 
 	"github.com/johanhenriksson/goworld/core/light"
+	"github.com/johanhenriksson/goworld/core/object/query"
 	"github.com/johanhenriksson/goworld/core/scene"
 	"github.com/johanhenriksson/goworld/core/window"
 	"github.com/johanhenriksson/goworld/editor"
@@ -31,6 +32,8 @@ import (
 	"github.com/johanhenriksson/goworld/game"
 	"github.com/johanhenriksson/goworld/geometry/gizmo/mover"
 	"github.com/johanhenriksson/goworld/gui"
+	"github.com/johanhenriksson/goworld/gui/node"
+	"github.com/johanhenriksson/goworld/gui/widget/palette"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/ui"
@@ -75,7 +78,20 @@ func main() {
 
 	// attach GUI manager first.
 	// this will give it input priority
-	guim := gui.New()
+	guim := gui.New(func() node.T {
+		return palette.New("palette", &palette.Props{
+			Palette: color.DefaultPalette,
+			OnPick: func(clr color.T) {
+				editor := query.New[editor.T]().First(scene)
+				if editor == nil {
+					panic("could not find editor")
+				}
+
+				editor.SelectColor(clr)
+			},
+		})
+	})
+
 	scene.Adopt(guim)
 
 	uim := ui.NewManager(1600, 1200)

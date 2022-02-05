@@ -1,53 +1,35 @@
 package hooks
 
-type State interface{}
-type Setter func(State)
 type Effect func()
 
-type StateCallback func()
-
-var hookState = []State{}
-var nextHook = 0
-
-var notify StateCallback
-
-func SetCallback(cb StateCallback) {
-	notify = cb
-}
-
-func Reset() {
-	nextHook = 0
-}
-
-func UseState(initial State) (State, Setter) {
-	index := nextHook
-	nextHook++
+func UseState[T any](initial T) (T, func(T)) {
+	// keep a reference to the current state
+	state := getState()
+	index := state.Next()
 
 	// store state
-	state := initial
-	if len(hookState) > index {
-		state = hookState[index]
+	value := initial
+	if len(state.data) > index {
+		value = state.data[index].(T)
 	} else {
-		hookState = append(hookState, state)
+		state.data = append(state.data, value)
 	}
 
-	setter := func(new State) {
-		hookState[index] = new
-		if notify != nil {
-			notify()
-		}
+	setter := func(new T) {
+		state.data[index] = new
 	}
-	return state, setter
+	return value, setter
 }
 
-func UseEffect(callback Effect, deps ...State) {
-	index := nextHook
-	nextHook++
+func UseEffect(callback Effect, deps ...any) {
+	// keep a reference to the current state
+	state := getState()
+	index := state.Next()
 
 	noDeps := len(deps) == 0
 	changed := false
-	if len(hookState) > index {
-		prev := hookState[index].([]State)
+	if len(state.data) > index {
+		prev := state.data[index].([]any)
 		for i, dep := range deps {
 			if prev[i] != dep {
 				changed = true
@@ -55,7 +37,7 @@ func UseEffect(callback Effect, deps ...State) {
 			}
 		}
 	} else {
-		hookState[index] = deps
+		state.data[index] = deps
 	}
 
 	if noDeps || changed {

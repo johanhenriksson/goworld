@@ -38,16 +38,21 @@ func (mat *material) String() string {
 }
 
 // Use sets the current shader and activates textures
-func (mat *material) Use() {
-	mat.T.Use()
+func (mat *material) Use() error {
+	if err := mat.T.Use(); err != nil {
+		return err
+	}
 	for i, name := range mat.slots {
 		slot := texture.Slot(i)
 		tex := mat.textures[name]
-		tex.Use(slot)
+		if err := tex.Use(slot); err != nil {
+			return err
+		}
 		if err := mat.T.Texture2D(name, slot); err != nil {
-			panic(err)
+			return err
 		}
 	}
+	return nil
 }
 
 func (mat *material) Texture(name string, tex texture.T) {

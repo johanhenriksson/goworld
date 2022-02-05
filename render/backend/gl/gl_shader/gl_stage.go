@@ -5,7 +5,6 @@ import (
 
 	"github.com/johanhenriksson/goworld/render/backend/gl"
 	"github.com/johanhenriksson/goworld/render/shader"
-	"github.com/johanhenriksson/goworld/util"
 )
 
 // stage represents a shader part of a GLSL program
@@ -31,7 +30,7 @@ func (stage *stage) ID() shader.StageID {
 
 // CompileFile loads and compiles source code from the given file path
 func (stage *stage) CompileFile(path string) error {
-	source, err := ioutil.ReadFile(util.ExePath + path)
+	source, err := ioutil.ReadFile(path)
 	if err != nil {
 		return err
 	}

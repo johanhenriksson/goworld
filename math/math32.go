@@ -1,6 +1,7 @@
 package math
 
 import (
+	"constraints"
 	"math"
 )
 
@@ -24,7 +25,7 @@ var (
 )
 
 // Abs returns the absolute value of a number
-func Abs(v float32) float32 {
+func Abs[T constraints.Float | constraints.Integer](v T) T {
 	if v < 0 {
 		return -v
 	}
@@ -32,7 +33,7 @@ func Abs(v float32) float32 {
 }
 
 // Min returns the smaller of two numbers
-func Min(a, b float32) float32 {
+func Min[T constraints.Ordered](a, b T) T {
 	if a < b {
 		return a
 	}
@@ -40,7 +41,7 @@ func Min(a, b float32) float32 {
 }
 
 // Max returns the greater of two numbers
-func Max(a, b float32) float32 {
+func Max[T constraints.Ordered](a, b T) T {
 	if a > b {
 		return a
 	}
@@ -48,7 +49,7 @@ func Max(a, b float32) float32 {
 }
 
 // Clamp a value between a minimum and a maximum value
-func Clamp(v, min, max float32) float32 {
+func Clamp[T constraints.Ordered](v, min, max T) T {
 	if v > max {
 		return max
 	}

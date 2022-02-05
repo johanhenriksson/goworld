@@ -33,8 +33,8 @@ func NewGaussianPass(input texture.T) *GaussianPass {
 
 	shader := gl_shader.CompileShader(
 		"gaussian_pass",
-		"/assets/shaders/pass/postprocess.vs",
-		"/assets/shaders/pass/gaussian.fs")
+		"assets/shaders/pass/postprocess.vs",
+		"assets/shaders/pass/gaussian.fs")
 
 	mat := material.New("gaussian_pass", shader)
 	mat.Texture("tex_input", input)

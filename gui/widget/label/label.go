@@ -3,6 +3,7 @@ package label
 import (
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/gui/dimension"
+	"github.com/johanhenriksson/goworld/gui/node"
 	"github.com/johanhenriksson/goworld/gui/widget"
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/render"
@@ -27,14 +28,17 @@ type label struct {
 	renderer Renderer
 }
 
-func New(key string, props *Props) T {
+func New(key string, props *Props) node.T {
 	if props.Size == 0 {
 		props.Size = 12
 	}
 	if props.LineHeight == 0 {
 		props.LineHeight = 0
 	}
+	return node.Builtin(key, props, nil, new)
+}
 
+func new(key string, props *Props) T {
 	return &label{
 		T:        widget.New(key),
 		props:    props,
@@ -44,8 +48,8 @@ func New(key string, props *Props) T {
 
 func (l *label) Size() vec2.T { return l.T.Size() }
 
-func (l *label) Props() widget.Props       { return l.props }
-func (l *label) Update(props widget.Props) { l.props = props.(*Props) }
+func (l *label) Props() any       { return l.props }
+func (l *label) Update(props any) { l.props = props.(*Props) }
 
 func (l *label) Draw(args render.Args) {
 	l.T.Draw(args)

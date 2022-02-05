@@ -28,8 +28,8 @@ type lightshader struct {
 func NewLightShader(gbuffer framebuffer.Geometry) LightShader {
 	shader := gl_shader.CompileShader(
 		"light_pass",
-		"/assets/shaders/pass/postprocess.vs",
-		"/assets/shaders/pass/light.fs")
+		"assets/shaders/pass/postprocess.vs",
+		"assets/shaders/pass/light.fs")
 
 	mat := material.New("light_pass", shader)
 	mat.Texture("tex_diffuse", gbuffer.Diffuse())
