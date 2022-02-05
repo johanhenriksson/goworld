@@ -6,7 +6,6 @@ import (
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/core/scene"
-	"github.com/johanhenriksson/goworld/gui/hooks"
 	"github.com/johanhenriksson/goworld/gui/layout"
 	"github.com/johanhenriksson/goworld/gui/node"
 	"github.com/johanhenriksson/goworld/gui/widget"
@@ -28,27 +27,22 @@ type manager struct {
 	object.T
 	scale float32
 
-	tree node.T
-	gui  widget.T
-	root func() node.T
+	renderer node.Renderer
+	gui      widget.T
 }
 
-func New() Manager {
+func New(app node.RenderFunc) Manager {
 	root := func() node.T {
-		f := TestUI()
-		// f.Move(vec2.New(500, 300))
-		scene := rect.New("GUI", &rect.Props{
+		return rect.New("GUI", &rect.Props{
 			Layout:   layout.Absolute{},
-			Children: []node.T{f},
+			Children: []node.T{app()},
 		})
-		// scene.Resize(vec2.New(1600, 1200))
-		return scene
 	}
 
 	mgr := &manager{
-		T:     object.New("GUI Manager"),
-		root:  root,
-		scale: 1,
+		T:        object.New("GUI Manager"),
+		renderer: node.NewRenderer(root),
+		scale:    1,
 	}
 
 	return mgr
@@ -61,8 +55,7 @@ func (m *manager) Draw(args render.Args, scene scene.T) {
 	// todo: resize if changed
 	// perhaps the root component always accepts screen size etc
 
-	m.tree = node.Reconcile(m.tree, m.root())
-	m.gui = m.tree.Hydrate()
+	m.gui = m.renderer.Render()
 	m.gui.Resize(vec2.NewI(args.Viewport.Width, args.Viewport.Height))
 
 	proj := mat4.Orthographic(0, width, height, 0, 1000, -1000)
@@ -83,8 +76,6 @@ func (m *manager) Draw(args render.Args, scene scene.T) {
 	}
 
 	m.gui.Draw(uiArgs)
-
-	hooks.SetScene(scene)
 }
 
 func (m *manager) MouseEvent(e mouse.Event) {
