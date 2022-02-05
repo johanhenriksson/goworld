@@ -30,10 +30,9 @@ type T interface {
 type editor struct {
 	object.Component
 
-	Chunk   *game.Chunk
-	Camera  camera.T
-	Palette *PaletteWindow
-	Tool    Tool
+	Chunk  *game.Chunk
+	Camera camera.T
+	Tool   Tool
 
 	color       color.T
 	PlaceTool   *PlaceTool
@@ -62,9 +61,8 @@ func NewEditor(chunk *game.Chunk, cam camera.T, gbuffer framebuffer.Geometry) T 
 	e := &editor{
 		Component: object.NewComponent(),
 
-		Chunk:   chunk,
-		Camera:  cam,
-		Palette: NewPaletteWindow(color.DefaultPalette),
+		Chunk:  chunk,
+		Camera: cam,
 
 		PlaceTool:   NewPlaceTool(),
 		EraseTool:   NewEraseTool(),
@@ -84,8 +82,6 @@ func NewEditor(chunk *game.Chunk, cam camera.T, gbuffer framebuffer.Geometry) T 
 	}).
 		Parent(parent).
 		Create()
-
-	e.Palette.SetPosition(vec2.New(300, 20))
 
 	// X Construction Plane
 	plane.Builder(&e.XPlane, plane.Args{

@@ -25,7 +25,6 @@ type rect struct {
 }
 
 type Props struct {
-	Border   float32
 	Color    color.T
 	Layout   layout.T
 	Width    dimension.T

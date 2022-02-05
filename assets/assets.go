@@ -107,3 +107,7 @@ func GetFont(name string, size int) font.T {
 
 	return font
 }
+
+func DefaultFont() font.T {
+	return GetFont("assets/fonts/SourceCodeProRegular.ttf", 12*2)
+}

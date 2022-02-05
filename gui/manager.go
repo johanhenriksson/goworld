@@ -1,8 +1,6 @@
 package gui
 
 import (
-	"fmt"
-
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/core/scene"
@@ -86,10 +84,6 @@ func (m *manager) MouseEvent(e mouse.Event) {
 
 	// scale down to low dpi.
 	ev := e.Project(e.Position().Scaled(1 / m.scale))
-
-	if e.Action() == mouse.Press {
-		fmt.Println(e.Position())
-	}
 
 	hit := false
 	for _, frame := range m.gui.Children() {

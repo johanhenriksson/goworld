@@ -2,8 +2,8 @@ package layout_test
 
 import (
 	. "github.com/johanhenriksson/goworld/gui/layout"
-	"github.com/johanhenriksson/goworld/gui/rect"
 	"github.com/johanhenriksson/goworld/gui/widget"
+	"github.com/johanhenriksson/goworld/gui/widget/rect"
 	"github.com/johanhenriksson/goworld/math/vec2"
 
 	"testing"

@@ -24,6 +24,7 @@ import (
 	"runtime/pprof"
 
 	"github.com/johanhenriksson/goworld/core/light"
+	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/core/object/query"
 	"github.com/johanhenriksson/goworld/core/scene"
 	"github.com/johanhenriksson/goworld/core/window"
@@ -32,8 +33,12 @@ import (
 	"github.com/johanhenriksson/goworld/game"
 	"github.com/johanhenriksson/goworld/geometry/gizmo/mover"
 	"github.com/johanhenriksson/goworld/gui"
+	"github.com/johanhenriksson/goworld/gui/dimension"
+	"github.com/johanhenriksson/goworld/gui/layout"
 	"github.com/johanhenriksson/goworld/gui/node"
+	"github.com/johanhenriksson/goworld/gui/widget/label"
 	"github.com/johanhenriksson/goworld/gui/widget/palette"
+	"github.com/johanhenriksson/goworld/gui/widget/rect"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/ui"
@@ -42,6 +47,27 @@ import (
 )
 
 var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
+
+func ObjectHierarchy(idx int, obj object.T) node.T {
+	children := make([]node.T, len(obj.Children())+1)
+	clr := color.White
+	if !obj.Active() {
+		clr = color.RGB(0.7, 0.7, 0.7)
+	}
+	children[0] = label.New("title", &label.Props{
+		Text:  obj.Name(),
+		Color: clr,
+	})
+	for i, child := range obj.Children() {
+		children[i+1] = ObjectHierarchy(i, child)
+	}
+	return rect.New(fmt.Sprintf("object%d", idx), &rect.Props{
+		Layout: layout.Column{
+			Padding: 4,
+		},
+		Children: children,
+	})
+}
 
 func main() {
 	fmt.Println("goworld")
@@ -73,21 +99,31 @@ func main() {
 		panic(err)
 	}
 
-	// app := engine.NewApplication("goworld", 1400, 1000)
 	renderer := engine.NewRenderer(wnd)
 
 	// attach GUI manager first.
 	// this will give it input priority
 	guim := gui.New(func() node.T {
-		return palette.New("palette", &palette.Props{
-			Palette: color.DefaultPalette,
-			OnPick: func(clr color.T) {
-				editor := query.New[editor.T]().First(scene)
-				if editor == nil {
-					panic("could not find editor")
-				}
+		return rect.New("sidebar", &rect.Props{
+			Layout: layout.Column{},
+			Width:  dimension.Percent(15),
+			Height: dimension.Percent(100),
+			Children: []node.T{
+				palette.New("palette", &palette.Props{
+					Palette: color.DefaultPalette,
+					OnPick: func(clr color.T) {
+						editor := query.New[editor.T]().First(scene)
+						if editor == nil {
+							panic("could not find editor")
+						}
 
-				editor.SelectColor(clr)
+						editor.SelectColor(clr)
+					},
+				}),
+				rect.New("objects", &rect.Props{
+					Color:    color.RGBA(0, 0, 0, 0.75),
+					Children: []node.T{ObjectHierarchy(0, scene)},
+				}),
 			},
 		})
 	})

@@ -1,5 +1,7 @@
 package node
 
+import "fmt"
+
 func Reconcile(target, new T) T {
 	// no source tree - just go with the new one
 	if target == nil {
@@ -24,6 +26,9 @@ func Reconcile(target, new T) T {
 	// this allows us to reuse nodes and keep track of deletions
 	previous := map[string]T{}
 	for _, child := range target.Children() {
+		if _, exists := previous[child.Key()]; exists {
+			panic(fmt.Errorf("duplicate key %s in children of %s", child.Key(), target.Key()))
+		}
 		// todo: check for duplicate keys
 		previous[child.Key()] = child
 	}

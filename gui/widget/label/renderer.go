@@ -2,7 +2,7 @@ package label
 
 import (
 	"github.com/johanhenriksson/goworld/assets"
-	"github.com/johanhenriksson/goworld/geometry"
+	"github.com/johanhenriksson/goworld/gui/quad"
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/backend/gl/gl_texture"
@@ -20,42 +20,73 @@ type Renderer interface {
 
 type renderer struct {
 	text   string
-	color  color.T
+	size   int
 	bounds vec2.T
-	size   vec2.T
 
-	font font.T
-	tex  texture.T
-	mat  material.T
-	mesh *geometry.Rect
+	font  font.T
+	tex   texture.T
+	mat   material.T
+	mesh  quad.T
+	uvs   quad.UV
+	color color.T
 }
 
 func (r *renderer) Draw(args render.Args, label T, props *Props) {
-	fnt := assets.GetFont("assets/fonts/SourceCodeProRegular.ttf", int(props.Size*2))
+	if props.Text == "" {
+		return
+	}
 
 	if r.mesh == nil {
 		r.mat = assets.GetMaterial("ui_texture")
-		r.mesh = geometry.NewRect(r.mat, vec2.Zero)
+		r.uvs = quad.UV{
+			A: vec2.New(0, 0),
+			B: vec2.New(1, 1),
+		}
+		r.mesh = quad.New(r.mat, quad.Props{
+			UVs:   r.uvs,
+			Size:  r.bounds.Scaled(0.5),
+			Color: props.Color,
+		})
 	}
 
-	if r.text != props.Text || fnt != r.font || r.color != props.Color {
+	textChanged := r.text != props.Text
+	fontChanged := r.font != props.Font
+	sizeChanged := r.size != props.Size
+	colorChanged := r.color != props.Color
+
+	invalidateTexture := textChanged || sizeChanged || fontChanged
+	invalidateMesh := sizeChanged || fontChanged || colorChanged
+
+	r.text = props.Text
+	r.font = props.Font
+	r.size = props.Size
+	r.color = props.Color
+
+	if invalidateTexture {
+
 		// (re)create label texture
 		args := font.Args{
 			LineHeight: props.LineHeight,
-			Color:      props.Color,
+			Color:      color.White,
 		}
-		r.font = fnt
 		r.bounds = r.font.Measure(props.Text, args)
-		r.tex = gl_texture.New(int(r.bounds.X), int(r.bounds.Y))
 
-		r.text = props.Text
-		r.color = props.Color
+		// create texture if required
+		if r.tex == nil {
+			r.tex = gl_texture.New(int(r.bounds.X), int(r.bounds.Y))
+			// todo: single channel texture to save memory
+		}
 
 		img := r.font.Render(r.text, args)
-		img.SetRGBA(3, 3, color.Red.RGBA())
 		r.tex.BufferImage(img)
+	}
 
-		r.mesh.SetSize(r.bounds.Scaled(0.5))
+	if invalidateMesh {
+		r.mesh.Update(quad.Props{
+			Size:  r.bounds.Scaled(0.5),
+			UVs:   r.uvs,
+			Color: r.color,
+		})
 	}
 
 	// set correct blending
@@ -74,8 +105,8 @@ func (r *renderer) Draw(args render.Args, label T, props *Props) {
 	// we can center the label on the mesh by modifying the uvs
 	// scale := label.Size().Div(r.bounds)
 
-	r.mesh.Material.Use()
-	r.mesh.Material.RGBA("tint", color.White)
-	r.mesh.Material.Texture("image", r.tex)
+	r.mesh.Material().Use()
+	r.mesh.Material().RGBA("tint", props.Color)
+	r.mesh.Material().Texture("image", r.tex)
 	r.mesh.Draw(args)
 }

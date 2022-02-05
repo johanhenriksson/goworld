@@ -71,7 +71,6 @@ func render(props *Props) node.T {
 	})
 
 	return rect.New("window", &rect.Props{
-		Border: 3.0,
 		Color:  color.Black.WithAlpha(0.8),
 		Width:  dimension.Fixed(140),
 		Height: dimension.Fixed(230),

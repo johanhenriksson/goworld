@@ -20,6 +20,7 @@ var (
 	Yellow      = T{1, 1, 0, 1}
 	Cyan        = T{0, 1, 1, 1}
 	Transparent = T{0, 0, 0, 0}
+	None        = T{0, 0, 0, 0}
 
 	DarkGrey = T{0.2, 0.2, 0.2, 1}
 )
