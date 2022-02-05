@@ -42,7 +42,6 @@ import (
 	"github.com/johanhenriksson/goworld/gui/widget/rect"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render/color"
-	"github.com/johanhenriksson/goworld/ui"
 
 	"github.com/lsfn/ode"
 )
@@ -142,21 +141,12 @@ func main() {
 	})
 
 	scene.Adopt(guim)
-
-	uim := ui.NewManager(1600, 1200)
-	renderer.Append("ui", uim)
 	renderer.Append("gui", guim)
 
 	scene.Attach(light.NewDirectional(light.DirectionalArgs{
-		Intensity: 1.2,
+		Intensity: 1.6,
 		Color:     color.RGB(0.9*0.973, 0.9*0.945, 0.9*0.776),
 		Direction: vec3.New(0.95, -1.6, 1.05),
-		Shadows:   true,
-	}))
-	scene.Attach(light.NewDirectional(light.DirectionalArgs{
-		Intensity: 0.4,
-		Color:     color.RGB(0.9*0.973, 0.9*0.945, 0.9*0.776),
-		Direction: vec3.New(-1.2, -1.05, 1.12),
 		Shadows:   true,
 	}))
 
@@ -184,7 +174,6 @@ func main() {
 	// create editor
 	edit := editor.NewEditor(chunk, player.Camera, renderer.Geometry.Buffer)
 	scene.Adopt(edit.Object())
-	// uim.Attach(edit.Palette)
 
 	// cube := geometry.NewColorCube(render.Blue, 3)
 	// cube.Position = vec3.New(-2, -2, -2)
@@ -196,7 +185,7 @@ func main() {
 	// particles := engine.NewParticleSystem(vec3.New(3, 9, 3))
 	// scene.Add(particles)
 
-	fmt.Println("Ok")
+	fmt.Println("Ready")
 
 	for !wnd.ShouldClose() {
 		scene.Update(0.030)
