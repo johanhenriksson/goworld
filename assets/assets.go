@@ -80,6 +80,10 @@ func GetTexture(name string) texture.T {
 	return texture
 }
 
+func DefaultTexture() texture.T {
+	return GetTexture("textures/uv_checker.png")
+}
+
 func GetColorTexture(color color.T) texture.T {
 	name := fmt.Sprintf("Color%s", color)
 

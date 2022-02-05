@@ -3,7 +3,7 @@
 uniform sampler2D image;
 
 in vec2 out_uv;
-in vec3 out_color;
+in vec4 out_color;
 out vec4 frag_color;
 
 void main() {
@@ -14,6 +14,11 @@ void main() {
         discard;
     }
 
+    vec4 tint = vec4(1);
+    if (out_color.a > 0) {
+        tint = out_color;
+    }
+
     vec4 texcolor = texture(image, uv);
-    frag_color = texcolor.rgba * vec4(out_color.rgb, 1);
+    frag_color = texcolor.rgba * tint;
 }

@@ -36,6 +36,7 @@ import (
 	"github.com/johanhenriksson/goworld/gui/dimension"
 	"github.com/johanhenriksson/goworld/gui/layout"
 	"github.com/johanhenriksson/goworld/gui/node"
+	"github.com/johanhenriksson/goworld/gui/widget/image"
 	"github.com/johanhenriksson/goworld/gui/widget/label"
 	"github.com/johanhenriksson/goworld/gui/widget/palette"
 	"github.com/johanhenriksson/goworld/gui/widget/rect"
@@ -120,8 +121,20 @@ func main() {
 						editor.SelectColor(clr)
 					},
 				}),
+				image.New("diffuse", &image.Props{
+					Image:  renderer.Geometry.Buffer.Diffuse(),
+					Invert: true,
+				}),
+				image.New("normals", &image.Props{
+					Image:  renderer.Geometry.Buffer.Normal(),
+					Invert: true,
+				}),
+				image.New("position", &image.Props{
+					Image:  renderer.Geometry.Buffer.Position(),
+					Invert: true,
+				}),
 				rect.New("objects", &rect.Props{
-					Color:    color.RGBA(0, 0, 0, 0.75),
+					Color:    color.RGBA(0, 0, 0, 0.5),
 					Children: []node.T{ObjectHierarchy(0, scene)},
 				}),
 			},
@@ -172,9 +185,6 @@ func main() {
 	edit := editor.NewEditor(chunk, player.Camera, renderer.Geometry.Buffer)
 	scene.Adopt(edit.Object())
 	// uim.Attach(edit.Palette)
-
-	// buffer debug windows
-	uim.Attach(editor.DebugBufferWindows(renderer))
 
 	// cube := geometry.NewColorCube(render.Blue, 3)
 	// cube.Position = vec3.New(-2, -2, -2)

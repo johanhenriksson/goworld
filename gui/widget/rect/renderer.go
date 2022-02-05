@@ -23,6 +23,7 @@ type renderer struct {
 	mesh  quad.T
 	size  vec2.T
 	color color.T
+	uvs   quad.UV
 }
 
 func (r *renderer) Draw(args render.Args, frame T, props *Props) {
@@ -33,13 +34,13 @@ func (r *renderer) Draw(args render.Args, frame T, props *Props) {
 
 	if r.mesh == nil {
 		r.tex = assets.GetColorTexture(color.White)
-
+		r.uvs = quad.DefaultUVs
 		r.mat = assets.GetMaterial("ui_texture")
 		r.mat.Texture("image", r.tex)
 		r.mesh = quad.New(r.mat, quad.Props{
-			UVs:   quad.DefaultUVs,
-			Size:  frame.Size(),
-			Color: props.Color,
+			UVs:   r.uvs,
+			Size:  r.size,
+			Color: r.color,
 		})
 	}
 
@@ -56,7 +57,7 @@ func (r *renderer) Draw(args render.Args, frame T, props *Props) {
 		r.size = frame.Size()
 		r.color = props.Color
 		r.mesh.Update(quad.Props{
-			UVs:   quad.DefaultUVs,
+			UVs:   r.uvs,
 			Size:  r.size,
 			Color: r.color,
 		})

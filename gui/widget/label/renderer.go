@@ -38,10 +38,7 @@ func (r *renderer) Draw(args render.Args, label T, props *Props) {
 
 	if r.mesh == nil {
 		r.mat = assets.GetMaterial("ui_texture")
-		r.uvs = quad.UV{
-			A: vec2.New(0, 0),
-			B: vec2.New(1, 1),
-		}
+		r.uvs = quad.DefaultUVs
 		r.mesh = quad.New(r.mat, quad.Props{
 			UVs:   r.uvs,
 			Size:  r.bounds.Scaled(0.5),
