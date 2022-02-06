@@ -34,7 +34,27 @@ func TestColumnLayoutFixed(t *testing.T) {
 	assertDimensions(t, b, vec2.New(10, 40), vec2.New(100, 20))
 }
 
-func TestColumnLayoutAuto(t *testing.T) {
+func TestColumnLayoutPercent(t *testing.T) {
+	a := rect.Create("a", &rect.Props{
+		Height: dimension.Percent(50),
+	})
+	b := rect.Create("b", &rect.Props{
+		Height: dimension.Percent(30),
+	})
+	parent := rect.Create("parent", &rect.Props{})
+	parent.SetChildren([]widget.T{a, b})
+
+	parent.Arrange(vec2.New(100, 100))
+
+	// inner bounds should be 100x50
+	// gutter is 10px -> usable space 100x40
+
+	assertDimensions(t, parent, vec2.New(0, 0), vec2.New(100, 80))
+	assertDimensions(t, a, vec2.New(0, 0), vec2.New(100, 50))
+	assertDimensions(t, b, vec2.New(0, 50), vec2.New(100, 30))
+}
+
+func TestColumnLayoutAutoHeight(t *testing.T) {
 	a := rect.Create("a", &rect.Props{
 		Width:  dimension.Fixed(10),
 		Height: dimension.Fixed(10),

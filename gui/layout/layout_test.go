@@ -27,9 +27,9 @@ func TestLayoutAbsolute(t *testing.T) {
 func assertDimensions(t *testing.T, w widget.T, pos, size vec2.T) {
 	t.Helper()
 	if !w.Position().ApproxEqual(pos) {
-		t.Errorf("expected widget position %s, got %s", pos, w.Position())
+		t.Errorf("expected widget %s position %s, got %s", w.Key(), pos, w.Position())
 	}
 	if !w.Size().ApproxEqual(size) {
-		t.Errorf("expected widget size %s, got %s", size, w.Size())
+		t.Errorf("expected widget %s size %s, got %s", w.Key(), size, w.Size())
 	}
 }

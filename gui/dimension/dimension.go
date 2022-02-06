@@ -31,6 +31,6 @@ func (a auto) Auto() bool                     { return true }
 
 type Percent float32
 
-func (p Percent) Resolve(parent float32) float32 { return 0.01 * float32(p) }
+func (p Percent) Resolve(parent float32) float32 { return 0.01 * float32(p) * parent }
 func (f Percent) Fixed() bool                    { return false }
 func (f Percent) Auto() bool                     { return false }

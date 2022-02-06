@@ -1,6 +1,7 @@
 package layout
 
 import (
+	"github.com/johanhenriksson/goworld/gui/dimension"
 	"github.com/johanhenriksson/goworld/gui/widget"
 	"github.com/johanhenriksson/goworld/math/vec2"
 )
@@ -8,6 +9,8 @@ import (
 type T interface {
 	// Measure(widget.T, vec2.T) vec2.T
 	Arrange(widget.T, vec2.T) vec2.T
+	Width(dimension.T, []widget.T, float32) dimension.T
+	Height(dimension.T, []widget.T, float32) dimension.T
 }
 
 type Layoutable interface {

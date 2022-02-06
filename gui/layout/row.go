@@ -1,6 +1,7 @@
 package layout
 
 import (
+	"github.com/johanhenriksson/goworld/gui/dimension"
 	"github.com/johanhenriksson/goworld/gui/widget"
 	"github.com/johanhenriksson/goworld/math"
 	"github.com/johanhenriksson/goworld/math/vec2"
@@ -68,4 +69,12 @@ func (r Row) Arrange(w widget.T, space vec2.T) vec2.T {
 		size.Y = content.Y
 	}
 	return size
+}
+
+func (a Row) Width(basis dimension.T, children []widget.T, available float32) dimension.T {
+	return basis
+}
+
+func (a Row) Height(basis dimension.T, children []widget.T, available float32) dimension.T {
+	return basis
 }
