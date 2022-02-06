@@ -2,6 +2,8 @@ package layout_test
 
 import (
 	. "github.com/johanhenriksson/goworld/gui/layout"
+
+	"github.com/johanhenriksson/goworld/gui/dimension"
 	"github.com/johanhenriksson/goworld/gui/widget"
 	"github.com/johanhenriksson/goworld/gui/widget/rect"
 	"github.com/johanhenriksson/goworld/math/vec2"
@@ -9,31 +11,123 @@ import (
 	"testing"
 )
 
-func TestColumnLayout(t *testing.T) {
-	a := widget.New("a")
-	b := widget.New("b")
-	parent := rect.New("parent", &rect.Props{}, a, b)
-	parent.Resize(vec2.New(120, 70))
+func TestColumnLayoutFixed(t *testing.T) {
+	a := rect.Create("a", &rect.Props{})
+	b := rect.Create("b", &rect.Props{})
+	parent := rect.Create("parent", &rect.Props{
+		Width:  dimension.Fixed(120),
+		Height: dimension.Fixed(70),
+		Layout: Column{
+			Padding: 10,
+			Gutter:  10,
+		},
+	})
+	parent.SetChildren([]widget.T{a, b})
 
-	c := Column{
-		Padding: 10,
-		Gutter:  10,
-	}
-	c.Flow(parent)
+	parent.Arrange(vec2.New(1000, 300))
 
 	// inner bounds should be 100x50
 	// gutter is 10px -> usable space 100x40
 
+	assertDimensions(t, parent, vec2.New(0, 0), vec2.New(120, 70))
 	assertDimensions(t, a, vec2.New(10, 10), vec2.New(100, 20))
 	assertDimensions(t, b, vec2.New(10, 40), vec2.New(100, 20))
 }
 
-func assertDimensions(t *testing.T, w widget.T, pos, size vec2.T) {
-	t.Helper()
-	if !w.Position().ApproxEqual(pos) {
-		t.Errorf("expected widget position %s, got %s", pos, w.Position())
-	}
-	if !w.Size().ApproxEqual(size) {
-		t.Errorf("expected widget size %s, got %s", pos, w.Size())
-	}
+func TestColumnLayoutAuto(t *testing.T) {
+	a := rect.Create("a", &rect.Props{
+		Width:  dimension.Fixed(10),
+		Height: dimension.Fixed(10),
+	})
+	b := rect.Create("b", &rect.Props{
+		Width:  dimension.Fixed(20),
+		Height: dimension.Fixed(10),
+	})
+	parent := rect.Create("parent", &rect.Props{
+		Layout: Column{
+			Padding: 10,
+			Gutter:  10,
+		},
+	})
+	parent.SetChildren([]widget.T{a, b})
+
+	parent.Arrange(vec2.New(1000, 300))
+
+	// inner bounds should be 100x50
+	// gutter is 10px -> usable space 100x40
+
+	assertDimensions(t, parent, vec2.New(0, 0), vec2.New(40, 50))
+	assertDimensions(t, a, vec2.New(10, 10), vec2.New(10, 10))
+	assertDimensions(t, b, vec2.New(10, 30), vec2.New(20, 10))
+}
+
+func TestColumnLayoutMixed(t *testing.T) {
+	a := rect.Create("a", &rect.Props{
+		Height: dimension.Fixed(10),
+	})
+	b := rect.Create("b", &rect.Props{})
+	c := rect.Create("c", &rect.Props{})
+	parent := rect.Create("parent", &rect.Props{
+		Width:  dimension.Fixed(100),
+		Height: dimension.Fixed(100),
+		Layout: Column{
+			Padding: 10,
+			Gutter:  10,
+		},
+	})
+	parent.SetChildren([]widget.T{a, b, c})
+
+	parent.Arrange(vec2.New(1000, 300))
+
+	// inner bounds should be 80x80
+	// 2x gutter 10px -> usable space 80x60
+
+	assertDimensions(t, parent, vec2.New(0, 0), vec2.New(100, 100))
+	assertDimensions(t, a, vec2.New(10, 10), vec2.New(80, 10))
+
+	// bottom elements share the remaining 50px height
+	assertDimensions(t, b, vec2.New(10, 30), vec2.New(80, 25))
+	assertDimensions(t, c, vec2.New(10, 65), vec2.New(80, 25))
+}
+
+func TestColumnLayoutFixedChildren(t *testing.T) {
+	a := rect.Create("a", &rect.Props{
+		Height: dimension.Fixed(30),
+	})
+	b := rect.Create("b", &rect.Props{
+		Height: dimension.Fixed(30),
+	})
+	parent := rect.Create("parent", &rect.Props{
+		Layout: Column{},
+	})
+	parent.SetChildren([]widget.T{a, b})
+
+	parent.Arrange(vec2.New(100, 300))
+
+	assertDimensions(t, parent, vec2.New(0, 0), vec2.New(100, 60))
+	assertDimensions(t, a, vec2.New(0, 0), vec2.New(100, 30))
+	assertDimensions(t, b, vec2.New(0, 30), vec2.New(100, 30))
+}
+func TestColumnLayoutWeird(t *testing.T) {
+	a := rect.Create("a", &rect.Props{
+		Height: dimension.Fixed(30),
+	})
+	b := rect.Create("b", &rect.Props{
+		Height: dimension.Percent(50),
+	})
+	c := rect.Create("c", &rect.Props{
+		Height: dimension.Auto(),
+	})
+
+	parent := rect.Create("parent", &rect.Props{
+		Layout: Column{},
+	})
+	parent.SetChildren([]widget.T{a, b, c})
+
+	parent.Arrange(vec2.New(100, 300))
+
+	assertDimensions(t, parent, vec2.New(0, 0), vec2.New(100, 300))
+	assertDimensions(t, a, vec2.New(0, 0), vec2.New(100, 30))
+	assertDimensions(t, b, vec2.New(0, 30), vec2.New(100, 135))
+	assertDimensions(t, c, vec2.New(0, 165), vec2.New(100, 135))
 }

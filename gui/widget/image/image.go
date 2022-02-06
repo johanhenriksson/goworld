@@ -22,6 +22,8 @@ type Props struct {
 	Image   texture.T
 	Tint    color.T
 	Invert  bool
+	Width   dimension.T
+	Height  dimension.T
 	OnClick mouse.Callback
 }
 
@@ -45,11 +47,15 @@ func new(key string, props *Props) T {
 	return img
 }
 
-func (i *image) Size() vec2.T { return i.T.Size() }
-
 func (i *image) Props() any { return i.props }
 func (i *image) Update(props any) {
 	i.props = props.(*Props)
+	if i.props.Width == nil {
+		i.props.Width = dimension.Auto()
+	}
+	if i.props.Height == nil {
+		i.props.Height = dimension.Auto()
+	}
 	if i.props.Tint == color.None {
 		i.props.Tint = color.White
 	}
@@ -69,8 +75,15 @@ func (i *image) Draw(args render.Args) {
 	i.renderer.Draw(args, i, i.props)
 }
 
-func (i *image) Width() dimension.T  { return dimension.Fixed(i.size.X) }
-func (i *image) Height() dimension.T { return dimension.Fixed(i.size.Y) }
+func (i *image) Width() dimension.T  { return i.props.Width }
+func (i *image) Height() dimension.T { return i.props.Height }
+
+func (i *image) Arrange(space vec2.T) vec2.T {
+	aspect := i.size.X / i.size.Y
+	return vec2.New(
+		space.X,
+		space.X/aspect)
+}
 
 //
 // Events

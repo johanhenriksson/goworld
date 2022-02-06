@@ -25,6 +25,8 @@ type Props struct {
 	Font       font.T
 	Size       int
 	LineHeight float32
+	Width      dimension.T
+	Height     dimension.T
 	OnClick    mouse.Callback
 }
 
@@ -62,6 +64,12 @@ func (l *label) Size() vec2.T { return l.T.Size() }
 func (l *label) Props() any { return l.props }
 func (l *label) Update(props any) {
 	l.props = props.(*Props)
+	if l.props.Width == nil {
+		l.props.Width = dimension.Auto()
+	}
+	if l.props.Height == nil {
+		l.props.Height = dimension.Auto()
+	}
 	l.size = l.props.Font.Measure(l.Text(), font.Args{
 		LineHeight: l.LineHeight(),
 	})
@@ -78,8 +86,15 @@ func (l *label) Draw(args render.Args) {
 	l.renderer.Draw(args, l, l.props)
 }
 
-func (l *label) Width() dimension.T  { return dimension.Fixed(l.size.X) }
-func (l *label) Height() dimension.T { return dimension.Fixed(l.size.Y) }
+func (l *label) Width() dimension.T  { return l.props.Width }
+func (l *label) Height() dimension.T { return l.props.Height }
+
+func (l *label) Arrange(space vec2.T) vec2.T {
+	if space.X < l.size.X {
+		// reflow text
+	}
+	return l.size
+}
 
 //
 // Events

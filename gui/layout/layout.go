@@ -6,7 +6,8 @@ import (
 )
 
 type T interface {
-	Flow(Layoutable)
+	// Measure(widget.T, vec2.T) vec2.T
+	Arrange(widget.T, vec2.T) vec2.T
 }
 
 type Layoutable interface {

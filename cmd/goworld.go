@@ -75,11 +75,13 @@ func main() {
 	// cpu profiling
 	flag.Parse()
 	if *cpuprofile != "" {
-		f, err := os.Create(*cpuprofile)
+		os.MkdirAll("profiling", 0755)
+		ppath := fmt.Sprintf("profiling/%s", *cpuprofile)
+		f, err := os.Create(ppath)
 		if err != nil {
 			panic(err)
 		}
-		fmt.Println("writing cpu profiling output to", *cpuprofile)
+		fmt.Println("writing cpu profiling output to", ppath)
 		pprof.StartCPUProfile(f)
 		defer pprof.StopCPUProfile()
 	}
@@ -123,14 +125,17 @@ func main() {
 				image.New("diffuse", &image.Props{
 					Image:  renderer.Geometry.Buffer.Diffuse(),
 					Invert: true,
+					Width:  dimension.Percent(100),
 				}),
 				image.New("normals", &image.Props{
 					Image:  renderer.Geometry.Buffer.Normal(),
 					Invert: true,
+					Width:  dimension.Percent(100),
 				}),
 				image.New("position", &image.Props{
 					Image:  renderer.Geometry.Buffer.Position(),
 					Invert: true,
+					Width:  dimension.Percent(100),
 				}),
 				rect.New("objects", &rect.Props{
 					Color:    color.RGBA(0, 0, 0, 0.5),

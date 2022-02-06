@@ -3,6 +3,7 @@ package assets
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/johanhenriksson/goworld/render"
 	glshader "github.com/johanhenriksson/goworld/render/backend/gl/gl_shader"
@@ -47,12 +48,12 @@ func GetShader(name string) shader.T {
 	fmt.Println("+ shader", name)
 
 	files := []string{
-		fmt.Sprintf("assets/shaders/%s.vs", name),
-		fmt.Sprintf("assets/shaders/%s.fs", name),
+		AssetPath("shaders/%s.vs", name),
+		AssetPath("shaders/%s.fs", name),
 	}
 
 	// optional geometry shader
-	gsPath := fmt.Sprintf("assets/shaders/%s.gs", name)
+	gsPath := AssetPath("shaders/%s.gs", name)
 	if _, err := os.Stat(gsPath); err == nil {
 		files = append(files, gsPath)
 	}
@@ -71,7 +72,7 @@ func GetTexture(name string) texture.T {
 
 	// attempt to load
 	fmt.Println("+ texture", name)
-	texture, error := render.TextureFromFile("assets/" + name)
+	texture, error := render.TextureFromFile(AssetPath(name))
 	if error != nil {
 		panic(fmt.Sprintf("Error loading texture %s: %s", name, error))
 	}
@@ -106,12 +107,38 @@ func GetFont(name string, size int) font.T {
 	}
 
 	fmt.Printf("+ font %s %dpt\n", name, size)
-	font := font.Load(name, size)
+	font := font.Load(AssetPath(name), size)
 	cache.Fonts[key] = font
 
 	return font
 }
 
 func DefaultFont() font.T {
-	return GetFont("assets/fonts/SourceCodeProRegular.ttf", 12*2)
+	return GetFont("fonts/SourceCodeProRegular.ttf", 12*2)
+}
+
+var assetRoot = ""
+
+func AssetPath(path string, args ...any) string {
+	if assetRoot == "" {
+		cwd, err := os.Getwd()
+		if err != nil {
+			panic(err)
+		}
+		assetRoot = FindFileInParents("assets", cwd)
+	}
+	return filepath.Join(assetRoot, "assets", fmt.Sprintf(path, args...))
+}
+
+func FindFileInParents(name, path string) string {
+	files, err := os.ReadDir(path)
+	if err != nil {
+		panic(err)
+	}
+	for _, file := range files {
+		if file.Name() == name {
+			return path
+		}
+	}
+	return FindFileInParents(name, filepath.Dir(path))
 }

@@ -54,7 +54,7 @@ func (m *manager) Draw(args render.Args, scene scene.T) {
 	// perhaps the root component always accepts screen size etc
 
 	m.gui = m.renderer.Render()
-	m.gui.Resize(vec2.NewI(args.Viewport.Width, args.Viewport.Height))
+	m.gui.Arrange(vec2.NewI(args.Viewport.Width, args.Viewport.Height))
 
 	proj := mat4.Orthographic(0, width, height, 0, 1000, -1000)
 	view := mat4.Scale(vec3.New(m.scale, m.scale, 1)) // todo: ui scaling

@@ -89,6 +89,14 @@ func (f *font) Render(text string, args Args) *image.RGBA {
 	output := image.NewRGBA(image.Rect(0, 0, int(math.Ceil(size.X)), int(math.Ceil(size.Y))))
 	f.drawer.Dst = output
 
+	for y := 0; y < output.Bounds().Size().Y; y++ {
+		for x := 0; x < output.Bounds().Size().X; x++ {
+			if x == 0 || y == 0 || x == output.Bounds().Size().X-1 || y == output.Bounds().Size().Y-1 {
+				output.Set(x, y, color.Red.RGBA())
+			}
+		}
+	}
+
 	s := 0
 	line := 1
 	lineHeight := int(math.Ceil(f.size * args.LineHeight))

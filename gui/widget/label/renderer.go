@@ -36,6 +36,10 @@ func (r *renderer) Draw(args render.Args, label T, props *Props) {
 		return
 	}
 
+	if props.Font == nil {
+		props.Font = assets.DefaultFont()
+	}
+
 	if r.mesh == nil {
 		r.mat = assets.GetMaterial("ui_texture")
 		r.uvs = quad.DefaultUVs

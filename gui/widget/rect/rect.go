@@ -44,18 +44,16 @@ func New(key string, props *Props) node.T {
 	if props.Height == nil {
 		props.Height = dimension.Auto()
 	}
-	return node.Builtin(key, props, props.Children, new)
+	return node.Builtin(key, props, props.Children, Create)
 }
 
-func new(key string, props *Props) T {
-	f := &rect{
+func Create(key string, props *Props) T {
+	rect := &rect{
 		T:        widget.New(key),
-		props:    props,
 		renderer: &renderer{},
 	}
-
-	f.Reflow()
-	return f
+	rect.Update(props)
+	return rect
 }
 
 func (f *rect) Draw(args render.Args) {
@@ -76,25 +74,22 @@ func (f *rect) Draw(args render.Args) {
 	}
 }
 
-func (f *rect) Reflow() {
-	f.props.Layout.Flow(f)
-
-	// recursively layout children
-	for _, child := range f.children {
-		child.Reflow()
-	}
-}
-
-func (f *rect) Resize(s vec2.T) {
-	f.T.Resize(s)
-	f.Reflow()
-}
-
 func (f *rect) Children() []widget.T     { return f.children }
 func (f *rect) SetChildren(c []widget.T) { f.children = c }
 
 func (f *rect) Width() dimension.T  { return f.props.Width }
 func (f *rect) Height() dimension.T { return f.props.Height }
+
+func (f *rect) Arrange(space vec2.T) vec2.T {
+	size := f.props.Layout.Arrange(f, space)
+	f.SetSize(size)
+	return size
+}
+
+func (f *rect) Measure(space vec2.T) vec2.T {
+	return vec2.Zero
+	// return f.props.Layout.Measure(space)
+}
 
 //
 // Lifecycle
@@ -103,6 +98,15 @@ func (f *rect) Height() dimension.T { return f.props.Height }
 func (f *rect) Props() any { return f.props }
 func (f *rect) Update(p any) {
 	f.props = p.(*Props)
+	if f.props.Width == nil {
+		f.props.Width = dimension.Auto()
+	}
+	if f.props.Height == nil {
+		f.props.Height = dimension.Auto()
+	}
+	if f.props.Layout == nil {
+		f.props.Layout = layout.Column{}
+	}
 }
 
 func (f *rect) Destroy() {

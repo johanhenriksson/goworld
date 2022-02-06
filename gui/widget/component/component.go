@@ -57,14 +57,9 @@ func (c *component) Draw(args render.Args) {
 	}
 }
 
-func (c *component) Reflow() {
+func (c *component) SetSize(s vec2.T) {
 	if c.wrap != nil {
-		c.wrap.Reflow()
-	}
-}
-func (c *component) Resize(s vec2.T) {
-	if c.wrap != nil {
-		c.wrap.Resize(s)
+		c.wrap.SetSize(s)
 	}
 }
 
@@ -75,9 +70,9 @@ func (c *component) Size() vec2.T {
 	return vec2.Zero
 }
 
-func (c *component) Move(t vec2.T) {
+func (c *component) SetPosition(t vec2.T) {
 	if c.wrap != nil {
-		c.wrap.Move(t)
+		c.wrap.SetPosition(t)
 	}
 }
 func (c *component) Position() vec2.T {
@@ -99,6 +94,13 @@ func (c *component) Height() dimension.T {
 		return c.wrap.Height()
 	}
 	return dimension.Auto()
+}
+
+func (c *component) Arrange(space vec2.T) vec2.T {
+	if c.wrap != nil {
+		return c.wrap.Arrange(space)
+	}
+	return vec2.Zero
 }
 
 func (c *component) Destroy() {

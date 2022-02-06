@@ -8,6 +8,7 @@ import (
 	"github.com/johanhenriksson/goworld/gui/widget"
 	"github.com/johanhenriksson/goworld/gui/widget/palette"
 	"github.com/johanhenriksson/goworld/gui/widget/rect"
+	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/render/color"
 )
 
@@ -18,10 +19,18 @@ func TestClickSwatch(t *testing.T) {
 		})
 	})
 	w := app.Render()
+	w.Arrange(vec2.New(1000, 1000))
+
+	if w.Size() != vec2.New(140, 240) {
+		t.Errorf("wrong palette size: %s", w.Size())
+	}
 
 	swatch := widget.Find(w, "color1")
 	if swatch == nil {
 		t.Error("could not find swatch widget")
+	}
+	if swatch.Size() != vec2.New(20, 20) {
+		t.Errorf("wrong swatch size: %s", swatch.Size())
 	}
 
 	// click color swatch
