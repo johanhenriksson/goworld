@@ -1,5 +1,7 @@
 package vec2
 
+import "github.com/johanhenriksson/goworld/math"
+
 // New returns a vec2 from its components
 func New(x, y float32) T {
 	return T{X: x, Y: y}
@@ -18,4 +20,18 @@ func Dot(a, b T) float32 {
 // Distance returns the euclidian distance between two points.
 func Distance(a, b T) float32 {
 	return a.Sub(b).Length()
+}
+
+func Min(a, b T) T {
+	return T{
+		X: math.Min(a.X, b.X),
+		Y: math.Min(a.Y, b.Y),
+	}
+}
+
+func Max(a, b T) T {
+	return T{
+		X: math.Max(a.X, b.X),
+		Y: math.Max(a.Y, b.Y),
+	}
 }

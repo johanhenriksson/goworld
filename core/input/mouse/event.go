@@ -74,3 +74,15 @@ func NewButtonEvent(button Button, action Action, pos vec2.T, mod keys.Modifier,
 		locked:   locked,
 	}
 }
+
+func NewMouseEnterEvent() Event {
+	return &event{
+		action: Enter,
+	}
+}
+
+func NewMouseLeaveEvent() Event {
+	return &event{
+		action: Leave,
+	}
+}

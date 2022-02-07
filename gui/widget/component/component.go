@@ -2,10 +2,11 @@ package component
 
 import (
 	"github.com/johanhenriksson/goworld/core/input/mouse"
-	"github.com/johanhenriksson/goworld/gui/dimension"
+	"github.com/johanhenriksson/goworld/gui/style"
 	"github.com/johanhenriksson/goworld/gui/widget"
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/render"
+	"github.com/kjk/flex"
 )
 
 type T interface {
@@ -57,17 +58,6 @@ func (c *component) Draw(args render.Args) {
 	}
 }
 
-func (c *component) Reflow() {
-	if c.wrap != nil {
-		c.wrap.Reflow()
-	}
-}
-func (c *component) Resize(s vec2.T) {
-	if c.wrap != nil {
-		c.wrap.Resize(s)
-	}
-}
-
 func (c *component) Size() vec2.T {
 	if c.wrap != nil {
 		return c.wrap.Size()
@@ -75,11 +65,6 @@ func (c *component) Size() vec2.T {
 	return vec2.Zero
 }
 
-func (c *component) Move(t vec2.T) {
-	if c.wrap != nil {
-		c.wrap.Move(t)
-	}
-}
 func (c *component) Position() vec2.T {
 	if c.wrap != nil {
 		return c.wrap.Position()
@@ -87,18 +72,24 @@ func (c *component) Position() vec2.T {
 	return vec2.Zero
 }
 
-func (c *component) Width() dimension.T {
+func (c *component) Style() style.Sheet {
 	if c.wrap != nil {
-		return c.wrap.Width()
+		return c.wrap.Style()
 	}
-	return dimension.Auto()
+	return style.Sheet{}
 }
 
-func (c *component) Height() dimension.T {
+func (c *component) SetStyle(style style.Sheet) {
 	if c.wrap != nil {
-		return c.wrap.Height()
+		c.wrap.SetStyle(style)
 	}
-	return dimension.Auto()
+}
+
+func (c *component) Flex() *flex.Node {
+	if c.wrap != nil {
+		return c.wrap.Flex()
+	}
+	return nil
 }
 
 func (c *component) Destroy() {

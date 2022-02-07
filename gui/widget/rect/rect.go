@@ -1,16 +1,15 @@
 package rect
 
 import (
+	"github.com/kjk/flex"
+
 	"github.com/johanhenriksson/goworld/core/input/mouse"
-	"github.com/johanhenriksson/goworld/gui/dimension"
-	"github.com/johanhenriksson/goworld/gui/layout"
 	"github.com/johanhenriksson/goworld/gui/node"
+	"github.com/johanhenriksson/goworld/gui/style"
 	"github.com/johanhenriksson/goworld/gui/widget"
 	"github.com/johanhenriksson/goworld/math/mat4"
-	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
-	"github.com/johanhenriksson/goworld/render/color"
 )
 
 type T interface {
@@ -22,40 +21,30 @@ type rect struct {
 	props    *Props
 	renderer Renderer
 	children []widget.T
+
+	prevMouseTarget mouse.Handler
 }
 
 type Props struct {
-	Color    color.T
-	Layout   layout.T
-	Width    dimension.T
-	Height   dimension.T
-	OnClick  mouse.Callback
-	Children []node.T
+	Style        style.Sheet
+	OnClick      mouse.Callback
+	OnMouseEnter mouse.Callback
+	OnMouseLeave mouse.Callback
+	Children     []node.T
 }
 
 func New(key string, props *Props) node.T {
-	// defaults
-	if props.Layout == nil {
-		props.Layout = layout.Column{}
-	}
-	if props.Width == nil {
-		props.Width = dimension.Auto()
-	}
-	if props.Height == nil {
-		props.Height = dimension.Auto()
-	}
-	return node.Builtin(key, props, props.Children, new)
+	return node.Builtin(key, props, props.Children, Create)
 }
 
-func new(key string, props *Props) T {
-	f := &rect{
+func Create(key string, props *Props) T {
+	rect := &rect{
 		T:        widget.New(key),
-		props:    props,
 		renderer: &renderer{},
+		props:    nil,
 	}
-
-	f.Reflow()
-	return f
+	rect.Update(props)
+	return rect
 }
 
 func (f *rect) Draw(args render.Args) {
@@ -76,33 +65,36 @@ func (f *rect) Draw(args render.Args) {
 	}
 }
 
-func (f *rect) Reflow() {
-	f.props.Layout.Flow(f)
-
-	// recursively layout children
-	for _, child := range f.children {
-		child.Reflow()
+func (f *rect) Children() []widget.T { return f.children }
+func (f *rect) SetChildren(c []widget.T) {
+	f.children = c
+	nodes := make([]*flex.Node, len(c))
+	for i, child := range c {
+		nodes[i] = child.Flex()
 	}
+	f.Flex().Children = nodes
 }
-
-func (f *rect) Resize(s vec2.T) {
-	f.T.Resize(s)
-	f.Reflow()
-}
-
-func (f *rect) Children() []widget.T     { return f.children }
-func (f *rect) SetChildren(c []widget.T) { f.children = c }
-
-func (f *rect) Width() dimension.T  { return f.props.Width }
-func (f *rect) Height() dimension.T { return f.props.Height }
 
 //
 // Lifecycle
 //
 
 func (f *rect) Props() any { return f.props }
+
 func (f *rect) Update(p any) {
-	f.props = p.(*Props)
+	new := p.(*Props)
+
+	styleChanged := true
+	if f.props != nil {
+		styleChanged = new.Style != f.props.Style
+	}
+
+	// update props
+	f.props = new
+
+	if styleChanged {
+		f.SetStyle(new.Style)
+	}
 }
 
 func (f *rect) Destroy() {
@@ -119,6 +111,26 @@ func (f *rect) Destroy() {
 //
 
 func (f *rect) MouseEvent(e mouse.Event) {
+	if e.Action() == mouse.Enter {
+		// prop callback
+		if f.props.OnMouseEnter != nil {
+			f.props.OnMouseEnter(e)
+		}
+	}
+	if e.Action() == mouse.Leave {
+		// prop callback
+		if f.props.OnMouseLeave != nil {
+			f.props.OnMouseLeave(e)
+		}
+
+		if f.prevMouseTarget != nil {
+			// pass it on if we have a current hover target
+			f.prevMouseTarget.MouseEvent(e)
+		}
+		f.prevMouseTarget = nil
+	}
+
+	hit := false
 	for _, frame := range f.children {
 		if handler, ok := frame.(mouse.Handler); ok {
 			ev := e.Project(frame.Position())
@@ -129,6 +141,20 @@ func (f *rect) MouseEvent(e mouse.Event) {
 				continue
 			}
 
+			// we hit something
+			hit = true
+
+			if f.prevMouseTarget != handler {
+				if f.prevMouseTarget != nil {
+					// exit!
+					f.prevMouseTarget.MouseEvent(mouse.NewMouseLeaveEvent())
+				}
+
+				// mouse enter!
+				handler.MouseEvent(mouse.NewMouseEnterEvent())
+			}
+			f.prevMouseTarget = handler
+
 			handler.MouseEvent(ev)
 			if ev.Handled() {
 				e.Consume()
@@ -137,8 +163,10 @@ func (f *rect) MouseEvent(e mouse.Event) {
 		}
 	}
 
-	// how to do mouse enter/exit events?
-	// we wont get any event when the mouse is outside
+	if !hit && f.prevMouseTarget != nil {
+		f.prevMouseTarget.MouseEvent(mouse.NewMouseLeaveEvent())
+		f.prevMouseTarget = nil
+	}
 
 	if e.Action() == mouse.Press && f.props.OnClick != nil {
 		f.props.OnClick(e)

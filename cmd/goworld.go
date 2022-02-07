@@ -33,9 +33,8 @@ import (
 	"github.com/johanhenriksson/goworld/game"
 	"github.com/johanhenriksson/goworld/geometry/gizmo/mover"
 	"github.com/johanhenriksson/goworld/gui"
-	"github.com/johanhenriksson/goworld/gui/dimension"
-	"github.com/johanhenriksson/goworld/gui/layout"
 	"github.com/johanhenriksson/goworld/gui/node"
+	"github.com/johanhenriksson/goworld/gui/style"
 	"github.com/johanhenriksson/goworld/gui/widget/image"
 	"github.com/johanhenriksson/goworld/gui/widget/label"
 	"github.com/johanhenriksson/goworld/gui/widget/palette"
@@ -55,15 +54,19 @@ func ObjectHierarchy(idx int, obj object.T) node.T {
 		clr = color.RGB(0.7, 0.7, 0.7)
 	}
 	children[0] = label.New("title", &label.Props{
-		Text:  obj.Name(),
-		Color: clr,
+		Text: obj.Name(),
+		Style: style.Sheet{
+			Color: clr,
+		},
 	})
 	for i, child := range obj.Children() {
 		children[i+1] = ObjectHierarchy(i, child)
 	}
-	return rect.New(fmt.Sprintf("object%d", idx), &rect.Props{
-		Layout: layout.Column{
-			Padding: 4,
+	return rect.New(fmt.Sprintf("object%d:%s", idx, obj.Name()), &rect.Props{
+		Style: style.Sheet{
+			Padding: style.Rect{
+				Left: 5,
+			},
 		},
 		Children: children,
 	})
@@ -75,11 +78,13 @@ func main() {
 	// cpu profiling
 	flag.Parse()
 	if *cpuprofile != "" {
-		f, err := os.Create(*cpuprofile)
+		os.MkdirAll("profiling", 0755)
+		ppath := fmt.Sprintf("profiling/%s", *cpuprofile)
+		f, err := os.Create(ppath)
 		if err != nil {
 			panic(err)
 		}
-		fmt.Println("writing cpu profiling output to", *cpuprofile)
+		fmt.Println("writing cpu profiling output to", ppath)
 		pprof.StartCPUProfile(f)
 		defer pprof.StopCPUProfile()
 	}
@@ -105,9 +110,11 @@ func main() {
 	// this will give it input priority
 	guim := gui.New(func() node.T {
 		return rect.New("sidebar", &rect.Props{
-			Layout: layout.Column{},
-			Width:  dimension.Percent(15),
-			Height: dimension.Percent(100),
+			Style: style.Sheet{
+				Layout: style.Column{},
+				Width:  style.Pct(15),
+				Height: style.Pct(100),
+			},
 			Children: []node.T{
 				palette.New("palette", &palette.Props{
 					Palette: color.DefaultPalette,
@@ -133,7 +140,9 @@ func main() {
 					Invert: true,
 				}),
 				rect.New("objects", &rect.Props{
-					Color:    color.RGBA(0, 0, 0, 0.5),
+					Style: style.Sheet{
+						Color: color.Black.WithAlpha(0.9),
+					},
 					Children: []node.T{ObjectHierarchy(0, scene)},
 				}),
 			},

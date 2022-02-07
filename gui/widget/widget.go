@@ -3,10 +3,14 @@ package widget
 import (
 	"fmt"
 
-	"github.com/johanhenriksson/goworld/gui/dimension"
+	"github.com/johanhenriksson/goworld/gui/style"
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/render"
+
+	"github.com/kjk/flex"
 )
+
+var FlexConfig = flex.NewConfig()
 
 type T interface {
 	Key() string
@@ -31,14 +35,13 @@ type T interface {
 	// Position returns the current position of the element relative to its parent
 	Position() vec2.T
 
-	Resize(vec2.T)
-	Move(vec2.T)
-	Width() dimension.T
-	Height() dimension.T
+	Style() style.Sheet
+	SetStyle(style.Sheet)
 
 	Children() []T
 	SetChildren([]T)
-	Reflow()
+
+	Flex() *flex.Node
 
 	// Draw the widget. This should only be called by the GUI Draw Pass
 	// Calling Draw() will instantiate any required GPU resources prior to drawing.
@@ -52,26 +55,38 @@ type widget struct {
 	size      vec2.T
 	position  vec2.T
 	destroyed bool
+	flex      *flex.Node
+	style     style.Sheet
 }
 
 func New(key string) T {
 	return &widget{
-		key: key,
+		key:  key,
+		flex: flex.NewNodeWithConfig(FlexConfig),
 	}
 }
 
-func (w *widget) Key() string         { return w.key }
-func (w *widget) Position() vec2.T    { return w.position }
-func (w *widget) Size() vec2.T        { return w.size }
-func (w *widget) Width() dimension.T  { return dimension.Auto() }
-func (w *widget) Height() dimension.T { return dimension.Auto() }
-func (w *widget) Destroyed() bool     { return w.destroyed }
-func (w *widget) Move(p vec2.T)       { w.position = p }
-func (w *widget) Resize(s vec2.T)     { w.size = s }
-func (w *widget) Destroy()            { w.destroyed = true }
+func (w *widget) Key() string     { return w.key }
+func (w *widget) Destroyed() bool { return w.destroyed }
+func (w *widget) Destroy()        { w.destroyed = true }
 
-func (w *widget) DesiredHeight(width float32) float32 {
-	return 0
+func (w *widget) Style() style.Sheet { return w.style }
+func (w *widget) SetStyle(style style.Sheet) {
+	w.style = style
+	// w.flex.Reset()
+	w.style.Apply(w.flex)
+}
+
+func (w *widget) Flex() *flex.Node {
+	return w.flex
+}
+
+func (w *widget) Position() vec2.T {
+	return vec2.New(w.flex.LayoutGetLeft(), w.flex.LayoutGetTop())
+}
+
+func (w *widget) Size() vec2.T {
+	return vec2.New(w.flex.LayoutGetWidth(), w.flex.LayoutGetHeight())
 }
 
 func (w *widget) Props() any {
@@ -81,8 +96,6 @@ func (w *widget) Props() any {
 func (w *widget) Update(any) {
 	panic("widget.Update() must be implemented")
 }
-
-func (w *widget) Reflow() {}
 
 func (w *widget) Children() []T     { return nil }
 func (w *widget) SetChildren(c []T) {}

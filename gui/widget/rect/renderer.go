@@ -1,8 +1,6 @@
 package rect
 
 import (
-	"github.com/go-gl/gl/v4.1-core/gl"
-
 	"github.com/johanhenriksson/goworld/assets"
 	"github.com/johanhenriksson/goworld/gui/quad"
 	"github.com/johanhenriksson/goworld/math/vec2"
@@ -28,7 +26,7 @@ type renderer struct {
 
 func (r *renderer) Draw(args render.Args, frame T, props *Props) {
 	// dont draw anything if its transparent anyway
-	if props.Color.A == 0 {
+	if frame.Style().Color.A <= 0 {
 		return
 	}
 
@@ -45,17 +43,16 @@ func (r *renderer) Draw(args render.Args, frame T, props *Props) {
 	}
 
 	// set correct blending
-	// perhaps this belongs somewhere else
-	render.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+	render.BlendMultiply()
 
 	// resize if needed
 	sizeChanged := !frame.Size().ApproxEqual(r.size)
-	colorChanged := props.Color != r.color
+	colorChanged := frame.Style().Color != r.color
 	invalidated := sizeChanged || colorChanged
 
 	if invalidated {
 		r.size = frame.Size()
-		r.color = props.Color
+		r.color = frame.Style().Color
 		r.mesh.Update(quad.Props{
 			UVs:   r.uvs,
 			Size:  r.size,

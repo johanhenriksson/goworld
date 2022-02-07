@@ -9,6 +9,8 @@ const (
 	Release        = Action(glfw.Release)
 	Move           = Action(4)
 	Scroll         = Action(5)
+	Enter          = Action(6)
+	Leave          = Action(7)
 )
 
 func (a Action) String() string {

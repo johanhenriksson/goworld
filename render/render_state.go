@@ -101,6 +101,7 @@ func BlendAdditive() {
 }
 
 func BlendMultiply() {
+	Blend(true)
 	BlendFunc(SrcAlpha, OneMinusSrcAlpha)
 }
 

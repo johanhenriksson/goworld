@@ -1,5 +1,6 @@
 goworld
 chunks/
+profiling/
 .vscode/
 .idea/*
 .DS_Store
