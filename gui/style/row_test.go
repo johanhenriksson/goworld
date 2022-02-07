@@ -13,14 +13,14 @@ import (
 func TestRowFixedChildren(t *testing.T) {
 	a := rect.Create("a", &rect.Props{
 		Style: Sheet{
-			Width:  Fixed(20),
-			Height: Fixed(20),
+			Width:  Px(20),
+			Height: Px(20),
 		},
 	})
 	b := rect.Create("b", &rect.Props{
 		Style: Sheet{
-			Width:  Fixed(20),
-			Height: Fixed(20),
+			Width:  Px(20),
+			Height: Px(20),
 		},
 	})
 	parent := rect.Create("parent", &rect.Props{

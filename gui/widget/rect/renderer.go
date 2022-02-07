@@ -26,7 +26,7 @@ type renderer struct {
 
 func (r *renderer) Draw(args render.Args, frame T, props *Props) {
 	// dont draw anything if its transparent anyway
-	if props.Style.Color.A <= 0.001 {
+	if frame.Style().Color.A <= 0 {
 		return
 	}
 
@@ -47,12 +47,12 @@ func (r *renderer) Draw(args render.Args, frame T, props *Props) {
 
 	// resize if needed
 	sizeChanged := !frame.Size().ApproxEqual(r.size)
-	colorChanged := props.Style.Color != r.color
+	colorChanged := frame.Style().Color != r.color
 	invalidated := sizeChanged || colorChanged
 
 	if invalidated {
 		r.size = frame.Size()
-		r.color = props.Style.Color
+		r.color = frame.Style().Color
 		r.mesh.Update(quad.Props{
 			UVs:   r.uvs,
 			Size:  r.size,

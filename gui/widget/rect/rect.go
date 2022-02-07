@@ -21,12 +21,16 @@ type rect struct {
 	props    *Props
 	renderer Renderer
 	children []widget.T
+
+	prevMouseTarget mouse.Handler
 }
 
 type Props struct {
-	Style    style.Sheet
-	OnClick  mouse.Callback
-	Children []node.T
+	Style        style.Sheet
+	OnClick      mouse.Callback
+	OnMouseEnter mouse.Callback
+	OnMouseLeave mouse.Callback
+	Children     []node.T
 }
 
 func New(key string, props *Props) node.T {
@@ -107,6 +111,26 @@ func (f *rect) Destroy() {
 //
 
 func (f *rect) MouseEvent(e mouse.Event) {
+	if e.Action() == mouse.Enter {
+		// prop callback
+		if f.props.OnMouseEnter != nil {
+			f.props.OnMouseEnter(e)
+		}
+	}
+	if e.Action() == mouse.Leave {
+		// prop callback
+		if f.props.OnMouseLeave != nil {
+			f.props.OnMouseLeave(e)
+		}
+
+		if f.prevMouseTarget != nil {
+			// pass it on if we have a current hover target
+			f.prevMouseTarget.MouseEvent(e)
+		}
+		f.prevMouseTarget = nil
+	}
+
+	hit := false
 	for _, frame := range f.children {
 		if handler, ok := frame.(mouse.Handler); ok {
 			ev := e.Project(frame.Position())
@@ -117,6 +141,20 @@ func (f *rect) MouseEvent(e mouse.Event) {
 				continue
 			}
 
+			// we hit something
+			hit = true
+
+			if f.prevMouseTarget != handler {
+				if f.prevMouseTarget != nil {
+					// exit!
+					f.prevMouseTarget.MouseEvent(mouse.NewMouseLeaveEvent())
+				}
+
+				// mouse enter!
+				handler.MouseEvent(mouse.NewMouseEnterEvent())
+			}
+			f.prevMouseTarget = handler
+
 			handler.MouseEvent(ev)
 			if ev.Handled() {
 				e.Consume()
@@ -125,8 +163,10 @@ func (f *rect) MouseEvent(e mouse.Event) {
 		}
 	}
 
-	// how to do mouse enter/exit events?
-	// we wont get any event when the mouse is outside
+	if !hit && f.prevMouseTarget != nil {
+		f.prevMouseTarget.MouseEvent(mouse.NewMouseLeaveEvent())
+		f.prevMouseTarget = nil
+	}
 
 	if e.Action() == mouse.Press && f.props.OnClick != nil {
 		f.props.OnClick(e)

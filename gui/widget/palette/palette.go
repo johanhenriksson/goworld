@@ -51,10 +51,11 @@ func render(props *Props) node.T {
 		return rect.New(fmt.Sprintf("color%d", i), &rect.Props{
 			Style: style.Sheet{
 				Color:  c,
-				Grow:   1,
-				Shrink: 0,
-				Basis:  style.Fixed(20),
-				Height: style.Fixed(20),
+				Grow:   style.Grow(0),
+				Shrink: style.Shrink(1),
+				Basis:  style.Pct(16),
+				Height: style.Px(20),
+				Margin: style.Px(2),
 			},
 			OnClick: func(e mouse.Event) {
 				setSelected(c)
@@ -68,10 +69,8 @@ func render(props *Props) node.T {
 	rows := Map(Chunks(colors, perRow), func(i int, colors []node.T) node.T {
 		return rect.New(fmt.Sprintf("row%d", i), &rect.Props{
 			Style: style.Sheet{
-				Width: style.Percent(100),
-				Layout: style.Row{
-					Padding: 1,
-				},
+				Width:  style.Pct(100),
+				Layout: style.Row{},
 			},
 			Children: colors,
 		})
@@ -79,10 +78,9 @@ func render(props *Props) node.T {
 
 	return rect.New("window", &rect.Props{
 		Style: style.Sheet{
-			Color: color.Black.WithAlpha(0.9),
-			Layout: style.Column{
-				Padding: 4,
-			},
+			Color:   color.Black.WithAlpha(0.9),
+			Padding: style.Px(4),
+			Layout:  style.Column{},
 		},
 		Children: []node.T{
 			label.New("title", &label.Props{
@@ -95,24 +93,24 @@ func render(props *Props) node.T {
 			rect.New("selected", &rect.Props{
 				Style: style.Sheet{
 					Layout:   style.Row{},
-					MaxWidth: style.Percent(100),
+					MaxWidth: style.Pct(100),
 				},
 				Children: []node.T{
 					label.New("selected", &label.Props{
 						Text: "Selected",
 						Style: style.Sheet{
 							Color: color.White,
-							Basis: style.Percent(80),
-							Grow:  1,
+							Basis: style.Pct(80),
+							Grow:  style.Grow(1),
 						},
 					}),
 					rect.New("preview", &rect.Props{
 						Style: style.Sheet{
 							Color:  selected,
-							Grow:   0,
-							Shrink: 0,
-							Basis:  style.Fixed(20),
-							Height: style.Fixed(20),
+							Grow:   style.Grow(1),
+							Shrink: style.Shrink(1),
+							Basis:  style.Px(20),
+							Height: style.Px(20),
 						},
 					}),
 				},

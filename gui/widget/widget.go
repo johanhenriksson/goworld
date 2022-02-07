@@ -73,7 +73,7 @@ func (w *widget) Destroy()        { w.destroyed = true }
 func (w *widget) Style() style.Sheet { return w.style }
 func (w *widget) SetStyle(style style.Sheet) {
 	w.style = style
-	w.flex.Reset()
+	// w.flex.Reset()
 	w.style.Apply(w.flex)
 }
 

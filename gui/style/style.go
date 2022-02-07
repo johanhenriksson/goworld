@@ -5,40 +5,59 @@ import (
 	"github.com/kjk/flex"
 )
 
+// Each type should define its own style struct!!!
+// rect.Style etc
 type Sheet struct {
-	Color     color.T
-	Basis     Dim
-	Width     Dim
-	MaxWidth  Dim
-	Height    Dim
-	MaxHeight Dim
-	Grow      int
-	Shrink    int
-	Layout    Layout
+	Color color.T
+
+	// Sizing properties
+
+	Width     WidthProp
+	MaxWidth  MaxWidthProp
+	Height    HeightProp
+	MaxHeight MaxHeightProp
+	Padding   PaddingProp
+	Margin    MarginProp
+
+	// Flex properties
+
+	Basis  BasisProp
+	Grow   FlexGrowProp
+	Shrink FlexShrinkProp
+	Layout FlexDirectionProp
 }
 
 func (style *Sheet) Apply(node *flex.Node) {
 	node.StyleSetDisplay(flex.DisplayFlex)
-	node.StyleSetFlexGrow(float32(style.Grow))
-	node.StyleSetFlexShrink(float32(style.Shrink))
 
 	if style.Basis != nil {
-		style.Basis.SetBasis(node)
+		style.Basis.ApplyBasis(node)
 	}
 	if style.Width != nil {
-		style.Width.SetWidth(node)
+		style.Width.ApplyWidth(node)
 	}
 	if style.MaxWidth != nil {
-		style.MaxWidth.SetMaxWidth(node)
+		style.MaxWidth.ApplyMaxWidth(node)
 	}
 	if style.Height != nil {
-		style.Height.SetHeight(node)
+		style.Height.ApplyHeight(node)
 	}
 	if style.MaxHeight != nil {
-		style.MaxHeight.SetMaxHeight(node)
+		style.MaxHeight.ApplyMaxHeight(node)
 	}
-
+	if style.Padding != nil {
+		style.Padding.ApplyPadding(node)
+	}
+	if style.Margin != nil {
+		style.Margin.ApplyMargin(node)
+	}
 	if style.Layout != nil {
-		style.Layout.Apply(node)
+		style.Layout.ApplyFlexDirection(node)
+	}
+	if style.Grow != nil {
+		style.Grow.ApplyFlexGrow(node)
+	}
+	if style.Shrink != nil {
+		style.Shrink.ApplyFlexShrink(node)
 	}
 }

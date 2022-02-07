@@ -62,10 +62,10 @@ func ObjectHierarchy(idx int, obj object.T) node.T {
 	for i, child := range obj.Children() {
 		children[i+1] = ObjectHierarchy(i, child)
 	}
-	return rect.New(fmt.Sprintf("object%d", idx), &rect.Props{
+	return rect.New(fmt.Sprintf("object%d:%s", idx, obj.Name()), &rect.Props{
 		Style: style.Sheet{
-			Layout: style.Column{
-				Padding: 4,
+			Padding: style.Rect{
+				Left: 5,
 			},
 		},
 		Children: children,
@@ -112,8 +112,8 @@ func main() {
 		return rect.New("sidebar", &rect.Props{
 			Style: style.Sheet{
 				Layout: style.Column{},
-				Width:  style.Percent(15),
-				Height: style.Percent(100),
+				Width:  style.Pct(15),
+				Height: style.Pct(100),
 			},
 			Children: []node.T{
 				palette.New("palette", &palette.Props{

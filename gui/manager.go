@@ -5,7 +5,6 @@ import (
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/core/scene"
 	"github.com/johanhenriksson/goworld/gui/node"
-	"github.com/johanhenriksson/goworld/gui/style"
 	"github.com/johanhenriksson/goworld/gui/widget"
 	"github.com/johanhenriksson/goworld/gui/widget/rect"
 	"github.com/johanhenriksson/goworld/math/mat4"
@@ -32,9 +31,6 @@ type manager struct {
 func New(app node.RenderFunc) Manager {
 	root := func() node.T {
 		return rect.New("GUI", &rect.Props{
-			Style: style.Sheet{
-				Layout: style.Absolute{},
-			},
 			Children: []node.T{app()},
 		})
 	}
@@ -84,30 +80,24 @@ func (m *manager) MouseEvent(e mouse.Event) {
 
 	// scale down to low dpi.
 	ev := e.Project(e.Position().Scaled(1 / m.scale))
+	if handler, ok := m.gui.(mouse.Handler); ok {
+		handler.MouseEvent(ev)
+	}
 
-	hit := false
-	for _, frame := range m.gui.Children() {
-		if handler, ok := frame.(mouse.Handler); ok {
-			fev := ev.Project(frame.Position())
-			target := fev.Position()
-			size := frame.Size()
+	// check if the event actually hit something
+	for _, child := range m.gui.Children() {
+		if _, ok := child.(mouse.Handler); ok {
+			ev := ev.Project(child.Position())
+			target := ev.Position()
+			size := child.Size()
 			if target.X < 0 || target.X > size.X || target.Y < 0 || target.Y > size.Y {
 				// outside
 				continue
 			}
 
-			hit = true
-
-			handler.MouseEvent(fev)
-			if fev.Handled() {
-				e.Consume()
-				break
-			}
+			// we hit something
+			e.Consume()
+			break
 		}
-	}
-
-	// consume the event if it hits any UI element
-	if hit {
-		e.Consume()
 	}
 }
