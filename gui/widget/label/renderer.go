@@ -10,8 +10,6 @@ import (
 	"github.com/johanhenriksson/goworld/render/font"
 	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/texture"
-
-	"github.com/go-gl/gl/v4.1-core/gl"
 )
 
 type Renderer interface {
@@ -46,14 +44,14 @@ func (r *renderer) Draw(args render.Args, label T, props *Props) {
 		r.mesh = quad.New(r.mat, quad.Props{
 			UVs:   r.uvs,
 			Size:  r.bounds.Scaled(0.5),
-			Color: props.Color,
+			Color: props.Style.Color,
 		})
 	}
 
 	textChanged := r.text != props.Text
 	fontChanged := r.font != props.Font
 	sizeChanged := r.size != props.Size
-	colorChanged := r.color != props.Color
+	colorChanged := r.color != props.Style.Color
 
 	invalidateTexture := textChanged || sizeChanged || fontChanged
 	invalidateMesh := sizeChanged || fontChanged || colorChanged
@@ -61,7 +59,7 @@ func (r *renderer) Draw(args render.Args, label T, props *Props) {
 	r.text = props.Text
 	r.font = props.Font
 	r.size = props.Size
-	r.color = props.Color
+	r.color = props.Style.Color
 
 	if invalidateTexture {
 
@@ -91,8 +89,7 @@ func (r *renderer) Draw(args render.Args, label T, props *Props) {
 	}
 
 	// set correct blending
-	// perhaps this belongs somewhere else
-	render.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+	render.BlendMultiply()
 
 	// resize mesh if needed
 	// if !label.Size().ApproxEqual(r.size) {
@@ -107,7 +104,6 @@ func (r *renderer) Draw(args render.Args, label T, props *Props) {
 	// scale := label.Size().Div(r.bounds)
 
 	r.mesh.Material().Use()
-	r.mesh.Material().RGBA("tint", props.Color)
 	r.mesh.Material().Texture("image", r.tex)
 	r.mesh.Draw(args)
 }

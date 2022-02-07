@@ -8,8 +8,6 @@ import (
 	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/texture"
-
-	"github.com/go-gl/gl/v4.1-core/gl"
 )
 
 type Renderer interface {
@@ -58,7 +56,7 @@ func (r *renderer) Draw(args render.Args, image T, props *Props) {
 
 	// set correct blending
 	// perhaps this belongs somewhere else
-	render.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+	render.BlendMultiply()
 
 	r.mesh.Material().Use()
 	r.mesh.Material().Texture("image", props.Image)

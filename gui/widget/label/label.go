@@ -3,13 +3,14 @@ package label
 import (
 	"github.com/johanhenriksson/goworld/assets"
 	"github.com/johanhenriksson/goworld/core/input/mouse"
-	"github.com/johanhenriksson/goworld/gui/dimension"
 	"github.com/johanhenriksson/goworld/gui/node"
+	"github.com/johanhenriksson/goworld/gui/style"
 	"github.com/johanhenriksson/goworld/gui/widget"
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/font"
+	"github.com/kjk/flex"
 )
 
 type T interface {
@@ -20,13 +21,11 @@ type T interface {
 }
 
 type Props struct {
+	Style      style.Sheet
 	Text       string
-	Color      color.T
 	Font       font.T
 	Size       int
 	LineHeight float32
-	Width      dimension.T
-	Height     dimension.T
 	OnClick    mouse.Callback
 }
 
@@ -63,16 +62,27 @@ func (l *label) Size() vec2.T { return l.T.Size() }
 
 func (l *label) Props() any { return l.props }
 func (l *label) Update(props any) {
-	l.props = props.(*Props)
-	if l.props.Width == nil {
-		l.props.Width = dimension.Auto()
+	new := props.(*Props)
+
+	invalidated := true
+	styleChanged := true
+	if l.props != nil {
+		textChanged := new.Text != l.props.Text
+		sizeChanged := new.Size != l.props.Size
+		heightChanged := new.LineHeight != l.props.LineHeight
+		styleChanged = new.Style != l.props.Style
+		invalidated = textChanged || sizeChanged || heightChanged
 	}
-	if l.props.Height == nil {
-		l.props.Height = dimension.Auto()
+
+	l.props = new
+
+	if styleChanged {
+		l.SetStyle(new.Style)
 	}
-	l.size = l.props.Font.Measure(l.Text(), font.Args{
-		LineHeight: l.LineHeight(),
-	})
+
+	if invalidated || styleChanged {
+		l.Flex().MarkDirty()
+	}
 }
 
 // prop accessors
@@ -86,14 +96,24 @@ func (l *label) Draw(args render.Args) {
 	l.renderer.Draw(args, l, l.props)
 }
 
-func (l *label) Width() dimension.T  { return l.props.Width }
-func (l *label) Height() dimension.T { return l.props.Height }
+func (l *label) Flex() *flex.Node {
+	node := l.T.Flex()
+	node.SetMeasureFunc(l.measure)
+	return node
+}
 
-func (l *label) Arrange(space vec2.T) vec2.T {
-	if space.X < l.size.X {
-		// reflow text
+func (l *label) measure(node *flex.Node, width float32, widthMode flex.MeasureMode, height float32, heightMode flex.MeasureMode) flex.Size {
+	// todo: consider constraints
+	args := font.Args{
+		LineHeight: l.props.LineHeight,
+		Color:      color.White,
 	}
-	return l.size
+	size := l.props.Font.Measure(l.props.Text, args).Scaled(0.5)
+
+	return flex.Size{
+		Width:  size.X,
+		Height: size.Y,
+	}
 }
 
 //

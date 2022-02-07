@@ -33,9 +33,8 @@ import (
 	"github.com/johanhenriksson/goworld/game"
 	"github.com/johanhenriksson/goworld/geometry/gizmo/mover"
 	"github.com/johanhenriksson/goworld/gui"
-	"github.com/johanhenriksson/goworld/gui/dimension"
-	"github.com/johanhenriksson/goworld/gui/layout"
 	"github.com/johanhenriksson/goworld/gui/node"
+	"github.com/johanhenriksson/goworld/gui/style"
 	"github.com/johanhenriksson/goworld/gui/widget/image"
 	"github.com/johanhenriksson/goworld/gui/widget/label"
 	"github.com/johanhenriksson/goworld/gui/widget/palette"
@@ -55,15 +54,19 @@ func ObjectHierarchy(idx int, obj object.T) node.T {
 		clr = color.RGB(0.7, 0.7, 0.7)
 	}
 	children[0] = label.New("title", &label.Props{
-		Text:  obj.Name(),
-		Color: clr,
+		Text: obj.Name(),
+		Style: style.Sheet{
+			Color: clr,
+		},
 	})
 	for i, child := range obj.Children() {
 		children[i+1] = ObjectHierarchy(i, child)
 	}
 	return rect.New(fmt.Sprintf("object%d", idx), &rect.Props{
-		Layout: layout.Column{
-			Padding: 4,
+		Style: style.Sheet{
+			Layout: style.Column{
+				Padding: 4,
+			},
 		},
 		Children: children,
 	})
@@ -107,9 +110,11 @@ func main() {
 	// this will give it input priority
 	guim := gui.New(func() node.T {
 		return rect.New("sidebar", &rect.Props{
-			Layout: layout.Column{},
-			Width:  dimension.Percent(15),
-			Height: dimension.Percent(100),
+			Style: style.Sheet{
+				Layout: style.Column{},
+				Width:  style.Percent(15),
+				Height: style.Percent(100),
+			},
 			Children: []node.T{
 				palette.New("palette", &palette.Props{
 					Palette: color.DefaultPalette,
@@ -125,20 +130,19 @@ func main() {
 				image.New("diffuse", &image.Props{
 					Image:  renderer.Geometry.Buffer.Diffuse(),
 					Invert: true,
-					Width:  dimension.Percent(100),
 				}),
 				image.New("normals", &image.Props{
 					Image:  renderer.Geometry.Buffer.Normal(),
 					Invert: true,
-					Width:  dimension.Percent(100),
 				}),
 				image.New("position", &image.Props{
 					Image:  renderer.Geometry.Buffer.Position(),
 					Invert: true,
-					Width:  dimension.Percent(100),
 				}),
 				rect.New("objects", &rect.Props{
-					Color:    color.RGBA(0, 0, 0, 0.5),
+					Style: style.Sheet{
+						Color: color.Black.WithAlpha(0.9),
+					},
 					Children: []node.T{ObjectHierarchy(0, scene)},
 				}),
 			},

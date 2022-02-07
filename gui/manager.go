@@ -4,8 +4,8 @@ import (
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/core/scene"
-	"github.com/johanhenriksson/goworld/gui/layout"
 	"github.com/johanhenriksson/goworld/gui/node"
+	"github.com/johanhenriksson/goworld/gui/style"
 	"github.com/johanhenriksson/goworld/gui/widget"
 	"github.com/johanhenriksson/goworld/gui/widget/rect"
 	"github.com/johanhenriksson/goworld/math/mat4"
@@ -32,7 +32,9 @@ type manager struct {
 func New(app node.RenderFunc) Manager {
 	root := func() node.T {
 		return rect.New("GUI", &rect.Props{
-			Layout:   layout.Absolute{},
+			Style: style.Sheet{
+				Layout: style.Absolute{},
+			},
 			Children: []node.T{app()},
 		})
 	}
@@ -50,11 +52,9 @@ func (m *manager) Draw(args render.Args, scene scene.T) {
 	width, height := float32(args.Viewport.FrameWidth), float32(args.Viewport.FrameHeight)
 	m.scale = width / float32(args.Viewport.Width)
 
-	// todo: resize if changed
-	// perhaps the root component always accepts screen size etc
-
-	m.gui = m.renderer.Render()
-	m.gui.Arrange(vec2.NewI(args.Viewport.Width, args.Viewport.Height))
+	// render GUI elements
+	viewport := vec2.NewI(args.Viewport.Width, args.Viewport.Height)
+	m.gui = m.renderer.Render(viewport)
 
 	proj := mat4.Orthographic(0, width, height, 0, 1000, -1000)
 	view := mat4.Scale(vec3.New(m.scale, m.scale, 1)) // todo: ui scaling

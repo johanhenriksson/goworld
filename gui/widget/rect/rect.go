@@ -1,16 +1,15 @@
 package rect
 
 import (
+	"github.com/kjk/flex"
+
 	"github.com/johanhenriksson/goworld/core/input/mouse"
-	"github.com/johanhenriksson/goworld/gui/dimension"
-	"github.com/johanhenriksson/goworld/gui/layout"
 	"github.com/johanhenriksson/goworld/gui/node"
+	"github.com/johanhenriksson/goworld/gui/style"
 	"github.com/johanhenriksson/goworld/gui/widget"
 	"github.com/johanhenriksson/goworld/math/mat4"
-	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
-	"github.com/johanhenriksson/goworld/render/color"
 )
 
 type T interface {
@@ -25,25 +24,12 @@ type rect struct {
 }
 
 type Props struct {
-	Color    color.T
-	Layout   layout.T
-	Width    dimension.T
-	Height   dimension.T
+	Style    style.Sheet
 	OnClick  mouse.Callback
 	Children []node.T
 }
 
 func New(key string, props *Props) node.T {
-	// defaults
-	if props.Layout == nil {
-		props.Layout = layout.Column{}
-	}
-	if props.Width == nil {
-		props.Width = dimension.Auto()
-	}
-	if props.Height == nil {
-		props.Height = dimension.Auto()
-	}
 	return node.Builtin(key, props, props.Children, Create)
 }
 
@@ -51,6 +37,7 @@ func Create(key string, props *Props) T {
 	rect := &rect{
 		T:        widget.New(key),
 		renderer: &renderer{},
+		props:    nil,
 	}
 	rect.Update(props)
 	return rect
@@ -74,21 +61,14 @@ func (f *rect) Draw(args render.Args) {
 	}
 }
 
-func (f *rect) Children() []widget.T     { return f.children }
-func (f *rect) SetChildren(c []widget.T) { f.children = c }
-
-func (f *rect) Width() dimension.T  { return f.props.Width }
-func (f *rect) Height() dimension.T { return f.props.Height }
-
-func (f *rect) Arrange(space vec2.T) vec2.T {
-	size := f.props.Layout.Arrange(f, space)
-	f.SetSize(size)
-	return size
-}
-
-func (f *rect) Measure(space vec2.T) vec2.T {
-	return vec2.Zero
-	// return f.props.Layout.Measure(space)
+func (f *rect) Children() []widget.T { return f.children }
+func (f *rect) SetChildren(c []widget.T) {
+	f.children = c
+	nodes := make([]*flex.Node, len(c))
+	for i, child := range c {
+		nodes[i] = child.Flex()
+	}
+	f.Flex().Children = nodes
 }
 
 //
@@ -96,16 +76,20 @@ func (f *rect) Measure(space vec2.T) vec2.T {
 //
 
 func (f *rect) Props() any { return f.props }
+
 func (f *rect) Update(p any) {
-	f.props = p.(*Props)
-	if f.props.Width == nil {
-		f.props.Width = dimension.Auto()
+	new := p.(*Props)
+
+	styleChanged := true
+	if f.props != nil {
+		styleChanged = new.Style != f.props.Style
 	}
-	if f.props.Height == nil {
-		f.props.Height = dimension.Auto()
-	}
-	if f.props.Layout == nil {
-		f.props.Layout = layout.Column{}
+
+	// update props
+	f.props = new
+
+	if styleChanged {
+		f.SetStyle(new.Style)
 	}
 }
 

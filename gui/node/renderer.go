@@ -1,11 +1,16 @@
 package node
 
-import "github.com/johanhenriksson/goworld/gui/widget"
+import (
+	"github.com/johanhenriksson/goworld/gui/widget"
+	"github.com/johanhenriksson/goworld/math/vec2"
+
+	"github.com/kjk/flex"
+)
 
 type RenderFunc func() T
 
 type Renderer interface {
-	Render() widget.T
+	Render(viewport vec2.T) widget.T
 }
 
 type renderer struct {
@@ -20,8 +25,12 @@ func NewRenderer(app RenderFunc) Renderer {
 	}
 }
 
-func (r *renderer) Render() widget.T {
+func (r *renderer) Render(viewport vec2.T) widget.T {
 	r.tree = Reconcile(r.tree, r.root())
 	r.display = r.tree.Hydrate()
+
+	root := r.display.Flex()
+	flex.CalculateLayout(root, viewport.X, viewport.Y, flex.DirectionLTR)
+
 	return r.display
 }

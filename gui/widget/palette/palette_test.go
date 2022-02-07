@@ -18,8 +18,8 @@ func TestClickSwatch(t *testing.T) {
 			Palette: color.DefaultPalette,
 		})
 	})
-	w := app.Render()
-	w.Arrange(vec2.New(1000, 1000))
+	view := vec2.New(1000, 1000)
+	w := app.Render(view)
 
 	if w.Size() != vec2.New(140, 240) {
 		t.Errorf("wrong palette size: %s", w.Size())
@@ -37,7 +37,7 @@ func TestClickSwatch(t *testing.T) {
 	widget.SimulateClick(swatch, mouse.Button1)
 
 	// re-render
-	w2 := app.Render()
+	w2 := app.Render(view)
 	if w != w2 {
 		t.Error("unexpected element recreation")
 	}
