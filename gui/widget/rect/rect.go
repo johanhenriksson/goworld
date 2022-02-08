@@ -18,7 +18,7 @@ type T interface {
 
 type rect struct {
 	widget.T
-	props    *Props
+	props    Props
 	renderer Renderer
 	children []widget.T
 
@@ -33,15 +33,14 @@ type Props struct {
 	Children     []node.T
 }
 
-func New(key string, props *Props) node.T {
+func New(key string, props Props) node.T {
 	return node.Builtin(key, props, props.Children, Create)
 }
 
-func Create(key string, props *Props) T {
+func Create(key string, props Props) T {
 	rect := &rect{
 		T:        widget.New(key),
 		renderer: &renderer{},
-		props:    nil,
 	}
 	rect.Update(props)
 	return rect
@@ -50,7 +49,7 @@ func Create(key string, props *Props) T {
 func (f *rect) Draw(args render.Args) {
 	f.T.Draw(args)
 
-	f.renderer.Draw(args, f, f.props)
+	f.renderer.Draw(args, f, &f.props)
 
 	for _, child := range f.children {
 		// calculate child tranasform
@@ -82,14 +81,10 @@ func (f *rect) SetChildren(c []widget.T) {
 func (f *rect) Props() any { return f.props }
 
 func (f *rect) Update(p any) {
-	new := p.(*Props)
+	new := p.(Props)
 
-	styleChanged := true
-	if f.props != nil {
-		styleChanged = new.Style != f.props.Style
-	}
+	styleChanged := new.Style != f.props.Style
 
-	// update props
 	f.props = new
 
 	if styleChanged {

@@ -28,15 +28,15 @@ type Props struct {
 
 type image struct {
 	widget.T
-	props    *Props
+	props    Props
 	renderer Renderer
 }
 
-func New(key string, props *Props) node.T {
+func New(key string, props Props) node.T {
 	return node.Builtin(key, props, nil, new)
 }
 
-func new(key string, props *Props) T {
+func new(key string, props Props) T {
 	img := &image{
 		T:        widget.New(key),
 		renderer: &renderer{},
@@ -48,7 +48,7 @@ func new(key string, props *Props) T {
 func (i *image) Props() any { return i.props }
 
 func (i *image) Update(props any) {
-	new := props.(*Props)
+	new := props.(Props)
 
 	// default
 	if new.Tint == color.None {
@@ -58,14 +58,10 @@ func (i *image) Update(props any) {
 		new.Image = assets.DefaultTexture()
 	}
 
-	invalidated := true
-	styleChanged := true
-	if i.props != nil {
-		imageChanged := new.Image != i.props.Image
-		invalidated = imageChanged
+	imageChanged := new.Image != i.props.Image
+	invalidated := imageChanged
 
-		styleChanged = new.Style != i.props.Style
-	}
+	styleChanged := new.Style != i.props.Style
 
 	// update props
 	i.props = new
@@ -86,7 +82,7 @@ func (i *image) Tint() color.T    { return i.props.Tint }
 
 func (i *image) Draw(args render.Args) {
 	i.T.Draw(args)
-	i.renderer.Draw(args, i, i.props)
+	i.renderer.Draw(args, i, &i.props)
 }
 
 func (i *image) Flex() *flex.Node {

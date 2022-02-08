@@ -30,7 +30,7 @@ type manager struct {
 
 func New(app node.RenderFunc) Manager {
 	root := func() node.T {
-		return rect.New("GUI", &rect.Props{
+		return rect.New("GUI", rect.Props{
 			Children: []node.T{app()},
 		})
 	}

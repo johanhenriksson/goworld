@@ -53,7 +53,7 @@ func ObjectHierarchy(idx int, obj object.T) node.T {
 	if !obj.Active() {
 		clr = color.RGB(0.7, 0.7, 0.7)
 	}
-	children[0] = label.New("title", &label.Props{
+	children[0] = label.New("title", label.Props{
 		Text: obj.Name(),
 		Style: style.Sheet{
 			Color: clr,
@@ -62,7 +62,7 @@ func ObjectHierarchy(idx int, obj object.T) node.T {
 	for i, child := range obj.Children() {
 		children[i+1] = ObjectHierarchy(i, child)
 	}
-	return rect.New(fmt.Sprintf("object%d:%s", idx, obj.Name()), &rect.Props{
+	return rect.New(fmt.Sprintf("object%d:%s", idx, obj.Name()), rect.Props{
 		Style: style.Sheet{
 			Padding: style.Rect{
 				Left: 5,
@@ -109,14 +109,14 @@ func main() {
 	// attach GUI manager first.
 	// this will give it input priority
 	guim := gui.New(func() node.T {
-		return rect.New("sidebar", &rect.Props{
+		return rect.New("sidebar", rect.Props{
 			Style: style.Sheet{
 				Layout: style.Column{},
 				Width:  style.Pct(15),
 				Height: style.Pct(100),
 			},
 			Children: []node.T{
-				palette.New("palette", &palette.Props{
+				palette.New("palette", palette.Props{
 					Palette: color.DefaultPalette,
 					OnPick: func(clr color.T) {
 						editor := query.New[editor.T]().First(scene)
@@ -127,19 +127,19 @@ func main() {
 						editor.SelectColor(clr)
 					},
 				}),
-				image.New("diffuse", &image.Props{
+				image.New("diffuse", image.Props{
 					Image:  renderer.Geometry.Buffer.Diffuse(),
 					Invert: true,
 				}),
-				image.New("normals", &image.Props{
+				image.New("normals", image.Props{
 					Image:  renderer.Geometry.Buffer.Normal(),
 					Invert: true,
 				}),
-				image.New("position", &image.Props{
+				image.New("position", image.Props{
 					Image:  renderer.Geometry.Buffer.Position(),
 					Invert: true,
 				}),
-				rect.New("objects", &rect.Props{
+				rect.New("objects", rect.Props{
 					Style: style.Sheet{
 						Color: color.Black.WithAlpha(0.9),
 					},

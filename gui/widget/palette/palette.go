@@ -38,17 +38,17 @@ func Chunks[T any](slice []T, size int) [][]T {
 	return chunks
 }
 
-func New(key string, props *Props) node.T {
+func New(key string, props Props) node.T {
 	return node.Component(key, props, nil, render)
 }
 
-func render(props *Props) node.T {
+func render(props Props) node.T {
 	perRow := 5
 
 	selected, setSelected := hooks.UseState(props.Palette[0])
 
 	colors := Map(props.Palette, func(i int, c color.T) node.T {
-		return rect.New(fmt.Sprintf("color%d", i), &rect.Props{
+		return rect.New(fmt.Sprintf("color%d", i), rect.Props{
 			Style: Sheet{
 				Color:  c,
 				Grow:   Grow(0),
@@ -67,7 +67,7 @@ func render(props *Props) node.T {
 	})
 
 	rows := Map(Chunks(colors, perRow), func(i int, colors []node.T) node.T {
-		return rect.New(fmt.Sprintf("row%d", i), &rect.Props{
+		return rect.New(fmt.Sprintf("row%d", i), rect.Props{
 			Style: Sheet{
 				Width:  Pct(100),
 				Layout: Row{},
@@ -76,27 +76,27 @@ func render(props *Props) node.T {
 		})
 	})
 
-	return rect.New("window", &rect.Props{
+	return rect.New("window", rect.Props{
 		Style: Sheet{
 			Color:   color.Black.WithAlpha(0.9),
 			Padding: Px(4),
 			Layout:  Column{},
 		},
 		Children: []node.T{
-			label.New("title", &label.Props{
+			label.New("title", label.Props{
 				Text: "Palette",
 				Size: 16,
 				Style: Sheet{
 					Color: color.White,
 				},
 			}),
-			rect.New("selected", &rect.Props{
+			rect.New("selected", rect.Props{
 				Style: Sheet{
 					Layout:   Row{},
 					MaxWidth: Pct(100),
 				},
 				Children: []node.T{
-					label.New("selected", &label.Props{
+					label.New("selected", label.Props{
 						Text: "Selected",
 						Style: Sheet{
 							Color: color.White,
@@ -104,7 +104,7 @@ func render(props *Props) node.T {
 							Grow:  Grow(1),
 						},
 					}),
-					rect.New("preview", &rect.Props{
+					rect.New("preview", rect.Props{
 						Style: Sheet{
 							Color:  selected,
 							Grow:   Grow(1),
@@ -115,7 +115,7 @@ func render(props *Props) node.T {
 					}),
 				},
 			}),
-			rect.New("grid", &rect.Props{
+			rect.New("grid", rect.Props{
 				Children: rows,
 			}),
 		},

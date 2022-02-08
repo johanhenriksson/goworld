@@ -31,12 +31,12 @@ type Props struct {
 
 type label struct {
 	widget.T
-	props    *Props
+	props    Props
 	renderer Renderer
 	size     vec2.T
 }
 
-func New(key string, props *Props) node.T {
+func New(key string, props Props) node.T {
 	if props.Size == 0 {
 		props.Size = 12
 	}
@@ -49,7 +49,7 @@ func New(key string, props *Props) node.T {
 	return node.Builtin(key, props, nil, new)
 }
 
-func new(key string, props *Props) T {
+func new(key string, props Props) T {
 	lbl := &label{
 		T:        widget.New(key),
 		renderer: &renderer{},
@@ -62,17 +62,13 @@ func (l *label) Size() vec2.T { return l.T.Size() }
 
 func (l *label) Props() any { return l.props }
 func (l *label) Update(props any) {
-	new := props.(*Props)
+	new := props.(Props)
 
-	invalidated := true
-	styleChanged := true
-	if l.props != nil {
-		textChanged := new.Text != l.props.Text
-		sizeChanged := new.Size != l.props.Size
-		heightChanged := new.LineHeight != l.props.LineHeight
-		styleChanged = new.Style != l.props.Style
-		invalidated = textChanged || sizeChanged || heightChanged
-	}
+	textChanged := new.Text != l.props.Text
+	sizeChanged := new.Size != l.props.Size
+	heightChanged := new.LineHeight != l.props.LineHeight
+	styleChanged := new.Style != l.props.Style
+	invalidated := textChanged || sizeChanged || heightChanged
 
 	l.props = new
 
@@ -93,7 +89,7 @@ func (l *label) LineHeight() float32 { return l.props.LineHeight }
 
 func (l *label) Draw(args render.Args) {
 	l.T.Draw(args)
-	l.renderer.Draw(args, l, l.props)
+	l.renderer.Draw(args, l, &l.props)
 }
 
 func (l *label) Flex() *flex.Node {
