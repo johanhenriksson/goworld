@@ -24,6 +24,7 @@ func CreateRenderArgs(window window.T, cam camera.T) render.Args {
 		MVP:        cam.ViewProj(),
 		Transform:  mat4.Ident(),
 		Position:   cam.Transform().WorldPosition(),
+		Clear:      cam.ClearColor(),
 
 		Viewport: render.Screen{
 			Width:       w,

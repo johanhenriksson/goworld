@@ -177,7 +177,6 @@ func main() {
 	})
 	player.Flying = true
 	player.Eye.Transform().SetRotation(vec3.New(22, 135, 0))
-	scene.SetCamera(player.Camera)
 	scene.Adopt(player)
 
 	// create editor

@@ -4,6 +4,8 @@ import (
 	"fmt"
 
 	"github.com/johanhenriksson/goworld/assets"
+	"github.com/johanhenriksson/goworld/core/camera"
+	"github.com/johanhenriksson/goworld/core/object/query"
 	"github.com/johanhenriksson/goworld/core/scene"
 	"github.com/johanhenriksson/goworld/core/window"
 	"github.com/johanhenriksson/goworld/engine/deferred"
@@ -97,7 +99,9 @@ func (r *Renderer) Get(name string) DrawPass {
 
 // Draw the world.
 func (r *Renderer) Draw(scene scene.T) {
-	args := CreateRenderArgs(r.window, scene.Camera())
+	camera := query.New[camera.T]().First(scene)
+
+	args := CreateRenderArgs(r.window, camera)
 	for _, pass := range r.Passes {
 		pass.Draw(args, scene)
 	}
