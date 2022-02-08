@@ -107,14 +107,14 @@ func GetFont(name string, size int) font.T {
 	}
 
 	fmt.Printf("+ font %s %dpt\n", name, size)
-	font := font.Load(AssetPath(name), size)
+	font := font.Load(AssetPath(name), size*2)
 	cache.Fonts[key] = font
 
 	return font
 }
 
 func DefaultFont() font.T {
-	return GetFont("fonts/SourceCodeProRegular.ttf", 12*2)
+	return GetFont("fonts/SourceCodeProRegular.ttf", 12)
 }
 
 var assetRoot = ""
