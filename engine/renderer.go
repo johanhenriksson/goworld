@@ -103,6 +103,7 @@ func (r *Renderer) Get(name string) DrawPass {
 
 // Draw the world.
 func (r *Renderer) Draw(scene object.T) {
+	// find the first active camera
 	camera := query.New[camera.T]().First(scene)
 
 	args := CreateRenderArgs(r.window, camera)

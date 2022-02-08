@@ -18,15 +18,10 @@ package main
  */
 
 import (
-	"flag"
 	"fmt"
-	"os"
-	"runtime/pprof"
 
-	"github.com/johanhenriksson/goworld/core/light"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/core/object/query"
-	"github.com/johanhenriksson/goworld/core/window"
 	"github.com/johanhenriksson/goworld/editor"
 	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/game"
@@ -40,72 +35,40 @@ import (
 	"github.com/johanhenriksson/goworld/gui/widget/rect"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render/color"
-
-	"github.com/lsfn/ode"
 )
 
-var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
-
-func ObjectHierarchy(idx int, obj object.T) node.T {
-	children := make([]node.T, len(obj.Children())+1)
-	clr := color.White
-	if !obj.Active() {
-		clr = color.RGB(0.7, 0.7, 0.7)
-	}
-	children[0] = label.New("title", label.Props{
-		Text: obj.Name(),
-		Style: style.Sheet{
-			Color: clr,
-		},
-	})
-	for i, child := range obj.Children() {
-		children[i+1] = ObjectHierarchy(i, child)
-	}
-	return rect.New(fmt.Sprintf("object%d:%s", idx, obj.Name()), rect.Props{
-		Style: style.Sheet{
-			Padding: style.Rect{
-				Left: 5,
-			},
-		},
-		Children: children,
+func main() {
+	engine.Run(engine.Args{
+		Title:     "goworld",
+		Width:     1600,
+		Height:    1200,
+		SceneFunc: makeScene,
 	})
 }
 
-func main() {
-	fmt.Println("goworld")
+// the renderer object should probably not be exposed to the scene at all
+// currently, access to the geometry buffer is needed for 2 things:
+// - object picking (editor)
+// - framebuffer debug windows
 
-	// cpu profiling
-	flag.Parse()
-	if *cpuprofile != "" {
-		os.MkdirAll("profiling", 0755)
-		ppath := fmt.Sprintf("profiling/%s", *cpuprofile)
-		f, err := os.Create(ppath)
-		if err != nil {
-			panic(err)
-		}
-		fmt.Println("writing cpu profiling output to", ppath)
-		pprof.StartCPUProfile(f)
-		defer pprof.StopCPUProfile()
-	}
+func makeScene(renderer *engine.Renderer, scene object.T) {
+	makeGui(renderer, scene)
 
-	w := ode.NewWorld()
-	w.SetGravity(ode.Vector3{0, -9.82, 0})
+	// create voxel chunk scene
+	player, chunk := game.CreateScene(renderer, scene)
 
-	scene := object.New("Scene")
+	// create editor
+	edit := editor.NewEditor(chunk, player.Camera, renderer.Geometry.Buffer)
+	scene.Adopt(edit.Object())
 
-	wnd, err := window.New(window.Args{
-		Title:        "goworld2",
-		Width:        1600,
-		Height:       1200,
-		InputHandler: scene,
-	})
-	if err != nil {
-		panic(err)
-	}
+	// little gizmo thingy
+	gizmo := mover.New(mover.Args{})
+	gizmo.Transform().SetPosition(vec3.New(-1, 0, -1))
+	scene.Adopt(gizmo)
+}
 
-	renderer := engine.NewRenderer(wnd)
-
-	guim := gui.New(func() node.T {
+func makeGui(renderer *engine.Renderer, scene object.T) {
+	scene.Attach(gui.New(func() node.T {
 		return rect.New("sidebar", rect.Props{
 			Style: style.Sheet{
 				Layout: style.Column{},
@@ -140,61 +103,34 @@ func main() {
 					Style: style.Sheet{
 						Color: color.Black.WithAlpha(0.9),
 					},
-					Children: []node.T{ObjectHierarchy(0, scene)},
+					Children: []node.T{ObjectListEntry(0, scene)},
 				}),
 			},
 		})
-	})
-
-	// attach UI first - this will give it input priority
-	scene.Attach(guim)
-
-	scene.Attach(light.NewDirectional(light.DirectionalArgs{
-		Intensity: 1.6,
-		Color:     color.RGB(0.9*0.973, 0.9*0.945, 0.9*0.776),
-		Direction: vec3.New(0.95, -1.6, 1.05),
-		Shadows:   true,
 	}))
+}
 
-	gizmo := mover.New(mover.Args{})
-	gizmo.Transform().SetPosition(vec3.New(-1, 0, -1))
-	scene.Adopt(gizmo)
-
-	// create chunk
-	world := game.NewWorld(31481234, 16)
-	chunk := world.AddChunk(0, 0)
-
-	// first person controls
-	player := game.NewPlayer(vec3.New(1, 22, 1), func(player *game.Player, target vec3.T) (bool, vec3.T) {
-		height := world.HeightAt(target)
-		if target.Y < height {
-			return true, vec3.New(target.X, height, target.Z)
-		}
-		return false, vec3.Zero
-	})
-	player.Flying = true
-	player.Eye.Transform().SetRotation(vec3.New(22, 135, 0))
-	scene.Adopt(player)
-
-	// create editor
-	edit := editor.NewEditor(chunk, player.Camera, renderer.Geometry.Buffer)
-	scene.Adopt(edit.Object())
-
-	// cube := geometry.NewColorCube(render.Blue, 3)
-	// cube.Position = vec3.New(-2, -2, -2)
-
-	// THIS DOES NOT ATTACH THE OBJECT
-	// IT ATTACHES THE COMPONENT DIRECTLY!
-	// scene.Attach(cube)
-
-	// particles := engine.NewParticleSystem(vec3.New(3, 9, 3))
-	// scene.Add(particles)
-
-	fmt.Println("Ready")
-
-	for !wnd.ShouldClose() {
-		scene.Update(0.030)
-		renderer.Draw(scene)
-		wnd.SwapBuffers()
+func ObjectListEntry(idx int, obj object.T) node.T {
+	children := make([]node.T, len(obj.Children())+1)
+	clr := color.White
+	if !obj.Active() {
+		clr = color.RGB(0.7, 0.7, 0.7)
 	}
+	children[0] = label.New("title", label.Props{
+		Text: obj.Name(),
+		Style: style.Sheet{
+			Color: clr,
+		},
+	})
+	for i, child := range obj.Children() {
+		children[i+1] = ObjectListEntry(i, child)
+	}
+	return rect.New(fmt.Sprintf("object%d:%s", idx, obj.Name()), rect.Props{
+		Style: style.Sheet{
+			Padding: style.Rect{
+				Left: 5,
+			},
+		},
+		Children: children,
+	})
 }

@@ -34,6 +34,8 @@ type T interface {
 
 	SwapBuffers()
 	ShouldClose() bool
+
+	SetInputHandler(input.Handler)
 }
 
 type Args struct {
