@@ -60,9 +60,13 @@ func (r *renderer) Draw(args render.Args, frame T, props *Props) {
 		})
 	}
 
+	// render.Scissor(frame.Position(), frame.Size())
+
 	r.mat.Use()
 	r.mat.Texture("image", r.tex)
 	r.mesh.Draw(args)
+
+	// render.ScissorDisable()
 }
 
 func (r *renderer) Destroy() {

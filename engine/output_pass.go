@@ -45,7 +45,10 @@ func NewOutputPass(color texture.T, depth texture.T) *OutputPass {
 // DrawPass draws the input texture to the scene camera buffer.
 func (p *OutputPass) Draw(args render.Args, scene scene.T) {
 	render.BindScreenBuffer()
-	render.SetViewport(0, 0, args.Viewport.FrameWidth, args.Viewport.FrameHeight)
+	render.SetViewport(render.Viewport{
+		Width:  args.Viewport.FrameWidth,
+		Height: args.Viewport.FrameHeight,
+	})
 
 	// ensures we dont fail depth tests while restoring the depth buffer
 	gl.DepthFunc(gl.ALWAYS)

@@ -15,10 +15,10 @@ type Args struct {
 	View       mat4.T
 	Transform  mat4.T
 	Position   vec3.T
-	Viewport   Viewport
+	Viewport   Screen
 }
 
-type Viewport struct {
+type Screen struct {
 	Width       int
 	Height      int
 	FrameWidth  int

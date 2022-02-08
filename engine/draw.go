@@ -25,7 +25,7 @@ func CreateRenderArgs(window window.T, cam camera.T) render.Args {
 		Transform:  mat4.Ident(),
 		Position:   cam.Transform().WorldPosition(),
 
-		Viewport: render.Viewport{
+		Viewport: render.Screen{
 			Width:       w,
 			Height:      h,
 			FrameWidth:  fw,

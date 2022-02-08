@@ -24,7 +24,10 @@ func NewLinePass() *LinePass {
 // DrawPass executes the line pass
 func (p *LinePass) Draw(args render.Args, scene scene.T) {
 	render.BindScreenBuffer()
-	render.SetViewport(0, 0, args.Viewport.FrameWidth, args.Viewport.FrameHeight)
+	render.SetViewport(render.Viewport{
+		Width:  args.Viewport.FrameWidth,
+		Height: args.Viewport.FrameHeight,
+	})
 
 	objects := query.New[LineDrawable]().Collect(scene)
 	for _, drawable := range objects {
