@@ -1,6 +1,9 @@
 package style
 
-import "github.com/kjk/flex"
+import (
+	"github.com/johanhenriksson/goworld/gui/widget"
+	"github.com/kjk/flex"
+)
 
 // Px is a pixel value
 type Px float32
@@ -12,3 +15,9 @@ func (p Px) ApplyHeight(n *flex.Node)    { n.StyleSetHeight(float32(p)) }
 func (p Px) ApplyMaxHeight(n *flex.Node) { n.StyleSetMaxHeight(float32(p)) }
 func (p Px) ApplyPadding(n *flex.Node)   { n.StyleSetPadding(flex.EdgeAll, float32(p)) }
 func (p Px) ApplyMargin(n *flex.Node)    { n.StyleSetMargin(flex.EdgeAll, float32(p)) }
+
+func (p Px) ApplyLineHeight(w widget.T) {
+	if fw, ok := w.(FontWidget); ok {
+		fw.SetLineHeight(float32(p))
+	}
+}

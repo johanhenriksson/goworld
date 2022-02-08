@@ -6,6 +6,7 @@ import (
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/gui/hooks"
 	"github.com/johanhenriksson/goworld/gui/node"
+	"github.com/johanhenriksson/goworld/gui/style"
 	. "github.com/johanhenriksson/goworld/gui/style"
 	"github.com/johanhenriksson/goworld/gui/widget/label"
 	"github.com/johanhenriksson/goworld/gui/widget/rect"
@@ -85,9 +86,12 @@ func render(props Props) node.T {
 		Children: []node.T{
 			label.New("title", label.Props{
 				Text: "Palette",
-				Size: 16,
 				Style: Sheet{
 					Color: color.White,
+					Font: style.Font{
+						Name: "fonts/SourceCodeProRegular.ttf",
+						Size: 16,
+					},
 				},
 			}),
 			rect.New("selected", rect.Props{

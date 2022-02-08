@@ -11,22 +11,41 @@ import (
 )
 
 type Renderer interface {
-	Draw(render.Args, T, *Props)
+	Draw(render.Args, T)
 	Destroy()
+
+	SetColor(color.T)
 }
 
 type renderer struct {
-	mat   material.T
-	tex   texture.T
-	mesh  quad.T
-	size  vec2.T
-	color color.T
-	uvs   quad.UV
+	mat     material.T
+	tex     texture.T
+	mesh    quad.T
+	size    vec2.T
+	color   color.T
+	uvs     quad.UV
+	invalid bool
 }
 
-func (r *renderer) Draw(args render.Args, frame T, props *Props) {
+func NewRenderer() Renderer {
+	return &renderer{
+		invalid: true,
+	}
+}
+
+func (r *renderer) SetSize(size vec2.T) {
+	r.invalid = r.invalid || size != r.size
+	r.size = size
+}
+
+func (r *renderer) SetColor(clr color.T) {
+	r.invalid = r.invalid || clr != r.color
+	r.color = clr
+}
+
+func (r *renderer) Draw(args render.Args, rect T) {
 	// dont draw anything if its transparent anyway
-	if frame.Style().Color.A <= 0 {
+	if r.color.A <= 0 {
 		return
 	}
 
@@ -42,23 +61,19 @@ func (r *renderer) Draw(args render.Args, frame T, props *Props) {
 		})
 	}
 
-	// set correct blending
-	render.BlendMultiply()
+	r.SetSize(rect.Size())
 
-	// resize if needed
-	sizeChanged := !frame.Size().ApproxEqual(r.size)
-	colorChanged := frame.Style().Color != r.color
-	invalidated := sizeChanged || colorChanged
-
-	if invalidated {
-		r.size = frame.Size()
-		r.color = frame.Style().Color
+	if r.invalid {
 		r.mesh.Update(quad.Props{
 			UVs:   r.uvs,
 			Size:  r.size,
 			Color: r.color,
 		})
+		r.invalid = false
 	}
+
+	// set correct blending
+	render.BlendMultiply()
 
 	// render.Scissor(frame.Position(), frame.Size())
 

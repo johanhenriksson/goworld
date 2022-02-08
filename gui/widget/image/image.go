@@ -1,35 +1,31 @@
 package image
 
 import (
-	"github.com/johanhenriksson/goworld/assets"
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/gui/node"
 	"github.com/johanhenriksson/goworld/gui/style"
 	"github.com/johanhenriksson/goworld/gui/widget"
 	"github.com/johanhenriksson/goworld/render"
-	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/texture"
 	"github.com/kjk/flex"
 )
 
 type T interface {
 	widget.T
-	Tint() color.T
 	Image() texture.T
 }
 
 type Props struct {
 	Style   style.Sheet
 	Image   texture.T
-	Tint    color.T
 	Invert  bool
 	OnClick mouse.Callback
 }
 
 type image struct {
 	widget.T
-	props    Props
-	renderer Renderer
+	Renderer
+	props Props
 }
 
 func New(key string, props Props) node.T {
@@ -39,7 +35,7 @@ func New(key string, props Props) node.T {
 func new(key string, props Props) T {
 	img := &image{
 		T:        widget.New(key),
-		renderer: &renderer{},
+		Renderer: NewRenderer(),
 	}
 	img.Update(props)
 	return img
@@ -49,28 +45,14 @@ func (i *image) Props() any { return i.props }
 
 func (i *image) Update(props any) {
 	new := props.(Props)
-
-	// default
-	if new.Tint == color.None {
-		new.Tint = color.White
-	}
-	if new.Image == nil {
-		new.Image = assets.DefaultTexture()
-	}
-
-	imageChanged := new.Image != i.props.Image
-	invalidated := imageChanged
-
 	styleChanged := new.Style != i.props.Style
-
-	// update props
 	i.props = new
 
-	if styleChanged {
-		i.SetStyle(new.Style)
-	}
+	i.Renderer.SetImage(new.Image)
+	i.Renderer.SetInvert(new.Invert)
 
-	if invalidated {
+	if styleChanged {
+		new.Style.Apply(i)
 		i.Flex().MarkDirty()
 	}
 }
@@ -78,11 +60,14 @@ func (i *image) Update(props any) {
 // prop accessors
 
 func (i *image) Image() texture.T { return i.props.Image }
-func (i *image) Tint() color.T    { return i.props.Tint }
 
 func (i *image) Draw(args render.Args) {
 	i.T.Draw(args)
-	i.renderer.Draw(args, i, &i.props)
+	i.Renderer.Draw(args, i)
+}
+
+func (i *image) Destroy() {
+	i.Renderer.Destroy()
 }
 
 func (i *image) Flex() *flex.Node {

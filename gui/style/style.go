@@ -1,6 +1,7 @@
 package style
 
 import (
+	"github.com/johanhenriksson/goworld/gui/widget"
 	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/kjk/flex"
 )
@@ -8,7 +9,15 @@ import (
 // Each type should define its own style struct!!!
 // rect.Style etc
 type Sheet struct {
-	Color color.T
+	// Display properties
+
+	Color ColorProp
+
+	// Text properties
+
+	Font       FontProp
+	FontColor  ColorProp
+	LineHeight LineHeightProp
 
 	// Sizing properties
 
@@ -27,7 +36,8 @@ type Sheet struct {
 	Layout FlexDirectionProp
 }
 
-func (style *Sheet) Apply(node *flex.Node) {
+func (style *Sheet) Apply(w widget.T) {
+	node := w.Flex()
 	node.StyleSetDisplay(flex.DisplayFlex)
 
 	if style.Basis != nil {
@@ -59,5 +69,20 @@ func (style *Sheet) Apply(node *flex.Node) {
 	}
 	if style.Shrink != nil {
 		style.Shrink.ApplyFlexShrink(node)
+	}
+	if style.Font != nil {
+		style.Font.ApplyFont(w)
+	}
+	if style.Color != nil {
+		if cc, ok := w.(Colorizable); ok {
+			rgba := style.Color.Vec4()
+			cc.SetColor(color.RGBA(rgba.X, rgba.Y, rgba.Z, rgba.W))
+		}
+	}
+	if style.FontColor != nil {
+		if fc, ok := w.(FontWidget); ok {
+			rgba := style.FontColor.Vec4()
+			fc.SetFontColor(color.RGBA(rgba.X, rgba.Y, rgba.Z, rgba.W))
+		}
 	}
 }

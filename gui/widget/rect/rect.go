@@ -18,8 +18,9 @@ type T interface {
 
 type rect struct {
 	widget.T
+	Renderer
+
 	props    Props
-	renderer Renderer
 	children []widget.T
 
 	prevMouseTarget mouse.Handler
@@ -40,7 +41,7 @@ func New(key string, props Props) node.T {
 func Create(key string, props Props) T {
 	rect := &rect{
 		T:        widget.New(key),
-		renderer: &renderer{},
+		Renderer: NewRenderer(),
 	}
 	rect.Update(props)
 	return rect
@@ -48,8 +49,7 @@ func Create(key string, props Props) T {
 
 func (f *rect) Draw(args render.Args) {
 	f.T.Draw(args)
-
-	f.renderer.Draw(args, f, &f.props)
+	f.Renderer.Draw(args, f)
 
 	for _, child := range f.children {
 		// calculate child tranasform
@@ -82,19 +82,17 @@ func (f *rect) Props() any { return f.props }
 
 func (f *rect) Update(p any) {
 	new := p.(Props)
-
 	styleChanged := new.Style != f.props.Style
-
 	f.props = new
 
 	if styleChanged {
-		f.SetStyle(new.Style)
+		new.Style.Apply(f)
 	}
 }
 
 func (f *rect) Destroy() {
 	f.T.Destroy()
-	f.renderer.Destroy()
+	f.Renderer.Destroy()
 
 	for _, child := range f.children {
 		child.Destroy()
