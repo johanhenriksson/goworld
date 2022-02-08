@@ -1,7 +1,7 @@
 package engine
 
 import (
-	"github.com/johanhenriksson/goworld/core/scene"
+	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/engine/screen_quad"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/backend/gl/gl_shader"
@@ -43,7 +43,7 @@ func NewOutputPass(color texture.T, depth texture.T) *OutputPass {
 }
 
 // DrawPass draws the input texture to the scene camera buffer.
-func (p *OutputPass) Draw(args render.Args, scene scene.T) {
+func (p *OutputPass) Draw(args render.Args, scene object.T) {
 	render.BindScreenBuffer()
 	render.SetViewport(render.Viewport{
 		Width:  args.Viewport.FrameWidth,

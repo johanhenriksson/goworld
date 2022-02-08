@@ -5,8 +5,8 @@ import (
 
 	"github.com/johanhenriksson/goworld/assets"
 	"github.com/johanhenriksson/goworld/core/camera"
+	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/core/object/query"
-	"github.com/johanhenriksson/goworld/core/scene"
 	"github.com/johanhenriksson/goworld/core/window"
 	"github.com/johanhenriksson/goworld/engine/deferred"
 	"github.com/johanhenriksson/goworld/engine/effect"
@@ -98,7 +98,7 @@ func (r *Renderer) Get(name string) DrawPass {
 }
 
 // Draw the world.
-func (r *Renderer) Draw(scene scene.T) {
+func (r *Renderer) Draw(scene object.T) {
 	camera := query.New[camera.T]().First(scene)
 
 	args := CreateRenderArgs(r.window, camera)

@@ -2,8 +2,8 @@ package deferred
 
 import (
 	"github.com/johanhenriksson/goworld/core/light"
+	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/core/object/query"
-	"github.com/johanhenriksson/goworld/core/scene"
 	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/backend/gl/gl_framebuffer"
@@ -45,7 +45,7 @@ func NewShadowPass(size int) *ShadowPass {
 }
 
 // DrawLight draws a shadow pass for the given light.
-func (p *ShadowPass) DrawLight(scene scene.T, lit *light.Descriptor) {
+func (p *ShadowPass) DrawLight(scene object.T, lit *light.Descriptor) {
 	if !lit.Shadows {
 		return
 	}

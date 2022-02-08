@@ -26,7 +26,6 @@ import (
 	"github.com/johanhenriksson/goworld/core/light"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/core/object/query"
-	"github.com/johanhenriksson/goworld/core/scene"
 	"github.com/johanhenriksson/goworld/core/window"
 	"github.com/johanhenriksson/goworld/editor"
 	"github.com/johanhenriksson/goworld/engine"
@@ -92,7 +91,7 @@ func main() {
 	w := ode.NewWorld()
 	w.SetGravity(ode.Vector3{0, -9.82, 0})
 
-	scene := scene.New()
+	scene := object.New("Scene")
 
 	wnd, err := window.New(window.Args{
 		Title:        "goworld2",

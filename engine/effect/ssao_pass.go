@@ -3,7 +3,7 @@ package effect
 import (
 	"github.com/go-gl/gl/v4.1-core/gl"
 
-	"github.com/johanhenriksson/goworld/core/scene"
+	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/engine/screen_quad"
 	"github.com/johanhenriksson/goworld/math"
 	"github.com/johanhenriksson/goworld/math/random"
@@ -89,7 +89,7 @@ func NewSSAOPass(gbuff framebuffer.Geometry, settings SSAOSettings) *SSAOPass {
 }
 
 // DrawPass draws the SSAO texture.
-func (p *SSAOPass) Draw(args render.Args, scene scene.T) {
+func (p *SSAOPass) Draw(args render.Args, scene object.T) {
 	render.Blend(false)
 	render.DepthOutput(false)
 

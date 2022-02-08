@@ -1,7 +1,7 @@
 package effect
 
 import (
-	"github.com/johanhenriksson/goworld/core/scene"
+	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/engine/screen_quad"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/backend/gl/gl_framebuffer"
@@ -50,7 +50,7 @@ func NewGaussianPass(input texture.T) *GaussianPass {
 }
 
 // Draw draws the gaussian blurred output to the output frame buffer.
-func (p *GaussianPass) Draw(args render.Args, scene scene.T) {
+func (p *GaussianPass) Draw(args render.Args, scene object.T) {
 	render.Blend(false)
 	render.DepthOutput(false)
 

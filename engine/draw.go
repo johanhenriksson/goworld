@@ -2,7 +2,7 @@ package engine
 
 import (
 	"github.com/johanhenriksson/goworld/core/camera"
-	"github.com/johanhenriksson/goworld/core/scene"
+	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/core/window"
 	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/render"
@@ -10,7 +10,7 @@ import (
 
 type DrawPass interface {
 	// Prepare()
-	Draw(render.Args, scene.T)
+	Draw(render.Args, object.T)
 }
 
 func CreateRenderArgs(window window.T, cam camera.T) render.Args {

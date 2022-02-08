@@ -3,7 +3,6 @@ package gui
 import (
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/core/object"
-	"github.com/johanhenriksson/goworld/core/scene"
 	"github.com/johanhenriksson/goworld/gui/node"
 	"github.com/johanhenriksson/goworld/gui/widget"
 	"github.com/johanhenriksson/goworld/gui/widget/rect"
@@ -17,7 +16,7 @@ import (
 
 type Manager interface {
 	object.T
-	Draw(render.Args, scene.T)
+	Draw(render.Args, object.T)
 }
 
 type manager struct {
@@ -44,7 +43,7 @@ func New(app node.RenderFunc) Manager {
 	return mgr
 }
 
-func (m *manager) Draw(args render.Args, scene scene.T) {
+func (m *manager) Draw(args render.Args, scene object.T) {
 	width, height := float32(args.Viewport.FrameWidth), float32(args.Viewport.FrameHeight)
 	m.scale = width / float32(args.Viewport.Width)
 
