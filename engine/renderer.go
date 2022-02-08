@@ -28,6 +28,7 @@ type Renderer struct {
 	SSAO     *effect.SSAOPass
 	Colors   *effect.ColorPass
 	Lines    *LinePass
+	Gui      *GuiPass
 
 	passMap PassMap
 	window  window.T
@@ -66,6 +67,8 @@ func NewRenderer(window window.T) *Renderer {
 	// lines
 	r.Lines = NewLinePass()
 
+	r.Gui = NewGuiPass()
+
 	r.Passes = []DrawPass{
 		r.Pre,
 		r.Geometry,
@@ -75,6 +78,7 @@ func NewRenderer(window window.T) *Renderer {
 		r.Colors,
 		r.Output,
 		r.Lines,
+		r.Gui,
 	}
 
 	return r

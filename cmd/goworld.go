@@ -105,8 +105,6 @@ func main() {
 
 	renderer := engine.NewRenderer(wnd)
 
-	// attach GUI manager first.
-	// this will give it input priority
 	guim := gui.New(func() node.T {
 		return rect.New("sidebar", rect.Props{
 			Style: style.Sheet{
@@ -148,8 +146,8 @@ func main() {
 		})
 	})
 
-	scene.Adopt(guim)
-	renderer.Append("gui", guim)
+	// attach UI first - this will give it input priority
+	scene.Attach(guim)
 
 	scene.Attach(light.NewDirectional(light.DirectionalArgs{
 		Intensity: 1.6,
