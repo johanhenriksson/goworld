@@ -51,6 +51,8 @@ func New(fov, near, far float32, clear color.T) T {
 	}
 }
 
+func (cam *camera) Name() string { return "Camera" }
+
 // Unproject screen space coordinates into world space
 func (cam *camera) Unproject(pos vec3.T) vec3.T {
 	// screen space -> clip space

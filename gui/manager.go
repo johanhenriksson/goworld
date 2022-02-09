@@ -31,6 +31,8 @@ func New(app node.RenderFunc) Manager {
 	}
 }
 
+func (m *manager) Name() string { return "GUIManager" }
+
 func (m *manager) DrawUI(args render.Args, scene object.T) {
 	viewport := vec2.NewI(args.Viewport.Width, args.Viewport.Height)
 	m.scale = args.Viewport.Scale

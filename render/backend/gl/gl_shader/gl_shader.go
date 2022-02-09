@@ -208,9 +208,6 @@ func (s *glshader) Int32(name string, value int) error {
 		return nil
 	}
 	if uniform, err := s.Uniform(name); err == nil {
-		if name == "depth" {
-			fmt.Println(uniform)
-		}
 		return gl.UniformVec1i(s.id, uniform, value)
 	} else {
 		return err
@@ -331,7 +328,6 @@ func (s *glshader) VertexPointers(data interface{}) shader.Pointers {
 
 		attr, err := s.Attribute(tag.Name)
 		if errors.Is(err, shader.ErrUnknownAttribute) {
-			// fmt.Printf("attribute %s does not exist on %s\n", tag.Name, shader.Name)
 			offset += gltype.Size() * tag.Count
 			continue
 		}
@@ -362,7 +358,6 @@ func (s *glshader) readAttributes() {
 	for i := 0; i < count; i++ {
 		attr := gl.GetActiveAttribute(s.id, i)
 		s.attributes[attr.Name] = attr
-		fmt.Println(s.name, "uniform", attr.Name, attr.Type, "=", attr.Index, "size:", attr.Size)
 	}
 }
 
@@ -372,6 +367,5 @@ func (s *glshader) readUniforms() {
 	for i := 0; i < count; i++ {
 		uniform := gl.GetActiveUniform(s.id, i)
 		s.uniforms[uniform.Name] = uniform
-		fmt.Println(s.name, "uniform", uniform.Name, uniform.Type, "=", uniform.Index, "size:", uniform.Size)
 	}
 }

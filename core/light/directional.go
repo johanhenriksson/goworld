@@ -27,6 +27,8 @@ func NewDirectional(args DirectionalArgs) T {
 	}
 }
 
+func (lit *dirlight) Name() string { return "DirectionalLight" }
+
 func (lit *dirlight) LightDescriptor() Descriptor {
 	position := lit.Direction.Scaled(-1).Normalized() // turn direction into a position
 
