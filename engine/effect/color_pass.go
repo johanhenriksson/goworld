@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/johanhenriksson/goworld/assets"
-	"github.com/johanhenriksson/goworld/core/scene"
+	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/engine/screen_quad"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/backend/gl/gl_framebuffer"
@@ -59,7 +59,7 @@ func NewColorPass(input framebuffer.Color, filter string, occlusion texture.T) *
 }
 
 // DrawPass applies color correction to the scene
-func (p *ColorPass) Draw(args render.Args, scene scene.T) {
+func (p *ColorPass) Draw(args render.Args, scene object.T) {
 	p.Output.Bind()
 	defer p.Output.Unbind()
 	p.Output.Resize(p.Input.Width(), p.Input.Height())

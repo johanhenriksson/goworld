@@ -2,6 +2,7 @@ package render
 
 import (
 	"github.com/go-gl/gl/v4.1-core/gl"
+	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/render/color"
 )
 
@@ -16,6 +17,15 @@ const (
 
 type BlendValue uint32
 
+type rect struct {
+	X, Y, W, H int
+}
+
+type Viewport struct {
+	X, Y          int
+	Width, Height int
+}
+
 // Blend Functions
 const (
 	One              = BlendValue(gl.ONE)
@@ -25,19 +35,16 @@ const (
 )
 
 type State struct {
-	Blend       bool
-	BlendSrc    BlendValue
-	BlendDst    BlendValue
-	DepthTest   bool
-	DepthOutput bool
-	ClearColor  color.T
-	CullMode    CullMode
-
-	// Viewport dimensions
-	Y      int
-	X      int
-	Width  int
-	Height int
+	Blend         bool
+	BlendSrc      BlendValue
+	BlendDst      BlendValue
+	DepthTest     bool
+	DepthOutput   bool
+	ClearColor    color.T
+	CullMode      CullMode
+	ScissorEnable bool
+	Scissor       rect
+	Viewport      Viewport
 }
 
 var state = State{
@@ -56,7 +63,7 @@ func (s *State) Enable() {
 	DepthOutput(s.DepthOutput)
 
 	ClearColor(s.ClearColor)
-	SetViewport(s.X, s.Y, s.Width, s.Height)
+	SetViewport(s.Viewport)
 	CullFace(s.CullMode)
 }
 
@@ -133,13 +140,10 @@ func ClearColor(color color.T) {
 	// }
 }
 
-func SetViewport(x, y, w, h int) {
-	if state.Width != w || state.Height != h || state.Y != y || state.X != x {
-		gl.Viewport(int32(x), int32(y), int32(w), int32(h))
-		state.Width = w
-		state.Height = h
-		state.X = x
-		state.Y = y
+func SetViewport(vp Viewport) {
+	if state.Viewport != vp {
+		gl.Viewport(int32(vp.X), int32(vp.Y), int32(vp.Width), int32(vp.Height))
+		state.Viewport = vp
 	}
 }
 
@@ -158,4 +162,26 @@ func CullFace(mode CullMode) {
 		gl.CullFace(gl.FRONT)
 	}
 	state.CullMode = mode
+}
+
+func Scissor(pos vec2.T, size vec2.T) {
+	area := rect{
+		X: int(pos.X), Y: int(pos.Y),
+		W: int(size.X), H: int(size.Y),
+	}
+	if !state.ScissorEnable {
+		gl.Enable(gl.SCISSOR_TEST)
+		state.ScissorEnable = true
+	}
+	if state.Scissor != area {
+		gl.Scissor(int32(area.X), int32(area.Y), int32(area.W), int32(area.H))
+		state.Scissor = area
+	}
+}
+
+func ScissorDisable() {
+	if state.ScissorEnable {
+		gl.Disable(gl.SCISSOR_TEST)
+		state.ScissorEnable = false
+	}
 }

@@ -11,39 +11,77 @@ import (
 )
 
 type Renderer interface {
-	Draw(render.Args, T, *Props)
+	Draw(render.Args, T)
+	Destroy()
+
+	SetSize(vec2.T)
+	SetImage(texture.T)
+	SetInvert(bool)
+	SetColor(color.T)
 }
 
 type renderer struct {
-	size vec2.T
-	tex  texture.T
-	mat  material.T
-	mesh quad.T
-	uvs  quad.UV
-	tint color.T
+	tint   color.T
+	invert bool
+	tex    texture.T
+
+	invalid bool
+	size    vec2.T
+	mat     material.T
+	mesh    quad.T
+	uvs     quad.UV
 }
 
-func (r *renderer) Draw(args render.Args, image T, props *Props) {
+func NewRenderer() Renderer {
+	return &renderer{
+		tint:    color.White,
+		tex:     assets.DefaultTexture(),
+		uvs:     quad.DefaultUVs,
+		invalid: true,
+	}
+}
+
+func (r *renderer) SetSize(size vec2.T) {
+	r.invalid = r.invalid || size != r.size
+	r.size = size
+}
+
+func (r *renderer) SetImage(tex texture.T) {
+	if tex == nil {
+		tex = assets.DefaultTexture()
+	}
+	r.invalid = r.invalid || tex != r.tex
+	r.tex = tex
+}
+
+func (r *renderer) SetColor(tint color.T) {
+	if tint == color.None {
+		tint = color.White
+	}
+	r.invalid = r.invalid || tint != r.tint
+	r.tint = tint
+}
+
+func (r *renderer) SetInvert(invert bool) {
+	r.invalid = r.invalid || invert != r.invert
+	r.invert = invert
+}
+
+func (r *renderer) Draw(args render.Args, image T) {
 	if r.mesh == nil {
 		r.mat = assets.GetMaterial("ui_texture")
-		r.uvs = quad.DefaultUVs
 		r.mesh = quad.New(r.mat, quad.Props{
 			UVs:   r.uvs,
 			Size:  r.size,
-			Color: props.Tint,
+			Color: color.White,
 		})
 	}
 
-	sizeChanged := !image.Size().ApproxEqual(r.size)
-	colorChanged := props.Tint != r.tint
-	invalidated := sizeChanged || colorChanged
+	r.SetSize(image.Size())
 
-	if invalidated {
-		r.size = image.Size()
-		r.tint = props.Tint
-
+	if r.invalid {
 		uvs := r.uvs
-		if props.Invert {
+		if r.invert {
 			uvs = uvs.Inverted()
 		}
 
@@ -52,6 +90,7 @@ func (r *renderer) Draw(args render.Args, image T, props *Props) {
 			Size:  r.size,
 			Color: r.tint,
 		})
+		r.invalid = false
 	}
 
 	// set correct blending
@@ -59,6 +98,10 @@ func (r *renderer) Draw(args render.Args, image T, props *Props) {
 	render.BlendMultiply()
 
 	r.mesh.Material().Use()
-	r.mesh.Material().Texture("image", props.Image)
+	r.mesh.Material().Texture("image", r.tex)
 	r.mesh.Draw(args)
+}
+
+func (r *renderer) Destroy() {
+
 }

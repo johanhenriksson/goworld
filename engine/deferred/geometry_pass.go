@@ -3,8 +3,8 @@ package deferred
 import (
 	"fmt"
 
+	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/core/object/query"
-	"github.com/johanhenriksson/goworld/core/scene"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/backend/gl"
 	"github.com/johanhenriksson/goworld/render/backend/gl/gl_framebuffer"
@@ -26,7 +26,7 @@ func NewGeometryPass() *GeometryPass {
 }
 
 // DrawPass executes the geometry pass
-func (p *GeometryPass) Draw(args render.Args, scene scene.T) {
+func (p *GeometryPass) Draw(args render.Args, scene object.T) {
 	p.Buffer.Bind()
 	defer p.Buffer.Unbind()
 	p.Buffer.Resize(args.Viewport.FrameWidth, args.Viewport.FrameHeight)

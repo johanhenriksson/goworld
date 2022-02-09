@@ -18,6 +18,7 @@ type T interface {
 	Color() color.T
 	Update(Props)
 	Draw(render.Args)
+	Destroy()
 }
 
 type Props struct {
@@ -101,4 +102,8 @@ func (q *quad) Draw(args render.Args) {
 	q.mat.Mat4("model", args.Transform)
 	q.mat.Mat4("viewport", args.VP)
 	q.vao.Draw()
+}
+
+func (q *quad) Destroy() {
+	q.vao.Delete()
 }

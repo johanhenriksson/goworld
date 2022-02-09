@@ -5,7 +5,6 @@ import (
 
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/core/object/query"
-	"github.com/johanhenriksson/goworld/core/scene"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/backend/gl"
 	"github.com/johanhenriksson/goworld/render/backend/gl/gl_framebuffer"
@@ -45,7 +44,7 @@ func NewForwardPass(gbuffer framebuffer.Geometry, output framebuffer.Color) *For
 }
 
 // DrawPass executes the forward pass
-func (p *ForwardPass) Draw(args render.Args, scene scene.T) {
+func (p *ForwardPass) Draw(args render.Args, scene object.T) {
 
 	// setup rendering
 	render.Blend(true)

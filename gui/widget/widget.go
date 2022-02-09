@@ -3,7 +3,6 @@ package widget
 import (
 	"fmt"
 
-	"github.com/johanhenriksson/goworld/gui/style"
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/render"
 
@@ -35,9 +34,6 @@ type T interface {
 	// Position returns the current position of the element relative to its parent
 	Position() vec2.T
 
-	Style() style.Sheet
-	SetStyle(style.Sheet)
-
 	Children() []T
 	SetChildren([]T)
 
@@ -56,7 +52,6 @@ type widget struct {
 	position  vec2.T
 	destroyed bool
 	flex      *flex.Node
-	style     style.Sheet
 }
 
 func New(key string) T {
@@ -69,13 +64,6 @@ func New(key string) T {
 func (w *widget) Key() string     { return w.key }
 func (w *widget) Destroyed() bool { return w.destroyed }
 func (w *widget) Destroy()        { w.destroyed = true }
-
-func (w *widget) Style() style.Sheet { return w.style }
-func (w *widget) SetStyle(style style.Sheet) {
-	w.style = style
-	// w.flex.Reset()
-	w.style.Apply(w.flex)
-}
 
 func (w *widget) Flex() *flex.Node {
 	return w.flex

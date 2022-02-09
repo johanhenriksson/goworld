@@ -4,6 +4,7 @@ import (
 	"github.com/johanhenriksson/goworld/core/transform"
 	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/math/vec3"
+	"github.com/johanhenriksson/goworld/render/color"
 )
 
 // Args holds the arguments used to perform a draw pass.
@@ -15,10 +16,11 @@ type Args struct {
 	View       mat4.T
 	Transform  mat4.T
 	Position   vec3.T
-	Viewport   Viewport
+	Viewport   Screen
+	Clear      color.T
 }
 
-type Viewport struct {
+type Screen struct {
 	Width       int
 	Height      int
 	FrameWidth  int

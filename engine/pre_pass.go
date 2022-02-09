@@ -3,7 +3,6 @@ package engine
 import (
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/core/object/query"
-	"github.com/johanhenriksson/goworld/core/scene"
 	"github.com/johanhenriksson/goworld/render"
 )
 
@@ -14,7 +13,7 @@ type PreDrawable interface {
 	PreDraw(render.Args) error
 }
 
-func (p *PrePass) Draw(args render.Args, scene scene.T) {
+func (p *PrePass) Draw(args render.Args, scene object.T) {
 	objects := query.New[PreDrawable]().Collect(scene)
 	for _, component := range objects {
 		drawable := component.(PreDrawable)

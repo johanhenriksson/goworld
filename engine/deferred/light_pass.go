@@ -5,8 +5,8 @@ import (
 
 	"github.com/johanhenriksson/goworld/core/camera"
 	"github.com/johanhenriksson/goworld/core/light"
+	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/core/object/query"
-	"github.com/johanhenriksson/goworld/core/scene"
 	"github.com/johanhenriksson/goworld/engine/screen_quad"
 	"github.com/johanhenriksson/goworld/math"
 	"github.com/johanhenriksson/goworld/math/mat4"
@@ -67,12 +67,12 @@ func NewLightPass(input framebuffer.Geometry) *LightPass {
 }
 
 // Draw executes the deferred lighting pass.
-func (p *LightPass) Draw(args render.Args, scene scene.T) {
+func (p *LightPass) Draw(args render.Args, scene object.T) {
 	// clear output buffer
 	p.Output.Bind()
 	defer p.Output.Unbind()
 	p.Output.Resize(args.Viewport.FrameWidth, args.Viewport.FrameHeight)
-	render.ClearWith(scene.Camera().ClearColor())
+	render.ClearWith(args.Clear)
 
 	// enable back face culling
 	render.CullFace(render.CullBack)

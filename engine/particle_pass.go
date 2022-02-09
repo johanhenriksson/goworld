@@ -3,7 +3,7 @@ package engine
 import (
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/johanhenriksson/goworld/assets"
-	"github.com/johanhenriksson/goworld/core/scene"
+	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/core/transform"
 	"github.com/johanhenriksson/goworld/math/random"
 	"github.com/johanhenriksson/goworld/math/vec3"
@@ -30,7 +30,7 @@ func NewParticlePass() *ParticlePass {
 func (p *ParticlePass) Resize(width, height int) {}
 
 // DrawPass executes the particle pass
-func (p *ParticlePass) Draw(args render.Args, scene scene.T) {
+func (p *ParticlePass) Draw(args render.Args, scene object.T) {
 
 }
 

@@ -2,7 +2,6 @@ package component
 
 import (
 	"github.com/johanhenriksson/goworld/core/input/mouse"
-	"github.com/johanhenriksson/goworld/gui/style"
 	"github.com/johanhenriksson/goworld/gui/widget"
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/render"
@@ -70,19 +69,6 @@ func (c *component) Position() vec2.T {
 		return c.wrap.Position()
 	}
 	return vec2.Zero
-}
-
-func (c *component) Style() style.Sheet {
-	if c.wrap != nil {
-		return c.wrap.Style()
-	}
-	return style.Sheet{}
-}
-
-func (c *component) SetStyle(style style.Sheet) {
-	if c.wrap != nil {
-		c.wrap.SetStyle(style)
-	}
 }
 
 func (c *component) Flex() *flex.Node {

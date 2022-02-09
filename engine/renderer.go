@@ -4,7 +4,9 @@ import (
 	"fmt"
 
 	"github.com/johanhenriksson/goworld/assets"
-	"github.com/johanhenriksson/goworld/core/scene"
+	"github.com/johanhenriksson/goworld/core/camera"
+	"github.com/johanhenriksson/goworld/core/object"
+	"github.com/johanhenriksson/goworld/core/object/query"
 	"github.com/johanhenriksson/goworld/core/window"
 	"github.com/johanhenriksson/goworld/engine/deferred"
 	"github.com/johanhenriksson/goworld/engine/effect"
@@ -26,6 +28,7 @@ type Renderer struct {
 	SSAO     *effect.SSAOPass
 	Colors   *effect.ColorPass
 	Lines    *LinePass
+	Gui      *GuiPass
 
 	passMap PassMap
 	window  window.T
@@ -64,6 +67,8 @@ func NewRenderer(window window.T) *Renderer {
 	// lines
 	r.Lines = NewLinePass()
 
+	r.Gui = NewGuiPass()
+
 	r.Passes = []DrawPass{
 		r.Pre,
 		r.Geometry,
@@ -73,6 +78,7 @@ func NewRenderer(window window.T) *Renderer {
 		r.Colors,
 		r.Output,
 		r.Lines,
+		r.Gui,
 	}
 
 	return r
@@ -96,8 +102,11 @@ func (r *Renderer) Get(name string) DrawPass {
 }
 
 // Draw the world.
-func (r *Renderer) Draw(scene scene.T) {
-	args := CreateRenderArgs(r.window, scene.Camera())
+func (r *Renderer) Draw(scene object.T) {
+	// find the first active camera
+	camera := query.New[camera.T]().First(scene)
+
+	args := CreateRenderArgs(r.window, camera)
 	for _, pass := range r.Passes {
 		pass.Draw(args, scene)
 	}

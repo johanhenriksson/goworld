@@ -3,7 +3,6 @@ package engine
 import (
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/core/object/query"
-	"github.com/johanhenriksson/goworld/core/scene"
 	"github.com/johanhenriksson/goworld/render"
 )
 
@@ -22,9 +21,12 @@ func NewLinePass() *LinePass {
 }
 
 // DrawPass executes the line pass
-func (p *LinePass) Draw(args render.Args, scene scene.T) {
+func (p *LinePass) Draw(args render.Args, scene object.T) {
 	render.BindScreenBuffer()
-	render.SetViewport(0, 0, args.Viewport.FrameWidth, args.Viewport.FrameHeight)
+	render.SetViewport(render.Viewport{
+		Width:  args.Viewport.FrameWidth,
+		Height: args.Viewport.FrameHeight,
+	})
 
 	objects := query.New[LineDrawable]().Collect(scene)
 	for _, drawable := range objects {
