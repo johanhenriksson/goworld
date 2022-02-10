@@ -14,7 +14,7 @@ import (
 
 func TestClickSwatch(t *testing.T) {
 	app := node.NewRenderer(func() node.T {
-		return palette.New("palette", &palette.Props{
+		return palette.New("palette", palette.Props{
 			Palette: color.DefaultPalette,
 		})
 	})
