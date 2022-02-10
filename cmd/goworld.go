@@ -111,7 +111,7 @@ func makeGui(renderer *engine.Renderer, scene object.T) {
 }
 
 func ObjectListEntry(idx int, obj object.T) node.T {
-	children := make([]node.T, len(obj.Children())+1)
+	children := make([]node.T, len(obj.Children())+len(obj.Components())+1)
 	clr := color.White
 	if !obj.Active() {
 		clr = color.RGB(0.7, 0.7, 0.7)
@@ -119,11 +119,22 @@ func ObjectListEntry(idx int, obj object.T) node.T {
 	children[0] = label.New("title", label.Props{
 		Text: obj.Name(),
 		Style: style.Sheet{
-			Color: clr,
+			FontColor: clr,
 		},
 	})
-	for i, child := range obj.Children() {
-		children[i+1] = ObjectListEntry(i, child)
+	i := 1
+	for j, cmp := range obj.Components() {
+		children[i] = label.New(fmt.Sprintf("component%d:%s", j, cmp.Name()), label.Props{
+			Text: fmt.Sprintf("+ %s", cmp.Name()),
+			Style: style.Sheet{
+				FontColor: clr,
+			},
+		})
+		i++
+	}
+	for j, child := range obj.Children() {
+		children[i] = ObjectListEntry(j, child)
+		i++
 	}
 	return rect.New(fmt.Sprintf("object%d:%s", idx, obj.Name()), rect.Props{
 		Style: style.Sheet{

@@ -6,25 +6,36 @@ import (
 
 // Box holds a centered an axis-aligned bounding box.
 type Box struct {
-	Extents vec3.T
-	Center  vec3.T
+	Min vec3.T
+	Max vec3.T
 }
 
-// Min returns the lower point
-func (box Box) Min() vec3.T {
-	return vec3.T{
-		X: box.Center.X - box.Extents.X/2,
-		Y: box.Center.Y - box.Extents.Y/2,
-		Z: box.Center.Z - box.Extents.Z/2,
+func NewBox(center, extents vec3.T) Box {
+	half := extents.Scaled(0.5)
+	return Box{
+		Min: center.Sub(half),
+		Max: center.Add(half),
 	}
 }
 
-// Max returns the upper point
-func (box Box) Max() vec3.T {
-	return vec3.T{
-		X: box.Center.X + box.Extents.X/2,
-		Y: box.Center.Y + box.Extents.Y/2,
-		Z: box.Center.Z + box.Extents.Z/2,
+func (box Box) Center() vec3.T {
+	return box.Min.Add(box.Max).Scaled(0.5)
+}
+
+func (box Box) Extents() vec3.T {
+	return box.Max.Sub(box.Min)
+}
+
+func (box Box) Corners() [8]vec3.T {
+	return [8]vec3.T{
+		box.Min, // 000
+		vec3.New(box.Min.X, box.Min.Y, box.Max.Z), // 001
+		vec3.New(box.Min.X, box.Max.Y, box.Min.Z), // 010
+		vec3.New(box.Min.X, box.Max.Y, box.Max.Z), // 011
+		vec3.New(box.Max.X, box.Min.Y, box.Min.Z), // 100
+		vec3.New(box.Max.X, box.Min.Y, box.Max.Z), // 101
+		vec3.New(box.Max.X, box.Max.Y, box.Min.Z), // 110
+		box.Max, // 111
 	}
 }
 
@@ -41,8 +52,8 @@ func (box *Box) Intersect(ray *Ray) (bool, vec3.T) {
 	)
 
 	hit := [DIM]float32{}
-	minB := box.Min().Slice()
-	maxB := box.Max().Slice()
+	minB := box.Min.Slice()
+	maxB := box.Max.Slice()
 	inside := true
 	maxT := [DIM]float32{}
 	origin := ray.Origin.Slice()

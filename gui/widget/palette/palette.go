@@ -11,32 +11,12 @@ import (
 	"github.com/johanhenriksson/goworld/gui/widget/label"
 	"github.com/johanhenriksson/goworld/gui/widget/rect"
 	"github.com/johanhenriksson/goworld/render/color"
+	"github.com/johanhenriksson/goworld/util"
 )
 
 type Props struct {
 	Palette color.Palette
 	OnPick  func(color.T)
-}
-
-func Map[T any, S any](items []T, transform func(int, T) S) []S {
-	output := make([]S, len(items))
-	for i, item := range items {
-		output[i] = transform(i, item)
-	}
-	return output
-}
-
-func Chunks[T any](slice []T, size int) [][]T {
-	count := len(slice) / size
-	chunks := make([][]T, 0, count)
-	for i := 0; i < len(slice); i += size {
-		end := i + size
-		if end > len(slice) {
-			end = len(slice)
-		}
-		chunks = append(chunks, slice[i:end])
-	}
-	return chunks
 }
 
 func New(key string, props Props) node.T {
@@ -48,7 +28,7 @@ func render(props Props) node.T {
 
 	selected, setSelected := hooks.UseState(props.Palette[0])
 
-	colors := Map(props.Palette, func(i int, c color.T) node.T {
+	colors := util.Map(props.Palette, func(i int, c color.T) node.T {
 		return rect.New(fmt.Sprintf("color%d", i), rect.Props{
 			Style: Sheet{
 				Color:  c,
@@ -67,7 +47,7 @@ func render(props Props) node.T {
 		})
 	})
 
-	rows := Map(Chunks(colors, perRow), func(i int, colors []node.T) node.T {
+	rows := util.Map(util.Chunks(colors, perRow), func(i int, colors []node.T) node.T {
 		return rect.New(fmt.Sprintf("row%d", i), rect.Props{
 			Style: Sheet{
 				Width:  Pct(100),
