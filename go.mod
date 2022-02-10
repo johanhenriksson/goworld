@@ -11,6 +11,7 @@ require (
 	github.com/ojrac/opensimplex-go v1.0.1
 	github.com/udhos/gwob v0.0.0-20200524213453-619810f75817
 	golang.org/x/image v0.0.0-20210628002857-a66eb6448b8d
+	github.com/vulkan-go/vulkan v0.0.0-20210402152248-956e3850d8f9
 )
 
 require (
@@ -18,3 +19,5 @@ require (
 	github.com/stretchr/testify v1.7.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )
+
+replace github.com/vulkan-go/vulkan => github.com/johanhenriksson/vulkan v0.0.0-20220209212039-bb0a9288948f
