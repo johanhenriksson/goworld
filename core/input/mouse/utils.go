@@ -1,6 +1,6 @@
 package mouse
 
-import "github.com/go-gl/glfw/v3.1/glfw"
+import "github.com/go-gl/glfw/v3.3/glfw"
 
 var locked bool = false
 var lockingEnabled bool = false

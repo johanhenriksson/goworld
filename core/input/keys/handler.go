@@ -1,6 +1,6 @@
 package keys
 
-import "github.com/go-gl/glfw/v3.1/glfw"
+import "github.com/go-gl/glfw/v3.3/glfw"
 
 type Handler interface {
 	KeyEvent(Event)
