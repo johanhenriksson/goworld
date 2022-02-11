@@ -36,6 +36,7 @@ func New(device device.T, size int, usage vk.BufferUsageFlags, properties vk.Mem
 
 	var memreq vk.MemoryRequirements
 	vk.GetBufferMemoryRequirements(device.Ptr(), ptr, &memreq)
+	memreq.Deref()
 
 	mem := device.Allocate(memreq, properties)
 
@@ -54,6 +55,14 @@ func NewStaging(device device.T, size int) T {
 		device, size,
 		vk.BufferUsageFlags(vk.BufferUsageTransferSrcBit),
 		vk.MemoryPropertyFlags(vk.MemoryPropertyHostVisibleBit|vk.MemoryPropertyHostCoherentBit),
+		vk.SharingModeExclusive)
+}
+
+func NewRemote(device device.T, size int) T {
+	return New(
+		device, size,
+		vk.BufferUsageFlags(vk.BufferUsageTransferDstBit),
+		vk.MemoryPropertyFlags(vk.MemoryPropertyDeviceLocalBit),
 		vk.SharingModeExclusive)
 }
 

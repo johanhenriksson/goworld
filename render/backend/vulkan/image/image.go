@@ -48,6 +48,7 @@ func New2D(device device.T, width, height int, format vk.Format, usage vk.ImageU
 
 	var memreq vk.MemoryRequirements
 	vk.GetImageMemoryRequirements(device.Ptr(), ptr, &memreq)
+	memreq.Deref()
 
 	mem := device.Allocate(memreq, vk.MemoryPropertyFlags(vk.MemoryPropertyDeviceLocalBit))
 	vk.BindImageMemory(device.Ptr(), ptr, mem.Ptr(), vk.DeviceSize(0))
