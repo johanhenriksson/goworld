@@ -1,4 +1,4 @@
-package commandbuffer
+package command
 
 import (
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/device"
@@ -6,7 +6,7 @@ import (
 	vk "github.com/vulkan-go/vulkan"
 )
 
-type T interface {
+type Buffer interface {
 	Ptr() vk.CommandBuffer
 }
 
@@ -15,7 +15,7 @@ type buffer struct {
 	device device.T
 }
 
-func New(device device.T, ptr vk.CommandBuffer) T {
+func newBuffer(device device.T, ptr vk.CommandBuffer) Buffer {
 	return &buffer{
 		ptr:    ptr,
 		device: device,

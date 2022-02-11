@@ -1,4 +1,4 @@
-package fence
+package sync
 
 import (
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/device"
@@ -6,9 +6,10 @@ import (
 	vk "github.com/vulkan-go/vulkan"
 )
 
-type T interface {
+type Fence interface {
 	device.Resource
 	Reset()
+	Wait()
 	Ptr() vk.Fence
 }
 
@@ -17,9 +18,15 @@ type fence struct {
 	ptr    vk.Fence
 }
 
-func New(device device.T) T {
+func NewFence(device device.T, signaled bool) Fence {
+	var flags vk.FenceCreateFlags
+	if signaled {
+		flags = vk.FenceCreateFlags(vk.FenceCreateSignaledBit)
+	}
+
 	info := vk.FenceCreateInfo{
 		SType: vk.StructureTypeFenceCreateInfo,
+		Flags: flags,
 	}
 
 	var fnc vk.Fence
