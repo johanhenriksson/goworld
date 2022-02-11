@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"runtime"
 
+	"github.com/johanhenriksson/goworld/render/backend/vulkan/buffer"
+	"github.com/johanhenriksson/goworld/render/backend/vulkan/command"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/device"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/instance"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/swapchain"
@@ -51,13 +53,37 @@ func main() {
 		panic(err)
 	}
 	surface := vk.SurfaceFromPointer(surfPtr)
+	defer vk.DestroySurface(instance.Ptr(), surface, nil)
 
 	// window.Show()
 
 	chain := swapchain.New(window, device, surface)
 	defer chain.Destroy()
 
-	for !window.ShouldClose() {
+	input := []int{1, 2, 3}
+	stage := buffer.NewStaging(device, 8*3)
+	defer stage.Destroy()
+	stage.Copy(input, 0)
+
+	remote := buffer.NewRemote(device, 8*3)
+	defer remote.Destroy()
+
+	pool := command.NewPool(
+		device,
+		vk.CommandPoolCreateFlags(vk.CommandPoolCreateResetCommandBufferBit),
+		vk.QueueFlags(vk.QueueGraphicsBit))
+	defer pool.Destroy()
+
+	cmdbuf := pool.Allocate(vk.CommandBufferLevelPrimary)
+	defer cmdbuf.Destroy()
+	cmdbuf.Begin()
+	cmdbuf.CopyBuffer(stage, remote, vk.BufferCopy{SrcOffset: 0, DstOffset: 0, Size: 24})
+	cmdbuf.End()
+
+	cmdbuf.SubmitSync(device.GetQueue(0, vk.QueueFlags(vk.QueueGraphicsBit)))
+	fmt.Println("buffer success???")
+
+	for false && !window.ShouldClose() {
 		// aquire backbuffer image
 		chain.Aquire()
 
