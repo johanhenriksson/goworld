@@ -16,8 +16,12 @@ type T interface {
 	Resource
 	Ptr() vk.Device
 
-	GetQueue(queueFamily, queueIndex int) vk.Queue
+	Allocate(vk.MemoryRequirements, vk.MemoryPropertyFlags) Memory
+	GetQueue(queueIndex int, flags vk.QueueFlags) vk.Queue
+	GetQueueFamilyIndex(flags vk.QueueFlags) int
 	GetSurfaceFormats(vk.Surface) []vk.SurfaceFormat
+	GetDepthFormat() vk.Format
+	GetMemoryTypeIndex(uint32, vk.MemoryPropertyFlags) int
 	WaitIdle()
 }
 
@@ -63,10 +67,26 @@ func (d *device) Ptr() vk.Device {
 	return d.ptr
 }
 
-func (d *device) GetQueue(queueFamily, queueIndex int) vk.Queue {
+func (d *device) GetQueue(queueIndex int, flags vk.QueueFlags) vk.Queue {
+	familyIndex := d.GetQueueFamilyIndex(flags)
 	var queue vk.Queue
-	vk.GetDeviceQueue(d.ptr, uint32(queueFamily), uint32(queueIndex), &queue)
+	vk.GetDeviceQueue(d.ptr, uint32(familyIndex), uint32(queueIndex), &queue)
 	return queue
+}
+
+func (d *device) GetQueueFamilyIndex(flags vk.QueueFlags) int {
+	var familyCount uint32
+	vk.GetPhysicalDeviceQueueFamilyProperties(d.physical, &familyCount, nil)
+	families := make([]vk.QueueFamilyProperties, uint32(familyCount))
+	vk.GetPhysicalDeviceQueueFamilyProperties(d.physical, &familyCount, families)
+
+	for index, family := range families {
+		family.Deref()
+		if family.QueueFlags&flags == flags {
+			return index
+		}
+	}
+	return 0
 }
 
 func (d *device) GetSurfaceFormats(surface vk.Surface) []vk.SurfaceFormat {
@@ -79,6 +99,47 @@ func (d *device) GetSurfaceFormats(surface vk.Surface) []vk.SurfaceFormat {
 		surfaceFormats[i] = format
 	}
 	return surfaceFormats
+}
+
+func (d *device) GetDepthFormat() vk.Format {
+	depthFormats := []vk.Format{
+		vk.FormatD32SfloatS8Uint,
+		vk.FormatD32Sfloat,
+		vk.FormatD24UnormS8Uint,
+		vk.FormatD16UnormS8Uint,
+		vk.FormatD16Unorm,
+	}
+	for _, format := range depthFormats {
+		var properties vk.FormatProperties
+		vk.GetPhysicalDeviceFormatProperties(d.physical, format, &properties)
+		properties.Deref()
+
+		if properties.OptimalTilingFeatures&vk.FormatFeatureFlags(vk.FormatFeatureDepthStencilAttachmentBit) == vk.FormatFeatureFlags(vk.FormatFeatureDepthStencilAttachmentBit) {
+			return format
+		}
+	}
+
+	return depthFormats[0]
+}
+
+func (d *device) GetMemoryTypeIndex(memoryTypeBits uint32, flags vk.MemoryPropertyFlags) int {
+	var props vk.PhysicalDeviceMemoryProperties
+	vk.GetPhysicalDeviceMemoryProperties(d.physical, &props)
+
+	for i := 0; i < int(props.MemoryTypeCount); i++ {
+		if memoryTypeBits&1 == 1 {
+			if props.MemoryTypes[i].PropertyFlags&flags == flags {
+				return i
+			}
+		}
+		memoryTypeBits >>= 1
+	}
+
+	return 0
+}
+
+func (d *device) Allocate(req vk.MemoryRequirements, flags vk.MemoryPropertyFlags) Memory {
+	return alloc(d, req, flags)
 }
 
 func (d *device) Destroy() {

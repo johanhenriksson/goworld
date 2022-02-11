@@ -1,4 +1,4 @@
-package descriptorpool
+package descriptor
 
 import (
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/device"
@@ -6,7 +6,7 @@ import (
 	vk "github.com/vulkan-go/vulkan"
 )
 
-type T interface {
+type Pool interface {
 	device.Resource
 	Ptr() vk.DescriptorPool
 }
@@ -16,7 +16,7 @@ type pool struct {
 	device device.T
 }
 
-func New(device device.T, sizes []vk.DescriptorPoolSize) T {
+func NewPool(device device.T, sizes []vk.DescriptorPoolSize) Pool {
 	info := vk.DescriptorPoolCreateInfo{
 		SType:         vk.StructureTypeDescriptorPoolCreateInfo,
 		PPoolSizes:    sizes,

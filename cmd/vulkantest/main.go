@@ -61,10 +61,10 @@ func main() {
 		// aquire backbuffer image
 		chain.Aquire()
 
-		cmds := make([]vk.CommandBuffer, 1)
-		vk.AllocateCommandBuffers(device.Ptr(), &vk.CommandBufferAllocateInfo{
-			SType: vk.StructureTypeCommandBufferAllocateInfo,
-		}, cmds)
+		// cmds := make([]vk.CommandBuffer, 1)
+		// vk.AllocateCommandBuffers(device.Ptr(), &vk.CommandBufferAllocateInfo{
+		// 	SType: vk.StructureTypeCommandBufferAllocateInfo,
+		// }, cmds)
 
 		// draw
 		chain.Submit([]vk.CommandBuffer{})

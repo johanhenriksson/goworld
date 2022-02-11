@@ -1,4 +1,4 @@
-package semaphore
+package sync
 
 import (
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/device"
@@ -6,7 +6,7 @@ import (
 	vk "github.com/vulkan-go/vulkan"
 )
 
-type T interface {
+type Semaphore interface {
 	device.Resource
 	Ptr() vk.Semaphore
 }
@@ -16,7 +16,7 @@ type semaphore struct {
 	ptr    vk.Semaphore
 }
 
-func New(dev device.T) T {
+func NewSemaphore(dev device.T) Semaphore {
 	info := vk.SemaphoreCreateInfo{
 		SType: vk.StructureTypeSemaphoreCreateInfo,
 	}
