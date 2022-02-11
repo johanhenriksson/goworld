@@ -30,7 +30,7 @@ type T interface {
 	BufferSize() (int, int)
 	Scale() float32
 
-	SwapBuffers()
+	Poll()
 	ShouldClose() bool
 
 	SetInputHandler(input.Handler)
@@ -46,8 +46,9 @@ type Args struct {
 }
 
 type window struct {
-	wnd   *glfw.Window
-	mouse mouse.MouseWrapper
+	wnd     *glfw.Window
+	backend GlfwBackend
+	mouse   mouse.MouseWrapper
 
 	title           string
 	width, height   int
@@ -56,9 +57,6 @@ type window struct {
 }
 
 func New(backend GlfwBackend, args Args) (T, error) {
-	if backend == nil {
-		backend = &OpenGLBackend{}
-	}
 
 	// window creation hints.
 	for _, hint := range backend.GlfwHints(args) {
@@ -80,6 +78,7 @@ func New(backend GlfwBackend, args Args) (T, error) {
 
 	window := &window{
 		wnd:     wnd,
+		backend: backend,
 		title:   args.Title,
 		width:   width,
 		height:  height,
@@ -104,8 +103,7 @@ func New(backend GlfwBackend, args Args) (T, error) {
 	return window, nil
 }
 
-func (w *window) SwapBuffers() {
-	w.wnd.SwapBuffers()
+func (w *window) Poll() {
 	glfw.PollEvents()
 }
 
@@ -128,10 +126,13 @@ func (w *window) SetInputHandler(handler input.Handler) {
 }
 
 func (w *window) onResize(_ *glfw.Window, width, height int) {
+	// very unclear if this works with vulkan
 	w.width = width
 	w.height = height
 	w.fwidth, w.fheight = w.wnd.GetFramebufferSize()
 	w.scale = float32(w.fwidth) / float32(w.width)
+
+	w.backend.Resize(w.fwidth, w.fheight)
 }
 
 func (w *window) SetTitle(title string) {

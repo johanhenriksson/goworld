@@ -38,8 +38,10 @@ func Run(args Args) {
 		defer pprof.StopCPUProfile()
 	}
 
+	backend := &window.OpenGLBackend{}
+
 	// create a window
-	wnd, err := window.New(nil, window.Args{
+	wnd, err := window.New(backend, window.Args{
 		Title:  args.Title,
 		Width:  args.Width,
 		Height: args.Height,
@@ -59,8 +61,11 @@ func Run(args Args) {
 	// run the render loop
 	fmt.Println("Ready")
 	for !wnd.ShouldClose() {
+		wnd.Poll()
 		scene.Update(0.030)
+
+		backend.Aquire()
 		renderer.Draw(scene)
-		wnd.SwapBuffers()
+		backend.Present()
 	}
 }

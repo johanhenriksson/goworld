@@ -11,6 +11,9 @@ import (
 type GlfwBackend interface {
 	GlfwHints(Args) []GlfwHint
 	GlfwSetup(*glfw.Window, Args) error
+	Resize(int, int)
+	Present()
+	Aquire()
 }
 
 type GlfwHint struct {
@@ -18,7 +21,9 @@ type GlfwHint struct {
 	Value int
 }
 
-type OpenGLBackend struct{}
+type OpenGLBackend struct {
+	window *glfw.Window
+}
 
 func (b *OpenGLBackend) GlfwHints(args Args) []GlfwHint {
 	hints := []GlfwHint{
@@ -37,6 +42,8 @@ func (b *OpenGLBackend) GlfwHints(args Args) []GlfwHint {
 }
 
 func (b *OpenGLBackend) GlfwSetup(w *glfw.Window, args Args) error {
+	b.window = w
+
 	if args.Vsync {
 		glfw.SwapInterval(1)
 	}
@@ -64,6 +71,18 @@ func (b *OpenGLBackend) GlfwSetup(w *glfw.Window, args Args) error {
 	}
 
 	return nil
+}
+
+func (b *OpenGLBackend) Resize(width, height int) {
+
+}
+
+func (b *OpenGLBackend) Aquire() {
+
+}
+
+func (b *OpenGLBackend) Present() {
+	b.window.SwapBuffers()
 }
 
 func (b *OpenGLBackend) onDebugMessage(
