@@ -15,6 +15,11 @@ type Memory interface {
 	IsHostVisible() bool
 }
 
+type memtype struct {
+	TypeBits uint32
+	Flags    vk.MemoryPropertyFlags
+}
+
 type memory struct {
 	ptr     vk.DeviceMemory
 	device  T
@@ -38,6 +43,7 @@ func alloc(device T, req vk.MemoryRequirements, flags vk.MemoryPropertyFlags) Me
 		device: device,
 		ptr:    ptr,
 		flags:  flags,
+		size:   int(req.Size),
 	}
 
 	return m

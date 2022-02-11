@@ -10,6 +10,8 @@ import (
 type Pool interface {
 	device.Resource
 	Ptr() vk.CommandPool
+	Allocate(level vk.CommandBufferLevel) Buffer
+	AllocateBuffers(level vk.CommandBufferLevel, count int) []Buffer
 }
 
 type pool struct {
@@ -17,10 +19,12 @@ type pool struct {
 	device device.T
 }
 
-func New(device device.T, queueFamily int) Pool {
+func NewPool(device device.T, flags vk.CommandPoolCreateFlags, queueFlags vk.QueueFlags) Pool {
+	queueIdx := device.GetQueueFamilyIndex(queueFlags)
 	info := vk.CommandPoolCreateInfo{
 		SType:            vk.StructureTypeCommandPoolCreateInfo,
-		QueueFamilyIndex: uint32(queueFamily),
+		Flags:            flags,
+		QueueFamilyIndex: uint32(queueIdx),
 	}
 
 	var ptr vk.CommandPool
@@ -40,16 +44,23 @@ func (p *pool) Destroy() {
 	vk.DestroyCommandPool(p.device.Ptr(), p.ptr, nil)
 }
 
-func (p *pool) AllocateBuffers(count int) []Buffer {
+func (p *pool) Allocate(level vk.CommandBufferLevel) Buffer {
+	buffers := p.AllocateBuffers(level, 1)
+	return buffers[0]
+}
+
+func (p *pool) AllocateBuffers(level vk.CommandBufferLevel, count int) []Buffer {
 	info := vk.CommandBufferAllocateInfo{
-		SType: vk.StructureTypeCommandBufferAllocateInfo,
-		Level: vk.CommandBufferLevelPrimary,
+		SType:              vk.StructureTypeCommandBufferAllocateInfo,
+		CommandPool:        p.ptr,
+		Level:              level,
+		CommandBufferCount: uint32(count),
 	}
 
 	ptrs := make([]vk.CommandBuffer, count)
 	vk.AllocateCommandBuffers(p.device.Ptr(), &info, ptrs)
 
 	return util.Map(ptrs, func(i int, ptr vk.CommandBuffer) Buffer {
-		return newBuffer(p.device, ptr)
+		return newBuffer(p.device, p.ptr, ptr)
 	})
 }

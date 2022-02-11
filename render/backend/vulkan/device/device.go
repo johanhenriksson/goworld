@@ -28,6 +28,9 @@ type T interface {
 type device struct {
 	physical vk.PhysicalDevice
 	ptr      vk.Device
+
+	memtypes map[memtype]int
+	queues   map[vk.QueueFlags]int
 }
 
 func New(physDevice vk.PhysicalDevice) (T, error) {
@@ -60,6 +63,8 @@ func New(physDevice vk.PhysicalDevice) (T, error) {
 	return &device{
 		physical: physDevice,
 		ptr:      dev,
+		memtypes: make(map[memtype]int),
+		queues:   make(map[vk.QueueFlags]int),
 	}, nil
 }
 
@@ -75,6 +80,10 @@ func (d *device) GetQueue(queueIndex int, flags vk.QueueFlags) vk.Queue {
 }
 
 func (d *device) GetQueueFamilyIndex(flags vk.QueueFlags) int {
+	if q, ok := d.queues[flags]; ok {
+		return q
+	}
+
 	var familyCount uint32
 	vk.GetPhysicalDeviceQueueFamilyProperties(d.physical, &familyCount, nil)
 	families := make([]vk.QueueFamilyProperties, uint32(familyCount))
@@ -83,9 +92,12 @@ func (d *device) GetQueueFamilyIndex(flags vk.QueueFlags) int {
 	for index, family := range families {
 		family.Deref()
 		if family.QueueFlags&flags == flags {
+			d.queues[flags] = index
 			return index
 		}
 	}
+
+	d.queues[flags] = 0
 	return 0
 }
 
@@ -122,19 +134,28 @@ func (d *device) GetDepthFormat() vk.Format {
 	return depthFormats[0]
 }
 
-func (d *device) GetMemoryTypeIndex(memoryTypeBits uint32, flags vk.MemoryPropertyFlags) int {
+func (d *device) GetMemoryTypeIndex(typeBits uint32, flags vk.MemoryPropertyFlags) int {
+	mtype := memtype{typeBits, flags}
+	if t, ok := d.memtypes[mtype]; ok {
+		return t
+	}
+
 	var props vk.PhysicalDeviceMemoryProperties
 	vk.GetPhysicalDeviceMemoryProperties(d.physical, &props)
+	props.Deref()
 
 	for i := 0; i < int(props.MemoryTypeCount); i++ {
-		if memoryTypeBits&1 == 1 {
+		if typeBits&1 == 1 {
+			props.MemoryTypes[i].Deref()
 			if props.MemoryTypes[i].PropertyFlags&flags == flags {
+				d.memtypes[mtype] = i
 				return i
 			}
 		}
-		memoryTypeBits >>= 1
+		typeBits >>= 1
 	}
 
+	d.memtypes[mtype] = 0
 	return 0
 }
 
