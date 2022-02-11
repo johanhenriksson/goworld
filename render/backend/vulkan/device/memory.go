@@ -11,7 +11,8 @@ import (
 type Memory interface {
 	Resource
 	Ptr() vk.DeviceMemory
-	Copy(data any, offset int)
+	Read(data any, offset int)
+	Write(data any, offset int)
 	IsHostVisible() bool
 }
 
@@ -63,7 +64,7 @@ func (m *memory) Destroy() {
 	m.ptr = nil
 }
 
-func (m *memory) Copy(data any, offset int) {
+func (m *memory) Write(data any, offset int) {
 	if !m.IsHostVisible() {
 		panic("memory is not visible to host")
 	}
@@ -75,13 +76,9 @@ func (m *memory) Copy(data any, offset int) {
 
 	v := reflect.ValueOf(data)
 
-	// the length of the slice is the number of buffer elements
+	// calculate copy size
 	count := v.Len()
-
-	// get byte size of each element, e.g. sizeof(element)
 	sizeof := int(t.Elem().Size())
-
-	// total copy size
 	size := count * sizeof
 
 	// get a pointer to the beginning of the array
@@ -101,6 +98,47 @@ func (m *memory) Copy(data any, offset int) {
 		vk.MemoryMapFlags(0),
 		&dst)
 	// copy from host
+	memcpy(dst, src, size)
+
+	// unmap shared memory
+	vk.UnmapMemory(m.device.Ptr(), m.Ptr())
+}
+
+func (m *memory) Read(target any, offset int) {
+	if !m.IsHostVisible() {
+		panic("memory is not visible to host")
+	}
+
+	t := reflect.TypeOf(target)
+	if t.Kind() != reflect.Slice {
+		panic(fmt.Errorf("output buffer must be a slice"))
+	}
+
+	v := reflect.ValueOf(target)
+
+	// calculate copy size
+	count := v.Len()
+	sizeof := int(t.Elem().Size())
+	size := count * sizeof
+
+	// get a pointer to the beginning of the array
+	dst := unsafe.Pointer(v.Pointer())
+
+	if size+offset > m.size {
+		panic("out of bounds")
+	}
+
+	// map shared memory
+	var src unsafe.Pointer
+	vk.MapMemory(
+		m.device.Ptr(),
+		m.ptr,
+		vk.DeviceSize(offset),
+		vk.DeviceSize(size),
+		vk.MemoryMapFlags(0),
+		&src)
+
+	// copy to host
 	memcpy(dst, src, size)
 
 	// unmap shared memory

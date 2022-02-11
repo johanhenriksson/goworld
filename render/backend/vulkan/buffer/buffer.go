@@ -9,7 +9,8 @@ import (
 type T interface {
 	device.Resource
 	Ptr() vk.Buffer
-	Copy(data any, offset int)
+	Read(data any, offset int)
+	Write(data any, offset int)
 }
 
 type buffer struct {
@@ -50,7 +51,7 @@ func New(device device.T, size int, usage vk.BufferUsageFlags, properties vk.Mem
 	}
 }
 
-func NewStaging(device device.T, size int) T {
+func NewShared(device device.T, size int) T {
 	return New(
 		device, size,
 		vk.BufferUsageFlags(vk.BufferUsageTransferSrcBit),
@@ -76,6 +77,10 @@ func (b *buffer) Destroy() {
 	b.ptr = nil
 }
 
-func (b *buffer) Copy(data any, offset int) {
-	b.memory.Copy(data, offset)
+func (b *buffer) Write(data any, offset int) {
+	b.memory.Write(data, offset)
+}
+
+func (b *buffer) Read(data any, offset int) {
+	b.memory.Read(data, offset)
 }
