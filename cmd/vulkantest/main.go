@@ -36,7 +36,7 @@ func main() {
 	defer window.Destroy()
 
 	// create instance
-	instance := instance.New("gulkan")
+	instance := instance.New("goworld")
 	defer instance.Destroy()
 
 	// create device
@@ -55,18 +55,19 @@ func main() {
 	surface := vk.SurfaceFromPointer(surfPtr)
 	defer vk.DestroySurface(instance.Ptr(), surface, nil)
 
-	// window.Show()
-
 	chain := swapchain.New(window, device, surface)
 	defer chain.Destroy()
 
 	input := []int{1, 2, 3}
-	stage := buffer.NewStaging(device, 8*3)
+	stage := buffer.NewShared(device, 8*3)
 	defer stage.Destroy()
-	stage.Copy(input, 0)
+	stage.Write(input, 0)
 
 	remote := buffer.NewRemote(device, 8*3)
 	defer remote.Destroy()
+
+	output := buffer.NewShared(device, 8*3)
+	defer output.Destroy()
 
 	pool := command.NewPool(
 		device,
@@ -78,12 +79,16 @@ func main() {
 	defer cmdbuf.Destroy()
 	cmdbuf.Begin()
 	cmdbuf.CopyBuffer(stage, remote, vk.BufferCopy{SrcOffset: 0, DstOffset: 0, Size: 24})
+	cmdbuf.CopyBuffer(remote, output, vk.BufferCopy{SrcOffset: 0, DstOffset: 0, Size: 24})
 	cmdbuf.End()
 
 	cmdbuf.SubmitSync(device.GetQueue(0, vk.QueueFlags(vk.QueueGraphicsBit)))
-	fmt.Println("buffer success???")
 
-	for false && !window.ShouldClose() {
+	result := make([]int, 3)
+	output.Read(result, 0)
+	fmt.Println("read back", result)
+
+	for !window.ShouldClose() {
 		// aquire backbuffer image
 		chain.Aquire()
 
