@@ -4,7 +4,6 @@ import (
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/device"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/sync"
 
-	"github.com/go-gl/glfw/v3.3/glfw"
 	vk "github.com/vulkan-go/vulkan"
 )
 
@@ -32,7 +31,7 @@ type swapchain struct {
 	currentImage      uint32
 }
 
-func New(window *glfw.Window, device device.T, surface vk.Surface) T {
+func New(device device.T, width, height int, surface vk.Surface) T {
 	// todo: surface format logic
 	surfaceFormat := device.GetSurfaceFormats(surface)[0]
 	queue := device.GetQueue(0, vk.QueueFlags(vk.QueueGraphicsBit))
@@ -48,7 +47,6 @@ func New(window *glfw.Window, device device.T, surface vk.Surface) T {
 	}
 
 	// size according to framebuffer
-	width, height := window.GetFramebufferSize()
 	s.Resize(width, height)
 
 	return s

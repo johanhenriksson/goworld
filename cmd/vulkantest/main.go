@@ -2,61 +2,28 @@ package main
 
 import (
 	"fmt"
-	"runtime"
 
+	"github.com/johanhenriksson/goworld/core/window"
+	"github.com/johanhenriksson/goworld/render/backend/vulkan"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/buffer"
-	"github.com/johanhenriksson/goworld/render/backend/vulkan/command"
-	"github.com/johanhenriksson/goworld/render/backend/vulkan/device"
-	"github.com/johanhenriksson/goworld/render/backend/vulkan/instance"
-	"github.com/johanhenriksson/goworld/render/backend/vulkan/swapchain"
-	"github.com/johanhenriksson/goworld/util"
 
-	"github.com/go-gl/glfw/v3.3/glfw"
 	vk "github.com/vulkan-go/vulkan"
 )
 
-func init() {
-	runtime.LockOSThread()
-
-	if err := glfw.Init(); err != nil {
-		panic(err)
-	}
-	vk.SetGetInstanceProcAddr(glfw.GetVulkanGetInstanceProcAddress())
-
-	if err := vk.Init(); err != nil {
-		panic(err)
-	}
-}
-
 func main() {
-	// create a window
-	glfw.WindowHint(glfw.ClientAPI, glfw.NoAPI)
-	window, err := glfw.CreateWindow(500, 500, "moltenvk", nil, nil)
-	fmt.Println("window required extensions:", window.GetRequiredInstanceExtensions())
-	defer window.Destroy()
+	backend := vulkan.New("goworld: vulkan", 0)
+	defer backend.Destroy()
 
-	// create instance
-	instance := instance.New("goworld")
-	defer instance.Destroy()
-
-	// create device
-	physDevices := instance.EnumeratePhysicalDevices()
-	device, err := device.New(physDevices[0])
+	wnd, err := window.New(backend, window.Args{
+		Title:  "goworld: vulkan",
+		Width:  500,
+		Height: 500,
+	})
 	if err != nil {
 		panic(err)
 	}
-	defer device.Destroy()
 
-	// surface
-	surfPtr, err := window.CreateWindowSurface(instance.Ptr(), nil)
-	if err != nil {
-		panic(err)
-	}
-	surface := vk.SurfaceFromPointer(surfPtr)
-	defer vk.DestroySurface(instance.Ptr(), surface, nil)
-
-	chain := swapchain.New(window, device, surface)
-	defer chain.Destroy()
+	device := backend.Device()
 
 	input := []int{1, 2, 3}
 	stage := buffer.NewShared(device, 8*3)
@@ -69,13 +36,7 @@ func main() {
 	output := buffer.NewShared(device, 8*3)
 	defer output.Destroy()
 
-	pool := command.NewPool(
-		device,
-		vk.CommandPoolCreateFlags(vk.CommandPoolCreateResetCommandBufferBit),
-		vk.QueueFlags(vk.QueueGraphicsBit))
-	defer pool.Destroy()
-
-	cmdbuf := pool.Allocate(vk.CommandBufferLevelPrimary)
+	cmdbuf := backend.CmdPool().Allocate(vk.CommandBufferLevelPrimary)
 	defer cmdbuf.Destroy()
 	cmdbuf.Begin()
 	cmdbuf.CopyBuffer(stage, remote, vk.BufferCopy{SrcOffset: 0, DstOffset: 0, Size: 24})
@@ -88,29 +49,15 @@ func main() {
 	output.Read(result, 0)
 	fmt.Println("read back", result)
 
-	for !window.ShouldClose() {
+	for !wnd.ShouldClose() {
 		// aquire backbuffer image
-		chain.Aquire()
-
-		// cmds := make([]vk.CommandBuffer, 1)
-		// vk.AllocateCommandBuffers(device.Ptr(), &vk.CommandBufferAllocateInfo{
-		// 	SType: vk.StructureTypeCommandBufferAllocateInfo,
-		// }, cmds)
+		backend.Aquire()
 
 		// draw
-		chain.Submit([]vk.CommandBuffer{})
+		backend.Submit([]vk.CommandBuffer{})
 
-		chain.Present()
+		backend.Present()
 
-		glfw.PollEvents()
+		wnd.Poll()
 	}
-}
-
-func GetDeviceNames(devices []vk.PhysicalDevice) []string {
-	return util.Map(devices, func(i int, device vk.PhysicalDevice) string {
-		var properties vk.PhysicalDeviceProperties
-		vk.GetPhysicalDeviceProperties(device, &properties)
-		properties.Deref()
-		return vk.ToString(properties.DeviceName[:])
-	})
 }
