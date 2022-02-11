@@ -39,7 +39,7 @@ func Run(args Args) {
 	}
 
 	// create a window
-	wnd, err := window.New(window.Args{
+	wnd, err := window.New(nil, window.Args{
 		Title:  args.Title,
 		Width:  args.Width,
 		Height: args.Height,

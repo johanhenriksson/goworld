@@ -4,13 +4,11 @@ import (
 	"fmt"
 	"log"
 	"runtime"
-	"unsafe"
 
 	"github.com/johanhenriksson/goworld/core/input"
 	"github.com/johanhenriksson/goworld/core/input/keys"
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 
-	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/glfw/v3.3/glfw"
 )
 
@@ -57,16 +55,14 @@ type window struct {
 	scale           float32
 }
 
-func New(args Args) (T, error) {
-	// window creation hints.
-	glfw.WindowHint(glfw.ContextVersionMajor, 4)
-	glfw.WindowHint(glfw.ContextVersionMinor, 1)
-	glfw.WindowHint(glfw.OpenGLProfile, glfw.OpenGLCoreProfile)
-	glfw.WindowHint(glfw.OpenGLForwardCompatible, glfw.True)
-	glfw.WindowHint(glfw.Samples, 1)
+func New(backend GlfwBackend, args Args) (T, error) {
+	if backend == nil {
+		backend = &OpenGLBackend{}
+	}
 
-	if args.Debug {
-		glfw.WindowHint(glfw.OpenGLDebugContext, glfw.True)
+	// window creation hints.
+	for _, hint := range backend.GlfwHints(args) {
+		glfw.WindowHint(hint.Hint, hint.Value)
 	}
 
 	// create a new GLFW window
@@ -92,16 +88,9 @@ func New(args Args) (T, error) {
 		scale:   scale,
 	}
 
-	if args.Vsync {
-		glfw.SwapInterval(1)
-	}
-
-	// activate OpenGL context
-	wnd.MakeContextCurrent()
-
-	// initialize OpenGL. context must be active first
-	if err := gl.Init(); err != nil {
-		return nil, fmt.Errorf("failed to initialize OpenGL: %w", err)
+	// setup glfw window for use with the current backend
+	if err := backend.GlfwSetup(wnd, args); err != nil {
+		return nil, err
 	}
 
 	// attach default input handler, if provided
@@ -111,20 +100,6 @@ func New(args Args) (T, error) {
 
 	// set resize callback
 	wnd.SetSizeCallback(window.onResize)
-
-	// set up debugging
-	if args.Debug {
-		var flags int32
-		gl.GetIntegerv(gl.CONTEXT_FLAGS, &flags)
-		if flags&gl.CONTEXT_FLAG_DEBUG_BIT == gl.CONTEXT_FLAG_DEBUG_BIT {
-			gl.Enable(gl.DEBUG_OUTPUT)
-			gl.Enable(gl.DEBUG_OUTPUT_SYNCHRONOUS)
-			gl.DebugMessageControl(gl.DONT_CARE, gl.DONT_CARE, gl.DONT_CARE, 0, nil, true)
-			gl.DebugMessageCallback(window.onDebugMessage, nil)
-		} else {
-			fmt.Println("warning: failed to enable opengl debugging")
-		}
-	}
 
 	return window, nil
 }
@@ -157,19 +132,6 @@ func (w *window) onResize(_ *glfw.Window, width, height int) {
 	w.height = height
 	w.fwidth, w.fheight = w.wnd.GetFramebufferSize()
 	w.scale = float32(w.fwidth) / float32(w.width)
-}
-
-func (w *window) onDebugMessage(
-	source uint32,
-	gltype uint32,
-	id uint32,
-	severity uint32,
-	length int32,
-	message string,
-	userParam unsafe.Pointer) {
-	// todo: proper messages
-	// see https://learnopengl.com/In-Practice/Debugging
-	fmt.Println("GL Debug:", message)
 }
 
 func (w *window) SetTitle(title string) {
