@@ -9,6 +9,7 @@ import (
 type T interface {
 	device.Resource[vk.Buffer]
 
+	Size() int
 	Read(data any, offset int)
 	Write(data any, offset int)
 }
@@ -59,16 +60,20 @@ func NewShared(device device.T, size int) T {
 		vk.SharingModeExclusive)
 }
 
-func NewRemote(device device.T, size int) T {
+func NewRemote(device device.T, size int, flags vk.BufferUsageFlags) T {
 	return New(
 		device, size,
-		vk.BufferUsageFlags(vk.BufferUsageTransferDstBit),
+		vk.BufferUsageFlags(vk.BufferUsageTransferDstBit)|flags,
 		vk.MemoryPropertyFlags(vk.MemoryPropertyDeviceLocalBit),
 		vk.SharingModeExclusive)
 }
 
 func (b *buffer) Ptr() vk.Buffer {
 	return b.ptr
+}
+
+func (b *buffer) Size() int {
+	return b.size
 }
 
 func (b *buffer) Destroy() {

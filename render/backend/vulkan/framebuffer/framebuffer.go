@@ -30,6 +30,7 @@ func New(device device.T, width, height int, pass vk.RenderPass, attachments []i
 		PAttachments:    util.Map(attachments, func(i int, v image.View) vk.ImageView { return v.Ptr() }),
 		Width:           uint32(width),
 		Height:          uint32(height),
+		Layers:          1,
 	}
 
 	var ptr vk.Framebuffer

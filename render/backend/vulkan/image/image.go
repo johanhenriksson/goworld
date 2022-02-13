@@ -28,7 +28,7 @@ func New2D(device device.T, width, height int, format vk.Format, usage vk.ImageU
 		Extent: vk.Extent3D{
 			Width:  uint32(width),
 			Height: uint32(height),
-			Depth:  0,
+			Depth:  1,
 		},
 		MipLevels:   1,
 		ArrayLayers: 1,
@@ -88,7 +88,7 @@ func (i *image) Destroy() {
 
 func (i *image) View(format vk.Format, mask vk.ImageAspectFlags) View {
 	info := vk.ImageViewCreateInfo{
-		SType:    vk.StructureTypeImageCreateInfo,
+		SType:    vk.StructureTypeImageViewCreateInfo,
 		Image:    i.ptr,
 		ViewType: vk.ImageViewType2d,
 		Format:   format,

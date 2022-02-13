@@ -16,24 +16,56 @@ type pipeline struct {
 	device device.T
 }
 
-func New(device device.T, cache vk.PipelineCache, shaders []Shader) T {
+func New(device device.T, cache vk.PipelineCache, layout Layout, pass Pass, shaders []Shader) T {
 	modules := util.Map(shaders, func(i int, shader Shader) vk.PipelineShaderStageCreateInfo {
 		return vk.PipelineShaderStageCreateInfo{
 			SType:  vk.StructureTypePipelineShaderStageCreateInfo,
-			Flags:  vk.PipelineShaderStageCreateFlags(vk.PipelineStageVertexShaderBit),
 			Module: shader.Ptr(),
 			PName:  util.CString(shader.Entrypoint()),
+			Stage:  shader.Stage(),
 		}
 	})
 
 	info := vk.GraphicsPipelineCreateInfo{
 		SType: vk.StructureTypeGraphicsPipelineCreateInfo,
 
+		// layout
+		Layout: layout.Ptr(),
+
+		// render pass
+		RenderPass: pass.Ptr(),
+
 		// Stages
 		StageCount: uint32(len(modules)),
 		PStages:    modules,
 
 		// Vertex input state
+		PVertexInputState: &vk.PipelineVertexInputStateCreateInfo{
+			SType:                         vk.StructureTypePipelineVertexInputStateCreateInfo,
+			VertexBindingDescriptionCount: 1,
+			PVertexBindingDescriptions: []vk.VertexInputBindingDescription{
+				{
+					Binding:   0,
+					Stride:    6 * 4,
+					InputRate: vk.VertexInputRateVertex,
+				},
+			},
+			VertexAttributeDescriptionCount: 2,
+			PVertexAttributeDescriptions: []vk.VertexInputAttributeDescription{
+				{
+					Binding:  0,
+					Location: 0, // vec3 position
+					Format:   vk.FormatR32g32b32Sfloat,
+					Offset:   0,
+				},
+				{
+					Binding:  0,
+					Location: 1, // vec3 color
+					Format:   vk.FormatR32g32b32Sfloat,
+					Offset:   3 * 4,
+				},
+			},
+		},
 
 		// Input assembly
 		PInputAssemblyState: &vk.PipelineInputAssemblyStateCreateInfo{
@@ -45,12 +77,22 @@ func New(device device.T, cache vk.PipelineCache, shaders []Shader) T {
 		PViewportState: &vk.PipelineViewportStateCreateInfo{
 			SType:         vk.StructureTypePipelineViewportStateCreateInfo,
 			ViewportCount: 1,
-			PViewports:    []vk.Viewport{
-				// viewport
+			PViewports: []vk.Viewport{
+				{
+					Width:  1000,
+					Height: 1000,
+				},
 			},
 			ScissorCount: 1,
-			PScissors:    []vk.Rect2D{
+			PScissors: []vk.Rect2D{
 				// scissor
+				{
+					Offset: vk.Offset2D{},
+					Extent: vk.Extent2D{
+						Width:  1000,
+						Height: 1000,
+					},
+				},
 			},
 		},
 
@@ -62,6 +104,7 @@ func New(device device.T, cache vk.PipelineCache, shaders []Shader) T {
 			PolygonMode:             vk.PolygonModeFill,
 			CullMode:                vk.CullModeFlags(vk.CullModeNone),
 			FrontFace:               vk.FrontFaceCounterClockwise,
+			LineWidth:               1,
 		},
 
 		// multisample
@@ -71,6 +114,24 @@ func New(device device.T, cache vk.PipelineCache, shaders []Shader) T {
 		},
 
 		// depth & stencil
+		PDepthStencilState: &vk.PipelineDepthStencilStateCreateInfo{
+			SType:                 vk.StructureTypePipelineDepthStencilStateCreateInfo,
+			DepthTestEnable:       vk.True,
+			DepthWriteEnable:      vk.True,
+			DepthCompareOp:        vk.CompareOpLessOrEqual,
+			DepthBoundsTestEnable: vk.False,
+			Back: vk.StencilOpState{
+				FailOp:    vk.StencilOpKeep,
+				PassOp:    vk.StencilOpKeep,
+				CompareOp: vk.CompareOpAlways,
+			},
+			StencilTestEnable: vk.False,
+			Front: vk.StencilOpState{
+				FailOp:    vk.StencilOpKeep,
+				PassOp:    vk.StencilOpKeep,
+				CompareOp: vk.CompareOpAlways,
+			},
+		},
 
 		// color blending
 		PColorBlendState: &vk.PipelineColorBlendStateCreateInfo{
@@ -97,15 +158,15 @@ func New(device device.T, cache vk.PipelineCache, shaders []Shader) T {
 		// dynamic state: viewport & scissor
 		PDynamicState: &vk.PipelineDynamicStateCreateInfo{
 			SType:             vk.StructureTypePipelineDynamicStateCreateInfo,
-			DynamicStateCount: 2,
+			DynamicStateCount: 1,
 			PDynamicStates: []vk.DynamicState{
-				vk.DynamicStateScissor,
+				// vk.DynamicStateScissor,
 				vk.DynamicStateViewport,
 			},
 		},
 	}
 
-	var ptrs []vk.Pipeline
+	ptrs := make([]vk.Pipeline, 1)
 	vk.CreateGraphicsPipelines(device.Ptr(), cache, 1, []vk.GraphicsPipelineCreateInfo{info}, nil, ptrs)
 
 	return &pipeline{

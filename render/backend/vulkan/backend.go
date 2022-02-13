@@ -9,11 +9,17 @@ import (
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/framebuffer"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/image"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/instance"
+	"github.com/johanhenriksson/goworld/render/backend/vulkan/pipeline"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/swapchain"
 
 	"github.com/go-gl/glfw/v3.3/glfw"
 	vk "github.com/vulkan-go/vulkan"
 )
+
+type VkVertex struct {
+	X, Y, Z float32
+	R, G, B float32
+}
 
 type T interface {
 	Instance() instance.T
@@ -21,12 +27,14 @@ type T interface {
 	Surface() vk.Surface
 	Swapchain() swapchain.T
 	Destroy()
+	OutputPass() pipeline.Pass
 
 	GlfwHints(window.Args) []window.GlfwHint
 	GlfwSetup(*glfw.Window, window.Args) error
 
 	Resize(int, int)
 	CmdPool() command.Pool
+	Framebuffer(int) framebuffer.T
 	Aquire()
 	Present()
 	Submit([]vk.CommandBuffer)
@@ -46,6 +54,7 @@ type backend struct {
 	swapviews []image.View
 	buffers   []framebuffer.T
 	buffer    framebuffer.T
+	output    pipeline.Pass
 }
 
 func New(appName string, deviceIndex int) T {
@@ -108,8 +117,8 @@ func (b *backend) GlfwSetup(w *glfw.Window, args window.Args) error {
 	// mega refactor below this point
 	//
 
-	// create render pass
-	passInfo := vk.RenderPassCreateInfo{
+	// create output render pass
+	b.output = pipeline.NewPass(b.device, &vk.RenderPassCreateInfo{
 		SType:           vk.StructureTypeRenderPassCreateInfo,
 		AttachmentCount: 2,
 		PAttachments: []vk.AttachmentDescription{
@@ -152,31 +161,28 @@ func (b *backend) GlfwSetup(w *glfw.Window, args window.Args) error {
 				},
 			},
 		},
-		DependencyCount: 2,
-		PDependencies: []vk.SubpassDependency{
-			{
-				SrcSubpass:      0,
-				DstSubpass:      0,
-				SrcStageMask:    vk.PipelineStageFlags(vk.PipelineStageBottomOfPipeBit),
-				DstStageMask:    vk.PipelineStageFlags(vk.PipelineStageColorAttachmentOutputBit),
-				SrcAccessMask:   vk.AccessFlags(vk.AccessMemoryReadBit),
-				DstAccessMask:   vk.AccessFlags(vk.AccessColorAttachmentReadBit | vk.AccessColorAttachmentWriteBit),
-				DependencyFlags: vk.DependencyFlags(vk.DependencyByRegionBit),
-			},
-			{
-				SrcSubpass:      0,
-				DstSubpass:      0,
-				SrcStageMask:    vk.PipelineStageFlags(vk.PipelineStageColorAttachmentOutputBit),
-				DstStageMask:    vk.PipelineStageFlags(vk.PipelineStageBottomOfPipeBit),
-				SrcAccessMask:   vk.AccessFlags(vk.AccessMemoryReadBit),
-				DstAccessMask:   vk.AccessFlags(vk.AccessColorAttachmentReadBit | vk.AccessColorAttachmentWriteBit),
-				DependencyFlags: vk.DependencyFlags(vk.DependencyByRegionBit),
-			},
+		DependencyCount: 0,
+		PDependencies:   []vk.SubpassDependency{
+			// {
+			// 	SrcSubpass:      0,
+			// 	DstSubpass:      0,
+			// 	SrcStageMask:    vk.PipelineStageFlags(vk.PipelineStageBottomOfPipeBit),
+			// 	DstStageMask:    vk.PipelineStageFlags(vk.PipelineStageColorAttachmentOutputBit),
+			// 	SrcAccessMask:   vk.AccessFlags(vk.AccessMemoryReadBit),
+			// 	DstAccessMask:   vk.AccessFlags(vk.AccessColorAttachmentReadBit | vk.AccessColorAttachmentWriteBit),
+			// 	DependencyFlags: vk.DependencyFlags(vk.DependencyByRegionBit),
+			// },
+			// {
+			// 	SrcSubpass:      0,
+			// 	DstSubpass:      0,
+			// 	SrcStageMask:    vk.PipelineStageFlags(vk.PipelineStageBottomOfPipeBit),
+			// 	DstStageMask:    vk.PipelineStageFlags(vk.PipelineStageColorAttachmentOutputBit),
+			// 	SrcAccessMask:   vk.AccessFlags(vk.AccessMemoryReadBit),
+			// 	DstAccessMask:   vk.AccessFlags(vk.AccessColorAttachmentReadBit | vk.AccessColorAttachmentWriteBit),
+			// 	DependencyFlags: vk.DependencyFlags(vk.DependencyByRegionBit),
+			// },
 		},
-	}
-
-	var renderpass vk.RenderPass
-	vk.CreateRenderPass(b.device.Ptr(), &passInfo, nil, &renderpass)
+	})
 
 	// allocate a depth buffer
 	depthFormat := b.device.GetDepthFormat()
@@ -193,10 +199,10 @@ func (b *backend) GlfwSetup(w *glfw.Window, args window.Args) error {
 		b.buffers[i] = framebuffer.New(
 			b.device,
 			width, height,
-			renderpass,
+			b.output.Ptr(),
 			[]image.View{
-				depthview,
 				colorview,
+				depthview,
 			},
 		)
 	}
@@ -226,6 +232,14 @@ func (b *backend) Destroy() {
 		b.instance.Destroy()
 		b.instance = nil
 	}
+}
+
+func (b *backend) Framebuffer(idx int) framebuffer.T {
+	return b.buffers[idx]
+}
+
+func (b *backend) OutputPass() pipeline.Pass {
+	return b.output
 }
 
 func (b *backend) Resize(width, height int) {

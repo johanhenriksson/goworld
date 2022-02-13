@@ -14,16 +14,16 @@ type Shader interface {
 	device.Resource[vk.ShaderModule]
 
 	Entrypoint() string
-	PipelineFlags() vk.PipelineStageFlags
+	Stage() vk.ShaderStageFlagBits
 }
 
 type shader struct {
 	device device.T
 	ptr    vk.ShaderModule
-	flags  vk.PipelineStageFlags
+	stage  vk.ShaderStageFlagBits
 }
 
-func NewShader(device device.T, path string, flags vk.PipelineStageFlags) Shader {
+func NewShader(device device.T, path string, stage vk.ShaderStageFlagBits) Shader {
 	f, err := os.Open(path)
 	if err != nil {
 		panic(err)
@@ -46,7 +46,7 @@ func NewShader(device device.T, path string, flags vk.PipelineStageFlags) Shader
 	return &shader{
 		device: device,
 		ptr:    ptr,
-		flags:  flags,
+		stage:  stage,
 	}
 }
 
@@ -54,8 +54,8 @@ func (s *shader) Ptr() vk.ShaderModule {
 	return s.ptr
 }
 
-func (s *shader) PipelineFlags() vk.PipelineStageFlags {
-	return s.flags
+func (s *shader) Stage() vk.ShaderStageFlagBits {
+	return s.stage
 }
 
 func (s *shader) Entrypoint() string {
