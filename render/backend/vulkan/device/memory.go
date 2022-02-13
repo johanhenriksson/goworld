@@ -9,8 +9,7 @@ import (
 )
 
 type Memory interface {
-	Resource
-	Ptr() vk.DeviceMemory
+	Resource[vk.DeviceMemory]
 	Read(data any, offset int)
 	Write(data any, offset int)
 	IsHostVisible() bool

@@ -7,8 +7,7 @@ import (
 )
 
 type Pool interface {
-	device.Resource
-	Ptr() vk.DescriptorPool
+	device.Resource[vk.DescriptorPool]
 }
 
 type pool struct {

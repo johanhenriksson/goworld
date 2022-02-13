@@ -7,9 +7,10 @@ import (
 )
 
 type T interface {
-	device.Resource
-	Ptr() vk.Image
+	device.Resource[vk.Image]
+
 	Memory() device.Memory
+	View(format vk.Format, mask vk.ImageAspectFlags) View
 }
 
 type image struct {
@@ -60,6 +61,14 @@ func New2D(device device.T, width, height int, format vk.Format, usage vk.ImageU
 	}
 }
 
+func Wrap(device device.T, ptr vk.Image) T {
+	return &image{
+		ptr:    ptr,
+		device: device,
+		memory: nil,
+	}
+}
+
 func (i *image) Ptr() vk.Image {
 	return i.ptr
 }
@@ -69,7 +78,9 @@ func (i *image) Memory() device.Memory {
 }
 
 func (i *image) Destroy() {
-	// free device memory?
+	if i.memory != nil {
+		i.memory.Destroy()
+	}
 
 	vk.DestroyImage(i.device.Ptr(), i.ptr, nil)
 	i.ptr = nil
@@ -97,5 +108,6 @@ func (i *image) View(format vk.Format, mask vk.ImageAspectFlags) View {
 		ptr:    ptr,
 		device: i.device,
 		image:  i,
+		format: format,
 	}
 }
