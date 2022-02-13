@@ -9,8 +9,8 @@ import (
 )
 
 type Buffer interface {
-	device.Resource
-	Ptr() vk.CommandBuffer
+	device.Resource[vk.CommandBuffer]
+
 	SubmitSync(vk.Queue)
 	Begin()
 	End()

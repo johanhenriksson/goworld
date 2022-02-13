@@ -8,8 +8,8 @@ import (
 )
 
 type Pool interface {
-	device.Resource
-	Ptr() vk.CommandPool
+	device.Resource[vk.CommandPool]
+
 	Allocate(level vk.CommandBufferLevel) Buffer
 	AllocateBuffers(level vk.CommandBufferLevel, count int) []Buffer
 }

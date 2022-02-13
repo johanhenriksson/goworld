@@ -7,8 +7,8 @@ import (
 )
 
 type T interface {
-	device.Resource
-	Ptr() vk.Buffer
+	device.Resource[vk.Buffer]
+
 	Read(data any, offset int)
 	Write(data any, offset int)
 }

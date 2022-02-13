@@ -2,20 +2,24 @@ package swapchain
 
 import (
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/device"
+	"github.com/johanhenriksson/goworld/render/backend/vulkan/image"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/sync"
+	"github.com/johanhenriksson/goworld/util"
 
 	vk "github.com/vulkan-go/vulkan"
 )
 
 type T interface {
-	device.Resource
-	Ptr() vk.Swapchain
-	Resize(int, int)
+	device.Resource[vk.Swapchain]
 
-	Aquire()
+	Aquire() int
 	Submit([]vk.CommandBuffer)
 	Present()
-	NextImage() vk.Image
+	CurrentImage() image.T
+	Resize(int, int)
+
+	Count() int
+	Image(int) image.T
 }
 
 type swapchain struct {
@@ -24,16 +28,16 @@ type swapchain struct {
 	queue             vk.Queue
 	surface           vk.Surface
 	surfaceFormat     vk.SurfaceFormat
-	images            []vk.Image
+	images            []image.T
 	fenceSwap         []sync.Fence
 	semImageAvailable sync.Semaphore
 	semRenderComplete sync.Semaphore
-	currentImage      uint32
+	currentImage      int
+	swapCount         int
 }
 
-func New(device device.T, width, height int, surface vk.Surface) T {
+func New(device device.T, width, height, count int, surface vk.Surface, surfaceFormat vk.SurfaceFormat) T {
 	// todo: surface format logic
-	surfaceFormat := device.GetSurfaceFormats(surface)[0]
 	queue := device.GetQueue(0, vk.QueueFlags(vk.QueueGraphicsBit))
 
 	s := &swapchain{
@@ -41,6 +45,7 @@ func New(device device.T, width, height int, surface vk.Surface) T {
 		queue:         queue,
 		surface:       surface,
 		surfaceFormat: surfaceFormat,
+		swapCount:     count,
 
 		semImageAvailable: sync.NewSemaphore(device),
 		semRenderComplete: sync.NewSemaphore(device),
@@ -66,7 +71,7 @@ func (s *swapchain) Resize(width, height int) {
 	swapInfo := vk.SwapchainCreateInfo{
 		SType:           vk.StructureTypeSwapchainCreateInfo,
 		Surface:         s.surface,
-		MinImageCount:   2,
+		MinImageCount:   uint32(s.swapCount),
 		ImageFormat:     s.surfaceFormat.Format,
 		ImageColorSpace: s.surfaceFormat.ColorSpace,
 		ImageExtent: vk.Extent2D{
@@ -92,9 +97,13 @@ func (s *swapchain) Resize(width, height int) {
 	// get swapchain images
 	swapImageCount := uint32(0)
 	vk.GetSwapchainImages(s.device.Ptr(), s.ptr, &swapImageCount, nil)
+	if swapImageCount != uint32(s.swapCount) {
+		panic("failed to get the requested number of swapchain images")
+	}
+
 	images := make([]vk.Image, swapImageCount)
 	vk.GetSwapchainImages(s.device.Ptr(), s.ptr, &swapImageCount, images)
-	s.images = images
+	s.images = util.Map(images, func(i int, ptr vk.Image) image.T { return image.Wrap(s.device, ptr) })
 
 	// set up fences for each backbuffer
 	if len(s.fenceSwap) != int(swapImageCount) {
@@ -108,10 +117,11 @@ func (s *swapchain) Resize(width, height int) {
 	}
 }
 
-func (s *swapchain) Aquire() {
+func (s *swapchain) Aquire() int {
 	idx := uint32(0)
 	vk.AcquireNextImage(s.device.Ptr(), s.ptr, vk.MaxUint64, s.semImageAvailable.Ptr(), nil, &idx)
-	s.currentImage = idx
+	s.currentImage = int(idx)
+	return s.currentImage
 }
 
 func (s *swapchain) Submit(commandBuffers []vk.CommandBuffer) {
@@ -139,21 +149,34 @@ func (s *swapchain) Present() {
 		PWaitSemaphores:    []vk.Semaphore{s.semRenderComplete.Ptr()},
 		SwapchainCount:     1,
 		PSwapchains:        []vk.Swapchain{s.ptr},
-		PImageIndices:      []uint32{s.currentImage},
+		PImageIndices:      []uint32{uint32(s.currentImage)},
 	}
 	vk.QueuePresent(s.queue, &presentInfo)
 }
 
-func (s *swapchain) NextImage() vk.Image {
+func (s *swapchain) CurrentImage() image.T {
 	return s.images[s.currentImage]
+}
+
+func (s *swapchain) Count() int {
+	return s.swapCount
+}
+
+func (s *swapchain) Image(idx int) image.T {
+	return s.images[idx]
 }
 
 func (s *swapchain) Destroy() {
 	for _, fence := range s.fenceSwap {
 		fence.Destroy()
 	}
+	s.fenceSwap = nil
+
 	s.semImageAvailable.Destroy()
+	s.semImageAvailable = nil
+
 	s.semRenderComplete.Destroy()
+	s.semRenderComplete = nil
 
 	if s.ptr != nil {
 		vk.DestroySwapchain(s.device.Ptr(), s.ptr, nil)

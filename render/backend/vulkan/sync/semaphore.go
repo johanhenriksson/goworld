@@ -7,8 +7,7 @@ import (
 )
 
 type Semaphore interface {
-	device.Resource
-	Ptr() vk.Semaphore
+	device.Resource[vk.Semaphore]
 }
 
 type semaphore struct {

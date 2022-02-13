@@ -7,14 +7,16 @@ import (
 )
 
 type View interface {
-	device.Resource
+	device.Resource[vk.ImageView]
+
 	Image() T
-	Ptr() vk.ImageView
+	Format() vk.Format
 }
 
 type imgview struct {
 	ptr    vk.ImageView
 	image  T
+	format vk.Format
 	device device.T
 }
 
@@ -24,6 +26,10 @@ func (v *imgview) Ptr() vk.ImageView {
 
 func (v *imgview) Image() T {
 	return v.image
+}
+
+func (v *imgview) Format() vk.Format {
+	return v.format
 }
 
 func (v *imgview) Destroy() {
