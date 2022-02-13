@@ -8,13 +8,13 @@ import (
 	vk "github.com/vulkan-go/vulkan"
 )
 
-type Resource interface {
+type Resource[T any] interface {
 	Destroy()
+	Ptr() T
 }
 
 type T interface {
-	Resource
-	Ptr() vk.Device
+	Resource[vk.Device]
 
 	Allocate(vk.MemoryRequirements, vk.MemoryPropertyFlags) Memory
 	GetQueue(queueIndex int, flags vk.QueueFlags) vk.Queue

@@ -6,6 +6,8 @@ import (
 	"github.com/johanhenriksson/goworld/core/window"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/command"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/device"
+	"github.com/johanhenriksson/goworld/render/backend/vulkan/framebuffer"
+	"github.com/johanhenriksson/goworld/render/backend/vulkan/image"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/instance"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/swapchain"
 
@@ -17,13 +19,14 @@ type T interface {
 	Instance() instance.T
 	Device() device.T
 	Surface() vk.Surface
-	CmdPool() command.Pool
+	Swapchain() swapchain.T
 	Destroy()
 
 	GlfwHints(window.Args) []window.GlfwHint
 	GlfwSetup(*glfw.Window, window.Args) error
 
 	Resize(int, int)
+	CmdPool() command.Pool
 	Aquire()
 	Present()
 	Submit([]vk.CommandBuffer)
@@ -32,24 +35,32 @@ type T interface {
 type backend struct {
 	appName   string
 	deviceIdx int
+	swapcount int
 	instance  instance.T
 	device    device.T
 	surface   vk.Surface
 	swapchain swapchain.T
+	depth     image.T
+	cmdpools  []command.Pool
 	cmdpool   command.Pool
+	swapviews []image.View
+	buffers   []framebuffer.T
+	buffer    framebuffer.T
 }
 
 func New(appName string, deviceIndex int) T {
 	return &backend{
 		appName:   appName,
 		deviceIdx: deviceIndex,
+		swapcount: 2,
 	}
 }
 
-func (b *backend) Instance() instance.T  { return b.instance }
-func (b *backend) Device() device.T      { return b.device }
-func (b *backend) Surface() vk.Surface   { return b.surface }
-func (b *backend) CmdPool() command.Pool { return b.cmdpool }
+func (b *backend) Instance() instance.T   { return b.instance }
+func (b *backend) Device() device.T       { return b.device }
+func (b *backend) Surface() vk.Surface    { return b.surface }
+func (b *backend) CmdPool() command.Pool  { return b.cmdpool }
+func (b *backend) Swapchain() swapchain.T { return b.swapchain }
 
 func (b *backend) GlfwHints(args window.Args) []window.GlfwHint {
 	return []window.GlfwHint{
@@ -66,16 +77,9 @@ func (b *backend) GlfwSetup(w *glfw.Window, args window.Args) error {
 
 	fmt.Println("window required extensions:", w.GetRequiredInstanceExtensions())
 
-	// create instance
+	// create instance * device
 	b.instance = instance.New(b.appName)
-
-	// create device
-	var err error
-	physDevices := b.instance.EnumeratePhysicalDevices()
-	b.device, err = device.New(physDevices[b.deviceIdx])
-	if err != nil {
-		panic(err)
-	}
+	b.device = b.instance.GetDevice(b.deviceIdx)
 
 	// surface
 	surfPtr, err := w.CreateWindowSurface(b.instance.Ptr(), nil)
@@ -84,23 +88,128 @@ func (b *backend) GlfwSetup(w *glfw.Window, args window.Args) error {
 	}
 
 	b.surface = vk.SurfaceFromPointer(surfPtr)
+	surfaceFormat := b.device.GetSurfaceFormats(b.surface)[0]
 
+	// allocate swapchain
 	width, height := w.GetFramebufferSize()
-	b.swapchain = swapchain.New(b.device, width, height, b.surface)
+	b.swapchain = swapchain.New(b.device, width, height, b.swapcount, b.surface, surfaceFormat)
 
-	b.cmdpool = command.NewPool(
-		b.device,
-		vk.CommandPoolCreateFlags(vk.CommandPoolCreateResetCommandBufferBit),
-		vk.QueueFlags(vk.QueueGraphicsBit))
+	// allocate a command pool for each swap image
+	b.cmdpools = make([]command.Pool, b.swapcount)
+	for i := range b.cmdpools {
+		b.cmdpools[i] = command.NewPool(
+			b.device,
+			vk.CommandPoolCreateFlags(vk.CommandPoolCreateResetCommandBufferBit),
+			vk.QueueFlags(vk.QueueGraphicsBit))
+	}
+	b.cmdpool = b.cmdpools[0]
+
+	//
+	// mega refactor below this point
+	//
+
+	// create render pass
+	passInfo := vk.RenderPassCreateInfo{
+		SType:           vk.StructureTypeRenderPassCreateInfo,
+		AttachmentCount: 2,
+		PAttachments: []vk.AttachmentDescription{
+			{
+				Format:         surfaceFormat.Format,
+				Samples:        vk.SampleCount1Bit,
+				LoadOp:         vk.AttachmentLoadOpClear,
+				StoreOp:        vk.AttachmentStoreOpStore,
+				StencilLoadOp:  vk.AttachmentLoadOpDontCare,
+				StencilStoreOp: vk.AttachmentStoreOpDontCare,
+				InitialLayout:  vk.ImageLayoutUndefined,
+				FinalLayout:    vk.ImageLayoutPresentSrc,
+			},
+			{
+				Format:         b.device.GetDepthFormat(),
+				Samples:        vk.SampleCount1Bit,
+				LoadOp:         vk.AttachmentLoadOpClear,
+				StoreOp:        vk.AttachmentStoreOpDontCare,
+				StencilLoadOp:  vk.AttachmentLoadOpDontCare,
+				StencilStoreOp: vk.AttachmentStoreOpDontCare,
+				InitialLayout:  vk.ImageLayoutUndefined,
+				FinalLayout:    vk.ImageLayoutDepthStencilAttachmentOptimal,
+			},
+		},
+		SubpassCount: 1,
+		PSubpasses: []vk.SubpassDescription{
+			{
+				PipelineBindPoint:    vk.PipelineBindPointGraphics,
+				InputAttachmentCount: 0,
+				ColorAttachmentCount: 1,
+				PColorAttachments: []vk.AttachmentReference{
+					{
+						Attachment: 0,
+						Layout:     vk.ImageLayoutColorAttachmentOptimal,
+					},
+				},
+				PDepthStencilAttachment: &vk.AttachmentReference{
+					Attachment: 1,
+					Layout:     vk.ImageLayoutDepthStencilAttachmentOptimal,
+				},
+			},
+		},
+		DependencyCount: 2,
+		PDependencies: []vk.SubpassDependency{
+			{
+				SrcSubpass:      0,
+				DstSubpass:      0,
+				SrcStageMask:    vk.PipelineStageFlags(vk.PipelineStageBottomOfPipeBit),
+				DstStageMask:    vk.PipelineStageFlags(vk.PipelineStageColorAttachmentOutputBit),
+				SrcAccessMask:   vk.AccessFlags(vk.AccessMemoryReadBit),
+				DstAccessMask:   vk.AccessFlags(vk.AccessColorAttachmentReadBit | vk.AccessColorAttachmentWriteBit),
+				DependencyFlags: vk.DependencyFlags(vk.DependencyByRegionBit),
+			},
+			{
+				SrcSubpass:      0,
+				DstSubpass:      0,
+				SrcStageMask:    vk.PipelineStageFlags(vk.PipelineStageColorAttachmentOutputBit),
+				DstStageMask:    vk.PipelineStageFlags(vk.PipelineStageBottomOfPipeBit),
+				SrcAccessMask:   vk.AccessFlags(vk.AccessMemoryReadBit),
+				DstAccessMask:   vk.AccessFlags(vk.AccessColorAttachmentReadBit | vk.AccessColorAttachmentWriteBit),
+				DependencyFlags: vk.DependencyFlags(vk.DependencyByRegionBit),
+			},
+		},
+	}
+
+	var renderpass vk.RenderPass
+	vk.CreateRenderPass(b.device.Ptr(), &passInfo, nil, &renderpass)
+
+	// allocate a depth buffer
+	depthFormat := b.device.GetDepthFormat()
+	usage := vk.ImageUsageFlags(vk.ImageUsageDepthStencilAttachmentBit | vk.ImageUsageTransferSrcBit)
+	img := image.New2D(b.device, width, height, depthFormat, usage)
+	depthview := img.View(depthFormat, vk.ImageAspectFlags(vk.ImageAspectDepthBit|vk.ImageAspectStencilBit))
+
+	// allocate a frame buffer for each swap image
+	b.buffers = make([]framebuffer.T, b.swapcount)
+	b.swapviews = make([]image.View, b.swapcount)
+	for i := range b.buffers {
+		colorview := b.swapchain.Image(i).View(surfaceFormat.Format, vk.ImageAspectFlags(vk.ImageAspectColorBit))
+		b.swapviews[i] = colorview
+		b.buffers[i] = framebuffer.New(
+			b.device,
+			width, height,
+			renderpass,
+			[]image.View{
+				depthview,
+				colorview,
+			},
+		)
+	}
 
 	return nil
 }
 
 func (b *backend) Destroy() {
-	if b.cmdpool != nil {
-		b.cmdpool.Destroy()
-		b.cmdpool = nil
+	for _, pool := range b.cmdpools {
+		pool.Destroy()
 	}
+	b.cmdpools = nil
+
 	if b.swapchain != nil {
 		b.swapchain.Destroy()
 		b.swapchain = nil
@@ -124,7 +233,9 @@ func (b *backend) Resize(width, height int) {
 }
 
 func (b *backend) Aquire() {
-	b.swapchain.Aquire()
+	index := b.swapchain.Aquire()
+	b.cmdpool = b.cmdpools[index]
+	b.buffer = b.buffers[index]
 }
 
 func (b *backend) Present() {

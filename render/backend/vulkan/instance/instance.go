@@ -3,6 +3,7 @@ package instance
 import (
 	"fmt"
 
+	"github.com/johanhenriksson/goworld/render/backend/vulkan/device"
 	"github.com/johanhenriksson/goworld/util"
 
 	vk "github.com/vulkan-go/vulkan"
@@ -20,9 +21,9 @@ var layers = []string{
 }
 
 type T interface {
-	Ptr() vk.Instance
-	Destroy()
+	device.Resource[vk.Instance]
 	EnumeratePhysicalDevices() []vk.PhysicalDevice
+	GetDevice(int) device.T
 }
 
 type instance struct {
@@ -70,6 +71,15 @@ func (i *instance) Ptr() vk.Instance {
 func (i *instance) Destroy() {
 	vk.DestroyInstance(i.ptr, nil)
 	i.ptr = nil
+}
+
+func (i *instance) GetDevice(index int) device.T {
+	physDevices := i.EnumeratePhysicalDevices()
+	device, err := device.New(physDevices[index])
+	if err != nil {
+		panic(err)
+	}
+	return device
 }
 
 func (i *instance) EnumeratePhysicalDevices() []vk.PhysicalDevice {

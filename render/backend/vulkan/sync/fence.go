@@ -7,10 +7,10 @@ import (
 )
 
 type Fence interface {
-	device.Resource
+	device.Resource[vk.Fence]
+
 	Reset()
 	Wait()
-	Ptr() vk.Fence
 }
 
 type fence struct {
