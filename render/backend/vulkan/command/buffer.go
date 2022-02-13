@@ -12,6 +12,7 @@ type Buffer interface {
 	device.Resource[vk.CommandBuffer]
 
 	SubmitSync(vk.Queue)
+	Reset()
 	Begin()
 	End()
 
@@ -58,6 +59,10 @@ func (b *buf) SubmitSync(queue vk.Queue) {
 	fence.Wait()
 }
 
+func (b *buf) Reset() {
+	vk.ResetCommandBuffer(b.ptr, vk.CommandBufferResetFlags(vk.CommandBufferResetReleaseResourcesBit))
+}
+
 func (b *buf) Begin() {
 	info := vk.CommandBufferBeginInfo{
 		SType: vk.StructureTypeCommandBufferBeginInfo,
@@ -70,5 +75,14 @@ func (b *buf) End() {
 }
 
 func (b *buf) CopyBuffer(src, dst buffer.T, regions ...vk.BufferCopy) {
+	if len(regions) == 0 {
+		regions = []vk.BufferCopy{
+			{
+				SrcOffset: 0,
+				DstOffset: 0,
+				Size:      vk.DeviceSize(src.Size()),
+			},
+		}
+	}
 	vk.CmdCopyBuffer(b.ptr, src.Ptr(), dst.Ptr(), uint32(len(regions)), regions)
 }
