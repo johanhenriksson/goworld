@@ -130,7 +130,8 @@ func (s *swapchain) Submit(commandBuffers []vk.CommandBuffer) {
 
 	submitInfo := vk.SubmitInfo{
 		SType:                vk.StructureTypeSubmitInfo,
-		CommandBufferCount:   0,
+		CommandBufferCount:   1,
+		PCommandBuffers:      commandBuffers,
 		WaitSemaphoreCount:   1,
 		PWaitSemaphores:      []vk.Semaphore{s.semImageAvailable.Ptr()},
 		SignalSemaphoreCount: 1,
