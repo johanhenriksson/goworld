@@ -2,8 +2,11 @@ package command
 
 import (
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/buffer"
+	"github.com/johanhenriksson/goworld/render/backend/vulkan/descriptor"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/device"
+	"github.com/johanhenriksson/goworld/render/backend/vulkan/pipeline"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/sync"
+	"github.com/johanhenriksson/goworld/util"
 
 	vk "github.com/vulkan-go/vulkan"
 )
@@ -16,7 +19,12 @@ type Buffer interface {
 	Begin()
 	End()
 
-	CopyBuffer(src, dst buffer.T, regions ...vk.BufferCopy)
+	CmdCopyBuffer(src, dst buffer.T, regions ...vk.BufferCopy)
+	CmdBindGraphicsPipeline(pipe pipeline.T)
+	CmdBindGraphicsDescriptors(layout pipeline.Layout, sets []descriptor.Set)
+	CmdBindVertexBuffer(vtx buffer.T, offset int)
+	CmdBindIndexBuffers(idx buffer.T, offset int, kind vk.IndexType)
+	CmdDrawIndexed(indexCount, instanceCount, firstIndex, vertexOffset, firstInstance int)
 }
 
 type buf struct {
@@ -74,7 +82,7 @@ func (b *buf) End() {
 	vk.EndCommandBuffer(b.ptr)
 }
 
-func (b *buf) CopyBuffer(src, dst buffer.T, regions ...vk.BufferCopy) {
+func (b *buf) CmdCopyBuffer(src, dst buffer.T, regions ...vk.BufferCopy) {
 	if len(regions) == 0 {
 		regions = []vk.BufferCopy{
 			{
@@ -85,4 +93,29 @@ func (b *buf) CopyBuffer(src, dst buffer.T, regions ...vk.BufferCopy) {
 		}
 	}
 	vk.CmdCopyBuffer(b.ptr, src.Ptr(), dst.Ptr(), uint32(len(regions)), regions)
+}
+
+func (b *buf) CmdBindGraphicsPipeline(pipe pipeline.T) {
+	vk.CmdBindPipeline(b.Ptr(), vk.PipelineBindPointGraphics, pipe.Ptr())
+}
+
+func (b *buf) CmdBindGraphicsDescriptors(layout pipeline.Layout, sets []descriptor.Set) {
+	vk.CmdBindDescriptorSets(
+		b.Ptr(),
+		vk.PipelineBindPointGraphics,
+		layout.Ptr(), 0, 1,
+		util.Map(sets, func(i int, s descriptor.Set) vk.DescriptorSet { return s.Ptr() }),
+		0, nil)
+}
+
+func (b *buf) CmdBindVertexBuffer(vtx buffer.T, offset int) {
+	vk.CmdBindVertexBuffers(b.Ptr(), 0, 1, []vk.Buffer{vtx.Ptr()}, []vk.DeviceSize{vk.DeviceSize(offset)})
+}
+
+func (b *buf) CmdBindIndexBuffers(idx buffer.T, offset int, kind vk.IndexType) {
+	vk.CmdBindIndexBuffer(b.Ptr(), idx.Ptr(), vk.DeviceSize(offset), kind)
+}
+
+func (b *buf) CmdDrawIndexed(indexCount, instanceCount, firstIndex, vertexOffset, firstInstance int) {
+	vk.CmdDrawIndexed(b.Ptr(), uint32(indexCount), uint32(instanceCount), uint32(firstIndex), int32(vertexOffset), uint32(firstInstance))
 }
