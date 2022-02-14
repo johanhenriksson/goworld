@@ -1,11 +1,15 @@
 package main
 
 import (
+	"flag"
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
+	"runtime/pprof"
 
 	"github.com/johanhenriksson/goworld/core/window"
+	"github.com/johanhenriksson/goworld/game"
 	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/math/vec4"
@@ -32,10 +36,25 @@ type Uniforms struct {
 	Model mat4.T
 }
 
+var cpuprof = flag.String("cpuprof", "", "write cpu profile to file")
+
 func main() {
 	defer func() {
 		log.Println("Clean exit")
 	}()
+
+	flag.Parse()
+	if *cpuprof != "" {
+		os.MkdirAll("profiling", 0755)
+		ppath := fmt.Sprintf("profiling/%s", *cpuprof)
+		f, err := os.Create(ppath)
+		if err != nil {
+			panic(err)
+		}
+		fmt.Println("writing cpu profiling output to", ppath)
+		pprof.StartCPUProfile(f)
+		defer pprof.StopCPUProfile()
+	}
 
 	running := true
 	sigint := make(chan os.Signal, 1)
@@ -80,10 +99,23 @@ func main() {
 		mat4.Rotate(vec3.New(0, 0, 45)),
 	}, 0)
 
-	vtx := buffer.NewRemote(backend.Device(), 4096, vk.BufferUsageFlags(vk.BufferUsageVertexBufferBit))
+	world := game.NewWorld(31481234, 16)
+	chunk := world.AddChunk(0, 0)
+	mesh := game.ChunkMesh{
+		Chunk: chunk,
+	}
+
+	vertexdata := mesh.ComputeVertexData()
+	vertices := len(vertexdata)
+	triangles := vertices / 3
+	log.Println("vertices:", vertices, "triangles:", triangles)
+	bufsize := vertices * 10
+
+	vtx := buffer.NewRemote(backend.Device(), bufsize, vk.BufferUsageFlags(vk.BufferUsageVertexBufferBit))
 	defer vtx.Destroy()
-	vtxstage := buffer.NewShared(backend.Device(), 4096)
-	vtxstage.Write(makeColorCube(1), 0)
+	vtxstage := buffer.NewShared(backend.Device(), bufsize)
+	vtxstage.Write(vertexdata, 0)
+	// vtxstage.Write(makeColorCube(1), 0)
 
 	transferer := command.NewWorker(backend.Device(), vk.QueueFlags(vk.QueueTransferBit))
 	defer transferer.Destroy()
@@ -178,7 +210,7 @@ func main() {
 		// update ubo
 		t += 0.016
 		ubo[ctx.Index].Write([]mat4.T{
-			mat4.Perspective(45, float32(ctx.Width)/float32(ctx.Height), 0.1, 100),
+			mat4.PerspectiveVK(45, float32(ctx.Width)/float32(ctx.Height), 0.1, 100),
 			view,
 			mat4.Rotate(vec3.New(0, float32(44*t), float32(90*t))),
 		}, 0)
@@ -197,7 +229,7 @@ func main() {
 			cmd.CmdBindGraphicsDescriptors(layout, []descriptor.Set{desc[ctx.Index]})
 
 			cmd.CmdBindVertexBuffer(vtx, 0)
-			cmd.CmdDraw(36, 12, 0, 0)
+			cmd.CmdDraw(vertices, triangles, 0, 0)
 
 			cmd.CmdEndRenderPass()
 		})

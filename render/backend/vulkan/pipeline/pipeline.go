@@ -46,7 +46,7 @@ func New(device device.T, cache vk.PipelineCache, layout Layout, pass Pass, shad
 			PVertexBindingDescriptions: []vk.VertexInputBindingDescription{
 				{
 					Binding:   0,
-					Stride:    10 * 4,
+					Stride:    8,
 					InputRate: vk.VertexInputRateVertex,
 				},
 			},
@@ -55,14 +55,16 @@ func New(device device.T, cache vk.PipelineCache, layout Layout, pass Pass, shad
 				{
 					Binding:  0,
 					Location: 0, // vec3 position
-					Format:   vk.FormatR32g32b32Sfloat,
-					Offset:   0,
+					// Format:   vk.FormatR32g32b32Sfloat,
+					Format: vk.FormatR8g8b8Uscaled,
+					Offset: 0,
 				},
 				{
 					Binding:  0,
 					Location: 1, // vec3 color
-					Format:   vk.FormatR32g32b32Sfloat,
-					Offset:   6 * 4,
+					// Format:   vk.FormatR32g32b32Sfloat,
+					Format: vk.FormatR8g8b8Unorm,
+					Offset: 4,
 				},
 			},
 		},

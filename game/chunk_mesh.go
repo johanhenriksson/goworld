@@ -33,12 +33,12 @@ func (cm *ChunkMesh) Update(dt float32) {
 // Queues recomputation of the mesh
 func (cm *ChunkMesh) Compute() {
 	go func() {
-		data := cm.computeVertexData()
+		data := cm.ComputeVertexData()
 		cm.meshComputed <- data
 	}()
 }
 
-func (cm *ChunkMesh) computeVertexData() []VoxelVertex {
+func (cm *ChunkMesh) ComputeVertexData() []VoxelVertex {
 	data := make([]VoxelVertex, 0, 64)
 	light := cm.Light.Brightness
 	Omax := float32(220)
