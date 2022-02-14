@@ -24,6 +24,7 @@ type Workers []Worker
 
 type worker struct {
 	device   device.T
+	queue    vk.Queue
 	pool     Pool
 	input    chan CommandFn
 	signal   chan SubmitInfo
@@ -34,14 +35,13 @@ type worker struct {
 	fence    sync.Fence
 }
 
-func NewWorker(device device.T) Worker {
-	pool := NewPool(
-		device,
-		vk.CommandPoolCreateFlags(vk.CommandPoolCreateTransientBit),
-		vk.QueueFlags(vk.QueueGraphicsBit))
+func NewWorker(device device.T, queueFlags vk.QueueFlags) Worker {
+	pool := NewPool(device, vk.CommandPoolCreateFlags(vk.CommandPoolCreateTransientBit), queueFlags)
+	queue := device.GetQueue(0, queueFlags)
 
 	w := &worker{
 		device:   device,
+		queue:    queue,
 		pool:     pool,
 		input:    make(chan CommandFn),
 		signal:   make(chan SubmitInfo),
@@ -67,7 +67,7 @@ func (w *worker) run() {
 	for running {
 		select {
 		case batch := <-w.input:
-			w.queue(batch)
+			w.enqueue(batch)
 		case info := <-w.signal:
 			w.submit(info)
 			w.complete <- true
@@ -94,7 +94,7 @@ func (w *worker) run() {
 
 func (w *worker) Queue(batch CommandFn) { w.input <- batch }
 
-func (w *worker) queue(batch CommandFn) {
+func (w *worker) enqueue(batch CommandFn) {
 	// allocate a new buffer
 	buf := w.pool.Allocate(vk.CommandBufferLevelPrimary)
 
@@ -108,7 +108,6 @@ func (w *worker) queue(batch CommandFn) {
 }
 
 type SubmitInfo struct {
-	Queue    vk.Queue
 	Wait     []sync.Semaphore
 	Signal   []sync.Semaphore
 	WaitMask []vk.PipelineStageFlags
@@ -152,7 +151,7 @@ func (w *worker) submit(submit SubmitInfo) {
 			PWaitDstStageMask:    submit.WaitMask,
 		},
 	}
-	vk.QueueSubmit(submit.Queue, uint32(len(w.batch)), info, w.fence.Ptr())
+	vk.QueueSubmit(w.queue, uint32(len(w.batch)), info, w.fence.Ptr())
 
 	// add submitted buffers to destroy list
 	w.destroy = append(w.destroy, buffers...)

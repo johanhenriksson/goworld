@@ -86,8 +86,8 @@ func PerspectiveVK(fovy, aspect, near, far float32) T {
 	return T{
 		1 / (aspect * tanHalfFov), 0, 0, 0,
 		0, 1 / tanHalfFov, 0, 0,
-		0, 0, -near / (far - near), 1,
-		0, 0, (far * near) / (far - near), 0,
+		0, 0, far / (far - near), 1,
+		0, 0, -(far * near) / (far - near), 0,
 	}
 }
 

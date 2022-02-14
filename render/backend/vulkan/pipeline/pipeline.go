@@ -46,7 +46,7 @@ func New(device device.T, cache vk.PipelineCache, layout Layout, pass Pass, shad
 			PVertexBindingDescriptions: []vk.VertexInputBindingDescription{
 				{
 					Binding:   0,
-					Stride:    6 * 4,
+					Stride:    10 * 4,
 					InputRate: vk.VertexInputRateVertex,
 				},
 			},
@@ -62,7 +62,7 @@ func New(device device.T, cache vk.PipelineCache, layout Layout, pass Pass, shad
 					Binding:  0,
 					Location: 1, // vec3 color
 					Format:   vk.FormatR32g32b32Sfloat,
-					Offset:   3 * 4,
+					Offset:   6 * 4,
 				},
 			},
 		},
@@ -79,8 +79,10 @@ func New(device device.T, cache vk.PipelineCache, layout Layout, pass Pass, shad
 			ViewportCount: 1,
 			PViewports: []vk.Viewport{
 				{
-					Width:  1000,
-					Height: 1000,
+					Width:    1000,
+					Height:   1000,
+					MinDepth: 0,
+					MaxDepth: 1,
 				},
 			},
 			ScissorCount: 1,
