@@ -115,7 +115,7 @@ func New(device device.T, cache vk.PipelineCache, layout Layout, pass Pass, shad
 
 		// depth & stencil
 		PDepthStencilState: &vk.PipelineDepthStencilStateCreateInfo{
-			// enable depth testing with less or equal
+			// enable depth testing with less or
 			SType:                 vk.StructureTypePipelineDepthStencilStateCreateInfo,
 			DepthTestEnable:       vk.True,
 			DepthWriteEnable:      vk.True,
@@ -160,10 +160,10 @@ func New(device device.T, cache vk.PipelineCache, layout Layout, pass Pass, shad
 		// dynamic state: viewport & scissor
 		PDynamicState: &vk.PipelineDynamicStateCreateInfo{
 			SType:             vk.StructureTypePipelineDynamicStateCreateInfo,
-			DynamicStateCount: 1,
+			DynamicStateCount: 2,
 			PDynamicStates: []vk.DynamicState{
-				// vk.DynamicStateScissor,
 				vk.DynamicStateViewport,
+				vk.DynamicStateScissor,
 			},
 		},
 	}

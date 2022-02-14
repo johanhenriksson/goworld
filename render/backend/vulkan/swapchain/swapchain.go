@@ -116,13 +116,20 @@ func (s *swapchain) Resize(width, height int) {
 
 	// depth buffer
 	// todo: destroy existing
+	if s.depth != nil {
+		s.depth.Destroy()
+	}
+	if s.depthview != nil {
+		s.depthview.Destroy()
+	}
 	depthFormat := s.device.GetDepthFormat()
 	usage := vk.ImageUsageFlags(vk.ImageUsageDepthStencilAttachmentBit | vk.ImageUsageTransferSrcBit)
 	s.depth = image.New2D(s.device, width, height, depthFormat, usage)
 	s.depthview = s.depth.View(depthFormat, vk.ImageAspectFlags(vk.ImageAspectDepthBit|vk.ImageAspectStencilBit))
 
 	for i := range s.contexts {
-		// todo: destroy existing
+		// destroy existing
+		s.contexts[i].Destroy()
 
 		color := image.Wrap(s.device, images[i])
 		colorview := color.View(s.surfaceFmt.Format, vk.ImageAspectFlags(vk.ImageAspectColorBit))

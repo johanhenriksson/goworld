@@ -2,6 +2,8 @@ package main
 
 import (
 	"log"
+	"os"
+	"os/signal"
 
 	"github.com/johanhenriksson/goworld/core/window"
 	"github.com/johanhenriksson/goworld/math/mat4"
@@ -27,6 +29,20 @@ type Uniforms struct {
 }
 
 func main() {
+	defer func() {
+		log.Println("Clean exit")
+	}()
+
+	running := true
+	sigint := make(chan os.Signal, 1)
+	signal.Notify(sigint, os.Interrupt)
+	go func() {
+		for range sigint {
+			log.Println("Interrupt")
+			running = false
+		}
+	}()
+
 	backend := vulkan.New("goworld: vulkan", 0)
 	defer backend.Destroy()
 
@@ -40,18 +56,16 @@ func main() {
 	}
 	queue := backend.Device().GetQueue(0, vk.QueueFlags(vk.QueueGraphicsBit))
 
-	proj := mat4.Perspective(50, 1, 0.1, 100)
+	proj := mat4.Perspective(45, 1, 0.1, 100)
 	proj[5] *= -1
+	view := mat4.Translate(vec3.New(0, 0, -3))
 
-	ubo := buffer.NewRemote(backend.Device(), 3*16*4, vk.BufferUsageFlags(vk.BufferUsageUniformBufferBit))
+	ubo := buffer.NewUniform(backend.Device(), 3*16*4)
 	defer ubo.Destroy()
-	ubostage := buffer.NewShared(backend.Device(), 3*16*4)
-	ubostage.Write([]Uniforms{
-		{
-			Proj:  proj,
-			View:  mat4.Translate(vec3.New(0, 0, -15)),
-			Model: mat4.Ident(),
-		},
+	ubo.Write([]mat4.T{
+		proj,
+		view,
+		mat4.Rotate(vec3.New(0, 0, 45)),
 	}, 0)
 
 	vtx := buffer.NewRemote(backend.Device(), 3*24, vk.BufferUsageFlags(vk.BufferUsageVertexBufferBit))
@@ -69,10 +83,10 @@ func main() {
 	idxstage.Write([]uint32{0, 1, 2}, 0)
 
 	transferer := command.NewWorker(backend.Device())
+	defer transferer.Destroy()
 	transferer.Queue(func(cmd command.Buffer) {
 		cmd.CmdCopyBuffer(vtxstage, vtx)
 		cmd.CmdCopyBuffer(idxstage, idx)
-		cmd.CmdCopyBuffer(ubostage, ubo)
 	})
 	transferer.Submit(command.SubmitInfo{
 		Queue: queue,
@@ -83,7 +97,6 @@ func main() {
 
 	vtxstage.Destroy()
 	idxstage.Destroy()
-	ubostage.Destroy()
 
 	var cache vk.PipelineCache
 	vk.CreatePipelineCache(backend.Device().Ptr(), &vk.PipelineCacheCreateInfo{
@@ -145,10 +158,17 @@ func main() {
 	defer pipe.Destroy()
 
 	f := 0
-	for !wnd.ShouldClose() {
-		// update ubo
+	t := 0.0
+	for running && !wnd.ShouldClose() {
+		ctx := backend.Aquire()
 
-		backend.Aquire()
+		// update ubo
+		t += 0.016
+		ubo.Write([]mat4.T{
+			mat4.Perspective(45, float32(ctx.Width)/float32(ctx.Height), 0.1, 100),
+			view,
+			mat4.Rotate(vec3.New(0, 0, float32(90*t))),
+		}, 0)
 
 		backend.Present(func(buf command.Buffer) {
 			buf.CmdBindGraphicsPipeline(pipe)

@@ -21,7 +21,17 @@ type Context struct {
 }
 
 func (c Context) Destroy() {
-	c.ColorView.Destroy()
-	c.Framebuffer.Destroy()
-	c.Workers[0].Destroy()
+	if c.ColorView != nil {
+
+		c.ColorView.Destroy()
+	}
+	if c.Framebuffer != nil {
+
+		c.Framebuffer.Destroy()
+	}
+	if c.Workers != nil {
+		for _, worker := range c.Workers {
+			worker.Destroy()
+		}
+	}
 }
