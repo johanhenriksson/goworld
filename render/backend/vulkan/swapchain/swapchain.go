@@ -15,7 +15,7 @@ type T interface {
 	device.Resource[vk.Swapchain]
 
 	Aquire() Context
-	Present(command.CommandFn)
+	Present()
 	Resize(int, int)
 
 	Output() pipeline.Pass
@@ -24,23 +24,19 @@ type T interface {
 }
 
 type swapchain struct {
-	ptr            vk.Swapchain
-	device         device.T
-	queue          vk.Queue
-	surface        vk.Surface
-	surfaceFmt     vk.SurfaceFormat
-	depth          image.T
-	depthview      image.View
-	imageAvailable sync.Semaphore
-	renderComplete sync.Semaphore
-	current        int
-	swapCount      int
-	output         pipeline.Pass
+	ptr        vk.Swapchain
+	device     device.T
+	queue      vk.Queue
+	surface    vk.Surface
+	surfaceFmt vk.SurfaceFormat
+	current    int
+	buffers    int
+	output     pipeline.Pass
 
 	contexts []Context
 }
 
-func New(device device.T, width, height, count int, surface vk.Surface, surfaceFormat vk.SurfaceFormat) T {
+func New(device device.T, width, height, buffers int, surface vk.Surface, surfaceFormat vk.SurfaceFormat) T {
 	// todo: surface format logic
 	queue := device.GetQueue(0, vk.QueueFlags(vk.QueueGraphicsBit))
 
@@ -49,11 +45,9 @@ func New(device device.T, width, height, count int, surface vk.Surface, surfaceF
 		queue:      queue,
 		surface:    surface,
 		surfaceFmt: surfaceFormat,
-		swapCount:  count,
-		contexts:   make([]Context, count),
-
-		imageAvailable: sync.NewSemaphore(device),
-		renderComplete: sync.NewSemaphore(device),
+		buffers:    buffers,
+		contexts:   make([]Context, buffers),
+		current:    -1, // initialize to -1 for the first Aquire() call to be correct
 	}
 
 	s.output = s.createOutputPass()
@@ -82,7 +76,7 @@ func (s *swapchain) Resize(width, height int) {
 	swapInfo := vk.SwapchainCreateInfo{
 		SType:           vk.StructureTypeSwapchainCreateInfo,
 		Surface:         s.surface,
-		MinImageCount:   uint32(s.swapCount),
+		MinImageCount:   uint32(s.buffers),
 		ImageFormat:     s.surfaceFmt.Format,
 		ImageColorSpace: s.surfaceFmt.ColorSpace,
 		ImageExtent: vk.Extent2D{
@@ -107,7 +101,7 @@ func (s *swapchain) Resize(width, height int) {
 
 	swapImageCount := uint32(0)
 	vk.GetSwapchainImages(s.device.Ptr(), s.ptr, &swapImageCount, nil)
-	if swapImageCount != uint32(s.swapCount) {
+	if swapImageCount != uint32(s.buffers) {
 		panic("failed to get the requested number of swapchain images")
 	}
 
@@ -116,16 +110,8 @@ func (s *swapchain) Resize(width, height int) {
 
 	// depth buffer
 	// todo: destroy existing
-	if s.depth != nil {
-		s.depth.Destroy()
-	}
-	if s.depthview != nil {
-		s.depthview.Destroy()
-	}
 	depthFormat := s.device.GetDepthFormat()
-	usage := vk.ImageUsageFlags(vk.ImageUsageDepthStencilAttachmentBit | vk.ImageUsageTransferSrcBit)
-	s.depth = image.New2D(s.device, width, height, depthFormat, usage)
-	s.depthview = s.depth.View(depthFormat, vk.ImageAspectFlags(vk.ImageAspectDepthBit|vk.ImageAspectStencilBit))
+	depthUsage := vk.ImageUsageFlags(vk.ImageUsageDepthStencilAttachmentBit | vk.ImageUsageTransferSrcBit)
 
 	for i := range s.contexts {
 		// destroy existing
@@ -134,101 +120,52 @@ func (s *swapchain) Resize(width, height int) {
 		color := image.Wrap(s.device, images[i])
 		colorview := color.View(s.surfaceFmt.Format, vk.ImageAspectFlags(vk.ImageAspectColorBit))
 
+		depth := image.New2D(s.device, width, height, depthFormat, depthUsage)
+		depthview := depth.View(depthFormat, vk.ImageAspectFlags(vk.ImageAspectDepthBit|vk.ImageAspectStencilBit))
+
 		s.contexts[i] = Context{
 			Index:     i,
 			Color:     color,
 			ColorView: colorview,
-			Depth:     s.depth,
-			DepthView: s.depthview,
+			Depth:     depth,
+			DepthView: depthview,
 			Framebuffer: framebuffer.New(
 				s.device,
 				width, height,
 				s.output.Ptr(),
 				[]image.View{
 					colorview,
-					s.depthview,
+					depthview,
 				},
 			),
 			Workers: command.Workers{
-				command.NewWorker(s.device),
+				command.NewWorker(s.device, vk.QueueFlags(vk.QueueGraphicsBit)),
 			},
-			Output: s.output,
-			Width:  width,
-			Height: height,
+			Output:         s.output,
+			Width:          width,
+			Height:         height,
+			ImageAvailable: sync.NewSemaphore(s.device),
+			RenderComplete: sync.NewSemaphore(s.device),
 		}
 	}
 }
 
 func (s *swapchain) Aquire() Context {
 	idx := uint32(0)
-	vk.AcquireNextImage(s.device.Ptr(), s.ptr, vk.MaxUint64, s.imageAvailable.Ptr(), nil, &idx)
+	next := s.contexts[(s.current+1)%s.buffers]
+	vk.AcquireNextImage(s.device.Ptr(), s.ptr, vk.MaxUint64, next.ImageAvailable.Ptr(), nil, &idx)
 	s.current = int(idx)
 	return s.contexts[s.current]
 }
 
 // Present executes the final output render pass and presents the image to the screen.
 // When calling, the final render pass command buffer should be submitted to worker 0 of the current context.
-func (s *swapchain) Present(cmdf command.CommandFn) {
-	context := s.Context()
-	worker := context.Workers[0]
-
-	worker.Queue(func(cmd command.Buffer) {
-		clearValues := make([]vk.ClearValue, 2)
-		clearValues[1].SetDepthStencil(1, 0)
-		clearValues[0].SetColor([]float32{
-			0.2, 0.2, 0.2, 0.2,
-		})
-
-		vk.CmdBeginRenderPass(cmd.Ptr(), &vk.RenderPassBeginInfo{
-			SType:       vk.StructureTypeRenderPassBeginInfo,
-			RenderPass:  s.Output().Ptr(),
-			Framebuffer: context.Framebuffer.Ptr(),
-			RenderArea: vk.Rect2D{
-				Offset: vk.Offset2D{},
-				Extent: vk.Extent2D{
-					Width:  uint32(context.Width),
-					Height: uint32(context.Height),
-				},
-			},
-			ClearValueCount: 2,
-			PClearValues:    clearValues,
-		}, vk.SubpassContentsInline)
-
-		vk.CmdSetViewport(cmd.Ptr(), 0, 1, []vk.Viewport{
-			{
-				Width:  float32(context.Width),
-				Height: float32(context.Height),
-			},
-		})
-		vk.CmdSetScissor(cmd.Ptr(), 0, 1, []vk.Rect2D{
-			{
-				Offset: vk.Offset2D{},
-				Extent: vk.Extent2D{
-					Width:  uint32(context.Width),
-					Height: uint32(context.Height),
-				},
-			},
-		})
-
-		// user draw calls
-		cmdf(cmd)
-
-		vk.CmdEndRenderPass(cmd.Ptr())
-	})
-
-	s.Context().Workers[0].Submit(command.SubmitInfo{
-		Queue:  s.queue,
-		Wait:   []sync.Semaphore{s.imageAvailable},
-		Signal: []sync.Semaphore{s.renderComplete},
-		WaitMask: []vk.PipelineStageFlags{
-			vk.PipelineStageFlags(vk.PipelineStageColorAttachmentOutputBit),
-		},
-	})
-
+func (s *swapchain) Present() {
+	ctx := s.Context()
 	presentInfo := vk.PresentInfo{
 		SType:              vk.StructureTypePresentInfo,
 		WaitSemaphoreCount: 1,
-		PWaitSemaphores:    []vk.Semaphore{s.renderComplete.Ptr()},
+		PWaitSemaphores:    []vk.Semaphore{ctx.RenderComplete.Ptr()},
 		SwapchainCount:     1,
 		PSwapchains:        []vk.Swapchain{s.ptr},
 		PImageIndices:      []uint32{uint32(s.current)},
@@ -241,7 +178,7 @@ func (s *swapchain) Context() Context {
 }
 
 func (s *swapchain) Count() int {
-	return s.swapCount
+	return s.buffers
 }
 
 func (s *swapchain) Destroy() {
@@ -250,16 +187,7 @@ func (s *swapchain) Destroy() {
 	}
 	s.contexts = nil
 
-	s.depthview.Destroy()
-	s.depth.Destroy()
-
 	s.output.Destroy()
-
-	s.imageAvailable.Destroy()
-	s.imageAvailable = nil
-
-	s.renderComplete.Destroy()
-	s.renderComplete = nil
 
 	if s.ptr != nil {
 		vk.DestroySwapchain(s.device.Ptr(), s.ptr, nil)
@@ -286,7 +214,7 @@ func (s *swapchain) createOutputPass() pipeline.Pass {
 				Format:         s.device.GetDepthFormat(),
 				Samples:        vk.SampleCount1Bit,
 				LoadOp:         vk.AttachmentLoadOpClear,
-				StoreOp:        vk.AttachmentStoreOpDontCare,
+				StoreOp:        vk.AttachmentStoreOpStore,
 				StencilLoadOp:  vk.AttachmentLoadOpDontCare,
 				StencilStoreOp: vk.AttachmentStoreOpDontCare,
 				InitialLayout:  vk.ImageLayoutUndefined,
@@ -312,7 +240,16 @@ func (s *swapchain) createOutputPass() pipeline.Pass {
 			},
 		},
 		DependencyCount: 0,
-		PDependencies:   []vk.SubpassDependency{
+		PDependencies: []vk.SubpassDependency{
+			{
+				SrcSubpass:      0,
+				DstSubpass:      0,
+				SrcStageMask:    vk.PipelineStageFlags(vk.PipelineStageEarlyFragmentTestsBit | vk.PipelineStageLateFragmentTestsBit),
+				SrcAccessMask:   0,
+				DstStageMask:    vk.PipelineStageFlags(vk.PipelineStageEarlyFragmentTestsBit | vk.PipelineStageLateFragmentTestsBit),
+				DstAccessMask:   vk.AccessFlags(vk.AccessDepthStencilAttachmentWriteBit),
+				DependencyFlags: vk.DependencyFlags(vk.DependencyByRegionBit),
+			},
 			// {
 			// 	SrcSubpass:      0,
 			// 	DstSubpass:      0,

@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/johanhenriksson/goworld/core/window"
-	"github.com/johanhenriksson/goworld/render/backend/vulkan/command"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/device"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/instance"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/swapchain"
@@ -30,7 +29,7 @@ type T interface {
 
 	Resize(int, int)
 	Aquire() swapchain.Context
-	Present(command.CommandFn)
+	Present()
 }
 
 type backend struct {
@@ -118,6 +117,6 @@ func (b *backend) Aquire() swapchain.Context {
 	return b.swapchain.Aquire()
 }
 
-func (b *backend) Present(cmd command.CommandFn) {
-	b.swapchain.Present(cmd)
+func (b *backend) Present() {
+	b.swapchain.Present()
 }

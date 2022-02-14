@@ -37,8 +37,8 @@ func OrthographicLH(left, right, bottom, top, near, far float32) T {
 
 // Perspective generates a perspective projection matrix.
 func Perspective(fovy, aspect, near, far float32) T {
-	// fovy = (fovy * math.Pi) / 180.0 // convert from degrees to radians
-	nmf, f := near-far, float32(1./math.Tan(float64(fovy)/2.0))
+	fovy = (fovy * math.Pi) / 180.0 // convert from degrees to radians
+	nmf, f := near-far, float32(1./math.Tan(float64(fovy)/2))
 
 	return T{float32(f / aspect), 0, 0, 0, 0, float32(f), 0, 0, 0, 0, float32((near + far) / nmf), -1, 0, 0, float32((2. * far * near) / nmf), 0}
 }
@@ -52,6 +52,18 @@ func PerspectiveLH(fovy, aspect, near, far float32) T {
 		0, 1 / tanHalfFov, 0, 0,
 		0, 0, -(far + near) / (far - near), 1,
 		0, 0, (2 * far * near) / (far - near), 0,
+	}
+}
+
+func PerspectiveVK(fovy, aspect, near, far float32) T {
+	fovy = (fovy * math.Pi) / 180.0 // convert from degrees to radians
+	tanHalfFov := float32(math.Tan(float64(fovy) / 2))
+
+	return T{
+		1 / (aspect * tanHalfFov), 0, 0, 0,
+		0, 1 / tanHalfFov, 0, 0,
+		0, 0, far / (far - near), 1,
+		0, 0, -(far * near) / (far - near), 0,
 	}
 }
 
