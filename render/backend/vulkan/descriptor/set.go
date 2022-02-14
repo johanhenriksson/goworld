@@ -6,12 +6,18 @@ import (
 
 type Set interface {
 	Ptr() vk.DescriptorSet
+	Layout() T
 }
 
 type set struct {
-	ptr vk.DescriptorSet
+	layout T
+	ptr    vk.DescriptorSet
 }
 
 func (s *set) Ptr() vk.DescriptorSet {
 	return s.ptr
+}
+
+func (s *set) Layout() T {
+	return s.layout
 }

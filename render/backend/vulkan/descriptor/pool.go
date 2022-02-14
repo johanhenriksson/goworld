@@ -61,7 +61,8 @@ func (p *pool) AllocateSets(layouts []T) []Set {
 
 	return util.Map(sets, func(i int, ptr vk.DescriptorSet) Set {
 		return &set{
-			ptr: ptr,
+			ptr:    ptr,
+			layout: layouts[i],
 		}
 	})
 }
