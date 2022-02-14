@@ -4,8 +4,10 @@ import (
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/buffer"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/descriptor"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/device"
+	"github.com/johanhenriksson/goworld/render/backend/vulkan/framebuffer"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/pipeline"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/sync"
+	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/util"
 
 	vk "github.com/vulkan-go/vulkan"
@@ -24,7 +26,12 @@ type Buffer interface {
 	CmdBindGraphicsDescriptors(layout pipeline.Layout, sets []descriptor.Set)
 	CmdBindVertexBuffer(vtx buffer.T, offset int)
 	CmdBindIndexBuffers(idx buffer.T, offset int, kind vk.IndexType)
+	CmdDraw(vertexCount, instanceCount, firstVertex, firstInstance int)
 	CmdDrawIndexed(indexCount, instanceCount, firstIndex, vertexOffset, firstInstance int)
+	CmdBeginRenderPass(pass pipeline.Pass, framebuffer framebuffer.T, clear color.T)
+	CmdEndRenderPass()
+	CmdSetViewport(x, y, w, h int)
+	CmdSetScissor(x, y, w, h int)
 }
 
 type buf struct {
@@ -119,6 +126,65 @@ func (b *buf) CmdBindIndexBuffers(idx buffer.T, offset int, kind vk.IndexType) {
 	vk.CmdBindIndexBuffer(b.Ptr(), idx.Ptr(), vk.DeviceSize(offset), kind)
 }
 
+func (b *buf) CmdDraw(vertexCount, instanceCount, firstVertex, firstInstance int) {
+	vk.CmdDraw(b.Ptr(), uint32(vertexCount), uint32(instanceCount), uint32(firstVertex), uint32(firstInstance))
+}
+
 func (b *buf) CmdDrawIndexed(indexCount, instanceCount, firstIndex, vertexOffset, firstInstance int) {
 	vk.CmdDrawIndexed(b.Ptr(), uint32(indexCount), uint32(instanceCount), uint32(firstIndex), int32(vertexOffset), uint32(firstInstance))
+}
+
+func (b *buf) CmdBeginRenderPass(pass pipeline.Pass, framebuffer framebuffer.T, clear color.T) {
+	w, h := framebuffer.Size()
+
+	clearValues := make([]vk.ClearValue, 2)
+	clearValues[1].SetDepthStencil(1, 0)
+	clearValues[0].SetColor([]float32{clear.R, clear.G, clear.B, clear.A})
+
+	vk.CmdBeginRenderPass(b.Ptr(), &vk.RenderPassBeginInfo{
+		SType:       vk.StructureTypeRenderPassBeginInfo,
+		RenderPass:  pass.Ptr(),
+		Framebuffer: framebuffer.Ptr(),
+		RenderArea: vk.Rect2D{
+			Offset: vk.Offset2D{},
+			Extent: vk.Extent2D{
+				Width:  uint32(w),
+				Height: uint32(h),
+			},
+		},
+		ClearValueCount: 2,
+		PClearValues:    clearValues,
+	}, vk.SubpassContentsInline)
+}
+
+func (b *buf) CmdEndRenderPass() {
+	vk.CmdEndRenderPass(b.ptr)
+}
+
+func (b *buf) CmdSetViewport(x, y, w, h int) {
+	vk.CmdSetViewport(b.Ptr(), 0, 1, []vk.Viewport{
+		{
+			X:        float32(x),
+			Y:        float32(y),
+			Width:    float32(w),
+			Height:   float32(h),
+			MinDepth: 0,
+			MaxDepth: 1,
+		},
+	})
+}
+
+func (b *buf) CmdSetScissor(x, y, w, h int) {
+	vk.CmdSetScissor(b.Ptr(), 0, 1, []vk.Rect2D{
+		{
+			Offset: vk.Offset2D{
+				X: int32(x),
+				Y: int32(y),
+			},
+			Extent: vk.Extent2D{
+				Width:  uint32(w),
+				Height: uint32(h),
+			},
+		},
+	})
 }

@@ -8,11 +8,15 @@ import (
 	"github.com/johanhenriksson/goworld/core/window"
 	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/math/vec3"
+	"github.com/johanhenriksson/goworld/math/vec4"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/buffer"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/command"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/descriptor"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/pipeline"
+	"github.com/johanhenriksson/goworld/render/backend/vulkan/sync"
+	"github.com/johanhenriksson/goworld/render/color"
+	"github.com/johanhenriksson/goworld/render/vertex"
 
 	vk "github.com/vulkan-go/vulkan"
 )
@@ -54,11 +58,9 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	queue := backend.Device().GetQueue(0, vk.QueueFlags(vk.QueueGraphicsBit))
 
-	proj := mat4.Perspective(45, 1, 0.1, 100)
-	proj[5] *= -1
-	view := mat4.Translate(vec3.New(0, 0, -3))
+	proj := mat4.PerspectiveVK(45, 1, 0.1, 100)
+	view := mat4.Translate(vec3.New(0, 0, -6))
 
 	ubo := buffer.NewUniform(backend.Device(), 3*16*4)
 	defer ubo.Destroy()
@@ -68,35 +70,22 @@ func main() {
 		mat4.Rotate(vec3.New(0, 0, 45)),
 	}, 0)
 
-	vtx := buffer.NewRemote(backend.Device(), 3*24, vk.BufferUsageFlags(vk.BufferUsageVertexBufferBit))
+	vtx := buffer.NewRemote(backend.Device(), 4096, vk.BufferUsageFlags(vk.BufferUsageVertexBufferBit))
 	defer vtx.Destroy()
-	vtxstage := buffer.NewShared(backend.Device(), 3*24)
-	vtxstage.Write([]VkVertex{
-		{1.0, 1.0, 0.0, 1.0, 0.0, 0.0},
-		{-1.0, 1.0, 0.0, 0.0, 1.0, 0.0},
-		{0.0, -1.0, 0.0, 0.0, 0.0, 1.0},
-	}, 0)
+	vtxstage := buffer.NewShared(backend.Device(), 4096)
+	vtxstage.Write(makeColorCube(1), 0)
 
-	idx := buffer.NewRemote(backend.Device(), 3*4, vk.BufferUsageFlags(vk.BufferUsageIndexBufferBit))
-	defer idx.Destroy()
-	idxstage := buffer.NewShared(backend.Device(), 3*4)
-	idxstage.Write([]uint32{0, 1, 2}, 0)
-
-	transferer := command.NewWorker(backend.Device())
+	transferer := command.NewWorker(backend.Device(), vk.QueueFlags(vk.QueueTransferBit))
 	defer transferer.Destroy()
 	transferer.Queue(func(cmd command.Buffer) {
 		cmd.CmdCopyBuffer(vtxstage, vtx)
-		cmd.CmdCopyBuffer(idxstage, idx)
 	})
-	transferer.Submit(command.SubmitInfo{
-		Queue: queue,
-	})
+	transferer.Submit(command.SubmitInfo{})
 	log.Println("waiting for transfers...")
 	transferer.Wait()
 	log.Println("transfers completed")
 
 	vtxstage.Destroy()
-	idxstage.Destroy()
 
 	var cache vk.PipelineCache
 	vk.CreatePipelineCache(backend.Device().Ptr(), &vk.PipelineCacheCreateInfo{
@@ -157,7 +146,6 @@ func main() {
 	pipe := pipeline.New(backend.Device(), cache, layout, backend.Swapchain().Output(), shaders)
 	defer pipe.Destroy()
 
-	f := 0
 	t := 0.0
 	for running && !wnd.ShouldClose() {
 		ctx := backend.Aquire()
@@ -167,23 +155,86 @@ func main() {
 		ubo.Write([]mat4.T{
 			mat4.Perspective(45, float32(ctx.Width)/float32(ctx.Height), 0.1, 100),
 			view,
-			mat4.Rotate(vec3.New(0, 0, float32(90*t))),
+			mat4.Rotate(vec3.New(0, float32(44*t), float32(90*t))),
 		}, 0)
 
-		backend.Present(func(buf command.Buffer) {
-			buf.CmdBindGraphicsPipeline(pipe)
-			buf.CmdBindGraphicsDescriptors(layout, desc)
+		worker := ctx.Workers[0]
 
-			buf.CmdBindVertexBuffer(vtx, 0)
-			buf.CmdBindIndexBuffers(idx, 0, vk.IndexTypeUint32)
+		worker.Queue(func(cmd command.Buffer) {
+			clear := color.RGB(0.2, 0.2, 0.2)
 
-			buf.CmdDrawIndexed(3, 1, 0, 0, 0)
+			cmd.CmdBeginRenderPass(backend.Swapchain().Output(), ctx.Framebuffer, clear)
+			cmd.CmdSetViewport(0, 0, ctx.Width, ctx.Height)
+			cmd.CmdSetScissor(0, 0, ctx.Width, ctx.Height)
+
+			// user draw calls
+			cmd.CmdBindGraphicsPipeline(pipe)
+			cmd.CmdBindGraphicsDescriptors(layout, desc)
+
+			cmd.CmdBindVertexBuffer(vtx, 0)
+			cmd.CmdDraw(36, 12, 0, 0)
+
+			cmd.CmdEndRenderPass()
 		})
 
-		wnd.Poll()
-		f++
+		worker.Submit(command.SubmitInfo{
+			Wait:   []sync.Semaphore{ctx.ImageAvailable},
+			Signal: []sync.Semaphore{ctx.RenderComplete},
+			WaitMask: []vk.PipelineStageFlags{
+				vk.PipelineStageFlags(vk.PipelineStageColorAttachmentOutputBit),
+			},
+		})
 
+		backend.Present()
+
+		wnd.Poll()
 	}
 
 	vk.DeviceWaitIdle(backend.Device().Ptr())
+}
+
+func makeColorCube(s float32) []vertex.C {
+	return []vertex.C{
+		{P: vec3.New(s, -s, s), N: vec3.UnitX, C: vec4.New(1, 0, 1, 1)},
+		{P: vec3.New(s, -s, -s), N: vec3.UnitX, C: vec4.New(1, 0, 0, 1)},
+		{P: vec3.New(s, s, -s), N: vec3.UnitX, C: vec4.New(1, 1, 0, 1)},
+		{P: vec3.New(s, -s, s), N: vec3.UnitX, C: vec4.New(1, 0, 1, 1)},
+		{P: vec3.New(s, s, -s), N: vec3.UnitX, C: vec4.New(1, 1, 0, 1)},
+		{P: vec3.New(s, s, s), N: vec3.UnitX, C: vec4.New(1, 1, 1, 1)},
+
+		{P: vec3.New(-s, -s, s), N: vec3.UnitXN, C: vec4.New(0, 0, 1, 1)},
+		{P: vec3.New(-s, s, -s), N: vec3.UnitXN, C: vec4.New(0, 1, 0, 1)},
+		{P: vec3.New(-s, -s, -s), N: vec3.UnitXN, C: vec4.New(0, 0, 0, 1)},
+		{P: vec3.New(-s, -s, s), N: vec3.UnitXN, C: vec4.New(0, 0, 1, 1)},
+		{P: vec3.New(-s, s, s), N: vec3.UnitXN, C: vec4.New(0, 1, 1, 1)},
+		{P: vec3.New(-s, s, -s), N: vec3.UnitXN, C: vec4.New(0, 1, 0, 1)},
+
+		{P: vec3.New(-s, s, -s), N: vec3.UnitY, C: vec4.New(0, 1, 0, 1)},
+		{P: vec3.New(-s, s, s), N: vec3.UnitY, C: vec4.New(0, 1, 1, 1)},
+		{P: vec3.New(s, s, -s), N: vec3.UnitY, C: vec4.New(1, 1, 0, 1)},
+		{P: vec3.New(s, s, -s), N: vec3.UnitY, C: vec4.New(1, 1, 0, 1)},
+		{P: vec3.New(-s, s, s), N: vec3.UnitY, C: vec4.New(0, 1, 1, 1)},
+		{P: vec3.New(s, s, s), N: vec3.UnitY, C: vec4.New(1, 1, 1, 1)},
+
+		{P: vec3.New(-s, -s, -s), N: vec3.UnitYN, C: vec4.New(0, 0, 0, 1)},
+		{P: vec3.New(s, -s, -s), N: vec3.UnitYN, C: vec4.New(1, 0, 0, 1)},
+		{P: vec3.New(-s, -s, s), N: vec3.UnitYN, C: vec4.New(0, 0, 1, 1)},
+		{P: vec3.New(s, -s, -s), N: vec3.UnitYN, C: vec4.New(1, 0, 0, 1)},
+		{P: vec3.New(s, -s, s), N: vec3.UnitYN, C: vec4.New(1, 0, 1, 1)},
+		{P: vec3.New(-s, -s, s), N: vec3.UnitYN, C: vec4.New(0, 0, 1, 1)},
+
+		{P: vec3.New(-s, -s, s), N: vec3.UnitZ, C: vec4.New(0, 0, 1, 1)},
+		{P: vec3.New(s, -s, s), N: vec3.UnitZ, C: vec4.New(1, 0, 1, 1)},
+		{P: vec3.New(-s, s, s), N: vec3.UnitZ, C: vec4.New(0, 1, 1, 1)},
+		{P: vec3.New(s, -s, s), N: vec3.UnitZ, C: vec4.New(1, 0, 1, 1)},
+		{P: vec3.New(s, s, s), N: vec3.UnitZ, C: vec4.New(1, 1, 1, 1)},
+		{P: vec3.New(-s, s, s), N: vec3.UnitZ, C: vec4.New(0, 1, 1, 1)},
+
+		{P: vec3.New(-s, -s, -s), N: vec3.UnitZN, C: vec4.New(0, 0, 0, 1)},
+		{P: vec3.New(-s, s, -s), N: vec3.UnitZN, C: vec4.New(0, 1, 0, 1)},
+		{P: vec3.New(s, -s, -s), N: vec3.UnitZN, C: vec4.New(1, 0, 0, 1)},
+		{P: vec3.New(s, -s, -s), N: vec3.UnitZN, C: vec4.New(1, 0, 0, 1)},
+		{P: vec3.New(-s, s, -s), N: vec3.UnitZN, C: vec4.New(0, 1, 0, 1)},
+		{P: vec3.New(s, s, -s), N: vec3.UnitZN, C: vec4.New(1, 1, 0, 1)},
+	}
 }

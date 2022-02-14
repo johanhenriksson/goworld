@@ -30,13 +30,10 @@ func New2D(device device.T, width, height int, format vk.Format, usage vk.ImageU
 			Height: uint32(height),
 			Depth:  1,
 		},
-		MipLevels:   1,
-		ArrayLayers: 1,
-		Samples:     vk.SampleCountFlagBits(vk.SampleCount1Bit),
-		Tiling:      vk.ImageTilingOptimal,
-		// Usage: vk.ImageUsageFlags(
-		// 	vk.ImageUsageDepthStencilAttachmentBit |
-		// 		vk.ImageUsageTransferSrcBit),
+		MipLevels:             1,
+		ArrayLayers:           1,
+		Samples:               vk.SampleCountFlagBits(vk.SampleCount1Bit),
+		Tiling:                vk.ImageTilingOptimal,
 		Usage:                 usage,
 		SharingMode:           vk.SharingModeExclusive,
 		QueueFamilyIndexCount: 1,

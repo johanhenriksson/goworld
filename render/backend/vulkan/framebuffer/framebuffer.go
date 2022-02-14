@@ -12,12 +12,15 @@ type T interface {
 	device.Resource[vk.Framebuffer]
 
 	Attachments() []image.View
+	Size() (int, int)
 }
 
 type framebuf struct {
 	ptr         vk.Framebuffer
 	device      device.T
 	attachments []image.View
+	width       int
+	height      int
 }
 
 func New(device device.T, width, height int, pass vk.RenderPass, attachments []image.View) T {
@@ -40,11 +43,17 @@ func New(device device.T, width, height int, pass vk.RenderPass, attachments []i
 		ptr:         ptr,
 		device:      device,
 		attachments: attachments,
+		width:       width,
+		height:      height,
 	}
 }
 
 func (b *framebuf) Ptr() vk.Framebuffer {
 	return b.ptr
+}
+
+func (b *framebuf) Size() (int, int) {
+	return b.width, b.height
 }
 
 func (b *framebuf) Attachments() []image.View {
