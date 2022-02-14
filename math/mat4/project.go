@@ -35,6 +35,14 @@ func OrthographicLH(left, right, bottom, top, near, far float32) T {
 	}
 }
 
+// #ifdef GLM_DEPTH_ZERO_TO_ONE
+// 		Result[2][2] = farVal / (farVal - nearVal);
+// 		Result[3][2] = -(farVal * nearVal) / (farVal - nearVal);
+// #else
+// 		Result[2][2] = (farVal + nearVal) / (farVal - nearVal);
+// 		Result[3][2] = - (static_cast<T>(2) * farVal * nearVal) / (farVal - nearVal);
+// #endif
+
 // Perspective generates a perspective projection matrix.
 func Perspective(fovy, aspect, near, far float32) T {
 	fovy = (fovy * math.Pi) / 180.0 // convert from degrees to radians
