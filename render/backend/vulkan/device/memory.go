@@ -80,6 +80,8 @@ func (m *memory) Write(data any, offset int) {
 	sizeof := int(t.Elem().Size())
 	size := count * sizeof
 
+	fmt.Println("write memory:", count, "x", sizeof)
+
 	// get a pointer to the beginning of the array
 	src := unsafe.Pointer(v.Pointer())
 
