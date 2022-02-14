@@ -115,6 +115,7 @@ func New(device device.T, cache vk.PipelineCache, layout Layout, pass Pass, shad
 
 		// depth & stencil
 		PDepthStencilState: &vk.PipelineDepthStencilStateCreateInfo{
+			// enable depth testing with less or equal
 			SType:                 vk.StructureTypePipelineDepthStencilStateCreateInfo,
 			DepthTestEnable:       vk.True,
 			DepthWriteEnable:      vk.True,
@@ -141,6 +142,7 @@ func New(device device.T, cache vk.PipelineCache, layout Layout, pass Pass, shad
 			AttachmentCount: 1,
 			PAttachments: []vk.PipelineColorBlendAttachmentState{
 				{
+					// additive blending
 					BlendEnable:         vk.False,
 					ColorBlendOp:        vk.BlendOpAdd,
 					SrcColorBlendFactor: vk.BlendFactorZero,

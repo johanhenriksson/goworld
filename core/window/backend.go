@@ -13,7 +13,6 @@ type GlfwBackend interface {
 	GlfwSetup(*glfw.Window, Args) error
 	Resize(int, int)
 	Present()
-	Aquire()
 }
 
 type GlfwHint struct {
