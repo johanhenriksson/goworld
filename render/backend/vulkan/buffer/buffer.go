@@ -1,6 +1,8 @@
 package buffer
 
 import (
+	"log"
+
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/device"
 
 	vk "github.com/vulkan-go/vulkan"
@@ -34,7 +36,10 @@ func New(device device.T, size int, usage vk.BufferUsageFlags, properties vk.Mem
 	}
 
 	var ptr vk.Buffer
-	vk.CreateBuffer(device.Ptr(), &info, nil, &ptr)
+	r := vk.CreateBuffer(device.Ptr(), &info, nil, &ptr)
+	if r != vk.Success {
+		panic("failed to create buffer")
+	}
 
 	var memreq vk.MemoryRequirements
 	vk.GetBufferMemoryRequirements(device.Ptr(), ptr, &memreq)
@@ -50,6 +55,14 @@ func New(device device.T, size int, usage vk.BufferUsageFlags, properties vk.Mem
 		memory: mem,
 		size:   int(memreq.Size),
 	}
+}
+
+func NewUniform(device device.T, size int) T {
+	return New(
+		device, size,
+		vk.BufferUsageFlags(vk.BufferUsageTransferDstBit|vk.BufferUsageUniformBufferBit),
+		vk.MemoryPropertyFlags(vk.MemoryPropertyHostVisibleBit),
+		vk.SharingModeExclusive)
 }
 
 func NewShared(device device.T, size int) T {
@@ -77,6 +90,7 @@ func (b *buffer) Size() int {
 }
 
 func (b *buffer) Destroy() {
+	log.Println("destroying buffer", b.ptr)
 	b.memory.Destroy()
 	vk.DestroyBuffer(b.device.Ptr(), b.ptr, nil)
 	b.ptr = nil

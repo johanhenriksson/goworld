@@ -92,6 +92,9 @@ func (b *buf) CmdCopyBuffer(src, dst buffer.T, regions ...vk.BufferCopy) {
 			},
 		}
 	}
+	if src.Ptr() == nil || dst.Ptr() == nil {
+		panic("copy to/from null buffer")
+	}
 	vk.CmdCopyBuffer(b.ptr, src.Ptr(), dst.Ptr(), uint32(len(regions)), regions)
 }
 

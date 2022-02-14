@@ -1,7 +1,6 @@
 package descriptor
 
 import (
-	"fmt"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/device"
 	"github.com/johanhenriksson/goworld/util"
 
@@ -57,7 +56,6 @@ func (p *pool) AllocateSets(layouts []T) []Set {
 
 	sets := make([]vk.DescriptorSet, len(layouts))
 	vk.AllocateDescriptorSets(p.device.Ptr(), &info, &sets[0])
-	fmt.Println("desc ptr", sets)
 
 	return util.Map(sets, func(i int, ptr vk.DescriptorSet) Set {
 		return &set{
