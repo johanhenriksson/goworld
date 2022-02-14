@@ -11,7 +11,6 @@ import (
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/command"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/descriptor"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/pipeline"
-	"github.com/johanhenriksson/goworld/util"
 
 	vk "github.com/vulkan-go/vulkan"
 )
@@ -71,9 +70,9 @@ func main() {
 
 	transferer := command.NewWorker(backend.Device())
 	transferer.Queue(func(cmd command.Buffer) {
-		cmd.CopyBuffer(vtxstage, vtx)
-		cmd.CopyBuffer(idxstage, idx)
-		cmd.CopyBuffer(ubostage, ubo)
+		cmd.CmdCopyBuffer(vtxstage, vtx)
+		cmd.CmdCopyBuffer(idxstage, idx)
+		cmd.CmdCopyBuffer(ubostage, ubo)
 	})
 	transferer.Submit(command.SubmitInfo{
 		Queue: queue,
@@ -147,66 +146,19 @@ func main() {
 
 	f := 0
 	for !wnd.ShouldClose() {
-		// aquire backbuffer image
-		context := backend.Aquire()
+		// update ubo
 
-		drawScene := func(draws command.Buffer) {
-			clearValues := make([]vk.ClearValue, 2)
-			clearValues[1].SetDepthStencil(1, 0)
-			clearValues[0].SetColor([]float32{
-				0.2, 0.2, 0.2, 0.2,
-			})
+		backend.Aquire()
 
-			vk.CmdBeginRenderPass(draws.Ptr(), &vk.RenderPassBeginInfo{
-				SType:       vk.StructureTypeRenderPassBeginInfo,
-				RenderPass:  backend.Swapchain().Output().Ptr(),
-				Framebuffer: context.Framebuffer.Ptr(),
-				RenderArea: vk.Rect2D{
-					Offset: vk.Offset2D{},
-					Extent: vk.Extent2D{
-						Width:  1000,
-						Height: 1000,
-					},
-				},
-				ClearValueCount: 2,
-				PClearValues:    clearValues,
-			}, vk.SubpassContentsInline)
+		backend.Present(func(buf command.Buffer) {
+			buf.CmdBindGraphicsPipeline(pipe)
+			buf.CmdBindGraphicsDescriptors(layout, desc)
 
-			vk.CmdSetViewport(draws.Ptr(), 0, 1, []vk.Viewport{
-				{
-					Width:  1000,
-					Height: 1000,
-				},
-			})
-			vk.CmdSetScissor(draws.Ptr(), 0, 1, []vk.Rect2D{
-				{
-					Offset: vk.Offset2D{},
-					Extent: vk.Extent2D{
-						Width:  1000,
-						Height: 1000,
-					},
-				},
-			})
+			buf.CmdBindVertexBuffer(vtx, 0)
+			buf.CmdBindIndexBuffers(idx, 0, vk.IndexTypeUint32)
 
-			vk.CmdBindPipeline(draws.Ptr(), vk.PipelineBindPointGraphics, pipe.Ptr())
-
-			vk.CmdBindDescriptorSets(
-				draws.Ptr(),
-				vk.PipelineBindPointGraphics,
-				layout.Ptr(), 0, 1,
-				util.Map(desc, func(i int, s descriptor.Set) vk.DescriptorSet { return s.Ptr() }),
-				0, nil)
-
-			vk.CmdBindVertexBuffers(draws.Ptr(), 0, 1, []vk.Buffer{vtx.Ptr()}, []vk.DeviceSize{0})
-			vk.CmdBindIndexBuffer(draws.Ptr(), idx.Ptr(), 0, vk.IndexTypeUint32)
-			vk.CmdDrawIndexed(draws.Ptr(), 3, 1, 0, 0, 0)
-
-			vk.CmdEndRenderPass(draws.Ptr())
-		}
-
-		context.Workers[0].Queue(drawScene)
-
-		backend.Present()
+			buf.CmdDrawIndexed(3, 1, 0, 0, 0)
+		})
 
 		wnd.Poll()
 		f++
