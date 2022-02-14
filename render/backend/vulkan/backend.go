@@ -55,6 +55,7 @@ type backend struct {
 	buffers   []framebuffer.T
 	buffer    framebuffer.T
 	output    pipeline.Pass
+	depthview image.View
 }
 
 func New(appName string, deviceIndex int) T {
@@ -187,8 +188,8 @@ func (b *backend) GlfwSetup(w *glfw.Window, args window.Args) error {
 	// allocate a depth buffer
 	depthFormat := b.device.GetDepthFormat()
 	usage := vk.ImageUsageFlags(vk.ImageUsageDepthStencilAttachmentBit | vk.ImageUsageTransferSrcBit)
-	img := image.New2D(b.device, width, height, depthFormat, usage)
-	depthview := img.View(depthFormat, vk.ImageAspectFlags(vk.ImageAspectDepthBit|vk.ImageAspectStencilBit))
+	b.depth = image.New2D(b.device, width, height, depthFormat, usage)
+	b.depthview = b.depth.View(depthFormat, vk.ImageAspectFlags(vk.ImageAspectDepthBit|vk.ImageAspectStencilBit))
 
 	// allocate a frame buffer for each swap image
 	b.buffers = make([]framebuffer.T, b.swapcount)
@@ -202,7 +203,7 @@ func (b *backend) GlfwSetup(w *glfw.Window, args window.Args) error {
 			b.output.Ptr(),
 			[]image.View{
 				colorview,
-				depthview,
+				b.depthview,
 			},
 		)
 	}
@@ -211,6 +212,17 @@ func (b *backend) GlfwSetup(w *glfw.Window, args window.Args) error {
 }
 
 func (b *backend) Destroy() {
+	b.output.Destroy()
+
+	for _, buf := range b.buffers {
+		buf.Destroy()
+	}
+	for _, view := range b.swapviews {
+		view.Destroy()
+	}
+	b.depth.Destroy()
+	b.depthview.Destroy()
+
 	for _, pool := range b.cmdpools {
 		pool.Destroy()
 	}
