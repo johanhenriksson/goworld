@@ -76,14 +76,17 @@ func (w *worker) run() {
 		}
 	}
 
+	// dealloc
+	w.device.WaitIdle()
+	w.fence.Destroy()
+	w.pool.Destroy()
+
 	// close command channels
+	w.complete <- true
 	close(w.input)
 	close(w.signal)
 	close(w.stop)
-
-	// dealloc
-	w.fence.Destroy()
-	w.pool.Destroy()
+	close(w.complete)
 
 	// return the thread
 	runtime.UnlockOSThread()
@@ -164,4 +167,5 @@ func (w *worker) Wait() {
 
 func (w *worker) Destroy() {
 	w.stop <- true
+	<-w.complete
 }

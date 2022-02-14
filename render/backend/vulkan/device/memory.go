@@ -37,7 +37,10 @@ func alloc(device T, req vk.MemoryRequirements, flags vk.MemoryPropertyFlags) Me
 		MemoryTypeIndex: uint32(typeIdx),
 	}
 	var ptr vk.DeviceMemory
-	vk.AllocateMemory(device.Ptr(), &alloc, nil, &ptr)
+	r := vk.AllocateMemory(device.Ptr(), &alloc, nil, &ptr)
+	if r != vk.Success {
+		panic("failed to allocate memory")
+	}
 
 	m := &memory{
 		device: device,
@@ -79,8 +82,6 @@ func (m *memory) Write(data any, offset int) {
 	count := v.Len()
 	sizeof := int(t.Elem().Size())
 	size := count * sizeof
-
-	fmt.Println("write memory:", count, "x", sizeof)
 
 	// get a pointer to the beginning of the array
 	src := unsafe.Pointer(v.Pointer())
