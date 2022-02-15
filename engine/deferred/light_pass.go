@@ -99,8 +99,8 @@ func (p *LightPass) Draw(args render.Args, scene object.T) {
 	render.BlendAdditive()
 
 	lights := query.New[light.T]().Collect(scene)
-	for _, light := range lights {
-		desc := light.LightDescriptor()
+	for _, lit := range lights {
+		desc := lit.LightDescriptor()
 
 		// fit light projection matrix to the current camera frustum
 		p.FitLightToCamera(args.VP.Invert(), &desc)
@@ -161,7 +161,7 @@ func (p *LightPass) FitLightToCamera(vpi mat4.T, desc *light.Descriptor) {
 	zmin := float32(-100)
 	zmax := float32(100)
 
-	desc.Projection = mat4.Orthographic(
+	desc.Projection = mat4.OrthographicVK(
 		math.Snap(lfst.Center.X-maxExtent, snap), math.Snap(lfst.Center.X+maxExtent, snap),
 		math.Snap(lfst.Center.Y-maxExtent, snap), math.Snap(lfst.Center.Y+maxExtent, snap),
 		zmin, zmax)

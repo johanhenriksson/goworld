@@ -65,5 +65,5 @@ func (g *glgeombuf) SampleDepth(p vec2.T) (float32, bool) {
 	g.Bind()
 	x, y := int(p.X), int(p.Y)
 	depth, _ := g.T.SampleDepth(vec2.NewI(x, g.depth.Height()-y-1))
-	return depth, depth != 0.0
+	return depth, depth != 1.0
 }

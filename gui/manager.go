@@ -69,7 +69,7 @@ func (m *manager) MouseEvent(e mouse.Event) {
 			}
 
 			// we hit something
-			e.Consume()
+			// e.Consume()
 			break
 		}
 	}

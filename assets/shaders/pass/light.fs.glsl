@@ -41,7 +41,7 @@ vec3 positionFromDepth(float depth) {
     /* clip coords */
     float xhs = 2 * texcoord0.x - 1;
     float yhs = 2 * texcoord0.y - 1;
-    float zhs = 2 * depth - 1;
+    float zhs = depth;
 
     /* homogenous clip vector */
     vec4 pos_hs = vec4(xhs, yhs, zhs, 1) / gl_FragCoord.w;
@@ -75,14 +75,13 @@ float sampleShadowmap(sampler2D shadowmap, vec3 position, float bias) {
     /* world -> light clip coords */
     vec4 light_clip_pos = light_vp * vec4(position, 1);
 
+    /* depth of position in light space */
+    float z = light_clip_pos.z;
+
     /* convert light clip to light ndc by dividing by W, then map values to 0-1 */
+    // this gives us the xy coords to sample the shadowmap
     vec3 light_ndc_pos = (light_clip_pos.xyz / light_clip_pos.w) * 0.5 + 0.5;
 
-    /* depth of position in light space */
-    float z = light_ndc_pos.z;
-    if (z > 1) {
-        return 0;
-    }
 
     // todo: implement angle-dependent bias
     // float bias = max(0.05 * (1.0 - dot(normal, lightDir)), 0.005);  
@@ -130,7 +129,6 @@ void main() {
     vec3 normal = normalize(worldNormal.xyz);
 
     // calculate world position from depth map and the inverse camera view projection
-    // why do we do this when we have a position buffer? :/
     vec3 position = positionFromDepth(depth);
 
     // now we should be able to calculate the position in light space!
@@ -172,8 +170,7 @@ void main() {
 
     // lightColor *= mix(1, ssao, ssao_amount);
 
-    // write fragment color & restore depth buffer
-    color = vec4(lightColor,  1.0);
+    color = vec4(lightColor, 1);
 
     gl_FragDepth = depth;
 }

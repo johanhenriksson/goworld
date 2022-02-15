@@ -14,14 +14,14 @@ type Frustum struct {
 }
 
 var ndc_corners = vec3.Array{
-	vec3.New(-1, 1, -1),  // NTL
-	vec3.New(1, 1, -1),   // NTR
-	vec3.New(-1, -1, -1), // NBL
-	vec3.New(1, -1, -1),  // NBR
-	vec3.New(-1, 1, 1),   // FTL
-	vec3.New(1, 1, 1),    // FTR
-	vec3.New(-1, -1, 1),  // FBL
-	vec3.New(1, -1, 1),   // FBR
+	vec3.New(-1, 1, 1),  // NTL
+	vec3.New(1, 1, 1),   // NTR
+	vec3.New(-1, -1, 1), // NBL
+	vec3.New(1, -1, 1),  // NBR
+	vec3.New(-1, 1, 0),  // FTL
+	vec3.New(1, 1, 0),   // FTR
+	vec3.New(-1, -1, 0), // FBL
+	vec3.New(1, -1, 0),  // FBR
 }
 
 // NewFrustum creates a view frustum from an inverse view projection matrix by unprojecting the corners of the NDC cube.
