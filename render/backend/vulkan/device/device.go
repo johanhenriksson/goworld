@@ -41,16 +41,11 @@ func New(physDevice vk.PhysicalDevice) (T, error) {
 		PQueuePriorities: []float32{1},
 	}
 
-	var deviceExtensions = util.CStrings([]string{
-		"VK_KHR_swapchain",
-		"VK_KHR_portability_subset",
-	})
-
 	var dev vk.Device
 	deviceInfo := vk.DeviceCreateInfo{
 		SType:                   vk.StructureTypeDeviceCreateInfo,
 		EnabledExtensionCount:   uint32(len(deviceExtensions)),
-		PpEnabledExtensionNames: deviceExtensions,
+		PpEnabledExtensionNames: util.CStrings(deviceExtensions),
 		PQueueCreateInfos:       []vk.DeviceQueueCreateInfo{queueInfo},
 		QueueCreateInfoCount:    1,
 	}
