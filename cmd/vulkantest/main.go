@@ -62,9 +62,19 @@ func main() {
 	proj := mat4.PerspectiveVK(45, 1, 0.1, 100)
 	view := mat4.Translate(vec3.New(0, 0, -6))
 
-	ubo := buffer.NewUniform(backend.Device(), 3*16*4)
-	defer ubo.Destroy()
-	ubo.Write([]mat4.T{
+	ubosize := 3 * 16 * 4
+	ubo := []buffer.T{
+		buffer.NewUniform(backend.Device(), ubosize),
+		buffer.NewUniform(backend.Device(), ubosize),
+	}
+	defer ubo[0].Destroy()
+	defer ubo[1].Destroy()
+	ubo[0].Write([]mat4.T{
+		proj,
+		view,
+		mat4.Rotate(vec3.New(0, 0, 45)),
+	}, 0)
+	ubo[1].Write([]mat4.T{
 		proj,
 		view,
 		mat4.Rotate(vec3.New(0, 0, 45)),
@@ -109,12 +119,12 @@ func main() {
 		},
 	})
 	defer ubolayout.Destroy()
-	dlayouts := []descriptor.T{ubolayout}
+	dlayouts := []descriptor.T{ubolayout, ubolayout}
 
 	dpool := descriptor.NewPool(backend.Device(), []vk.DescriptorPoolSize{
 		{
 			Type:            vk.DescriptorTypeUniformBuffer,
-			DescriptorCount: 1,
+			DescriptorCount: 2,
 		},
 	})
 	defer dpool.Destroy()
@@ -122,7 +132,7 @@ func main() {
 	desc := dpool.AllocateSets(dlayouts)
 	// uboset := desc[0]
 
-	vk.UpdateDescriptorSets(backend.Device().Ptr(), 1, []vk.WriteDescriptorSet{
+	vk.UpdateDescriptorSets(backend.Device().Ptr(), 2, []vk.WriteDescriptorSet{
 		{
 			SType:           vk.StructureTypeWriteDescriptorSet,
 			DstSet:          desc[0].Ptr(),
@@ -132,9 +142,24 @@ func main() {
 			DescriptorType:  vk.DescriptorTypeUniformBuffer,
 			PBufferInfo: []vk.DescriptorBufferInfo{
 				{
-					Buffer: ubo.Ptr(),
+					Buffer: ubo[0].Ptr(),
 					Offset: 0,
-					Range:  vk.DeviceSize(ubo.Size()),
+					Range:  vk.DeviceSize(ubosize),
+				},
+			},
+		},
+		{
+			SType:           vk.StructureTypeWriteDescriptorSet,
+			DstSet:          desc[1].Ptr(),
+			DstBinding:      0,
+			DstArrayElement: 0,
+			DescriptorCount: 1,
+			DescriptorType:  vk.DescriptorTypeUniformBuffer,
+			PBufferInfo: []vk.DescriptorBufferInfo{
+				{
+					Buffer: ubo[1].Ptr(),
+					Offset: 0,
+					Range:  vk.DeviceSize(ubosize),
 				},
 			},
 		},
@@ -152,7 +177,7 @@ func main() {
 
 		// update ubo
 		t += 0.016
-		ubo.Write([]mat4.T{
+		ubo[ctx.Index].Write([]mat4.T{
 			mat4.Perspective(45, float32(ctx.Width)/float32(ctx.Height), 0.1, 100),
 			view,
 			mat4.Rotate(vec3.New(0, float32(44*t), float32(90*t))),
@@ -169,7 +194,7 @@ func main() {
 
 			// user draw calls
 			cmd.CmdBindGraphicsPipeline(pipe)
-			cmd.CmdBindGraphicsDescriptors(layout, desc)
+			cmd.CmdBindGraphicsDescriptors(layout, []descriptor.Set{desc[ctx.Index]})
 
 			cmd.CmdBindVertexBuffer(vtx, 0)
 			cmd.CmdDraw(36, 12, 0, 0)
