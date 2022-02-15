@@ -27,11 +27,11 @@ func (g *GuiPass) Draw(args render.Args, scene object.T) {
 	scale := width / float32(args.Viewport.Width)
 
 	// setup viewport
-	proj := mat4.Orthographic(0, width, height, 0, 1000, -1000)
+	proj := mat4.OrthographicLH(0, width, height, 0, 1000, -1000)
 	view := mat4.Scale(vec3.New(scale, scale, 1))
 	vp := proj.Mul(&view)
 
-	gl.DepthFunc(gl.LEQUAL)
+	gl.DepthFunc(gl.GREATER)
 
 	uiArgs := render.Args{
 		Projection: proj,

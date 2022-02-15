@@ -74,7 +74,7 @@ func New(args Args) *T {
 	}).
 		Name("Z Cone").
 		Parent(g).
-		Position(vec3.UnitZN).
+		Position(vec3.UnitZ).
 		Rotation(vec3.New(90, 180, 0)).
 		Create()
 
@@ -113,7 +113,7 @@ func New(args Args) *T {
 			// axis lines
 			lines.L(vec3.Zero, vec3.UnitX, color.Red),
 			lines.L(vec3.Zero, vec3.UnitY, color.Green),
-			lines.L(vec3.Zero, vec3.UnitZN, color.Blue),
+			lines.L(vec3.Zero, vec3.UnitZ, color.Blue),
 
 			// xz lines
 			lines.L(vec3.New(side, 0, 0), vec3.New(side, 0, side), color.Green),

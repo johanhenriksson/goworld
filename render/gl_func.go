@@ -17,6 +17,7 @@ func ClearWith(color color.T) {
 }
 
 func ClearDepth() {
+	gl.ClearDepth(0)
 	gl.Clear(gl.DEPTH_BUFFER_BIT)
 }
 

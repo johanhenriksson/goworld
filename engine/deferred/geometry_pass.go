@@ -10,6 +10,8 @@ import (
 	"github.com/johanhenriksson/goworld/render/backend/gl/gl_framebuffer"
 	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/framebuffer"
+
+	ogl "github.com/go-gl/gl/v4.1-core/gl"
 )
 
 // GeometryPass draws the scene geometry to a G-buffer
@@ -33,9 +35,10 @@ func (p *GeometryPass) Draw(args render.Args, scene object.T) {
 
 	// setup rendering
 	render.Blend(false)
-	render.CullFace(render.CullBack)
+	render.CullFace(render.CullFront)
 	render.DepthOutput(true)
 	render.DepthTest(true)
+	ogl.DepthFunc(ogl.GREATER)
 
 	render.ClearWith(color.Black)
 	render.ClearDepth()

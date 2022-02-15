@@ -49,7 +49,7 @@ void main()
         offset.xyz = offset.xyz * 0.5 + 0.5; // transform to range 0.0 - 1.0
         
         // get sample depth - i.e. the Z component of the sampled position in view space
-        float sampleDepth = texture(tex_position, offset.xy).z;
+        float sampleDepth = 1 - texture(tex_position, offset.xy).z;
 
         // range check & accumulate
         float rangeCheck = smoothstep(0.0, 1.0, radius / abs(fragPos.z - sampleDepth));

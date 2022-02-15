@@ -52,7 +52,7 @@ func New(position, rotation, scale vec3.T) T {
 		scale:    scale,
 		right:    vec3.UnitX,
 		up:       vec3.UnitY,
-		forward:  vec3.UnitZN,
+		forward:  vec3.UnitZ,
 	}
 	t.Recalculate(nil)
 	return t

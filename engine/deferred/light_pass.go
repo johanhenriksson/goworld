@@ -48,7 +48,7 @@ func NewLightPass(input framebuffer.Geometry) *LightPass {
 		Shadows:        shadowPass,
 		Ambient:        color.RGB(0.15, 0.15, 0.15),
 		ShadowStrength: 0.8,
-		ShadowBias:     0.0001,
+		ShadowBias:     0.0002,
 		ShadowSize:     shadowsize,
 		ShadowSoft:     true,
 
@@ -99,8 +99,8 @@ func (p *LightPass) Draw(args render.Args, scene object.T) {
 	render.BlendAdditive()
 
 	lights := query.New[light.T]().Collect(scene)
-	for _, light := range lights {
-		desc := light.LightDescriptor()
+	for _, lit := range lights {
+		desc := lit.LightDescriptor()
 
 		// fit light projection matrix to the current camera frustum
 		p.FitLightToCamera(args.VP.Invert(), &desc)

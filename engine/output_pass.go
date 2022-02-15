@@ -57,5 +57,5 @@ func (p *OutputPass) Draw(args render.Args, scene object.T) {
 	p.mat.Use()
 	p.quad.Draw()
 
-	gl.DepthFunc(gl.LESS)
+	gl.DepthFunc(gl.GREATER)
 }

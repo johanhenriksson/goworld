@@ -21,7 +21,7 @@ func CreateScene(renderer *engine.Renderer, scene object.T) (*Player, *Chunk) {
 	chunk := world.AddChunk(0, 0)
 
 	// first person controls
-	player := NewPlayer(vec3.New(1, 22, 1), func(player *Player, target vec3.T) (bool, vec3.T) {
+	player := NewPlayer(vec3.New(-5, 5, -5), func(player *Player, target vec3.T) (bool, vec3.T) {
 		height := world.HeightAt(target)
 		if target.Y < height {
 			return true, vec3.New(target.X, height, target.Z)
@@ -29,7 +29,7 @@ func CreateScene(renderer *engine.Renderer, scene object.T) (*Player, *Chunk) {
 		return false, vec3.Zero
 	})
 	player.Flying = true
-	player.Eye.Transform().SetRotation(vec3.New(22, 135, 0))
+	player.Eye.Transform().SetRotation(vec3.New(0, 0, 0))
 	scene.Adopt(player)
 
 	return player, chunk
