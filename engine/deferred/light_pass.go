@@ -161,7 +161,7 @@ func (p *LightPass) FitLightToCamera(vpi mat4.T, desc *light.Descriptor) {
 	zmin := float32(-100)
 	zmax := float32(100)
 
-	desc.Projection = mat4.Orthographic(
+	desc.Projection = mat4.OrthographicVK(
 		math.Snap(lfst.Center.X-maxExtent, snap), math.Snap(lfst.Center.X+maxExtent, snap),
 		math.Snap(lfst.Center.Y-maxExtent, snap), math.Snap(lfst.Center.Y+maxExtent, snap),
 		zmin, zmax)

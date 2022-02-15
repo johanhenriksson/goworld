@@ -55,8 +55,8 @@ func (cam *camera) Name() string { return "Camera" }
 // Unproject screen space coordinates into world space
 func (cam *camera) Unproject(pos vec3.T) vec3.T {
 	// screen space -> clip space
-	pos.Y = 1 - pos.Y
-	pos = pos.Scaled(2).Sub(vec3.One)
+	pos.X = 2*pos.X - 1
+	pos.Y = 2*(1-pos.Y) - 1
 
 	// unproject to world space by multiplying inverse view-projection
 	return cam.vpi.TransformPoint(pos)
@@ -69,7 +69,7 @@ func (cam *camera) Update(dt float32) {
 func (cam *camera) PreDraw(args render.Args) error {
 	// update view & view-projection matrices
 	aspect := float32(args.Viewport.Width) / float32(args.Viewport.Height)
-	cam.proj = mat4.PerspectiveLH(cam.fov, aspect, cam.near, cam.far)
+	cam.proj = mat4.PerspectiveVK(cam.fov, aspect, cam.near, cam.far)
 
 	// Calculate new view matrix based on position & forward vector
 	// why is this different from the parent objects world matrix?

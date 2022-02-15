@@ -68,6 +68,9 @@ func (b *OpenGLBackend) GlfwSetup(w *glfw.Window, args Args) error {
 		}
 	}
 
+	// set depth values to 0-1 instead of -1 to 1
+	gl.ClipControl(gl.LOWER_LEFT, gl.ZERO_TO_ONE)
+
 	return nil
 }
 

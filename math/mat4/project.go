@@ -7,7 +7,7 @@ import (
 	mgl "github.com/go-gl/mathgl/mgl32"
 )
 
-// Orthographic generates a right-handed orthographic projection matrix.
+// OrthographicVK generates a right-handed orthographic projection matrix.
 // Outputs depth values in the range [-1, 1]
 func Orthographic(left, right, bottom, top, near, far float32) T {
 	rml, tmb, fmn := (right - left), (top - bottom), (far - near)
@@ -20,7 +20,7 @@ func Orthographic(left, right, bottom, top, near, far float32) T {
 	}
 }
 
-// OrthographicLH generates a left-handed orthographic projection matrix.
+// OrthographicVK generates a left-handed orthographic projection matrix.
 // Outputs depth values in the range [-1, 1]
 func OrthographicLH(left, right, bottom, top, near, far float32) T {
 	rml, tmb, fmn := (right - left), (top - bottom), (far - near)
