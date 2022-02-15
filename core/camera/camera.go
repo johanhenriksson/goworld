@@ -2,7 +2,6 @@ package camera
 
 import (
 	"github.com/johanhenriksson/goworld/core/object"
-	"github.com/johanhenriksson/goworld/math"
 	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
@@ -57,7 +56,7 @@ func (cam *camera) Name() string { return "Camera" }
 func (cam *camera) Unproject(pos vec3.T) vec3.T {
 	// screen space -> clip space
 	pos.Y = 1 - pos.Y
-	point := pos.Scaled(2).Sub(vec3.One)
+	point := pos.Scaled(1).Sub(vec3.One)
 
 	// unproject to world space by multiplying inverse view-projection
 	return cam.vpi.TransformPoint(point)
@@ -70,14 +69,14 @@ func (cam *camera) Update(dt float32) {
 func (cam *camera) PreDraw(args render.Args) error {
 	// update view & view-projection matrices
 	aspect := float32(args.Viewport.Width) / float32(args.Viewport.Height)
-	cam.proj = mat4.Perspective(math.DegToRad(cam.fov), aspect, cam.near, cam.far)
+	cam.proj = mat4.PerspectiveLH(cam.fov, aspect, cam.near, cam.far)
 
 	// Calculate new view matrix based on position & forward vector
 	// why is this different from the parent objects world matrix?
 	position := cam.Transform().WorldPosition()
 	lookAt := position.Add(cam.Transform().Forward())
-	cam.view = mat4.LookAt(position, lookAt)
-	cam.viewi = cam.view.Invert()
+	cam.view = mat4.LookAtLH(position, lookAt)
+	cam.viewi = cam.viewi.Invert()
 
 	cam.vp = cam.proj.Mul(&cam.view)
 	cam.vpi = cam.vp.Invert()

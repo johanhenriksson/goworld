@@ -48,7 +48,7 @@ func NewLightPass(input framebuffer.Geometry) *LightPass {
 		Shadows:        shadowPass,
 		Ambient:        color.RGB(0.15, 0.15, 0.15),
 		ShadowStrength: 0.8,
-		ShadowBias:     0.0001,
+		ShadowBias:     0.0002,
 		ShadowSize:     shadowsize,
 		ShadowSoft:     true,
 

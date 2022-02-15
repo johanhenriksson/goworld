@@ -182,7 +182,6 @@ func (p *Player) Update(dt float32) {
 	position = position.Add(step)
 
 	// update camera position
-	//p.camera.SetPosition(p.position.Add(p.CamHeight))
 	p.Transform().SetPosition(position)
 
 	p.T.Update(dt)
@@ -204,17 +203,14 @@ func (p *Player) MouseEvent(e mouse.Event) {
 		sensitivity := vec2.New(0.045, 0.04)
 		delta := e.Delta().Mul(sensitivity)
 
-		xrot := p.Eye.Transform().Rotation().X + delta.Y
-		yrot := p.Eye.Transform().Rotation().Y + delta.X
-
-		// rot := p.Eye.Transform().Rotation().XY().Sub(delta)
+		xrot := p.Eye.Transform().Rotation().X - delta.Y
+		yrot := p.Eye.Transform().Rotation().Y - delta.X
 
 		// camera angle limits
 		xrot = math.Clamp(xrot, -89.9, 89.9)
 		yrot = math.Mod(yrot, 360)
 
 		p.Eye.Transform().SetRotation(vec3.New(xrot, yrot, 0))
-		// p.Transform().SetRotation(vec3.New(0, yrot, 0))
 
 		e.Consume()
 	}

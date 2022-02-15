@@ -49,7 +49,7 @@ func (p *ForwardPass) Draw(args render.Args, scene object.T) {
 	// setup rendering
 	render.Blend(true)
 	render.BlendMultiply()
-	render.CullFace(render.CullBack)
+	render.CullFace(render.CullFront)
 
 	// todo: depth sorting
 	// there is finally a decent way of doing it!!

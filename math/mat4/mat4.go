@@ -297,8 +297,8 @@ func (m *T) Up() vec3.T {
 // Forward extracts the forward vector from a transformation matrix
 func (m *T) Forward() vec3.T {
 	return vec3.T{
-		X: -m[4*0+2],
-		Y: -m[4*1+2],
-		Z: -m[4*2+2],
+		X: m[4*0+2],
+		Y: m[4*1+2],
+		Z: m[4*2+2],
 	}
 }

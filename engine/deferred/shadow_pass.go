@@ -63,7 +63,7 @@ func (p *ShadowPass) DrawLight(scene object.T, lit *light.Descriptor) {
 
 	// use front-face culling while rendering shadows to mitigate panning
 	// but it seems to cause problems??
-	//render.CullFace(render.CullFront)
+	render.CullFace(render.CullFront)
 
 	args := render.Args{
 		Projection: lit.Projection,
