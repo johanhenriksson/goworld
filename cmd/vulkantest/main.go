@@ -83,10 +83,9 @@ func main() {
 		panic(err)
 	}
 
-	proj := mat4.Perspective(45, 1, 0.1, 100)
-	proj[5] *= -1
+	proj := mat4.PerspectiveVK(45, 1, 0.1, 100)
 	// view := mat4.LookAtVK(vec3.New(-5, 8, -5), vec3.New(0, 0, 0))
-	view := mat4.LookAtVK(vec3.New(-11, 17, -11), vec3.New(8, 3, 8))
+	view := mat4.LookAtLH(vec3.New(-11, 17, -11), vec3.New(8, 3, 8))
 	// view.Invert()
 
 	ubosize := 3 * 16 * 4
