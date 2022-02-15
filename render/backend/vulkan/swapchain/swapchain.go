@@ -1,6 +1,9 @@
 package swapchain
 
 import (
+	"fmt"
+	"log"
+
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/command"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/device"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/framebuffer"
@@ -14,7 +17,7 @@ import (
 type T interface {
 	device.Resource[vk.Swapchain]
 
-	Aquire() Context
+	Aquire() (Context, error)
 	Present()
 	Resize(int, int)
 
@@ -29,14 +32,17 @@ type swapchain struct {
 	queue      vk.Queue
 	surface    vk.Surface
 	surfaceFmt vk.SurfaceFormat
+	output     pipeline.Pass
 	current    int
 	buffers    int
-	output     pipeline.Pass
+	width      int
+	height     int
+	resized    bool
 
 	contexts []Context
 }
 
-func New(device device.T, width, height, buffers int, surface vk.Surface, surfaceFormat vk.SurfaceFormat) T {
+func New(device device.T, buffers int, surface vk.Surface, surfaceFormat vk.SurfaceFormat) T {
 	// todo: surface format logic
 	queue := device.GetQueue(0, vk.QueueFlags(vk.QueueGraphicsBit))
 
@@ -47,13 +53,11 @@ func New(device device.T, width, height, buffers int, surface vk.Surface, surfac
 		surfaceFmt: surfaceFormat,
 		buffers:    buffers,
 		contexts:   make([]Context, buffers),
-		current:    -1, // initialize to -1 for the first Aquire() call to be correct
 	}
 
 	s.output = s.createOutputPass()
 
-	// size according to framebuffer
-	s.Resize(width, height)
+	s.recreate()
 
 	return s
 }
@@ -67,11 +71,23 @@ func (s *swapchain) Output() pipeline.Pass {
 }
 
 func (s *swapchain) Resize(width, height int) {
+	s.resized = true
+	log.Println("Resize swapchain to", width, "x", height)
+}
+
+func (s *swapchain) recreate() {
+	log.Println("Recreating swapchain")
 	s.device.WaitIdle()
 
 	if s.ptr != nil {
 		vk.DestroySwapchain(s.device.Ptr(), s.ptr, nil)
 	}
+
+	// query max surface size
+	caps := s.device.GetSurfaceCapabilities(s.surface)
+	caps.MaxImageExtent.Deref()
+	s.width = int(caps.MaxImageExtent.Width)
+	s.height = int(caps.MaxImageExtent.Height)
 
 	swapInfo := vk.SwapchainCreateInfo{
 		SType:           vk.StructureTypeSwapchainCreateInfo,
@@ -80,8 +96,8 @@ func (s *swapchain) Resize(width, height int) {
 		ImageFormat:     s.surfaceFmt.Format,
 		ImageColorSpace: s.surfaceFmt.ColorSpace,
 		ImageExtent: vk.Extent2D{
-			Width:  uint32(width),
-			Height: uint32(height),
+			Width:  uint32(s.width),
+			Height: uint32(s.height),
 		},
 		ImageArrayLayers: 1,
 		ImageUsage:       vk.ImageUsageFlags(vk.ImageUsageColorAttachmentBit),
@@ -120,7 +136,7 @@ func (s *swapchain) Resize(width, height int) {
 		color := image.Wrap(s.device, images[i])
 		colorview := color.View(s.surfaceFmt.Format, vk.ImageAspectFlags(vk.ImageAspectColorBit))
 
-		depth := image.New2D(s.device, width, height, depthFormat, depthUsage)
+		depth := image.New2D(s.device, s.width, s.height, depthFormat, depthUsage)
 		depthview := depth.View(depthFormat, vk.ImageAspectFlags(vk.ImageAspectDepthBit|vk.ImageAspectStencilBit))
 
 		s.contexts[i] = Context{
@@ -131,7 +147,7 @@ func (s *swapchain) Resize(width, height int) {
 			DepthView: depthview,
 			Framebuffer: framebuffer.New(
 				s.device,
-				width, height,
+				s.width, s.height,
 				s.output.Ptr(),
 				[]image.View{
 					colorview,
@@ -142,20 +158,27 @@ func (s *swapchain) Resize(width, height int) {
 				command.NewWorker(s.device, vk.QueueFlags(vk.QueueGraphicsBit)),
 			},
 			Output:         s.output,
-			Width:          width,
-			Height:         height,
+			Width:          s.width,
+			Height:         s.height,
 			ImageAvailable: sync.NewSemaphore(s.device),
 			RenderComplete: sync.NewSemaphore(s.device),
 		}
 	}
+
+	// this ensures the first call to Aquire works properly
+	s.current = -1
 }
 
-func (s *swapchain) Aquire() Context {
+func (s *swapchain) Aquire() (Context, error) {
 	idx := uint32(0)
 	next := s.contexts[(s.current+1)%s.buffers]
-	vk.AcquireNextImage(s.device.Ptr(), s.ptr, vk.MaxUint64, next.ImageAvailable.Ptr(), nil, &idx)
+	r := vk.AcquireNextImage(s.device.Ptr(), s.ptr, 1e9, next.ImageAvailable.Ptr(), nil, &idx)
+	if r == vk.ErrorOutOfDate {
+		s.recreate()
+		return Context{}, fmt.Errorf("swapchain out of date")
+	}
 	s.current = int(idx)
-	return s.contexts[s.current]
+	return s.contexts[s.current], nil
 }
 
 // Present executes the final output render pass and presents the image to the screen.
@@ -170,7 +193,12 @@ func (s *swapchain) Present() {
 		PSwapchains:        []vk.Swapchain{s.ptr},
 		PImageIndices:      []uint32{uint32(s.current)},
 	}
+
 	vk.QueuePresent(s.queue, &presentInfo)
+	if s.resized {
+		s.recreate()
+		s.resized = false
+	}
 }
 
 func (s *swapchain) Context() Context {

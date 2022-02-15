@@ -20,6 +20,7 @@ type T interface {
 	GetQueue(queueIndex int, flags vk.QueueFlags) vk.Queue
 	GetQueueFamilyIndex(flags vk.QueueFlags) int
 	GetSurfaceFormats(vk.Surface) []vk.SurfaceFormat
+	GetSurfaceCapabilities(surface vk.Surface) *vk.SurfaceCapabilities
 	GetDepthFormat() vk.Format
 	GetMemoryTypeIndex(uint32, vk.MemoryPropertyFlags) int
 	WaitIdle()
@@ -106,6 +107,13 @@ func (d *device) GetSurfaceFormats(surface vk.Surface) []vk.SurfaceFormat {
 		surfaceFormats[i] = format
 	}
 	return surfaceFormats
+}
+
+func (d *device) GetSurfaceCapabilities(surface vk.Surface) *vk.SurfaceCapabilities {
+	var caps vk.SurfaceCapabilities
+	vk.GetPhysicalDeviceSurfaceCapabilities(d.physical, surface, &caps)
+	caps.Deref()
+	return &caps
 }
 
 func (d *device) GetDepthFormat() vk.Format {

@@ -70,7 +70,6 @@ func (w *worker) run() {
 			w.enqueue(batch)
 		case info := <-w.signal:
 			w.submit(info)
-			w.complete <- true
 		case <-w.stop:
 			running = false
 		}
@@ -158,6 +157,8 @@ func (w *worker) submit(submit SubmitInfo) {
 
 	// clear batch slice but keep memory
 	w.batch = w.batch[:0]
+
+	w.complete <- true
 }
 
 func (w *worker) Wait() {

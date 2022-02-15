@@ -28,7 +28,7 @@ type T interface {
 	GlfwSetup(*glfw.Window, window.Args) error
 
 	Resize(int, int)
-	Aquire() swapchain.Context
+	Aquire() (swapchain.Context, error)
 	Present()
 }
 
@@ -84,8 +84,7 @@ func (b *backend) GlfwSetup(w *glfw.Window, args window.Args) error {
 	surfaceFormat := b.device.GetSurfaceFormats(b.surface)[0]
 
 	// allocate swapchain
-	width, height := w.GetFramebufferSize()
-	b.swapchain = swapchain.New(b.device, width, height, b.swapcount, b.surface, surfaceFormat)
+	b.swapchain = swapchain.New(b.device, b.swapcount, b.surface, surfaceFormat)
 
 	return nil
 }
@@ -113,7 +112,7 @@ func (b *backend) Resize(width, height int) {
 	b.swapchain.Resize(width, height)
 }
 
-func (b *backend) Aquire() swapchain.Context {
+func (b *backend) Aquire() (swapchain.Context, error) {
 	return b.swapchain.Aquire()
 }
 
