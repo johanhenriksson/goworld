@@ -61,8 +61,13 @@ func main() {
 	signal.Notify(sigint, os.Interrupt)
 	go func() {
 		for range sigint {
-			log.Println("Interrupt")
-			running = false
+			if !running {
+				log.Println("Kill")
+				os.Exit(1)
+			} else {
+				log.Println("Interrupt")
+				running = false
+			}
 		}
 	}()
 
@@ -78,8 +83,11 @@ func main() {
 		panic(err)
 	}
 
-	proj := mat4.PerspectiveVK(45, 1, 0.1, 100)
-	view := mat4.Translate(vec3.New(0, 0, -6))
+	proj := mat4.Perspective(45, 1, 0.1, 100)
+	proj[5] *= -1
+	// view := mat4.LookAtVK(vec3.New(-5, 8, -5), vec3.New(0, 0, 0))
+	view := mat4.LookAtVK(vec3.New(-11, 17, -11), vec3.New(8, 3, 8))
+	// view.Invert()
 
 	ubosize := 3 * 16 * 4
 	ubo := []buffer.T{
@@ -205,14 +213,19 @@ func main() {
 
 	t := 0.0
 	for running && !wnd.ShouldClose() {
-		ctx := backend.Aquire()
+		ctx, err := backend.Aquire()
+		if err != nil {
+			log.Println("Aquire() failed:", err)
+			wnd.Poll()
+			continue
+		}
 
 		// update ubo
 		t += 0.016
 		ubo[ctx.Index].Write([]mat4.T{
-			mat4.PerspectiveVK(45, float32(ctx.Width)/float32(ctx.Height), 0.1, 100),
+			proj, // mat4.Perspective(45, float32(ctx.Width)/float32(ctx.Height), 0.1, 100),
 			view,
-			mat4.Rotate(vec3.New(0, float32(44*t), float32(90*t))),
+			mat4.Ident(), // mat4.Rotate(vec3.New(0, float32(44*t), float32(90*t))),
 		}, 0)
 
 		worker := ctx.Workers[0]
@@ -244,6 +257,7 @@ func main() {
 
 		backend.Present()
 
+		// this call may cause resize events
 		wnd.Poll()
 	}
 
