@@ -2,6 +2,7 @@ package instance
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/device"
 	"github.com/johanhenriksson/goworld/util"
@@ -9,15 +10,9 @@ import (
 	vk "github.com/vulkan-go/vulkan"
 )
 
-var extensions = []string{
-	vk.KhrSurfaceExtensionName,
-	vk.ExtDebugReportExtensionName,
-	"VK_EXT_metal_surface",
-}
-
 var layers = []string{
 	"VK_LAYER_KHRONOS_validation",
-	// "VK_LAYER_LUNARG_api_dump",
+	//"VK_LAYER_LUNARG_api_dump",
 }
 
 type T interface {
@@ -39,6 +34,8 @@ func New(appName string) T {
 		EngineVersion:      vk.MakeVersion(0, 2, 0),
 		ApiVersion:         vk.MakeVersion(1, 1, 0),
 	}
+
+	log.Println("Creating instance with extensions:", extensions)
 
 	createInfo := vk.InstanceCreateInfo{
 		SType:                   vk.StructureTypeInstanceCreateInfo,
