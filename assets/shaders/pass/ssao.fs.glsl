@@ -26,7 +26,9 @@ void main()
 
     // get input vectors from gbuffer & noise texture
     vec3 fragPos = texture(tex_position, texcoord0).xyz;
-    vec3 normal = texture(tex_normal, texcoord0).rgb;
+    vec3 normalEncoded = texture(tex_normal, texcoord0).xyz; // normals [0,1]
+    vec3 normal = normalize(2.0 * normalEncoded - 1); // normals [-1,1] 
+
     vec3 randomVec = texture(tex_noise, texcoord0 * noiseScale).xyz;
 
     // create TBN change-of-basis matrix: from tangent-space to view-space
@@ -49,11 +51,11 @@ void main()
         offset.xyz = offset.xyz * 0.5 + 0.5; // transform to range 0.0 - 1.0
         
         // get sample depth - i.e. the Z component of the sampled position in view space
-        float sampleDepth = 1 - texture(tex_position, offset.xy).z;
+        float sampleDepth = texture(tex_position, offset.xy).z;
 
         // range check & accumulate
         float rangeCheck = smoothstep(0.0, 1.0, radius / abs(fragPos.z - sampleDepth));
-        if (sampleDepth >= sample.z + bias) {
+        if (sampleDepth <= sample.z - bias) {
             occlusion += 1.0 * rangeCheck;
         }
     }
