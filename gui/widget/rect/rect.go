@@ -53,7 +53,8 @@ func (f *rect) Draw(args render.Args) {
 
 	for _, child := range f.children {
 		// calculate child tranasform
-		pos := vec3.Extend(child.Position(), -1)
+		// try to fix the position to an actual pixel
+		pos := vec3.Extend(child.Position().Scaled(args.Viewport.Scale).Floor().Scaled(1/args.Viewport.Scale), -1)
 		transform := mat4.Translate(pos)
 		childArgs := args
 		childArgs.Transform = transform.Mul(&args.Transform)

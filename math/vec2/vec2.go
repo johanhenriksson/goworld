@@ -119,3 +119,13 @@ func (v T) ApproxEqual(v2 T) bool {
 func (v T) String() string {
 	return fmt.Sprintf("%.3f,%.3f", v.X, v.Y)
 }
+
+// Floor each components of the vector
+func (v T) Floor() T {
+	return T{math.Floor(v.X), math.Floor(v.Y)}
+}
+
+// Ceil each component of the vector
+func (v T) Ceil() T {
+	return T{math.Ceil(v.X), math.Ceil(v.Y)}
+}
