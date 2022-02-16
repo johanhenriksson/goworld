@@ -2,6 +2,7 @@ package label
 
 import (
 	"github.com/johanhenriksson/goworld/core/input/mouse"
+	"github.com/johanhenriksson/goworld/core/window"
 	"github.com/johanhenriksson/goworld/gui/node"
 	"github.com/johanhenriksson/goworld/gui/style"
 	"github.com/johanhenriksson/goworld/gui/widget"
@@ -28,6 +29,7 @@ type label struct {
 
 	props Props
 	size  vec2.T
+	scale float32
 }
 
 func New(key string, props Props) node.T {
@@ -38,6 +40,7 @@ func new(key string, props Props) T {
 	lbl := &label{
 		T:        widget.New(key),
 		Renderer: NewRenderer(),
+		scale:    1,
 	}
 	lbl.Update(props)
 	return lbl
@@ -68,6 +71,12 @@ func (l *label) Update(props any) {
 func (l *label) Text() string { return l.props.Text }
 
 func (l *label) Draw(args render.Args) {
+	if window.Scale != l.scale {
+		// ui scale has changed
+		l.Flex().MarkDirty()
+		l.scale = window.Scale
+	}
+
 	l.T.Draw(args)
 	l.Renderer.Draw(args)
 }

@@ -62,7 +62,7 @@ func (p *ForwardPass) Draw(args render.Args, scene object.T) {
 
 	p.fbo.Bind()
 	defer p.fbo.Unbind()
-	p.fbo.Resize(args.Viewport.FrameWidth, args.Viewport.FrameHeight)
+	p.fbo.Resize(args.Viewport.Width, args.Viewport.Height)
 
 	// disable depth testing
 	// todo: should be disabled for transparent things, not everything

@@ -81,11 +81,8 @@ float sampleShadowmap(sampler2D shadowmap, vec3 position, float bias) {
     /* depth of position in light space */
     float z = light_ndc_pos.z;
     if (z > 1) {
-        return 0;
+        return 0.0;
     }
-
-    // todo: implement angle-dependent bias
-    // float bias = max(0.05 * (1.0 - dot(normal, lightDir)), 0.005);  
 
     float shadow = 0.0;
     if (soft_shadows) {
@@ -93,7 +90,7 @@ float sampleShadowmap(sampler2D shadowmap, vec3 position, float bias) {
         for(int x = -1; x <= 1; ++x) {
             for(int y = -1; y <= 1; ++y) {
                 float pcf_depth = texture(shadowmap, light_ndc_pos.xy + vec2(x, y) * texelSize).r; 
-                shadow += z + bias > pcf_depth ? 1.0 : 0.0;        
+                shadow += pcf_depth < (z + bias) ? 1.0 : 0.0;        
             }    
         }
         shadow /= 9.0;
@@ -150,8 +147,8 @@ void main() {
         vec3 surfaceToLight = normalize(light.Position);
         contrib = max(dot(surfaceToLight, normal), 0.0);
 
-        //float bias = max(0.05 * (1.0 - contrib), 0.005);  
-        float bias = contrib * shadow_bias;
+        // angle-dependent bias
+        float bias = max(shadow_bias * (1.0 - dot(normal, surfaceToLight)), 0.0005);  
 
         // experimental shadows
         shadow = sampleShadowmap(tex_shadow, position, bias);

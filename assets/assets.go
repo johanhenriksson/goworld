@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/johanhenriksson/goworld/core/window"
 	"github.com/johanhenriksson/goworld/render"
 	glshader "github.com/johanhenriksson/goworld/render/backend/gl/gl_shader"
 	"github.com/johanhenriksson/goworld/render/color"
@@ -107,7 +108,7 @@ func GetFont(name string, size int) font.T {
 	}
 
 	fmt.Printf("+ font %s %dpt\n", name, size)
-	font := font.Load(AssetPath(name), size*2)
+	font := font.Load(AssetPath(name), int(float32(size)*window.Scale))
 	cache.Fonts[key] = font
 
 	return font

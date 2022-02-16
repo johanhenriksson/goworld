@@ -46,8 +46,8 @@ func NewOutputPass(color texture.T, depth texture.T) *OutputPass {
 func (p *OutputPass) Draw(args render.Args, scene object.T) {
 	render.BindScreenBuffer()
 	render.SetViewport(render.Viewport{
-		Width:  args.Viewport.FrameWidth,
-		Height: args.Viewport.FrameHeight,
+		Width:  args.Viewport.Width,
+		Height: args.Viewport.Height,
 	})
 
 	// ensures we dont fail depth tests while restoring the depth buffer

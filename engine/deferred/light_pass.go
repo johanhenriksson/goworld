@@ -48,7 +48,7 @@ func NewLightPass(input framebuffer.Geometry) *LightPass {
 		Shadows:        shadowPass,
 		Ambient:        color.RGB(0.15, 0.15, 0.15),
 		ShadowStrength: 0.8,
-		ShadowBias:     0.0002,
+		ShadowBias:     0.001,
 		ShadowSize:     shadowsize,
 		ShadowSoft:     true,
 
@@ -71,7 +71,7 @@ func (p *LightPass) Draw(args render.Args, scene object.T) {
 	// clear output buffer
 	p.Output.Bind()
 	defer p.Output.Unbind()
-	p.Output.Resize(args.Viewport.FrameWidth, args.Viewport.FrameHeight)
+	p.Output.Resize(args.Viewport.Width, args.Viewport.Height)
 	render.ClearWith(args.Clear)
 
 	// enable back face culling

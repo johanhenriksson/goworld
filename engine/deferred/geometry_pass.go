@@ -31,7 +31,7 @@ func NewGeometryPass() *GeometryPass {
 func (p *GeometryPass) Draw(args render.Args, scene object.T) {
 	p.Buffer.Bind()
 	defer p.Buffer.Unbind()
-	p.Buffer.Resize(args.Viewport.FrameWidth, args.Viewport.FrameHeight)
+	p.Buffer.Resize(args.Viewport.Width, args.Viewport.Height)
 
 	// setup rendering
 	render.Blend(false)

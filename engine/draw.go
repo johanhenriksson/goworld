@@ -15,7 +15,6 @@ type DrawPass interface {
 
 func CreateRenderArgs(window window.T, cam camera.T) render.Args {
 	w, h := window.Size()
-	fw, fh := window.BufferSize()
 
 	return render.Args{
 		Projection: cam.Projection(),
@@ -27,11 +26,9 @@ func CreateRenderArgs(window window.T, cam camera.T) render.Args {
 		Clear:      cam.ClearColor(),
 
 		Viewport: render.Screen{
-			Width:       w,
-			Height:      h,
-			FrameWidth:  fw,
-			FrameHeight: fh,
-			Scale:       window.Scale(),
+			Width:  w,
+			Height: h,
+			Scale:  window.Scale(),
 		},
 	}
 }
