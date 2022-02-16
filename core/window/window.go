@@ -27,7 +27,6 @@ type T interface {
 	SetTitle(string)
 
 	Size() (int, int)
-	BufferSize() (int, int)
 	Scale() float32
 
 	Poll()
@@ -50,10 +49,9 @@ type window struct {
 	backend GlfwBackend
 	mouse   mouse.MouseWrapper
 
-	title           string
-	width, height   int
-	fwidth, fheight int
-	scale           float32
+	title         string
+	width, height int
+	scale         float32
 }
 
 func New(backend GlfwBackend, args Args) (T, error) {
@@ -69,12 +67,16 @@ func New(backend GlfwBackend, args Args) (T, error) {
 		return nil, fmt.Errorf("failed to create glfw window: %w", err)
 	}
 
+	// find the scaling of the current monitor
+	// what do we do if the user moves it to a different monitor with different scaling?
+	monitor := GetCurrentMonitor(wnd)
+	scale, _ := monitor.GetContentScale()
+
 	// retrieve window & framebuffer size
-	width, height := wnd.GetSize()
-	fwidth, fheight := wnd.GetFramebufferSize()
-	scale := float32(fwidth) / float32(width)
-	log.Printf("Created window. Size %dx%d, Buffer Size %dx%d. Scale = %.0f%%\n",
-		width, height, fwidth, fheight, scale*100)
+	width, height := wnd.GetFramebufferSize()
+	Scale = scale
+	log.Printf("Created window with size %dx%d and content scale %.0f%%\n",
+		width, height, scale*100)
 
 	window := &window{
 		wnd:     wnd,
@@ -82,8 +84,6 @@ func New(backend GlfwBackend, args Args) (T, error) {
 		title:   args.Title,
 		width:   width,
 		height:  height,
-		fwidth:  fwidth,
-		fheight: fheight,
 		scale:   scale,
 	}
 
@@ -98,7 +98,7 @@ func New(backend GlfwBackend, args Args) (T, error) {
 	}
 
 	// set resize callback
-	wnd.SetSizeCallback(window.onResize)
+	wnd.SetFramebufferSizeCallback(window.onResize)
 
 	return window, nil
 }
@@ -107,11 +107,10 @@ func (w *window) Poll() {
 	glfw.PollEvents()
 }
 
-func (w *window) Size() (int, int)       { return w.width, w.height }
-func (w *window) BufferSize() (int, int) { return w.fwidth, w.fheight }
-func (w *window) Scale() float32         { return w.scale }
-func (w *window) ShouldClose() bool      { return w.wnd.ShouldClose() }
-func (w *window) Title() string          { return w.title }
+func (w *window) Size() (int, int)  { return w.width, w.height }
+func (w *window) Scale() float32    { return w.scale }
+func (w *window) ShouldClose() bool { return w.wnd.ShouldClose() }
+func (w *window) Title() string     { return w.title }
 
 func (w *window) SetInputHandler(handler input.Handler) {
 	// keyboard events
@@ -126,13 +125,8 @@ func (w *window) SetInputHandler(handler input.Handler) {
 }
 
 func (w *window) onResize(_ *glfw.Window, width, height int) {
-	// very unclear if this works with vulkan
-	w.width = width
-	w.height = height
-	w.fwidth, w.fheight = w.wnd.GetFramebufferSize()
-	w.scale = float32(w.fwidth) / float32(w.width)
-
-	w.backend.Resize(w.fwidth, w.fheight)
+	w.width, w.height = w.wnd.GetFramebufferSize()
+	w.backend.Resize(w.width, w.height)
 }
 
 func (w *window) SetTitle(title string) {

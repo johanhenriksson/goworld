@@ -71,7 +71,7 @@ func (p *LightPass) Draw(args render.Args, scene object.T) {
 	// clear output buffer
 	p.Output.Bind()
 	defer p.Output.Unbind()
-	p.Output.Resize(args.Viewport.FrameWidth, args.Viewport.FrameHeight)
+	p.Output.Resize(args.Viewport.Width, args.Viewport.Height)
 	render.ClearWith(args.Clear)
 
 	// enable back face culling

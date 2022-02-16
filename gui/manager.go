@@ -51,8 +51,10 @@ func (m *manager) MouseEvent(e mouse.Event) {
 		return
 	}
 
-	// scale down to low dpi.
-	ev := e.Project(e.Position().Scaled(1 / m.scale))
+	// apply UI scaling to cursor position
+	offset := e.Position().Sub(e.Position().Scaled(1 / m.scale))
+	ev := e.Project(offset)
+
 	if handler, ok := m.gui.(mouse.Handler); ok {
 		handler.MouseEvent(ev)
 	}
@@ -69,7 +71,7 @@ func (m *manager) MouseEvent(e mouse.Event) {
 			}
 
 			// we hit something
-			// e.Consume()
+			e.Consume()
 			break
 		}
 	}

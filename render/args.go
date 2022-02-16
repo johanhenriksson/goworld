@@ -21,11 +21,9 @@ type Args struct {
 }
 
 type Screen struct {
-	Width       int
-	Height      int
-	FrameWidth  int
-	FrameHeight int
-	Scale       float32
+	Width  int
+	Height int
+	Scale  float32
 }
 
 // Apply the effects of a transform

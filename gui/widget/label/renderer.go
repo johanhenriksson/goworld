@@ -40,6 +40,7 @@ type renderer struct {
 
 	invalidTexture bool
 	invalidMesh    bool
+	scale          float32
 	bounds         vec2.T
 	tex            texture.T
 	mat            material.T
@@ -55,6 +56,7 @@ func NewRenderer() Renderer {
 		font:           assets.DefaultFont(),
 		invalidTexture: true,
 		invalidMesh:    true,
+		scale:          2,
 	}
 }
 
@@ -99,6 +101,8 @@ func (r *renderer) SetLineHeight(lineHeight float32) {
 }
 
 func (r *renderer) Draw(args render.Args) {
+	r.scale = args.Viewport.Scale
+
 	if r.text == "" {
 		return
 	}
@@ -108,7 +112,7 @@ func (r *renderer) Draw(args render.Args) {
 		r.uvs = quad.DefaultUVs
 		r.mesh = quad.New(r.mat, quad.Props{
 			UVs:   r.uvs,
-			Size:  r.bounds.Scaled(0.5),
+			Size:  r.bounds.Scaled(1 / r.scale),
 			Color: r.color,
 		})
 	}
@@ -135,7 +139,7 @@ func (r *renderer) Draw(args render.Args) {
 
 	if r.invalidMesh {
 		r.mesh.Update(quad.Props{
-			Size:  r.bounds.Scaled(0.5),
+			Size:  r.bounds.Scaled(1 / r.scale),
 			UVs:   r.uvs,
 			Color: r.color,
 		})
@@ -179,7 +183,7 @@ func (r *renderer) Measure(node *flex.Node, width float32, widthMode flex.Measur
 		Color:      color.White,
 	})
 
-	size = size.Scaled(0.5)
+	size = size.Scaled(1 / r.scale)
 
 	return flex.Size{
 		Width:  size.X,
