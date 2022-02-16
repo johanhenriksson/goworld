@@ -51,7 +51,7 @@ func NewRenderer(window window.T) *Renderer {
 	// postprocess and output
 	r.SSAO = effect.NewSSAOPass(r.Geometry.Buffer, effect.SSAOSettings{
 		Samples: 16,
-		Radius:  0.1,
+		Radius:  0.3,
 		Bias:    0.03,
 		Power:   2.0,
 		Scale:   2,
