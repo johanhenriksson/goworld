@@ -4,7 +4,7 @@ uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
 
-in vec3 position;
+layout(location=0) in vec3 position;
 in int normal_id;
 in vec3 color;
 in float occlusion;

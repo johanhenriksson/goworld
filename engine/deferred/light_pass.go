@@ -34,7 +34,7 @@ type LightPass struct {
 
 // NewLightPass creates a new deferred lighting pass
 func NewLightPass(input framebuffer.Geometry) *LightPass {
-	shadowsize := 2048
+	shadowsize := 4096
 
 	// child passes
 	shadowPass := NewShadowPass(shadowsize)
@@ -98,6 +98,9 @@ func (p *LightPass) Draw(args render.Args, scene object.T) {
 	// accumulate the light from the non-ambient light sources
 	render.BlendAdditive()
 
+	// collect all shadow casting objects
+	drawables := query.New[ShadowDrawable]().Collect(scene)
+
 	lights := query.New[light.T]().Collect(scene)
 	for _, lit := range lights {
 		desc := lit.LightDescriptor()
@@ -106,7 +109,7 @@ func (p *LightPass) Draw(args render.Args, scene object.T) {
 		p.FitLightToCamera(args.VP.Invert(), &desc)
 
 		// draw shadow pass for this light into the shadow map
-		p.Shadows.DrawLight(scene, &desc)
+		p.Shadows.DrawLight(drawables, &desc)
 
 		// accumulate light from this source
 		p.drawLight(desc)

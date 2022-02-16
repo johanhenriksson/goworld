@@ -47,7 +47,7 @@ func (p *GeometryPass) Draw(args render.Args, scene object.T) {
 	// lets not draw stuff thats behind us at the very least
 	// ... things need bounding boxes though.
 
-	objects := query.New[DeferredDrawable]().Collect(scene)
+	objects := query.New[Drawable]().Collect(scene)
 	for _, drawable := range objects {
 		if err := drawable.DrawDeferred(args.Apply(drawable.Object().Transform().World())); err != nil {
 			fmt.Printf("deferred draw error in object %s: %s\n", drawable.Object().Name(), err)
