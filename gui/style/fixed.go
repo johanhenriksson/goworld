@@ -1,23 +1,20 @@
 package style
 
 import (
-	"github.com/johanhenriksson/goworld/gui/widget"
 	"github.com/kjk/flex"
 )
 
 // Px is a pixel value
 type Px float32
 
-func (p Px) ApplyBasis(n *flex.Node)     { n.StyleSetFlexBasis(float32(p)) }
-func (p Px) ApplyWidth(n *flex.Node)     { n.StyleSetWidth(float32(p)) }
-func (p Px) ApplyMaxWidth(n *flex.Node)  { n.StyleSetMaxWidth(float32(p)) }
-func (p Px) ApplyHeight(n *flex.Node)    { n.StyleSetHeight(float32(p)) }
-func (p Px) ApplyMaxHeight(n *flex.Node) { n.StyleSetMaxHeight(float32(p)) }
-func (p Px) ApplyPadding(n *flex.Node)   { n.StyleSetPadding(flex.EdgeAll, float32(p)) }
-func (p Px) ApplyMargin(n *flex.Node)    { n.StyleSetMargin(flex.EdgeAll, float32(p)) }
+func (p Px) ApplyBasis(fw FlexWidget)     { fw.Flex().StyleSetFlexBasis(float32(p)) }
+func (p Px) ApplyWidth(fw FlexWidget)     { fw.Flex().StyleSetWidth(float32(p)) }
+func (p Px) ApplyMaxWidth(fw FlexWidget)  { fw.Flex().StyleSetMaxWidth(float32(p)) }
+func (p Px) ApplyHeight(fw FlexWidget)    { fw.Flex().StyleSetHeight(float32(p)) }
+func (p Px) ApplyMaxHeight(fw FlexWidget) { fw.Flex().StyleSetMaxHeight(float32(p)) }
+func (p Px) ApplyPadding(fw FlexWidget)   { fw.Flex().StyleSetPadding(flex.EdgeAll, float32(p)) }
+func (p Px) ApplyMargin(fw FlexWidget)    { fw.Flex().StyleSetMargin(flex.EdgeAll, float32(p)) }
 
-func (p Px) ApplyLineHeight(w widget.T) {
-	if fw, ok := w.(FontWidget); ok {
-		fw.SetLineHeight(float32(p))
-	}
+func (p Px) ApplyLineHeight(fw FontWidget) {
+	fw.SetLineHeight(float32(p))
 }
