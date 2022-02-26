@@ -13,12 +13,13 @@ import (
 
 type T interface {
 	widget.T
+	style.FontWidget
 
 	Text() string
 }
 
 type Props struct {
-	Style   style.Sheet
+	Style   Style
 	Text    string
 	OnClick mouse.Callback
 }
@@ -30,6 +31,7 @@ type label struct {
 	props Props
 	size  vec2.T
 	scale float32
+	state style.State
 }
 
 func New(key string, props Props) node.T {
@@ -56,7 +58,7 @@ func (l *label) Update(props any) {
 	l.props = new
 
 	if styleChanged {
-		new.Style.Apply(l)
+		new.Style.Apply(l, l.state)
 		l.Flex().MarkDirty()
 	}
 
@@ -71,6 +73,10 @@ func (l *label) Update(props any) {
 func (l *label) Text() string { return l.props.Text }
 
 func (l *label) Draw(args render.Args) {
+	if l.props.Style.Hidden {
+		return
+	}
+
 	if window.Scale != l.scale {
 		// ui scale has changed
 		l.Flex().MarkDirty()
@@ -99,5 +105,16 @@ func (l *label) MouseEvent(e mouse.Event) {
 	if e.Action() == mouse.Press && l.props.OnClick != nil {
 		l.props.OnClick(e)
 		e.Consume()
+	}
+
+	if e.Action() == mouse.Enter {
+		l.state.Hovered = true
+		l.props.Style.Apply(l, l.state)
+		l.Flex().MarkDirty()
+	}
+	if e.Action() == mouse.Leave {
+		l.state.Hovered = false
+		l.props.Style.Apply(l, l.state)
+		l.Flex().MarkDirty()
 	}
 }

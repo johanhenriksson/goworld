@@ -70,7 +70,7 @@ func makeScene(renderer *engine.Renderer, scene object.T) {
 func makeGui(renderer *engine.Renderer, scene object.T) {
 	scene.Attach(gui.New(func() node.T {
 		return rect.New("sidebar", rect.Props{
-			Style: style.Sheet{
+			Style: rect.Style{
 				Layout: style.Column{},
 				Width:  style.Pct(15),
 				Height: style.Pct(100),
@@ -100,7 +100,7 @@ func makeGui(renderer *engine.Renderer, scene object.T) {
 					Invert: true,
 				}),
 				rect.New("objects", rect.Props{
-					Style: style.Sheet{
+					Style: rect.Style{
 						Color: color.Black.WithAlpha(0.9),
 					},
 					Children: []node.T{ObjectListEntry(0, scene)},
@@ -118,16 +118,16 @@ func ObjectListEntry(idx int, obj object.T) node.T {
 	}
 	children[0] = label.New("title", label.Props{
 		Text: obj.Name(),
-		Style: style.Sheet{
-			FontColor: clr,
+		Style: label.Style{
+			Color: clr,
 		},
 	})
 	i := 1
 	for j, cmp := range obj.Components() {
 		children[i] = label.New(fmt.Sprintf("component%d:%s", j, cmp.Name()), label.Props{
 			Text: fmt.Sprintf("+ %s", cmp.Name()),
-			Style: style.Sheet{
-				FontColor: clr,
+			Style: label.Style{
+				Color: clr,
 			},
 		})
 		i++
@@ -137,7 +137,7 @@ func ObjectListEntry(idx int, obj object.T) node.T {
 		i++
 	}
 	return rect.New(fmt.Sprintf("object%d:%s", idx, obj.Name()), rect.Props{
-		Style: style.Sheet{
+		Style: rect.Style{
 			Padding: style.Rect{
 				Left: 5,
 			},

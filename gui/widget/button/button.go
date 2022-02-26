@@ -3,15 +3,14 @@ package button
 import (
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/gui/node"
-	"github.com/johanhenriksson/goworld/gui/style"
 	"github.com/johanhenriksson/goworld/gui/widget/label"
 	"github.com/johanhenriksson/goworld/gui/widget/rect"
 )
 
 type Props struct {
 	Text       string
-	Background style.Sheet
-	Label      style.Sheet
+	Background rect.Style
+	Label      label.Style
 	// how to do hover styles?
 	OnClick mouse.Callback
 }

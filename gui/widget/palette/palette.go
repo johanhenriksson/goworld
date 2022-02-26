@@ -6,7 +6,6 @@ import (
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/gui/hooks"
 	"github.com/johanhenriksson/goworld/gui/node"
-	"github.com/johanhenriksson/goworld/gui/style"
 	. "github.com/johanhenriksson/goworld/gui/style"
 	"github.com/johanhenriksson/goworld/gui/widget/label"
 	"github.com/johanhenriksson/goworld/gui/widget/rect"
@@ -30,7 +29,7 @@ func render(props Props) node.T {
 
 	colors := util.Map(props.Palette, func(i int, c color.T) node.T {
 		return rect.New(fmt.Sprintf("color%d", i), rect.Props{
-			Style: Sheet{
+			Style: rect.Style{
 				Color:  c,
 				Grow:   Grow(0),
 				Shrink: Shrink(1),
@@ -49,7 +48,7 @@ func render(props Props) node.T {
 
 	rows := util.Map(util.Chunks(colors, perRow), func(i int, colors []node.T) node.T {
 		return rect.New(fmt.Sprintf("row%d", i), rect.Props{
-			Style: Sheet{
+			Style: rect.Style{
 				Width:  Pct(100),
 				Layout: Row{},
 			},
@@ -58,38 +57,30 @@ func render(props Props) node.T {
 	})
 
 	return rect.New("window", rect.Props{
-		Style: Sheet{
+		Style: rect.Style{
 			Color:   color.Black.WithAlpha(0.9),
 			Padding: Px(4),
 			Layout:  Column{},
 		},
 		Children: []node.T{
 			label.New("title", label.Props{
-				Text: "Palette",
-				Style: Sheet{
-					Color: color.White,
-					Font: style.Font{
-						Name: "fonts/SourceCodeProRegular.ttf",
-						Size: 16,
-					},
-				},
+				Text:  "Palette",
+				Style: TitleStyle,
 			}),
 			rect.New("selected", rect.Props{
-				Style: Sheet{
+				Style: rect.Style{
 					Layout:   Row{},
 					MaxWidth: Pct(100),
 				},
 				Children: []node.T{
 					label.New("selected", label.Props{
 						Text: "Selected",
-						Style: Sheet{
+						Style: label.Style{
 							Color: color.White,
-							Basis: Pct(80),
-							Grow:  Grow(1),
 						},
 					}),
 					rect.New("preview", rect.Props{
-						Style: Sheet{
+						Style: rect.Style{
 							Color:  selected,
 							Grow:   Grow(1),
 							Shrink: Shrink(1),

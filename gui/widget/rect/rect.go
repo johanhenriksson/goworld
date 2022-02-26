@@ -14,6 +14,7 @@ import (
 
 type T interface {
 	widget.T
+	style.Colorizable
 }
 
 type rect struct {
@@ -23,11 +24,12 @@ type rect struct {
 	props    Props
 	children []widget.T
 
+	hovered         bool
 	prevMouseTarget mouse.Handler
 }
 
 type Props struct {
-	Style        style.Sheet
+	Style        Style
 	OnClick      mouse.Callback
 	OnMouseEnter mouse.Callback
 	OnMouseLeave mouse.Callback
@@ -48,6 +50,10 @@ func Create(key string, props Props) T {
 }
 
 func (f *rect) Draw(args render.Args) {
+	if f.props.Style.Hidden {
+		return
+	}
+
 	f.T.Draw(args)
 	f.Renderer.Draw(args, f)
 
@@ -87,7 +93,10 @@ func (f *rect) Update(p any) {
 	f.props = new
 
 	if styleChanged {
-		new.Style.Apply(f)
+		// apply new styles
+		new.Style.Apply(f, style.State{
+			Hovered: f.hovered,
+		})
 	}
 }
 
@@ -106,12 +115,22 @@ func (f *rect) Destroy() {
 
 func (f *rect) MouseEvent(e mouse.Event) {
 	if e.Action() == mouse.Enter {
+		f.hovered = true
+		f.props.Style.Apply(f, style.State{
+			Hovered: f.hovered,
+		})
+
 		// prop callback
 		if f.props.OnMouseEnter != nil {
 			f.props.OnMouseEnter(e)
 		}
 	}
 	if e.Action() == mouse.Leave {
+		f.hovered = false
+		f.props.Style.Apply(f, style.State{
+			Hovered: f.hovered,
+		})
+
 		// prop callback
 		if f.props.OnMouseLeave != nil {
 			f.props.OnMouseLeave(e)

@@ -16,7 +16,7 @@ type T interface {
 }
 
 type Props struct {
-	Style   style.Sheet
+	Style   Style
 	Image   texture.T
 	Invert  bool
 	OnClick mouse.Callback
@@ -52,7 +52,7 @@ func (i *image) Update(props any) {
 	i.Renderer.SetInvert(new.Invert)
 
 	if styleChanged {
-		new.Style.Apply(i)
+		new.Style.Apply(i, style.State{})
 		i.Flex().MarkDirty()
 	}
 }
