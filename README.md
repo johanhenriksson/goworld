@@ -5,7 +5,7 @@
 Yet another attempt at building a basic OpenGL 3D engine from scratch, this time in Go. The goal is to create a engine capable of producing *some* kind of *passable* graphics with a coherent art style. So far, the style is based around colored voxels.
 
 **Features:**
-- Voxel World demo, with basic player physics and an editable, persistent world.
+- Voxel editor demo with basic player physics
 - Deferred Rendering Pipeline
 - Directional Lights
 - Directional Shadows
@@ -14,11 +14,12 @@ Yet another attempt at building a basic OpenGL 3D engine from scratch, this time
 - Color Grading with Lookup Tables
 - OBJ Model Loader
 - TrueType Font Rendering
-- UI: Panels, Labels, Images, and a simple layout engine
+- React-like UI including a flexbox layout engine
 - Custom ergonomic 3D math library derived from mathgl and go3d
 
-Only tested on OSX 10.10+. It should *theoretically* work on Windows and Linux.
+Tested on OSX 10.10+ and Manjaro Linux. It should *theoretically* work on Windows.
 
+![Screenshot from 2022-02-27](docs/img/screenshot220227.png)
 ![Screenshot from 2020-09-26](docs/img/screenshot200926.png)
 ![Screenshot from 2019-05-07](docs/img/screenshot190507.png)
 
@@ -28,11 +29,8 @@ Only tested on OSX 10.10+. It should *theoretically* work on Windows and Linux.
 
 ## Todo / Ideas
 
- * Improved Scene Graph / Components System
  * User Interface elements:
    * Textbox
-   * Button
- * Embedded scripting language (probably javascript/V8)
  * Console
  * Lighting
    * Point Light shadows
