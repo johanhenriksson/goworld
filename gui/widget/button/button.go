@@ -1,8 +1,6 @@
 package button
 
 import (
-	"fmt"
-
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/gui/node"
 	"github.com/johanhenriksson/goworld/gui/widget/label"
@@ -26,11 +24,9 @@ func render(props Props) node.T {
 			if props.OnClick != nil {
 				props.OnClick(e)
 			}
-			fmt.Println("button up")
 			e.Consume()
 		},
 		OnMouseDown: func(e mouse.Event) {
-			fmt.Println("button down")
 			e.Consume()
 		},
 		Children: []node.T{
