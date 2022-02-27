@@ -29,14 +29,9 @@ func render(props Props) node.T {
 
 	colors := util.Map(props.Palette, func(i int, c color.T) node.T {
 		return rect.New(fmt.Sprintf("color%d", i), rect.Props{
-			Style: rect.Style{
-				Color:  c,
-				Grow:   Grow(0),
-				Shrink: Shrink(1),
-				Basis:  Pct(16),
-				Height: Px(20),
-				Margin: Px(2),
-			},
+			Style: SwatchStyle.Extend(rect.Style{
+				Color: c,
+			}),
 			OnClick: func(e mouse.Event) {
 				setSelected(c)
 				if props.OnPick != nil {
@@ -57,10 +52,15 @@ func render(props Props) node.T {
 	})
 
 	return rect.New("window", rect.Props{
+		OnClick: func(e mouse.Event) {},
 		Style: rect.Style{
 			Color:   color.Black.WithAlpha(0.9),
 			Padding: Px(4),
 			Layout:  Column{},
+			Position: Absolute{
+				Top:  Px(0),
+				Left: Pct(100),
+			},
 		},
 		Children: []node.T{
 			label.New("title", label.Props{
@@ -77,16 +77,13 @@ func render(props Props) node.T {
 						Text: "Selected",
 						Style: label.Style{
 							Color: color.White,
+							Grow:  Grow(1),
 						},
 					}),
 					rect.New("preview", rect.Props{
-						Style: rect.Style{
-							Color:  selected,
-							Grow:   Grow(1),
-							Shrink: Shrink(1),
-							Basis:  Px(20),
-							Height: Px(20),
-						},
+						Style: SwatchStyle.Extend(rect.Style{
+							Color: selected,
+						}),
 					}),
 				},
 			}),

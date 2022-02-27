@@ -9,6 +9,7 @@ import (
 var DefaultStyle = &Style{
 	Padding: None{},
 	Margin:  None{},
+	// Position: Relative{},
 }
 
 type Style struct {
@@ -17,8 +18,9 @@ type Style struct {
 
 	// Display properties
 
-	Hidden bool
-	Color  ColorProp
+	Hidden   bool
+	Color    ColorProp
+	Position PositionProp
 
 	// Sizing properties
 
@@ -48,6 +50,10 @@ func (style *Style) Apply(w T, state State) {
 		}
 	} else {
 		style.Extends.Apply(w, state)
+	}
+
+	if style.Position != nil {
+		style.Position.ApplyPosition(w)
 	}
 
 	// always set display: flex
@@ -92,6 +98,11 @@ func (style *Style) Apply(w T, state State) {
 	if state.Hovered {
 		style.Hover.Apply(w)
 	}
+}
+
+func (s *Style) Extend(e Style) Style {
+	e.Extends = s
+	return e
 }
 
 func (s Hover) Apply(w T) {

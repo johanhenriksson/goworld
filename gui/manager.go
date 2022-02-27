@@ -57,22 +57,8 @@ func (m *manager) MouseEvent(e mouse.Event) {
 
 	if handler, ok := m.gui.(mouse.Handler); ok {
 		handler.MouseEvent(ev)
-	}
-
-	// check if the event actually hit something
-	for _, child := range m.gui.Children() {
-		if _, ok := child.(mouse.Handler); ok {
-			ev := ev.Project(child.Position())
-			target := ev.Position()
-			size := child.Size()
-			if target.X < 0 || target.X > size.X || target.Y < 0 || target.Y > size.Y {
-				// outside
-				continue
-			}
-
-			// we hit something
+		if ev.Handled() {
 			e.Consume()
-			break
 		}
 	}
 }

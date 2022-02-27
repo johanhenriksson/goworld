@@ -102,19 +102,27 @@ func (l *label) Destroy() {
 //
 
 func (l *label) MouseEvent(e mouse.Event) {
-	if e.Action() == mouse.Press && l.props.OnClick != nil {
-		l.props.OnClick(e)
-		e.Consume()
-	}
+	target := e.Position().Sub(l.Position())
+	size := l.Size()
+	mouseover := target.X >= 0 && target.X < size.X && target.Y >= 0 && target.Y < size.Y
 
-	if e.Action() == mouse.Enter {
-		l.state.Hovered = true
-		l.props.Style.Apply(l, l.state)
-		l.Flex().MarkDirty()
-	}
-	if e.Action() == mouse.Leave {
-		l.state.Hovered = false
-		l.props.Style.Apply(l, l.state)
-		l.Flex().MarkDirty()
+	if mouseover {
+		// hover start
+		if !l.state.Hovered {
+			l.state.Hovered = true
+			l.props.Style.Apply(l, l.state)
+		}
+
+		// click
+		if e.Action() == mouse.Press && l.props.OnClick != nil {
+			l.props.OnClick(e)
+			e.Consume()
+		}
+	} else {
+		// hover end
+		if l.state.Hovered {
+			l.state.Hovered = false
+			l.props.Style.Apply(l, l.state)
+		}
 	}
 }

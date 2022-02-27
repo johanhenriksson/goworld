@@ -20,6 +20,7 @@ package main
 import (
 	"fmt"
 
+	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/core/object/query"
 	"github.com/johanhenriksson/goworld/editor"
@@ -70,6 +71,7 @@ func makeScene(renderer *engine.Renderer, scene object.T) {
 func makeGui(renderer *engine.Renderer, scene object.T) {
 	scene.Attach(gui.New(func() node.T {
 		return rect.New("sidebar", rect.Props{
+			OnClick: func(e mouse.Event) {},
 			Style: rect.Style{
 				Layout: style.Column{},
 				Width:  style.Pct(15),
