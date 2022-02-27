@@ -34,10 +34,13 @@ type Style struct {
 
 	// Flex properties
 
-	Basis  BasisProp
-	Grow   FlexGrowProp
-	Shrink FlexShrinkProp
-	Layout FlexDirectionProp
+	Basis          BasisProp
+	Grow           FlexGrowProp
+	Shrink         FlexShrinkProp
+	Layout         FlexDirectionProp
+	AlignItems     AlignItemsProp
+	AlignContent   AlignContentProp
+	JustifyContent JustifyContentProp
 }
 
 type Hover struct {
@@ -93,6 +96,15 @@ func (style *Style) Apply(w T, state State) {
 	}
 	if style.Shrink != nil {
 		style.Shrink.ApplyFlexShrink(w)
+	}
+	if style.AlignItems != nil {
+		style.AlignItems.ApplyAlignItems(w)
+	}
+	if style.AlignContent != nil {
+		style.AlignContent.ApplyAlignContent(w)
+	}
+	if style.JustifyContent != nil {
+		style.JustifyContent.ApplyJustifyContent(w)
 	}
 
 	if style.Color != nil {

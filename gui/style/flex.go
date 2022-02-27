@@ -25,3 +25,26 @@ func (g Grow) ApplyFlexGrow(fw FlexWidget) { fw.Flex().StyleSetFlexGrow(float32(
 type Shrink float32
 
 func (s Shrink) ApplyFlexShrink(fw FlexWidget) { fw.Flex().StyleSetFlexGrow(float32(s)) }
+
+type Align flex.Align
+
+const (
+	AlignStart  = Align(flex.AlignFlexStart)
+	AlignCenter = Align(flex.AlignCenter)
+	AlignEnd    = Align(flex.AlignFlexEnd)
+)
+
+func (a Align) ApplyAlignItems(fw FlexWidget)   { fw.Flex().StyleSetAlignItems(flex.Align(a)) }
+func (a Align) ApplyAlignContent(fw FlexWidget) { fw.Flex().StyleSetAlignContent(flex.Align(a)) }
+
+type Justify flex.Justify
+
+const (
+	JustifyStart  = Justify(flex.JustifyFlexStart)
+	JustifyCenter = Justify(flex.JustifyCenter)
+	JustifyEnd    = Justify(flex.JustifyFlexEnd)
+)
+
+func (j Justify) ApplyJustifyContent(fw FlexWidget) {
+	fw.Flex().StyleSetJustifyContent(flex.Justify(j))
+}

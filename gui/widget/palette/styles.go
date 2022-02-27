@@ -16,6 +16,8 @@ var SwatchStyle = rect.Style{
 }
 
 var TitleStyle = label.Style{
+	Grow: Grow(1),
+
 	Color: color.White,
 	Font: Font{
 		Name: "fonts/SourceCodeProRegular.ttf",

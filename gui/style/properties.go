@@ -20,6 +20,9 @@ type MarginProp interface{ ApplyMargin(fw FlexWidget) }
 type FlexDirectionProp interface{ ApplyFlexDirection(fw FlexWidget) }
 type FlexGrowProp interface{ ApplyFlexGrow(fw FlexWidget) }
 type FlexShrinkProp interface{ ApplyFlexShrink(fw FlexWidget) }
+type AlignItemsProp interface{ ApplyAlignItems(fw FlexWidget) }
+type AlignContentProp interface{ ApplyAlignContent(fw FlexWidget) }
+type JustifyContentProp interface{ ApplyJustifyContent(fw FlexWidget) }
 
 type PositionProp interface{ ApplyPosition(fw FlexWidget) }
 type PositionValueProp interface {

@@ -31,6 +31,11 @@ type Hover struct {
 	Color ColorProp
 }
 
+func (s *Style) Extend(e Style) Style {
+	e.Extends = s
+	return e
+}
+
 func (style *Style) Apply(w T, state State) {
 	if style.Extends == nil {
 		if style != DefaultStyle {

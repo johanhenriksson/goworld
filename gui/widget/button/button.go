@@ -1,6 +1,8 @@
 package button
 
 import (
+	"fmt"
+
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/gui/node"
 	"github.com/johanhenriksson/goworld/gui/widget/label"
@@ -8,10 +10,8 @@ import (
 )
 
 type Props struct {
-	Text       string
-	Background rect.Style
-	Label      label.Style
-	// how to do hover styles?
+	Text    string
+	Style   Style
 	OnClick mouse.Callback
 }
 
@@ -20,20 +20,23 @@ func New(key string, props Props) node.T {
 }
 
 func render(props Props) node.T {
-	onclick := func(e mouse.Event) {
-		if props.OnClick != nil {
-			props.OnClick(e)
-		}
-		e.Consume()
-	}
 	return rect.New("background", rect.Props{
-		Style:   props.Background,
-		OnClick: onclick,
+		Style: props.Style.backgroundStyle(),
+		OnMouseUp: func(e mouse.Event) {
+			if props.OnClick != nil {
+				props.OnClick(e)
+			}
+			fmt.Println("button up")
+			e.Consume()
+		},
+		OnMouseDown: func(e mouse.Event) {
+			fmt.Println("button down")
+			e.Consume()
+		},
 		Children: []node.T{
 			label.New("label", label.Props{
-				Text:    props.Text,
-				Style:   props.Label,
-				OnClick: onclick,
+				Text:  props.Text,
+				Style: props.Style.labelStyle(),
 			}),
 		},
 	})
