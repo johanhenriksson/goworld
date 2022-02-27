@@ -21,6 +21,11 @@ type FlexDirectionProp interface{ ApplyFlexDirection(fw FlexWidget) }
 type FlexGrowProp interface{ ApplyFlexGrow(fw FlexWidget) }
 type FlexShrinkProp interface{ ApplyFlexShrink(fw FlexWidget) }
 
+type PositionProp interface{ ApplyPosition(fw FlexWidget) }
+type PositionValueProp interface {
+	ApplyPosition(fw FlexWidget, edge flex.Edge)
+}
+
 type FontWidget interface {
 	SetFont(font.T)
 	SetFontSize(int)

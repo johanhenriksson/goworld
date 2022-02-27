@@ -12,3 +12,7 @@ func (p Pct) ApplyHeight(fw FlexWidget)    { fw.Flex().StyleSetHeightPercent(flo
 func (p Pct) ApplyMaxHeight(fw FlexWidget) { fw.Flex().StyleSetMaxHeightPercent(float32(p)) }
 func (p Pct) ApplyPadding(fw FlexWidget)   { fw.Flex().StyleSetPaddingPercent(flex.EdgeAll, float32(p)) }
 func (p Pct) ApplyMargin(fw FlexWidget)    { fw.Flex().StyleSetMarginPercent(flex.EdgeAll, float32(p)) }
+
+func (p Pct) ApplyPosition(fw FlexWidget, edge flex.Edge) {
+	fw.Flex().StyleSetPositionPercent(edge, float32(p))
+}

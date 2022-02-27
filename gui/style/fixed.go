@@ -15,6 +15,10 @@ func (p Px) ApplyMaxHeight(fw FlexWidget) { fw.Flex().StyleSetMaxHeight(float32(
 func (p Px) ApplyPadding(fw FlexWidget)   { fw.Flex().StyleSetPadding(flex.EdgeAll, float32(p)) }
 func (p Px) ApplyMargin(fw FlexWidget)    { fw.Flex().StyleSetMargin(flex.EdgeAll, float32(p)) }
 
+func (p Px) ApplyPosition(fw FlexWidget, edge flex.Edge) {
+	fw.Flex().StyleSetPosition(edge, float32(p))
+}
+
 func (p Px) ApplyLineHeight(fw FontWidget) {
 	fw.SetLineHeight(float32(p))
 }

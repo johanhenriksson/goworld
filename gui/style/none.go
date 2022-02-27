@@ -1,5 +1,7 @@
 package style
 
+import "github.com/kjk/flex"
+
 // None implements all Prop interfaces but does nothing
 // It's a cool idea but is it worth setting it everywhere?
 type None struct{}
@@ -11,3 +13,5 @@ func (n None) ApplyHeight(fw FlexWidget)    {}
 func (n None) ApplyMaxHeight(fw FlexWidget) {}
 func (n None) ApplyPadding(fw FlexWidget)   {}
 func (n None) ApplyMargin(fw FlexWidget)    {}
+
+func (n None) ApplyPosition(fw FlexWidget, edge flex.Edge) {}
