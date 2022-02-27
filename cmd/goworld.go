@@ -71,7 +71,7 @@ func makeScene(renderer *engine.Renderer, scene object.T) {
 func makeGui(renderer *engine.Renderer, scene object.T) {
 	scene.Attach(gui.New(func() node.T {
 		return rect.New("sidebar", rect.Props{
-			OnClick: func(e mouse.Event) {},
+			OnMouseUp: func(e mouse.Event) {},
 			Style: rect.Style{
 				Layout: style.Column{},
 				Width:  style.Pct(15),

@@ -28,9 +28,12 @@ type rect struct {
 
 type Props struct {
 	Style        Style
-	OnClick      mouse.Callback
+	OnMouseUp    mouse.Callback
+	OnMouseDown  mouse.Callback
 	OnMouseEnter mouse.Callback
-	OnMouseLeave mouse.Callback
+	OnMouseExit  mouse.Callback
+	OnMouseMove  mouse.Callback
+	OnMouseDrag  mouse.Callback
 	Children     []node.T
 }
 
@@ -139,19 +142,54 @@ func (f *rect) MouseEvent(e mouse.Event) {
 			}
 		}
 
-		// click
-		if e.Action() == mouse.Press && f.props.OnClick != nil {
-			f.props.OnClick(e)
-			e.Consume()
+		// buttons
+		if e.Action() == mouse.Press {
+			f.state.Pressed = true
+			f.props.Style.Apply(f, f.state)
+
+			if f.props.OnMouseDown != nil {
+				f.props.OnMouseDown(e)
+				e.Consume()
+			}
+		}
+		if e.Action() == mouse.Release {
+			f.state.Pressed = false
+			f.props.Style.Apply(f, f.state)
+
+			if f.props.OnMouseUp != nil {
+				f.props.OnMouseUp(e)
+				e.Consume()
+			}
+		}
+
+		// move
+		if e.Action() == mouse.Move {
+			if f.state.Pressed && f.props.OnMouseDrag != nil {
+				f.props.OnMouseDrag(e)
+			} else {
+				if f.props.OnMouseMove != nil {
+					f.props.OnMouseMove(e)
+				}
+			}
 		}
 	} else {
+		if f.state.Pressed {
+			if e.Action() == mouse.Move && f.props.OnMouseDrag != nil {
+				f.props.OnMouseDrag(e)
+			}
+			if e.Action() == mouse.Release {
+				f.state.Pressed = false
+				f.props.Style.Apply(f, f.state)
+			}
+		}
+
 		// hover end
 		if f.state.Hovered {
 			f.state.Hovered = false
 			f.props.Style.Apply(f, f.state)
 
-			if f.props.OnMouseLeave != nil {
-				f.props.OnMouseLeave(e)
+			if f.props.OnMouseExit != nil {
+				f.props.OnMouseExit(e)
 			}
 		}
 	}

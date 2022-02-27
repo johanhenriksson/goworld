@@ -15,6 +15,7 @@ var DefaultStyle = &Style{
 type Style struct {
 	Extends *Style
 	Hover   Hover
+	Pressed Pressed
 
 	// Display properties
 
@@ -40,6 +41,10 @@ type Style struct {
 }
 
 type Hover struct {
+	Color ColorProp
+}
+
+type Pressed struct {
 	Color ColorProp
 }
 
@@ -98,6 +103,10 @@ func (style *Style) Apply(w T, state State) {
 	if state.Hovered {
 		style.Hover.Apply(w)
 	}
+
+	if state.Pressed {
+		style.Pressed.Apply(w)
+	}
 }
 
 func (s *Style) Extend(e Style) Style {
@@ -106,6 +115,13 @@ func (s *Style) Extend(e Style) Style {
 }
 
 func (s Hover) Apply(w T) {
+	if s.Color != nil {
+		rgba := s.Color.Vec4()
+		w.SetColor(color.RGBA(rgba.X, rgba.Y, rgba.Z, rgba.W))
+	}
+}
+
+func (s Pressed) Apply(w T) {
 	if s.Color != nil {
 		rgba := s.Color.Vec4()
 		w.SetColor(color.RGBA(rgba.X, rgba.Y, rgba.Z, rgba.W))
