@@ -2,12 +2,12 @@ package deferred
 
 import (
 	"github.com/johanhenriksson/goworld/core/light"
-	"github.com/johanhenriksson/goworld/core/object"
-	"github.com/johanhenriksson/goworld/core/object/query"
 	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/backend/gl/gl_framebuffer"
+	"github.com/johanhenriksson/goworld/render/backend/gl/gl_shader"
 	"github.com/johanhenriksson/goworld/render/framebuffer"
+	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/texture"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
@@ -19,6 +19,7 @@ type ShadowPass struct {
 	Width  int
 	Height int
 
+	mat       material.T
 	shadowmap framebuffer.Depth
 }
 
@@ -34,18 +35,26 @@ func NewShadowPass(size int) *ShadowPass {
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_BORDER)
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_BORDER)
 
+	shader := gl_shader.CompileShader(
+		"shadow_pass",
+		"assets/shaders/pass/shadow.vs",
+		"assets/shaders/util/empty.fs")
+
+	mat := material.New("shadow_pass", shader)
+
 	p := &ShadowPass{
 		Output: fbo.Depth(),
 		Width:  size,
 		Height: size,
 
+		mat:       mat,
 		shadowmap: fbo,
 	}
 	return p
 }
 
 // DrawLight draws a shadow pass for the given light.
-func (p *ShadowPass) DrawLight(scene object.T, lit *light.Descriptor) {
+func (p *ShadowPass) DrawLight(objects []ShadowDrawable, lit *light.Descriptor) {
 	if !lit.Shadows {
 		return
 	}
@@ -76,15 +85,13 @@ func (p *ShadowPass) DrawLight(scene object.T, lit *light.Descriptor) {
 	// todo: select only objects that cast shadows
 	// todo: view frustum culling based on the lights view projection
 
-	objects := query.Any().
-		Where(query.Is[DeferredDrawable]).
-		Collect(scene)
-
-	// todo: draw objects with a simplified shader that only outputs depth information
-
-	for _, component := range objects {
-		drawable := component.(DeferredDrawable)
-		drawable.DrawDeferred(args.Apply(component.Object().Transform().World()))
+	p.mat.Use()
+	for _, drawable := range objects {
+		objArgs := args.Apply(drawable.Object().Transform().World())
+		if err := p.mat.Mat4("mvp", objArgs.MVP); err != nil {
+			panic("failed to set shadow projection")
+		}
+		drawable.DrawShadow(objArgs)
 	}
 
 	render.CullFace(render.CullBack)

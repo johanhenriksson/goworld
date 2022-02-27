@@ -90,7 +90,7 @@ func makeGui(renderer *engine.Renderer, scene object.T) {
 					},
 				}),
 				image.New("diffuse", image.Props{
-					Image:  renderer.Geometry.Buffer.Diffuse(),
+					Image:  renderer.Light.Shadows.Output,
 					Invert: true,
 				}),
 				image.New("normals", image.Props{

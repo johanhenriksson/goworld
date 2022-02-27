@@ -3,7 +3,7 @@
 uniform mat4 viewport;
 uniform mat4 model;
 
-in vec3 position;
+layout(location=0) in vec3 position;
 in vec4 color;
 in vec2 texcoord;
 

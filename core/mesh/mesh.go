@@ -5,6 +5,8 @@ import (
 
 	"github.com/johanhenriksson/goworld/assets"
 	"github.com/johanhenriksson/goworld/core/object"
+	"github.com/johanhenriksson/goworld/engine"
+	"github.com/johanhenriksson/goworld/engine/deferred"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/backend/gl/gl_vertex_array"
 	"github.com/johanhenriksson/goworld/render/backend/types"
@@ -18,10 +20,10 @@ type MeshBufferMap map[string]vertex_buffer.T
 
 type T interface {
 	object.Component
-
-	DrawForward(render.Args) error
-	DrawDeferred(render.Args) error
-	DrawLines(render.Args) error
+	deferred.Drawable
+	deferred.ShadowDrawable
+	engine.ForwardDrawable
+	engine.LineDrawable
 
 	SetIndexType(t types.Type)
 	Buffer(data interface{})
@@ -65,6 +67,10 @@ func (m *mesh) SetIndexType(t types.Type) {
 
 func (m mesh) Name() string {
 	return "Mesh"
+}
+
+func (m mesh) Material() material.T {
+	return m.mat
 }
 
 func (m *mesh) DrawDeferred(args render.Args) error {
@@ -115,6 +121,14 @@ func (m *mesh) DrawLines(args render.Args) error {
 
 	m.mat.Mat4("mvp", args.MVP)
 
+	return m.vao.Draw()
+}
+
+func (m *mesh) DrawShadow(args render.Args) error {
+	if m.mode == Lines {
+		// lines cant cast shadows
+		return nil
+	}
 	return m.vao.Draw()
 }
 
