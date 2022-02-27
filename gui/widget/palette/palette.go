@@ -6,10 +6,10 @@ import (
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/gui/hooks"
 	"github.com/johanhenriksson/goworld/gui/node"
-	"github.com/johanhenriksson/goworld/gui/style"
 	. "github.com/johanhenriksson/goworld/gui/style"
 	"github.com/johanhenriksson/goworld/gui/widget/label"
 	"github.com/johanhenriksson/goworld/gui/widget/rect"
+	"github.com/johanhenriksson/goworld/gui/widget/window"
 	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/util"
 )
@@ -26,19 +26,14 @@ func New(key string, props Props) node.T {
 func render(props Props) node.T {
 	perRow := 5
 
-	selected, setSelected := hooks.UseState(props.Palette[0])
+	selected, setSelected := hooks.UseState(props.Palette[3])
 
 	colors := util.Map(props.Palette, func(i int, c color.T) node.T {
 		return rect.New(fmt.Sprintf("color%d", i), rect.Props{
-			Style: Sheet{
-				Color:  c,
-				Grow:   Grow(0),
-				Shrink: Shrink(1),
-				Basis:  Pct(16),
-				Height: Px(20),
-				Margin: Px(2),
-			},
-			OnClick: func(e mouse.Event) {
+			Style: SwatchStyle.Extend(rect.Style{
+				Color: c,
+			}),
+			OnMouseUp: func(e mouse.Event) {
 				setSelected(c)
 				if props.OnPick != nil {
 					props.OnPick(c)
@@ -49,7 +44,7 @@ func render(props Props) node.T {
 
 	rows := util.Map(util.Chunks(colors, perRow), func(i int, colors []node.T) node.T {
 		return rect.New(fmt.Sprintf("row%d", i), rect.Props{
-			Style: Sheet{
+			Style: rect.Style{
 				Width:  Pct(100),
 				Layout: Row{},
 			},
@@ -57,44 +52,28 @@ func render(props Props) node.T {
 		})
 	})
 
-	return rect.New("window", rect.Props{
-		Style: Sheet{
-			Color:   color.Black.WithAlpha(0.9),
-			Padding: Px(4),
-			Layout:  Column{},
-		},
+	return window.New("palette", window.Props{
+		Title: "Palette",
 		Children: []node.T{
-			label.New("title", label.Props{
-				Text: "Palette",
-				Style: Sheet{
-					Color: color.White,
-					Font: style.Font{
-						Name: "fonts/SourceCodeProRegular.ttf",
-						Size: 16,
-					},
-				},
-			}),
 			rect.New("selected", rect.Props{
-				Style: Sheet{
-					Layout:   Row{},
-					MaxWidth: Pct(100),
+				Style: rect.Style{
+					Layout:     Row{},
+					MaxWidth:   Pct(100),
+					AlignItems: AlignCenter,
 				},
 				Children: []node.T{
 					label.New("selected", label.Props{
 						Text: "Selected",
-						Style: Sheet{
+						Style: label.Style{
 							Color: color.White,
-							Basis: Pct(80),
 							Grow:  Grow(1),
 						},
 					}),
 					rect.New("preview", rect.Props{
-						Style: Sheet{
+						Style: rect.Style{
 							Color:  selected,
-							Grow:   Grow(1),
-							Shrink: Shrink(1),
-							Basis:  Px(20),
 							Height: Px(20),
+							Basis:  Pct(16),
 						},
 					}),
 				},

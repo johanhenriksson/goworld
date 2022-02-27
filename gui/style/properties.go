@@ -1,21 +1,41 @@
 package style
 
 import (
-	"github.com/johanhenriksson/goworld/gui/widget"
+	"github.com/johanhenriksson/goworld/render/color"
+	"github.com/johanhenriksson/goworld/render/font"
 	"github.com/kjk/flex"
 )
 
-type WidthProp interface{ ApplyWidth(n *flex.Node) }
-type MaxWidthProp interface{ ApplyMaxWidth(n *flex.Node) }
-type HeightProp interface{ ApplyHeight(n *flex.Node) }
-type MaxHeightProp interface{ ApplyMaxHeight(n *flex.Node) }
-type BasisProp interface{ ApplyBasis(n *flex.Node) }
-type PaddingProp interface{ ApplyPadding(n *flex.Node) }
-type MarginProp interface{ ApplyMargin(n *flex.Node) }
-type FlexDirectionProp interface{ ApplyFlexDirection(n *flex.Node) }
-type FlexGrowProp interface{ ApplyFlexGrow(n *flex.Node) }
-type FlexShrinkProp interface{ ApplyFlexShrink(n *flex.Node) }
+type FlexWidget interface {
+	Flex() *flex.Node
+}
 
-type FontProp interface{ ApplyFont(w widget.T) }
-type FontColorProp interface{ ApplyFontColor(w widget.T) }
-type LineHeightProp interface{ ApplyLineHeight(w widget.T) }
+type WidthProp interface{ ApplyWidth(fw FlexWidget) }
+type MaxWidthProp interface{ ApplyMaxWidth(fw FlexWidget) }
+type HeightProp interface{ ApplyHeight(fw FlexWidget) }
+type MaxHeightProp interface{ ApplyMaxHeight(fw FlexWidget) }
+type BasisProp interface{ ApplyBasis(fw FlexWidget) }
+type PaddingProp interface{ ApplyPadding(fw FlexWidget) }
+type MarginProp interface{ ApplyMargin(fw FlexWidget) }
+type FlexDirectionProp interface{ ApplyFlexDirection(fw FlexWidget) }
+type FlexGrowProp interface{ ApplyFlexGrow(fw FlexWidget) }
+type FlexShrinkProp interface{ ApplyFlexShrink(fw FlexWidget) }
+type AlignItemsProp interface{ ApplyAlignItems(fw FlexWidget) }
+type AlignContentProp interface{ ApplyAlignContent(fw FlexWidget) }
+type JustifyContentProp interface{ ApplyJustifyContent(fw FlexWidget) }
+
+type PositionProp interface{ ApplyPosition(fw FlexWidget) }
+type PositionValueProp interface {
+	ApplyPosition(fw FlexWidget, edge flex.Edge)
+}
+
+type FontWidget interface {
+	SetFont(font.T)
+	SetFontSize(int)
+	SetFontColor(color.T)
+	SetLineHeight(float32)
+}
+
+type FontProp interface{ ApplyFont(fw FontWidget) }
+type FontColorProp interface{ ApplyFontColor(fw FontWidget) }
+type LineHeightProp interface{ ApplyLineHeight(fw FontWidget) }

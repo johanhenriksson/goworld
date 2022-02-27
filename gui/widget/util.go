@@ -26,3 +26,12 @@ func SimulateClick(widget T, button mouse.Button) {
 	event := mouse.NewButtonEvent(button, mouse.Press, vec2.New(0, 0), 0, false)
 	handler.MouseEvent(event)
 }
+
+type MouseHandler interface {
+	MouseEvent(mouse.Event) (MouseHandler, float32)
+
+	MouseEnter(e mouse.Event)
+	MouseExit(e mouse.Event)
+	MouseMove(e mouse.Event)
+	MouseClick(e mouse.Event)
+}

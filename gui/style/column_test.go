@@ -11,18 +11,18 @@ import (
 )
 
 func TestColumn(t *testing.T) {
-	a := rect.Create("a", &rect.Props{
-		Style: Sheet{
+	a := rect.Create("a", rect.Props{
+		Style: rect.Style{
 			Height: Pct(50),
 		},
 	})
-	b := rect.Create("b", &rect.Props{
-		Style: Sheet{
+	b := rect.Create("b", rect.Props{
+		Style: rect.Style{
 			Height: Pct(50),
 		},
 	})
-	parent := rect.Create("parent", &rect.Props{
-		Style: Sheet{
+	parent := rect.Create("parent", rect.Props{
+		Style: rect.Style{
 			Layout: Column{},
 		},
 	})

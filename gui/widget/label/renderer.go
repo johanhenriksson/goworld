@@ -87,7 +87,7 @@ func (r *renderer) SetFontColor(clr color.T) {
 	if clr == color.None {
 		clr = color.White
 	}
-	r.invalidTexture = r.invalidTexture || clr != r.color
+	r.invalidMesh = r.invalidMesh || clr != r.color
 	r.color = clr
 }
 

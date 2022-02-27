@@ -5,10 +5,14 @@ import "github.com/kjk/flex"
 // Pct is a percentage value
 type Pct float32
 
-func (p Pct) ApplyBasis(n *flex.Node)     { n.StyleSetFlexBasisPercent(float32(p)) }
-func (p Pct) ApplyWidth(n *flex.Node)     { n.StyleSetWidthPercent(float32(p)) }
-func (p Pct) ApplyMaxWidth(n *flex.Node)  { n.StyleSetMaxWidthPercent(float32(p)) }
-func (p Pct) ApplyHeight(n *flex.Node)    { n.StyleSetHeightPercent(float32(p)) }
-func (p Pct) ApplyMaxHeight(n *flex.Node) { n.StyleSetMaxHeightPercent(float32(p)) }
-func (p Pct) ApplyPadding(n *flex.Node)   { n.StyleSetPaddingPercent(flex.EdgeAll, float32(p)) }
-func (p Pct) ApplyMargin(n *flex.Node)    { n.StyleSetMarginPercent(flex.EdgeAll, float32(p)) }
+func (p Pct) ApplyBasis(fw FlexWidget)     { fw.Flex().StyleSetFlexBasisPercent(float32(p)) }
+func (p Pct) ApplyWidth(fw FlexWidget)     { fw.Flex().StyleSetWidthPercent(float32(p)) }
+func (p Pct) ApplyMaxWidth(fw FlexWidget)  { fw.Flex().StyleSetMaxWidthPercent(float32(p)) }
+func (p Pct) ApplyHeight(fw FlexWidget)    { fw.Flex().StyleSetHeightPercent(float32(p)) }
+func (p Pct) ApplyMaxHeight(fw FlexWidget) { fw.Flex().StyleSetMaxHeightPercent(float32(p)) }
+func (p Pct) ApplyPadding(fw FlexWidget)   { fw.Flex().StyleSetPaddingPercent(flex.EdgeAll, float32(p)) }
+func (p Pct) ApplyMargin(fw FlexWidget)    { fw.Flex().StyleSetMarginPercent(flex.EdgeAll, float32(p)) }
+
+func (p Pct) ApplyPosition(fw FlexWidget, edge flex.Edge) {
+	fw.Flex().StyleSetPositionPercent(edge, float32(p))
+}

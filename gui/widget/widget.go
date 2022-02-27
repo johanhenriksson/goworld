@@ -70,7 +70,8 @@ func (w *widget) Flex() *flex.Node {
 }
 
 func (w *widget) Position() vec2.T {
-	return vec2.New(w.flex.LayoutGetLeft(), w.flex.LayoutGetTop())
+	//return vec2.New(w.flex.LayoutGetLeft(), w.flex.LayoutGetTop())
+	return calculatePosition(w.flex)
 }
 
 func (w *widget) Size() vec2.T {
@@ -94,4 +95,12 @@ func (w *widget) Draw(render.Args) {
 	if w.Destroyed() {
 		panic(fmt.Sprintf("attempt to draw destroyed widget %s", w.key))
 	}
+}
+
+func calculatePosition(node *flex.Node) vec2.T {
+	pos := vec2.New(node.LayoutGetLeft(), node.LayoutGetTop())
+	if node.Parent != nil {
+		pos = pos.Add(calculatePosition(node.Parent))
+	}
+	return pos
 }

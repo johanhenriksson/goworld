@@ -9,16 +9,16 @@ type Rect struct {
 	Bottom float32
 }
 
-func (p Rect) ApplyPadding(node *flex.Node) {
-	node.StyleSetPadding(flex.EdgeLeft, p.Left)
-	node.StyleSetPadding(flex.EdgeRight, p.Right)
-	node.StyleSetPadding(flex.EdgeTop, p.Top)
-	node.StyleSetPadding(flex.EdgeBottom, p.Bottom)
+func (p Rect) ApplyPadding(fw FlexWidget) {
+	fw.Flex().StyleSetPadding(flex.EdgeLeft, p.Left)
+	fw.Flex().StyleSetPadding(flex.EdgeRight, p.Right)
+	fw.Flex().StyleSetPadding(flex.EdgeTop, p.Top)
+	fw.Flex().StyleSetPadding(flex.EdgeBottom, p.Bottom)
 }
 
-func (p Rect) ApplyMargin(node *flex.Node) {
-	node.StyleSetPadding(flex.EdgeLeft, p.Left)
-	node.StyleSetPadding(flex.EdgeRight, p.Right)
-	node.StyleSetPadding(flex.EdgeTop, p.Top)
-	node.StyleSetPadding(flex.EdgeBottom, p.Bottom)
+func (p Rect) ApplyMargin(fw FlexWidget) {
+	fw.Flex().StyleSetPadding(flex.EdgeLeft, p.Left)
+	fw.Flex().StyleSetPadding(flex.EdgeRight, p.Right)
+	fw.Flex().StyleSetPadding(flex.EdgeTop, p.Top)
+	fw.Flex().StyleSetPadding(flex.EdgeBottom, p.Bottom)
 }

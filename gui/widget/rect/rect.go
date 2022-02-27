@@ -14,6 +14,7 @@ import (
 
 type T interface {
 	widget.T
+	style.Colorizable
 }
 
 type rect struct {
@@ -22,15 +23,17 @@ type rect struct {
 
 	props    Props
 	children []widget.T
-
-	prevMouseTarget mouse.Handler
+	state    style.State
 }
 
 type Props struct {
-	Style        style.Sheet
-	OnClick      mouse.Callback
+	Style        Style
+	OnMouseUp    mouse.Callback
+	OnMouseDown  mouse.Callback
 	OnMouseEnter mouse.Callback
-	OnMouseLeave mouse.Callback
+	OnMouseExit  mouse.Callback
+	OnMouseMove  mouse.Callback
+	OnMouseDrag  mouse.Callback
 	Children     []node.T
 }
 
@@ -48,16 +51,21 @@ func Create(key string, props Props) T {
 }
 
 func (f *rect) Draw(args render.Args) {
+	if f.props.Style.Hidden {
+		return
+	}
+
 	f.T.Draw(args)
 	f.Renderer.Draw(args, f)
 
 	for _, child := range f.children {
 		// calculate child tranasform
 		// try to fix the position to an actual pixel
-		pos := vec3.Extend(child.Position().Scaled(args.Viewport.Scale).Floor().Scaled(1/args.Viewport.Scale), -1)
+		// pos := vec3.Extend(child.Position().Scaled(args.Viewport.Scale).Floor().Scaled(1/args.Viewport.Scale), -1)
+		pos := vec3.Extend(child.Position(), args.Position.Z-1)
 		transform := mat4.Translate(pos)
 		childArgs := args
-		childArgs.Transform = transform.Mul(&args.Transform)
+		childArgs.Transform = transform // .Mul(&args.Transform)
 		childArgs.Position = pos
 
 		// draw child
@@ -71,6 +79,7 @@ func (f *rect) SetChildren(c []widget.T) {
 	nodes := make([]*flex.Node, len(c))
 	for i, child := range c {
 		nodes[i] = child.Flex()
+		child.Flex().Parent = f.Flex()
 	}
 	f.Flex().Children = nodes
 }
@@ -87,7 +96,8 @@ func (f *rect) Update(p any) {
 	f.props = new
 
 	if styleChanged {
-		new.Style.Apply(f)
+		// apply new styles
+		new.Style.Apply(f, f.state)
 	}
 }
 
@@ -105,65 +115,82 @@ func (f *rect) Destroy() {
 //
 
 func (f *rect) MouseEvent(e mouse.Event) {
-	if e.Action() == mouse.Enter {
-		// prop callback
-		if f.props.OnMouseEnter != nil {
-			f.props.OnMouseEnter(e)
-		}
-	}
-	if e.Action() == mouse.Leave {
-		// prop callback
-		if f.props.OnMouseLeave != nil {
-			f.props.OnMouseLeave(e)
-		}
-
-		if f.prevMouseTarget != nil {
-			// pass it on if we have a current hover target
-			f.prevMouseTarget.MouseEvent(e)
-		}
-		f.prevMouseTarget = nil
-	}
-
-	hit := false
+	// because children may have absolute positioning, we must pass the event to all of them.
+	// children always have higher z index, so they have priority
 	for _, frame := range f.children {
 		if handler, ok := frame.(mouse.Handler); ok {
-			ev := e.Project(frame.Position())
-			target := ev.Position()
-			size := frame.Size()
-			if target.X < 0 || target.X > size.X || target.Y < 0 || target.Y > size.Y {
-				// outside
-				continue
-			}
-
-			// we hit something
-			hit = true
-
-			if f.prevMouseTarget != handler {
-				if f.prevMouseTarget != nil {
-					// exit!
-					f.prevMouseTarget.MouseEvent(mouse.NewMouseLeaveEvent())
-				}
-
-				// mouse enter!
-				handler.MouseEvent(mouse.NewMouseEnterEvent())
-			}
-			f.prevMouseTarget = handler
-
-			handler.MouseEvent(ev)
-			if ev.Handled() {
+			handler.MouseEvent(e)
+			if e.Handled() {
 				e.Consume()
 				return
 			}
 		}
 	}
 
-	if !hit && f.prevMouseTarget != nil {
-		f.prevMouseTarget.MouseEvent(mouse.NewMouseLeaveEvent())
-		f.prevMouseTarget = nil
-	}
+	target := e.Position().Sub(f.Position())
+	size := f.Size()
+	mouseover := target.X >= 0 && target.X < size.X && target.Y >= 0 && target.Y < size.Y
 
-	if e.Action() == mouse.Press && f.props.OnClick != nil {
-		f.props.OnClick(e)
-		e.Consume()
+	if mouseover {
+		// hover start
+		if !f.state.Hovered {
+			f.state.Hovered = true
+			f.props.Style.Apply(f, f.state)
+
+			if f.props.OnMouseEnter != nil {
+				f.props.OnMouseEnter(e)
+			}
+		}
+
+		// buttons
+		if e.Action() == mouse.Press {
+			f.state.Pressed = true
+			f.props.Style.Apply(f, f.state)
+
+			if f.props.OnMouseDown != nil {
+				f.props.OnMouseDown(e)
+				e.Consume()
+			}
+		}
+		if e.Action() == mouse.Release {
+			f.state.Pressed = false
+			f.props.Style.Apply(f, f.state)
+
+			if f.props.OnMouseUp != nil {
+				f.props.OnMouseUp(e)
+				e.Consume()
+			}
+		}
+
+		// move
+		if e.Action() == mouse.Move {
+			if f.state.Pressed && f.props.OnMouseDrag != nil {
+				f.props.OnMouseDrag(e)
+			} else {
+				if f.props.OnMouseMove != nil {
+					f.props.OnMouseMove(e)
+				}
+			}
+		}
+	} else {
+		if f.state.Pressed {
+			if e.Action() == mouse.Move && f.props.OnMouseDrag != nil {
+				f.props.OnMouseDrag(e)
+			}
+			if e.Action() == mouse.Release {
+				f.state.Pressed = false
+				f.props.Style.Apply(f, f.state)
+			}
+		}
+
+		// hover end
+		if f.state.Hovered {
+			f.state.Hovered = false
+			f.props.Style.Apply(f, f.state)
+
+			if f.props.OnMouseExit != nil {
+				f.props.OnMouseExit(e)
+			}
+		}
 	}
 }

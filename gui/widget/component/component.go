@@ -94,17 +94,8 @@ func (c *component) Destroyed() bool {
 func (c *component) MouseEvent(e mouse.Event) {
 	for _, frame := range c.children {
 		if handler, ok := frame.(mouse.Handler); ok {
-			ev := e.Project(frame.Position())
-			target := ev.Position()
-			size := frame.Size()
-			if target.X < 0 || target.X > size.X || target.Y < 0 || target.Y > size.Y {
-				// outside
-				continue
-			}
-
-			handler.MouseEvent(ev)
-			if ev.Handled() {
-				e.Consume()
+			handler.MouseEvent(e)
+			if e.Handled() {
 				return
 			}
 		}
