@@ -2,7 +2,7 @@ package vertex_array
 
 import (
 	"github.com/johanhenriksson/goworld/render/backend/types"
-	"github.com/johanhenriksson/goworld/render/shader"
+	"github.com/johanhenriksson/goworld/render/vertex"
 )
 
 type T interface {
@@ -13,5 +13,7 @@ type T interface {
 	Indexed() bool
 	Draw() error
 	Buffer(name string, data interface{})
-	BufferTo(ptrs shader.Pointers, data interface{})
+	BufferRaw(name string, elements int, data []byte)
+	BufferTo(ptrs vertex.Pointers, data interface{})
+	SetPointers(vertex.Pointers)
 }

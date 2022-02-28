@@ -32,23 +32,21 @@ type T interface {
 	RGB(string, color.T) error
 	RGBA(string, color.T) error
 	Texture2D(string, texture.Slot) error
-
-	VertexPointers(interface{}) Pointers
 }
 
 type UniformMap map[string]UniformDesc
 type AttributeMap map[string]AttributeDesc
 
 type UniformDesc struct {
-	Name  string
-	Index int
-	Size  int
-	Type  types.Type
+	Name string
+	Bind int
+	Size int
+	Type types.Type
 }
 
 type AttributeDesc struct {
-	Name  string
-	Index int
-	Size  int
-	Type  types.Type
+	Name string
+	Bind int
+	Size int
+	Type types.Type
 }

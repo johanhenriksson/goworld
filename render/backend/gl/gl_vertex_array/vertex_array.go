@@ -7,7 +7,7 @@ import (
 	"github.com/johanhenriksson/goworld/render/backend/gl"
 	"github.com/johanhenriksson/goworld/render/backend/gl/gl_vertex_buffer"
 	"github.com/johanhenriksson/goworld/render/backend/types"
-	"github.com/johanhenriksson/goworld/render/shader"
+	"github.com/johanhenriksson/goworld/render/vertex"
 	"github.com/johanhenriksson/goworld/render/vertex_array"
 	"github.com/johanhenriksson/goworld/render/vertex_buffer"
 
@@ -111,17 +111,16 @@ func (vao *glvertexarray) SetIndexType(t types.Type) {
 
 // Buffer vertex data to the GPU
 func (vao *glvertexarray) Buffer(name string, data interface{}) {
-	if name == "index" {
-		// todo: set index type
-		// then get rid of SetIndexType
-	}
-
 	vao.Bind()
 
 	vbo, exists := vao.vbos[name]
 	if !exists {
 		// create new buffer
-		vbo = gl_vertex_buffer.New()
+		if name == "index" {
+			vbo = gl_vertex_buffer.NewIndex()
+		} else {
+			vbo = gl_vertex_buffer.New()
+		}
 		vao.vbos[name] = vbo
 	}
 
@@ -134,8 +133,15 @@ func (vao *glvertexarray) Buffer(name string, data interface{}) {
 	}
 }
 
-func (vao *glvertexarray) BufferTo(pointers shader.Pointers, data interface{}) {
-	name := pointers.BufferString()
+func (vao *glvertexarray) BufferRaw(name string, elements int, data []byte) {
+	vao.Buffer(name, data)
+
+	// overwrite length with the actual number of elements
+	vao.Length = elements
+}
+
+func (vao *glvertexarray) BufferTo(pointers vertex.Pointers, data interface{}) {
+	name := "vertex"
 
 	vao.Bind()
 
@@ -154,5 +160,10 @@ func (vao *glvertexarray) BufferTo(pointers shader.Pointers, data interface{}) {
 		vao.Length = elements
 	}
 
-	pointers.Enable()
+	vao.SetPointers(pointers)
+}
+
+func (vao *glvertexarray) SetPointers(pointers vertex.Pointers) {
+	vao.Bind()
+	gl.EnablePointers(pointers)
 }

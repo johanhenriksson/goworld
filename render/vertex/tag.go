@@ -2,8 +2,11 @@ package vertex
 
 import (
 	"fmt"
+	"reflect"
 	"strconv"
 	"strings"
+
+	"github.com/johanhenriksson/goworld/render/backend/types"
 )
 
 type Tag struct {
@@ -36,4 +39,56 @@ func ParseTag(tag string) (Tag, error) {
 		Count:     count,
 		Normalize: norm,
 	}, nil
+}
+
+func ParsePointers(data interface{}) Pointers {
+	t := reflect.TypeOf(data)
+	if t.Kind() != reflect.Slice {
+		return nil
+	}
+
+	el := t.Elem()
+	if el.Kind() != reflect.Struct {
+		fmt.Println("not a struct")
+		return nil
+	}
+
+	size := int(el.Size())
+
+	offset := 0
+	pointers := make(Pointers, 0, el.NumField())
+	for i := 0; i < el.NumField(); i++ {
+		f := el.Field(i)
+		tagstr := f.Tag.Get("vtx")
+		if tagstr == "skip" {
+			continue
+		}
+		tag, err := ParseTag(tagstr)
+		if err != nil {
+			fmt.Printf("tag error on %s.%s: %s\n", el.String(), f.Name, err)
+			continue
+		}
+
+		kind, err := types.TypeFromString(tag.Type)
+		if err != nil {
+			panic(fmt.Errorf("invalid GL type: %s", tag.Type))
+		}
+
+		ptr := Pointer{
+			Binding:     -1,
+			Name:        tag.Name,
+			Source:      kind,
+			Destination: kind,
+			Elements:    tag.Count,
+			Normalize:   tag.Normalize,
+			Offset:      offset,
+			Stride:      size,
+		}
+
+		pointers = append(pointers, ptr)
+
+		offset += kind.Size() * tag.Count
+	}
+
+	return pointers
 }

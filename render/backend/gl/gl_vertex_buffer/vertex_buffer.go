@@ -11,11 +11,10 @@ import (
 
 // glvertexbuf represents an OpenGL Vertex Buffer object
 type glvertexbuf struct {
-	ID       uint32 /* OpenGL Buffer Identifier */
-	Target   uint32 /* Target buffer type, defaults to GL_ARRAY_BUFFER */
-	Usage    uint32 /* Buffer usage flag, defaults to GL_STATIC_DRAW */
-	Elements int    /* Number of verticies/elements currently stored in the VBO */
-	Size     int    /* Element size in bytes */
+	ID     uint32 /* OpenGL Buffer Identifier */
+	Target uint32 /* Target buffer type, defaults to GL_ARRAY_BUFFER */
+	Usage  uint32 /* Buffer usage flag, defaults to GL_STATIC_DRAW */
+	Size   int    /* Element size in bytes */
 }
 
 // New creates a new GL vertex buffer object
@@ -60,11 +59,10 @@ func (vbo *glvertexbuf) Delete() {
 	}
 }
 
-func (vbo *glvertexbuf) BufferFrom(elements, size int, ptr unsafe.Pointer) {
-	vbo.Elements = elements
-	vbo.Size = size * elements
+func (vbo *glvertexbuf) BufferFrom(ptr unsafe.Pointer, size int) {
+	vbo.Size = size
 
-	if elements <= 0 {
+	if size <= 0 {
 		return
 	}
 
@@ -100,6 +98,6 @@ func (vbo *glvertexbuf) Buffer(data interface{}) int {
 	// get a pointer to the beginning of the array
 	ptr := unsafe.Pointer(v.Pointer())
 
-	vbo.BufferFrom(elements, size, ptr)
+	vbo.BufferFrom(ptr, elements*size)
 	return elements
 }
