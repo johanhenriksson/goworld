@@ -1,9 +1,7 @@
 package gl_shader
 
 import (
-	"errors"
 	"fmt"
-	"reflect"
 
 	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/math/vec2"
@@ -12,7 +10,6 @@ import (
 	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/shader"
 	"github.com/johanhenriksson/goworld/render/texture"
-	"github.com/johanhenriksson/goworld/render/vertex"
 
 	"github.com/johanhenriksson/goworld/render/backend/gl"
 )
@@ -126,8 +123,8 @@ func (s *glshader) Uniform(uniform string) (shader.UniformDesc, error) {
 	desc, ok := s.uniforms[uniform]
 	if !ok {
 		return shader.UniformDesc{
-			Name:  uniform,
-			Index: -1,
+			Name: uniform,
+			Bind: -1,
 		}, fmt.Errorf("%w: %s", shader.ErrUnknownUniform, uniform)
 	}
 	return desc, nil
@@ -138,8 +135,8 @@ func (s *glshader) Attribute(attr string) (shader.AttributeDesc, error) {
 	desc, ok := s.attributes[attr]
 	if !ok {
 		return shader.AttributeDesc{
-			Name:  attr,
-			Index: -1,
+			Name: attr,
+			Bind: -1,
 		}, fmt.Errorf("%w: %s", shader.ErrUnknownAttribute, attr)
 	}
 	return desc, nil
@@ -291,64 +288,6 @@ func (s *glshader) Texture2D(name string, slot texture.Slot) error {
 	} else {
 		return err
 	}
-}
-
-func (s *glshader) VertexPointers(data interface{}) shader.Pointers {
-	t := reflect.TypeOf(data)
-	if t.Kind() != reflect.Slice {
-		return nil
-	}
-
-	el := t.Elem()
-	if el.Kind() != reflect.Struct {
-		fmt.Println("not a struct")
-		return nil
-	}
-
-	size := int(el.Size())
-
-	offset := 0
-	pointers := make(shader.Pointers, 0, el.NumField())
-	for i := 0; i < el.NumField(); i++ {
-		f := el.Field(i)
-		tagstr := f.Tag.Get("vtx")
-		if tagstr == "skip" {
-			continue
-		}
-		tag, err := vertex.ParseTag(tagstr)
-		if err != nil {
-			fmt.Printf("tag error on %s.%s: %s\n", el.String(), f.Name, err)
-			continue
-		}
-
-		gltype, err := gl.TypeFromString(tag.Type)
-		if err != nil {
-			panic(fmt.Errorf("invalid GL type: %s", tag.Type))
-		}
-
-		attr, err := s.Attribute(tag.Name)
-		if errors.Is(err, shader.ErrUnknownAttribute) {
-			offset += gltype.Size() * tag.Count
-			continue
-		}
-
-		ptr := Pointer{
-			Index:       int(attr.Index),
-			Name:        tag.Name,
-			Source:      gltype,
-			Destination: gl.TypeCast(attr.Type),
-			Elements:    tag.Count,
-			Normalize:   tag.Normalize,
-			Offset:      offset,
-			Stride:      size,
-		}
-
-		pointers = append(pointers, ptr)
-
-		offset += gltype.Size() * tag.Count
-	}
-
-	return pointers
 }
 
 func (s *glshader) readAttributes() {

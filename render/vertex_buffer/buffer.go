@@ -7,5 +7,5 @@ type T interface {
 	Unbind()
 	Delete()
 	Buffer(data interface{}) int
-	BufferFrom(elements, size int, ptr unsafe.Pointer)
+	BufferFrom(ptr unsafe.Pointer, size int)
 }

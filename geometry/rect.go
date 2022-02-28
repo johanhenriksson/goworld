@@ -190,11 +190,10 @@ func (q *Rect) compute() {
 			leftBottomLeft, BottomLeft, TopLeft)
 	}
 
-	/* Setup VAO */
-	q.vao.Bind()
-	// q.vao.Buffer("geometry", vtx)
-	ptr := q.Material.VertexPointers(vtx)
-	q.vao.BufferTo(ptr, vtx)
+	ptrs := vertex.ParsePointers(vtx)
+	ptrs.Bind(q.Material)
+
+	q.vao.BufferTo(ptrs, vtx)
 }
 
 func (q *Rect) Draw(args render.Args) {

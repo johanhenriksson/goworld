@@ -11,6 +11,7 @@ import (
 	"github.com/johanhenriksson/goworld/render/backend/gl/gl_vertex_array"
 	"github.com/johanhenriksson/goworld/render/backend/types"
 	"github.com/johanhenriksson/goworld/render/material"
+	"github.com/johanhenriksson/goworld/render/vertex"
 	"github.com/johanhenriksson/goworld/render/vertex_array"
 	"github.com/johanhenriksson/goworld/render/vertex_buffer"
 )
@@ -26,6 +27,8 @@ type T interface {
 	engine.LineDrawable
 
 	SetIndexType(t types.Type)
+	SetPointers(vertex.Pointers)
+	BufferRaw(name string, elements int, data []byte)
 	Buffer(data interface{})
 }
 
@@ -58,11 +61,6 @@ func NewPrimitiveMesh(primitive render.Primitive, mat material.T, mode DrawMode)
 		vao:       gl_vertex_array.New(primitive),
 	}
 	return m
-}
-
-func (m *mesh) SetIndexType(t types.Type) {
-	// get rid of this later
-	m.vao.SetIndexType(t)
 }
 
 func (m mesh) Name() string {
@@ -133,7 +131,8 @@ func (m *mesh) DrawShadow(args render.Args) error {
 }
 
 func (m *mesh) Buffer(data interface{}) {
-	pointers := m.mat.VertexPointers(data)
+	pointers := vertex.ParsePointers(data)
+	pointers.Bind(m.mat)
 
 	// compatibility hack
 	// ... but for what? this never seems to happen
@@ -143,4 +142,22 @@ func (m *mesh) Buffer(data interface{}) {
 	}
 
 	m.vao.BufferTo(pointers, data)
+}
+
+//
+// these functions do not really belong here
+//
+
+func (m *mesh) SetIndexType(t types.Type) {
+	// get rid of this later
+	m.vao.SetIndexType(t)
+}
+
+func (m *mesh) BufferRaw(name string, elements int, data []byte) {
+	m.vao.BufferRaw(name, elements, data)
+}
+
+func (m *mesh) SetPointers(ptrs vertex.Pointers) {
+	ptrs.Bind(m.mat)
+	m.vao.SetPointers(ptrs)
 }

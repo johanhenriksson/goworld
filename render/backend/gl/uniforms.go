@@ -24,10 +24,10 @@ func GetActiveUniform(id shader.ShaderID, index int) shader.UniformDesc {
 	loc := gl.GetUniformLocation(uint32(id), bufferPtr)
 
 	return shader.UniformDesc{
-		Name:  buffer[:length],
-		Index: int(loc),
-		Size:  int(size),
-		Type:  Type(gltype).Cast(),
+		Name: buffer[:length],
+		Bind: int(loc),
+		Size: int(size),
+		Type: Type(gltype).Cast(),
 	}
 }
 
@@ -56,7 +56,7 @@ func UniformMatrix4f(id shader.ShaderID, uniform shader.UniformDesc, mat4 mat4.T
 	if uniform.Type != types.Mat4f {
 		return uniformTypeError(uniform, types.Mat4f)
 	}
-	gl.ProgramUniformMatrix4fv(uint32(id), int32(uniform.Index), 1, false, &mat4[0])
+	gl.ProgramUniformMatrix4fv(uint32(id), int32(uniform.Bind), 1, false, &mat4[0])
 	return uniformUpdateErrorCheck()
 }
 
@@ -64,7 +64,7 @@ func UniformVec1f(id shader.ShaderID, uniform shader.UniformDesc, value float32)
 	if uniform.Type != types.Float {
 		return uniformTypeError(uniform, types.Float)
 	}
-	gl.ProgramUniform1f(uint32(id), int32(uniform.Index), value)
+	gl.ProgramUniform1f(uint32(id), int32(uniform.Bind), value)
 	return uniformUpdateErrorCheck()
 }
 
@@ -72,7 +72,7 @@ func UniformVec2f(id shader.ShaderID, uniform shader.UniformDesc, vec vec2.T) er
 	if uniform.Type != types.Vec2f {
 		return uniformTypeError(uniform, types.Vec2f)
 	}
-	gl.ProgramUniform2f(uint32(id), int32(uniform.Index), vec.X, vec.Y)
+	gl.ProgramUniform2f(uint32(id), int32(uniform.Bind), vec.X, vec.Y)
 	return uniformUpdateErrorCheck()
 }
 
@@ -80,7 +80,7 @@ func UniformVec3f(id shader.ShaderID, uniform shader.UniformDesc, vec vec3.T) er
 	if uniform.Type != types.Vec3f {
 		return uniformTypeError(uniform, types.Vec3f)
 	}
-	gl.ProgramUniform3f(uint32(id), int32(uniform.Index), vec.X, vec.Y, vec.Z)
+	gl.ProgramUniform3f(uint32(id), int32(uniform.Bind), vec.X, vec.Y, vec.Z)
 	return uniformUpdateErrorCheck()
 }
 
@@ -95,7 +95,7 @@ func UniformVec3fArray(id shader.ShaderID, uniform shader.UniformDesc, vecs []ve
 		return fmt.Errorf("%w: array is too long for %s, max length: %d", shader.ErrUniformType, uniform.Name, uniform.Size)
 	}
 	for i, vec := range vecs {
-		gl.ProgramUniform3f(uint32(id), int32(uniform.Index+i), vec.X, vec.Y, vec.Z)
+		gl.ProgramUniform3f(uint32(id), int32(uniform.Bind+i), vec.X, vec.Y, vec.Z)
 	}
 	return uniformUpdateErrorCheck()
 }
@@ -104,7 +104,7 @@ func UniformVec4f(id shader.ShaderID, uniform shader.UniformDesc, vec vec4.T) er
 	if uniform.Type != types.Vec4f {
 		return uniformTypeError(uniform, types.Vec4f)
 	}
-	gl.ProgramUniform4f(uint32(id), int32(uniform.Index), vec.X, vec.Y, vec.Z, vec.W)
+	gl.ProgramUniform4f(uint32(id), int32(uniform.Bind), vec.X, vec.Y, vec.Z, vec.W)
 	return uniformUpdateErrorCheck()
 }
 
@@ -112,7 +112,7 @@ func UniformVec1ui(id shader.ShaderID, uniform shader.UniformDesc, value int) er
 	if uniform.Type != types.UInt32 {
 		return uniformTypeError(uniform, types.UInt32)
 	}
-	gl.ProgramUniform1ui(uint32(id), int32(uniform.Index), uint32(value))
+	gl.ProgramUniform1ui(uint32(id), int32(uniform.Bind), uint32(value))
 	return uniformUpdateErrorCheck()
 }
 
@@ -120,7 +120,7 @@ func UniformVec1i(id shader.ShaderID, uniform shader.UniformDesc, value int) err
 	if uniform.Type != types.Int32 {
 		return uniformTypeError(uniform, types.Int32)
 	}
-	gl.ProgramUniform1i(uint32(id), int32(uniform.Index), int32(value))
+	gl.ProgramUniform1i(uint32(id), int32(uniform.Bind), int32(value))
 	return uniformUpdateErrorCheck()
 }
 
@@ -132,7 +132,7 @@ func UniformBool(id shader.ShaderID, uniform shader.UniformDesc, value bool) err
 	if value {
 		iv = 1
 	}
-	gl.ProgramUniform1i(uint32(id), int32(uniform.Index), iv)
+	gl.ProgramUniform1i(uint32(id), int32(uniform.Bind), iv)
 	return uniformUpdateErrorCheck()
 }
 
@@ -140,6 +140,6 @@ func UniformTexture2D(id shader.ShaderID, uniform shader.UniformDesc, slot textu
 	if uniform.Type != types.Texture2D {
 		return uniformTypeError(uniform, types.Bool)
 	}
-	gl.ProgramUniform1i(uint32(id), int32(uniform.Index), int32(slot))
+	gl.ProgramUniform1i(uint32(id), int32(uniform.Bind), int32(slot))
 	return uniformUpdateErrorCheck()
 }
