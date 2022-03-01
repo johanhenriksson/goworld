@@ -11,18 +11,18 @@ import (
 type C struct {
 	P vec3.T `vtx:"position,float,3"`
 	N vec3.T `vtx:"normal,float,3"`
-	C vec4.T `vtx:"color,float,4"`
+	C vec4.T `vtx:"color_0,float,4"`
 }
 
 // T - Textured Vertex
 type T struct {
 	P vec3.T `vtx:"position,float,3"`
 	N vec3.T `vtx:"normal,float,3"`
-	T vec2.T `vtx:"texcoord,float,2"`
+	T vec2.T `vtx:"texcoord_0,float,2"`
 }
 
 type UI struct {
 	P vec3.T  `vtx:"position,float,3"`
-	C color.T `vtx:"color,float,4"`
-	T vec2.T  `vtx:"texcoord,float,2"`
+	C color.T `vtx:"color_0,float,4"`
+	T vec2.T  `vtx:"texcoord_0,float,2"`
 }

@@ -1,8 +1,6 @@
 package screen_quad
 
 import (
-	"log"
-
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
@@ -39,7 +37,6 @@ func New(shader shader.T) T {
 
 	ptrs := vertex.ParsePointers(vtx)
 	ptrs.Bind(shader)
-	log.Println(ptrs)
 	q.vao.BufferTo(ptrs, vtx)
 
 	return q

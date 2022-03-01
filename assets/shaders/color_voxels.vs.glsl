@@ -6,7 +6,7 @@ uniform mat4 projection;
 
 layout(location=0) in vec3 position;
 in int normal_id;
-in vec3 color;
+in vec3 color_0;
 in float occlusion;
 
 out vec4 color0;
@@ -37,7 +37,7 @@ void main() {
     position0 = (mv * vec4(position, 1.0)).xyz;
 
     // pass color and occlusion
-    color0 = vec4(color * (1 - occlusion), 1);
+    color0 = vec4(color_0 * (1 - occlusion), 1);
 
     // finally, transform view -> clip space and output vertex position
     gl_Position = projection * vec4(position0, 1);
