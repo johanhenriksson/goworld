@@ -94,8 +94,8 @@ func (q *quad) compute() {
 	ptrs := vertex.ParsePointers(vtx)
 	ptrs.Bind(q.mat)
 
-	q.vao.Bind()
-	q.vao.BufferTo(ptrs, vtx)
+	q.vao.Buffer("vertex", vtx)
+	q.vao.SetPointers(ptrs)
 }
 
 func (q *quad) Draw(args render.Args) {

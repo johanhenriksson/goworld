@@ -73,5 +73,5 @@ func (c *ColorCube) generate() {
 		{P: vec3.New(-s, s, -s), N: vec3.UnitZN, C: co},
 		{P: vec3.New(s, s, -s), N: vec3.UnitZN, C: co},
 	}
-	c.Buffer(data)
+	c.Buffer("vertex", data)
 }

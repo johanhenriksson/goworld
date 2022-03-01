@@ -67,5 +67,5 @@ func (p *T) generate() {
 		o1, z1, x1, x1, z1, d1,
 		x2, z2, o2, d2, z2, x2,
 	}
-	p.Buffer(data)
+	p.Buffer("vertex", data)
 }

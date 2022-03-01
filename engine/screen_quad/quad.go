@@ -37,7 +37,9 @@ func New(shader shader.T) T {
 
 	ptrs := vertex.ParsePointers(vtx)
 	ptrs.Bind(shader)
-	q.vao.BufferTo(ptrs, vtx)
+
+	q.vao.Buffer("vertex", vtx)
+	q.vao.SetPointers(ptrs)
 
 	return q
 }

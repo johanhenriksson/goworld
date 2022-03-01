@@ -80,7 +80,7 @@ func (vbo *glvertexbuf) BufferFrom(ptr unsafe.Pointer, size int) {
 }
 
 // Buffer data to GPU memory
-func (vbo *glvertexbuf) Buffer(data interface{}) int {
+func (vbo *glvertexbuf) Buffer(data interface{}) (int, int) {
 	// make sure we've been passed a slice
 	t := reflect.TypeOf(data)
 	if t.Kind() != reflect.Slice {
@@ -99,5 +99,5 @@ func (vbo *glvertexbuf) Buffer(data interface{}) int {
 	ptr := unsafe.Pointer(v.Pointer())
 
 	vbo.BufferFrom(ptr, elements*size)
-	return elements
+	return elements, size
 }

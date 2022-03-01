@@ -53,5 +53,5 @@ func (li *T) compute() {
 		b.P = line.End
 		b.C = line.Color.Vec4()
 	}
-	li.Buffer(vertices)
+	li.Buffer("vertex", vertices)
 }

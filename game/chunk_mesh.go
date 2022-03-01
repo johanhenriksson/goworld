@@ -25,7 +25,7 @@ func (cm *ChunkMesh) Update(dt float32) {
 	cm.T.Update(dt)
 	select {
 	case newMesh := <-cm.meshComputed:
-		cm.Buffer(newMesh)
+		cm.Buffer("vertex", newMesh)
 	default:
 	}
 }
