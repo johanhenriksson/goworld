@@ -79,5 +79,5 @@ func (b *T) compute() {
 		{P: vec3.New(x+w, y, z+d), C: c},
 		{P: vec3.New(x+w, y+h, z+d), C: c},
 	}
-	b.Buffer(vertices)
+	b.Buffer("vertex", vertices)
 }

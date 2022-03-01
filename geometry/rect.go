@@ -193,7 +193,8 @@ func (q *Rect) compute() {
 	ptrs := vertex.ParsePointers(vtx)
 	ptrs.Bind(q.Material)
 
-	q.vao.BufferTo(ptrs, vtx)
+	q.vao.Buffer("vertex", vtx)
+	q.vao.SetPointers(ptrs)
 }
 
 func (q *Rect) Draw(args render.Args) {

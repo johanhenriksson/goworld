@@ -76,5 +76,5 @@ func (c *Cube) generate() {
 		{P: vec3.New(-s, s, -s), N: vec3.UnitZN, T: vec2.New(0, 1)},
 		{P: vec3.New(s, s, -s), N: vec3.UnitZN, T: vec2.New(1, 1)},
 	}
-	c.Buffer(data)
+	c.Buffer("vertex", data)
 }

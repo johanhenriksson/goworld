@@ -89,5 +89,5 @@ func (c *T) generate() {
 		data[o+2] = vertex.C{P: v2, N: n, C: c.Color.Vec4()}
 	}
 
-	c.Buffer(data)
+	c.Buffer("vertex", data)
 }

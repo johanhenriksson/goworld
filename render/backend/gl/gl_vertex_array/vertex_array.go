@@ -6,7 +6,6 @@ import (
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/backend/gl"
 	"github.com/johanhenriksson/goworld/render/backend/gl/gl_vertex_buffer"
-	"github.com/johanhenriksson/goworld/render/backend/types"
 	"github.com/johanhenriksson/goworld/render/vertex"
 	"github.com/johanhenriksson/goworld/render/vertex_array"
 	"github.com/johanhenriksson/goworld/render/vertex_buffer"
@@ -104,11 +103,6 @@ func (vao glvertexarray) Draw() error {
 	return nil
 }
 
-func (vao *glvertexarray) SetIndexType(t types.Type) {
-	// todo: get rid of this later
-	vao.index = gl.TypeCast(t)
-}
-
 // Buffer vertex data to the GPU
 func (vao *glvertexarray) Buffer(name string, data interface{}) {
 	vao.Bind()
@@ -125,45 +119,45 @@ func (vao *glvertexarray) Buffer(name string, data interface{}) {
 	}
 
 	// buffer data to vbo
-	elements := vbo.Buffer(data)
+	elements, size := vbo.Buffer(data)
 
 	// update number of elements
 	if !vao.Indexed() || name == "index" {
 		vao.Length = elements
+	}
+
+	// guess index type
+	if name == "index" {
+		vao.setIndexSize(size)
 	}
 }
 
 func (vao *glvertexarray) BufferRaw(name string, elements int, data []byte) {
 	vao.Buffer(name, data)
 
-	// overwrite length with the actual number of elements
-	vao.Length = elements
-}
-
-func (vao *glvertexarray) BufferTo(pointers vertex.Pointers, data interface{}) {
-	name := "vertex"
-
-	vao.Bind()
-
-	vbo, exists := vao.vbos[name]
-	if !exists {
-		// create new buffer
-		vbo = gl_vertex_buffer.New()
-		vao.vbos[name] = vbo
-	}
-
-	// buffer data to vbo
-	elements := vbo.Buffer(data)
-
-	// update number of elements
-	if !vao.Indexed() {
+	// rewrite index/number of elements with the actual values
+	if !vao.Indexed() || name == "index" {
 		vao.Length = elements
 	}
-
-	vao.SetPointers(pointers)
+	if name == "index" {
+		vao.setIndexSize(len(data) / elements)
+	}
 }
 
 func (vao *glvertexarray) SetPointers(pointers vertex.Pointers) {
 	vao.Bind()
 	gl.EnablePointers(pointers)
+}
+
+func (vao *glvertexarray) setIndexSize(size int) {
+	switch size {
+	case 1:
+		vao.index = gl.UInt8
+	case 2:
+		vao.index = gl.UInt16
+	case 4:
+		vao.index = gl.UInt32
+	default:
+		panic(fmt.Sprintf("illegal index size: %d", size))
+	}
 }

@@ -9,7 +9,6 @@ import (
 	"github.com/johanhenriksson/goworld/engine/deferred"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/backend/gl/gl_vertex_array"
-	"github.com/johanhenriksson/goworld/render/backend/types"
 	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/vertex"
 	"github.com/johanhenriksson/goworld/render/vertex_array"
@@ -26,10 +25,9 @@ type T interface {
 	engine.ForwardDrawable
 	engine.LineDrawable
 
-	SetIndexType(t types.Type)
 	SetPointers(vertex.Pointers)
 	BufferRaw(name string, elements int, data []byte)
-	Buffer(data interface{})
+	Buffer(name string, data interface{})
 }
 
 // mesh base
@@ -130,28 +128,19 @@ func (m *mesh) DrawShadow(args render.Args) error {
 	return m.vao.Draw()
 }
 
-func (m *mesh) Buffer(data interface{}) {
-	pointers := vertex.ParsePointers(data)
-	pointers.Bind(m.mat)
+func (m *mesh) Buffer(name string, data interface{}) {
+	m.vao.Buffer(name, data)
 
-	// compatibility hack
-	// ... but for what? this never seems to happen
-	// more like a sanity check
-	if len(pointers) == 0 {
-		panic(fmt.Errorf("error buffering mesh %s - no pointers", m.Name()))
+	if name == "vertex" {
+		pointers := vertex.ParsePointers(data)
+		pointers.Bind(m.mat)
+		m.vao.SetPointers(pointers)
 	}
-
-	m.vao.BufferTo(pointers, data)
 }
 
 //
 // these functions do not really belong here
 //
-
-func (m *mesh) SetIndexType(t types.Type) {
-	// get rid of this later
-	m.vao.SetIndexType(t)
-}
 
 func (m *mesh) BufferRaw(name string, elements int, data []byte) {
 	m.vao.BufferRaw(name, elements, data)
