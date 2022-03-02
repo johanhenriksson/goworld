@@ -1,13 +1,8 @@
 package mesh
 
 import (
-	"fmt"
-
 	"github.com/johanhenriksson/goworld/assets"
 	"github.com/johanhenriksson/goworld/core/object"
-	"github.com/johanhenriksson/goworld/engine"
-	"github.com/johanhenriksson/goworld/engine/deferred"
-	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/backend/gl/gl_vertex_array"
 	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/vertex"
@@ -15,14 +10,13 @@ import (
 
 type T interface {
 	object.Component
-	deferred.Drawable
-	deferred.ShadowDrawable
-	engine.ForwardDrawable
-	engine.LineDrawable
 
 	Mesh() vertex.Mesh
 	SetMesh(vertex.Mesh)
 	Material() material.T
+	Mode() DrawMode
+	CastShadows() bool
+	Vao() vertex.Array
 }
 
 // mesh base
@@ -77,69 +71,19 @@ func (m *mesh) SetMesh(data vertex.Mesh) {
 	m.data = data
 }
 
+func (m *mesh) Vao() vertex.Array {
+	// todo: remove this
+	return m.vao
+}
+
 func (m mesh) Material() material.T {
 	return m.mat
 }
 
-func (m *mesh) DrawDeferred(args render.Args) error {
-	if m.mode != Deferred {
-		return nil
-	}
-
-	// the actual draw call belongs to the renderer
-	// this should be extracted
-
-	if err := m.mat.Use(); err != nil {
-		return fmt.Errorf("failed to assign material %s in mesh %s: %w", m.mat.Name(), m.Name(), err)
-	}
-
-	// set up uniforms
-	m.mat.Mat4("model", args.Transform)
-	m.mat.Mat4("view", args.View)
-	m.mat.Mat4("projection", args.Projection)
-	m.mat.Mat4("mvp", args.MVP)
-	m.mat.Vec3("eye", args.Position)
-
-	return m.vao.Draw()
+func (m mesh) CastShadows() bool {
+	return m.mode != Lines
 }
 
-func (m *mesh) DrawForward(args render.Args) error {
-	if m.mode != Forward {
-		return nil
-	}
-
-	if err := m.mat.Use(); err != nil {
-		return fmt.Errorf("failed to assign material %s in mesh %s: %w", m.mat.Name(), m.Name(), err)
-	}
-
-	// set up uniforms
-	m.mat.Mat4("model", args.Transform)
-	m.mat.Mat4("view", args.View)
-	m.mat.Mat4("projection", args.Projection)
-	m.mat.Mat4("mvp", args.MVP)
-
-	return m.vao.Draw()
-}
-
-func (m *mesh) DrawLines(args render.Args) error {
-	if m.mode != Lines {
-		return nil
-	}
-
-	if err := m.mat.Use(); err != nil {
-		return fmt.Errorf("failed to assign material %s in mesh %s: %w", m.mat.Name(), m.Name(), err)
-	}
-
-	m.mat.Mat4("mvp", args.MVP)
-
-	return m.vao.Draw()
-}
-
-func (m *mesh) DrawShadow(args render.Args) error {
-	if m.mode == Lines {
-		// lines cant cast shadows
-		return nil
-	}
-
-	return m.vao.Draw()
+func (m mesh) Mode() DrawMode {
+	return m.mode
 }

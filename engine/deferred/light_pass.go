@@ -5,6 +5,7 @@ import (
 
 	"github.com/johanhenriksson/goworld/core/camera"
 	"github.com/johanhenriksson/goworld/core/light"
+	"github.com/johanhenriksson/goworld/core/mesh"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/core/object/query"
 	"github.com/johanhenriksson/goworld/engine/screen_quad"
@@ -99,7 +100,7 @@ func (p *LightPass) Draw(args render.Args, scene object.T) {
 	render.BlendAdditive()
 
 	// collect all shadow casting objects
-	drawables := query.New[ShadowDrawable]().Collect(scene)
+	drawables := query.New[mesh.T]().Where(castsShadows).Collect(scene)
 
 	lights := query.New[light.T]().Collect(scene)
 	for _, lit := range lights {
@@ -171,4 +172,8 @@ func (p *LightPass) FitLightToCamera(vpi mat4.T, desc *light.Descriptor) {
 
 	// finally, update light view projection
 	desc.ViewProj = desc.Projection.Mul(&desc.View)
+}
+
+func castsShadows(m mesh.T) bool {
+	return m.CastShadows()
 }

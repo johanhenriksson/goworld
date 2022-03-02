@@ -3,6 +3,7 @@ package engine
 import (
 	"fmt"
 
+	"github.com/johanhenriksson/goworld/core/mesh"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/core/object/query"
 	"github.com/johanhenriksson/goworld/render"
@@ -12,11 +13,6 @@ import (
 
 	ogl "github.com/go-gl/gl/v4.1-core/gl"
 )
-
-type ForwardDrawable interface {
-	object.Component
-	DrawForward(render.Args) error
-}
 
 // ForwardPass holds information required to perform a forward rendering pass.
 type ForwardPass struct {
@@ -72,9 +68,9 @@ func (p *ForwardPass) Draw(args render.Args, scene object.T) {
 		fmt.Println("uncaught GL error during pre-forward pass:", err)
 	}
 
-	objects := query.New[ForwardDrawable]().Collect(scene)
+	objects := query.New[mesh.T]().Where(isDrawForward).Collect(scene)
 	for _, drawable := range objects {
-		if err := drawable.DrawForward(args.Apply(drawable.Object().Transform().World())); err != nil {
+		if err := p.DrawForward(args, drawable); err != nil {
 			fmt.Printf("forward draw error in object %s: %s\n", drawable.Object().Name(), err)
 		}
 	}
@@ -85,4 +81,26 @@ func (p *ForwardPass) Draw(args render.Args, scene object.T) {
 	if err := gl.GetError(); err != nil {
 		fmt.Println("uncaught GL error during forward pass:", err)
 	}
+}
+
+func isDrawForward(m mesh.T) bool {
+	return m.Mode() == mesh.Forward
+}
+
+func (p *ForwardPass) DrawForward(args render.Args, m mesh.T) error {
+	args = args.Apply(m.Transform().World())
+
+	mat := m.Material()
+
+	if err := mat.Use(); err != nil {
+		return fmt.Errorf("failed to assign material %s in mesh %s: %w", mat.Name(), m.Name(), err)
+	}
+
+	// set up uniforms
+	mat.Mat4("model", args.Transform)
+	mat.Mat4("view", args.View)
+	mat.Mat4("projection", args.Projection)
+	mat.Mat4("mvp", args.MVP)
+
+	return m.Vao().Draw()
 }
