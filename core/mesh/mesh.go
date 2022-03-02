@@ -11,12 +11,7 @@ import (
 	"github.com/johanhenriksson/goworld/render/backend/gl/gl_vertex_array"
 	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/vertex"
-	"github.com/johanhenriksson/goworld/render/vertex_array"
-	"github.com/johanhenriksson/goworld/render/vertex_buffer"
 )
-
-// MeshBufferMap maps buffer names to vertex buffer objects
-type MeshBufferMap map[string]vertex_buffer.T
 
 type T interface {
 	object.Component
@@ -25,9 +20,9 @@ type T interface {
 	engine.ForwardDrawable
 	engine.LineDrawable
 
-	SetPointers(vertex.Pointers)
-	BufferRaw(name string, elements int, data []byte)
-	Buffer(name string, data interface{})
+	Mesh() vertex.Mesh
+	SetMesh(vertex.Mesh)
+	Material() material.T
 }
 
 // mesh base
@@ -35,23 +30,24 @@ type mesh struct {
 	object.Component
 
 	mat  material.T
-	vao  vertex_array.T
+	data vertex.Mesh
+	vao  vertex.Array
 	mode DrawMode
 }
 
 // New creates a new mesh component
 func New(mat material.T, mode DrawMode) T {
-	return NewPrimitiveMesh(render.Triangles, mat, mode)
+	return NewPrimitiveMesh(vertex.Triangles, mat, mode)
 }
 
 // NewLines creates a new line mesh component
 func NewLines() T {
 	material := assets.GetMaterialShared("lines")
-	return NewPrimitiveMesh(render.Lines, material, Lines)
+	return NewPrimitiveMesh(vertex.Lines, material, Lines)
 }
 
 // NewPrimitiveMesh creates a new mesh composed of a given GL primitive
-func NewPrimitiveMesh(primitive render.Primitive, mat material.T, mode DrawMode) *mesh {
+func NewPrimitiveMesh(primitive vertex.Primitive, mat material.T, mode DrawMode) *mesh {
 	m := &mesh{
 		Component: object.NewComponent(),
 		mode:      mode,
@@ -65,6 +61,22 @@ func (m mesh) Name() string {
 	return "Mesh"
 }
 
+func (m mesh) Mesh() vertex.Mesh {
+	return m.data
+}
+
+func (m *mesh) SetMesh(data vertex.Mesh) {
+	ptrs := data.Pointers()
+	ptrs.Bind(m.mat)
+	m.vao.SetPointers(ptrs)
+	m.vao.SetIndexSize(data.IndexSize())
+	m.vao.SetElements(data.Elements())
+	m.vao.Buffer("vertex", data.VertexData())
+	m.vao.Buffer("index", data.IndexData())
+
+	m.data = data
+}
+
 func (m mesh) Material() material.T {
 	return m.mat
 }
@@ -73,6 +85,9 @@ func (m *mesh) DrawDeferred(args render.Args) error {
 	if m.mode != Deferred {
 		return nil
 	}
+
+	// the actual draw call belongs to the renderer
+	// this should be extracted
 
 	if err := m.mat.Use(); err != nil {
 		return fmt.Errorf("failed to assign material %s in mesh %s: %w", m.mat.Name(), m.Name(), err)
@@ -125,28 +140,6 @@ func (m *mesh) DrawShadow(args render.Args) error {
 		// lines cant cast shadows
 		return nil
 	}
+
 	return m.vao.Draw()
-}
-
-func (m *mesh) Buffer(name string, data interface{}) {
-	m.vao.Buffer(name, data)
-
-	if name == "vertex" {
-		pointers := vertex.ParsePointers(data)
-		pointers.Bind(m.mat)
-		m.vao.SetPointers(pointers)
-	}
-}
-
-//
-// these functions do not really belong here
-//
-
-func (m *mesh) BufferRaw(name string, elements int, data []byte) {
-	m.vao.BufferRaw(name, elements, data)
-}
-
-func (m *mesh) SetPointers(ptrs vertex.Pointers) {
-	ptrs.Bind(m.mat)
-	m.vao.SetPointers(ptrs)
 }

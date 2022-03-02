@@ -10,7 +10,7 @@ import (
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/backend/gl/gl_vertex_array"
 	"github.com/johanhenriksson/goworld/render/material"
-	"github.com/johanhenriksson/goworld/render/vertex_array"
+	"github.com/johanhenriksson/goworld/render/vertex"
 )
 
 type ParticleDrawable interface {
@@ -55,7 +55,7 @@ type ParticleSystem struct {
 
 	positions vec3.Array
 	mat       material.T
-	vao       vertex_array.T
+	vao       vertex.Array
 }
 
 // Update the particle system
@@ -125,7 +125,7 @@ func NewParticleSystem(position vec3.T) *ParticleSystem {
 		MaxDur: 3,
 
 		mat:       mat,
-		vao:       gl_vertex_array.New(render.Points),
+		vao:       gl_vertex_array.New(vertex.Points),
 		positions: make(vec3.Array, count),
 	}
 

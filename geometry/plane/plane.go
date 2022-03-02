@@ -53,19 +53,23 @@ func (p *T) generate() {
 	y := float32(0.001)
 	c := p.Color.Vec4()
 
-	o1 := vertex.C{P: vec3.New(-s, y, -s), N: vec3.UnitY, C: c}
-	x1 := vertex.C{P: vec3.New(s, y, -s), N: vec3.UnitY, C: c}
-	z1 := vertex.C{P: vec3.New(-s, y, s), N: vec3.UnitY, C: c}
-	d1 := vertex.C{P: vec3.New(s, y, s), N: vec3.UnitY, C: c}
+	vertices := []vertex.C{
+		{P: vec3.New(-s, y, -s), N: vec3.UnitY, C: c}, // o1
+		{P: vec3.New(s, y, -s), N: vec3.UnitY, C: c},  // x1
+		{P: vec3.New(-s, y, s), N: vec3.UnitY, C: c},  // z1
+		{P: vec3.New(s, y, s), N: vec3.UnitY, C: c},   // d1
 
-	o2 := vertex.C{P: vec3.New(-s, -y, -s), N: vec3.UnitYN, C: c}
-	x2 := vertex.C{P: vec3.New(s, -y, -s), N: vec3.UnitYN, C: c}
-	z2 := vertex.C{P: vec3.New(-s, -y, s), N: vec3.UnitYN, C: c}
-	d2 := vertex.C{P: vec3.New(s, -y, s), N: vec3.UnitYN, C: c}
-
-	data := []vertex.C{
-		o1, z1, x1, x1, z1, d1,
-		x2, z2, o2, d2, z2, x2,
+		{P: vec3.New(-s, -y, -s), N: vec3.UnitYN, C: c}, // o2
+		{P: vec3.New(s, -y, -s), N: vec3.UnitYN, C: c},  // x2
+		{P: vec3.New(-s, -y, s), N: vec3.UnitYN, C: c},  // z2
+		{P: vec3.New(s, -y, s), N: vec3.UnitYN, C: c},   // d2
 	}
-	p.Buffer("vertex", data)
+
+	indices := []uint8{
+		0, 2, 1, 1, 2, 3,
+		5, 6, 4, 7, 6, 5,
+	}
+
+	mesh := vertex.NewTriangles("plane", vertices, indices)
+	p.SetMesh(mesh)
 }

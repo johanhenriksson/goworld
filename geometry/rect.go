@@ -9,7 +9,6 @@ import (
 	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/texture"
 	"github.com/johanhenriksson/goworld/render/vertex"
-	"github.com/johanhenriksson/goworld/render/vertex_array"
 )
 
 // Rect with support for borders and rounded corners.
@@ -22,7 +21,7 @@ type Rect struct {
 
 	segments int
 	border   float32
-	vao      vertex_array.T
+	vao      vertex.Array
 }
 
 func NewRect(mat material.T, size vec2.T) *Rect {
@@ -35,7 +34,7 @@ func NewRect(mat material.T, size vec2.T) *Rect {
 		Invert:   false,
 		Depth:    false,
 
-		vao: gl_vertex_array.New(render.Triangles),
+		vao: gl_vertex_array.New(vertex.Triangles),
 	}
 	q.compute()
 	return q

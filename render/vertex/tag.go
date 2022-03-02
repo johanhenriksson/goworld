@@ -42,15 +42,15 @@ func ParseTag(tag string) (Tag, error) {
 }
 
 func ParsePointers(data interface{}) Pointers {
-	t := reflect.TypeOf(data)
-	if t.Kind() != reflect.Slice {
-		return nil
-	}
+	var el reflect.Type
 
-	el := t.Elem()
-	if el.Kind() != reflect.Struct {
-		fmt.Println("not a struct")
-		return nil
+	t := reflect.TypeOf(data)
+	if t.Kind() == reflect.Struct {
+		el = t
+	} else if t.Kind() == reflect.Slice {
+		el = t.Elem()
+	} else {
+		panic("must be struct or slice")
 	}
 
 	size := int(el.Size())

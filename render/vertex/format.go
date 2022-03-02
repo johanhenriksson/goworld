@@ -26,3 +26,7 @@ type UI struct {
 	C color.T `vtx:"color_0,float,4"`
 	T vec2.T  `vtx:"texcoord_0,float,2"`
 }
+
+type Indices interface {
+	uint8 | uint16 | uint32
+}

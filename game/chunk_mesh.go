@@ -1,21 +1,24 @@
 package game
 
 import (
+	"fmt"
+
 	"github.com/johanhenriksson/goworld/assets"
 	"github.com/johanhenriksson/goworld/core/mesh"
+	"github.com/johanhenriksson/goworld/render/vertex"
 )
 
 type ChunkMesh struct {
 	mesh.T
 	*Chunk
-	meshComputed chan []VoxelVertex
+	meshComputed chan vertex.Mesh
 }
 
 func NewChunkMesh(chunk *Chunk) *ChunkMesh {
 	chk := &ChunkMesh{
 		T:            mesh.New(assets.GetMaterialShared("color_voxels"), mesh.Deferred),
 		Chunk:        chunk,
-		meshComputed: make(chan []VoxelVertex),
+		meshComputed: make(chan vertex.Mesh),
 	}
 	chk.Compute()
 	return chk
@@ -25,7 +28,8 @@ func (cm *ChunkMesh) Update(dt float32) {
 	cm.T.Update(dt)
 	select {
 	case newMesh := <-cm.meshComputed:
-		cm.Buffer("vertex", newMesh)
+		fmt.Println("set chunk data")
+		cm.SetMesh(newMesh)
 	default:
 	}
 }
@@ -38,8 +42,8 @@ func (cm *ChunkMesh) Compute() {
 	}()
 }
 
-func (cm *ChunkMesh) computeVertexData() []VoxelVertex {
-	data := make([]VoxelVertex, 0, 64)
+func (cm *ChunkMesh) computeVertexData() vertex.Mesh {
+	vertices := make([]VoxelVertex, 0, 1024)
 	light := cm.Light.Brightness
 	Omax := float32(220)
 
@@ -112,7 +116,7 @@ func (cm *ChunkMesh) computeVertexData() []VoxelVertex {
 						if ynf && znf {
 							v4.O = byte(Omax * (1 - (lzn+lyn+l)/3))
 						}
-						data = append(data, v2, v3, v1, v4, v3, v2)
+						vertices = append(vertices, v2, v3, v1, v4, v3, v2)
 					}
 
 					if xnf {
@@ -150,7 +154,7 @@ func (cm *ChunkMesh) computeVertexData() []VoxelVertex {
 						if ynf && zpf {
 							v4.O = byte(Omax * (1 - (lyn+lzp+l)/3))
 						}
-						data = append(data, v2, v3, v1, v4, v3, v2)
+						vertices = append(vertices, v2, v3, v1, v4, v3, v2)
 					}
 				}
 
@@ -198,7 +202,7 @@ func (cm *ChunkMesh) computeVertexData() []VoxelVertex {
 						if xnf && znf {
 							v4.O = byte(Omax * (1 - (lxn+lzn+l)/3))
 						}
-						data = append(data, v1, v3, v2, v2, v3, v4)
+						vertices = append(vertices, v1, v3, v2, v2, v3, v4)
 					}
 
 					if ynf {
@@ -236,7 +240,7 @@ func (cm *ChunkMesh) computeVertexData() []VoxelVertex {
 						if xnf && znf {
 							v4.O = byte(Omax * (1 - l/3))
 						}
-						data = append(data, v2, v3, v1, v4, v3, v2)
+						vertices = append(vertices, v2, v3, v1, v4, v3, v2)
 					}
 				}
 
@@ -285,7 +289,7 @@ func (cm *ChunkMesh) computeVertexData() []VoxelVertex {
 						if xpf && ynf {
 							v4.O = byte(Omax * (1 - (lxp+lyn+l)/3))
 						}
-						data = append(data, v2, v3, v1, v4, v3, v2)
+						vertices = append(vertices, v2, v3, v1, v4, v3, v2)
 					}
 
 					if znf {
@@ -323,11 +327,14 @@ func (cm *ChunkMesh) computeVertexData() []VoxelVertex {
 						if xpf && ynf {
 							v4.O = byte(Omax * (1 - (lxp+lyn+l)/3))
 						}
-						data = append(data, v1, v3, v2, v2, v3, v4)
+						vertices = append(vertices, v1, v3, v2, v2, v3, v4)
 					}
 				}
 			}
 		}
 	}
-	return data
+
+	fmt.Println("vertices", len(vertices))
+
+	return vertex.NewTriangles("chunk", vertices, []uint16{})
 }

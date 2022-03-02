@@ -53,5 +53,7 @@ func (li *T) compute() {
 		b.P = line.End
 		b.C = line.Color.Vec4()
 	}
-	li.Buffer("vertex", vertices)
+
+	mesh := vertex.NewLines("lines", vertices, []uint16{})
+	li.SetMesh(mesh)
 }

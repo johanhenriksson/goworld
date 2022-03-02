@@ -8,7 +8,6 @@ import (
 	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/vertex"
-	"github.com/johanhenriksson/goworld/render/vertex_array"
 )
 
 type T interface {
@@ -30,7 +29,7 @@ type Props struct {
 
 type quad struct {
 	props Props
-	vao   vertex_array.T
+	vao   vertex.Array
 	mat   material.T
 }
 
@@ -38,7 +37,7 @@ func New(mat material.T, props Props) T {
 	q := &quad{
 		props: props,
 		mat:   mat,
-		vao:   gl_vertex_array.New(render.Triangles),
+		vao:   gl_vertex_array.New(vertex.Triangles),
 	}
 	q.compute()
 	return q
@@ -94,8 +93,11 @@ func (q *quad) compute() {
 	ptrs := vertex.ParsePointers(vtx)
 	ptrs.Bind(q.mat)
 
-	q.vao.Buffer("vertex", vtx)
 	q.vao.SetPointers(ptrs)
+	q.vao.SetIndexSize(0)
+	q.vao.SetElements(len(vtx))
+
+	q.vao.Buffer("vertex", vtx)
 }
 
 func (q *quad) Draw(args render.Args) {
