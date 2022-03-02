@@ -6,7 +6,7 @@ import (
 	"unsafe"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
-	"github.com/johanhenriksson/goworld/render/vertex_buffer"
+	"github.com/johanhenriksson/goworld/render/vertex"
 )
 
 // glvertexbuf represents an OpenGL Vertex Buffer object
@@ -18,7 +18,7 @@ type glvertexbuf struct {
 }
 
 // New creates a new GL vertex buffer object
-func New() vertex_buffer.T {
+func New() vertex.Buffer {
 	vbo := &glvertexbuf{
 		Target: gl.ARRAY_BUFFER,
 		Usage:  gl.STATIC_DRAW,
@@ -80,7 +80,7 @@ func (vbo *glvertexbuf) BufferFrom(ptr unsafe.Pointer, size int) {
 }
 
 // Buffer data to GPU memory
-func (vbo *glvertexbuf) Buffer(data interface{}) (int, int) {
+func (vbo *glvertexbuf) Buffer(data interface{}) {
 	// make sure we've been passed a slice
 	t := reflect.TypeOf(data)
 	if t.Kind() != reflect.Slice {
@@ -99,5 +99,4 @@ func (vbo *glvertexbuf) Buffer(data interface{}) (int, int) {
 	ptr := unsafe.Pointer(v.Pointer())
 
 	vbo.BufferFrom(ptr, elements*size)
-	return elements, size
 }

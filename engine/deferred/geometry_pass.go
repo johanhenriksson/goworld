@@ -47,6 +47,18 @@ func (p *GeometryPass) Draw(args render.Args, scene object.T) {
 	// lets not draw stuff thats behind us at the very least
 	// ... things need bounding boxes though.
 
+	// render passes basically want to collect objects based on their material
+	// this is probably the place where all gpu interaction should happen - even moving data to the gpu
+
+	// collect everything that should be rendered
+	// check the asset cache if its available on the gpu
+	// if not, queue upload
+	// else, draw
+
+	// this way, the implementation details like whether its a VAO or VBO can be hidden from the scene components themselves
+	// they only keep a description of the mesh to be rendered, along with material etc
+	// the asset cache could be shared among all render passes
+
 	objects := query.New[Drawable]().Collect(scene)
 	for _, drawable := range objects {
 		if err := drawable.DrawDeferred(args.Apply(drawable.Object().Transform().World())); err != nil {
