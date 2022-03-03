@@ -20,6 +20,7 @@ package main
 import (
 	"fmt"
 
+	"github.com/johanhenriksson/goworld/assets"
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/core/object/query"
@@ -27,6 +28,7 @@ import (
 	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/game"
 	"github.com/johanhenriksson/goworld/geometry/gizmo/mover"
+	"github.com/johanhenriksson/goworld/geometry/gltf"
 	"github.com/johanhenriksson/goworld/gui"
 	"github.com/johanhenriksson/goworld/gui/node"
 	"github.com/johanhenriksson/goworld/gui/style"
@@ -70,6 +72,9 @@ func makeScene(renderer engine.Renderer, scene object.T) {
 	gizmo := mover.New(mover.Args{})
 	gizmo.Transform().SetPosition(vec3.New(-1, 0, -1))
 	scene.Adopt(gizmo)
+
+	asd := gltf.Load(assets.GetMaterial("color.d"), "models/stack.glb")
+	scene.Adopt(asd)
 }
 
 func makeGui(renderer *engine.GLRenderer, scene object.T) {
