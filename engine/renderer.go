@@ -115,5 +115,6 @@ func (r *Renderer) Draw(scene object.T) {
 	}
 
 	// reclaim mesh memory
+	r.meshes.Tick()
 	r.meshes.Evict()
 }
