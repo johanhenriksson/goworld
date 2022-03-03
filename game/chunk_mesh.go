@@ -6,17 +6,21 @@ import (
 	"github.com/johanhenriksson/goworld/render/vertex"
 )
 
+type MeshData vertex.MutableMesh[VoxelVertex, uint16]
+
 type ChunkMesh struct {
 	mesh.T
 	*Chunk
-	meshComputed chan vertex.Mesh
+	meshdata     MeshData
+	meshComputed chan MeshData
 }
 
 func NewChunkMesh(chunk *Chunk) *ChunkMesh {
 	chk := &ChunkMesh{
 		T:            mesh.New(assets.GetMaterialShared("color_voxels"), mesh.Deferred),
 		Chunk:        chunk,
-		meshComputed: make(chan vertex.Mesh),
+		meshdata:     vertex.NewTriangles("chunk", []VoxelVertex{}, []uint16{}),
+		meshComputed: make(chan MeshData),
 	}
 	chk.Compute()
 	return chk
@@ -26,6 +30,7 @@ func (cm *ChunkMesh) Update(dt float32) {
 	cm.T.Update(dt)
 	select {
 	case newMesh := <-cm.meshComputed:
+		cm.meshdata = newMesh
 		cm.SetMesh(newMesh)
 	default:
 	}
@@ -39,7 +44,7 @@ func (cm *ChunkMesh) Compute() {
 	}()
 }
 
-func (cm *ChunkMesh) computeVertexData() vertex.Mesh {
+func (cm *ChunkMesh) computeVertexData() MeshData {
 	vertices := make([]VoxelVertex, 0, 1024)
 	light := cm.Light.Brightness
 	Omax := float32(220)
@@ -331,5 +336,6 @@ func (cm *ChunkMesh) computeVertexData() vertex.Mesh {
 		}
 	}
 
-	return vertex.NewTriangles("chunk", vertices, []uint16{})
+	cm.meshdata.Update(vertices, []uint16{})
+	return cm.meshdata
 }

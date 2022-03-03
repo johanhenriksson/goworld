@@ -9,14 +9,8 @@ import (
 )
 
 type BufferedMesh interface {
-	Delete()
 	Draw() error
 }
-
-type nilmesh struct{}
-
-func (n nilmesh) Draw() error { return nil }
-func (n nilmesh) Delete()     {}
 
 type Meshes interface {
 	Fetch(vertex.Mesh, material.T) BufferedMesh
@@ -24,8 +18,9 @@ type Meshes interface {
 }
 
 type entry struct {
-	age  int
-	mesh BufferedMesh
+	age     int
+	version int
+	mesh    vertex.Array
 }
 
 type meshes struct {
@@ -46,27 +41,50 @@ func (m *meshes) Fetch(mesh vertex.Mesh, mat material.T) BufferedMesh {
 	}
 
 	line, hit := m.cache[mesh.Id()]
-	if hit {
-		line.age--
+	if !hit {
+		log.Println("buffering new mesh", mesh.Id(), "version", mesh.Version())
+		return m.instantiate(mesh, mat)
+	}
+
+	// decrement age (frame since last use)
+	line.age--
+
+	// if we have the appropriate version, just return it
+	if line.version == mesh.Version() {
 		return line.mesh
 	}
 
-	// this is where we create a vao!
+	// version has changed, update the mesh
+	log.Println("updating existing mesh", mesh.Id(), "to version", mesh.Version())
+	return m.update(line, mesh, mat)
+}
+
+func (m *meshes) instantiate(mesh vertex.Mesh, mat material.T) BufferedMesh {
+	// most of this is opengl-specific and could be extracted to make the cache more general
+
 	vao := gl_vertex_array.New(mesh.Primitive())
+
+	line := &entry{
+		mesh: vao,
+	}
+	m.cache[mesh.Id()] = line
+	return m.update(line, mesh, mat)
+}
+
+func (m *meshes) update(line *entry, mesh vertex.Mesh, mat material.T) BufferedMesh {
+	// most of this is opengl-specific and could be extracted to make the cache more general
 
 	ptrs := mesh.Pointers()
 	ptrs.Bind(mat)
-	vao.SetPointers(ptrs)
-	vao.SetIndexSize(mesh.IndexSize())
-	vao.SetElements(mesh.Elements())
-	vao.Buffer("vertex", mesh.VertexData())
-	vao.Buffer("index", mesh.IndexData())
 
-	log.Println("buffered mesh", mesh.Id(), "to gpu")
-	m.cache[mesh.Id()] = &entry{
-		mesh: vao,
-	}
-	return vao
+	line.mesh.SetPointers(ptrs)
+	line.mesh.SetIndexSize(mesh.IndexSize())
+	line.mesh.SetElements(mesh.Elements())
+	line.mesh.Buffer("vertex", mesh.VertexData())
+	line.mesh.Buffer("index", mesh.IndexData())
+	line.version = mesh.Version()
+
+	return line.mesh
 }
 
 func (m *meshes) Evict() {
