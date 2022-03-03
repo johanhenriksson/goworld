@@ -73,8 +73,8 @@ func makeScene(renderer engine.Renderer, scene object.T) {
 	gizmo.Transform().SetPosition(vec3.New(-1, 0, -1))
 	scene.Adopt(gizmo)
 
-	asd := gltf.Load(assets.GetMaterial("color.d"), "models/sphere.glb")
-	scene.Attach(asd)
+	asd := gltf.Load(assets.GetMaterial("color.d"), "models/stack.glb")
+	scene.Adopt(asd)
 }
 
 func makeGui(renderer *engine.GLRenderer, scene object.T) {

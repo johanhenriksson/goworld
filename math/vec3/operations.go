@@ -15,6 +15,13 @@ func NewI(x, y, z int) T {
 	return T{float32(x), float32(y), float32(z)}
 }
 
+func FromSlice(v []float32) T {
+	if len(v) < 3 {
+		panic("slice must have at least 3 components")
+	}
+	return T{v[0], v[1], v[2]}
+}
+
 // Extend a vec2 to a vec3 by adding a Z component
 func Extend(v vec2.T, z float32) T {
 	return T{v.X, v.Y, z}
