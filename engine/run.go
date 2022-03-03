@@ -6,13 +6,16 @@ import (
 	"os"
 	"runtime/pprof"
 
+	"github.com/johanhenriksson/goworld/core/camera"
 	"github.com/johanhenriksson/goworld/core/object"
+	"github.com/johanhenriksson/goworld/core/object/query"
 	"github.com/johanhenriksson/goworld/core/window"
+	"github.com/johanhenriksson/goworld/render"
 )
 
 var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
 
-type SceneFunc func(*Renderer, object.T)
+type SceneFunc func(Renderer, object.T)
 
 type Args struct {
 	Title     string
@@ -51,7 +54,7 @@ func Run(args Args) {
 	}
 
 	// initialize graphics pipeline
-	renderer := NewRenderer(wnd)
+	renderer := NewRenderer()
 
 	// create scene
 	scene := object.New("Scene")
@@ -59,13 +62,29 @@ func Run(args Args) {
 	args.SceneFunc(renderer, scene)
 
 	// run the render loop
-	fmt.Println("Ready")
+	fmt.Println("ready")
+
 	for !wnd.ShouldClose() {
 		wnd.Poll()
+
+		w, h := wnd.Size()
+		screen := render.Screen{
+			Width:  w,
+			Height: h,
+			Scale:  wnd.Scale(),
+		}
+
+		// update scene
 		scene.Update(0.030)
 
+		// find the first active camera
+		camera := query.New[camera.T]().First(scene)
+
+		args := CreateRenderArgs(screen, camera)
+
+		// draw
 		backend.Aquire()
-		renderer.Draw(scene)
+		renderer.Draw(args, scene)
 		backend.Present()
 	}
 }

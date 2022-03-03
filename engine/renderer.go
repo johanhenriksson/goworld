@@ -1,24 +1,19 @@
 package engine
 
 import (
-	"fmt"
-
-	"github.com/johanhenriksson/goworld/assets"
-	"github.com/johanhenriksson/goworld/core/camera"
 	"github.com/johanhenriksson/goworld/core/object"
-	"github.com/johanhenriksson/goworld/core/object/query"
-	"github.com/johanhenriksson/goworld/core/window"
 	"github.com/johanhenriksson/goworld/engine/cache"
 	"github.com/johanhenriksson/goworld/engine/deferred"
 	"github.com/johanhenriksson/goworld/engine/effect"
-	"github.com/johanhenriksson/goworld/render/color"
+	"github.com/johanhenriksson/goworld/render"
 )
 
-// PassMap maps names to Render Passes
-type PassMap map[string]DrawPass
+type Renderer interface {
+	Draw(args render.Args, scene object.T)
+}
 
-// Renderer holds references to the Scene and is responsible for executing render passes in order
-type Renderer struct {
+// GLRenderer holds references to the Scene and is responsible for executing render passes in order
+type GLRenderer struct {
 	Passes []DrawPass
 
 	Pre      *PrePass
@@ -31,17 +26,13 @@ type Renderer struct {
 	Lines    *LinePass
 	Gui      *GuiPass
 
-	meshes  cache.Meshes
-	passMap PassMap
-	window  window.T
+	meshes cache.Meshes
 }
 
 // NewRenderer instantiates a new rendering pipeline.
-func NewRenderer(window window.T) *Renderer {
-	r := &Renderer{
-		passMap: make(PassMap),
-		window:  window,
-		meshes:  cache.NewMeshes(),
+func NewRenderer() Renderer {
+	r := &GLRenderer{
+		meshes: cache.NewMeshes(),
 	}
 
 	// deferred rendering pass
@@ -51,7 +42,7 @@ func NewRenderer(window window.T) *Renderer {
 	// forward pass
 	r.Forward = NewForwardPass(r.Geometry.Buffer, r.Light.Output, r.meshes)
 
-	// postprocess and output
+	// ssao pass
 	r.SSAO = effect.NewSSAOPass(r.Geometry.Buffer, effect.SSAOSettings{
 		Samples: 16,
 		Radius:  0.3,
@@ -60,16 +51,16 @@ func NewRenderer(window window.T) *Renderer {
 		Scale:   2,
 	})
 
-	white := assets.GetColorTexture(color.White)
-	white.Height()
-
-	// r.Colors = effect.NewColorPass(r.Light.Output, "saturated", white)
+	// color correction & ssao merge
 	r.Colors = effect.NewColorPass(r.Light.Output, "saturated", r.SSAO.Gaussian.Output)
+
+	// output world image
 	r.Output = NewOutputPass(r.Colors.Output.Texture(), r.Geometry.Buffer.Depth())
 
 	// lines
 	r.Lines = NewLinePass(r.meshes)
 
+	// gui
 	r.Gui = NewGuiPass()
 
 	r.Passes = []DrawPass{
@@ -87,29 +78,8 @@ func NewRenderer(window window.T) *Renderer {
 	return r
 }
 
-// Append a new render pass
-func (r *Renderer) Append(name string, pass DrawPass) {
-	if len(name) == 0 {
-		panic(fmt.Errorf("render passes must have names"))
-	}
-
-	r.Passes = append(r.Passes, pass)
-	if len(name) > 0 {
-		r.passMap[name] = pass
-	}
-}
-
-// Get render pass by name
-func (r *Renderer) Get(name string) DrawPass {
-	return r.passMap[name]
-}
-
 // Draw the world.
-func (r *Renderer) Draw(scene object.T) {
-	// find the first active camera
-	camera := query.New[camera.T]().First(scene)
-
-	args := CreateRenderArgs(r.window, camera)
+func (r *GLRenderer) Draw(args render.Args, scene object.T) {
 	for _, pass := range r.Passes {
 		pass.Draw(args, scene)
 	}
