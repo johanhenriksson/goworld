@@ -1,8 +1,6 @@
 package box
 
 import (
-	"fmt"
-
 	"github.com/johanhenriksson/goworld/core/mesh"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/math/vec3"
@@ -49,16 +47,12 @@ func Builder(out **T, args Args) *object.Builder {
 	return b.Attach(*out)
 }
 
-func (b *T) String() string {
-	return fmt.Sprintf("Box%+v", b.Args)
-}
-
 func (b *T) compute() {
 	var x, y, z float32
 	w, h, d := b.Size.X, b.Size.Y, b.Size.Z
 	c := b.Color.Vec4()
 
-	mesh := vertex.NewLines(b.String(), []vertex.C{
+	mesh := vertex.NewLines("box", []vertex.C{
 		// bottom square
 		{P: vec3.New(x, y, z), C: c},     // 0
 		{P: vec3.New(x+w, y, z), C: c},   // 1

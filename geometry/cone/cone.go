@@ -1,8 +1,6 @@
 package cone
 
 import (
-	"fmt"
-
 	"github.com/johanhenriksson/goworld/assets"
 	"github.com/johanhenriksson/goworld/core/mesh"
 	"github.com/johanhenriksson/goworld/core/object"
@@ -92,6 +90,5 @@ func (c *T) generate() {
 	}
 
 	mesh := vertex.NewTriangles("cone", data, []uint16{})
-	fmt.Println(mesh.IndexData())
 	c.SetMesh(mesh)
 }

@@ -8,7 +8,7 @@ import (
 	"github.com/johanhenriksson/goworld/render/color"
 )
 
-func CreateScene(renderer *engine.Renderer, scene object.T) (*Player, *Chunk) {
+func CreateScene(renderer engine.Renderer, scene object.T) (*Player, *Chunk) {
 	scene.Attach(light.NewDirectional(light.DirectionalArgs{
 		Intensity: 1.6,
 		Color:     color.RGB(0.9*0.973, 0.9*0.945, 0.9*0.776),

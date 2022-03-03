@@ -2,6 +2,8 @@ package deferred
 
 import (
 	"github.com/johanhenriksson/goworld/core/light"
+	"github.com/johanhenriksson/goworld/core/mesh"
+	"github.com/johanhenriksson/goworld/engine/cache"
 	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/backend/gl/gl_framebuffer"
@@ -21,10 +23,11 @@ type ShadowPass struct {
 
 	mat       material.T
 	shadowmap framebuffer.Depth
+	meshes    cache.Meshes
 }
 
 // NewShadowPass creates a new shadow pass
-func NewShadowPass(size int) *ShadowPass {
+func NewShadowPass(size int, meshes cache.Meshes) *ShadowPass {
 	fbo := gl_framebuffer.NewDepth(size, size)
 
 	// set the shadow buffer texture to clamp to a white border so that samples
@@ -49,12 +52,13 @@ func NewShadowPass(size int) *ShadowPass {
 
 		mat:       mat,
 		shadowmap: fbo,
+		meshes:    meshes,
 	}
 	return p
 }
 
 // DrawLight draws a shadow pass for the given light.
-func (p *ShadowPass) DrawLight(objects []ShadowDrawable, lit *light.Descriptor) {
+func (p *ShadowPass) DrawLight(meshes []mesh.T, lit *light.Descriptor) {
 	if !lit.Shadows {
 		return
 	}
@@ -86,12 +90,14 @@ func (p *ShadowPass) DrawLight(objects []ShadowDrawable, lit *light.Descriptor) 
 	// todo: view frustum culling based on the lights view projection
 
 	p.mat.Use()
-	for _, drawable := range objects {
-		objArgs := args.Apply(drawable.Object().Transform().World())
+	for _, mesh := range meshes {
+		objArgs := args.Apply(mesh.Object().Transform().World())
 		if err := p.mat.Mat4("mvp", objArgs.MVP); err != nil {
 			panic("failed to set shadow projection")
 		}
-		drawable.DrawShadow(objArgs)
+
+		drawable := p.meshes.Fetch(mesh.Mesh(), mesh.Material())
+		drawable.Draw()
 	}
 
 	render.CullFace(render.CullBack)

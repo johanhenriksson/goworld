@@ -49,17 +49,21 @@ func main() {
 
 // the renderer object should probably not be exposed to the scene at all
 // currently, access to the geometry buffer is needed for 2 things:
+//
 // - object picking (editor)
 // - framebuffer debug windows
+//
+// in both cases, what we need to access is framebuffer textures
 
-func makeScene(renderer *engine.Renderer, scene object.T) {
-	makeGui(renderer, scene)
+func makeScene(renderer engine.Renderer, scene object.T) {
+	glrender := renderer.(*engine.GLRenderer)
+	makeGui(glrender, scene)
 
 	// create voxel chunk scene
 	player, chunk := game.CreateScene(renderer, scene)
 
 	// create editor
-	edit := editor.NewEditor(chunk, player.Camera, renderer.Geometry.Buffer)
+	edit := editor.NewEditor(chunk, player.Camera, glrender.Geometry.Buffer)
 	scene.Adopt(edit.Object())
 
 	// little gizmo thingy
@@ -68,7 +72,7 @@ func makeScene(renderer *engine.Renderer, scene object.T) {
 	scene.Adopt(gizmo)
 }
 
-func makeGui(renderer *engine.Renderer, scene object.T) {
+func makeGui(renderer *engine.GLRenderer, scene object.T) {
 	scene.Attach(gui.New(func() node.T {
 		return rect.New("sidebar", rect.Props{
 			OnMouseDown: func(e mouse.Event) {},
