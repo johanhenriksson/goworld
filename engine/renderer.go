@@ -8,6 +8,7 @@ import (
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/core/object/query"
 	"github.com/johanhenriksson/goworld/core/window"
+	"github.com/johanhenriksson/goworld/engine/cache"
 	"github.com/johanhenriksson/goworld/engine/deferred"
 	"github.com/johanhenriksson/goworld/engine/effect"
 	"github.com/johanhenriksson/goworld/render/color"
@@ -30,6 +31,7 @@ type Renderer struct {
 	Lines    *LinePass
 	Gui      *GuiPass
 
+	meshes  cache.Meshes
 	passMap PassMap
 	window  window.T
 }
@@ -39,14 +41,15 @@ func NewRenderer(window window.T) *Renderer {
 	r := &Renderer{
 		passMap: make(PassMap),
 		window:  window,
+		meshes:  cache.NewMeshes(),
 	}
 
 	// deferred rendering pass
-	r.Geometry = deferred.NewGeometryPass()
-	r.Light = deferred.NewLightPass(r.Geometry.Buffer)
+	r.Geometry = deferred.NewGeometryPass(r.meshes)
+	r.Light = deferred.NewLightPass(r.Geometry.Buffer, r.meshes)
 
 	// forward pass
-	r.Forward = NewForwardPass(r.Geometry.Buffer, r.Light.Output)
+	r.Forward = NewForwardPass(r.Geometry.Buffer, r.Light.Output, r.meshes)
 
 	// postprocess and output
 	r.SSAO = effect.NewSSAOPass(r.Geometry.Buffer, effect.SSAOSettings{
@@ -65,7 +68,7 @@ func NewRenderer(window window.T) *Renderer {
 	r.Output = NewOutputPass(r.Colors.Output.Texture(), r.Geometry.Buffer.Depth())
 
 	// lines
-	r.Lines = NewLinePass()
+	r.Lines = NewLinePass(r.meshes)
 
 	r.Gui = NewGuiPass()
 
@@ -110,4 +113,7 @@ func (r *Renderer) Draw(scene object.T) {
 	for _, pass := range r.Passes {
 		pass.Draw(args, scene)
 	}
+
+	// reclaim mesh memory
+	r.meshes.Evict()
 }

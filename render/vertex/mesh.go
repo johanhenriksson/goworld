@@ -1,6 +1,11 @@
 package vertex
 
-import "reflect"
+import (
+	"fmt"
+	"reflect"
+)
+
+var nextID int = 1
 
 type Mesh interface {
 	Id() string
@@ -45,6 +50,9 @@ func (m *mesh[T, K]) Update(vertices []T, indices []K) {
 }
 
 func NewMesh[T any, K Indices](id string, primitive Primitive, vertices []T, indices []K) Mesh {
+	id = fmt.Sprintf("%s-%d", id, nextID)
+	nextID++
+
 	if len(indices) == 0 {
 		indices = make([]K, len(vertices))
 		for i := 0; i < len(indices); i++ {

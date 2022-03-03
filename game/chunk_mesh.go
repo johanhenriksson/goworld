@@ -1,8 +1,6 @@
 package game
 
 import (
-	"fmt"
-
 	"github.com/johanhenriksson/goworld/assets"
 	"github.com/johanhenriksson/goworld/core/mesh"
 	"github.com/johanhenriksson/goworld/render/vertex"
@@ -28,7 +26,6 @@ func (cm *ChunkMesh) Update(dt float32) {
 	cm.T.Update(dt)
 	select {
 	case newMesh := <-cm.meshComputed:
-		fmt.Println("set chunk data")
 		cm.SetMesh(newMesh)
 	default:
 	}
@@ -333,8 +330,6 @@ func (cm *ChunkMesh) computeVertexData() vertex.Mesh {
 			}
 		}
 	}
-
-	fmt.Println("vertices", len(vertices))
 
 	return vertex.NewTriangles("chunk", vertices, []uint16{})
 }

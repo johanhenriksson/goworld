@@ -3,7 +3,6 @@ package mesh
 import (
 	"github.com/johanhenriksson/goworld/assets"
 	"github.com/johanhenriksson/goworld/core/object"
-	"github.com/johanhenriksson/goworld/render/backend/gl/gl_vertex_array"
 	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/vertex"
 )
@@ -16,7 +15,6 @@ type T interface {
 	Material() material.T
 	Mode() DrawMode
 	CastShadows() bool
-	Vao() vertex.Array
 }
 
 // mesh base
@@ -25,7 +23,6 @@ type mesh struct {
 
 	mat  material.T
 	data vertex.Mesh
-	vao  vertex.Array
 	mode DrawMode
 }
 
@@ -46,7 +43,6 @@ func NewPrimitiveMesh(primitive vertex.Primitive, mat material.T, mode DrawMode)
 		Component: object.NewComponent(),
 		mode:      mode,
 		mat:       mat,
-		vao:       gl_vertex_array.New(primitive),
 	}
 	return m
 }
@@ -60,20 +56,7 @@ func (m mesh) Mesh() vertex.Mesh {
 }
 
 func (m *mesh) SetMesh(data vertex.Mesh) {
-	ptrs := data.Pointers()
-	ptrs.Bind(m.mat)
-	m.vao.SetPointers(ptrs)
-	m.vao.SetIndexSize(data.IndexSize())
-	m.vao.SetElements(data.Elements())
-	m.vao.Buffer("vertex", data.VertexData())
-	m.vao.Buffer("index", data.IndexData())
-
 	m.data = data
-}
-
-func (m *mesh) Vao() vertex.Array {
-	// todo: remove this
-	return m.vao
 }
 
 func (m mesh) Material() material.T {

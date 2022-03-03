@@ -6,6 +6,7 @@ import (
 	"github.com/johanhenriksson/goworld/core/mesh"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/core/object/query"
+	"github.com/johanhenriksson/goworld/engine/cache"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/backend/gl"
 	"github.com/johanhenriksson/goworld/render/backend/gl/gl_framebuffer"
@@ -18,12 +19,15 @@ import (
 // GeometryPass draws the scene geometry to a G-buffer
 type GeometryPass struct {
 	Buffer framebuffer.Geometry
+
+	meshes cache.Meshes
 }
 
 // NewGeometryPass sets up a geometry pass.
-func NewGeometryPass() *GeometryPass {
+func NewGeometryPass(meshes cache.Meshes) *GeometryPass {
 	p := &GeometryPass{
 		Buffer: gl_framebuffer.NewGeometry(1, 1),
+		meshes: meshes,
 	}
 	return p
 }
@@ -90,7 +94,8 @@ func (p *GeometryPass) DrawDeferred(args render.Args, mesh mesh.T) error {
 	mat.Mat4("model", args.Transform)
 	mat.Mat4("mvp", args.MVP)
 
-	return mesh.Vao().Draw()
+	drawable := p.meshes.Fetch(mesh.Mesh(), mat)
+	return drawable.Draw()
 }
 
 func isDrawDeferred(m mesh.T) bool {

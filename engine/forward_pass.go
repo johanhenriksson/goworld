@@ -6,6 +6,7 @@ import (
 	"github.com/johanhenriksson/goworld/core/mesh"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/core/object/query"
+	"github.com/johanhenriksson/goworld/engine/cache"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/backend/gl"
 	"github.com/johanhenriksson/goworld/render/backend/gl/gl_framebuffer"
@@ -19,10 +20,11 @@ type ForwardPass struct {
 	output  framebuffer.Color
 	gbuffer framebuffer.Geometry
 	fbo     framebuffer.T
+	meshes  cache.Meshes
 }
 
 // NewForwardPass sets up a forward pass.
-func NewForwardPass(gbuffer framebuffer.Geometry, output framebuffer.Color) *ForwardPass {
+func NewForwardPass(gbuffer framebuffer.Geometry, output framebuffer.Color, meshes cache.Meshes) *ForwardPass {
 	// the forward pass renders into the output of the final deferred pass.
 	// it reuses the normal, position and depth buffers and writes new data according to what is rendered
 	// this ensures that we have complete information in those buffers for later passes
@@ -36,6 +38,7 @@ func NewForwardPass(gbuffer framebuffer.Geometry, output framebuffer.Color) *For
 		fbo:     fbo,
 		output:  output,
 		gbuffer: gbuffer,
+		meshes:  meshes,
 	}
 }
 
@@ -102,5 +105,6 @@ func (p *ForwardPass) DrawForward(args render.Args, m mesh.T) error {
 	mat.Mat4("projection", args.Projection)
 	mat.Mat4("mvp", args.MVP)
 
-	return m.Vao().Draw()
+	drawable := p.meshes.Fetch(m.Mesh(), mat)
+	return drawable.Draw()
 }

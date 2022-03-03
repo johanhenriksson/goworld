@@ -8,6 +8,7 @@ import (
 	"github.com/johanhenriksson/goworld/core/mesh"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/core/object/query"
+	"github.com/johanhenriksson/goworld/engine/cache"
 	"github.com/johanhenriksson/goworld/engine/screen_quad"
 	"github.com/johanhenriksson/goworld/math"
 	"github.com/johanhenriksson/goworld/math/mat4"
@@ -34,11 +35,11 @@ type LightPass struct {
 }
 
 // NewLightPass creates a new deferred lighting pass
-func NewLightPass(input framebuffer.Geometry) *LightPass {
+func NewLightPass(input framebuffer.Geometry, meshes cache.Meshes) *LightPass {
 	shadowsize := 4096
 
 	// child passes
-	shadowPass := NewShadowPass(shadowsize)
+	shadowPass := NewShadowPass(shadowsize, meshes)
 
 	// instantiate light pass shader
 	shader := NewLightShader(input)

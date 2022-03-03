@@ -6,16 +6,20 @@ import (
 	"github.com/johanhenriksson/goworld/core/mesh"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/core/object/query"
+	"github.com/johanhenriksson/goworld/engine/cache"
 	"github.com/johanhenriksson/goworld/render"
 )
 
 // LinePass draws line geometry
 type LinePass struct {
+	meshes cache.Meshes
 }
 
 // NewLinePass sets up a line geometry pass.
-func NewLinePass() *LinePass {
-	return &LinePass{}
+func NewLinePass(meshes cache.Meshes) *LinePass {
+	return &LinePass{
+		meshes: meshes,
+	}
 }
 
 // DrawPass executes the line pass
@@ -42,7 +46,8 @@ func (p *LinePass) DrawLines(args render.Args, m mesh.T) error {
 
 	mat.Mat4("mvp", args.MVP)
 
-	return m.Vao().Draw()
+	drawable := p.meshes.Fetch(m.Mesh(), mat)
+	return drawable.Draw()
 }
 
 func isDrawLines(m mesh.T) bool {
