@@ -12,7 +12,7 @@ type ChunkMesh struct {
 	mesh.T
 	*Chunk
 	meshdata     MeshData
-	meshComputed chan MeshData
+	meshComputed chan []VoxelVertex
 }
 
 func NewChunkMesh(chunk *Chunk) *ChunkMesh {
@@ -20,7 +20,7 @@ func NewChunkMesh(chunk *Chunk) *ChunkMesh {
 		T:            mesh.New(assets.GetMaterialShared("color_voxels"), mesh.Deferred),
 		Chunk:        chunk,
 		meshdata:     vertex.NewTriangles("chunk", []VoxelVertex{}, []uint16{}),
-		meshComputed: make(chan MeshData),
+		meshComputed: make(chan []VoxelVertex),
 	}
 	chk.Compute()
 	return chk
@@ -29,9 +29,9 @@ func NewChunkMesh(chunk *Chunk) *ChunkMesh {
 func (cm *ChunkMesh) Update(dt float32) {
 	cm.T.Update(dt)
 	select {
-	case newMesh := <-cm.meshComputed:
-		cm.meshdata = newMesh
-		cm.SetMesh(newMesh)
+	case vertices := <-cm.meshComputed:
+		cm.meshdata.Update(vertices, []uint16{})
+		cm.SetMesh(cm.meshdata)
 	default:
 	}
 }
@@ -39,12 +39,12 @@ func (cm *ChunkMesh) Update(dt float32) {
 // Queues recomputation of the mesh
 func (cm *ChunkMesh) Compute() {
 	go func() {
-		data := cm.ComputeVertexData()
+		data := ComputeVertexData(cm.Chunk)
 		cm.meshComputed <- data
 	}()
 }
 
-func (cm *ChunkMesh) ComputeVertexData() MeshData {
+func ComputeVertexData(cm *Chunk) []VoxelVertex {
 	vertices := make([]VoxelVertex, 0, 1024)
 	light := cm.Light.Brightness
 	Omax := float32(220)
@@ -336,6 +336,5 @@ func (cm *ChunkMesh) ComputeVertexData() MeshData {
 		}
 	}
 
-	cm.meshdata.Update(vertices, []uint16{})
-	return cm.meshdata
+	return vertices
 }

@@ -108,15 +108,12 @@ func main() {
 
 	world := game.NewWorld(31481234, 16)
 	chunk := world.AddChunk(0, 0)
-	mesh := game.ChunkMesh{
-		Chunk: chunk,
-	}
+	vertexdata := game.ComputeVertexData(chunk)
 
-	vertexdata := mesh.ComputeVertexData()
 	vertices := len(vertexdata)
 	triangles := vertices / 3
 	log.Println("vertices:", vertices, "triangles:", triangles)
-	bufsize := vertices * 10
+	bufsize := vertices * 10 * 4
 
 	vtx := buffer.NewRemote(backend.Device(), bufsize, vk.BufferUsageFlags(vk.BufferUsageVertexBufferBit))
 	defer vtx.Destroy()
@@ -222,9 +219,9 @@ func main() {
 		// update ubo
 		t += 0.016
 		ubo[ctx.Index].Write([]mat4.T{
-			proj, // mat4.Perspective(45, float32(ctx.Width)/float32(ctx.Height), 0.1, 100),
+			mat4.PerspectiveVK(45, float32(ctx.Width)/float32(ctx.Height), 0.1, 100),
 			view,
-			mat4.Ident(), // mat4.Rotate(vec3.New(0, float32(44*t), float32(90*t))),
+			mat4.Rotate(vec3.New(0, float32(44*t), float32(90*t))),
 		}, 0)
 
 		worker := ctx.Workers[0]
