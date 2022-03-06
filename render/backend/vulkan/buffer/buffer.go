@@ -65,6 +65,14 @@ func NewUniform(device device.T, size int) T {
 		vk.SharingModeExclusive)
 }
 
+func NewStorage(device device.T, size int) T {
+	return New(
+		device, size,
+		vk.BufferUsageFlags(vk.BufferUsageTransferDstBit|vk.BufferUsageStorageBufferBit),
+		vk.MemoryPropertyFlags(vk.MemoryPropertyDeviceLocalBit|vk.MemoryPropertyHostVisibleBit),
+		vk.SharingModeExclusive)
+}
+
 func NewShared(device device.T, size int) T {
 	return New(
 		device, size,

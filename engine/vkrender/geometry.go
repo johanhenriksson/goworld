@@ -8,6 +8,7 @@ import (
 	"github.com/johanhenriksson/goworld/core/object/query"
 	"github.com/johanhenriksson/goworld/engine/cache"
 	"github.com/johanhenriksson/goworld/math/mat4"
+	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/command"
@@ -24,13 +25,16 @@ import (
 type Uniforms struct {
 	Projection mat4.T
 	View       mat4.T
-	Model      mat4.T
+}
+
+type Storage struct {
+	Model mat4.T
 }
 
 type GeometryPass struct {
 	meshes  cache.Meshes
 	backend vulkan.T
-	shader  shader.T[Uniforms]
+	shader  shader.T[Uniforms, Storage]
 
 	diffuse     image.T
 	framebuffer framebuffer.T
@@ -38,7 +42,7 @@ type GeometryPass struct {
 }
 
 func NewGeometryPass(backend vulkan.T, meshes cache.Meshes) *GeometryPass {
-	sh := shader.New[Uniforms](backend, shader.Args{
+	sh := shader.New[Uniforms, Storage](backend, shader.Args{
 		Path:   "color_f",
 		Frames: backend.Swapchain().Count(),
 		Pass:   backend.Swapchain().Output(),
@@ -53,6 +57,22 @@ func NewGeometryPass(backend vulkan.T, meshes cache.Meshes) *GeometryPass {
 func (p *GeometryPass) Draw(args render.Args, scene object.T) {
 	ctx := args.Context
 	cmds := command.NewRecorder()
+
+	p.shader.SetUniforms(ctx.Index, []Uniforms{
+		{
+			Projection: args.Projection,
+			View:       args.View,
+		},
+	})
+
+	p.shader.SetStorage(ctx.Index, []Storage{
+		{
+			Model: mat4.Ident(),
+		},
+		{
+			Model: mat4.Translate(vec3.New(-16, 0, 0)),
+		},
+	})
 
 	cmds.Record(func(cmd command.Buffer) {
 		clear := color.RGB(0.2, 0.2, 0.2)
@@ -88,15 +108,6 @@ func (p *GeometryPass) Draw(args render.Args, scene object.T) {
 
 func (p *GeometryPass) DrawDeferred(cmds command.Recorder, args render.Args, mesh mesh.T) error {
 	args = args.Apply(mesh.Transform().World())
-	ctx := args.Context
-
-	p.shader.SetUniforms(ctx.Index, []Uniforms{
-		{
-			Projection: args.Projection,
-			View:       args.View,
-			Model:      mat4.Ident(),
-		},
-	})
 
 	vkmesh, ok := p.meshes.Fetch(mesh.Mesh(), nil).(*cache.VkMesh)
 	if !ok {
@@ -108,7 +119,14 @@ func (p *GeometryPass) DrawDeferred(cmds command.Recorder, args render.Args, mes
 		cmd.CmdBindVertexBuffer(vkmesh.Vertices, 0)
 		cmd.CmdBindIndexBuffers(vkmesh.Indices, 0, vk.IndexTypeUint16)
 		// cmd.CmdDraw(vkmesh.Mesh.Elements(), vkmesh.Mesh.Elements()/3, 0, 0)
-		cmd.CmdDrawIndexed(vkmesh.Mesh.Elements(), vkmesh.Mesh.Elements()/3, 0, 0, 0)
+		// cmd.CmdPushConstant(p.shader.Layout(), vk.ShaderStageFlags(vk.ShaderStageAll), 0, &push)
+
+		// index of the object properties in the ssbo
+		idx := 0
+		cmd.CmdDrawIndexed(vkmesh.Mesh.Elements(), 1, 0, 0, idx)
+
+		idx = 1
+		cmd.CmdDrawIndexed(vkmesh.Mesh.Elements(), 1, 0, 0, idx)
 	})
 
 	return nil

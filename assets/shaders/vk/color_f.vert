@@ -7,11 +7,22 @@
 layout (location = 0) in vec3 inPos;
 layout (location = 1) in vec3 inColor;
 
-layout (binding = 0) uniform UBO {
+// layout (push_constant) uniform Push {
+// } push;
+
+layout (std140, set = 0, binding = 0) uniform UBO {
 	mat4 proj;
 	mat4 view;
+} ubo;
+
+struct ObjectData{
 	mat4 model;
-} ubo[];
+};
+
+//all object matrices
+layout(std140, set = 1, binding = 0) readonly buffer ObjectBuffer{
+	ObjectData objects[];
+} ssbo;
 
 // Varyings
 layout (location = 0) out vec3 outColor;
@@ -25,5 +36,5 @@ out gl_PerVertex
 void main() 
 {
 	outColor = inColor;
-	gl_Position = ubo[0].proj * ubo[0].view * ubo[0].model * vec4(inPos.xyz, 1.0);
+	gl_Position = ubo.proj * ubo.view * ssbo.objects[gl_InstanceIndex].model * vec4(inPos.xyz, 1.0);
 }

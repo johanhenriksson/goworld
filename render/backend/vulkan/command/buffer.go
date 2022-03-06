@@ -1,6 +1,9 @@
 package command
 
 import (
+	"reflect"
+	"unsafe"
+
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/buffer"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/descriptor"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/device"
@@ -32,6 +35,7 @@ type Buffer interface {
 	CmdEndRenderPass()
 	CmdSetViewport(x, y, w, h int)
 	CmdSetScissor(x, y, w, h int)
+	CmdPushConstant(layout pipeline.Layout, stages vk.ShaderStageFlags, offset int, value any)
 }
 
 type buf struct {
@@ -113,7 +117,7 @@ func (b *buf) CmdBindGraphicsDescriptors(layout pipeline.Layout, sets []descript
 	vk.CmdBindDescriptorSets(
 		b.Ptr(),
 		vk.PipelineBindPointGraphics,
-		layout.Ptr(), 0, 1,
+		layout.Ptr(), 0, uint32(len(sets)),
 		util.Map(sets, func(i int, s descriptor.Set) vk.DescriptorSet { return s.Ptr() }),
 		0, nil)
 }
@@ -187,4 +191,10 @@ func (b *buf) CmdSetScissor(x, y, w, h int) {
 			},
 		},
 	})
+}
+
+func (b *buf) CmdPushConstant(layout pipeline.Layout, stages vk.ShaderStageFlags, offset int, value any) {
+	ptr := reflect.ValueOf(value).UnsafePointer()
+	size := reflect.ValueOf(value).Elem().Type().Size()
+	vk.CmdPushConstants(b.ptr, layout.Ptr(), stages, uint32(offset), uint32(size), unsafe.Pointer(ptr))
 }
