@@ -6,12 +6,15 @@ import (
 
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/glfw/v3.3/glfw"
+	"github.com/johanhenriksson/goworld/render/backend/vulkan/swapchain"
 )
 
 type GlfwBackend interface {
 	GlfwHints(Args) []GlfwHint
 	GlfwSetup(*glfw.Window, Args) error
 	Resize(int, int)
+	Aquire() (swapchain.Context, error)
+	Present()
 }
 
 type GlfwHint struct {
@@ -75,8 +78,8 @@ func (b *OpenGLBackend) Resize(width, height int) {
 
 }
 
-func (b *OpenGLBackend) Aquire() {
-
+func (b *OpenGLBackend) Aquire() (swapchain.Context, error) {
+	return swapchain.Context{}, nil
 }
 
 func (b *OpenGLBackend) Present() {

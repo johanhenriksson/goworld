@@ -18,6 +18,8 @@ type Meshes interface {
 
 	// Tick increments the age of all items in the cache
 	Tick()
+
+	Destroy()
 }
 
 type meshes struct {
@@ -95,4 +97,12 @@ func (m *meshes) Evict() bool {
 		return true
 	}
 	return false
+}
+
+func (m *meshes) Destroy() {
+	for _, line := range m.cache {
+		m.backend.Delete(line.mesh)
+	}
+	m.backend.Destroy()
+	m.cache = make(map[string]*entry)
 }

@@ -10,6 +10,7 @@ import (
 
 type Renderer interface {
 	Draw(args render.Args, scene object.T)
+	Destroy()
 }
 
 // GLRenderer holds references to the Scene and is responsible for executing render passes in order
@@ -87,4 +88,8 @@ func (r *GLRenderer) Draw(args render.Args, scene object.T) {
 	// reclaim mesh memory
 	r.meshes.Tick()
 	r.meshes.Evict()
+}
+
+func (r *GLRenderer) Destroy() {
+
 }

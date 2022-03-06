@@ -10,6 +10,7 @@ type MeshBackend interface {
 	Instantiate(mesh vertex.Mesh, mat material.T) GpuMesh
 	Update(bmesh GpuMesh, mesh vertex.Mesh)
 	Delete(bmesh GpuMesh)
+	Destroy()
 }
 
 // glmeshes is a mesh buffer backend for OpenGL
@@ -37,4 +38,7 @@ func (m *glmeshes) Update(bmesh GpuMesh, mesh vertex.Mesh) {
 func (m *glmeshes) Delete(bmesh GpuMesh) {
 	vao := bmesh.(vertex.Array)
 	vao.Delete()
+}
+
+func (m *glmeshes) Destroy() {
 }

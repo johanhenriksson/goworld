@@ -53,9 +53,9 @@ func LoadMaterialDefinition(file string) (*MaterialDefinition, error) {
 }
 
 func LoadMaterial(name string, matf *MaterialDefinition) (material.T, error) {
-	shader := GetShader(matf.Shader)
+	// shader := GetShader(matf.Shader)
 
-	mat := material.New(name, shader)
+	mat := material.New(name, nil)
 
 	// load textures
 	for name, txtf := range matf.Textures {

@@ -3,7 +3,9 @@ package engine
 import (
 	"flag"
 	"fmt"
+	"log"
 	"os"
+	"os/signal"
 	"runtime/pprof"
 
 	"github.com/johanhenriksson/goworld/core/camera"
@@ -16,12 +18,15 @@ import (
 var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
 
 type SceneFunc func(Renderer, object.T)
+type RendererFunc func() Renderer
 
 type Args struct {
 	Title     string
 	Width     int
 	Height    int
 	SceneFunc SceneFunc
+	Backend   window.GlfwBackend
+	Renderer  RendererFunc
 }
 
 func Run(args Args) {
@@ -41,7 +46,26 @@ func Run(args Args) {
 		defer pprof.StopCPUProfile()
 	}
 
-	backend := &window.OpenGLBackend{}
+	running := true
+	sigint := make(chan os.Signal, 1)
+	signal.Notify(sigint, os.Interrupt)
+	go func() {
+		for range sigint {
+			if !running {
+				log.Println("Kill")
+				os.Exit(1)
+			} else {
+				log.Println("Interrupt")
+				running = false
+			}
+		}
+	}()
+
+	backend := args.Backend
+	if backend == nil {
+		// default to opengl backend
+		backend = &window.OpenGLBackend{}
+	}
 
 	// create a window
 	wnd, err := window.New(backend, window.Args{
@@ -53,8 +77,14 @@ func Run(args Args) {
 		panic(err)
 	}
 
-	// initialize graphics pipeline
-	renderer := NewRenderer()
+	var renderer Renderer
+	if args.Renderer != nil {
+		renderer = args.Renderer()
+	} else {
+		// default to deferred opengl renderer
+		renderer = NewRenderer()
+	}
+	defer renderer.Destroy()
 
 	// create scene
 	scene := object.New("Scene")
@@ -64,7 +94,7 @@ func Run(args Args) {
 	// run the render loop
 	fmt.Println("ready")
 
-	for !wnd.ShouldClose() {
+	for running && !wnd.ShouldClose() {
 		wnd.Poll()
 
 		w, h := wnd.Size()
@@ -79,11 +109,20 @@ func Run(args Args) {
 
 		// find the first active camera
 		camera := query.New[camera.T]().First(scene)
-
-		args := CreateRenderArgs(screen, camera)
+		if camera == nil {
+			fmt.Println("no active camera in the scene")
+			continue
+		}
 
 		// draw
-		backend.Aquire()
+		context, err := backend.Aquire()
+		if err != nil {
+			continue
+		}
+
+		args := CreateRenderArgs(screen, camera)
+		args.Context = context
+
 		renderer.Draw(args, scene)
 		backend.Present()
 	}

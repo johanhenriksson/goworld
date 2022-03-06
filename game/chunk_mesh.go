@@ -22,7 +22,9 @@ func NewChunkMesh(chunk *Chunk) *ChunkMesh {
 		meshdata:     vertex.NewTriangles("chunk", []VoxelVertex{}, []uint16{}),
 		meshComputed: make(chan []VoxelVertex),
 	}
-	chk.Compute()
+	// chk.Compute()
+	chk.meshdata.Update(ComputeVertexData(chunk), []uint16{})
+	chk.SetMesh(chk.meshdata)
 	return chk
 }
 
