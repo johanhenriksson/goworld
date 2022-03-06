@@ -19,8 +19,9 @@ type vkmeshes struct {
 }
 
 type VkMesh struct {
-	Buffer buffer.T
-	Mesh   vertex.Mesh
+	Vertices buffer.T
+	Indices  buffer.T
+	Mesh     vertex.Mesh
 }
 
 func (m *VkMesh) Draw() error {
@@ -28,13 +29,12 @@ func (m *VkMesh) Draw() error {
 }
 
 func NewVkCache(backend vulkan.T) Meshes {
-	worker := command.NewWorker(backend.Device(), vk.QueueFlags(vk.QueueTransferBit))
 	return &meshes{
 		maxAge: 1000,
 		cache:  make(map[string]*entry),
 		backend: &vkmeshes{
 			backend: backend,
-			worker:  worker,
+			worker:  backend.Transferer(),
 		},
 	}
 }
@@ -43,12 +43,17 @@ func (m *vkmeshes) Instantiate(mesh vertex.Mesh, mat material.T) GpuMesh {
 	bufsize := 100 * 1024 // 100k for now
 
 	vtx := buffer.NewRemote(m.backend.Device(), bufsize, vk.BufferUsageFlags(vk.BufferUsageVertexBufferBit))
+	idx := buffer.NewRemote(m.backend.Device(), bufsize, vk.BufferUsageFlags(vk.BufferUsageIndexBufferBit))
 
 	vtxstage := buffer.NewShared(m.backend.Device(), bufsize)
 	vtxstage.Write(mesh.VertexData(), 0)
 
+	idxstage := buffer.NewShared(m.backend.Device(), bufsize)
+	idxstage.Write(mesh.IndexData(), 0)
+
 	m.worker.Queue(func(cmd command.Buffer) {
 		cmd.CmdCopyBuffer(vtxstage, vtx)
+		cmd.CmdCopyBuffer(idxstage, idx)
 	})
 	m.worker.Submit(command.SubmitInfo{})
 	log.Println("waiting for transfers...")
@@ -56,10 +61,12 @@ func (m *vkmeshes) Instantiate(mesh vertex.Mesh, mat material.T) GpuMesh {
 	log.Println("transfers completed")
 
 	vtxstage.Destroy()
+	idxstage.Destroy()
 
 	return &VkMesh{
-		Buffer: vtx,
-		Mesh:   mesh,
+		Vertices: vtx,
+		Indices:  idx,
+		Mesh:     mesh,
 	}
 }
 
@@ -68,7 +75,8 @@ func (m *vkmeshes) Update(bmesh GpuMesh, mesh vertex.Mesh) {
 
 func (m *vkmeshes) Delete(bmesh GpuMesh) {
 	if vkmesh, ok := bmesh.(*VkMesh); ok {
-		vkmesh.Buffer.Destroy()
+		vkmesh.Vertices.Destroy()
+		vkmesh.Indices.Destroy()
 	}
 }
 

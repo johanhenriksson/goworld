@@ -11,6 +11,7 @@ import (
 type VKRenderer struct {
 	Pre      *engine.PrePass
 	Geometry *GeometryPass
+	Output   *OutputPass
 
 	backend vulkan.T
 	meshes  cache.Meshes
@@ -21,6 +22,7 @@ func NewRenderer(backend vulkan.T) engine.Renderer {
 	return &VKRenderer{
 		Pre:      &engine.PrePass{},
 		Geometry: NewGeometryPass(backend, meshes),
+		Output:   NewOutputPass(backend, meshes),
 		backend:  backend,
 		meshes:   meshes,
 	}

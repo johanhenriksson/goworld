@@ -11,7 +11,7 @@ layout (binding = 0) uniform UBO {
 	mat4 proj;
 	mat4 view;
 	mat4 model;
-} ubo;
+} ubo[];
 
 // Varyings
 layout (location = 0) out vec3 outColor;
@@ -25,5 +25,5 @@ out gl_PerVertex
 void main() 
 {
 	outColor = inColor;
-	gl_Position = ubo.proj * ubo.view * ubo.model * vec4(inPos.xyz, 1.0);
+	gl_Position = ubo[0].proj * ubo[0].view * ubo[0].model * vec4(inPos.xyz, 1.0);
 }

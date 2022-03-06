@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/johanhenriksson/goworld/core/window"
+	"github.com/johanhenriksson/goworld/render/backend/vulkan/command"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/device"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/instance"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/swapchain"
@@ -24,6 +25,8 @@ type T interface {
 	Swapchain() swapchain.T
 	Destroy()
 
+	Transferer() command.Worker
+
 	GlfwHints(window.Args) []window.GlfwHint
 	GlfwSetup(*glfw.Window, window.Args) error
 
@@ -40,6 +43,7 @@ type backend struct {
 	device    device.T
 	surface   vk.Surface
 	swapchain swapchain.T
+	transfer  command.Worker
 }
 
 func New(appName string, deviceIndex int) T {
@@ -54,6 +58,8 @@ func (b *backend) Instance() instance.T   { return b.instance }
 func (b *backend) Device() device.T       { return b.device }
 func (b *backend) Surface() vk.Surface    { return b.surface }
 func (b *backend) Swapchain() swapchain.T { return b.swapchain }
+
+func (b *backend) Transferer() command.Worker { return b.transfer }
 
 func (b *backend) GlfwHints(args window.Args) []window.GlfwHint {
 	return []window.GlfwHint{
@@ -85,6 +91,8 @@ func (b *backend) GlfwSetup(w *glfw.Window, args window.Args) error {
 
 	// allocate swapchain
 	b.swapchain = swapchain.New(b.device, b.swapcount, b.surface, surfaceFormat)
+
+	b.transfer = command.NewWorker(b.device, vk.QueueFlags(vk.QueueTransferBit))
 
 	return nil
 }

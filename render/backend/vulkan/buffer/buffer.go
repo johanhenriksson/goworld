@@ -90,7 +90,7 @@ func (b *buffer) Size() int {
 }
 
 func (b *buffer) Destroy() {
-	log.Println("destroying buffer", b.ptr)
+	log.Printf("destroying buffer %p\n", b.ptr)
 	b.memory.Destroy()
 	vk.DestroyBuffer(b.device.Ptr(), b.ptr, nil)
 	b.ptr = nil
