@@ -1,4 +1,4 @@
-package shader
+package vk_shader
 
 import (
 	"fmt"
@@ -8,19 +8,23 @@ import (
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/command"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/descriptor"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/pipeline"
+	"github.com/johanhenriksson/goworld/render/shader"
+	"github.com/johanhenriksson/goworld/render/vertex"
 
 	vk "github.com/vulkan-go/vulkan"
 )
 
-type T[K any, S any] interface {
+type T[V any, K any, S any] interface {
 	SetUniforms(frame int, uniforms []K)
 	SetStorage(frame int, storage []S)
 	Destroy()
 	Bind(frame int, cmd command.Buffer)
+	Attribute(name string) (shader.AttributeDesc, error)
 	Layout() pipeline.Layout
 }
 
-type vk_shader[K any, S any] struct {
+type vk_shader[V any, U any, S any] struct {
+	name       string
 	frames     int
 	ubosize    int
 	backend    vulkan.T
@@ -34,16 +38,18 @@ type vk_shader[K any, S any] struct {
 	layout     pipeline.Layout
 	pipe       pipeline.T
 	pass       pipeline.Pass
+	attrs      shader.AttributeMap
 }
 
 type Args struct {
-	Path     string
-	Frames   int
-	Bindings []descriptor.Binding
-	Pass     pipeline.Pass
+	Path       string
+	Frames     int
+	Bindings   []descriptor.Binding
+	Pass       pipeline.Pass
+	Attributes shader.AttributeMap
 }
 
-func New[K any, S any](backend vulkan.T, args Args) T[K, S] {
+func New[V any, U any, S any](backend vulkan.T, args Args) T[V, U, S] {
 	ubosize := 16 * 1024
 	ssbosize := 1024 * 1024
 
@@ -98,9 +104,8 @@ func New[K any, S any](backend vulkan.T, args Args) T[K, S] {
 
 	layout := pipeline.NewLayout(backend.Device(), dlayouts)
 
-	pipe := pipeline.New(backend.Device(), nil, layout, args.Pass, shaders)
-
-	shader := &vk_shader[K, S]{
+	shader := &vk_shader[V, U, S]{
+		name:       args.Path,
 		frames:     args.Frames,
 		backend:    backend,
 		ubosize:    ubosize,
@@ -110,28 +115,49 @@ func New[K any, S any](backend vulkan.T, args Args) T[K, S] {
 		dpool:      dpool,
 		dsets:      dsets,
 		layout:     layout,
-		pipe:       pipe,
 		pass:       args.Pass,
 		ubo:        ubo,
 		ssbo:       ssbo,
+		attrs:      args.Attributes,
 	}
 
 	for i := 0; i < args.Frames; i++ {
 		shader.updateSets(i)
 	}
 
+	var vtx V
+	pointers := vertex.ParsePointers(vtx)
+	pointers.Bind(shader)
+
+	fmt.Println(pointers)
+	shader.pipe = pipeline.New(backend.Device(), nil, layout, args.Pass, shaders, pointers)
+
 	return shader
 }
 
-func (s *vk_shader[K, S]) SetUniforms(frame int, uniforms []K) {
+func (s *vk_shader[V, U, S]) Name() string {
+	return s.name
+}
+
+func (s *vk_shader[V, U, S]) Attribute(name string) (shader.AttributeDesc, error) {
+	if attr, ok := s.attrs[name]; ok {
+		return attr, nil
+	}
+	return shader.AttributeDesc{
+		Name: name,
+		Bind: -1,
+	}, shader.ErrUnknownAttribute
+}
+
+func (s *vk_shader[V, U, S]) SetUniforms(frame int, uniforms []U) {
 	s.ubo[frame].Write(uniforms, 0)
 }
 
-func (s *vk_shader[K, S]) SetStorage(frame int, storage []S) {
+func (s *vk_shader[V, U, S]) SetStorage(frame int, storage []S) {
 	s.ssbo[frame].Write(storage, 0)
 }
 
-func (s *vk_shader[K, S]) updateSets(frame int) {
+func (s *vk_shader[V, U, S]) updateSets(frame int) {
 	vk.UpdateDescriptorSets(s.backend.Device().Ptr(), 2, []vk.WriteDescriptorSet{
 		{
 			SType:           vk.StructureTypeWriteDescriptorSet,
@@ -166,16 +192,16 @@ func (s *vk_shader[K, S]) updateSets(frame int) {
 	}, 0, nil)
 }
 
-func (s *vk_shader[K, S]) Bind(frame int, cmd command.Buffer) {
+func (s *vk_shader[V, U, S]) Bind(frame int, cmd command.Buffer) {
 	cmd.CmdBindGraphicsPipeline(s.pipe)
 	cmd.CmdBindGraphicsDescriptors(s.layout, s.dsets[2*frame:2*frame+2])
 }
 
-func (s *vk_shader[K, S]) Layout() pipeline.Layout {
+func (s *vk_shader[V, U, S]) Layout() pipeline.Layout {
 	return s.layout
 }
 
-func (s *vk_shader[K, S]) Destroy() {
+func (s *vk_shader[V, U, S]) Destroy() {
 	s.pipe.Destroy()
 	s.layout.Destroy()
 	s.dpool.Destroy()

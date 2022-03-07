@@ -8,6 +8,7 @@ import (
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/descriptor"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/device"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/framebuffer"
+	"github.com/johanhenriksson/goworld/render/backend/vulkan/image"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/pipeline"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/sync"
 	"github.com/johanhenriksson/goworld/render/color"
@@ -36,6 +37,8 @@ type Buffer interface {
 	CmdSetViewport(x, y, w, h int)
 	CmdSetScissor(x, y, w, h int)
 	CmdPushConstant(layout pipeline.Layout, stages vk.ShaderStageFlags, offset int, value any)
+	CmdImageBarrier(srcMask, dstMask vk.PipelineStageFlags, image image.T, oldLayout, newLayout vk.ImageLayout)
+	CmdCopyBufferToImage(source buffer.T, dst image.T, layout vk.ImageLayout)
 }
 
 type buf struct {
@@ -197,4 +200,36 @@ func (b *buf) CmdPushConstant(layout pipeline.Layout, stages vk.ShaderStageFlags
 	ptr := reflect.ValueOf(value).UnsafePointer()
 	size := reflect.ValueOf(value).Elem().Type().Size()
 	vk.CmdPushConstants(b.ptr, layout.Ptr(), stages, uint32(offset), uint32(size), unsafe.Pointer(ptr))
+}
+
+func (b *buf) CmdImageBarrier(srcMask, dstMask vk.PipelineStageFlags, image image.T, oldLayout, newLayout vk.ImageLayout) {
+	vk.CmdPipelineBarrier(b.ptr, srcMask, dstMask, vk.DependencyFlags(0), 0, nil, 0, nil, 1, []vk.ImageMemoryBarrier{
+		{
+			SType:     vk.StructureTypeImageMemoryBarrier,
+			OldLayout: oldLayout,
+			NewLayout: newLayout,
+			Image:     image.Ptr(),
+			SubresourceRange: vk.ImageSubresourceRange{
+				AspectMask: vk.ImageAspectFlags(vk.ImageAspectColorBit),
+				LayerCount: 1,
+				LevelCount: 1,
+			},
+		},
+	})
+}
+
+func (b *buf) CmdCopyBufferToImage(source buffer.T, dst image.T, layout vk.ImageLayout) {
+	vk.CmdCopyBufferToImage(b.ptr, source.Ptr(), dst.Ptr(), layout, 1, []vk.BufferImageCopy{
+		{
+			ImageSubresource: vk.ImageSubresourceLayers{
+				AspectMask: vk.ImageAspectFlags(vk.ImageAspectColorBit),
+				LayerCount: 1,
+			},
+			ImageExtent: vk.Extent3D{
+				Width:  uint32(dst.Width()),
+				Height: uint32(dst.Height()),
+				Depth:  1,
+			},
+		},
+	})
 }

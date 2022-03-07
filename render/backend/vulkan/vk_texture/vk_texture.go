@@ -1,8 +1,6 @@
 package vk_texture
 
 import (
-	imglib "image"
-
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/device"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/image"
 
@@ -11,7 +9,7 @@ import (
 
 type T interface {
 	device.Resource[vk.Sampler]
-	BufferImage(*imglib.RGBA)
+	Image() image.T
 }
 
 type Args struct {
@@ -61,12 +59,12 @@ func New(device device.T, args Args) T {
 	}
 }
 
-func (t *vktexture) BufferImage(img *imglib.RGBA) {
-
-}
-
 func (t *vktexture) Ptr() vk.Sampler {
 	return t.ptr
+}
+
+func (t *vktexture) Image() image.T {
+	return t.image
 }
 
 func (t *vktexture) Destroy() {

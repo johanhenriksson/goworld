@@ -11,12 +11,16 @@ type T interface {
 
 	Memory() device.Memory
 	View(format vk.Format, mask vk.ImageAspectFlags) View
+	Width() int
+	Height() int
 }
 
 type image struct {
 	ptr    vk.Image
 	device device.T
 	memory device.Memory
+	width  int
+	height int
 }
 
 func New2D(device device.T, width, height int, format vk.Format, usage vk.ImageUsageFlags) T {
@@ -55,6 +59,8 @@ func New2D(device device.T, width, height int, format vk.Format, usage vk.ImageU
 		ptr:    ptr,
 		device: device,
 		memory: mem,
+		width:  width,
+		height: height,
 	}
 }
 
@@ -73,6 +79,9 @@ func (i *image) Ptr() vk.Image {
 func (i *image) Memory() device.Memory {
 	return i.memory
 }
+
+func (i *image) Width() int  { return i.width }
+func (i *image) Height() int { return i.height }
 
 func (i *image) Destroy() {
 	if i.memory != nil {

@@ -7,17 +7,20 @@ import (
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/core/object/query"
 	"github.com/johanhenriksson/goworld/engine/cache"
+	"github.com/johanhenriksson/goworld/game"
 	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
+	"github.com/johanhenriksson/goworld/render/backend/types"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/command"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/framebuffer"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/image"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/pipeline"
-	"github.com/johanhenriksson/goworld/render/backend/vulkan/shader"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/sync"
+	"github.com/johanhenriksson/goworld/render/backend/vulkan/vk_shader"
 	"github.com/johanhenriksson/goworld/render/color"
+	"github.com/johanhenriksson/goworld/render/shader"
 
 	vk "github.com/vulkan-go/vulkan"
 )
@@ -34,24 +37,40 @@ type Storage struct {
 type GeometryPass struct {
 	meshes  cache.Meshes
 	backend vulkan.T
-	shader  shader.T[Uniforms, Storage]
+	shader  vk_shader.T[game.VoxelVertex, Uniforms, Storage]
 
 	diffuse     image.T
 	framebuffer framebuffer.T
 	pass        pipeline.Pass
+	completed   sync.Semaphore
 }
 
 func NewGeometryPass(backend vulkan.T, meshes cache.Meshes) *GeometryPass {
-	sh := shader.New[Uniforms, Storage](backend, shader.Args{
+	sh := vk_shader.New[game.VoxelVertex, Uniforms, Storage](backend, vk_shader.Args{
 		Path:   "vk/color_f",
 		Frames: backend.Swapchain().Count(),
 		Pass:   backend.Swapchain().Output(),
+		Attributes: shader.AttributeMap{
+			"position": {
+				Bind: 0,
+				Type: types.Float,
+			},
+			"color_0": {
+				Bind: 1,
+				Type: types.Float,
+			},
+		},
 	})
 	return &GeometryPass{
-		backend: backend,
-		meshes:  meshes,
-		shader:  sh,
+		backend:   backend,
+		meshes:    meshes,
+		shader:    sh,
+		completed: sync.NewSemaphore(backend.Device()),
 	}
+}
+
+func (p *GeometryPass) Completed() sync.Semaphore {
+	return p.completed
 }
 
 func (p *GeometryPass) Draw(args render.Args, scene object.T) {
@@ -99,7 +118,7 @@ func (p *GeometryPass) Draw(args render.Args, scene object.T) {
 	worker.Queue(cmds.Apply)
 	worker.Submit(command.SubmitInfo{
 		Wait:   []sync.Semaphore{ctx.ImageAvailable},
-		Signal: []sync.Semaphore{ctx.RenderComplete},
+		Signal: []sync.Semaphore{p.completed},
 		WaitMask: []vk.PipelineStageFlags{
 			vk.PipelineStageFlags(vk.PipelineStageColorAttachmentOutputBit),
 		},
@@ -134,6 +153,7 @@ func (p *GeometryPass) DrawDeferred(cmds command.Recorder, args render.Args, mes
 
 func (p *GeometryPass) Destroy() {
 	p.shader.Destroy()
+	p.completed.Destroy()
 }
 
 func isDrawDeferred(m mesh.T) bool {

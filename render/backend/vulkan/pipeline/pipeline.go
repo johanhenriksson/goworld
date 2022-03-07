@@ -1,7 +1,11 @@
 package pipeline
 
 import (
+	"fmt"
+
+	"github.com/johanhenriksson/goworld/render/backend/types"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/device"
+	"github.com/johanhenriksson/goworld/render/vertex"
 	"github.com/johanhenriksson/goworld/util"
 
 	vk "github.com/vulkan-go/vulkan"
@@ -16,7 +20,7 @@ type pipeline struct {
 	device device.T
 }
 
-func New(device device.T, cache vk.PipelineCache, layout Layout, pass Pass, shaders []Shader) T {
+func New(device device.T, cache vk.PipelineCache, layout Layout, pass Pass, shaders []Shader, pointers vertex.Pointers) T {
 	modules := util.Map(shaders, func(i int, shader Shader) vk.PipelineShaderStageCreateInfo {
 		return vk.PipelineShaderStageCreateInfo{
 			SType:  vk.StructureTypePipelineShaderStageCreateInfo,
@@ -25,6 +29,9 @@ func New(device device.T, cache vk.PipelineCache, layout Layout, pass Pass, shad
 			Stage:  shader.Stage(),
 		}
 	})
+
+	attrs := pointersToVertexAttributes(pointers, 0)
+	fmt.Println("attributes", attrs)
 
 	info := vk.GraphicsPipelineCreateInfo{
 		SType: vk.StructureTypeGraphicsPipelineCreateInfo,
@@ -46,27 +53,12 @@ func New(device device.T, cache vk.PipelineCache, layout Layout, pass Pass, shad
 			PVertexBindingDescriptions: []vk.VertexInputBindingDescription{
 				{
 					Binding:   0,
-					Stride:    8,
+					Stride:    uint32(pointers.Stride()),
 					InputRate: vk.VertexInputRateVertex,
 				},
 			},
-			VertexAttributeDescriptionCount: 2,
-			PVertexAttributeDescriptions: []vk.VertexInputAttributeDescription{
-				{
-					Binding:  0,
-					Location: 0, // vec3 position
-					// Format:   vk.FormatR32g32b32Sfloat,
-					Format: vk.FormatR8g8b8Uscaled,
-					Offset: 0,
-				},
-				{
-					Binding:  0,
-					Location: 1, // vec3 color
-					// Format:   vk.FormatR32g32b32Sfloat,
-					Format: vk.FormatR8g8b8Unorm,
-					Offset: 4,
-				},
-			},
+			VertexAttributeDescriptionCount: uint32(len(attrs)),
+			PVertexAttributeDescriptions:    attrs,
 		},
 
 		// Input assembly
@@ -188,4 +180,90 @@ func (p *pipeline) Ptr() vk.Pipeline {
 func (p *pipeline) Destroy() {
 	vk.DestroyPipeline(p.device.Ptr(), p.ptr, nil)
 	p.ptr = nil
+}
+
+func pointersToVertexAttributes(ptrs vertex.Pointers, binding int) []vk.VertexInputAttributeDescription {
+	attrs := make([]vk.VertexInputAttributeDescription, 0, len(ptrs))
+	for _, ptr := range ptrs {
+		if ptr.Binding < 0 {
+			continue
+		}
+		attrs = append(attrs, vk.VertexInputAttributeDescription{
+			Binding:  uint32(binding),
+			Location: uint32(ptr.Binding),
+			Format:   convertFormat(ptr),
+			Offset:   uint32(ptr.Offset),
+		})
+	}
+	return attrs
+}
+
+type ptrType struct {
+	Source    types.Type
+	Target    types.Type
+	Elements  int
+	Normalize bool
+}
+
+var formatMap = map[ptrType]vk.Format{
+	{types.Float, types.Float, 1, false}:   vk.FormatR32Sfloat,
+	{types.Float, types.Float, 2, false}:   vk.FormatR32g32Sfloat,
+	{types.Float, types.Float, 3, false}:   vk.FormatR32g32b32Sfloat,
+	{types.Float, types.Float, 4, false}:   vk.FormatR32g32b32a32Sfloat,
+	{types.Int8, types.Int8, 1, false}:     vk.FormatR8Sint,
+	{types.Int8, types.Int8, 2, false}:     vk.FormatR8g8Sint,
+	{types.Int8, types.Int8, 3, false}:     vk.FormatR8g8b8Sint,
+	{types.Int8, types.Int8, 4, false}:     vk.FormatR8g8b8a8Sint,
+	{types.Int8, types.Float, 4, true}:     vk.FormatR8Snorm,
+	{types.Int8, types.Float, 2, true}:     vk.FormatR8g8Snorm,
+	{types.Int8, types.Float, 3, true}:     vk.FormatR8g8b8Snorm,
+	{types.Int8, types.Float, 4, true}:     vk.FormatR8g8b8a8Snorm,
+	{types.UInt8, types.UInt8, 1, false}:   vk.FormatR8Uint,
+	{types.UInt8, types.UInt8, 2, false}:   vk.FormatR8g8Uint,
+	{types.UInt8, types.UInt8, 3, false}:   vk.FormatR8g8b8Uint,
+	{types.UInt8, types.UInt8, 4, false}:   vk.FormatR8g8b8a8Uint,
+	{types.UInt8, types.Float, 1, false}:   vk.FormatR8Uscaled,
+	{types.UInt8, types.Float, 2, false}:   vk.FormatR8g8Uscaled,
+	{types.UInt8, types.Float, 3, false}:   vk.FormatR8g8b8Uscaled,
+	{types.UInt8, types.Float, 4, false}:   vk.FormatR8g8b8a8Uscaled,
+	{types.UInt8, types.Float, 1, true}:    vk.FormatR8Unorm,
+	{types.UInt8, types.Float, 2, true}:    vk.FormatR8g8Unorm,
+	{types.UInt8, types.Float, 3, true}:    vk.FormatR8g8b8Unorm,
+	{types.UInt8, types.Float, 4, true}:    vk.FormatR8g8b8a8Unorm,
+	{types.Int16, types.Int16, 1, false}:   vk.FormatR16Sint,
+	{types.Int16, types.Int16, 2, false}:   vk.FormatR16g16Sint,
+	{types.Int16, types.Int16, 3, false}:   vk.FormatR16g16b16Sint,
+	{types.Int16, types.Int16, 4, false}:   vk.FormatR16g16b16a16Sint,
+	{types.Int16, types.Float, 4, true}:    vk.FormatR16Snorm,
+	{types.Int16, types.Float, 2, true}:    vk.FormatR16g16Snorm,
+	{types.Int16, types.Float, 3, true}:    vk.FormatR16g16b16Snorm,
+	{types.Int16, types.Float, 4, true}:    vk.FormatR16g16b16a16Snorm,
+	{types.UInt16, types.UInt16, 1, false}: vk.FormatR16Uint,
+	{types.UInt16, types.UInt16, 2, false}: vk.FormatR16g16Uint,
+	{types.UInt16, types.UInt16, 3, false}: vk.FormatR16g16b16Uint,
+	{types.UInt16, types.UInt16, 4, false}: vk.FormatR16g16b16a16Uint,
+	{types.UInt16, types.Float, 1, true}:   vk.FormatR16Unorm,
+	{types.UInt16, types.Float, 2, true}:   vk.FormatR16g16Unorm,
+	{types.UInt16, types.Float, 3, true}:   vk.FormatR16g16b16Unorm,
+	{types.UInt16, types.Float, 4, true}:   vk.FormatR16g16b16a16Unorm,
+	{types.UInt16, types.Float, 1, false}:  vk.FormatR16Uscaled,
+	{types.UInt16, types.Float, 2, false}:  vk.FormatR16g16Uscaled,
+	{types.UInt16, types.Float, 3, false}:  vk.FormatR16g16b16Uscaled,
+	{types.UInt16, types.Float, 4, false}:  vk.FormatR16g16b16a16Uscaled,
+	{types.Int32, types.Int32, 1, false}:   vk.FormatR32Sint,
+	{types.Int32, types.Int32, 2, false}:   vk.FormatR32g32Sint,
+	{types.Int32, types.Int32, 3, false}:   vk.FormatR32g32b32Sint,
+	{types.Int32, types.Int32, 4, false}:   vk.FormatR32g32b32a32Sint,
+	{types.UInt32, types.UInt32, 1, false}: vk.FormatR32Uint,
+	{types.UInt32, types.UInt32, 2, false}: vk.FormatR32g32Uint,
+	{types.UInt32, types.UInt32, 3, false}: vk.FormatR32g32b32Uint,
+	{types.UInt32, types.UInt32, 4, false}: vk.FormatR32g32b32a32Uint,
+}
+
+func convertFormat(ptr vertex.Pointer) vk.Format {
+	kind := ptrType{ptr.Source, ptr.Destination, ptr.Elements, ptr.Normalize}
+	if fmt, exists := formatMap[kind]; exists {
+		return fmt
+	}
+	panic(fmt.Sprintf("illegal format in pointer %s from %s -> %s x%d (normalize: %t)", ptr.Name, ptr.Source, ptr.Destination, ptr.Elements, ptr.Normalize))
 }
