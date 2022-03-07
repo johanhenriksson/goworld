@@ -89,8 +89,10 @@ func (b *backend) GlfwSetup(w *glfw.Window, args window.Args) error {
 	b.surface = vk.SurfaceFromPointer(surfPtr)
 	surfaceFormat := b.device.GetSurfaceFormats(b.surface)[0]
 
+	width, height := w.GetFramebufferSize()
+
 	// allocate swapchain
-	b.swapchain = swapchain.New(b.device, b.swapcount, b.surface, surfaceFormat)
+	b.swapchain = swapchain.New(b.device, b.swapcount, width, height, b.surface, surfaceFormat)
 
 	b.transfer = command.NewWorker(b.device, vk.QueueFlags(vk.QueueTransferBit))
 

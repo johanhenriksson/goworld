@@ -42,7 +42,7 @@ type swapchain struct {
 	contexts []Context
 }
 
-func New(device device.T, buffers int, surface vk.Surface, surfaceFormat vk.SurfaceFormat) T {
+func New(device device.T, buffers, width, height int, surface vk.Surface, surfaceFormat vk.SurfaceFormat) T {
 	// todo: surface format logic
 	queue := device.GetQueue(0, vk.QueueFlags(vk.QueueGraphicsBit))
 
@@ -53,6 +53,8 @@ func New(device device.T, buffers int, surface vk.Surface, surfaceFormat vk.Surf
 		surfaceFmt: surfaceFormat,
 		buffers:    buffers,
 		contexts:   make([]Context, buffers),
+		width:      width,
+		height:     height,
 	}
 
 	s.output = s.createOutputPass()
@@ -71,6 +73,8 @@ func (s *swapchain) Output() pipeline.Pass {
 }
 
 func (s *swapchain) Resize(width, height int) {
+	s.width = width
+	s.height = height
 	s.resized = true
 	log.Println("Resize swapchain to", width, "x", height)
 }
@@ -84,10 +88,10 @@ func (s *swapchain) recreate() {
 	}
 
 	// query max surface size
-	caps := s.device.GetSurfaceCapabilities(s.surface)
-	caps.MaxImageExtent.Deref()
-	s.width = int(caps.MaxImageExtent.Width)
-	s.height = int(caps.MaxImageExtent.Height)
+	// caps := s.device.GetSurfaceCapabilities(s.surface)
+	// caps.MaxImageExtent.Deref()
+	// s.width = int(caps.MaxImageExtent.Width)
+	// s.height = int(caps.MaxImageExtent.Height)
 
 	swapInfo := vk.SwapchainCreateInfo{
 		SType:           vk.StructureTypeSwapchainCreateInfo,
@@ -120,6 +124,7 @@ func (s *swapchain) recreate() {
 	if swapImageCount != uint32(s.buffers) {
 		panic("failed to get the requested number of swapchain images")
 	}
+	s.buffers = int(swapImageCount)
 
 	images := make([]vk.Image, swapImageCount)
 	vk.GetSwapchainImages(s.device.Ptr(), s.ptr, &swapImageCount, images)

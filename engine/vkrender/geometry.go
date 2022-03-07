@@ -43,7 +43,7 @@ type GeometryPass struct {
 
 func NewGeometryPass(backend vulkan.T, meshes cache.Meshes) *GeometryPass {
 	sh := shader.New[Uniforms, Storage](backend, shader.Args{
-		Path:   "color_f",
+		Path:   "vk/color_f",
 		Frames: backend.Swapchain().Count(),
 		Pass:   backend.Swapchain().Output(),
 	})
@@ -75,7 +75,7 @@ func (p *GeometryPass) Draw(args render.Args, scene object.T) {
 	})
 
 	cmds.Record(func(cmd command.Buffer) {
-		clear := color.RGB(0.2, 0.2, 0.2)
+		clear := color.RGB(0.1, 0.1, 0.1)
 
 		cmd.CmdBeginRenderPass(p.backend.Swapchain().Output(), ctx.Framebuffer, clear)
 		cmd.CmdSetViewport(0, 0, ctx.Width, ctx.Height)

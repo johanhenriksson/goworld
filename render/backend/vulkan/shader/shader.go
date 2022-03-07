@@ -1,6 +1,8 @@
 package shader
 
 import (
+	"fmt"
+
 	"github.com/johanhenriksson/goworld/render/backend/vulkan"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/buffer"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/command"
@@ -53,8 +55,8 @@ func New[K any, S any](backend vulkan.T, args Args) T[K, S] {
 	}
 
 	shaders := []pipeline.Shader{
-		pipeline.NewShader(backend.Device(), "assets/shaders/vk/color_f.vert.spv", vk.ShaderStageVertexBit),
-		pipeline.NewShader(backend.Device(), "assets/shaders/vk/color_f.frag.spv", vk.ShaderStageFragmentBit),
+		pipeline.NewShader(backend.Device(), fmt.Sprintf("assets/shaders/%s.vert.spv", args.Path), vk.ShaderStageVertexBit),
+		pipeline.NewShader(backend.Device(), fmt.Sprintf("assets/shaders/%s.frag.spv", args.Path), vk.ShaderStageFragmentBit),
 	}
 
 	uboLayout := descriptor.New(backend.Device(), []descriptor.Binding{
@@ -73,8 +75,14 @@ func New[K any, S any](backend vulkan.T, args Args) T[K, S] {
 			Stages:  vk.ShaderStageFlags(vk.ShaderStageAll),
 		},
 	})
-	dlayouts := []descriptor.T{uboLayout, ssboLayout, uboLayout, ssboLayout}
 
+	dlayouts := make([]descriptor.T, 2*args.Frames)
+	for i := 0; i < 2*args.Frames; i += args.Frames {
+		dlayouts[i+0] = uboLayout
+		dlayouts[i+1] = ssboLayout
+	}
+
+	// todo: calculate this based on input []bindings
 	dpool := descriptor.NewPool(backend.Device(), []vk.DescriptorPoolSize{
 		{
 			Type:            vk.DescriptorTypeUniformBuffer,
