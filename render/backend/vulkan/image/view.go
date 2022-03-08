@@ -20,19 +20,13 @@ type imgview struct {
 	device device.T
 }
 
-func (v *imgview) Ptr() vk.ImageView {
-	return v.ptr
-}
-
-func (v *imgview) Image() T {
-	return v.image
-}
-
-func (v *imgview) Format() vk.Format {
-	return v.format
-}
+func (v *imgview) Ptr() vk.ImageView { return v.ptr }
+func (v *imgview) Image() T          { return v.image }
+func (v *imgview) Format() vk.Format { return v.format }
 
 func (v *imgview) Destroy() {
-	vk.DestroyImageView(v.device.Ptr(), v.ptr, nil)
-	v.ptr = nil
+	if v.ptr != nil {
+		vk.DestroyImageView(v.device.Ptr(), v.ptr, nil)
+		v.ptr = nil
+	}
 }

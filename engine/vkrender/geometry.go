@@ -14,9 +14,7 @@ import (
 	"github.com/johanhenriksson/goworld/render/backend/types"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/command"
-	"github.com/johanhenriksson/goworld/render/backend/vulkan/framebuffer"
-	"github.com/johanhenriksson/goworld/render/backend/vulkan/image"
-	"github.com/johanhenriksson/goworld/render/backend/vulkan/pipeline"
+	"github.com/johanhenriksson/goworld/render/backend/vulkan/renderpass"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/sync"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/vk_shader"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/vk_texture"
@@ -41,90 +39,61 @@ type Storage struct {
 }
 
 type GeometryPass struct {
-	meshes  cache.Meshes
-	backend vulkan.T
-	shader  vk_shader.T[game.VoxelVertex, Uniforms, Storage]
-
-	diffuse     []image.T
-	diffuseTex  []vk_texture.T
-	depth       []image.T
-	depthView   []image.View
-	framebuffer []framebuffer.T
-	pass        pipeline.Pass
-	completed   sync.Semaphore
+	meshes     cache.Meshes
+	backend    vulkan.T
+	pass       renderpass.T
+	shader     vk_shader.T[game.VoxelVertex, Uniforms, Storage]
+	diffuseTex []vk_texture.T
+	completed  sync.Semaphore
 }
 
 func NewGeometryPass(backend vulkan.T, meshes cache.Meshes) *GeometryPass {
 	diffuseFmt := vk.FormatR16g16b16a16Sfloat
 
-	passInfo := vk.RenderPassCreateInfo{
-		SType:           vk.StructureTypeRenderPassCreateInfo,
-		AttachmentCount: 2,
-		PAttachments: []vk.AttachmentDescription{
-			{
-				Format:         diffuseFmt,
-				Samples:        vk.SampleCount1Bit,
-				LoadOp:         vk.AttachmentLoadOpClear,
-				StoreOp:        vk.AttachmentStoreOpStore,
-				StencilLoadOp:  vk.AttachmentLoadOpDontCare,
-				StencilStoreOp: vk.AttachmentStoreOpDontCare,
-				InitialLayout:  vk.ImageLayoutUndefined,
-				FinalLayout:    vk.ImageLayoutShaderReadOnlyOptimal,
-			},
-			{
-				Format:         backend.Device().GetDepthFormat(),
-				Samples:        vk.SampleCount1Bit,
-				LoadOp:         vk.AttachmentLoadOpClear,
-				StoreOp:        vk.AttachmentStoreOpStore,
-				StencilLoadOp:  vk.AttachmentLoadOpDontCare,
-				StencilStoreOp: vk.AttachmentStoreOpStore,
-				InitialLayout:  vk.ImageLayoutUndefined,
-				FinalLayout:    vk.ImageLayoutDepthStencilAttachmentOptimal,
-			},
-		},
-		SubpassCount: 1,
-		PSubpasses: []vk.SubpassDescription{
-			{
-				PipelineBindPoint:    vk.PipelineBindPointGraphics,
-				InputAttachmentCount: 0,
-				ColorAttachmentCount: 1,
-				PColorAttachments: []vk.AttachmentReference{
-					{
-						Attachment: 0,
-						Layout:     vk.ImageLayoutColorAttachmentOptimal,
-					},
-				},
-				PDepthStencilAttachment: &vk.AttachmentReference{
-					Attachment: 1,
-					Layout:     vk.ImageLayoutDepthStencilAttachmentOptimal,
-				},
-			},
-		},
-		DependencyCount: 0,
-	}
-	pass := pipeline.NewPass(backend.Device(), &passInfo)
+	pass := renderpass.New(backend.Device(), renderpass.Args{
+		Frames: backend.Frames(),
+		Width:  backend.Width(),
+		Height: backend.Height(),
 
-	framebuffers := make([]framebuffer.T, backend.Frames())
-	diffuse := make([]image.T, backend.Frames())
+		ColorAttachments: map[string]renderpass.ColorAttachment{
+			"diffuse": {
+				Index:         0,
+				Format:        diffuseFmt,
+				Samples:       vk.SampleCount1Bit,
+				LoadOp:        vk.AttachmentLoadOpClear,
+				StoreOp:       vk.AttachmentStoreOpStore,
+				InitialLayout: vk.ImageLayoutUndefined,
+				FinalLayout:   vk.ImageLayoutShaderReadOnlyOptimal,
+				Clear:         color.RGB(0.1, 0.1, 0.16),
+			},
+		},
+		DepthAttachment: &renderpass.DepthAttachment{
+			Samples:       vk.SampleCount1Bit,
+			LoadOp:        vk.AttachmentLoadOpClear,
+			StoreOp:       vk.AttachmentStoreOpStore,
+			InitialLayout: vk.ImageLayoutUndefined,
+			FinalLayout:   vk.ImageLayoutDepthStencilAttachmentOptimal,
+			ClearDepth:    1,
+			ClearStencil:  0,
+		},
+		Subpasses: []renderpass.Subpass{
+			{
+				Name:  "geometry",
+				Depth: true,
+
+				ColorAttachments: []string{"diffuse"},
+			},
+		},
+		Dependencies: []renderpass.SubpassDependency{},
+	})
+
+	diffuse := pass.Attachment("diffuse")
 	diffuseTex := make([]vk_texture.T, backend.Frames())
-	depth := make([]image.T, backend.Frames())
-	depthView := make([]image.View, backend.Frames())
-
-	depthFormat := backend.Device().GetDepthFormat()
-	depthUsage := vk.ImageUsageFlags(vk.ImageUsageDepthStencilAttachmentBit | vk.ImageUsageSampledBit)
-
 	for i := 0; i < backend.Frames(); i++ {
-		diffuse[i] = image.New2D(backend.Device(), backend.Width(), backend.Height(), diffuseFmt, vk.ImageUsageFlags(vk.ImageUsageColorAttachmentBit|vk.ImageUsageSampledBit))
-		diffuseTex[i] = vk_texture.FromImage(backend.Device(), diffuse[i], vk_texture.Args{
+		diffuseTex[i] = vk_texture.FromImage(backend.Device(), diffuse.Image(i), vk_texture.Args{
 			Format: diffuseFmt,
 			Filter: vk.FilterLinear,
 			Wrap:   vk.SamplerAddressModeRepeat,
-		})
-		depth[i] = image.New2D(backend.Device(), backend.Width(), backend.Height(), depthFormat, depthUsage)
-		depthView[i] = depth[i].View(depthFormat, vk.ImageAspectFlags(vk.ImageAspectDepthBit|vk.ImageAspectStencilBit))
-		framebuffers[i] = framebuffer.New(backend.Device(), backend.Width(), backend.Height(), pass.Ptr(), []image.View{
-			diffuseTex[i].View(),
-			depthView[i],
 		})
 	}
 
@@ -148,12 +117,8 @@ func NewGeometryPass(backend vulkan.T, meshes cache.Meshes) *GeometryPass {
 		shader:    sh,
 		completed: sync.NewSemaphore(backend.Device()),
 
-		pass:        pass,
-		diffuse:     diffuse,
-		diffuseTex:  diffuseTex,
-		depth:       depth,
-		depthView:   depthView,
-		framebuffer: framebuffers,
+		pass:       pass,
+		diffuseTex: diffuseTex,
 	}
 }
 
@@ -182,9 +147,7 @@ func (p *GeometryPass) Draw(args render.Args, scene object.T) {
 	})
 
 	cmds.Record(func(cmd command.Buffer) {
-		clear := color.RGB(0.1, 0.1, 0.3)
-
-		cmd.CmdBeginRenderPass(p.pass, p.framebuffer[ctx.Index], clear)
+		cmd.CmdBeginRenderPass(p.pass, ctx.Index)
 		cmd.CmdSetViewport(0, 0, ctx.Width, ctx.Height)
 		cmd.CmdSetScissor(0, 0, ctx.Width, ctx.Height)
 
@@ -225,15 +188,11 @@ func (p *GeometryPass) DrawDeferred(cmds command.Recorder, args render.Args, mes
 	cmds.Record(func(cmd command.Buffer) {
 		cmd.CmdBindVertexBuffer(vkmesh.Vertices, 0)
 		cmd.CmdBindIndexBuffers(vkmesh.Indices, 0, vk.IndexTypeUint16)
-		// cmd.CmdDraw(vkmesh.Mesh.Elements(), vkmesh.Mesh.Elements()/3, 0, 0)
-		// cmd.CmdPushConstant(p.shader.Layout(), vk.ShaderStageFlags(vk.ShaderStageAll), 0, &push)
 
 		// index of the object properties in the ssbo
 		idx := 0
-		cmd.CmdDrawIndexed(vkmesh.Mesh.Elements(), 1, 0, 0, idx)
-
-		idx = 1
-		cmd.CmdDrawIndexed(vkmesh.Mesh.Elements(), 1, 0, 0, idx)
+		count := 2
+		cmd.CmdDrawIndexed(vkmesh.Mesh.Elements(), count, 0, 0, idx)
 	})
 
 	return nil
@@ -246,10 +205,7 @@ func (p *GeometryPass) Diffuse(frame int) vk_texture.T {
 func (p *GeometryPass) Destroy() {
 	p.pass.Destroy()
 	for i := 0; i < p.backend.Frames(); i++ {
-		p.framebuffer[i].Destroy()
 		p.diffuseTex[i].Destroy()
-		p.depth[i].Destroy()
-		p.depthView[i].Destroy()
 	}
 	p.shader.Destroy()
 	p.completed.Destroy()

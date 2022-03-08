@@ -7,6 +7,7 @@ import (
 	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/engine/vkrender"
 	"github.com/johanhenriksson/goworld/game"
+	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan"
 )
 
@@ -28,6 +29,8 @@ func main() {
 		},
 		SceneFunc: func(r engine.Renderer, scene object.T) {
 			player, chunk := game.CreateScene(r, scene)
+			player.Transform().SetPosition(vec3.New(0, 20, -11))
+			player.Eye.Transform().SetRotation(vec3.New(-30, 0, 0))
 
 			mesh := game.NewChunkMesh(chunk)
 			chunkobj := object.New("chunk", mesh)

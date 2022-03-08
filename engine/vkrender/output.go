@@ -9,10 +9,10 @@ import (
 	"github.com/johanhenriksson/goworld/render/backend/types"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/command"
+	"github.com/johanhenriksson/goworld/render/backend/vulkan/renderpass"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/sync"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/vk_shader"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/vk_texture"
-	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/shader"
 	"github.com/johanhenriksson/goworld/render/vertex"
 
@@ -28,6 +28,7 @@ type OutputPass struct {
 
 	quad *cache.VkMesh
 	tex  vk_texture.T
+	pass renderpass.T
 }
 
 func NewOutputPass(backend vulkan.T, meshes cache.Meshes, textures cache.Textures, geometry DeferredPass) *OutputPass {
@@ -51,9 +52,31 @@ func NewOutputPass(backend vulkan.T, meshes cache.Meshes, textures cache.Texture
 	p.quad = p.meshes.Fetch(quadvtx, nil).(*cache.VkMesh)
 	p.tex = p.textures.Fetch("assets/textures/uv_checker.png")
 
+	p.pass = renderpass.New(backend.Device(), renderpass.Args{
+		Frames: backend.Frames(),
+		Width:  backend.Width(),
+		Height: backend.Height(),
+		ColorAttachments: map[string]renderpass.ColorAttachment{
+			"color": {
+				Images:      backend.Swapchain().Images(),
+				Format:      backend.Swapchain().SurfaceFormat(),
+				Samples:     vk.SampleCount1Bit,
+				LoadOp:      vk.AttachmentLoadOpClear,
+				StoreOp:     vk.AttachmentStoreOpStore,
+				FinalLayout: vk.ImageLayoutPresentSrc,
+			},
+		},
+		Subpasses: []renderpass.Subpass{
+			{
+				Name:             "output",
+				ColorAttachments: []string{"color"},
+			},
+		},
+	})
+
 	p.shader = vk_shader.New[vertex.T, Uniforms, Storage](backend, vk_shader.Args{
 		Path: "vk/output",
-		Pass: backend.Swapchain().Output(),
+		Pass: p.pass,
 		Attributes: shader.AttributeMap{
 			"position": {
 				Bind: 0,
@@ -79,9 +102,7 @@ func (p *OutputPass) Draw(args render.Args, scene object.T) {
 	p.shader.SetTexture(ctx.Index, "diffuse", p.geometry.Diffuse(ctx.Index))
 
 	worker.Queue(func(cmd command.Buffer) {
-		clear := color.RGB(1, 0, 0)
-
-		cmd.CmdBeginRenderPass(p.backend.Swapchain().Output(), ctx.Framebuffer, clear)
+		cmd.CmdBeginRenderPass(p.pass, ctx.Index)
 		cmd.CmdSetViewport(0, 0, ctx.Width, ctx.Height)
 		cmd.CmdSetScissor(0, 0, ctx.Width, ctx.Height)
 
@@ -104,5 +125,6 @@ func (p *OutputPass) Draw(args render.Args, scene object.T) {
 }
 
 func (p *OutputPass) Destroy() {
+	p.pass.Destroy()
 	p.shader.Destroy()
 }

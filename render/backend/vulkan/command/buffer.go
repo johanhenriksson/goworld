@@ -7,11 +7,10 @@ import (
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/buffer"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/descriptor"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/device"
-	"github.com/johanhenriksson/goworld/render/backend/vulkan/framebuffer"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/image"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/pipeline"
+	"github.com/johanhenriksson/goworld/render/backend/vulkan/renderpass"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/sync"
-	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/util"
 
 	vk "github.com/vulkan-go/vulkan"
@@ -32,7 +31,7 @@ type Buffer interface {
 	CmdBindIndexBuffers(idx buffer.T, offset int, kind vk.IndexType)
 	CmdDraw(vertexCount, instanceCount, firstVertex, firstInstance int)
 	CmdDrawIndexed(indexCount, instanceCount, firstIndex, vertexOffset, firstInstance int)
-	CmdBeginRenderPass(pass pipeline.Pass, framebuffer framebuffer.T, clear color.T)
+	CmdBeginRenderPass(pass renderpass.T, frame int)
 	CmdEndRenderPass()
 	CmdSetViewport(x, y, w, h int)
 	CmdSetScissor(x, y, w, h int)
@@ -141,12 +140,10 @@ func (b *buf) CmdDrawIndexed(indexCount, instanceCount, firstIndex, vertexOffset
 	vk.CmdDrawIndexed(b.Ptr(), uint32(indexCount), uint32(instanceCount), uint32(firstIndex), int32(vertexOffset), uint32(firstInstance))
 }
 
-func (b *buf) CmdBeginRenderPass(pass pipeline.Pass, framebuffer framebuffer.T, clear color.T) {
+func (b *buf) CmdBeginRenderPass(pass renderpass.T, frame int) {
+	clear := pass.Clear()
+	framebuffer := pass.Framebuffer(frame)
 	w, h := framebuffer.Size()
-
-	clearValues := make([]vk.ClearValue, 2)
-	clearValues[1].SetDepthStencil(1, 0)
-	clearValues[0].SetColor([]float32{clear.R, clear.G, clear.B, clear.A})
 
 	vk.CmdBeginRenderPass(b.Ptr(), &vk.RenderPassBeginInfo{
 		SType:       vk.StructureTypeRenderPassBeginInfo,
@@ -159,8 +156,8 @@ func (b *buf) CmdBeginRenderPass(pass pipeline.Pass, framebuffer framebuffer.T, 
 				Height: uint32(h),
 			},
 		},
-		ClearValueCount: 2,
-		PClearValues:    clearValues,
+		ClearValueCount: uint32(len(clear)),
+		PClearValues:    clear,
 	}, vk.SubpassContentsInline)
 }
 

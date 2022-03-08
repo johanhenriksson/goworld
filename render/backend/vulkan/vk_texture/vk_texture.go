@@ -40,7 +40,10 @@ func New(device device.T, args Args) T {
 
 func FromImage(device device.T, img image.T, args Args) T {
 	view := img.View(args.Format, vk.ImageAspectFlags(vk.ImageAspectColorBit))
+	return FromView(device, view, args)
+}
 
+func FromView(device device.T, view image.View, args Args) T {
 	info := vk.SamplerCreateInfo{
 		SType: vk.StructureTypeSamplerCreateInfo,
 
@@ -60,7 +63,7 @@ func FromImage(device device.T, img image.T, args Args) T {
 		Args:   args,
 		ptr:    ptr,
 		device: device,
-		image:  img,
+		image:  view.Image(),
 		view:   view,
 	}
 }
