@@ -34,6 +34,11 @@ func New(device device.T, args Args) T {
 		args.Width, args.Height, args.Format,
 		vk.ImageUsageFlags(vk.ImageUsageSampledBit|vk.ImageUsageTransferDstBit))
 
+	return FromImage(device, img, args)
+
+}
+
+func FromImage(device device.T, img image.T, args Args) T {
 	view := img.View(args.Format, vk.ImageAspectFlags(vk.ImageAspectColorBit))
 
 	info := vk.SamplerCreateInfo{

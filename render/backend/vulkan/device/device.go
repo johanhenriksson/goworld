@@ -167,8 +167,10 @@ func (d *device) Allocate(req vk.MemoryRequirements, flags vk.MemoryPropertyFlag
 }
 
 func (d *device) Destroy() {
-	vk.DestroyDevice(d.ptr, nil)
-	d.ptr = nil
+	if d.ptr != nil {
+		vk.DestroyDevice(d.ptr, nil)
+		d.ptr = nil
+	}
 }
 
 func (d *device) WaitIdle() {

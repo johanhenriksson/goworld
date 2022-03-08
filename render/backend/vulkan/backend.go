@@ -23,6 +23,9 @@ type T interface {
 	Device() device.T
 	Surface() vk.Surface
 	Swapchain() swapchain.T
+	Frames() int
+	Width() int
+	Height() int
 	Destroy()
 
 	Transferer() command.Worker
@@ -38,7 +41,9 @@ type T interface {
 type backend struct {
 	appName   string
 	deviceIdx int
-	swapcount int
+	frames    int
+	width     int
+	height    int
 	instance  instance.T
 	device    device.T
 	surface   vk.Surface
@@ -50,7 +55,7 @@ func New(appName string, deviceIndex int) T {
 	return &backend{
 		appName:   appName,
 		deviceIdx: deviceIndex,
-		swapcount: 2,
+		frames:    2,
 	}
 }
 
@@ -58,6 +63,9 @@ func (b *backend) Instance() instance.T   { return b.instance }
 func (b *backend) Device() device.T       { return b.device }
 func (b *backend) Surface() vk.Surface    { return b.surface }
 func (b *backend) Swapchain() swapchain.T { return b.swapchain }
+func (b *backend) Frames() int            { return b.frames }
+func (b *backend) Width() int             { return b.width }
+func (b *backend) Height() int            { return b.height }
 
 func (b *backend) Transferer() command.Worker { return b.transfer }
 
@@ -89,10 +97,10 @@ func (b *backend) GlfwSetup(w *glfw.Window, args window.Args) error {
 	b.surface = vk.SurfaceFromPointer(surfPtr)
 	surfaceFormat := b.device.GetSurfaceFormats(b.surface)[0]
 
-	width, height := w.GetFramebufferSize()
+	b.width, b.height = w.GetFramebufferSize()
 
 	// allocate swapchain
-	b.swapchain = swapchain.New(b.device, b.swapcount, width, height, b.surface, surfaceFormat)
+	b.swapchain = swapchain.New(b.device, b.frames, b.width, b.height, b.surface, surfaceFormat)
 
 	b.transfer = command.NewWorker(b.device, vk.QueueFlags(vk.QueueTransferBit))
 

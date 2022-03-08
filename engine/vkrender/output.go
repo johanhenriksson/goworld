@@ -24,13 +24,13 @@ type OutputPass struct {
 	meshes   cache.Meshes
 	textures cache.Textures
 	shader   vk_shader.T[vertex.T, Uniforms, Storage]
-	geometry Pass
+	geometry DeferredPass
 
 	quad *cache.VkMesh
 	tex  vk_texture.T
 }
 
-func NewOutputPass(backend vulkan.T, meshes cache.Meshes, textures cache.Textures, geometry Pass) *OutputPass {
+func NewOutputPass(backend vulkan.T, meshes cache.Meshes, textures cache.Textures, geometry DeferredPass) *OutputPass {
 	p := &OutputPass{
 		backend:  backend,
 		meshes:   meshes,
@@ -52,9 +52,8 @@ func NewOutputPass(backend vulkan.T, meshes cache.Meshes, textures cache.Texture
 	p.tex = p.textures.Fetch("assets/textures/uv_checker.png")
 
 	p.shader = vk_shader.New[vertex.T, Uniforms, Storage](backend, vk_shader.Args{
-		Path:   "vk/output",
-		Frames: backend.Swapchain().Count(),
-		Pass:   backend.Swapchain().Output(),
+		Path: "vk/output",
+		Pass: backend.Swapchain().Output(),
 		Attributes: shader.AttributeMap{
 			"position": {
 				Bind: 0,
@@ -77,10 +76,10 @@ func (p *OutputPass) Draw(args render.Args, scene object.T) {
 	ctx := args.Context
 	worker := ctx.Workers[0]
 
-	p.shader.SetTexture(ctx.Index, "diffuse", p.tex)
+	p.shader.SetTexture(ctx.Index, "diffuse", p.geometry.Diffuse(ctx.Index))
 
 	worker.Queue(func(cmd command.Buffer) {
-		clear := color.RGB(0.2, 0.2, 0.5)
+		clear := color.RGB(1, 0, 0)
 
 		cmd.CmdBeginRenderPass(p.backend.Swapchain().Output(), ctx.Framebuffer, clear)
 		cmd.CmdSetViewport(0, 0, ctx.Width, ctx.Height)

@@ -55,7 +55,6 @@ type vk_shader[V any, U any, S any] struct {
 
 type Args struct {
 	Path       string
-	Frames     int
 	Bindings   []descriptor.Binding
 	Pass       pipeline.Pass
 	Attributes shader.AttributeMap
@@ -65,10 +64,11 @@ type Args struct {
 func New[V any, U any, S any](backend vulkan.T, args Args) T[V, U, S] {
 	ubosize := 16 * 1024
 	ssbosize := 1024 * 1024
+	frames := backend.Frames()
 
-	ubo := make([]buffer.T, args.Frames)
-	ssbo := make([]buffer.T, args.Frames)
-	for i := 0; i < args.Frames; i++ {
+	ubo := make([]buffer.T, frames)
+	ssbo := make([]buffer.T, frames)
+	for i := 0; i < frames; i++ {
 		ubo[i] = buffer.NewUniform(backend.Device(), ubosize)
 		ssbo[i] = buffer.NewStorage(backend.Device(), ssbosize)
 	}
@@ -95,7 +95,7 @@ func New[V any, U any, S any](backend vulkan.T, args Args) T[V, U, S] {
 	})
 	poolsizes = append(poolsizes, vk.DescriptorPoolSize{
 		Type:            vk.DescriptorTypeUniformBuffer,
-		DescriptorCount: uint32(args.Frames),
+		DescriptorCount: uint32(frames),
 	})
 
 	ssboSet = 1
@@ -109,7 +109,7 @@ func New[V any, U any, S any](backend vulkan.T, args Args) T[V, U, S] {
 	})
 	poolsizes = append(poolsizes, vk.DescriptorPoolSize{
 		Type:            vk.DescriptorTypeStorageBuffer,
-		DescriptorCount: uint32(args.Frames),
+		DescriptorCount: uint32(frames),
 	})
 
 	texBinds := make([]descriptor.Binding, 0, len(args.Samplers))
@@ -123,14 +123,14 @@ func New[V any, U any, S any](backend vulkan.T, args Args) T[V, U, S] {
 		texLayout = descriptor.New(backend.Device(), texBinds)
 		poolsizes = append(poolsizes, vk.DescriptorPoolSize{
 			Type:            vk.DescriptorTypeCombinedImageSampler,
-			DescriptorCount: uint32(args.Frames * len(texBinds)),
+			DescriptorCount: uint32(frames * len(texBinds)),
 		})
 		texSet = sets
 		sets++
 	}
 
-	dlayouts := make([]descriptor.T, sets*args.Frames)
-	for i := 0; i < args.Frames; i++ {
+	dlayouts := make([]descriptor.T, sets*frames)
+	for i := 0; i < frames; i++ {
 		if uboSet >= 0 {
 			dlayouts[sets*i+uboSet] = uboLayout
 		}
@@ -152,7 +152,7 @@ func New[V any, U any, S any](backend vulkan.T, args Args) T[V, U, S] {
 
 	shader := &vk_shader[V, U, S]{
 		name:    args.Path,
-		frames:  args.Frames,
+		frames:  frames,
 		backend: backend,
 		ubosize: ubosize,
 		shaders: shaders,
@@ -175,7 +175,7 @@ func New[V any, U any, S any](backend vulkan.T, args Args) T[V, U, S] {
 		samplers: samplers,
 	}
 
-	for i := 0; i < args.Frames; i++ {
+	for i := 0; i < frames; i++ {
 		shader.updateSets(i)
 	}
 
