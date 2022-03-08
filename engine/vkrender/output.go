@@ -65,6 +65,9 @@ func NewOutputPass(backend vulkan.T, meshes cache.Meshes, textures cache.Texture
 				Type: types.Float,
 			},
 		},
+		Samplers: vk_shader.SamplerMap{
+			"diffuse": 0,
+		},
 	})
 
 	return p
@@ -73,6 +76,8 @@ func NewOutputPass(backend vulkan.T, meshes cache.Meshes, textures cache.Texture
 func (p *OutputPass) Draw(args render.Args, scene object.T) {
 	ctx := args.Context
 	worker := ctx.Workers[0]
+
+	p.shader.SetTexture(ctx.Index, "diffuse", p.tex)
 
 	worker.Queue(func(cmd command.Buffer) {
 		clear := color.RGB(0.2, 0.2, 0.5)

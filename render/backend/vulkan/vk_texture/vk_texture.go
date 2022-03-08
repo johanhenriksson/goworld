@@ -10,6 +10,7 @@ import (
 type T interface {
 	device.Resource[vk.Sampler]
 	Image() image.T
+	View() image.View
 }
 
 type Args struct {
@@ -63,9 +64,8 @@ func (t *vktexture) Ptr() vk.Sampler {
 	return t.ptr
 }
 
-func (t *vktexture) Image() image.T {
-	return t.image
-}
+func (t *vktexture) Image() image.T   { return t.image }
+func (t *vktexture) View() image.View { return t.view }
 
 func (t *vktexture) Destroy() {
 	vk.DestroySampler(t.device.Ptr(), t.ptr, nil)

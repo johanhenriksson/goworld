@@ -47,7 +47,7 @@ func (t *vktextures) Fetch(path string) vk_texture.T {
 	tex := vk_texture.New(t.backend.Device(), vk_texture.Args{
 		Width:  img.Rect.Size().X,
 		Height: img.Rect.Size().Y,
-		Format: vk.FormatA8b8g8r8UintPack32,
+		Format: vk.FormatR8g8b8a8Unorm,
 		Filter: vk.FilterLinear,
 		Wrap:   vk.SamplerAddressModeRepeat,
 	})
@@ -60,6 +60,12 @@ func (t *vktextures) Fetch(path string) vk_texture.T {
 			vk.ImageLayoutUndefined,
 			vk.ImageLayoutTransferDstOptimal)
 		cmd.CmdCopyBufferToImage(stage, tex.Image(), vk.ImageLayoutTransferDstOptimal)
+		cmd.CmdImageBarrier(
+			vk.PipelineStageFlags(vk.PipelineStageTransferBit),
+			vk.PipelineStageFlags(vk.PipelineStageFragmentShaderBit),
+			tex.Image(),
+			vk.ImageLayoutTransferDstOptimal,
+			vk.ImageLayoutShaderReadOnlyOptimal)
 	})
 	t.worker.Submit(command.SubmitInfo{})
 	t.worker.Wait()
