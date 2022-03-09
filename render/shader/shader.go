@@ -35,7 +35,6 @@ type T interface {
 }
 
 type UniformMap map[string]UniformDesc
-type AttributeMap map[string]AttributeDesc
 
 type UniformDesc struct {
 	Name string
@@ -49,4 +48,16 @@ type AttributeDesc struct {
 	Bind int
 	Size int
 	Type types.Type
+}
+
+type AttributeMap map[string]AttributeDesc
+
+func (m AttributeMap) Attribute(name string) (AttributeDesc, error) {
+	if attr, ok := m[name]; ok {
+		return attr, nil
+	}
+	return AttributeDesc{
+		Name: name,
+		Bind: -1,
+	}, ErrUnknownAttribute
 }

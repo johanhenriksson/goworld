@@ -12,7 +12,6 @@ import (
 type Pointers []Pointer
 
 type AttributeResolver interface {
-	Name() string
 	Attribute(name string) (shader.AttributeDesc, error)
 }
 
@@ -25,7 +24,7 @@ func (ps Pointers) Bind(shader AttributeResolver) {
 	for i, ptr := range ps {
 		attr, err := shader.Attribute(ptr.Name)
 		if err != nil {
-			log.Printf("no attribute in shader %s: %s\n", shader.Name(), ptr.Name)
+			log.Printf("no attribute in shader %s\n", ptr.Name)
 		}
 		ptr.Bind(attr.Bind, attr.Type)
 		ps[i] = ptr

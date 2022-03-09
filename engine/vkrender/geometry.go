@@ -39,12 +39,12 @@ type Storage struct {
 }
 
 type GeometryPass struct {
-	meshes     cache.Meshes
-	backend    vulkan.T
-	pass       renderpass.T
-	shader     vk_shader.T[game.VoxelVertex, Uniforms, Storage]
-	diffuseTex []vk_texture.T
-	completed  sync.Semaphore
+	meshes    cache.Meshes
+	backend   vulkan.T
+	pass      renderpass.T
+	shader    vk_shader.T[game.VoxelVertex, Uniforms, Storage]
+	textures  []vk_texture.T
+	completed sync.Semaphore
 }
 
 func NewGeometryPass(backend vulkan.T, meshes cache.Meshes) *GeometryPass {
@@ -109,11 +109,11 @@ func NewGeometryPass(backend vulkan.T, meshes cache.Meshes) *GeometryPass {
 		Dependencies: []renderpass.SubpassDependency{},
 	})
 
-	diffuse := pass.Attachment("normal")
-	diffuseTex := make([]vk_texture.T, backend.Frames())
+	attachment := pass.Attachment("diffuse")
+	textures := make([]vk_texture.T, backend.Frames())
 	for i := 0; i < backend.Frames(); i++ {
-		image := diffuse.Image(i)
-		diffuseTex[i] = vk_texture.FromImage(backend.Device(), image, vk_texture.Args{
+		image := attachment.Image(i)
+		textures[i] = vk_texture.FromImage(backend.Device(), image, vk_texture.Args{
 			Format: image.Format(),
 			Filter: vk.FilterLinear,
 			Wrap:   vk.SamplerAddressModeRepeat,
@@ -138,14 +138,14 @@ func NewGeometryPass(backend vulkan.T, meshes cache.Meshes) *GeometryPass {
 			},
 		},
 	})
+
 	return &GeometryPass{
 		backend:   backend,
 		meshes:    meshes,
 		shader:    sh,
+		pass:      pass,
+		textures:  textures,
 		completed: sync.NewSemaphore(backend.Device()),
-
-		pass:       pass,
-		diffuseTex: diffuseTex,
 	}
 }
 
@@ -226,13 +226,13 @@ func (p *GeometryPass) DrawDeferred(cmds command.Recorder, args render.Args, mes
 }
 
 func (p *GeometryPass) Diffuse(frame int) vk_texture.T {
-	return p.diffuseTex[frame]
+	return p.textures[frame]
 }
 
 func (p *GeometryPass) Destroy() {
 	p.pass.Destroy()
 	for i := 0; i < p.backend.Frames(); i++ {
-		p.diffuseTex[i].Destroy()
+		p.textures[i].Destroy()
 	}
 	p.shader.Destroy()
 	p.completed.Destroy()

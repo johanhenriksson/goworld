@@ -16,11 +16,11 @@ type layout struct {
 	device device.T
 }
 
-func NewLayout(device device.T, descriptors []descriptor.T) Layout {
+func NewLayout(device device.T, descriptors []descriptor.Layout) Layout {
 	info := vk.PipelineLayoutCreateInfo{
 		SType:          vk.StructureTypePipelineLayoutCreateInfo,
 		SetLayoutCount: uint32(len(descriptors)),
-		PSetLayouts: util.Map(descriptors, func(i int, desc descriptor.T) vk.DescriptorSetLayout {
+		PSetLayouts: util.Map(descriptors, func(i int, desc descriptor.Layout) vk.DescriptorSetLayout {
 			return desc.Ptr()
 		}),
 	}

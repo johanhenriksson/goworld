@@ -5,7 +5,7 @@
 
 // Attributes
 layout (location = 0) in vec3 position;
-layout (location = 1) in int normal_id;
+layout (location = 1) in uint normal_id;
 layout (location = 2) in vec3 color_0;
 
 // layout (push_constant) uniform Push {
@@ -21,7 +21,7 @@ struct ObjectData{
 };
 
 //all object matrices
-layout(std140, set = 1, binding = 0) readonly buffer ObjectBuffer{
+layout(std140, set = 0, binding = 1) readonly buffer ObjectBuffer{
 	ObjectData objects[];
 } ssbo;
 
