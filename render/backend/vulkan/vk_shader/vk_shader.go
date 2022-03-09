@@ -9,6 +9,7 @@ import (
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/command"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/descriptor"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/pipeline"
+	"github.com/johanhenriksson/goworld/render/backend/vulkan/renderpass"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/vk_texture"
 	"github.com/johanhenriksson/goworld/render/shader"
 	"github.com/johanhenriksson/goworld/render/vertex"
@@ -48,7 +49,7 @@ type vk_shader[V any, U any, S any] struct {
 	dpool      descriptor.Pool
 	layout     pipeline.Layout
 	pipe       pipeline.T
-	pass       pipeline.Pass
+	pass       renderpass.T
 	attrs      shader.AttributeMap
 	samplers   map[string]Sampler
 }
@@ -56,7 +57,7 @@ type vk_shader[V any, U any, S any] struct {
 type Args struct {
 	Path       string
 	Bindings   []descriptor.Binding
-	Pass       pipeline.Pass
+	Pass       renderpass.T
 	Attributes shader.AttributeMap
 	Samplers   SamplerMap
 }

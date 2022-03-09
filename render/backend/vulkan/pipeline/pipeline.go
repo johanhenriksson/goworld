@@ -2,9 +2,11 @@ package pipeline
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/johanhenriksson/goworld/render/backend/types"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/device"
+	"github.com/johanhenriksson/goworld/render/backend/vulkan/renderpass"
 	"github.com/johanhenriksson/goworld/render/vertex"
 	"github.com/johanhenriksson/goworld/util"
 
@@ -20,7 +22,7 @@ type pipeline struct {
 	device device.T
 }
 
-func New(device device.T, cache vk.PipelineCache, layout Layout, pass Pass, shaders []Shader, pointers vertex.Pointers) T {
+func New(device device.T, cache vk.PipelineCache, layout Layout, pass renderpass.T, shaders []Shader, pointers vertex.Pointers) T {
 	modules := util.Map(shaders, func(i int, shader Shader) vk.PipelineShaderStageCreateInfo {
 		return vk.PipelineShaderStageCreateInfo{
 			SType:  vk.StructureTypePipelineShaderStageCreateInfo,
@@ -31,7 +33,24 @@ func New(device device.T, cache vk.PipelineCache, layout Layout, pass Pass, shad
 	})
 
 	attrs := pointersToVertexAttributes(pointers, 0)
-	fmt.Println("attributes", attrs)
+	log.Println("attributes", attrs)
+
+	blendStates := util.Map(pass.Attachments(), func(i int, attachment renderpass.Attachment) vk.PipelineColorBlendAttachmentState {
+		// todo: move into attachment object
+		return vk.PipelineColorBlendAttachmentState{
+			// additive blending
+			BlendEnable:         vk.False,
+			ColorBlendOp:        vk.BlendOpAdd,
+			SrcColorBlendFactor: vk.BlendFactorZero,
+			DstColorBlendFactor: vk.BlendFactorOne,
+			AlphaBlendOp:        vk.BlendOpAdd,
+			SrcAlphaBlendFactor: vk.BlendFactorZero,
+			DstAlphaBlendFactor: vk.BlendFactorOne,
+			ColorWriteMask: vk.ColorComponentFlags(
+				vk.ColorComponentRBit | vk.ColorComponentGBit |
+					vk.ColorComponentBBit | vk.ColorComponentABit),
+		}
+	})
 
 	info := vk.GraphicsPipelineCreateInfo{
 		SType: vk.StructureTypeGraphicsPipelineCreateInfo,
@@ -135,22 +154,8 @@ func New(device device.T, cache vk.PipelineCache, layout Layout, pass Pass, shad
 			SType:           vk.StructureTypePipelineColorBlendStateCreateInfo,
 			LogicOpEnable:   vk.False,
 			LogicOp:         vk.LogicOpClear,
-			AttachmentCount: 1,
-			PAttachments: []vk.PipelineColorBlendAttachmentState{
-				{
-					// additive blending
-					BlendEnable:         vk.False,
-					ColorBlendOp:        vk.BlendOpAdd,
-					SrcColorBlendFactor: vk.BlendFactorZero,
-					DstColorBlendFactor: vk.BlendFactorOne,
-					AlphaBlendOp:        vk.BlendOpAdd,
-					SrcAlphaBlendFactor: vk.BlendFactorZero,
-					DstAlphaBlendFactor: vk.BlendFactorOne,
-					ColorWriteMask: vk.ColorComponentFlags(
-						vk.ColorComponentRBit | vk.ColorComponentGBit |
-							vk.ColorComponentBBit | vk.ColorComponentABit),
-				},
-			},
+			AttachmentCount: uint32(len(blendStates)),
+			PAttachments:    blendStates,
 		},
 
 		// dynamic state: viewport & scissor

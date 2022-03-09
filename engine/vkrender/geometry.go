@@ -49,6 +49,8 @@ type GeometryPass struct {
 
 func NewGeometryPass(backend vulkan.T, meshes cache.Meshes) *GeometryPass {
 	diffuseFmt := vk.FormatR16g16b16a16Sfloat
+	normalFmt := vk.FormatR8g8b8a8Unorm
+	positionFmt := vk.FormatR16g16b16a16Sfloat
 
 	pass := renderpass.New(backend.Device(), renderpass.Args{
 		Frames: backend.Frames(),
@@ -66,6 +68,26 @@ func NewGeometryPass(backend vulkan.T, meshes cache.Meshes) *GeometryPass {
 				FinalLayout:   vk.ImageLayoutShaderReadOnlyOptimal,
 				Clear:         color.RGB(0.1, 0.1, 0.16),
 			},
+			"normal": {
+				Index:         1,
+				Format:        normalFmt,
+				Samples:       vk.SampleCount1Bit,
+				LoadOp:        vk.AttachmentLoadOpClear,
+				StoreOp:       vk.AttachmentStoreOpStore,
+				InitialLayout: vk.ImageLayoutUndefined,
+				FinalLayout:   vk.ImageLayoutShaderReadOnlyOptimal,
+				Clear:         color.Black,
+			},
+			"position": {
+				Index:         2,
+				Format:        positionFmt,
+				Samples:       vk.SampleCount1Bit,
+				LoadOp:        vk.AttachmentLoadOpClear,
+				StoreOp:       vk.AttachmentStoreOpStore,
+				InitialLayout: vk.ImageLayoutUndefined,
+				FinalLayout:   vk.ImageLayoutShaderReadOnlyOptimal,
+				Clear:         color.Black,
+			},
 		},
 		DepthAttachment: &renderpass.DepthAttachment{
 			Samples:       vk.SampleCount1Bit,
@@ -81,17 +103,18 @@ func NewGeometryPass(backend vulkan.T, meshes cache.Meshes) *GeometryPass {
 				Name:  "geometry",
 				Depth: true,
 
-				ColorAttachments: []string{"diffuse"},
+				ColorAttachments: []string{"diffuse", "normal", "position"},
 			},
 		},
 		Dependencies: []renderpass.SubpassDependency{},
 	})
 
-	diffuse := pass.Attachment("diffuse")
+	diffuse := pass.Attachment("normal")
 	diffuseTex := make([]vk_texture.T, backend.Frames())
 	for i := 0; i < backend.Frames(); i++ {
-		diffuseTex[i] = vk_texture.FromImage(backend.Device(), diffuse.Image(i), vk_texture.Args{
-			Format: diffuseFmt,
+		image := diffuse.Image(i)
+		diffuseTex[i] = vk_texture.FromImage(backend.Device(), image, vk_texture.Args{
+			Format: image.Format(),
 			Filter: vk.FilterLinear,
 			Wrap:   vk.SamplerAddressModeRepeat,
 		})
@@ -105,8 +128,12 @@ func NewGeometryPass(backend vulkan.T, meshes cache.Meshes) *GeometryPass {
 				Bind: 0,
 				Type: types.Float,
 			},
-			"color_0": {
+			"normal_id": {
 				Bind: 1,
+				Type: types.UInt8,
+			},
+			"color_0": {
+				Bind: 2,
 				Type: types.Float,
 			},
 		},

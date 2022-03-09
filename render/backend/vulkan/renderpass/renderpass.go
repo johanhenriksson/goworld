@@ -14,6 +14,7 @@ type T interface {
 
 	Depth() Attachment
 	Attachment(name string) Attachment
+	Attachments() []Attachment
 	Framebuffer(frame int) framebuffer.T
 	Clear() []vk.ClearValue
 }
@@ -141,6 +142,10 @@ func (r *renderpass) Framebuffer(frame int) framebuffer.T {
 
 func (r *renderpass) Clear() []vk.ClearValue {
 	return r.clear
+}
+
+func (r *renderpass) Attachments() []Attachment {
+	return util.Map(r.order, func(i int, name string) Attachment { return r.attachments[name] })
 }
 
 func (r *renderpass) Destroy() {
