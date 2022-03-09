@@ -7,7 +7,7 @@ import (
 )
 
 type Attachment interface {
-	Index() int
+	Name() string
 	Image(int) image.T
 	View(int) image.View
 	Clear() vk.ClearValue
@@ -16,7 +16,7 @@ type Attachment interface {
 }
 
 type attachment struct {
-	index    int
+	name     string
 	view     []image.View
 	image    []image.T
 	clear    vk.ClearValue
@@ -28,7 +28,7 @@ func (a *attachment) Description() vk.AttachmentDescription {
 	return a.desc
 }
 
-func (a *attachment) Index() int                { return a.index }
+func (a *attachment) Name() string              { return a.name }
 func (a *attachment) Image(frame int) image.T   { return a.image[frame] }
 func (a *attachment) View(frame int) image.View { return a.view[frame] }
 func (a *attachment) Clear() vk.ClearValue      { return a.clear }
@@ -43,6 +43,8 @@ func (a *attachment) Destroy() {
 }
 
 func NewColorAttachment(device device.T, desc ColorAttachment, frames, width, height int) Attachment {
+	desc.defaults()
+
 	images := desc.Images
 	imgowner := false
 	if len(images) == 0 {
@@ -67,7 +69,7 @@ func NewColorAttachment(device device.T, desc ColorAttachment, frames, width, he
 	clear.SetColor([]float32{desc.Clear.R, desc.Clear.G, desc.Clear.B, desc.Clear.A})
 
 	return &attachment{
-		index:    desc.Index,
+		name:     desc.Name,
 		image:    images,
 		view:     views,
 		clear:    clear,
@@ -88,6 +90,8 @@ func NewColorAttachment(device device.T, desc ColorAttachment, frames, width, he
 }
 
 func NewDepthAttachment(device device.T, desc DepthAttachment, frames, width, height, index int) Attachment {
+	desc.defaults()
+
 	depthFormat := device.GetDepthFormat()
 	depthUsage := vk.ImageUsageFlags(vk.ImageUsageDepthStencilAttachmentBit | vk.ImageUsageSampledBit)
 
@@ -112,7 +116,7 @@ func NewDepthAttachment(device device.T, desc DepthAttachment, frames, width, he
 	clear.SetDepthStencil(desc.ClearDepth, desc.ClearStencil)
 
 	return &attachment{
-		index:    index,
+		name:     "depth",
 		image:    images,
 		view:     views,
 		clear:    clear,

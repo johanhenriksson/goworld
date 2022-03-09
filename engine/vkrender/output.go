@@ -9,6 +9,7 @@ import (
 	"github.com/johanhenriksson/goworld/render/backend/types"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/command"
+	"github.com/johanhenriksson/goworld/render/backend/vulkan/descriptor"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/renderpass"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/sync"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/vk_shader"
@@ -23,12 +24,17 @@ type OutputPass struct {
 	backend  vulkan.T
 	meshes   cache.Meshes
 	textures cache.Textures
-	shader   vk_shader.T[vertex.T, Uniforms, Storage]
+	shader   vk_shader.T[vertex.T, *OutputDescriptors]
 	geometry DeferredPass
 
 	quad *cache.VkMesh
 	tex  vk_texture.T
 	pass renderpass.T
+}
+
+type OutputDescriptors struct {
+	descriptor.Set
+	Diffuse *descriptor.Sampler
 }
 
 func NewOutputPass(backend vulkan.T, meshes cache.Meshes, textures cache.Textures, geometry DeferredPass) *OutputPass {
@@ -56,8 +62,9 @@ func NewOutputPass(backend vulkan.T, meshes cache.Meshes, textures cache.Texture
 		Frames: backend.Frames(),
 		Width:  backend.Width(),
 		Height: backend.Height(),
-		ColorAttachments: map[string]renderpass.ColorAttachment{
-			"color": {
+		ColorAttachments: []renderpass.ColorAttachment{
+			{
+				Name:        "color",
 				Images:      backend.Swapchain().Images(),
 				Format:      backend.Swapchain().SurfaceFormat(),
 				Samples:     vk.SampleCount1Bit,
@@ -74,23 +81,32 @@ func NewOutputPass(backend vulkan.T, meshes cache.Meshes, textures cache.Texture
 		},
 	})
 
-	p.shader = vk_shader.New[vertex.T, Uniforms, Storage](backend, vk_shader.Args{
-		Path: "vk/output",
-		Pass: p.pass,
-		Attributes: shader.AttributeMap{
-			"position": {
-				Bind: 0,
-				Type: types.Float,
-			},
-			"texcoord_0": {
-				Bind: 1,
-				Type: types.Float,
+	p.shader = vk_shader.New[vertex.T](
+		backend,
+		&OutputDescriptors{
+			Diffuse: &descriptor.Sampler{
+				Binding: 2,
+				Stages:  vk.ShaderStageFlags(vk.ShaderStageAll),
 			},
 		},
-		Samplers: vk_shader.SamplerMap{
-			"diffuse": 0,
-		},
-	})
+		vk_shader.Args{
+			Path: "vk/output",
+			Pass: p.pass,
+			Attributes: shader.AttributeMap{
+				"position": {
+					Bind: 0,
+					Type: types.Float,
+				},
+				"texcoord_0": {
+					Bind: 1,
+					Type: types.Float,
+				},
+			},
+		})
+
+	for i := 0; i < backend.Frames(); i++ {
+		p.shader.Descriptors(i).Diffuse.Set(p.geometry.Diffuse(i))
+	}
 
 	return p
 }
@@ -98,8 +114,6 @@ func NewOutputPass(backend vulkan.T, meshes cache.Meshes, textures cache.Texture
 func (p *OutputPass) Draw(args render.Args, scene object.T) {
 	ctx := args.Context
 	worker := ctx.Workers[0]
-
-	p.shader.SetTexture(ctx.Index, "diffuse", p.geometry.Diffuse(ctx.Index))
 
 	worker.Queue(func(cmd command.Buffer) {
 		cmd.CmdBeginRenderPass(p.pass, ctx.Index)

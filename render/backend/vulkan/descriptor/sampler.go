@@ -1,6 +1,7 @@
 package descriptor
 
 import (
+	"github.com/johanhenriksson/goworld/render/backend/vulkan/device"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/vk_texture"
 
 	vk "github.com/vulkan-go/vulkan"
@@ -17,6 +18,10 @@ type Sampler struct {
 }
 
 var _ Descriptor = &Sampler{}
+
+func (d *Sampler) Initialize(device device.T) {}
+
+func (d *Sampler) Destroy() {}
 
 func (d *Sampler) Bind(set Set) {
 	d.set = set

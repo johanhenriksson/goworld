@@ -23,19 +23,21 @@ type renderpass struct {
 	device       device.T
 	ptr          vk.RenderPass
 	framebuffers []framebuffer.T
-	attachments  map[string]Attachment
+	attachments  []Attachment
 	depth        Attachment
-	order        []string
+	indices      map[string]int
 	clear        []vk.ClearValue
 }
 
 func New(device device.T, args Args) T {
 	clear := make([]vk.ClearValue, 0, len(args.ColorAttachments)+1)
-	attachments := make(map[string]Attachment)
-	for name, desc := range args.ColorAttachments {
+	attachments := make([]Attachment, len(args.ColorAttachments))
+	attachmentIndices := make(map[string]int)
+	for index, desc := range args.ColorAttachments {
 		attachment := NewColorAttachment(device, desc, args.Frames, args.Width, args.Height)
 		clear = append(clear, attachment.Clear())
-		attachments[name] = attachment
+		attachments[index] = attachment
+		attachmentIndices[attachment.Name()] = index
 	}
 
 	var depth Attachment
@@ -46,10 +48,8 @@ func New(device device.T, args Args) T {
 	}
 
 	descriptions := make([]vk.AttachmentDescription, 0, len(args.ColorAttachments)+1)
-	attachmentOrder := make([]string, 0, len(args.ColorAttachments))
-	for name, attachment := range attachments {
+	for _, attachment := range attachments {
 		descriptions = append(descriptions, attachment.Description())
-		attachmentOrder = append(attachmentOrder, name)
 	}
 	if depth != nil {
 		descriptions = append(descriptions, depth.Description())
@@ -61,14 +61,14 @@ func New(device device.T, args Args) T {
 		var depthRef *vk.AttachmentReference
 		if depth != nil {
 			depthRef = &vk.AttachmentReference{
-				Attachment: uint32(len(attachmentOrder)),
+				Attachment: uint32(len(attachments)),
 				Layout:     vk.ImageLayoutDepthStencilAttachmentOptimal,
 			}
 		}
 		subpasses = append(subpasses, vk.SubpassDescription{
 			PipelineBindPoint:    vk.PipelineBindPointGraphics,
 			ColorAttachmentCount: uint32(len(attachments)),
-			PColorAttachments: util.Map(attachmentOrder, func(idx int, name string) vk.AttachmentReference {
+			PColorAttachments: util.Map(attachments, func(idx int, attach Attachment) vk.AttachmentReference {
 				return vk.AttachmentReference{
 					Attachment: uint32(idx),
 					Layout:     vk.ImageLayoutColorAttachmentOptimal,
@@ -108,8 +108,7 @@ func New(device device.T, args Args) T {
 	framebuffers := make([]framebuffer.T, args.Frames)
 	for i := range framebuffers {
 		fbviews := make([]image.View, 0, len(descriptions))
-		for _, name := range attachmentOrder {
-			attachment := attachments[name]
+		for _, attachment := range attachments {
 			fbviews = append(fbviews, attachment.View(i))
 		}
 		if depth != nil {
@@ -123,7 +122,7 @@ func New(device device.T, args Args) T {
 		ptr:          ptr,
 		framebuffers: framebuffers,
 		depth:        depth,
-		order:        attachmentOrder,
+		indices:      attachmentIndices,
 		attachments:  attachments,
 		clear:        clear,
 	}
@@ -133,7 +132,8 @@ func (r *renderpass) Ptr() vk.RenderPass { return r.ptr }
 func (r *renderpass) Depth() Attachment  { return r.depth }
 
 func (r *renderpass) Attachment(name string) Attachment {
-	return r.attachments[name]
+	index := r.indices[name]
+	return r.attachments[index]
 }
 
 func (r *renderpass) Framebuffer(frame int) framebuffer.T {
@@ -145,7 +145,7 @@ func (r *renderpass) Clear() []vk.ClearValue {
 }
 
 func (r *renderpass) Attachments() []Attachment {
-	return util.Map(r.order, func(i int, name string) Attachment { return r.attachments[name] })
+	return r.attachments
 }
 
 func (r *renderpass) Destroy() {

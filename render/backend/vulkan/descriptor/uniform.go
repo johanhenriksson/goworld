@@ -1,12 +1,16 @@
 package descriptor
 
 import (
+	"fmt"
+	"reflect"
+
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/buffer"
+	"github.com/johanhenriksson/goworld/render/backend/vulkan/device"
 
 	vk "github.com/vulkan-go/vulkan"
 )
 
-type Uniform struct {
+type Uniform[K any] struct {
 	Binding int
 	Stages  vk.ShaderStageFlags
 
@@ -14,18 +18,34 @@ type Uniform struct {
 	set    Set
 }
 
-var _ Descriptor = &Uniform{}
+func (d *Uniform[K]) Initialize(device device.T) {
+	if d.set == nil {
+		panic("descriptor must be bound first")
+	}
 
-func (d *Uniform) Bind(set Set) {
+	var empty K
+	t := reflect.TypeOf(empty)
+	d.buffer = buffer.NewUniform(device, int(t.Size()))
+	d.Write()
+	fmt.Println("initialize uniform")
+}
+
+func (d *Uniform[K]) Destroy() {
+	if d.buffer != nil {
+		d.buffer.Destroy()
+	}
+}
+
+func (d *Uniform[K]) Bind(set Set) {
 	d.set = set
 }
 
-func (d *Uniform) Set(buffer buffer.T) {
-	d.buffer = buffer
-	d.Write()
+func (d *Uniform[K]) Set(data K) {
+	ptr := &data
+	d.buffer.Write(ptr, 0)
 }
 
-func (d *Uniform) Write() {
+func (d *Uniform[K]) Write() {
 	d.set.Write(vk.WriteDescriptorSet{
 		SType:           vk.StructureTypeWriteDescriptorSet,
 		DstBinding:      uint32(d.Binding),
@@ -42,7 +62,7 @@ func (d *Uniform) Write() {
 	})
 }
 
-func (d *Uniform) LayoutBinding() vk.DescriptorSetLayoutBinding {
+func (d *Uniform[K]) LayoutBinding() vk.DescriptorSetLayoutBinding {
 	return vk.DescriptorSetLayoutBinding{
 		Binding:         uint32(d.Binding),
 		DescriptorType:  vk.DescriptorTypeUniformBuffer,

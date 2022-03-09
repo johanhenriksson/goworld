@@ -23,21 +23,12 @@ type TypedLayout[S Set] interface {
 	Descriptor(name string) Descriptor
 }
 
-type Args struct {
-	Descriptors map[string]Descriptor
-}
-
-type Descriptor interface {
-	LayoutBinding() vk.DescriptorSetLayoutBinding
-	Write()
-	Bind(Set)
-}
-
 type layout[T any] struct {
 	device      device.T
 	ptr         vk.DescriptorSetLayout
 	pool        Pool
 	set         T
+	allocated   []Descriptor
 	descriptors Map
 }
 
@@ -72,17 +63,14 @@ func (d *layout[T]) Ptr() vk.DescriptorSetLayout {
 	return d.ptr
 }
 
-func (d *layout[T]) Allocate() T {
-	dset := d.pool.AllocateSet(d)
-	copy := BindSet(d.set, dset)
-	return copy
-}
-
 func (d *layout[T]) Descriptor(name string) Descriptor {
 	return d.descriptors[name]
 }
 
 func (d *layout[T]) Destroy() {
+	for _, desc := range d.allocated {
+		desc.Destroy()
+	}
 	if d.ptr != nil {
 		vk.DestroyDescriptorSetLayout(d.device.Ptr(), d.ptr, nil)
 		d.ptr = nil
@@ -129,9 +117,11 @@ func ParseDescriptors(set any) Map {
 	return descriptors
 }
 
-func BindSet[T any](set T, bind Set) T {
+func (d *layout[T]) Allocate() T {
+	bind := d.pool.AllocateSet(d)
+
 	// dereference
-	ptr := reflect.ValueOf(set)
+	ptr := reflect.ValueOf(d.set)
 	value := ptr.Elem()
 	structName := value.Type().Name()
 
@@ -159,6 +149,8 @@ func BindSet[T any](set T, bind Set) T {
 
 			desc := descCopy.Interface().(Descriptor)
 			desc.Bind(bind)
+			desc.Initialize(d.device)
+			d.allocated = append(d.allocated, desc)
 		}
 	}
 

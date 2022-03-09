@@ -11,7 +11,7 @@ type Args struct {
 	Width  int
 	Height int
 
-	ColorAttachments map[string]ColorAttachment
+	ColorAttachments []ColorAttachment
 	DepthAttachment  *DepthAttachment
 
 	Subpasses    []Subpass
@@ -19,7 +19,7 @@ type Args struct {
 }
 
 type ColorAttachment struct {
-	Index         int
+	Name          string
 	Format        vk.Format
 	Samples       vk.SampleCountFlagBits
 	LoadOp        vk.AttachmentLoadOp
@@ -28,6 +28,12 @@ type ColorAttachment struct {
 	FinalLayout   vk.ImageLayout
 	Clear         color.T
 	Images        []image.T
+}
+
+func (desc *ColorAttachment) defaults() {
+	if desc.Samples == 0 {
+		desc.Samples = vk.SampleCount1Bit
+	}
 }
 
 type DepthAttachment struct {
@@ -41,6 +47,12 @@ type DepthAttachment struct {
 	ClearDepth     float32
 	ClearStencil   uint32
 	Images         []image.T
+}
+
+func (desc *DepthAttachment) defaults() {
+	if desc.Samples == 0 {
+		desc.Samples = vk.SampleCount1Bit
+	}
 }
 
 type Subpass struct {

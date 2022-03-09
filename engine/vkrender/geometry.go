@@ -14,10 +14,10 @@ import (
 	"github.com/johanhenriksson/goworld/render/backend/types"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/command"
+	"github.com/johanhenriksson/goworld/render/backend/vulkan/descriptor"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/renderpass"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/sync"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/vk_shader"
-	"github.com/johanhenriksson/goworld/render/backend/vulkan/vk_texture"
 	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/shader"
 
@@ -26,24 +26,31 @@ import (
 
 type DeferredPass interface {
 	Pass
-	Diffuse(frame int) vk_texture.T
+	GeometryBuffer
 }
 
-type Uniforms struct {
+type CameraData struct {
 	Projection mat4.T
 	View       mat4.T
 }
 
-type Storage struct {
+type ObjectStorage struct {
 	Model mat4.T
 }
 
+type GeometryDescriptors struct {
+	descriptor.Set
+	Camera  *descriptor.Uniform[CameraData]
+	Objects *descriptor.Storage[ObjectStorage]
+}
+
 type GeometryPass struct {
+	GeometryBuffer
+
 	meshes    cache.Meshes
 	backend   vulkan.T
 	pass      renderpass.T
-	shader    vk_shader.T[game.VoxelVertex, Uniforms, Storage]
-	textures  []vk_texture.T
+	shader    vk_shader.T[game.VoxelVertex, *GeometryDescriptors]
 	completed sync.Semaphore
 }
 
@@ -57,46 +64,32 @@ func NewGeometryPass(backend vulkan.T, meshes cache.Meshes) *GeometryPass {
 		Width:  backend.Width(),
 		Height: backend.Height(),
 
-		ColorAttachments: map[string]renderpass.ColorAttachment{
-			"diffuse": {
-				Index:         0,
-				Format:        diffuseFmt,
-				Samples:       vk.SampleCount1Bit,
-				LoadOp:        vk.AttachmentLoadOpClear,
-				StoreOp:       vk.AttachmentStoreOpStore,
-				InitialLayout: vk.ImageLayoutUndefined,
-				FinalLayout:   vk.ImageLayoutShaderReadOnlyOptimal,
-				Clear:         color.RGB(0.1, 0.1, 0.16),
+		ColorAttachments: []renderpass.ColorAttachment{
+			{
+				Name:        "diffuse",
+				Format:      diffuseFmt,
+				LoadOp:      vk.AttachmentLoadOpClear,
+				FinalLayout: vk.ImageLayoutShaderReadOnlyOptimal,
+				Clear:       color.RGB(0.1, 0.1, 0.16),
 			},
-			"normal": {
-				Index:         1,
-				Format:        normalFmt,
-				Samples:       vk.SampleCount1Bit,
-				LoadOp:        vk.AttachmentLoadOpClear,
-				StoreOp:       vk.AttachmentStoreOpStore,
-				InitialLayout: vk.ImageLayoutUndefined,
-				FinalLayout:   vk.ImageLayoutShaderReadOnlyOptimal,
-				Clear:         color.Black,
+			{
+				Name:        "normal",
+				Format:      normalFmt,
+				LoadOp:      vk.AttachmentLoadOpClear,
+				FinalLayout: vk.ImageLayoutShaderReadOnlyOptimal,
 			},
-			"position": {
-				Index:         2,
-				Format:        positionFmt,
-				Samples:       vk.SampleCount1Bit,
-				LoadOp:        vk.AttachmentLoadOpClear,
-				StoreOp:       vk.AttachmentStoreOpStore,
-				InitialLayout: vk.ImageLayoutUndefined,
-				FinalLayout:   vk.ImageLayoutShaderReadOnlyOptimal,
-				Clear:         color.Black,
+			{
+				Name:        "position",
+				Format:      positionFmt,
+				LoadOp:      vk.AttachmentLoadOpClear,
+				FinalLayout: vk.ImageLayoutShaderReadOnlyOptimal,
 			},
 		},
 		DepthAttachment: &renderpass.DepthAttachment{
-			Samples:       vk.SampleCount1Bit,
-			LoadOp:        vk.AttachmentLoadOpClear,
-			StoreOp:       vk.AttachmentStoreOpStore,
-			InitialLayout: vk.ImageLayoutUndefined,
-			FinalLayout:   vk.ImageLayoutDepthStencilAttachmentOptimal,
-			ClearDepth:    1,
-			ClearStencil:  0,
+			LoadOp:       vk.AttachmentLoadOpClear,
+			FinalLayout:  vk.ImageLayoutDepthStencilAttachmentOptimal,
+			ClearDepth:   1,
+			ClearStencil: 0,
 		},
 		Subpasses: []renderpass.Subpass{
 			{
@@ -109,42 +102,47 @@ func NewGeometryPass(backend vulkan.T, meshes cache.Meshes) *GeometryPass {
 		Dependencies: []renderpass.SubpassDependency{},
 	})
 
-	attachment := pass.Attachment("diffuse")
-	textures := make([]vk_texture.T, backend.Frames())
-	for i := 0; i < backend.Frames(); i++ {
-		image := attachment.Image(i)
-		textures[i] = vk_texture.FromImage(backend.Device(), image, vk_texture.Args{
-			Format: image.Format(),
-			Filter: vk.FilterLinear,
-			Wrap:   vk.SamplerAddressModeRepeat,
-		})
-	}
+	gbuffer := NewGbuffer(backend, pass)
 
-	sh := vk_shader.New[game.VoxelVertex, Uniforms, Storage](backend, vk_shader.Args{
-		Path: "vk/color_f",
-		Pass: pass,
-		Attributes: shader.AttributeMap{
-			"position": {
-				Bind: 0,
-				Type: types.Float,
+	sh := vk_shader.New[game.VoxelVertex](
+		backend,
+		&GeometryDescriptors{
+			Camera: &descriptor.Uniform[CameraData]{
+				Binding: 0,
+				Stages:  vk.ShaderStageFlags(vk.ShaderStageAll),
 			},
-			"normal_id": {
-				Bind: 1,
-				Type: types.UInt8,
-			},
-			"color_0": {
-				Bind: 2,
-				Type: types.Float,
+			Objects: &descriptor.Storage[ObjectStorage]{
+				Binding: 1,
+				Stages:  vk.ShaderStageFlags(vk.ShaderStageAll),
+				Size:    100,
 			},
 		},
-	})
+		vk_shader.Args{
+			Path: "vk/color_f",
+			Pass: pass,
+			Attributes: shader.AttributeMap{
+				"position": {
+					Bind: 0,
+					Type: types.Float,
+				},
+				"normal_id": {
+					Bind: 1,
+					Type: types.UInt8,
+				},
+				"color_0": {
+					Bind: 2,
+					Type: types.Float,
+				},
+			},
+		})
 
 	return &GeometryPass{
+		GeometryBuffer: gbuffer,
+
 		backend:   backend,
 		meshes:    meshes,
 		shader:    sh,
 		pass:      pass,
-		textures:  textures,
 		completed: sync.NewSemaphore(backend.Device()),
 	}
 }
@@ -157,20 +155,19 @@ func (p *GeometryPass) Draw(args render.Args, scene object.T) {
 	ctx := args.Context
 	cmds := command.NewRecorder()
 
-	p.shader.SetUniforms(ctx.Index, []Uniforms{
-		{
-			Projection: args.Projection,
-			View:       args.View,
-		},
+	descriptors := p.shader.Descriptors(ctx.Index)
+
+	descriptors.Camera.Set(CameraData{
+		Projection: args.Projection,
+		View:       args.View,
 	})
 
-	p.shader.SetStorage(ctx.Index, []Storage{
-		{
-			Model: mat4.Ident(),
-		},
-		{
-			Model: mat4.Translate(vec3.New(-16, 0, 0)),
-		},
+	descriptors.Objects.Set(0, ObjectStorage{
+		Model: mat4.Ident(),
+	})
+
+	descriptors.Objects.Set(1, ObjectStorage{
+		Model: mat4.Translate(vec3.New(-16, 0, 0)),
 	})
 
 	cmds.Record(func(cmd command.Buffer) {
@@ -225,15 +222,9 @@ func (p *GeometryPass) DrawDeferred(cmds command.Recorder, args render.Args, mes
 	return nil
 }
 
-func (p *GeometryPass) Diffuse(frame int) vk_texture.T {
-	return p.textures[frame]
-}
-
 func (p *GeometryPass) Destroy() {
 	p.pass.Destroy()
-	for i := 0; i < p.backend.Frames(); i++ {
-		p.textures[i].Destroy()
-	}
+	p.GeometryBuffer.Destroy()
 	p.shader.Destroy()
 	p.completed.Destroy()
 }

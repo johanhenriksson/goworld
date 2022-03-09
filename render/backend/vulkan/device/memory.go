@@ -66,25 +66,35 @@ func (m *memory) Destroy() {
 	m.ptr = nil
 }
 
+type eface struct {
+	rtype, ptr unsafe.Pointer
+}
+
 func (m *memory) Write(data any, offset int) {
 	if !m.IsHostVisible() {
 		panic("memory is not visible to host")
 	}
 
-	t := reflect.TypeOf(data)
-	if t.Kind() != reflect.Slice {
-		panic(fmt.Errorf("buffered data must be a slice"))
-	}
+	size := 0
+	var src unsafe.Pointer
 
+	t := reflect.TypeOf(data)
 	v := reflect.ValueOf(data)
 
-	// calculate copy size
-	count := v.Len()
-	sizeof := int(t.Elem().Size())
-	size := count * sizeof
+	if t.Kind() == reflect.Slice {
+		// calculate copy size
+		count := v.Len()
+		sizeof := int(t.Elem().Size())
+		size = count * sizeof
 
-	// get a pointer to the beginning of the array
-	src := unsafe.Pointer(v.Pointer())
+		// get a pointer to the beginning of the array
+		src = unsafe.Pointer(v.Pointer())
+	} else if t.Kind() == reflect.Pointer {
+		src = v.UnsafePointer()
+		size = int(v.Elem().Type().Size())
+	} else {
+		panic(fmt.Errorf("buffered data must be a slice, struct or a pointer"))
+	}
 
 	if size+offset > m.size {
 		panic("out of bounds")

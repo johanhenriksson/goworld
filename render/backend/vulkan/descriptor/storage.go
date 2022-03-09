@@ -1,31 +1,63 @@
 package descriptor
 
 import (
+	"reflect"
+
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/buffer"
+	"github.com/johanhenriksson/goworld/render/backend/vulkan/device"
 
 	vk "github.com/vulkan-go/vulkan"
 )
 
-type Storage struct {
+type Storage[K any] struct {
 	Binding int
 	Stages  vk.ShaderStageFlags
+	Size    int
 
-	buffer buffer.T
-	set    Set
+	buffer  buffer.T
+	set     Set
+	element int
 }
 
-var _ Descriptor = &Storage{}
+func (d *Storage[K]) Initialize(device device.T) {
+	if d.set == nil {
+		panic("descriptor must be bound first")
+	}
+	if d.Size == 0 {
+		panic("storage descriptor size must be set")
+	}
 
-func (d *Storage) Bind(set Set) {
-	d.set = set
-}
+	var empty K
+	t := reflect.TypeOf(empty)
+	d.element = int(t.Size())
 
-func (d *Storage) Set(buffer buffer.T) {
-	d.buffer = buffer
+	d.buffer = buffer.NewStorage(device, d.Size*d.element)
 	d.Write()
 }
 
-func (d *Storage) LayoutBinding() vk.DescriptorSetLayoutBinding {
+func (d *Storage[K]) Destroy() {
+	if d.buffer != nil {
+		d.buffer.Destroy()
+		d.buffer = nil
+	}
+}
+
+func (d *Storage[K]) Bind(set Set) {
+	d.set = set
+}
+
+func (d *Storage[K]) Set(index int, data K) {
+	ptr := &data
+	offset := index * d.element
+	d.buffer.Write(ptr, offset)
+}
+
+func (d *Storage[K]) SetRange(data []K, offset int) {
+	offset *= d.element
+	d.buffer.Write(data, offset)
+}
+
+func (d *Storage[K]) LayoutBinding() vk.DescriptorSetLayoutBinding {
 	return vk.DescriptorSetLayoutBinding{
 		Binding:         uint32(d.Binding),
 		DescriptorType:  vk.DescriptorTypeStorageBuffer,
@@ -34,7 +66,7 @@ func (d *Storage) LayoutBinding() vk.DescriptorSetLayoutBinding {
 	}
 }
 
-func (d *Storage) Write() {
+func (d *Storage[K]) Write() {
 	d.set.Write(vk.WriteDescriptorSet{
 		SType:           vk.StructureTypeWriteDescriptorSet,
 		DstSet:          d.set.Ptr(),
