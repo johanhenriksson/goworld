@@ -1,8 +1,9 @@
 package descriptor
 
 import (
+	"unsafe"
+
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/device"
-	"github.com/johanhenriksson/goworld/util"
 
 	vk "github.com/vulkan-go/vulkan"
 )
@@ -10,8 +11,7 @@ import (
 type Pool interface {
 	device.Resource[vk.DescriptorPool]
 
-	AllocateSet(layouts SetLayout) Set
-	AllocateSets(layouts []SetLayout) []Set
+	Allocate(layouts SetLayout) Set
 }
 
 type pool struct {
@@ -45,28 +45,29 @@ func (p *pool) Destroy() {
 	p.ptr = nil
 }
 
-func (p *pool) AllocateSet(layout SetLayout) Set {
-	return p.AllocateSets([]SetLayout{layout})[0]
-}
-
-func (p *pool) AllocateSets(layouts []SetLayout) []Set {
+func (p *pool) Allocate(layout SetLayout) Set {
 	info := vk.DescriptorSetAllocateInfo{
 		SType:              vk.StructureTypeDescriptorSetAllocateInfo,
 		DescriptorPool:     p.ptr,
-		DescriptorSetCount: uint32(len(layouts)),
-		PSetLayouts: util.Map(layouts, func(item SetLayout) vk.DescriptorSetLayout {
-			return item.Ptr()
-		}),
+		DescriptorSetCount: 1,
+		PSetLayouts:        []vk.DescriptorSetLayout{layout.Ptr()},
 	}
 
-	sets := make([]vk.DescriptorSet, len(layouts))
-	vk.AllocateDescriptorSets(p.device.Ptr(), &info, &sets[0])
-
-	return util.MapIdx(sets, func(ptr vk.DescriptorSet, i int) Set {
-		return &set{
-			device: p.device,
-			ptr:    ptr,
-			layout: layouts[i],
+	if layout.VariableCount() > 0 {
+		variableInfo := vk.DescriptorSetVariableDescriptorCountAllocateInfo{
+			SType:              vk.StructureTypeDescriptorSetVariableDescriptorCountAllocateInfo,
+			DescriptorSetCount: 1,
+			PDescriptorCounts:  []uint32{uint32(layout.VariableCount())},
 		}
-	})
+		info.PNext = unsafe.Pointer(&variableInfo)
+	}
+
+	var ptr vk.DescriptorSet
+	vk.AllocateDescriptorSets(p.device.Ptr(), &info, &ptr)
+
+	return &set{
+		device: p.device,
+		ptr:    ptr,
+		layout: layout,
+	}
 }

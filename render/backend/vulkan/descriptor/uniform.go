@@ -70,3 +70,5 @@ func (d *Uniform[K]) LayoutBinding() vk.DescriptorSetLayoutBinding {
 		StageFlags:      d.Stages,
 	}
 }
+
+func (d *Uniform[K]) BindingFlags() vk.DescriptorBindingFlags { return 0 }

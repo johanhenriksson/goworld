@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 	"reflect"
-	"strings"
+	"unsafe"
 
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/device"
 	"github.com/johanhenriksson/goworld/util"
@@ -16,12 +16,12 @@ type Map map[string]Descriptor
 
 type SetLayout interface {
 	device.Resource[vk.DescriptorSetLayout]
+	VariableCount() int
 }
 
 type SetLayoutTyped[S Set] interface {
 	SetLayout
 	Allocate() S
-	Descriptor(name string) Descriptor
 }
 
 type layout[S any] struct {
@@ -30,20 +30,30 @@ type layout[S any] struct {
 	pool        Pool
 	set         S
 	allocated   []Descriptor
-	descriptors Map
+	descriptors []Descriptor
 }
 
 func New[S Set](device device.T, pool Pool, set S) SetLayoutTyped[S] {
 	descriptors := ParseDescriptors(set)
 
-	bindings := util.MapValues(descriptors, func(desc Descriptor) vk.DescriptorSetLayoutBinding {
+	bindings := util.Map(descriptors, func(desc Descriptor) vk.DescriptorSetLayoutBinding {
 		return desc.LayoutBinding()
 	})
 
+	bindFlags := util.Map(descriptors, func(desc Descriptor) vk.DescriptorBindingFlags { return desc.BindingFlags() })
+
 	log.Println("descriptor bindings:", bindings)
 
+	bindFlagsInfo := vk.DescriptorSetLayoutBindingFlagsCreateInfo{
+		SType:         vk.StructureTypeDescriptorSetLayoutBindingFlagsCreateInfo,
+		BindingCount:  uint32(len(bindFlags)),
+		PBindingFlags: bindFlags,
+	}
+
 	info := vk.DescriptorSetLayoutCreateInfo{
-		SType:        vk.StructureTypeDescriptorSetLayoutCreateInfo,
+		SType: vk.StructureTypeDescriptorSetLayoutCreateInfo,
+		PNext: unsafe.Pointer(&bindFlagsInfo),
+
 		BindingCount: uint32(len(bindings)),
 		PBindings:    bindings,
 	}
@@ -52,10 +62,11 @@ func New[S Set](device device.T, pool Pool, set S) SetLayoutTyped[S] {
 	vk.CreateDescriptorSetLayout(device.Ptr(), &info, nil, &ptr)
 
 	return &layout[S]{
-		device: device,
-		ptr:    ptr,
-		set:    set,
-		pool:   pool,
+		device:      device,
+		ptr:         ptr,
+		set:         set,
+		pool:        pool,
+		descriptors: descriptors,
 	}
 }
 
@@ -63,8 +74,12 @@ func (d *layout[S]) Ptr() vk.DescriptorSetLayout {
 	return d.ptr
 }
 
-func (d *layout[S]) Descriptor(name string) Descriptor {
-	return d.descriptors[name]
+func (d *layout[S]) VariableCount() int {
+	lastDescriptor := d.descriptors[len(d.descriptors)-1]
+	if variable, ok := lastDescriptor.(VariableDescriptor); ok {
+		return variable.MaxCount()
+	}
+	return 0
 }
 
 func (d *layout[S]) Destroy() {
@@ -77,7 +92,7 @@ func (d *layout[S]) Destroy() {
 	}
 }
 
-func ParseDescriptors[S Set](set S) Map {
+func ParseDescriptors[S Set](set S) []Descriptor {
 	ptr := reflect.ValueOf(set)
 	if ptr.Type().Kind() != reflect.Pointer {
 		panic("set is not a pointer to struct")
@@ -91,7 +106,7 @@ func ParseDescriptors[S Set](set S) Map {
 	}
 
 	hasSet := false
-	descriptors := make(Map)
+	descriptors := make([]Descriptor, 0, value.NumField())
 	for i := 0; i < value.NumField(); i++ {
 		fieldName := value.Type().Field(i).Name
 
@@ -106,8 +121,7 @@ func ParseDescriptors[S Set](set S) Map {
 			panic(fmt.Sprintf("%s is not a Descriptor value\n", fieldName))
 		}
 
-		name := strings.ToLower(fieldName)
-		descriptors[name] = descriptor
+		descriptors = append(descriptors, descriptor)
 	}
 
 	if !hasSet {
@@ -118,7 +132,7 @@ func ParseDescriptors[S Set](set S) Map {
 }
 
 func (d *layout[S]) Allocate() S {
-	bind := d.pool.AllocateSet(d)
+	bind := d.pool.Allocate(d)
 
 	// dereference
 	ptr := reflect.ValueOf(d.set)

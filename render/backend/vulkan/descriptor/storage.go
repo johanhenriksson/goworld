@@ -66,6 +66,8 @@ func (d *Storage[K]) LayoutBinding() vk.DescriptorSetLayoutBinding {
 	}
 }
 
+func (d *Storage[K]) BindingFlags() vk.DescriptorBindingFlags { return 0 }
+
 func (d *Storage[K]) write() {
 	d.set.Write(vk.WriteDescriptorSet{
 		SType:           vk.StructureTypeWriteDescriptorSet,

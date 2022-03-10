@@ -2,6 +2,8 @@ package device
 
 import (
 	"fmt"
+	"log"
+	"unsafe"
 
 	"github.com/johanhenriksson/goworld/util"
 
@@ -42,9 +44,22 @@ func New(physDevice vk.PhysicalDevice) (T, error) {
 		PQueuePriorities: []float32{1},
 	}
 
+	log.Println("creating device with extensions", deviceExtensions)
+
+	// VK_EXT_descriptor_indexing settings
+	indexingFeatures := vk.PhysicalDeviceDescriptorIndexingFeatures{
+		SType: vk.StructureTypePhysicalDeviceDescriptorIndexingFeatures,
+		ShaderSampledImageArrayNonUniformIndexing: vk.True,
+		RuntimeDescriptorArray:                    vk.True,
+		DescriptorBindingPartiallyBound:           vk.True,
+		DescriptorBindingVariableDescriptorCount:  vk.True,
+		DescriptorBindingUpdateUnusedWhilePending: vk.True,
+	}
+
 	var dev vk.Device
 	deviceInfo := vk.DeviceCreateInfo{
 		SType:                   vk.StructureTypeDeviceCreateInfo,
+		PNext:                   unsafe.Pointer(&indexingFeatures),
 		EnabledExtensionCount:   uint32(len(deviceExtensions)),
 		PpEnabledExtensionNames: util.CStrings(deviceExtensions),
 		PQueueCreateInfos:       []vk.DeviceQueueCreateInfo{queueInfo},

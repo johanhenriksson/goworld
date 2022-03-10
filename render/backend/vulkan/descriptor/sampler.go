@@ -13,7 +13,6 @@ type Sampler struct {
 
 	sampler vk.Sampler
 	view    vk.ImageView
-	layout  vk.ImageLayout
 	set     Set
 }
 
@@ -41,6 +40,8 @@ func (d *Sampler) LayoutBinding() vk.DescriptorSetLayoutBinding {
 		StageFlags:      d.Stages,
 	}
 }
+
+func (d *Sampler) BindingFlags() vk.DescriptorBindingFlags { return 0 }
 
 func (d *Sampler) write() {
 	d.set.Write(vk.WriteDescriptorSet{
