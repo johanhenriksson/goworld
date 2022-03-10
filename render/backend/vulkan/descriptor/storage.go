@@ -32,7 +32,7 @@ func (d *Storage[K]) Initialize(device device.T) {
 	d.element = int(t.Size())
 
 	d.buffer = buffer.NewStorage(device, d.Size*d.element)
-	d.Write()
+	d.write()
 }
 
 func (d *Storage[K]) Destroy() {
@@ -66,7 +66,7 @@ func (d *Storage[K]) LayoutBinding() vk.DescriptorSetLayoutBinding {
 	}
 }
 
-func (d *Storage[K]) Write() {
+func (d *Storage[K]) write() {
 	d.set.Write(vk.WriteDescriptorSet{
 		SType:           vk.StructureTypeWriteDescriptorSet,
 		DstSet:          d.set.Ptr(),

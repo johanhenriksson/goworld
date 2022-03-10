@@ -7,38 +7,38 @@ import (
 	"strings"
 
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/device"
+	"github.com/johanhenriksson/goworld/util"
 
 	vk "github.com/vulkan-go/vulkan"
 )
 
 type Map map[string]Descriptor
 
-type Layout interface {
+type SetLayout interface {
 	device.Resource[vk.DescriptorSetLayout]
 }
 
-type TypedLayout[S Set] interface {
-	Layout
+type SetLayoutTyped[S Set] interface {
+	SetLayout
 	Allocate() S
 	Descriptor(name string) Descriptor
 }
 
-type layout[T any] struct {
+type layout[S any] struct {
 	device      device.T
 	ptr         vk.DescriptorSetLayout
 	pool        Pool
-	set         T
+	set         S
 	allocated   []Descriptor
 	descriptors Map
 }
 
-func New[S Set](device device.T, pool Pool, set S) TypedLayout[S] {
+func New[S Set](device device.T, pool Pool, set S) SetLayoutTyped[S] {
 	descriptors := ParseDescriptors(set)
 
-	bindings := make([]vk.DescriptorSetLayoutBinding, 0, len(descriptors))
-	for _, descriptor := range descriptors {
-		bindings = append(bindings, descriptor.LayoutBinding())
-	}
+	bindings := util.MapValues(descriptors, func(desc Descriptor) vk.DescriptorSetLayoutBinding {
+		return desc.LayoutBinding()
+	})
 
 	log.Println("descriptor bindings:", bindings)
 
@@ -59,15 +59,15 @@ func New[S Set](device device.T, pool Pool, set S) TypedLayout[S] {
 	}
 }
 
-func (d *layout[T]) Ptr() vk.DescriptorSetLayout {
+func (d *layout[S]) Ptr() vk.DescriptorSetLayout {
 	return d.ptr
 }
 
-func (d *layout[T]) Descriptor(name string) Descriptor {
+func (d *layout[S]) Descriptor(name string) Descriptor {
 	return d.descriptors[name]
 }
 
-func (d *layout[T]) Destroy() {
+func (d *layout[S]) Destroy() {
 	for _, desc := range d.allocated {
 		desc.Destroy()
 	}
@@ -77,7 +77,7 @@ func (d *layout[T]) Destroy() {
 	}
 }
 
-func ParseDescriptors(set any) Map {
+func ParseDescriptors[S Set](set S) Map {
 	ptr := reflect.ValueOf(set)
 	if ptr.Type().Kind() != reflect.Pointer {
 		panic("set is not a pointer to struct")
@@ -117,7 +117,7 @@ func ParseDescriptors(set any) Map {
 	return descriptors
 }
 
-func (d *layout[T]) Allocate() T {
+func (d *layout[S]) Allocate() S {
 	bind := d.pool.AllocateSet(d)
 
 	// dereference
@@ -154,6 +154,6 @@ func (d *layout[T]) Allocate() T {
 		}
 	}
 
-	copy := copyPtr.Interface().(T)
+	copy := copyPtr.Interface().(S)
 	return copy
 }

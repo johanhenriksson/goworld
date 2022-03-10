@@ -11,17 +11,17 @@ layout (location = 2) in vec3 color_0;
 // layout (push_constant) uniform Push {
 // } push;
 
-layout (std140, set = 0, binding = 0) uniform UBO {
+layout (binding = 0) uniform CameraData {
 	mat4 proj;
 	mat4 view;
-} ubo;
+} camera;
 
 struct ObjectData{
 	mat4 model;
 };
 
 //all object matrices
-layout(std140, set = 0, binding = 1) readonly buffer ObjectBuffer{
+layout(binding = 1) readonly buffer ObjectBuffer{
 	ObjectData objects[];
 } ssbo;
 
@@ -47,7 +47,7 @@ const vec3 normals[7] = vec3[7] (
 
 void main() 
 {
-	mat4 mv = ubo.view * ssbo.objects[gl_InstanceIndex].model;
+	mat4 mv = camera.view * ssbo.objects[gl_InstanceIndex].model;
 
 	// gbuffer diffuse
 	color0 = color_0;
@@ -60,5 +60,5 @@ void main()
     normal0 = normalize((mv * vec4(normal, 0.0)).xyz);
 
 	// vertex clip space position
-	gl_Position = ubo.proj * vec4(position0, 1);
+	gl_Position = camera.proj * vec4(position0, 1);
 }

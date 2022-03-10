@@ -30,7 +30,7 @@ func (d *Sampler) Bind(set Set) {
 func (d *Sampler) Set(tex vk_texture.T) {
 	d.sampler = tex.Ptr()
 	d.view = tex.View().Ptr()
-	d.Write()
+	d.write()
 }
 
 func (d *Sampler) LayoutBinding() vk.DescriptorSetLayoutBinding {
@@ -42,7 +42,7 @@ func (d *Sampler) LayoutBinding() vk.DescriptorSetLayoutBinding {
 	}
 }
 
-func (d *Sampler) Write() {
+func (d *Sampler) write() {
 	d.set.Write(vk.WriteDescriptorSet{
 		SType:           vk.StructureTypeWriteDescriptorSet,
 		DstSet:          d.set.Ptr(),

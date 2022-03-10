@@ -16,7 +16,7 @@ type AttributeResolver interface {
 }
 
 func (ps Pointers) BufferString() string {
-	names := util.Map(ps, func(i int, p Pointer) string { return p.Name })
+	names := util.Map(ps, func(p Pointer) string { return p.Name })
 	return strings.Join(names, ",")
 }
 
@@ -26,7 +26,7 @@ func (ps Pointers) Bind(shader AttributeResolver) {
 		if err != nil {
 			log.Printf("no attribute in shader %s\n", ptr.Name)
 		}
-		ptr.Bind(attr.Bind, attr.Type)
+		ptr.Bind(attr.Loc, attr.Type)
 		ps[i] = ptr
 	}
 }

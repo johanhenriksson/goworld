@@ -26,7 +26,7 @@ func (d *Uniform[K]) Initialize(device device.T) {
 	var empty K
 	t := reflect.TypeOf(empty)
 	d.buffer = buffer.NewUniform(device, int(t.Size()))
-	d.Write()
+	d.write()
 	fmt.Println("initialize uniform")
 }
 
@@ -45,7 +45,7 @@ func (d *Uniform[K]) Set(data K) {
 	d.buffer.Write(ptr, 0)
 }
 
-func (d *Uniform[K]) Write() {
+func (d *Uniform[K]) write() {
 	d.set.Write(vk.WriteDescriptorSet{
 		SType:           vk.StructureTypeWriteDescriptorSet,
 		DstBinding:      uint32(d.Binding),

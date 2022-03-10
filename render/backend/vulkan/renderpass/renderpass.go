@@ -68,12 +68,14 @@ func New(device device.T, args Args) T {
 		subpasses = append(subpasses, vk.SubpassDescription{
 			PipelineBindPoint:    vk.PipelineBindPointGraphics,
 			ColorAttachmentCount: uint32(len(attachments)),
-			PColorAttachments: util.Map(attachments, func(idx int, attach Attachment) vk.AttachmentReference {
-				return vk.AttachmentReference{
-					Attachment: uint32(idx),
-					Layout:     vk.ImageLayoutColorAttachmentOptimal,
-				}
-			}),
+			PColorAttachments: util.Map(
+				util.Range(0, len(attachments), 1),
+				func(idx int) vk.AttachmentReference {
+					return vk.AttachmentReference{
+						Attachment: uint32(idx),
+						Layout:     vk.ImageLayoutColorAttachmentOptimal,
+					}
+				}),
 			PDepthStencilAttachment: depthRef,
 		})
 		subpassIndices[subpass.Name] = idx
@@ -107,10 +109,7 @@ func New(device device.T, args Args) T {
 
 	framebuffers := make([]framebuffer.T, args.Frames)
 	for i := range framebuffers {
-		fbviews := make([]image.View, 0, len(descriptions))
-		for _, attachment := range attachments {
-			fbviews = append(fbviews, attachment.View(i))
-		}
+		fbviews := util.Map(attachments, func(attachment Attachment) image.View { return attachment.View(i) })
 		if depth != nil {
 			fbviews = append(fbviews, depth.View(i))
 		}

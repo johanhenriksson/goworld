@@ -34,7 +34,7 @@ type OutputPass struct {
 
 type OutputDescriptors struct {
 	descriptor.Set
-	Diffuse *descriptor.Sampler
+	Output *descriptor.Sampler
 }
 
 func NewOutputPass(backend vulkan.T, meshes cache.Meshes, textures cache.Textures, geometry DeferredPass) *OutputPass {
@@ -67,9 +67,7 @@ func NewOutputPass(backend vulkan.T, meshes cache.Meshes, textures cache.Texture
 				Name:        "color",
 				Images:      backend.Swapchain().Images(),
 				Format:      backend.Swapchain().SurfaceFormat(),
-				Samples:     vk.SampleCount1Bit,
 				LoadOp:      vk.AttachmentLoadOpClear,
-				StoreOp:     vk.AttachmentStoreOpStore,
 				FinalLayout: vk.ImageLayoutPresentSrc,
 			},
 		},
@@ -84,8 +82,8 @@ func NewOutputPass(backend vulkan.T, meshes cache.Meshes, textures cache.Texture
 	p.shader = vk_shader.New[vertex.T](
 		backend,
 		&OutputDescriptors{
-			Diffuse: &descriptor.Sampler{
-				Binding: 2,
+			Output: &descriptor.Sampler{
+				Binding: 0,
 				Stages:  vk.ShaderStageFlags(vk.ShaderStageAll),
 			},
 		},
@@ -94,18 +92,18 @@ func NewOutputPass(backend vulkan.T, meshes cache.Meshes, textures cache.Texture
 			Pass: p.pass,
 			Attributes: shader.AttributeMap{
 				"position": {
-					Bind: 0,
+					Loc:  0,
 					Type: types.Float,
 				},
 				"texcoord_0": {
-					Bind: 1,
+					Loc:  1,
 					Type: types.Float,
 				},
 			},
 		})
 
 	for i := 0; i < backend.Frames(); i++ {
-		p.shader.Descriptors(i).Diffuse.Set(p.geometry.Diffuse(i))
+		p.shader.Descriptors(i).Output.Set(p.geometry.Diffuse(i))
 	}
 
 	return p
@@ -113,12 +111,10 @@ func NewOutputPass(backend vulkan.T, meshes cache.Meshes, textures cache.Texture
 
 func (p *OutputPass) Draw(args render.Args, scene object.T) {
 	ctx := args.Context
-	worker := ctx.Workers[0]
 
+	worker := p.backend.Worker(ctx.Index)
 	worker.Queue(func(cmd command.Buffer) {
 		cmd.CmdBeginRenderPass(p.pass, ctx.Index)
-		cmd.CmdSetViewport(0, 0, ctx.Width, ctx.Height)
-		cmd.CmdSetScissor(0, 0, ctx.Width, ctx.Height)
 
 		p.shader.Bind(ctx.Index, cmd)
 		cmd.CmdBindVertexBuffer(p.quad.Vertices, 0)
@@ -129,6 +125,7 @@ func (p *OutputPass) Draw(args render.Args, scene object.T) {
 
 		cmd.CmdEndRenderPass()
 	})
+
 	worker.Submit(command.SubmitInfo{
 		Wait:   []sync.Semaphore{p.geometry.Completed()},
 		Signal: []sync.Semaphore{ctx.RenderComplete},

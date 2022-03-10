@@ -45,7 +45,7 @@ type UniformDesc struct {
 
 type AttributeDesc struct {
 	Name string
-	Bind int
+	Loc  int
 	Size int
 	Type types.Type
 }
@@ -58,6 +58,6 @@ func (m AttributeMap) Attribute(name string) (AttributeDesc, error) {
 	}
 	return AttributeDesc{
 		Name: name,
-		Bind: -1,
+		Loc:  -1,
 	}, ErrUnknownAttribute
 }

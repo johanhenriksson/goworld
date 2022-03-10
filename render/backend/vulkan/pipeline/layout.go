@@ -16,11 +16,11 @@ type layout struct {
 	device device.T
 }
 
-func NewLayout(device device.T, descriptors []descriptor.Layout) Layout {
+func NewLayout(device device.T, descriptors []descriptor.SetLayout) Layout {
 	info := vk.PipelineLayoutCreateInfo{
 		SType:          vk.StructureTypePipelineLayoutCreateInfo,
 		SetLayoutCount: uint32(len(descriptors)),
-		PSetLayouts: util.Map(descriptors, func(i int, desc descriptor.Layout) vk.DescriptorSetLayout {
+		PSetLayouts: util.Map(descriptors, func(desc descriptor.SetLayout) vk.DescriptorSetLayout {
 			return desc.Ptr()
 		}),
 	}
@@ -39,6 +39,8 @@ func (l *layout) Ptr() vk.PipelineLayout {
 }
 
 func (l *layout) Destroy() {
-	vk.DestroyPipelineLayout(l.device.Ptr(), l.ptr, nil)
-	l.ptr = nil
+	if l.ptr != nil {
+		vk.DestroyPipelineLayout(l.device.Ptr(), l.ptr, nil)
+		l.ptr = nil
+	}
 }

@@ -86,6 +86,7 @@ func (w *worker) run() {
 	close(w.signal)
 	close(w.stop)
 	close(w.complete)
+	w.stop = nil
 
 	// return the thread
 	runtime.UnlockOSThread()
@@ -137,7 +138,7 @@ func (w *worker) submit(submit SubmitInfo) {
 	}
 
 	// submit buffers to the given queue
-	buffers := util.Map(w.batch, func(i int, buf Buffer) vk.CommandBuffer { return buf.Ptr() })
+	buffers := util.Map(w.batch, func(buf Buffer) vk.CommandBuffer { return buf.Ptr() })
 	info := []vk.SubmitInfo{
 		{
 			SType:                vk.StructureTypeSubmitInfo,
@@ -145,8 +146,8 @@ func (w *worker) submit(submit SubmitInfo) {
 			WaitSemaphoreCount:   uint32(len(submit.Wait)),
 			SignalSemaphoreCount: uint32(len(submit.Signal)),
 			PCommandBuffers:      buffers,
-			PWaitSemaphores:      util.Map(submit.Wait, func(i int, sem sync.Semaphore) vk.Semaphore { return sem.Ptr() }),
-			PSignalSemaphores:    util.Map(submit.Signal, func(i int, sem sync.Semaphore) vk.Semaphore { return sem.Ptr() }),
+			PWaitSemaphores:      util.Map(submit.Wait, func(sem sync.Semaphore) vk.Semaphore { return sem.Ptr() }),
+			PSignalSemaphores:    util.Map(submit.Signal, func(sem sync.Semaphore) vk.Semaphore { return sem.Ptr() }),
 			PWaitDstStageMask:    submit.WaitMask,
 		},
 	}
@@ -166,6 +167,8 @@ func (w *worker) Wait() {
 }
 
 func (w *worker) Destroy() {
-	w.stop <- true
-	<-w.complete
+	if w.stop != nil {
+		w.stop <- true
+		<-w.complete
+	}
 }

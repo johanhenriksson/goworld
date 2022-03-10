@@ -9,7 +9,6 @@ import (
 type Descriptor interface {
 	Initialize(device.T)
 	LayoutBinding() vk.DescriptorSetLayoutBinding
-	Write()
 	Bind(Set)
 	Destroy()
 }

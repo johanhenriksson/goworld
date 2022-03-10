@@ -19,7 +19,7 @@ func GetActiveAttribute(id shader.ShaderID, index int) shader.AttributeDesc {
 
 	return shader.AttributeDesc{
 		Name: buffer[:length],
-		Bind: int(loc),
+		Loc:  int(loc),
 		Size: int(size),
 		Type: Type(gltype).Cast(),
 	}

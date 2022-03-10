@@ -22,8 +22,39 @@ type pipeline struct {
 	device device.T
 }
 
-func New(device device.T, cache vk.PipelineCache, layout Layout, pass renderpass.T, shaders []Shader, pointers vertex.Pointers) T {
-	modules := util.Map(shaders, func(i int, shader Shader) vk.PipelineShaderStageCreateInfo {
+type Args struct {
+	Pass     renderpass.T
+	Layout   Layout
+	Shaders  []Shader
+	Pointers vertex.Pointers
+
+	Primitive       vertex.Primitive
+	PolygonFillMode vk.PolygonMode
+	CullMode        vk.CullModeFlags
+
+	DepthTest  bool
+	DepthWrite bool
+	DepthFunc  vk.CompareOp
+
+	StencilTest bool
+}
+
+func (args *Args) defaults() {
+	if args.DepthFunc == 0 {
+		args.DepthFunc = vk.CompareOpLessOrEqual
+	}
+	if args.Primitive == 0 {
+		args.Primitive = vertex.Triangles
+	}
+}
+
+func New(device device.T, args Args) T {
+	args.defaults()
+
+	// todo: pipeline cache
+	// could probably be controlled a global setting?
+
+	modules := util.Map(args.Shaders, func(shader Shader) vk.PipelineShaderStageCreateInfo {
 		return vk.PipelineShaderStageCreateInfo{
 			SType:  vk.StructureTypePipelineShaderStageCreateInfo,
 			Module: shader.Ptr(),
@@ -32,10 +63,10 @@ func New(device device.T, cache vk.PipelineCache, layout Layout, pass renderpass
 		}
 	})
 
-	attrs := pointersToVertexAttributes(pointers, 0)
+	attrs := pointersToVertexAttributes(args.Pointers, 0)
 	log.Println("attributes", attrs)
 
-	blendStates := util.Map(pass.Attachments(), func(i int, attachment renderpass.Attachment) vk.PipelineColorBlendAttachmentState {
+	blendStates := util.Map(args.Pass.Attachments(), func(attachment renderpass.Attachment) vk.PipelineColorBlendAttachmentState {
 		// todo: move into attachment object
 		return vk.PipelineColorBlendAttachmentState{
 			// additive blending
@@ -56,10 +87,10 @@ func New(device device.T, cache vk.PipelineCache, layout Layout, pass renderpass
 		SType: vk.StructureTypeGraphicsPipelineCreateInfo,
 
 		// layout
-		Layout: layout.Ptr(),
+		Layout: args.Layout.Ptr(),
 
 		// render pass
-		RenderPass: pass.Ptr(),
+		RenderPass: args.Pass.Ptr(),
 
 		// Stages
 		StageCount: uint32(len(modules)),
@@ -72,7 +103,7 @@ func New(device device.T, cache vk.PipelineCache, layout Layout, pass renderpass
 			PVertexBindingDescriptions: []vk.VertexInputBindingDescription{
 				{
 					Binding:   0,
-					Stride:    uint32(pointers.Stride()),
+					Stride:    uint32(args.Pointers.Stride()),
 					InputRate: vk.VertexInputRateVertex,
 				},
 			},
@@ -83,7 +114,7 @@ func New(device device.T, cache vk.PipelineCache, layout Layout, pass renderpass
 		// Input assembly
 		PInputAssemblyState: &vk.PipelineInputAssemblyStateCreateInfo{
 			SType:    vk.StructureTypePipelineInputAssemblyStateCreateInfo,
-			Topology: vk.PrimitiveTopologyTriangleList,
+			Topology: vkPrimitiveTopology(args.Primitive),
 		},
 
 		// viewport state
@@ -116,8 +147,8 @@ func New(device device.T, cache vk.PipelineCache, layout Layout, pass renderpass
 			SType:                   vk.StructureTypePipelineRasterizationStateCreateInfo,
 			DepthClampEnable:        vk.False,
 			RasterizerDiscardEnable: vk.False,
-			PolygonMode:             vk.PolygonModeFill,
-			CullMode:                vk.CullModeFlags(vk.CullModeNone),
+			PolygonMode:             args.PolygonFillMode,
+			CullMode:                args.CullMode,
 			FrontFace:               vk.FrontFaceCounterClockwise,
 			LineWidth:               1,
 		},
@@ -132,16 +163,16 @@ func New(device device.T, cache vk.PipelineCache, layout Layout, pass renderpass
 		PDepthStencilState: &vk.PipelineDepthStencilStateCreateInfo{
 			// enable depth testing with less or
 			SType:                 vk.StructureTypePipelineDepthStencilStateCreateInfo,
-			DepthTestEnable:       vk.True,
-			DepthWriteEnable:      vk.True,
-			DepthCompareOp:        vk.CompareOpLessOrEqual,
+			DepthTestEnable:       vkBool(args.DepthTest),
+			DepthWriteEnable:      vkBool(args.DepthWrite),
+			DepthCompareOp:        args.DepthFunc,
 			DepthBoundsTestEnable: vk.False,
 			Back: vk.StencilOpState{
 				FailOp:    vk.StencilOpKeep,
 				PassOp:    vk.StencilOpKeep,
 				CompareOp: vk.CompareOpAlways,
 			},
-			StencilTestEnable: vk.False,
+			StencilTestEnable: vkBool(args.StencilTest),
 			Front: vk.StencilOpState{
 				FailOp:    vk.StencilOpKeep,
 				PassOp:    vk.StencilOpKeep,
@@ -170,7 +201,7 @@ func New(device device.T, cache vk.PipelineCache, layout Layout, pass renderpass
 	}
 
 	ptrs := make([]vk.Pipeline, 1)
-	vk.CreateGraphicsPipelines(device.Ptr(), cache, 1, []vk.GraphicsPipelineCreateInfo{info}, nil, ptrs)
+	vk.CreateGraphicsPipelines(device.Ptr(), nil, 1, []vk.GraphicsPipelineCreateInfo{info}, nil, ptrs)
 
 	return &pipeline{
 		ptr:    ptrs[0],
@@ -183,8 +214,10 @@ func (p *pipeline) Ptr() vk.Pipeline {
 }
 
 func (p *pipeline) Destroy() {
-	vk.DestroyPipeline(p.device.Ptr(), p.ptr, nil)
-	p.ptr = nil
+	if p.ptr != nil {
+		vk.DestroyPipeline(p.device.Ptr(), p.ptr, nil)
+		p.ptr = nil
+	}
 }
 
 func pointersToVertexAttributes(ptrs vertex.Pointers, binding int) []vk.VertexInputAttributeDescription {
@@ -271,4 +304,23 @@ func convertFormat(ptr vertex.Pointer) vk.Format {
 		return fmt
 	}
 	panic(fmt.Sprintf("illegal format in pointer %s from %s -> %s x%d (normalize: %t)", ptr.Name, ptr.Source, ptr.Destination, ptr.Elements, ptr.Normalize))
+}
+
+func vkBool(v bool) vk.Bool32 {
+	if v {
+		return vk.True
+	}
+	return vk.False
+}
+
+func vkPrimitiveTopology(primitive vertex.Primitive) vk.PrimitiveTopology {
+	switch primitive {
+	case vertex.Triangles:
+		return vk.PrimitiveTopologyTriangleList
+	case vertex.Lines:
+		return vk.PrimitiveTopologyLineList
+	case vertex.Points:
+		return vk.PrimitiveTopologyPointList
+	}
+	panic("unknown primitive")
 }

@@ -1,9 +1,28 @@
 package util
 
-func Map[T any, S any](items []T, transform func(int, T) S) []S {
+func Map[T any, S any](items []T, transform func(T) S) []S {
 	output := make([]S, len(items))
 	for i, item := range items {
-		output[i] = transform(i, item)
+		output[i] = transform(item)
+	}
+	return output
+}
+
+func MapIdx[T any, S any](items []T, transform func(T, int) S) []S {
+	output := make([]S, len(items))
+	for i, item := range items {
+		output[i] = transform(item, i)
+	}
+	return output
+}
+
+func Range(from, to, step int) []int {
+	n := (to - from) / step
+	output := make([]int, n)
+	v := from
+	for i := 0; v < to; i++ {
+		output[i] = v
+		v += step
 	}
 	return output
 }

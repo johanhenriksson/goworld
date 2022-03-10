@@ -11,7 +11,6 @@ import (
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/pipeline"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/renderpass"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/sync"
-	"github.com/johanhenriksson/goworld/util"
 
 	vk "github.com/vulkan-go/vulkan"
 )
@@ -26,7 +25,7 @@ type Buffer interface {
 
 	CmdCopyBuffer(src, dst buffer.T, regions ...vk.BufferCopy)
 	CmdBindGraphicsPipeline(pipe pipeline.T)
-	CmdBindGraphicsDescriptors(layout pipeline.Layout, sets []descriptor.Set)
+	CmdBindGraphicsDescriptor(layout pipeline.Layout, sets descriptor.Set)
 	CmdBindVertexBuffer(vtx buffer.T, offset int)
 	CmdBindIndexBuffers(idx buffer.T, offset int, kind vk.IndexType)
 	CmdDraw(vertexCount, instanceCount, firstVertex, firstInstance int)
@@ -115,12 +114,12 @@ func (b *buf) CmdBindGraphicsPipeline(pipe pipeline.T) {
 	vk.CmdBindPipeline(b.Ptr(), vk.PipelineBindPointGraphics, pipe.Ptr())
 }
 
-func (b *buf) CmdBindGraphicsDescriptors(layout pipeline.Layout, sets []descriptor.Set) {
+func (b *buf) CmdBindGraphicsDescriptor(layout pipeline.Layout, set descriptor.Set) {
 	vk.CmdBindDescriptorSets(
 		b.Ptr(),
 		vk.PipelineBindPointGraphics,
-		layout.Ptr(), 0, uint32(len(sets)),
-		util.Map(sets, func(i int, s descriptor.Set) vk.DescriptorSet { return s.Ptr() }),
+		layout.Ptr(), 0, 1,
+		[]vk.DescriptorSet{set.Ptr()},
 		0, nil)
 }
 
@@ -159,6 +158,9 @@ func (b *buf) CmdBeginRenderPass(pass renderpass.T, frame int) {
 		ClearValueCount: uint32(len(clear)),
 		PClearValues:    clear,
 	}, vk.SubpassContentsInline)
+
+	b.CmdSetViewport(0, 0, w, h)
+	b.CmdSetScissor(0, 0, w, h)
 }
 
 func (b *buf) CmdEndRenderPass() {

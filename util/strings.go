@@ -3,7 +3,7 @@ package util
 import "strings"
 
 func CStrings(strings []string) []string {
-	return Map(strings, func(i int, str string) string {
+	return Map(strings, func(str string) string {
 		return CString(str)
 	})
 }

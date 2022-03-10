@@ -60,7 +60,7 @@ func (p *pool) AllocateBuffers(level vk.CommandBufferLevel, count int) []Buffer 
 	ptrs := make([]vk.CommandBuffer, count)
 	vk.AllocateCommandBuffers(p.device.Ptr(), &info, ptrs)
 
-	return util.Map(ptrs, func(i int, ptr vk.CommandBuffer) Buffer {
+	return util.Map(ptrs, func(ptr vk.CommandBuffer) Buffer {
 		return newBuffer(p.device, p.ptr, ptr)
 	})
 }

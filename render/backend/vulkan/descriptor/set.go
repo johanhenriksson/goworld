@@ -12,7 +12,7 @@ type Set interface {
 
 type set struct {
 	device device.T
-	layout Layout
+	layout SetLayout
 	ptr    vk.DescriptorSet
 }
 
@@ -20,7 +20,7 @@ func (s *set) Ptr() vk.DescriptorSet {
 	return s.ptr
 }
 
-func (s *set) Layout() Layout {
+func (s *set) Layout() SetLayout {
 	return s.layout
 }
 

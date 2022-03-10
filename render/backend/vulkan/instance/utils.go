@@ -21,7 +21,7 @@ func EnumerateExtensions() ([]string, error) {
 		return nil, fmt.Errorf("enumerate instance extensions failed")
 	}
 
-	names := util.Map(extensions, func(i int, ext vk.ExtensionProperties) string {
+	names := util.Map(extensions, func(ext vk.ExtensionProperties) string {
 		ext.Deref()
 		return vk.ToString(ext.ExtensionName[:])
 	})
@@ -42,7 +42,7 @@ func EnumerateInstanceLayers() ([]string, error) {
 		return nil, fmt.Errorf("enumerate instance extensions failed")
 	}
 
-	names := util.Map(layers, func(i int, layer vk.LayerProperties) string {
+	names := util.Map(layers, func(layer vk.LayerProperties) string {
 		layer.Deref()
 		return vk.ToString(layer.LayerName[:])
 	})

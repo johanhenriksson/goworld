@@ -122,17 +122,20 @@ func NewGeometryPass(backend vulkan.T, meshes cache.Meshes) *GeometryPass {
 			Pass: pass,
 			Attributes: shader.AttributeMap{
 				"position": {
-					Bind: 0,
+					Loc:  0,
 					Type: types.Float,
 				},
 				"normal_id": {
-					Bind: 1,
+					Loc:  1,
 					Type: types.UInt8,
 				},
 				"color_0": {
-					Bind: 2,
+					Loc:  2,
 					Type: types.Float,
 				},
+			},
+			Descriptors: vk_shader.Descriptors{
+				"Camera": 0,
 			},
 		})
 
@@ -172,9 +175,6 @@ func (p *GeometryPass) Draw(args render.Args, scene object.T) {
 
 	cmds.Record(func(cmd command.Buffer) {
 		cmd.CmdBeginRenderPass(p.pass, ctx.Index)
-		cmd.CmdSetViewport(0, 0, ctx.Width, ctx.Height)
-		cmd.CmdSetScissor(0, 0, ctx.Width, ctx.Height)
-
 		p.shader.Bind(ctx.Index, cmd)
 	})
 
@@ -189,7 +189,7 @@ func (p *GeometryPass) Draw(args render.Args, scene object.T) {
 		cmd.CmdEndRenderPass()
 	})
 
-	worker := ctx.Workers[0]
+	worker := p.backend.Worker(ctx.Index)
 	worker.Queue(cmds.Apply)
 	worker.Submit(command.SubmitInfo{
 		Wait:   []sync.Semaphore{ctx.ImageAvailable},

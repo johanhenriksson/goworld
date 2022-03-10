@@ -28,6 +28,7 @@ type T interface {
 	Height() int
 	Destroy()
 
+	Worker(int) command.Worker
 	Transferer() command.Worker
 
 	GlfwHints(window.Args) []window.GlfwHint
@@ -49,6 +50,7 @@ type backend struct {
 	surface   vk.Surface
 	swapchain swapchain.T
 	transfer  command.Worker
+	workers   []command.Worker
 }
 
 func New(appName string, deviceIndex int) T {
@@ -67,7 +69,13 @@ func (b *backend) Frames() int            { return b.frames }
 func (b *backend) Width() int             { return b.width }
 func (b *backend) Height() int            { return b.height }
 
-func (b *backend) Transferer() command.Worker { return b.transfer }
+func (b *backend) Transferer() command.Worker {
+	return b.transfer
+}
+
+func (b *backend) Worker(frame int) command.Worker {
+	return b.workers[frame]
+}
 
 func (b *backend) GlfwHints(args window.Args) []window.GlfwHint {
 	return []window.GlfwHint{
@@ -102,12 +110,24 @@ func (b *backend) GlfwSetup(w *glfw.Window, args window.Args) error {
 	// allocate swapchain
 	b.swapchain = swapchain.New(b.device, b.frames, b.width, b.height, b.surface, surfaceFormat)
 
+	// transfer worker
 	b.transfer = command.NewWorker(b.device, vk.QueueFlags(vk.QueueTransferBit))
+
+	// per frame graphics workers
+	b.workers = make([]command.Worker, b.frames)
+	for i := 0; i < b.frames; i++ {
+		b.workers[i] = command.NewWorker(b.device, vk.QueueFlags(vk.QueueGraphicsBit))
+	}
 
 	return nil
 }
 
 func (b *backend) Destroy() {
+	for i := 0; i < b.frames; i++ {
+		b.workers[i].Destroy()
+	}
+	b.transfer.Destroy()
+
 	if b.swapchain != nil {
 		b.swapchain.Destroy()
 		b.swapchain = nil

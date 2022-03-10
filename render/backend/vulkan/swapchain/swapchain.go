@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/johanhenriksson/goworld/render/backend/vulkan/command"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/device"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/image"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/sync"
@@ -113,23 +112,17 @@ func (s *swapchain) recreate() {
 	if swapImageCount != uint32(s.frames) {
 		panic("failed to get the requested number of swapchain images")
 	}
-	s.frames = int(swapImageCount)
 
 	swapimages := make([]vk.Image, swapImageCount)
 	vk.GetSwapchainImages(s.device.Ptr(), s.ptr, &swapImageCount, swapimages)
-	s.images = util.Map(swapimages, func(i int, img vk.Image) image.T { return image.Wrap(s.device, img) })
+	s.images = util.Map(swapimages, func(img vk.Image) image.T { return image.Wrap(s.device, img) })
 
 	for i := range s.contexts {
 		// destroy existing
 		s.contexts[i].Destroy()
 
 		s.contexts[i] = Context{
-			Index: i,
-			Workers: command.Workers{
-				command.NewWorker(s.device, vk.QueueFlags(vk.QueueGraphicsBit)),
-			},
-			Width:          s.width,
-			Height:         s.height,
+			Index:          i,
 			ImageAvailable: sync.NewSemaphore(s.device),
 			RenderComplete: sync.NewSemaphore(s.device),
 		}

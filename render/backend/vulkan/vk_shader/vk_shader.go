@@ -14,6 +14,8 @@ import (
 	vk "github.com/vulkan-go/vulkan"
 )
 
+type Descriptors map[string]int
+
 type T[V any, D descriptor.Set] interface {
 	Destroy()
 	Bind(frame int, cmd command.Buffer)
@@ -26,7 +28,7 @@ type vk_shader[V any, D descriptor.Set] struct {
 
 	dsets   []D
 	dpool   descriptor.Pool
-	dlayout descriptor.TypedLayout[D]
+	dlayout descriptor.SetLayoutTyped[D]
 
 	shaders []pipeline.Shader
 	layout  pipeline.Layout
@@ -37,9 +39,10 @@ type vk_shader[V any, D descriptor.Set] struct {
 }
 
 type Args struct {
-	Path       string
-	Pass       renderpass.T
-	Attributes shader.AttributeMap
+	Path        string
+	Pass        renderpass.T
+	Attributes  shader.AttributeMap
+	Descriptors Descriptors
 }
 
 func New[V any, D descriptor.Set](backend vulkan.T, descriptors D, args Args) T[V, D] {
@@ -48,6 +51,7 @@ func New[V any, D descriptor.Set](backend vulkan.T, descriptors D, args Args) T[
 		pipeline.NewShader(backend.Device(), fmt.Sprintf("assets/shaders/%s.frag.spv", args.Path), vk.ShaderStageFragmentBit),
 	}
 
+	// todo: put the descriptor pool somewhere else
 	dpool := descriptor.NewPool(backend.Device(), []vk.DescriptorPoolSize{
 		{
 			Type:            vk.DescriptorTypeUniformBuffer,
@@ -71,13 +75,23 @@ func New[V any, D descriptor.Set](backend vulkan.T, descriptors D, args Args) T[
 		descSets[i] = dset
 	}
 
-	layout := pipeline.NewLayout(backend.Device(), []descriptor.Layout{descLayout})
+	layout := pipeline.NewLayout(backend.Device(), []descriptor.SetLayout{descLayout})
 
+	// todo: the pointers & pipeline stuff should be extracted into a material thing
 	var vtx V
 	pointers := vertex.ParsePointers(vtx)
 	pointers.Bind(args.Attributes)
 
-	pipe := pipeline.New(backend.Device(), nil, layout, args.Pass, shaders, pointers)
+	pipe := pipeline.New(backend.Device(), pipeline.Args{
+		Layout:   layout,
+		Pass:     args.Pass,
+		Shaders:  shaders,
+		Pointers: pointers,
+
+		Primitive:  vertex.Triangles,
+		DepthTest:  true,
+		DepthWrite: true,
+	})
 
 	return &vk_shader[V, D]{
 		name:    args.Path,
@@ -105,9 +119,7 @@ func (s *vk_shader[V, D]) Descriptors(frame int) D {
 
 func (s *vk_shader[V, D]) Bind(frame int, cmd command.Buffer) {
 	cmd.CmdBindGraphicsPipeline(s.pipe)
-	cmd.CmdBindGraphicsDescriptors(s.layout, []descriptor.Set{
-		s.dsets[frame],
-	})
+	cmd.CmdBindGraphicsDescriptor(s.layout, s.dsets[frame])
 }
 
 func (s *vk_shader[V, D]) Destroy() {

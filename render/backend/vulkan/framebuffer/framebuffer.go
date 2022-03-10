@@ -24,13 +24,11 @@ type framebuf struct {
 }
 
 func New(device device.T, width, height int, pass vk.RenderPass, attachments []image.View) T {
-	// depth
-
 	info := vk.FramebufferCreateInfo{
 		SType:           vk.StructureTypeFramebufferCreateInfo,
 		RenderPass:      pass,
 		AttachmentCount: uint32(len(attachments)),
-		PAttachments:    util.Map(attachments, func(i int, v image.View) vk.ImageView { return v.Ptr() }),
+		PAttachments:    util.Map(attachments, func(v image.View) vk.ImageView { return v.Ptr() }),
 		Width:           uint32(width),
 		Height:          uint32(height),
 		Layers:          1,

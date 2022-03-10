@@ -67,6 +67,7 @@ func (s *shader) Destroy() {
 	s.ptr = nil
 }
 
+// Disgusting hack that reinterprets a byte slice as a slice of uint32
 func sliceUint32(data []byte) []uint32 {
 	type sliceHeader struct {
 		Data uintptr

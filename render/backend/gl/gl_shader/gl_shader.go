@@ -136,7 +136,7 @@ func (s *glshader) Attribute(attr string) (shader.AttributeDesc, error) {
 	if !ok {
 		return shader.AttributeDesc{
 			Name: attr,
-			Bind: -1,
+			Loc:  -1,
 		}, fmt.Errorf("%w: %s", shader.ErrUnknownAttribute, attr)
 	}
 	return desc, nil
