@@ -24,6 +24,7 @@ type T[V any, D descriptor.Set] interface {
 
 type vk_shader[V any, D descriptor.Set] struct {
 	name    string
+	frames  int
 	backend vulkan.T
 
 	dsets   []D
@@ -40,12 +41,17 @@ type vk_shader[V any, D descriptor.Set] struct {
 
 type Args struct {
 	Path        string
+	Frames      int
 	Pass        renderpass.T
 	Attributes  shader.AttributeMap
 	Descriptors Descriptors
 }
 
 func New[V any, D descriptor.Set](backend vulkan.T, descriptors D, args Args) T[V, D] {
+	if args.Frames == 0 {
+		args.Frames = backend.Frames()
+	}
+
 	shaders := []pipeline.Shader{
 		pipeline.NewShader(backend.Device(), fmt.Sprintf("assets/shaders/%s.vert.spv", args.Path), vk.ShaderStageVertexBit),
 		pipeline.NewShader(backend.Device(), fmt.Sprintf("assets/shaders/%s.frag.spv", args.Path), vk.ShaderStageFragmentBit),
@@ -69,7 +75,7 @@ func New[V any, D descriptor.Set](backend vulkan.T, descriptors D, args Args) T[
 
 	descLayout := descriptor.New(backend.Device(), dpool, descriptors)
 
-	descSets := make([]D, backend.Frames())
+	descSets := make([]D, args.Frames)
 	for i := range descSets {
 		dset := descLayout.Allocate()
 		descSets[i] = dset
@@ -97,6 +103,7 @@ func New[V any, D descriptor.Set](backend vulkan.T, descriptors D, args Args) T[
 		name:    args.Path,
 		backend: backend,
 		shaders: shaders,
+		frames:  args.Frames,
 
 		dsets:   descSets,
 		dlayout: descLayout,
@@ -114,12 +121,12 @@ func (s *vk_shader[V, D]) Name() string {
 }
 
 func (s *vk_shader[V, D]) Descriptors(frame int) D {
-	return s.dsets[frame]
+	return s.dsets[frame%s.frames]
 }
 
 func (s *vk_shader[V, D]) Bind(frame int, cmd command.Buffer) {
 	cmd.CmdBindGraphicsPipeline(s.pipe)
-	cmd.CmdBindGraphicsDescriptor(s.layout, s.dsets[frame])
+	cmd.CmdBindGraphicsDescriptor(s.layout, s.dsets[frame%s.frames])
 }
 
 func (s *vk_shader[V, D]) Destroy() {

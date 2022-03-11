@@ -56,9 +56,7 @@ func (m *vkmeshes) Instantiate(mesh vertex.Mesh, mat material.T) GpuMesh {
 		cmd.CmdCopyBuffer(idxstage, idx)
 	})
 	m.worker.Submit(command.SubmitInfo{})
-	log.Println("waiting for transfers...")
 	m.worker.Wait()
-	log.Println("transfers completed")
 
 	vtxstage.Destroy()
 	idxstage.Destroy()

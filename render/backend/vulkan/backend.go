@@ -57,7 +57,7 @@ func New(appName string, deviceIndex int) T {
 	return &backend{
 		appName:   appName,
 		deviceIdx: deviceIndex,
-		frames:    2,
+		frames:    3,
 	}
 }
 

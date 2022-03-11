@@ -21,7 +21,7 @@ func TestParseDescriptors(t *testing.T) {
 		},
 	}
 	desc := ParseDescriptors(&set)
-	if _, ok := desc["diffuse"]; !ok {
+	if len(desc) != 1 {
 		t.Error("expected to find diffuse descriptor")
 	}
 }

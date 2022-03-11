@@ -55,7 +55,7 @@ type GeometryPass struct {
 }
 
 func NewGeometryPass(backend vulkan.T, meshes cache.Meshes) *GeometryPass {
-	diffuseFmt := vk.FormatR16g16b16a16Sfloat
+	diffuseFmt := vk.FormatR8g8b8a8Unorm
 	normalFmt := vk.FormatR8g8b8a8Unorm
 	positionFmt := vk.FormatR16g16b16a16Sfloat
 
@@ -86,10 +86,9 @@ func NewGeometryPass(backend vulkan.T, meshes cache.Meshes) *GeometryPass {
 			},
 		},
 		DepthAttachment: &renderpass.DepthAttachment{
-			LoadOp:       vk.AttachmentLoadOpClear,
-			FinalLayout:  vk.ImageLayoutDepthStencilAttachmentOptimal,
-			ClearDepth:   1,
-			ClearStencil: 0,
+			LoadOp:      vk.AttachmentLoadOpClear,
+			FinalLayout: vk.ImageLayoutDepthStencilAttachmentOptimal,
+			ClearDepth:  1,
 		},
 		Subpasses: []renderpass.Subpass{
 			{
@@ -118,8 +117,9 @@ func NewGeometryPass(backend vulkan.T, meshes cache.Meshes) *GeometryPass {
 			},
 		},
 		vk_shader.Args{
-			Path: "vk/color_f",
-			Pass: pass,
+			Path:   "vk/color_f",
+			Frames: 1,
+			Pass:   pass,
 			Attributes: shader.AttributeMap{
 				"position": {
 					Loc:  0,

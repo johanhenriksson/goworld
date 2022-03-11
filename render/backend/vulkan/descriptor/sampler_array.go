@@ -46,8 +46,7 @@ func (d *SamplerArray) BindingFlags() vk.DescriptorBindingFlags {
 	return vk.DescriptorBindingFlags(
 		vk.DescriptorBindingPartiallyBoundBit |
 			vk.DescriptorBindingVariableDescriptorCountBit |
-			vk.DescriptorBindingUpdateUnusedWhilePendingBit |
-			vk.DescriptorBindingUpdateAfterBindBit)
+			vk.DescriptorBindingUpdateUnusedWhilePendingBit)
 }
 
 func (d *SamplerArray) MaxCount() int {

@@ -1,7 +1,6 @@
 package descriptor
 
 import (
-	"fmt"
 	"reflect"
 
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/buffer"
@@ -27,7 +26,6 @@ func (d *Uniform[K]) Initialize(device device.T) {
 	t := reflect.TypeOf(empty)
 	d.buffer = buffer.NewUniform(device, int(t.Size()))
 	d.write()
-	fmt.Println("initialize uniform")
 }
 
 func (d *Uniform[K]) Destroy() {
