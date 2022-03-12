@@ -1,6 +1,7 @@
 package descriptor
 
 import (
+	"fmt"
 	"reflect"
 
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/buffer"
@@ -11,7 +12,7 @@ import (
 
 type Uniform[K any] struct {
 	Binding int
-	Stages  vk.ShaderStageFlags
+	Stages  vk.ShaderStageFlagBits
 
 	buffer buffer.T
 	set    Set
@@ -24,6 +25,10 @@ func (d *Uniform[K]) Initialize(device device.T) {
 
 	var empty K
 	t := reflect.TypeOf(empty)
+	if t.Kind() != reflect.Struct {
+		panic(fmt.Sprintf("Uniform value must be a struct, was %s", t.Kind()))
+	}
+
 	d.buffer = buffer.NewUniform(device, int(t.Size()))
 	d.write()
 }
@@ -65,7 +70,7 @@ func (d *Uniform[K]) LayoutBinding() vk.DescriptorSetLayoutBinding {
 		Binding:         uint32(d.Binding),
 		DescriptorType:  vk.DescriptorTypeUniformBuffer,
 		DescriptorCount: 1,
-		StageFlags:      d.Stages,
+		StageFlags:      vk.ShaderStageFlags(d.Stages),
 	}
 }
 

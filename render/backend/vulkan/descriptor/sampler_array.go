@@ -9,7 +9,7 @@ import (
 type SamplerArray struct {
 	Binding int
 	Count   int
-	Stages  vk.ShaderStageFlags
+	Stages  vk.ShaderStageFlagBits
 
 	sampler []vk.Sampler
 	view    []vk.ImageView
@@ -37,8 +37,8 @@ func (d *SamplerArray) LayoutBinding() vk.DescriptorSetLayoutBinding {
 	return vk.DescriptorSetLayoutBinding{
 		Binding:         uint32(d.Binding),
 		DescriptorType:  vk.DescriptorTypeCombinedImageSampler,
-		DescriptorCount: 1,
-		StageFlags:      d.Stages,
+		DescriptorCount: uint32(d.Count),
+		StageFlags:      vk.ShaderStageFlags(d.Stages),
 	}
 }
 
@@ -57,6 +57,18 @@ func (d *SamplerArray) Set(index int, tex vk_texture.T) {
 	d.sampler[index] = tex.Ptr()
 	d.view[index] = tex.View().Ptr()
 	d.write(index, 1)
+}
+
+func (d *SamplerArray) SetRange(textures []vk_texture.T, offset int) {
+	end := offset + len(textures)
+	if end >= d.Count {
+		panic("out of bounds")
+	}
+	for i, tex := range textures {
+		d.sampler[offset+i] = tex.Ptr()
+		d.view[offset+i] = tex.View().Ptr()
+	}
+	d.write(offset, len(textures))
 }
 
 func (d *SamplerArray) write(index, count int) {

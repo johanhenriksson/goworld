@@ -2,58 +2,55 @@ package descriptor
 
 import (
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/device"
-	"github.com/johanhenriksson/goworld/render/backend/vulkan/vk_texture"
+	"github.com/johanhenriksson/goworld/render/backend/vulkan/image"
 
 	vk "github.com/vulkan-go/vulkan"
 )
 
-type Sampler struct {
+type InputAttachment struct {
 	Binding int
 	Stages  vk.ShaderStageFlagBits
 
-	sampler vk.Sampler
-	view    vk.ImageView
-	set     Set
+	view vk.ImageView
+	set  Set
 }
 
-var _ Descriptor = &Sampler{}
+var _ Descriptor = &InputAttachment{}
 
-func (d *Sampler) Initialize(device device.T) {}
+func (d *InputAttachment) Initialize(device device.T) {}
 
-func (d *Sampler) Destroy() {}
+func (d *InputAttachment) Destroy() {}
 
-func (d *Sampler) Bind(set Set) {
+func (d *InputAttachment) Bind(set Set) {
 	d.set = set
 }
 
-func (d *Sampler) Set(tex vk_texture.T) {
-	d.sampler = tex.Ptr()
-	d.view = tex.View().Ptr()
+func (d *InputAttachment) Set(view image.View) {
+	d.view = view.Ptr()
 	d.write()
 }
 
-func (d *Sampler) LayoutBinding() vk.DescriptorSetLayoutBinding {
+func (d *InputAttachment) LayoutBinding() vk.DescriptorSetLayoutBinding {
 	return vk.DescriptorSetLayoutBinding{
 		Binding:         uint32(d.Binding),
-		DescriptorType:  vk.DescriptorTypeCombinedImageSampler,
+		DescriptorType:  vk.DescriptorTypeInputAttachment,
 		DescriptorCount: 1,
 		StageFlags:      vk.ShaderStageFlags(d.Stages),
 	}
 }
 
-func (d *Sampler) BindingFlags() vk.DescriptorBindingFlags { return 0 }
+func (d *InputAttachment) BindingFlags() vk.DescriptorBindingFlags { return 0 }
 
-func (d *Sampler) write() {
+func (d *InputAttachment) write() {
 	d.set.Write(vk.WriteDescriptorSet{
 		SType:           vk.StructureTypeWriteDescriptorSet,
 		DstSet:          d.set.Ptr(),
 		DstBinding:      uint32(d.Binding),
 		DstArrayElement: 0,
 		DescriptorCount: 1,
-		DescriptorType:  vk.DescriptorTypeCombinedImageSampler,
+		DescriptorType:  vk.DescriptorTypeInputAttachment,
 		PImageInfo: []vk.DescriptorImageInfo{
 			{
-				Sampler:     d.sampler,
 				ImageView:   d.view,
 				ImageLayout: vk.ImageLayoutShaderReadOnlyOptimal,
 			},

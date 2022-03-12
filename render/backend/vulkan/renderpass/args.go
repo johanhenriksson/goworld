@@ -28,6 +28,9 @@ type ColorAttachment struct {
 	FinalLayout   vk.ImageLayout
 	Clear         color.T
 	Images        []image.T
+	Usage         vk.ImageUsageFlagBits
+
+	Blend bool
 }
 
 func (desc *ColorAttachment) defaults() {
@@ -47,6 +50,7 @@ type DepthAttachment struct {
 	ClearDepth     float32
 	ClearStencil   uint32
 	Images         []image.T
+	Usage          vk.ImageUsageFlagBits
 }
 
 func (desc *DepthAttachment) defaults() {
@@ -56,18 +60,24 @@ func (desc *DepthAttachment) defaults() {
 }
 
 type Subpass struct {
+	index            int
 	Name             string
 	Depth            bool
 	ColorAttachments []string
+	InputAttachments []string
+}
+
+func (s *Subpass) Index() int {
+	return s.index
 }
 
 type SubpassDependency struct {
 	Src string
 	Dst string
 
-	Flags         vk.DependencyFlags
-	SrcStageMask  vk.PipelineStageFlags
-	SrcAccessMask vk.AccessFlags
-	DstStageMask  vk.PipelineStageFlags
-	DstAccessMask vk.AccessFlags
+	Flags         vk.DependencyFlagBits
+	SrcStageMask  vk.PipelineStageFlagBits
+	SrcAccessMask vk.AccessFlagBits
+	DstStageMask  vk.PipelineStageFlagBits
+	DstAccessMask vk.AccessFlagBits
 }

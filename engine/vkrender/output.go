@@ -28,7 +28,7 @@ type OutputPass struct {
 	geometry DeferredPass
 
 	quad *cache.VkMesh
-	tex  vk_texture.T
+	tex  []vk_texture.T
 	pass renderpass.T
 }
 
@@ -56,7 +56,6 @@ func NewOutputPass(backend vulkan.T, meshes cache.Meshes, textures cache.Texture
 	})
 
 	p.quad = p.meshes.Fetch(quadvtx, nil).(*cache.VkMesh)
-	p.tex = p.textures.Fetch("assets/textures/uv_checker.png")
 
 	p.pass = renderpass.New(backend.Device(), renderpass.Args{
 		Frames: backend.Frames(),
@@ -84,7 +83,7 @@ func NewOutputPass(backend vulkan.T, meshes cache.Meshes, textures cache.Texture
 		&OutputDescriptors{
 			Output: &descriptor.Sampler{
 				Binding: 0,
-				Stages:  vk.ShaderStageFlags(vk.ShaderStageAll),
+				Stages:  vk.ShaderStageFragmentBit,
 			},
 		},
 		vk_shader.Args{
@@ -102,8 +101,13 @@ func NewOutputPass(backend vulkan.T, meshes cache.Meshes, textures cache.Texture
 			},
 		})
 
-	for i := 0; i < backend.Frames(); i++ {
-		p.shader.Descriptors(i).Output.Set(p.geometry.Diffuse(i))
+	p.tex = make([]vk_texture.T, backend.Frames())
+	for i := range p.tex {
+		p.tex[i] = vk_texture.FromView(backend.Device(), p.geometry.Output(i), vk_texture.Args{
+			Filter: vk.FilterNearest,
+			Wrap:   vk.SamplerAddressModeClampToEdge,
+		})
+		p.shader.Descriptors(i).Output.Set(p.tex[i])
 	}
 
 	return p
@@ -137,6 +141,9 @@ func (p *OutputPass) Draw(args render.Args, scene object.T) {
 }
 
 func (p *OutputPass) Destroy() {
+	for _, tex := range p.tex {
+		tex.Destroy()
+	}
 	p.pass.Destroy()
 	p.shader.Destroy()
 }

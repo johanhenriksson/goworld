@@ -13,6 +13,7 @@ type Attachment interface {
 	Clear() vk.ClearValue
 	Description() vk.AttachmentDescription
 	Destroy()
+	Blend() bool
 }
 
 type attachment struct {
@@ -22,6 +23,7 @@ type attachment struct {
 	clear    vk.ClearValue
 	desc     vk.AttachmentDescription
 	imgowner bool
+	blend    bool
 }
 
 func (a *attachment) Description() vk.AttachmentDescription {
@@ -32,6 +34,7 @@ func (a *attachment) Name() string              { return a.name }
 func (a *attachment) Image(frame int) image.T   { return a.image[frame] }
 func (a *attachment) View(frame int) image.View { return a.view[frame] }
 func (a *attachment) Clear() vk.ClearValue      { return a.clear }
+func (a *attachment) Blend() bool               { return a.blend }
 
 func (a *attachment) Destroy() {
 	for i := range a.image {
@@ -54,7 +57,7 @@ func NewColorAttachment(device device.T, desc ColorAttachment, frames, width, he
 			images[i] = image.New2D(
 				device,
 				width, height, desc.Format,
-				vk.ImageUsageFlags(vk.ImageUsageColorAttachmentBit|vk.ImageUsageSampledBit))
+				vk.ImageUsageFlags(vk.ImageUsageColorAttachmentBit|desc.Usage))
 		}
 	} else if len(images) != frames {
 		panic("wrong number of images supplied")
@@ -74,6 +77,7 @@ func NewColorAttachment(device device.T, desc ColorAttachment, frames, width, he
 		view:     views,
 		clear:    clear,
 		imgowner: imgowner,
+		blend:    desc.Blend,
 		desc: vk.AttachmentDescription{
 			Format:        desc.Format,
 			Samples:       desc.Samples,
@@ -93,7 +97,6 @@ func NewDepthAttachment(device device.T, desc DepthAttachment, frames, width, he
 	desc.defaults()
 
 	depthFormat := device.GetDepthFormat()
-	depthUsage := vk.ImageUsageFlags(vk.ImageUsageDepthStencilAttachmentBit | vk.ImageUsageSampledBit)
 
 	images := desc.Images
 	imgowner := false
@@ -101,7 +104,9 @@ func NewDepthAttachment(device device.T, desc DepthAttachment, frames, width, he
 		imgowner = true
 		images = make([]image.T, frames)
 		for i := range images {
-			images[i] = image.New2D(device, width, height, depthFormat, depthUsage)
+			images[i] = image.New2D(
+				device, width, height, depthFormat,
+				vk.ImageUsageFlags(vk.ImageUsageDepthStencilAttachmentBit|desc.Usage))
 		}
 	} else if len(images) != frames {
 		panic("wrong number of images supplied")
@@ -121,6 +126,7 @@ func NewDepthAttachment(device device.T, desc DepthAttachment, frames, width, he
 		view:     views,
 		clear:    clear,
 		imgowner: imgowner,
+		blend:    false,
 		desc: vk.AttachmentDescription{
 			Format:         depthFormat,
 			Samples:        desc.Samples,

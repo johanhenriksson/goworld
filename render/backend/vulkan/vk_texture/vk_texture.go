@@ -19,6 +19,8 @@ type Args struct {
 	Format vk.Format
 	Filter vk.Filter
 	Wrap   vk.SamplerAddressMode
+	Aspect vk.ImageAspectFlags
+	Usage  vk.ImageUsageFlags
 }
 
 type vktexture struct {
@@ -30,16 +32,21 @@ type vktexture struct {
 }
 
 func New(device device.T, args Args) T {
-	img := image.New2D(device,
-		args.Width, args.Height, args.Format,
-		vk.ImageUsageFlags(vk.ImageUsageSampledBit|vk.ImageUsageTransferDstBit))
+	if args.Usage == 0 {
+		args.Usage = vk.ImageUsageFlags(vk.ImageUsageSampledBit | vk.ImageUsageTransferDstBit)
+	}
+
+	img := image.New2D(device, args.Width, args.Height, args.Format, args.Usage)
 
 	return FromImage(device, img, args)
 
 }
 
 func FromImage(device device.T, img image.T, args Args) T {
-	view := img.View(args.Format, vk.ImageAspectFlags(vk.ImageAspectColorBit))
+	if args.Aspect == 0 {
+		args.Aspect = vk.ImageAspectFlags(vk.ImageAspectColorBit)
+	}
+	view := img.View(args.Format, args.Aspect)
 	return FromView(device, view, args)
 }
 

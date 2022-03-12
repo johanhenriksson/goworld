@@ -16,12 +16,22 @@ type layout struct {
 	device device.T
 }
 
-func NewLayout(device device.T, descriptors []descriptor.SetLayout) Layout {
+func NewLayout(device device.T, descriptors []descriptor.SetLayout, constants []PushConstant) Layout {
 	info := vk.PipelineLayoutCreateInfo{
-		SType:          vk.StructureTypePipelineLayoutCreateInfo,
+		SType: vk.StructureTypePipelineLayoutCreateInfo,
+
 		SetLayoutCount: uint32(len(descriptors)),
 		PSetLayouts: util.Map(descriptors, func(desc descriptor.SetLayout) vk.DescriptorSetLayout {
 			return desc.Ptr()
+		}),
+
+		PushConstantRangeCount: uint32(len(constants)),
+		PPushConstantRanges: util.Map(constants, func(push PushConstant) vk.PushConstantRange {
+			return vk.PushConstantRange{
+				StageFlags: vk.ShaderStageFlags(push.Stages),
+				Offset:     uint32(push.Offset),
+				Size:       uint32(push.Size),
+			}
 		}),
 	}
 

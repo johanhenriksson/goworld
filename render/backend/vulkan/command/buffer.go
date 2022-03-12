@@ -2,7 +2,6 @@ package command
 
 import (
 	"reflect"
-	"unsafe"
 
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/buffer"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/descriptor"
@@ -31,6 +30,7 @@ type Buffer interface {
 	CmdDraw(vertexCount, instanceCount, firstVertex, firstInstance int)
 	CmdDrawIndexed(indexCount, instanceCount, firstIndex, vertexOffset, firstInstance int)
 	CmdBeginRenderPass(pass renderpass.T, frame int)
+	CmdNextSubpass()
 	CmdEndRenderPass()
 	CmdSetViewport(x, y, w, h int)
 	CmdSetScissor(x, y, w, h int)
@@ -167,6 +167,10 @@ func (b *buf) CmdEndRenderPass() {
 	vk.CmdEndRenderPass(b.ptr)
 }
 
+func (b *buf) CmdNextSubpass() {
+	vk.CmdNextSubpass(b.ptr, vk.SubpassContentsInline)
+}
+
 func (b *buf) CmdSetViewport(x, y, w, h int) {
 	vk.CmdSetViewport(b.Ptr(), 0, 1, []vk.Viewport{
 		{
@@ -198,7 +202,7 @@ func (b *buf) CmdSetScissor(x, y, w, h int) {
 func (b *buf) CmdPushConstant(layout pipeline.Layout, stages vk.ShaderStageFlags, offset int, value any) {
 	ptr := reflect.ValueOf(value).UnsafePointer()
 	size := reflect.ValueOf(value).Elem().Type().Size()
-	vk.CmdPushConstants(b.ptr, layout.Ptr(), stages, uint32(offset), uint32(size), unsafe.Pointer(ptr))
+	vk.CmdPushConstants(b.ptr, layout.Ptr(), stages, uint32(offset), uint32(size), ptr)
 }
 
 func (b *buf) CmdImageBarrier(srcMask, dstMask vk.PipelineStageFlags, image image.T, oldLayout, newLayout vk.ImageLayout) {

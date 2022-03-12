@@ -6,7 +6,6 @@ import (
 
 	"github.com/johanhenriksson/goworld/render/backend/types"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/device"
-	"github.com/johanhenriksson/goworld/render/backend/vulkan/renderpass"
 	"github.com/johanhenriksson/goworld/render/vertex"
 	"github.com/johanhenriksson/goworld/util"
 
@@ -22,34 +21,9 @@ type pipeline struct {
 	device device.T
 }
 
-type Args struct {
-	Pass     renderpass.T
-	Layout   Layout
-	Shaders  []Shader
-	Pointers vertex.Pointers
-
-	Primitive       vertex.Primitive
-	PolygonFillMode vk.PolygonMode
-	CullMode        vk.CullModeFlags
-
-	DepthTest  bool
-	DepthWrite bool
-	DepthFunc  vk.CompareOp
-
-	StencilTest bool
-}
-
-func (args *Args) defaults() {
-	if args.DepthFunc == 0 {
-		args.DepthFunc = vk.CompareOpLessOrEqual
-	}
-	if args.Primitive == 0 {
-		args.Primitive = vertex.Triangles
-	}
-}
-
 func New(device device.T, args Args) T {
 	args.defaults()
+	log.Println("creating pipeline")
 
 	// todo: pipeline cache
 	// could probably be controlled a global setting?
@@ -64,18 +38,23 @@ func New(device device.T, args Args) T {
 	})
 
 	attrs := pointersToVertexAttributes(args.Pointers, 0)
-	log.Println("attributes", attrs)
+	log.Println("  attributes", attrs)
 
-	blendStates := util.Map(args.Pass.Attachments(), func(attachment renderpass.Attachment) vk.PipelineColorBlendAttachmentState {
+	subpass := args.Pass.Subpass(args.Subpass)
+	log.Println("  subpass:", subpass.Name, subpass.Index())
+
+	blendStates := util.Map(subpass.ColorAttachments, func(name string) vk.PipelineColorBlendAttachmentState {
+		attach := args.Pass.Attachment(name)
 		// todo: move into attachment object
+		// or into the material/pipeline object?
 		return vk.PipelineColorBlendAttachmentState{
 			// additive blending
-			BlendEnable:         vk.False,
+			BlendEnable:         vkBool(attach.Blend()),
 			ColorBlendOp:        vk.BlendOpAdd,
-			SrcColorBlendFactor: vk.BlendFactorZero,
+			SrcColorBlendFactor: vk.BlendFactorOne,
 			DstColorBlendFactor: vk.BlendFactorOne,
 			AlphaBlendOp:        vk.BlendOpAdd,
-			SrcAlphaBlendFactor: vk.BlendFactorZero,
+			SrcAlphaBlendFactor: vk.BlendFactorOne,
 			DstAlphaBlendFactor: vk.BlendFactorOne,
 			ColorWriteMask: vk.ColorComponentFlags(
 				vk.ColorComponentRBit | vk.ColorComponentGBit |
@@ -87,7 +66,8 @@ func New(device device.T, args Args) T {
 		SType: vk.StructureTypeGraphicsPipelineCreateInfo,
 
 		// layout
-		Layout: args.Layout.Ptr(),
+		Layout:  args.Layout.Ptr(),
+		Subpass: uint32(subpass.Index()),
 
 		// render pass
 		RenderPass: args.Pass.Ptr(),
@@ -148,7 +128,7 @@ func New(device device.T, args Args) T {
 			DepthClampEnable:        vk.False,
 			RasterizerDiscardEnable: vk.False,
 			PolygonMode:             args.PolygonFillMode,
-			CullMode:                args.CullMode,
+			CullMode:                vk.CullModeFlags(args.CullMode),
 			FrontFace:               vk.FrontFaceCounterClockwise,
 			LineWidth:               1,
 		},
@@ -156,7 +136,7 @@ func New(device device.T, args Args) T {
 		// multisample
 		PMultisampleState: &vk.PipelineMultisampleStateCreateInfo{
 			SType:                vk.StructureTypePipelineMultisampleStateCreateInfo,
-			RasterizationSamples: vk.SampleCountFlagBits(vk.SampleCount1Bit),
+			RasterizationSamples: vk.SampleCount1Bit,
 		},
 
 		// depth & stencil

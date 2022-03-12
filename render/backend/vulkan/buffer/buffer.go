@@ -14,6 +14,7 @@ type T interface {
 	Size() int
 	Read(data any, offset int)
 	Write(data any, offset int)
+	Memory() device.Memory
 }
 
 type buffer struct {
@@ -95,6 +96,10 @@ func (b *buffer) Ptr() vk.Buffer {
 
 func (b *buffer) Size() int {
 	return b.size
+}
+
+func (b *buffer) Memory() device.Memory {
+	return b.memory
 }
 
 func (b *buffer) Destroy() {

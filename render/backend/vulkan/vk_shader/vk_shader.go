@@ -20,6 +20,7 @@ type T[V any, D descriptor.Set] interface {
 	Destroy()
 	Bind(frame int, cmd command.Buffer)
 	Descriptors(frame int) D
+	Layout() pipeline.Layout
 }
 
 type vk_shader[V any, D descriptor.Set] struct {
@@ -43,8 +44,10 @@ type Args struct {
 	Path        string
 	Frames      int
 	Pass        renderpass.T
+	Subpass     string
 	Attributes  shader.AttributeMap
 	Descriptors Descriptors
+	Constants   []pipeline.PushConstant
 }
 
 func New[V any, D descriptor.Set](backend vulkan.T, descriptors D, args Args) T[V, D] {
@@ -53,8 +56,8 @@ func New[V any, D descriptor.Set](backend vulkan.T, descriptors D, args Args) T[
 	}
 
 	shaders := []pipeline.Shader{
-		pipeline.NewShader(backend.Device(), fmt.Sprintf("assets/shaders/%s.vert.spv", args.Path), vk.ShaderStageVertexBit),
-		pipeline.NewShader(backend.Device(), fmt.Sprintf("assets/shaders/%s.frag.spv", args.Path), vk.ShaderStageFragmentBit),
+		pipeline.NewShader(backend.Device(), fmt.Sprintf("assets/shaders/%s.vert", args.Path), vk.ShaderStageVertexBit),
+		pipeline.NewShader(backend.Device(), fmt.Sprintf("assets/shaders/%s.frag", args.Path), vk.ShaderStageFragmentBit),
 	}
 
 	// todo: put the descriptor pool somewhere else
@@ -71,6 +74,10 @@ func New[V any, D descriptor.Set](backend vulkan.T, descriptors D, args Args) T[
 			Type:            vk.DescriptorTypeCombinedImageSampler,
 			DescriptorCount: 100,
 		},
+		{
+			Type:            vk.DescriptorTypeInputAttachment,
+			DescriptorCount: 10,
+		},
 	})
 
 	descLayout := descriptor.New(backend.Device(), dpool, descriptors)
@@ -81,7 +88,7 @@ func New[V any, D descriptor.Set](backend vulkan.T, descriptors D, args Args) T[
 		descSets[i] = dset
 	}
 
-	layout := pipeline.NewLayout(backend.Device(), []descriptor.SetLayout{descLayout})
+	layout := pipeline.NewLayout(backend.Device(), []descriptor.SetLayout{descLayout}, args.Constants)
 
 	// todo: the pointers & pipeline stuff should be extracted into a material thing
 	var vtx V
@@ -91,6 +98,7 @@ func New[V any, D descriptor.Set](backend vulkan.T, descriptors D, args Args) T[
 	pipe := pipeline.New(backend.Device(), pipeline.Args{
 		Layout:   layout,
 		Pass:     args.Pass,
+		Subpass:  args.Subpass,
 		Shaders:  shaders,
 		Pointers: pointers,
 
@@ -122,6 +130,10 @@ func (s *vk_shader[V, D]) Name() string {
 
 func (s *vk_shader[V, D]) Descriptors(frame int) D {
 	return s.dsets[frame%s.frames]
+}
+
+func (s *vk_shader[V, D]) Layout() pipeline.Layout {
+	return s.layout
 }
 
 func (s *vk_shader[V, D]) Bind(frame int, cmd command.Buffer) {

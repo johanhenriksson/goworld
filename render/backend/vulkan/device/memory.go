@@ -39,7 +39,7 @@ func alloc(device T, req vk.MemoryRequirements, flags vk.MemoryPropertyFlags) Me
 	var ptr vk.DeviceMemory
 	r := vk.AllocateMemory(device.Ptr(), &alloc, nil, &ptr)
 	if r != vk.Success {
-		panic("failed to allocate memory")
+		panic(fmt.Sprintf("failed to allocate %d bytes of memory", req.Size))
 	}
 
 	m := &memory{
