@@ -10,6 +10,7 @@ import (
 type InputAttachment struct {
 	Binding int
 	Stages  vk.ShaderStageFlagBits
+	Layout  vk.ImageLayout
 
 	view vk.ImageView
 	set  Set
@@ -17,7 +18,11 @@ type InputAttachment struct {
 
 var _ Descriptor = &InputAttachment{}
 
-func (d *InputAttachment) Initialize(device device.T) {}
+func (d *InputAttachment) Initialize(device device.T) {
+	if d.Layout == 0 {
+		d.Layout = vk.ImageLayoutShaderReadOnlyOptimal
+	}
+}
 
 func (d *InputAttachment) Destroy() {}
 
@@ -52,7 +57,7 @@ func (d *InputAttachment) write() {
 		PImageInfo: []vk.DescriptorImageInfo{
 			{
 				ImageView:   d.view,
-				ImageLayout: vk.ImageLayoutShaderReadOnlyOptimal,
+				ImageLayout: d.Layout,
 			},
 		},
 	})

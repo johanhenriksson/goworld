@@ -59,7 +59,7 @@ func NewShadowPass(size int, meshes cache.Meshes) *ShadowPass {
 
 // DrawLight draws a shadow pass for the given light.
 func (p *ShadowPass) DrawLight(meshes []mesh.T, lit *light.Descriptor) {
-	if !lit.Shadows {
+	if lit.Shadows <= 0 {
 		return
 	}
 	if lit.Type != light.Directional {

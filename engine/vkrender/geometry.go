@@ -55,11 +55,12 @@ type GeometryDescriptors struct {
 
 type LightDescriptors struct {
 	descriptor.Set
+	Camera   *descriptor.Uniform[CameraData]
+	Light    *descriptor.UniformArray[light.Descriptor]
 	Diffuse  *descriptor.InputAttachment
 	Normal   *descriptor.InputAttachment
 	Position *descriptor.InputAttachment
-	Camera   *descriptor.Uniform[CameraData]
-	Light    *descriptor.UniformArray[light.Descriptor]
+	Depth    *descriptor.InputAttachment
 }
 
 type LightConst struct {
@@ -90,13 +91,12 @@ func NewGeometryPass(backend vulkan.T, meshes cache.Meshes) *GeometryPass {
 
 		ColorAttachments: []renderpass.ColorAttachment{
 			{
-				Name:          "output",
-				Format:        diffuseFmt,
-				LoadOp:        vk.AttachmentLoadOpClear,
-				InitialLayout: vk.ImageLayoutUndefined,
-				FinalLayout:   vk.ImageLayoutShaderReadOnlyOptimal,
-				Usage:         vk.ImageUsageSampledBit,
-				Blend:         true,
+				Name:        "output",
+				Format:      diffuseFmt,
+				LoadOp:      vk.AttachmentLoadOpClear,
+				FinalLayout: vk.ImageLayoutShaderReadOnlyOptimal,
+				Usage:       vk.ImageUsageSampledBit,
+				Blend:       true,
 			},
 			{
 				Name:        "diffuse",
@@ -105,7 +105,6 @@ func NewGeometryPass(backend vulkan.T, meshes cache.Meshes) *GeometryPass {
 				StoreOp:     vk.AttachmentStoreOpStore,
 				FinalLayout: vk.ImageLayoutShaderReadOnlyOptimal,
 				Usage:       vk.ImageUsageInputAttachmentBit | vk.ImageUsageSampledBit,
-				Clear:       color.RGB(0.1, 0.1, 0.16),
 			},
 			{
 				Name:        "normal",
@@ -127,7 +126,7 @@ func NewGeometryPass(backend vulkan.T, meshes cache.Meshes) *GeometryPass {
 		DepthAttachment: &renderpass.DepthAttachment{
 			LoadOp:      vk.AttachmentLoadOpClear,
 			StoreOp:     vk.AttachmentStoreOpDontCare,
-			FinalLayout: vk.ImageLayoutDepthStencilAttachmentOptimal,
+			FinalLayout: vk.ImageLayoutShaderReadOnlyOptimal,
 			Usage:       vk.ImageUsageInputAttachmentBit,
 			ClearDepth:  1,
 		},
@@ -143,7 +142,7 @@ func NewGeometryPass(backend vulkan.T, meshes cache.Meshes) *GeometryPass {
 				Depth: false,
 
 				ColorAttachments: []string{"output"},
-				InputAttachments: []string{"diffuse", "normal", "position"},
+				InputAttachments: []string{"diffuse", "normal", "position", "depth"},
 			},
 		},
 		Dependencies: []renderpass.SubpassDependency{
@@ -213,6 +212,10 @@ func NewGeometryPass(backend vulkan.T, meshes cache.Meshes) *GeometryPass {
 					Loc:  2,
 					Type: types.Float,
 				},
+				"occlusion": {
+					Loc:  3,
+					Type: types.Float,
+				},
 			},
 			Descriptors: vk_shader.Descriptors{
 				"Camera": 0,
@@ -244,12 +247,16 @@ func NewGeometryPass(backend vulkan.T, meshes cache.Meshes) *GeometryPass {
 				Binding: 2,
 				Stages:  vk.ShaderStageFragmentBit,
 			},
-			Camera: &descriptor.Uniform[CameraData]{
+			Depth: &descriptor.InputAttachment{
 				Binding: 3,
 				Stages:  vk.ShaderStageFragmentBit,
 			},
-			Light: &descriptor.UniformArray[light.Descriptor]{
+			Camera: &descriptor.Uniform[CameraData]{
 				Binding: 4,
+				Stages:  vk.ShaderStageFragmentBit,
+			},
+			Light: &descriptor.UniformArray[light.Descriptor]{
+				Binding: 5,
 				Count:   10,
 				Stages:  vk.ShaderStageFragmentBit,
 			},
@@ -277,10 +284,7 @@ func NewGeometryPass(backend vulkan.T, meshes cache.Meshes) *GeometryPass {
 			},
 		})
 
-	lightDesc := lightsh.Descriptors(0)
-	lightDesc.Diffuse.Set(gbuffer.Diffuse(0))
-	lightDesc.Normal.Set(gbuffer.Normal(0))
-	lightDesc.Position.Set(gbuffer.Position(0))
+	// lightsh.Descriptors(0).Depth.Set(gbuffer.Depth(0))
 
 	return &GeometryPass{
 		GeometryBuffer: gbuffer,
@@ -332,6 +336,7 @@ func (p *GeometryPass) Draw(args render.Args, scene object.T) {
 	lightDesc.Diffuse.Set(p.GeometryBuffer.Diffuse(ctx.Index))
 	lightDesc.Normal.Set(p.GeometryBuffer.Normal(ctx.Index))
 	lightDesc.Position.Set(p.GeometryBuffer.Position(ctx.Index))
+	lightDesc.Depth.Set(p.GeometryBuffer.Depth(ctx.Index))
 
 	cmds.Record(func(cmd command.Buffer) {
 		cmd.CmdBeginRenderPass(p.pass, ctx.Index)

@@ -7,6 +7,7 @@
 layout (location = 0) in vec3 position;
 layout (location = 1) in uint normal_id;
 layout (location = 2) in vec3 color_0;
+layout (location = 3) in float occlusion_0;
 
 // Uniforms
 layout (binding = 0) uniform Camera {
@@ -49,10 +50,10 @@ const vec3 normals[7] = vec3[7] (
 
 void main() 
 {
-	mat4 mv = camera.View; // * ssbo.objects[gl_InstanceIndex].model;
+	mat4 mv = camera.View * ssbo.objects[gl_InstanceIndex].model;
 
 	// gbuffer diffuse
-	color0 = color_0;
+	color0 = color_0 * (1 - occlusion_0);
 
 	// gbuffer position
 	position0 = (mv * vec4(position.xyz, 1.0)).xyz;

@@ -2,6 +2,7 @@ package descriptor
 
 import (
 	"fmt"
+	"log"
 	"reflect"
 
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/buffer"
@@ -27,6 +28,17 @@ func (d *Uniform[K]) Initialize(device device.T) {
 	t := reflect.TypeOf(empty)
 	if t.Kind() != reflect.Struct {
 		panic(fmt.Sprintf("Uniform value must be a struct, was %s", t.Kind()))
+	}
+
+	log.Println("uniform of type", t.Name())
+	expectedOffset := 0
+	for i := 0; i < t.NumField(); i++ {
+		field := t.Field(i)
+		log.Println("  field", field.Name, "offset:", field.Offset, "size:", field.Type.Size())
+		if field.Offset != uintptr(expectedOffset) {
+			panic("struct layout causes alignment issues")
+		}
+		expectedOffset = int(field.Offset + field.Type.Size())
 	}
 
 	d.buffer = buffer.NewUniform(device, int(t.Size()))

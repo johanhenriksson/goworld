@@ -114,7 +114,7 @@ func NewDepthAttachment(device device.T, desc DepthAttachment, frames, width, he
 
 	views := make([]image.View, frames)
 	for i := range images {
-		views[i] = images[i].View(depthFormat, vk.ImageAspectFlags(vk.ImageAspectDepthBit|vk.ImageAspectStencilBit))
+		views[i] = images[i].View(depthFormat, vk.ImageAspectFlags(vk.ImageAspectDepthBit))
 	}
 
 	var clear vk.ClearValue

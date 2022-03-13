@@ -4,6 +4,7 @@ import (
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/math/vec3"
+	"github.com/johanhenriksson/goworld/math/vec4"
 	"github.com/johanhenriksson/goworld/render/color"
 )
 
@@ -39,13 +40,15 @@ func (lit *dirlight) LightDescriptor() Descriptor {
 
 	desc := Descriptor{
 		Type:       Directional,
-		Position:   position,
+		Position:   vec4.Extend(position, 0),
 		Color:      lit.Color,
 		Intensity:  lit.Intensity,
-		Shadows:    lit.Shadows,
 		Projection: lp,
 		View:       lv,
 		ViewProj:   lvp,
+	}
+	if lit.Shadows {
+		desc.Shadows = 1
 	}
 	return desc
 }

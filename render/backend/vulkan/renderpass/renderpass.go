@@ -68,11 +68,12 @@ func New(device device.T, args Args) T {
 
 	subpasses := make([]vk.SubpassDescription, 0, len(args.Subpasses))
 	subpassIndices := make(map[string]int)
+
 	for idx, subpass := range args.Subpasses {
 		log.Println("subpass", idx)
 
 		var depthRef *vk.AttachmentReference
-		if depth != nil {
+		if depth != nil && subpass.Depth {
 			idx := attachmentIndices["depth"]
 			depthRef = &vk.AttachmentReference{
 				Attachment: uint32(idx),

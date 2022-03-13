@@ -68,7 +68,7 @@ func (sh *lightshader) SetShadowMap(tex texture.T) {
 
 func (sh *lightshader) SetLightDescriptor(desc light.Descriptor) {
 	sh.Int32("light.Type", int(desc.Type))
-	sh.Vec3("light.Position", desc.Position)
+	sh.Vec4("light.Position", desc.Position)
 	sh.RGB("light.Color", desc.Color)
 	sh.Float("light.Intensity", desc.Intensity)
 
