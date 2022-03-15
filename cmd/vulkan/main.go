@@ -19,7 +19,6 @@ func main() {
 	}()
 
 	backend := vulkan.New("goworld: vulkan", 0)
-	defer backend.Destroy()
 
 	engine.Run(engine.Args{
 		Backend: backend,

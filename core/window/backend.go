@@ -15,6 +15,7 @@ type GlfwBackend interface {
 	Resize(int, int)
 	Aquire() (swapchain.Context, error)
 	Present()
+	Destroy()
 }
 
 type GlfwHint struct {
@@ -84,6 +85,9 @@ func (b *OpenGLBackend) Aquire() (swapchain.Context, error) {
 
 func (b *OpenGLBackend) Present() {
 	b.window.SwapBuffers()
+}
+
+func (b *OpenGLBackend) Destroy() {
 }
 
 func (b *OpenGLBackend) onDebugMessage(

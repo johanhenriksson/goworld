@@ -30,7 +30,7 @@ type Args struct {
 }
 
 func Run(args Args) {
-	fmt.Println("goworld")
+	log.Println("goworld")
 
 	// cpu profiling
 	flag.Parse()
@@ -41,7 +41,7 @@ func Run(args Args) {
 		if err != nil {
 			panic(err)
 		}
-		fmt.Println("writing cpu profiling output to", ppath)
+		log.Println("writing cpu profiling output to", ppath)
 		pprof.StartCPUProfile(f)
 		defer pprof.StopCPUProfile()
 	}
@@ -61,10 +61,17 @@ func Run(args Args) {
 		}
 	}()
 
+	// default to opengl backend
 	backend := args.Backend
 	if backend == nil {
 		// default to opengl backend
 		backend = &window.OpenGLBackend{}
+	}
+	defer backend.Destroy()
+
+	// default to deferred opengl renderer
+	if args.Renderer == nil {
+		args.Renderer = NewRenderer
 	}
 
 	// create a window
@@ -78,12 +85,13 @@ func Run(args Args) {
 	}
 
 	var renderer Renderer
-	if args.Renderer != nil {
+	recreateRenderer := func() {
+		if renderer != nil {
+			renderer.Destroy()
+		}
 		renderer = args.Renderer()
-	} else {
-		// default to deferred opengl renderer
-		renderer = NewRenderer()
 	}
+	recreateRenderer()
 	defer renderer.Destroy()
 
 	// create scene
@@ -92,7 +100,7 @@ func Run(args Args) {
 	args.SceneFunc(renderer, scene)
 
 	// run the render loop
-	fmt.Println("ready")
+	log.Println("ready")
 
 	for running && !wnd.ShouldClose() {
 		wnd.Poll()
@@ -117,6 +125,8 @@ func Run(args Args) {
 		// draw
 		context, err := backend.Aquire()
 		if err != nil {
+			log.Println("swapchain recreated?? recreating renderer")
+			recreateRenderer()
 			continue
 		}
 

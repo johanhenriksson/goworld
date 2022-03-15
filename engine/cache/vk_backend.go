@@ -77,5 +77,4 @@ func (m *vkmeshes) Delete(bmesh GpuMesh) {
 }
 
 func (m *vkmeshes) Destroy() {
-	m.worker.Destroy()
 }

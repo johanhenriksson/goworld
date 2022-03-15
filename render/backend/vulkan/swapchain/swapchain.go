@@ -70,11 +70,10 @@ func (s *swapchain) Resize(width, height int) {
 	s.width = width
 	s.height = height
 	s.resized = true
-	log.Println("Resize swapchain to", width, "x", height)
 }
 
 func (s *swapchain) recreate() {
-	log.Println("Recreating swapchain")
+	log.Println("recreating swapchain")
 	s.device.WaitIdle()
 
 	if s.ptr != nil {
@@ -133,13 +132,22 @@ func (s *swapchain) recreate() {
 }
 
 func (s *swapchain) Aquire() (Context, error) {
+	if s.resized {
+		log.Println("aquire triggered swapchain recreation")
+		s.recreate()
+		s.resized = false
+		return Context{}, fmt.Errorf("swapchain out of date")
+	}
+
 	idx := uint32(0)
-	next := s.contexts[(s.current+1)%s.frames]
-	r := vk.AcquireNextImage(s.device.Ptr(), s.ptr, 1e9, next.ImageAvailable.Ptr(), nil, &idx)
+	timeoutNs := uint64(1e9)
+	nextFrame := s.contexts[(s.current+1)%s.frames]
+	r := vk.AcquireNextImage(s.device.Ptr(), s.ptr, timeoutNs, nextFrame.ImageAvailable.Ptr(), nil, &idx)
 	if r == vk.ErrorOutOfDate {
 		s.recreate()
 		return Context{}, fmt.Errorf("swapchain out of date")
 	}
+
 	s.current = int(idx)
 	return s.contexts[s.current], nil
 }
@@ -158,10 +166,6 @@ func (s *swapchain) Present() {
 	}
 
 	vk.QueuePresent(s.queue, &presentInfo)
-	if s.resized {
-		s.recreate()
-		s.resized = false
-	}
 }
 
 func (s *swapchain) Destroy() {

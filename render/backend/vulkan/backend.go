@@ -1,7 +1,7 @@
 package vulkan
 
 import (
-	"fmt"
+	"log"
 
 	"github.com/johanhenriksson/goworld/core/window"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/command"
@@ -13,12 +13,9 @@ import (
 	vk "github.com/vulkan-go/vulkan"
 )
 
-type VkVertex struct {
-	X, Y, Z float32
-	R, G, B float32
-}
-
 type T interface {
+	window.GlfwBackend
+
 	Instance() instance.T
 	Device() device.T
 	Surface() vk.Surface
@@ -90,7 +87,7 @@ func (b *backend) GlfwSetup(w *glfw.Window, args window.Args) error {
 		panic(err)
 	}
 
-	fmt.Println("window required extensions:", w.GetRequiredInstanceExtensions())
+	log.Println("window required extensions:", w.GetRequiredInstanceExtensions())
 
 	// create instance * device
 	b.instance = instance.New(b.appName)
@@ -147,6 +144,8 @@ func (b *backend) Destroy() {
 }
 
 func (b *backend) Resize(width, height int) {
+	b.width = width
+	b.height = height
 	b.swapchain.Resize(width, height)
 }
 

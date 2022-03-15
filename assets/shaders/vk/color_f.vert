@@ -50,7 +50,7 @@ const vec3 normals[7] = vec3[7] (
 
 void main() 
 {
-	mat4 mv = camera.View * ssbo.objects[gl_InstanceIndex].model;
+	mat4 mv = camera.View; // * ssbo.objects[gl_InstanceIndex].model;
 
 	// gbuffer diffuse
 	color0 = color_0 * (1 - occlusion_0);
