@@ -80,11 +80,11 @@ func New[V any, D descriptor.Set](backend vulkan.T, descriptors D, args Args) T[
 		},
 	})
 
-	descLayout := descriptor.New(backend.Device(), dpool, descriptors)
+	descLayout := descriptor.New(backend.Device(), descriptors)
 
 	descSets := make([]D, args.Frames)
 	for i := range descSets {
-		dset := descLayout.Allocate()
+		dset := descLayout.Instantiate(dpool)
 		descSets[i] = dset
 	}
 

@@ -48,6 +48,7 @@ func (d *Uniform[K]) Initialize(device device.T) {
 func (d *Uniform[K]) Destroy() {
 	if d.buffer != nil {
 		d.buffer.Destroy()
+		d.buffer = nil
 	}
 }
 

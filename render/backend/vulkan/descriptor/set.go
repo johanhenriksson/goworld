@@ -20,10 +20,6 @@ func (s *set) Ptr() vk.DescriptorSet {
 	return s.ptr
 }
 
-func (s *set) Layout() SetLayout {
-	return s.layout
-}
-
 func (s *set) Write(write vk.WriteDescriptorSet) {
 	write.SType = vk.StructureTypeWriteDescriptorSet
 	write.DstSet = s.ptr
