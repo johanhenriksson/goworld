@@ -35,7 +35,7 @@ func (d *UniformArray[K]) Initialize(device device.T) {
 	maxSize := int(device.GetLimits().MaxUniformBufferRange)
 
 	t := reflect.TypeOf(empty)
-	d.element = Align(int(t.Size()), alignment)
+	d.element = util.Align(int(t.Size()), alignment)
 	size := d.element * d.Size
 	if size > maxSize {
 		panic(fmt.Sprintf("uniform buffer too large: %d, max size: %d", size, maxSize))

@@ -1,9 +1,9 @@
-package descriptor_test
+package util_test
 
 import (
 	"testing"
 
-	. "github.com/johanhenriksson/goworld/render/backend/vulkan/descriptor"
+	. "github.com/johanhenriksson/goworld/util"
 )
 
 type AlignCase struct {

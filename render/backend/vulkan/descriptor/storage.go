@@ -6,6 +6,7 @@ import (
 
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/buffer"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/device"
+	"github.com/johanhenriksson/goworld/util"
 
 	vk "github.com/vulkan-go/vulkan"
 )
@@ -37,7 +38,7 @@ func (d *Storage[K]) Initialize(device device.T) {
 	maxSize := int(device.GetLimits().MaxStorageBufferRange)
 
 	t := reflect.TypeOf(empty)
-	d.element = Align(int(t.Size()), alignment)
+	d.element = util.Align(int(t.Size()), alignment)
 	size := d.element * d.Size
 	if size > maxSize {
 		panic(fmt.Sprintf("storage buffer too large: %d, max size: %d", size, maxSize))

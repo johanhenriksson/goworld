@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"unsafe"
 
+	"github.com/johanhenriksson/goworld/util"
 	vk "github.com/vulkan-go/vulkan"
 )
 
@@ -12,6 +13,8 @@ type Memory interface {
 	Resource[vk.DeviceMemory]
 	Read(data any, offset int)
 	Write(data any, offset int)
+	Flush()
+	Invalidate()
 	IsHostVisible() bool
 }
 
@@ -31,9 +34,12 @@ type memory struct {
 func alloc(device T, req vk.MemoryRequirements, flags vk.MemoryPropertyFlags) Memory {
 	typeIdx := device.GetMemoryTypeIndex(req.MemoryTypeBits, flags)
 
+	align := int(device.GetLimits().NonCoherentAtomSize)
+	size := util.Align(int(req.Size), align)
+
 	alloc := vk.MemoryAllocateInfo{
 		SType:           vk.StructureTypeMemoryAllocateInfo,
-		AllocationSize:  req.Size,
+		AllocationSize:  vk.DeviceSize(size),
 		MemoryTypeIndex: uint32(typeIdx),
 	}
 	var ptr vk.DeviceMemory
@@ -46,7 +52,7 @@ func alloc(device T, req vk.MemoryRequirements, flags vk.MemoryPropertyFlags) Me
 		device: device,
 		ptr:    ptr,
 		flags:  flags,
-		size:   int(req.Size),
+		size:   size,
 	}
 
 	return m
@@ -105,12 +111,20 @@ func (m *memory) Write(data any, offset int) {
 	vk.MapMemory(
 		m.device.Ptr(),
 		m.ptr,
-		vk.DeviceSize(offset),
-		vk.DeviceSize(size),
+		vk.DeviceSize(0),
+		vk.DeviceSize(vk.WholeSize),
 		vk.MemoryMapFlags(0),
 		&dst)
+
+	// create pointer at offset
+	offsetDst := unsafe.Pointer(uintptr(dst) + uintptr(offset))
+
 	// copy from host
-	memcpy(dst, src, size)
+	memcpy(offsetDst, src, size)
+
+	// flush region
+	// todo: optimize to the smallest possible region
+	m.Flush()
 
 	// unmap shared memory
 	vk.UnmapMemory(m.device.Ptr(), m.Ptr())
@@ -155,4 +169,26 @@ func (m *memory) Read(target any, offset int) {
 
 	// unmap shared memory
 	vk.UnmapMemory(m.device.Ptr(), m.Ptr())
+}
+
+func (m *memory) Flush() {
+	vk.FlushMappedMemoryRanges(m.device.Ptr(), 1, []vk.MappedMemoryRange{
+		{
+			SType:  vk.StructureTypeMappedMemoryRange,
+			Memory: m.ptr,
+			Offset: 0,
+			Size:   vk.DeviceSize(vk.WholeSize),
+		},
+	})
+}
+
+func (m *memory) Invalidate() {
+	vk.InvalidateMappedMemoryRanges(m.device.Ptr(), 1, []vk.MappedMemoryRange{
+		{
+			SType:  vk.StructureTypeMappedMemoryRange,
+			Memory: m.ptr,
+			Offset: 0,
+			Size:   vk.DeviceSize(vk.WholeSize),
+		},
+	})
 }
