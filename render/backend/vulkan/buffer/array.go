@@ -58,9 +58,7 @@ func NewArray[K any](device device.T, args Args) Array[K] {
 }
 
 func (a *array[K]) Set(index int, data K) {
-	ptr := &data
-	offset := index * a.element
-	a.T.Write(offset, ptr)
+	a.Write(index*a.element, &data)
 }
 
 func (a *array[K]) SetRange(offset int, data []K) {

@@ -6,7 +6,6 @@ import (
 
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/buffer"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/device"
-	"github.com/johanhenriksson/goworld/util"
 
 	vk "github.com/vulkan-go/vulkan"
 )
@@ -15,7 +14,7 @@ type Uniform[K any] struct {
 	Binding int
 	Stages  vk.ShaderStageFlagBits
 
-	buffer buffer.T
+	buffer buffer.Item[K]
 	set    Set
 }
 
@@ -23,14 +22,10 @@ func (d *Uniform[K]) Initialize(device device.T) {
 	if d.set == nil {
 		panic("descriptor must be bound first")
 	}
-
-	var empty K
-	if err := util.ValidateAlignment(empty); err != nil {
-		panic(fmt.Sprintf("illegal Uniform struct: %s", err))
-	}
-
-	t := reflect.TypeOf(empty)
-	d.buffer = buffer.NewUniform(device, int(t.Size()))
+	d.buffer = buffer.NewItem[K](device, buffer.Args{
+		Usage:  vk.BufferUsageUniformBufferBit,
+		Memory: vk.MemoryPropertyDeviceLocalBit | vk.MemoryPropertyHostVisibleBit,
+	})
 	d.write()
 }
 
@@ -52,8 +47,7 @@ func (d *Uniform[K]) Bind(set Set) {
 }
 
 func (d *Uniform[K]) Set(data K) {
-	ptr := &data
-	d.buffer.Write(0, ptr)
+	d.buffer.Set(data)
 }
 
 func (d *Uniform[K]) write() {
