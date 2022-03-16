@@ -42,7 +42,7 @@ func (t *vktextures) Fetch(path string) vk_texture.T {
 	}
 
 	stage := buffer.NewShared(t.backend.Device(), len(img.Pix))
-	stage.Write(img.Pix, 0)
+	stage.Write(0, img.Pix)
 
 	tex := vk_texture.New(t.backend.Device(), vk_texture.Args{
 		Width:  img.Rect.Size().X,

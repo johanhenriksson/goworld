@@ -81,14 +81,13 @@ func New[V any, D descriptor.Set](backend vulkan.T, descriptors D, args Args) T[
 	})
 
 	descLayout := descriptor.New(backend.Device(), descriptors)
+	layout := pipeline.NewLayout(backend.Device(), []descriptor.SetLayout{descLayout}, args.Constants)
 
 	descSets := make([]D, args.Frames)
 	for i := range descSets {
 		dset := descLayout.Instantiate(dpool)
 		descSets[i] = dset
 	}
-
-	layout := pipeline.NewLayout(backend.Device(), []descriptor.SetLayout{descLayout}, args.Constants)
 
 	// todo: the pointers & pipeline stuff should be extracted into a material thing
 	var vtx V

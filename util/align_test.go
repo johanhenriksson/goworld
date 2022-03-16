@@ -25,3 +25,23 @@ func TestAlign(t *testing.T) {
 		}
 	}
 }
+
+func TestValidateAlign(t *testing.T) {
+	type FailingStruct struct {
+		A bool
+		B int
+	}
+	err := ValidateAlignment(FailingStruct{})
+	if err == nil {
+		t.Error("expected struct to fail alignment test")
+	}
+
+	type PassingStruct struct {
+		A int
+		B float32
+	}
+	err = ValidateAlignment(PassingStruct{})
+	if err != nil {
+		t.Error("expected struct to pass alignment test")
+	}
+}

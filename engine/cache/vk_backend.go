@@ -40,14 +40,14 @@ func NewVkCache(backend vulkan.T) Meshes {
 func (m *vkmeshes) Instantiate(mesh vertex.Mesh, mat material.T) GpuMesh {
 	bufsize := 100 * 1024 // 100k for now
 
-	vtx := buffer.NewRemote(m.backend.Device(), bufsize, vk.BufferUsageFlags(vk.BufferUsageVertexBufferBit))
-	idx := buffer.NewRemote(m.backend.Device(), bufsize, vk.BufferUsageFlags(vk.BufferUsageIndexBufferBit))
+	vtx := buffer.NewRemote(m.backend.Device(), bufsize, vk.BufferUsageVertexBufferBit)
+	idx := buffer.NewRemote(m.backend.Device(), bufsize, vk.BufferUsageIndexBufferBit)
 
 	vtxstage := buffer.NewShared(m.backend.Device(), bufsize)
-	vtxstage.Write(mesh.VertexData(), 0)
+	vtxstage.Write(0, mesh.VertexData())
 
 	idxstage := buffer.NewShared(m.backend.Device(), bufsize)
-	idxstage.Write(mesh.IndexData(), 0)
+	idxstage.Write(0, mesh.IndexData())
 
 	m.worker.Queue(func(cmd command.Buffer) {
 		cmd.CmdCopyBuffer(vtxstage, vtx)

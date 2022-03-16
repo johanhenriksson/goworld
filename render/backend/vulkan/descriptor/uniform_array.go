@@ -16,32 +16,19 @@ type UniformArray[K any] struct {
 	Size    int
 	Stages  vk.ShaderStageFlagBits
 
-	element int
-	buffer  buffer.T
-	set     Set
+	buffer buffer.Array[K]
+	set    Set
 }
 
 func (d *UniformArray[K]) Initialize(device device.T) {
 	if d.set == nil {
 		panic("descriptor must be bound first")
 	}
-
-	var empty K
-	if err := ValidateShaderStruct(empty); err != nil {
-		panic(fmt.Sprintf("illegal UniformArray struct: %s", err))
-	}
-
-	alignment := int(device.GetLimits().MinUniformBufferOffsetAlignment)
-	maxSize := int(device.GetLimits().MaxUniformBufferRange)
-
-	t := reflect.TypeOf(empty)
-	d.element = util.Align(int(t.Size()), alignment)
-	size := d.element * d.Size
-	if size > maxSize {
-		panic(fmt.Sprintf("uniform buffer too large: %d, max size: %d", size, maxSize))
-	}
-
-	d.buffer = buffer.NewUniform(device, d.element*d.Size)
+	d.buffer = buffer.NewArray[K](device, buffer.Args{
+		Size:   d.Size,
+		Usage:  vk.BufferUsageUniformBufferBit,
+		Memory: vk.MemoryPropertyDeviceLocalBit | vk.MemoryPropertyHostVisibleBit,
+	})
 	d.write()
 }
 
@@ -63,9 +50,7 @@ func (d *UniformArray[K]) Bind(set Set) {
 }
 
 func (d *UniformArray[K]) Set(index int, data K) {
-	ptr := &data
-	offset := index * d.element
-	d.buffer.Write(ptr, offset)
+	d.buffer.Set(index, data)
 }
 
 func (d *UniformArray[K]) write() {
@@ -78,8 +63,8 @@ func (d *UniformArray[K]) write() {
 		PBufferInfo: util.Map(util.Range(0, d.Size, 1), func(i int) vk.DescriptorBufferInfo {
 			return vk.DescriptorBufferInfo{
 				Buffer: d.buffer.Ptr(),
-				Offset: vk.DeviceSize(i * d.element),
-				Range:  vk.DeviceSize(d.element),
+				Offset: vk.DeviceSize(i * d.buffer.Element()),
+				Range:  vk.DeviceSize(d.buffer.Element()),
 			}
 		}),
 	})

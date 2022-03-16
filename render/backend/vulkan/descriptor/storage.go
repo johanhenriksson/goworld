@@ -6,7 +6,6 @@ import (
 
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/buffer"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/device"
-	"github.com/johanhenriksson/goworld/util"
 
 	vk "github.com/vulkan-go/vulkan"
 )
@@ -16,9 +15,8 @@ type Storage[K any] struct {
 	Stages  vk.ShaderStageFlagBits
 	Size    int
 
-	Buffer  buffer.T
-	set     Set
-	element int
+	buffer buffer.Array[K]
+	set    Set
 }
 
 func (d *Storage[K]) Initialize(device device.T) {
@@ -29,22 +27,11 @@ func (d *Storage[K]) Initialize(device device.T) {
 		panic("storage descriptor size must be non-zero")
 	}
 
-	var empty K
-	if err := ValidateShaderStruct(empty); err != nil {
-		panic(fmt.Sprintf("illegal Storage struct: %s", err))
-	}
-
-	alignment := int(device.GetLimits().MinStorageBufferOffsetAlignment)
-	maxSize := int(device.GetLimits().MaxStorageBufferRange)
-
-	t := reflect.TypeOf(empty)
-	d.element = util.Align(int(t.Size()), alignment)
-	size := d.element * d.Size
-	if size > maxSize {
-		panic(fmt.Sprintf("storage buffer too large: %d, max size: %d", size, maxSize))
-	}
-
-	d.Buffer = buffer.NewStorage(device, d.Size*d.element)
+	d.buffer = buffer.NewArray[K](device, buffer.Args{
+		Size:   d.Size,
+		Usage:  vk.BufferUsageStorageBufferBit,
+		Memory: vk.MemoryPropertyDeviceLocalBit | vk.MemoryPropertyHostVisibleBit,
+	})
 	d.write()
 }
 
@@ -55,9 +42,9 @@ func (d *Storage[K]) String() string {
 }
 
 func (d *Storage[K]) Destroy() {
-	if d.Buffer != nil {
-		d.Buffer.Destroy()
-		d.Buffer = nil
+	if d.buffer != nil {
+		d.buffer.Destroy()
+		d.buffer = nil
 	}
 }
 
@@ -66,14 +53,11 @@ func (d *Storage[K]) Bind(set Set) {
 }
 
 func (d *Storage[K]) Set(index int, data K) {
-	ptr := &data
-	offset := index * d.element
-	d.Buffer.Write(ptr, offset)
+	d.buffer.Set(index, data)
 }
 
-func (d *Storage[K]) SetRange(data []K, offset int) {
-	offset *= d.element
-	d.Buffer.Write(data, offset)
+func (d *Storage[K]) SetRange(offset int, data []K) {
+	d.buffer.SetRange(offset, data)
 }
 
 func (d *Storage[K]) LayoutBinding() vk.DescriptorSetLayoutBinding {
@@ -97,7 +81,7 @@ func (d *Storage[K]) write() {
 		DescriptorType:  vk.DescriptorTypeStorageBuffer,
 		PBufferInfo: []vk.DescriptorBufferInfo{
 			{
-				Buffer: d.Buffer.Ptr(),
+				Buffer: d.buffer.Ptr(),
 				Offset: 0,
 				Range:  vk.DeviceSize(vk.WholeSize),
 			},

@@ -11,8 +11,8 @@ import (
 
 type Memory interface {
 	Resource[vk.DeviceMemory]
-	Read(data any, offset int)
-	Write(data any, offset int)
+	Read(offset int, data any)
+	Write(offset int, data any)
 	Flush()
 	Invalidate()
 	IsHostVisible() bool
@@ -76,7 +76,7 @@ type eface struct {
 	rtype, ptr unsafe.Pointer
 }
 
-func (m *memory) Write(data any, offset int) {
+func (m *memory) Write(offset int, data any) {
 	if !m.IsHostVisible() {
 		panic("memory is not visible to host")
 	}
@@ -130,7 +130,7 @@ func (m *memory) Write(data any, offset int) {
 	vk.UnmapMemory(m.device.Ptr(), m.Ptr())
 }
 
-func (m *memory) Read(target any, offset int) {
+func (m *memory) Read(offset int, target any) {
 	if !m.IsHostVisible() {
 		panic("memory is not visible to host")
 	}

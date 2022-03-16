@@ -10,8 +10,8 @@ require (
 	github.com/kjk/flex v0.0.0-20171203210503-ed34d6b6a425
 	github.com/ojrac/opensimplex-go v1.0.1
 	github.com/qmuntal/gltf v0.21.0
-	golang.org/x/image v0.0.0-20210628002857-a66eb6448b8d
 	github.com/vulkan-go/vulkan v0.0.0-20210402152248-956e3850d8f9
+	golang.org/x/image v0.0.0-20210628002857-a66eb6448b8d
 )
 
 require (

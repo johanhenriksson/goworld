@@ -6,6 +6,7 @@ import (
 
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/buffer"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/device"
+	"github.com/johanhenriksson/goworld/util"
 
 	vk "github.com/vulkan-go/vulkan"
 )
@@ -24,7 +25,7 @@ func (d *Uniform[K]) Initialize(device device.T) {
 	}
 
 	var empty K
-	if err := ValidateShaderStruct(empty); err != nil {
+	if err := util.ValidateAlignment(empty); err != nil {
 		panic(fmt.Sprintf("illegal Uniform struct: %s", err))
 	}
 
@@ -52,7 +53,7 @@ func (d *Uniform[K]) Bind(set Set) {
 
 func (d *Uniform[K]) Set(data K) {
 	ptr := &data
-	d.buffer.Write(ptr, 0)
+	d.buffer.Write(0, ptr)
 }
 
 func (d *Uniform[K]) write() {

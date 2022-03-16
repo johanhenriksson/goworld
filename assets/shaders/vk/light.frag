@@ -23,6 +23,10 @@ layout (std140, binding = 4) uniform Camera {
     vec3 Eye;
 } camera;
 
+// the light descriptor could be slimmed down to 128 bytes so that it can fit in a push constant
+// removing proj & view matrices would be enough. adding a 4-byte light index field puts the struct at exactly 128 bytes
+// this would greatly reduce the complexity of feeding data to the shader
+// shadowmaps could be attached to an unbounded sampler descriptor
 layout (std140, binding = 5) uniform Light {
     mat4 Proj;
     mat4 View;
