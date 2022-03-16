@@ -1,6 +1,7 @@
 package descriptor
 
 import (
+	"fmt"
 	"reflect"
 
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/buffer"
@@ -24,15 +25,32 @@ func (d *Storage[K]) Initialize(device device.T) {
 		panic("descriptor must be bound first")
 	}
 	if d.Size == 0 {
-		panic("storage descriptor size must be set")
+		panic("storage descriptor size must be non-zero")
 	}
 
 	var empty K
+	if err := ValidateShaderStruct(empty); err != nil {
+		panic(fmt.Sprintf("illegal Storage struct: %s", err))
+	}
+
+	alignment := int(device.GetLimits().MinStorageBufferOffsetAlignment)
+	maxSize := int(device.GetLimits().MaxStorageBufferRange)
+
 	t := reflect.TypeOf(empty)
-	d.element = int(t.Size())
+	d.element = Align(int(t.Size()), alignment)
+	size := d.element * d.Size
+	if size > maxSize {
+		panic(fmt.Sprintf("storage buffer too large: %d, max size: %d", size, maxSize))
+	}
 
 	d.Buffer = buffer.NewStorage(device, d.Size*d.element)
 	d.write()
+}
+
+func (d *Storage[K]) String() string {
+	var empty K
+	kind := reflect.TypeOf(empty)
+	return fmt.Sprintf("Storage[%s]:%d", kind.Name(), d.Binding)
 }
 
 func (d *Storage[K]) Destroy() {

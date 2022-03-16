@@ -1,6 +1,8 @@
 package descriptor
 
 import (
+	"fmt"
+
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/device"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/vk_texture"
 
@@ -19,6 +21,10 @@ type Sampler struct {
 var _ Descriptor = &Sampler{}
 
 func (d *Sampler) Initialize(device device.T) {}
+
+func (d *Sampler) String() string {
+	return fmt.Sprintf("Sampler:%d", d.Binding)
+}
 
 func (d *Sampler) Destroy() {}
 

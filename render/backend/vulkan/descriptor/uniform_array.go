@@ -2,7 +2,6 @@ package descriptor
 
 import (
 	"fmt"
-	"log"
 	"reflect"
 
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/buffer"
@@ -14,7 +13,7 @@ import (
 
 type UniformArray[K any] struct {
 	Binding int
-	Count   int
+	Size    int
 	Stages  vk.ShaderStageFlagBits
 
 	element int
@@ -28,26 +27,28 @@ func (d *UniformArray[K]) Initialize(device device.T) {
 	}
 
 	var empty K
+	if err := ValidateShaderStruct(empty); err != nil {
+		panic(fmt.Sprintf("illegal UniformArray struct: %s", err))
+	}
+
+	alignment := int(device.GetLimits().MinUniformBufferOffsetAlignment)
+	maxSize := int(device.GetLimits().MaxUniformBufferRange)
+
 	t := reflect.TypeOf(empty)
-	if t.Kind() != reflect.Struct {
-		panic(fmt.Sprintf("UniformArray value must be a struct, was %s", t.Kind()))
+	d.element = Align(int(t.Size()), alignment)
+	size := d.element * d.Size
+	if size > maxSize {
+		panic(fmt.Sprintf("uniform buffer too large: %d, max size: %d", size, maxSize))
 	}
 
-	log.Println("uniform array of type", t.Name())
-	log.Println("  count:", d.Count)
-	expectedOffset := 0
-	for i := 0; i < t.NumField(); i++ {
-		field := t.Field(i)
-		log.Println("  field", field.Name, "offset:", field.Offset, "size:", field.Type.Size())
-		if field.Offset != uintptr(expectedOffset) {
-			panic("struct layout causes alignment issues")
-		}
-		expectedOffset = int(field.Offset + field.Type.Size())
-	}
-
-	d.element = (int(t.Size())/64 + 1) * 64
-	d.buffer = buffer.NewUniform(device, d.element*d.Count)
+	d.buffer = buffer.NewUniform(device, d.element*d.Size)
 	d.write()
+}
+
+func (d *UniformArray[K]) String() string {
+	var empty K
+	kind := reflect.TypeOf(empty)
+	return fmt.Sprintf("UniformArray[%s]:%d", kind.Name(), d.Binding)
 }
 
 func (d *UniformArray[K]) Destroy() {
@@ -72,9 +73,9 @@ func (d *UniformArray[K]) write() {
 		SType:           vk.StructureTypeWriteDescriptorSet,
 		DstBinding:      uint32(d.Binding),
 		DstArrayElement: 0,
-		DescriptorCount: uint32(d.Count),
+		DescriptorCount: uint32(d.Size),
 		DescriptorType:  vk.DescriptorTypeUniformBuffer,
-		PBufferInfo: util.Map(util.Range(0, d.Count, 1), func(i int) vk.DescriptorBufferInfo {
+		PBufferInfo: util.Map(util.Range(0, d.Size, 1), func(i int) vk.DescriptorBufferInfo {
 			return vk.DescriptorBufferInfo{
 				Buffer: d.buffer.Ptr(),
 				Offset: vk.DeviceSize(i * d.element),
@@ -88,7 +89,7 @@ func (d *UniformArray[K]) LayoutBinding() vk.DescriptorSetLayoutBinding {
 	return vk.DescriptorSetLayoutBinding{
 		Binding:         uint32(d.Binding),
 		DescriptorType:  vk.DescriptorTypeUniformBuffer,
-		DescriptorCount: uint32(d.Count),
+		DescriptorCount: uint32(d.Size),
 		StageFlags:      vk.ShaderStageFlags(d.Stages),
 	}
 }

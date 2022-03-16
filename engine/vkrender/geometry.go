@@ -50,7 +50,7 @@ type ObjectStorage struct {
 type GeometryDescriptors struct {
 	descriptor.Set
 	Camera  *descriptor.Uniform[CameraData]
-	Objects *descriptor.Storage[ObjectStorage]
+	Objects *descriptor.UniformArray[ObjectStorage]
 }
 
 type LightDescriptors struct {
@@ -188,10 +188,10 @@ func NewGeometryPass(backend vulkan.T, meshes cache.Meshes) *GeometryPass {
 				Binding: 0,
 				Stages:  vk.ShaderStageAll,
 			},
-			Objects: &descriptor.Storage[ObjectStorage]{
+			Objects: &descriptor.UniformArray[ObjectStorage]{
 				Binding: 1,
 				Stages:  vk.ShaderStageAll,
-				Size:    100,
+				Size:    10,
 			},
 		},
 		vk_shader.Args{
@@ -257,7 +257,7 @@ func NewGeometryPass(backend vulkan.T, meshes cache.Meshes) *GeometryPass {
 			},
 			Light: &descriptor.UniformArray[light.Descriptor]{
 				Binding: 5,
-				Count:   10,
+				Size:    10,
 				Stages:  vk.ShaderStageFragmentBit,
 			},
 		},

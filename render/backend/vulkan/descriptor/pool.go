@@ -63,7 +63,10 @@ func (p *pool) Allocate(layout SetLayout) Set {
 	}
 
 	var ptr vk.DescriptorSet
-	vk.AllocateDescriptorSets(p.device.Ptr(), &info, &ptr)
+	r := vk.AllocateDescriptorSets(p.device.Ptr(), &info, &ptr)
+	if r != vk.Success {
+		panic("failed to allocate descriptor set")
+	}
 
 	return &set{
 		device: p.device,

@@ -20,13 +20,10 @@ layout (binding = 0) uniform Camera {
 	vec3 Eye;
 } camera;
 
-struct ObjectData{
-	mat4 model;
-};
 
-layout(binding = 1) readonly buffer ObjectBuffer{
-	ObjectData objects[];
-} ssbo;
+layout (binding = 1) uniform ObjectData {
+	mat4 model;
+} objects[10];
 
 // Varyings
 layout (location = 0) out vec3 color0;
@@ -50,7 +47,7 @@ const vec3 normals[7] = vec3[7] (
 
 void main() 
 {
-	mat4 mv = camera.View; // * ssbo.objects[gl_InstanceIndex].model;
+	mat4 mv = camera.View * objects[gl_InstanceIndex].model;
 
 	// gbuffer diffuse
 	color0 = color_0 * (1 - occlusion_0);

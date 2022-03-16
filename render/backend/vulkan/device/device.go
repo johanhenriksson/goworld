@@ -25,12 +25,14 @@ type T interface {
 	GetSurfaceCapabilities(surface vk.Surface) *vk.SurfaceCapabilities
 	GetDepthFormat() vk.Format
 	GetMemoryTypeIndex(uint32, vk.MemoryPropertyFlags) int
+	GetLimits() *vk.PhysicalDeviceLimits
 	WaitIdle()
 }
 
 type device struct {
 	physical vk.PhysicalDevice
 	ptr      vk.Device
+	limits   vk.PhysicalDeviceLimits
 
 	memtypes map[memtype]int
 	queues   map[vk.QueueFlags]int
@@ -71,9 +73,18 @@ func New(physDevice vk.PhysicalDevice) (T, error) {
 		return nil, fmt.Errorf("failed to create logical device")
 	}
 
+	var properties vk.PhysicalDeviceProperties
+	vk.GetPhysicalDeviceProperties(physDevice, &properties)
+	properties.Deref()
+	properties.Limits.Deref()
+
+	log.Println("minimum uniform buffer alignment:", properties.Limits.MinUniformBufferOffsetAlignment)
+	log.Println("minimum storage buffer alignment:", properties.Limits.MinStorageBufferOffsetAlignment)
+
 	return &device{
 		physical: physDevice,
 		ptr:      dev,
+		limits:   properties.Limits,
 		memtypes: make(map[memtype]int),
 		queues:   make(map[vk.QueueFlags]int),
 	}, nil
@@ -175,6 +186,10 @@ func (d *device) GetMemoryTypeIndex(typeBits uint32, flags vk.MemoryPropertyFlag
 
 	d.memtypes[mtype] = 0
 	return 0
+}
+
+func (d *device) GetLimits() *vk.PhysicalDeviceLimits {
+	return &d.limits
 }
 
 func (d *device) Allocate(req vk.MemoryRequirements, flags vk.MemoryPropertyFlags) Memory {

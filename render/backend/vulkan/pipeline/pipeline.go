@@ -37,8 +37,8 @@ func New(device device.T, args Args) T {
 		}
 	})
 
+	log.Println("  attributes", args.Pointers)
 	attrs := pointersToVertexAttributes(args.Pointers, 0)
-	log.Println("  attributes", attrs)
 
 	subpass := args.Pass.Subpass(args.Subpass)
 	log.Println("  subpass:", subpass.Name, subpass.Index())

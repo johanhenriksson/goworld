@@ -1,6 +1,8 @@
 package descriptor
 
 import (
+	"fmt"
+
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/device"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/image"
 
@@ -22,6 +24,10 @@ func (d *InputAttachment) Initialize(device device.T) {
 	if d.Layout == 0 {
 		d.Layout = vk.ImageLayoutShaderReadOnlyOptimal
 	}
+}
+
+func (d *InputAttachment) String() string {
+	return fmt.Sprintf("Input:%d", d.Binding)
 }
 
 func (d *InputAttachment) Destroy() {}

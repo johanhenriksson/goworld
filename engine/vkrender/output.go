@@ -137,6 +137,7 @@ func (p *OutputPass) Draw(args render.Args, scene object.T) {
 			vk.PipelineStageFlags(vk.PipelineStageColorAttachmentOutputBit),
 		},
 	})
+	worker.Wait()
 }
 
 func (p *OutputPass) Destroy() {

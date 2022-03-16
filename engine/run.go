@@ -92,7 +92,9 @@ func Run(args Args) {
 		renderer = args.Renderer()
 	}
 	recreateRenderer()
-	defer renderer.Destroy()
+	defer func() {
+		renderer.Destroy()
+	}()
 
 	// create scene
 	scene := object.New("Scene")
@@ -113,7 +115,7 @@ func Run(args Args) {
 		}
 
 		// update scene
-		scene.Update(0.030)
+		scene.Update(0.016)
 
 		// find the first active camera
 		camera := query.New[camera.T]().First(scene)
