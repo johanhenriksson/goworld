@@ -5,6 +5,7 @@ import (
 
 	"github.com/johanhenriksson/goworld/core/window"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/command"
+	"github.com/johanhenriksson/goworld/render/backend/vulkan/descriptor"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/device"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/instance"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/swapchain"
@@ -107,10 +108,16 @@ func (b *backend) GlfwSetup(w *glfw.Window, args window.Args) error {
 		b.workers[i] = command.NewWorker(b.device, vk.QueueFlags(vk.QueueGraphicsBit))
 	}
 
+	// init global descriptor pool
+	descriptor.InitGlobalPool(b.device)
+
 	return nil
 }
 
 func (b *backend) Destroy() {
+	// clean up global descriptor pool
+	descriptor.DestroyGlobalPool()
+
 	for i := 0; i < b.frames; i++ {
 		b.workers[i].Destroy()
 	}

@@ -8,8 +8,6 @@ import (
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/renderpass"
 	"github.com/johanhenriksson/goworld/render/shader"
 	"github.com/johanhenriksson/goworld/render/vertex"
-
-	vk "github.com/vulkan-go/vulkan"
 )
 
 type Descriptors map[string]int
@@ -27,7 +25,6 @@ type vk_shader[D descriptor.Set] struct {
 	backend vulkan.T
 
 	dsets   []D
-	dpool   descriptor.Pool
 	dlayout descriptor.SetLayoutTyped[D]
 
 	shader pipeline.Shader
@@ -55,28 +52,7 @@ func New[D descriptor.Set](backend vulkan.T, args Args, descriptors D) T[D] {
 
 	// instantiate shader modules
 	// ... this could be cached ...
-
 	shader := pipeline.NewShader(backend.Device(), args.Path)
-
-	// todo: put the descriptor pool somewhere else
-	dpool := descriptor.NewPool(backend.Device(), []vk.DescriptorPoolSize{
-		{
-			Type:            vk.DescriptorTypeUniformBuffer,
-			DescriptorCount: 100,
-		},
-		{
-			Type:            vk.DescriptorTypeStorageBuffer,
-			DescriptorCount: 100,
-		},
-		{
-			Type:            vk.DescriptorTypeCombinedImageSampler,
-			DescriptorCount: 100,
-		},
-		{
-			Type:            vk.DescriptorTypeInputAttachment,
-			DescriptorCount: 10,
-		},
-	})
 
 	// create new descriptor set layout
 	// ... this could be cached ...
@@ -86,9 +62,10 @@ func New[D descriptor.Set](backend vulkan.T, args Args, descriptors D) T[D] {
 	// ... this could be cached ...
 	layout := pipeline.NewLayout(backend.Device(), []descriptor.SetLayout{descLayout}, args.Constants)
 
+	// instantiate one descriptor set per frame
 	descSets := make([]D, args.Frames)
 	for i := range descSets {
-		dset := descLayout.Instantiate(dpool)
+		dset := descLayout.Instantiate(descriptor.GlobalPool)
 		descSets[i] = dset
 	}
 
@@ -115,7 +92,6 @@ func New[D descriptor.Set](backend vulkan.T, args Args, descriptors D) T[D] {
 
 		dsets:   descSets,
 		dlayout: descLayout,
-		dpool:   dpool,
 
 		attrs:  args.Attributes,
 		layout: layout,
@@ -143,8 +119,6 @@ func (s *vk_shader[D]) Bind(frame int, cmd command.Buffer) {
 
 func (s *vk_shader[D]) Destroy() {
 	s.dlayout.Destroy()
-	s.dpool.Destroy()
-
 	s.pipe.Destroy()
 	s.layout.Destroy()
 	s.shader.Destroy()
