@@ -24,7 +24,7 @@ type OutputPass struct {
 	backend  vulkan.T
 	meshes   cache.Meshes
 	textures cache.Textures
-	shader   vk_shader.T[vertex.T, *OutputDescriptors]
+	shader   vk_shader.T[*OutputDescriptors]
 	geometry DeferredPass
 
 	quad *cache.VkMesh
@@ -78,17 +78,12 @@ func NewOutputPass(backend vulkan.T, meshes cache.Meshes, textures cache.Texture
 		},
 	})
 
-	p.shader = vk_shader.New[vertex.T](
+	p.shader = vk_shader.New(
 		backend,
-		&OutputDescriptors{
-			Output: &descriptor.Sampler{
-				Binding: 0,
-				Stages:  vk.ShaderStageFragmentBit,
-			},
-		},
 		vk_shader.Args{
-			Path: "vk/output",
-			Pass: p.pass,
+			Path:     "vk/output",
+			Pass:     p.pass,
+			Pointers: vertex.ParsePointers(vertex.T{}),
 			Attributes: shader.AttributeMap{
 				"position": {
 					Loc:  0,
@@ -98,6 +93,12 @@ func NewOutputPass(backend vulkan.T, meshes cache.Meshes, textures cache.Texture
 					Loc:  1,
 					Type: types.Float,
 				},
+			},
+		},
+		&OutputDescriptors{
+			Output: &descriptor.Sampler{
+				Binding: 0,
+				Stages:  vk.ShaderStageFragmentBit,
 			},
 		})
 

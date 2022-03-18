@@ -28,7 +28,7 @@ func New(device device.T, args Args) T {
 	// todo: pipeline cache
 	// could probably be controlled a global setting?
 
-	modules := util.Map(args.Shaders, func(shader Shader) vk.PipelineShaderStageCreateInfo {
+	modules := util.Map(args.Shader.Modules(), func(shader ShaderModule) vk.PipelineShaderStageCreateInfo {
 		return vk.PipelineShaderStageCreateInfo{
 			SType:  vk.StructureTypePipelineShaderStageCreateInfo,
 			Module: shader.Ptr(),
@@ -98,6 +98,7 @@ func New(device device.T, args Args) T {
 		},
 
 		// viewport state
+		// does not seem to matter so much since we set it dynamically every frame
 		PViewportState: &vk.PipelineViewportStateCreateInfo{
 			SType:         vk.StructureTypePipelineViewportStateCreateInfo,
 			ViewportCount: 1,

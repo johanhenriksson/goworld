@@ -18,7 +18,6 @@ type T interface {
 
 	Instance() instance.T
 	Device() device.T
-	Surface() vk.Surface
 	Swapchain() swapchain.T
 	Frames() int
 	Width() int
@@ -27,13 +26,6 @@ type T interface {
 
 	Worker(int) command.Worker
 	Transferer() command.Worker
-
-	GlfwHints(window.Args) []window.GlfwHint
-	GlfwSetup(*glfw.Window, window.Args) error
-
-	Resize(int, int)
-	Aquire() (swapchain.Context, error)
-	Present()
 }
 
 type backend struct {
@@ -60,7 +52,6 @@ func New(appName string, deviceIndex int) T {
 
 func (b *backend) Instance() instance.T   { return b.instance }
 func (b *backend) Device() device.T       { return b.device }
-func (b *backend) Surface() vk.Surface    { return b.surface }
 func (b *backend) Swapchain() swapchain.T { return b.swapchain }
 func (b *backend) Frames() int            { return b.frames }
 func (b *backend) Width() int             { return b.width }

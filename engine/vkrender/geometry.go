@@ -53,16 +53,6 @@ type GeometryDescriptors struct {
 	Objects *descriptor.Storage[ObjectStorage]
 }
 
-type LightDescriptors struct {
-	descriptor.Set
-	Camera   *descriptor.Uniform[CameraData]
-	Light    *descriptor.UniformArray[light.Descriptor]
-	Diffuse  *descriptor.InputAttachment
-	Normal   *descriptor.InputAttachment
-	Position *descriptor.InputAttachment
-	Depth    *descriptor.InputAttachment
-}
-
 type LightConst struct {
 	LightIndex uint32
 }
@@ -74,8 +64,8 @@ type GeometryPass struct {
 	quad      vertex.Mesh
 	backend   vulkan.T
 	pass      renderpass.T
-	geom      vk_shader.T[game.VoxelVertex, *GeometryDescriptors]
-	light     vk_shader.T[vertex.T, *LightDescriptors]
+	geom      vk_shader.T[*GeometryDescriptors]
+	light     vk_shader.T[*LightDescriptors]
 	completed sync.Semaphore
 }
 
@@ -181,24 +171,14 @@ func NewGeometryPass(backend vulkan.T, meshes cache.Meshes) *GeometryPass {
 
 	gbuffer := NewGbuffer(backend, pass, backend.Frames())
 
-	geomsh := vk_shader.New[game.VoxelVertex](
+	geomsh := vk_shader.New(
 		backend,
-		&GeometryDescriptors{
-			Camera: &descriptor.Uniform[CameraData]{
-				Binding: 0,
-				Stages:  vk.ShaderStageAll,
-			},
-			Objects: &descriptor.Storage[ObjectStorage]{
-				Binding: 1,
-				Stages:  vk.ShaderStageAll,
-				Size:    10,
-			},
-		},
 		vk_shader.Args{
-			Path:    "vk/color_f",
-			Frames:  1,
-			Pass:    pass,
-			Subpass: "geometry",
+			Path:     "vk/color_f",
+			Frames:   1,
+			Pass:     pass,
+			Subpass:  "geometry",
+			Pointers: vertex.ParsePointers(game.VoxelVertex{}),
 			Attributes: shader.AttributeMap{
 				"position": {
 					Loc:  0,
@@ -217,8 +197,16 @@ func NewGeometryPass(backend vulkan.T, meshes cache.Meshes) *GeometryPass {
 					Type: types.Float,
 				},
 			},
-			Descriptors: vk_shader.Descriptors{
-				"Camera": 0,
+		},
+		&GeometryDescriptors{
+			Camera: &descriptor.Uniform[CameraData]{
+				Binding: 0,
+				Stages:  vk.ShaderStageAll,
+			},
+			Objects: &descriptor.Storage[ObjectStorage]{
+				Binding: 1,
+				Stages:  vk.ShaderStageAll,
+				Size:    10,
 			},
 		})
 
@@ -232,8 +220,28 @@ func NewGeometryPass(backend vulkan.T, meshes cache.Meshes) *GeometryPass {
 		0, 3, 1,
 	})
 
-	lightsh := vk_shader.New[vertex.T](
+	lightsh := vk_shader.New(
 		backend,
+		vk_shader.Args{
+			Path:     "vk/light",
+			Frames:   1,
+			Pass:     pass,
+			Subpass:  "lighting",
+			Pointers: vertex.ParsePointers(vertex.T{}),
+			Attributes: shader.AttributeMap{
+				"position": {
+					Loc:  0,
+					Type: types.Float,
+				},
+			},
+			Constants: []pipeline.PushConstant{
+				{
+					Stages: vk.ShaderStageFragmentBit,
+					Offset: 0,
+					Size:   4,
+				},
+			},
+		},
 		&LightDescriptors{
 			Diffuse: &descriptor.InputAttachment{
 				Binding: 0,
@@ -259,28 +267,6 @@ func NewGeometryPass(backend vulkan.T, meshes cache.Meshes) *GeometryPass {
 				Binding: 5,
 				Size:    10,
 				Stages:  vk.ShaderStageFragmentBit,
-			},
-		},
-		vk_shader.Args{
-			Path:    "vk/light",
-			Frames:  1,
-			Pass:    pass,
-			Subpass: "lighting",
-			Attributes: shader.AttributeMap{
-				"position": {
-					Loc:  0,
-					Type: types.Float,
-				},
-			},
-			Descriptors: vk_shader.Descriptors{
-				"Camera": 0,
-			},
-			Constants: []pipeline.PushConstant{
-				{
-					Stages: vk.ShaderStageFragmentBit,
-					Offset: 0,
-					Size:   4,
-				},
 			},
 		})
 
@@ -419,7 +405,7 @@ func (p *GeometryPass) DrawLight(cmds command.Recorder, args render.Args, index 
 		}
 		cmd.CmdPushConstant(p.light.Layout(), vk.ShaderStageFlags(vk.ShaderStageFragmentBit), 0, &push)
 
-		cmd.CmdDrawIndexed(vkmesh.Mesh.Elements(), 1, 0, 0, 0)
+		cmd.CmdDrawIndexed(vkmesh.Mesh.Elements(), 1, 0, 0, index)
 	})
 
 	return nil

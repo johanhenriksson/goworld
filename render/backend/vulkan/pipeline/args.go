@@ -10,7 +10,7 @@ type Args struct {
 	Pass     renderpass.T
 	Subpass  string
 	Layout   Layout
-	Shaders  []Shader
+	Shader   Shader
 	Pointers vertex.Pointers
 
 	Primitive       vertex.Primitive

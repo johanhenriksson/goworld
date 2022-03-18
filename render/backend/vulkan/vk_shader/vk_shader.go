@@ -1,8 +1,6 @@
 package vk_shader
 
 import (
-	"fmt"
-
 	"github.com/johanhenriksson/goworld/render/backend/vulkan"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/command"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/descriptor"
@@ -16,14 +14,14 @@ import (
 
 type Descriptors map[string]int
 
-type T[V any, D descriptor.Set] interface {
+type T[D descriptor.Set] interface {
 	Destroy()
 	Bind(frame int, cmd command.Buffer)
 	Descriptors(frame int) D
 	Layout() pipeline.Layout
 }
 
-type vk_shader[V any, D descriptor.Set] struct {
+type vk_shader[D descriptor.Set] struct {
 	name    string
 	frames  int
 	backend vulkan.T
@@ -32,33 +30,33 @@ type vk_shader[V any, D descriptor.Set] struct {
 	dpool   descriptor.Pool
 	dlayout descriptor.SetLayoutTyped[D]
 
-	shaders []pipeline.Shader
-	layout  pipeline.Layout
-	pipe    pipeline.T
+	shader pipeline.Shader
+	layout pipeline.Layout
+	pipe   pipeline.T
 
 	pass  renderpass.T
 	attrs shader.AttributeMap
 }
 
 type Args struct {
-	Path        string
-	Frames      int
-	Pass        renderpass.T
-	Subpass     string
-	Attributes  shader.AttributeMap
-	Descriptors Descriptors
-	Constants   []pipeline.PushConstant
+	Path       string
+	Frames     int
+	Pass       renderpass.T
+	Subpass    string
+	Attributes shader.AttributeMap
+	Pointers   vertex.Pointers
+	Constants  []pipeline.PushConstant
 }
 
-func New[V any, D descriptor.Set](backend vulkan.T, descriptors D, args Args) T[V, D] {
+func New[D descriptor.Set](backend vulkan.T, args Args, descriptors D) T[D] {
 	if args.Frames == 0 {
 		args.Frames = backend.Frames()
 	}
 
-	shaders := []pipeline.Shader{
-		pipeline.NewShader(backend.Device(), fmt.Sprintf("assets/shaders/%s.vert", args.Path), vk.ShaderStageVertexBit),
-		pipeline.NewShader(backend.Device(), fmt.Sprintf("assets/shaders/%s.frag", args.Path), vk.ShaderStageFragmentBit),
-	}
+	// instantiate shader modules
+	// ... this could be cached ...
+
+	shader := pipeline.NewShader(backend.Device(), args.Path)
 
 	// todo: put the descriptor pool somewhere else
 	dpool := descriptor.NewPool(backend.Device(), []vk.DescriptorPoolSize{
@@ -80,7 +78,12 @@ func New[V any, D descriptor.Set](backend vulkan.T, descriptors D, args Args) T[
 		},
 	})
 
+	// create new descriptor set layout
+	// ... this could be cached ...
 	descLayout := descriptor.New(backend.Device(), descriptors)
+
+	// crete pipeline layout
+	// ... this could be cached ...
 	layout := pipeline.NewLayout(backend.Device(), []descriptor.SetLayout{descLayout}, args.Constants)
 
 	descSets := make([]D, args.Frames)
@@ -90,26 +93,24 @@ func New[V any, D descriptor.Set](backend vulkan.T, descriptors D, args Args) T[
 	}
 
 	// todo: the pointers & pipeline stuff should be extracted into a material thing
-	var vtx V
-	pointers := vertex.ParsePointers(vtx)
-	pointers.Bind(args.Attributes)
+	args.Pointers.Bind(args.Attributes)
 
 	pipe := pipeline.New(backend.Device(), pipeline.Args{
 		Layout:   layout,
 		Pass:     args.Pass,
 		Subpass:  args.Subpass,
-		Shaders:  shaders,
-		Pointers: pointers,
+		Shader:   shader,
+		Pointers: args.Pointers,
 
 		Primitive:  vertex.Triangles,
 		DepthTest:  true,
 		DepthWrite: true,
 	})
 
-	return &vk_shader[V, D]{
+	return &vk_shader[D]{
 		name:    args.Path,
 		backend: backend,
-		shaders: shaders,
+		shader:  shader,
 		frames:  args.Frames,
 
 		dsets:   descSets,
@@ -123,31 +124,28 @@ func New[V any, D descriptor.Set](backend vulkan.T, descriptors D, args Args) T[
 	}
 }
 
-func (s *vk_shader[V, D]) Name() string {
+func (s *vk_shader[D]) Name() string {
 	return s.name
 }
 
-func (s *vk_shader[V, D]) Descriptors(frame int) D {
+func (s *vk_shader[D]) Descriptors(frame int) D {
 	return s.dsets[frame%s.frames]
 }
 
-func (s *vk_shader[V, D]) Layout() pipeline.Layout {
+func (s *vk_shader[D]) Layout() pipeline.Layout {
 	return s.layout
 }
 
-func (s *vk_shader[V, D]) Bind(frame int, cmd command.Buffer) {
+func (s *vk_shader[D]) Bind(frame int, cmd command.Buffer) {
 	cmd.CmdBindGraphicsPipeline(s.pipe)
 	cmd.CmdBindGraphicsDescriptor(s.layout, s.dsets[frame%s.frames])
 }
 
-func (s *vk_shader[V, D]) Destroy() {
+func (s *vk_shader[D]) Destroy() {
 	s.dlayout.Destroy()
 	s.dpool.Destroy()
 
 	s.pipe.Destroy()
 	s.layout.Destroy()
-
-	for _, shader := range s.shaders {
-		shader.Destroy()
-	}
+	s.shader.Destroy()
 }
