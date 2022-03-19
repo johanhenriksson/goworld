@@ -5,10 +5,10 @@ import (
 	"github.com/johanhenriksson/goworld/render/backend/types"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/descriptor"
+	"github.com/johanhenriksson/goworld/render/backend/vulkan/material"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/pipeline"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/renderpass"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/shader"
-	"github.com/johanhenriksson/goworld/render/backend/vulkan/vk_shader"
 	"github.com/johanhenriksson/goworld/render/vertex"
 	vk "github.com/vulkan-go/vulkan"
 )
@@ -23,14 +23,10 @@ type LightDescriptors struct {
 	Depth    *descriptor.InputAttachment
 }
 
-type LShader struct {
-	vk_shader.T[*LightDescriptors]
-}
-
-func NewLightShader(backend vulkan.T, pass renderpass.T) vk_shader.T[*LightDescriptors] {
-	return vk_shader.New(
+func NewLightShader(backend vulkan.T, pass renderpass.T) material.Instance[*LightDescriptors] {
+	mat := material.New(
 		backend,
-		vk_shader.Args{
+		material.Args{
 			Shader: shader.New(
 				backend.Device(),
 				"vk/light",
@@ -49,7 +45,6 @@ func NewLightShader(backend vulkan.T, pass renderpass.T) vk_shader.T[*LightDescr
 					"Light":    5,
 				},
 			),
-			Frames:   1,
 			Pass:     pass,
 			Subpass:  "lighting",
 			Pointers: vertex.ParsePointers(vertex.T{}),
@@ -82,4 +77,5 @@ func NewLightShader(backend vulkan.T, pass renderpass.T) vk_shader.T[*LightDescr
 				Stages: vk.ShaderStageFragmentBit,
 			},
 		})
+	return mat.Instantiate()
 }

@@ -2,7 +2,7 @@ package descriptor
 
 import (
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/device"
-	"github.com/johanhenriksson/goworld/render/backend/vulkan/vk_texture"
+	"github.com/johanhenriksson/goworld/render/backend/vulkan/texture"
 	vk "github.com/vulkan-go/vulkan"
 )
 
@@ -54,13 +54,13 @@ func (d *SamplerArray) MaxCount() int {
 	return d.Count
 }
 
-func (d *SamplerArray) Set(index int, tex vk_texture.T) {
+func (d *SamplerArray) Set(index int, tex texture.T) {
 	d.sampler[index] = tex.Ptr()
 	d.view[index] = tex.View().Ptr()
 	d.write(index, 1)
 }
 
-func (d *SamplerArray) SetRange(textures []vk_texture.T, offset int) {
+func (d *SamplerArray) SetRange(textures []texture.T, offset int) {
 	end := offset + len(textures)
 	if end >= d.Count {
 		panic("out of bounds")

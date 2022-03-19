@@ -186,7 +186,7 @@ func (r *renderpass) Attachment(name string) Attachment {
 }
 
 func (r *renderpass) Framebuffer(frame int) framebuffer.T {
-	return r.framebuffers[frame]
+	return r.framebuffers[frame%len(r.framebuffers)]
 }
 
 func (r *renderpass) Clear() []vk.ClearValue {

@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/device"
-	"github.com/johanhenriksson/goworld/render/backend/vulkan/vk_texture"
+	"github.com/johanhenriksson/goworld/render/backend/vulkan/texture"
 
 	vk "github.com/vulkan-go/vulkan"
 )
@@ -33,7 +33,7 @@ func (d *Sampler) Bind(set Set, binding int) {
 	d.Binding = binding
 }
 
-func (d *Sampler) Set(tex vk_texture.T) {
+func (d *Sampler) Set(tex texture.T) {
 	d.sampler = tex.Ptr()
 	d.view = tex.View().Ptr()
 	d.write()

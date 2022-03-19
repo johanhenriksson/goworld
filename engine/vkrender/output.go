@@ -10,11 +10,11 @@ import (
 	"github.com/johanhenriksson/goworld/render/backend/vulkan"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/command"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/descriptor"
+	"github.com/johanhenriksson/goworld/render/backend/vulkan/material"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/renderpass"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/shader"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/sync"
-	"github.com/johanhenriksson/goworld/render/backend/vulkan/vk_shader"
-	"github.com/johanhenriksson/goworld/render/backend/vulkan/vk_texture"
+	"github.com/johanhenriksson/goworld/render/backend/vulkan/texture"
 	"github.com/johanhenriksson/goworld/render/vertex"
 
 	vk "github.com/vulkan-go/vulkan"
@@ -24,11 +24,12 @@ type OutputPass struct {
 	backend  vulkan.T
 	meshes   cache.Meshes
 	textures cache.Textures
-	shader   vk_shader.T[*OutputDescriptors]
+	material material.T[*OutputDescriptors]
 	geometry DeferredPass
 
 	quad *cache.VkMesh
-	tex  []vk_texture.T
+	desc []material.Instance[*OutputDescriptors]
+	tex  []texture.T
 	pass renderpass.T
 }
 
@@ -78,9 +79,9 @@ func NewOutputPass(backend vulkan.T, meshes cache.Meshes, textures cache.Texture
 		},
 	})
 
-	p.shader = vk_shader.New(
+	p.material = material.New(
 		backend,
-		vk_shader.Args{
+		material.Args{
 			Shader: shader.New(
 				backend.Device(),
 				"vk/output",
@@ -107,13 +108,15 @@ func NewOutputPass(backend vulkan.T, meshes cache.Meshes, textures cache.Texture
 			},
 		})
 
-	p.tex = make([]vk_texture.T, backend.Frames())
+	frames := backend.Frames()
+	p.desc = p.material.InstantiateMany(frames)
+	p.tex = make([]texture.T, frames)
 	for i := range p.tex {
-		p.tex[i] = vk_texture.FromView(backend.Device(), p.geometry.Output(i), vk_texture.Args{
+		p.tex[i] = texture.FromView(backend.Device(), p.geometry.Output(i), texture.Args{
 			Filter: vk.FilterNearest,
 			Wrap:   vk.SamplerAddressModeClampToEdge,
 		})
-		p.shader.Descriptors(i).Output.Set(p.tex[i])
+		p.desc[i].Descriptors().Output.Set(p.tex[i])
 	}
 
 	return p
@@ -126,12 +129,11 @@ func (p *OutputPass) Draw(args render.Args, scene object.T) {
 	worker.Queue(func(cmd command.Buffer) {
 		cmd.CmdBeginRenderPass(p.pass, ctx.Index)
 
-		p.shader.Bind(ctx.Index, cmd)
+		p.desc[ctx.Index%len(p.desc)].Bind(cmd)
+
 		cmd.CmdBindVertexBuffer(p.quad.Vertices, 0)
 		cmd.CmdBindIndexBuffers(p.quad.Indices, 0, vk.IndexTypeUint16)
-
-		idx := 0
-		cmd.CmdDrawIndexed(p.quad.Mesh.Elements(), 1, 0, 0, idx)
+		cmd.CmdDrawIndexed(p.quad.Mesh.Elements(), 1, 0, 0, 0)
 
 		cmd.CmdEndRenderPass()
 	})
@@ -143,6 +145,7 @@ func (p *OutputPass) Draw(args render.Args, scene object.T) {
 			vk.PipelineStageFlags(vk.PipelineStageColorAttachmentOutputBit),
 		},
 	})
+
 	worker.Wait()
 }
 
@@ -151,5 +154,5 @@ func (p *OutputPass) Destroy() {
 		tex.Destroy()
 	}
 	p.pass.Destroy()
-	p.shader.Destroy()
+	p.material.Destroy()
 }

@@ -1,4 +1,4 @@
-package vk_shader
+package material
 
 import (
 	"log"
@@ -10,34 +10,28 @@ import (
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/renderpass"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/shader"
 	"github.com/johanhenriksson/goworld/render/vertex"
+	"github.com/johanhenriksson/goworld/util"
 )
-
-type Descriptors map[string]int
 
 type T[D descriptor.Set] interface {
 	Destroy()
-	Bind(frame int, cmd command.Buffer)
-	Descriptors(frame int) D
+	Bind(cmd command.Buffer)
 	Layout() pipeline.Layout
+	Instantiate() Instance[D]
+	InstantiateMany(int) []Instance[D]
 }
 
-type vk_shader[D descriptor.Set] struct {
-	frames  int
+type material[D descriptor.Set] struct {
 	backend vulkan.T
-
-	dsets   []D
 	dlayout descriptor.SetLayoutTyped[D]
-
-	shader shader.T
-	layout pipeline.Layout
-	pipe   pipeline.T
-
-	pass renderpass.T
+	shader  shader.T
+	layout  pipeline.Layout
+	pipe    pipeline.T
+	pass    renderpass.T
 }
 
 type Args struct {
 	Shader    shader.T
-	Frames    int
 	Pass      renderpass.T
 	Subpass   string
 	Pointers  vertex.Pointers
@@ -45,10 +39,6 @@ type Args struct {
 }
 
 func New[D descriptor.Set](backend vulkan.T, args Args, descriptors D) T[D] {
-	if args.Frames == 0 {
-		args.Frames = backend.Frames()
-	}
-
 	// instantiate shader modules
 	// ... this could be cached ...
 
@@ -69,13 +59,6 @@ func New[D descriptor.Set](backend vulkan.T, args Args, descriptors D) T[D] {
 	// ... this could be cached ...
 	layout := pipeline.NewLayout(backend.Device(), []descriptor.SetLayout{descLayout}, args.Constants)
 
-	// instantiate one descriptor set per frame
-	descSets := make([]D, args.Frames)
-	for i := range descSets {
-		dset := descLayout.Instantiate(descriptor.GlobalPool)
-		descSets[i] = dset
-	}
-
 	pipe := pipeline.New(backend.Device(), pipeline.Args{
 		Layout:   layout,
 		Pass:     args.Pass,
@@ -88,36 +71,40 @@ func New[D descriptor.Set](backend vulkan.T, args Args, descriptors D) T[D] {
 		DepthWrite: true,
 	})
 
-	return &vk_shader[D]{
+	return &material[D]{
 		backend: backend,
 		shader:  args.Shader,
-		frames:  args.Frames,
 
-		dsets:   descSets,
 		dlayout: descLayout,
-
-		layout: layout,
-		pipe:   pipe,
-		pass:   args.Pass,
+		layout:  layout,
+		pipe:    pipe,
+		pass:    args.Pass,
 	}
 }
 
-func (s *vk_shader[D]) Descriptors(frame int) D {
-	return s.dsets[frame%s.frames]
+func (m *material[D]) Layout() pipeline.Layout {
+	return m.layout
 }
 
-func (s *vk_shader[D]) Layout() pipeline.Layout {
-	return s.layout
+func (m *material[D]) Bind(cmd command.Buffer) {
+	cmd.CmdBindGraphicsPipeline(m.pipe)
 }
 
-func (s *vk_shader[D]) Bind(frame int, cmd command.Buffer) {
-	cmd.CmdBindGraphicsPipeline(s.pipe)
-	cmd.CmdBindGraphicsDescriptor(s.layout, s.dsets[frame%s.frames])
+func (m *material[D]) Destroy() {
+	m.dlayout.Destroy()
+	m.pipe.Destroy()
+	m.layout.Destroy()
+	m.shader.Destroy()
 }
 
-func (s *vk_shader[D]) Destroy() {
-	s.dlayout.Destroy()
-	s.pipe.Destroy()
-	s.layout.Destroy()
-	s.shader.Destroy()
+func (m *material[D]) Instantiate() Instance[D] {
+	set := m.dlayout.Instantiate(descriptor.GlobalPool)
+	return &instance[D]{
+		material: m,
+		set:      set,
+	}
+}
+
+func (m *material[D]) InstantiateMany(n int) []Instance[D] {
+	return util.Map(util.Range(0, n, 1), func(i int) Instance[D] { return m.Instantiate() })
 }

@@ -1,4 +1,4 @@
-package vk_texture
+package texture
 
 import (
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/device"

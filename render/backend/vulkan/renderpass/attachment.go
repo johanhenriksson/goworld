@@ -31,8 +31,8 @@ func (a *attachment) Description() vk.AttachmentDescription {
 }
 
 func (a *attachment) Name() string              { return a.name }
-func (a *attachment) Image(frame int) image.T   { return a.image[frame] }
-func (a *attachment) View(frame int) image.View { return a.view[frame] }
+func (a *attachment) Image(frame int) image.T   { return a.image[frame%len(a.image)] }
+func (a *attachment) View(frame int) image.View { return a.view[frame%len(a.view)] }
 func (a *attachment) Clear() vk.ClearValue      { return a.clear }
 func (a *attachment) Blend() bool               { return a.blend }
 

@@ -17,10 +17,10 @@ import (
 	"github.com/johanhenriksson/goworld/render/backend/vulkan"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/command"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/descriptor"
+	"github.com/johanhenriksson/goworld/render/backend/vulkan/material"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/renderpass"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/shader"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/sync"
-	"github.com/johanhenriksson/goworld/render/backend/vulkan/vk_shader"
 	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/vertex"
 
@@ -63,8 +63,8 @@ type GeometryPass struct {
 	quad      vertex.Mesh
 	backend   vulkan.T
 	pass      renderpass.T
-	geom      vk_shader.T[*GeometryDescriptors]
-	light     vk_shader.T[*LightDescriptors]
+	geom      material.Instance[*GeometryDescriptors]
+	light     material.Instance[*LightDescriptors]
 	completed sync.Semaphore
 }
 
@@ -170,9 +170,9 @@ func NewGeometryPass(backend vulkan.T, meshes cache.Meshes) *GeometryPass {
 
 	gbuffer := NewGbuffer(backend, pass, backend.Frames())
 
-	geomsh := vk_shader.New(
+	geomsh := material.New(
 		backend,
-		vk_shader.Args{
+		material.Args{
 			Shader: shader.New(
 				backend.Device(),
 				"vk/color_f",
@@ -199,7 +199,6 @@ func NewGeometryPass(backend vulkan.T, meshes cache.Meshes) *GeometryPass {
 					"Objects": 1,
 				},
 			),
-			Frames:   1,
 			Pass:     pass,
 			Subpass:  "geometry",
 			Pointers: vertex.ParsePointers(game.VoxelVertex{}),
@@ -212,7 +211,7 @@ func NewGeometryPass(backend vulkan.T, meshes cache.Meshes) *GeometryPass {
 				Stages: vk.ShaderStageAll,
 				Size:   10,
 			},
-		})
+		}).Instantiate()
 
 	quad := vertex.NewTriangles("screen_quad", []vertex.T{
 		{P: vec3.New(-1, -1, 0), T: vec2.New(0, 0)},
@@ -247,7 +246,7 @@ func (p *GeometryPass) Draw(args render.Args, scene object.T) {
 	ctx := args.Context
 	cmds := command.NewRecorder()
 
-	geomDesc := p.geom.Descriptors(ctx.Index)
+	geomDesc := p.geom.Descriptors()
 
 	camera := CameraData{
 		Proj:        args.Projection,
@@ -269,7 +268,7 @@ func (p *GeometryPass) Draw(args render.Args, scene object.T) {
 		Model: mat4.Translate(vec3.New(-16, 0, 0)),
 	})
 
-	lightDesc := p.light.Descriptors(ctx.Index)
+	lightDesc := p.light.Descriptors()
 
 	lightDesc.Camera.Set(camera)
 
@@ -280,7 +279,7 @@ func (p *GeometryPass) Draw(args render.Args, scene object.T) {
 
 	cmds.Record(func(cmd command.Buffer) {
 		cmd.CmdBeginRenderPass(p.pass, ctx.Index)
-		p.geom.Bind(ctx.Index, cmd)
+		p.geom.Bind(cmd)
 	})
 
 	objects := query.New[mesh.T]().Where(isDrawDeferred).Collect(scene)
@@ -292,7 +291,7 @@ func (p *GeometryPass) Draw(args render.Args, scene object.T) {
 
 	cmds.Record(func(cmd command.Buffer) {
 		cmd.CmdNextSubpass()
-		p.light.Bind(ctx.Index, cmd)
+		p.light.Bind(cmd)
 	})
 
 	ambient := light.Descriptor{
@@ -322,6 +321,7 @@ func (p *GeometryPass) Draw(args render.Args, scene object.T) {
 			vk.PipelineStageFlags(vk.PipelineStageColorAttachmentOutputBit),
 		},
 	})
+	worker.Wait()
 }
 
 func (p *GeometryPass) DrawDeferred(cmds command.Recorder, args render.Args, mesh mesh.T) error {
@@ -347,7 +347,7 @@ func (p *GeometryPass) DrawDeferred(cmds command.Recorder, args render.Args, mes
 }
 
 func (p *GeometryPass) DrawLight(cmds command.Recorder, args render.Args, index int, lit light.Descriptor) error {
-	p.light.Descriptors(0).Light.Set(index, lit)
+	p.light.Descriptors().Light.Set(index, lit)
 
 	vkmesh := p.meshes.Fetch(p.quad, nil).(*cache.VkMesh)
 	cmds.Record(func(cmd command.Buffer) {
@@ -357,7 +357,7 @@ func (p *GeometryPass) DrawLight(cmds command.Recorder, args render.Args, index 
 		push := LightConst{
 			LightIndex: uint32(index),
 		}
-		cmd.CmdPushConstant(p.light.Layout(), vk.ShaderStageFlags(vk.ShaderStageFragmentBit), 0, &push)
+		cmd.CmdPushConstant(p.light.Material().Layout(), vk.ShaderStageFlags(vk.ShaderStageFragmentBit), 0, &push)
 
 		cmd.CmdDrawIndexed(vkmesh.Mesh.Elements(), 1, 0, 0, index)
 	})
@@ -368,8 +368,8 @@ func (p *GeometryPass) DrawLight(cmds command.Recorder, args render.Args, index 
 func (p *GeometryPass) Destroy() {
 	p.pass.Destroy()
 	p.GeometryBuffer.Destroy()
-	p.geom.Destroy()
-	p.light.Destroy()
+	p.geom.Material().Destroy()
+	p.light.Material().Destroy()
 	p.completed.Destroy()
 }
 

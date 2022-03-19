@@ -7,31 +7,31 @@ import (
 	"github.com/johanhenriksson/goworld/render/backend/vulkan"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/buffer"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/command"
-	"github.com/johanhenriksson/goworld/render/backend/vulkan/vk_texture"
+	"github.com/johanhenriksson/goworld/render/backend/vulkan/texture"
 
 	vk "github.com/vulkan-go/vulkan"
 )
 
 type Textures interface {
-	Fetch(path string) vk_texture.T
+	Fetch(path string) texture.T
 	Destroy()
 }
 
 type vktextures struct {
 	backend vulkan.T
 	worker  command.Worker
-	cache   map[string]vk_texture.T
+	cache   map[string]texture.T
 }
 
 func NewVkTextures(backend vulkan.T) Textures {
 	return &vktextures{
 		backend: backend,
 		worker:  backend.Transferer(),
-		cache:   make(map[string]vk_texture.T),
+		cache:   make(map[string]texture.T),
 	}
 }
 
-func (t *vktextures) Fetch(path string) vk_texture.T {
+func (t *vktextures) Fetch(path string) texture.T {
 	if cached, hit := t.cache[path]; hit {
 		return cached
 	}
@@ -44,7 +44,7 @@ func (t *vktextures) Fetch(path string) vk_texture.T {
 	stage := buffer.NewShared(t.backend.Device(), len(img.Pix))
 	stage.Write(0, img.Pix)
 
-	tex := vk_texture.New(t.backend.Device(), vk_texture.Args{
+	tex := texture.New(t.backend.Device(), texture.Args{
 		Width:  img.Rect.Size().X,
 		Height: img.Rect.Size().Y,
 		Format: vk.FormatR8g8b8a8Unorm,
@@ -82,5 +82,5 @@ func (t *vktextures) Destroy() {
 	for _, tex := range t.cache {
 		tex.Destroy()
 	}
-	t.cache = make(map[string]vk_texture.T)
+	t.cache = make(map[string]texture.T)
 }

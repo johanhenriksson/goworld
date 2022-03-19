@@ -31,6 +31,7 @@ type shader struct {
 }
 
 func New(device device.T, path string, inputs Inputs, descriptors Descriptors) T {
+	// todo: inputs & descriptors should be obtained from SPIR-V reflection
 	modules := []Module{
 		NewModule(device, fmt.Sprintf("assets/shaders/%s.vert", path), vk.ShaderStageVertexBit),
 		NewModule(device, fmt.Sprintf("assets/shaders/%s.frag", path), vk.ShaderStageFragmentBit),
