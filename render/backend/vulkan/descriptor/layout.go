@@ -5,7 +5,7 @@ import (
 	"unsafe"
 
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/device"
-	"github.com/johanhenriksson/goworld/util"
+	"github.com/johanhenriksson/goworld/render/backend/vulkan/shader"
 
 	vk "github.com/vulkan-go/vulkan"
 )
@@ -24,32 +24,38 @@ type SetLayoutTyped[S Set] interface {
 
 type layout[S Set] struct {
 	device    device.T
+	shader    shader.T
 	ptr       vk.DescriptorSetLayout
 	set       S
 	allocated []Descriptor
 	maxCount  int
 }
 
-func New[S Set](device device.T, set S) SetLayoutTyped[S] {
+func New[S Set](device device.T, set S, shader shader.T) SetLayoutTyped[S] {
 	descriptors, err := ParseDescriptorStruct(set)
 	if err != nil {
 		panic(err)
 	}
 
-	log.Println("descriptors:", descriptors)
-
+	log.Println("descriptor set")
 	maxCount := 0
-	lastDescriptor := descriptors[len(descriptors)-1]
-	if variable, ok := lastDescriptor.(VariableDescriptor); ok {
-		log.Println("last descriptor is of variable length")
-		maxCount = variable.MaxCount()
+	bindings := make([]vk.DescriptorSetLayoutBinding, 0, len(descriptors))
+	bindFlags := make([]vk.DescriptorBindingFlags, 0, len(descriptors))
+	for name, descriptor := range descriptors {
+		index, exists := shader.Descriptor(name)
+		if !exists {
+			panic("unresolved descriptor")
+		}
+		bindings = append(bindings, descriptor.LayoutBinding(index))
+		bindFlags = append(bindFlags, descriptor.BindingFlags())
+
+		log.Println("  ", name, "->", index)
+
+		if variable, ok := descriptor.(VariableDescriptor); ok {
+			log.Println("descriptor", name, "is of variable length")
+			maxCount = variable.MaxCount()
+		}
 	}
-
-	bindings := util.Map(descriptors, func(desc Descriptor) vk.DescriptorSetLayoutBinding {
-		return desc.LayoutBinding()
-	})
-
-	bindFlags := util.Map(descriptors, func(desc Descriptor) vk.DescriptorBindingFlags { return desc.BindingFlags() })
 
 	bindFlagsInfo := vk.DescriptorSetLayoutBindingFlagsCreateInfo{
 		SType:         vk.StructureTypeDescriptorSetLayoutBindingFlagsCreateInfo,
@@ -70,6 +76,7 @@ func New[S Set](device device.T, set S) SetLayoutTyped[S] {
 
 	return &layout[S]{
 		device:   device,
+		shader:   shader,
 		ptr:      ptr,
 		set:      set,
 		maxCount: maxCount,
@@ -86,7 +93,7 @@ func (d *layout[S]) VariableCount() int {
 
 func (d *layout[S]) Instantiate(pool Pool) S {
 	set := pool.Allocate(d)
-	copy, descriptors := CopyDescriptorStruct(d.set, set)
+	copy, descriptors := CopyDescriptorStruct(d.set, set, d.shader)
 	for _, descriptor := range descriptors {
 		descriptor.Initialize(d.device)
 		d.allocated = append(d.allocated, descriptor)

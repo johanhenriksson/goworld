@@ -32,8 +32,9 @@ func (d *InputAttachment) String() string {
 
 func (d *InputAttachment) Destroy() {}
 
-func (d *InputAttachment) Bind(set Set) {
+func (d *InputAttachment) Bind(set Set, binding int) {
 	d.set = set
+	d.Binding = binding
 }
 
 func (d *InputAttachment) Set(view image.View) {
@@ -41,9 +42,9 @@ func (d *InputAttachment) Set(view image.View) {
 	d.write()
 }
 
-func (d *InputAttachment) LayoutBinding() vk.DescriptorSetLayoutBinding {
+func (d *InputAttachment) LayoutBinding(binding int) vk.DescriptorSetLayoutBinding {
 	return vk.DescriptorSetLayoutBinding{
-		Binding:         uint32(d.Binding),
+		Binding:         uint32(binding),
 		DescriptorType:  vk.DescriptorTypeInputAttachment,
 		DescriptorCount: 1,
 		StageFlags:      vk.ShaderStageFlags(d.Stages),

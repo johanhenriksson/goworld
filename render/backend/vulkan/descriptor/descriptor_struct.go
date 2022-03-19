@@ -8,7 +8,11 @@ import (
 
 var ErrDescriptorType = errors.New("invalid descriptor struct")
 
-func ParseDescriptorStruct[S Set](template S) ([]Descriptor, error) {
+type Resolver interface {
+	Descriptor(string) (int, bool)
+}
+
+func ParseDescriptorStruct[S Set](template S) (map[string]Descriptor, error) {
 	ptr := reflect.ValueOf(template)
 	if ptr.Kind() != reflect.Pointer {
 		return nil, fmt.Errorf("%w: template must be a pointer to struct", ErrDescriptorType)
@@ -20,7 +24,7 @@ func ParseDescriptorStruct[S Set](template S) ([]Descriptor, error) {
 		return nil, fmt.Errorf("%w: template %s must be a pointer to struct", ErrDescriptorType, structName)
 	}
 
-	descriptors := make([]Descriptor, 0, templateStruct.NumField())
+	descriptors := make(map[string]Descriptor)
 	for i := 0; i < templateStruct.NumField(); i++ {
 		fieldName := templateStruct.Type().Field(i).Name
 		templateField := templateStruct.Field(i)
@@ -57,7 +61,7 @@ func ParseDescriptorStruct[S Set](template S) ([]Descriptor, error) {
 				}
 			}
 
-			descriptors = append(descriptors, descriptor)
+			descriptors[fieldName] = descriptor
 		}
 	}
 
@@ -66,7 +70,7 @@ func ParseDescriptorStruct[S Set](template S) ([]Descriptor, error) {
 
 // CopyDescriptorStruct instantiates a descriptor struct according to the given template.
 // Assumes that the template has passed validation beforehand.
-func CopyDescriptorStruct[S Set](template S, blank Set) (S, []Descriptor) {
+func CopyDescriptorStruct[S Set](template S, blank Set, resolver Resolver) (S, []Descriptor) {
 	// dereference
 	ptr := reflect.ValueOf(template)
 	templateStruct := ptr.Elem()
@@ -96,8 +100,11 @@ func CopyDescriptorStruct[S Set](template S, blank Set) (S, []Descriptor) {
 			descriptor := valueCopy.Interface().(Descriptor)
 
 			// bind it to our blank descriptor set
-			descriptor.Bind(blank)
-
+			binding, exists := resolver.Descriptor(fieldName)
+			if !exists {
+				panic("unresolved descriptor")
+			}
+			descriptor.Bind(blank, binding)
 			descriptors = append(descriptors, descriptor)
 		}
 	}

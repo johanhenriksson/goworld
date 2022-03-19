@@ -17,12 +17,11 @@ import (
 	"github.com/johanhenriksson/goworld/render/backend/vulkan"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/command"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/descriptor"
-	"github.com/johanhenriksson/goworld/render/backend/vulkan/pipeline"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/renderpass"
+	"github.com/johanhenriksson/goworld/render/backend/vulkan/shader"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/sync"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/vk_shader"
 	"github.com/johanhenriksson/goworld/render/color"
-	"github.com/johanhenriksson/goworld/render/shader"
 	"github.com/johanhenriksson/goworld/render/vertex"
 
 	vk "github.com/vulkan-go/vulkan"
@@ -174,39 +173,44 @@ func NewGeometryPass(backend vulkan.T, meshes cache.Meshes) *GeometryPass {
 	geomsh := vk_shader.New(
 		backend,
 		vk_shader.Args{
-			Path:     "vk/color_f",
+			Shader: shader.New(
+				backend.Device(),
+				"vk/color_f",
+				shader.Inputs{
+					"position": {
+						Index: 0,
+						Type:  types.Float,
+					},
+					"normal_id": {
+						Index: 1,
+						Type:  types.UInt8,
+					},
+					"color_0": {
+						Index: 2,
+						Type:  types.Float,
+					},
+					"occlusion": {
+						Index: 3,
+						Type:  types.Float,
+					},
+				},
+				shader.Descriptors{
+					"Camera":  0,
+					"Objects": 1,
+				},
+			),
 			Frames:   1,
 			Pass:     pass,
 			Subpass:  "geometry",
 			Pointers: vertex.ParsePointers(game.VoxelVertex{}),
-			Attributes: shader.AttributeMap{
-				"position": {
-					Loc:  0,
-					Type: types.Float,
-				},
-				"normal_id": {
-					Loc:  1,
-					Type: types.UInt8,
-				},
-				"color_0": {
-					Loc:  2,
-					Type: types.Float,
-				},
-				"occlusion": {
-					Loc:  3,
-					Type: types.Float,
-				},
-			},
 		},
 		&GeometryDescriptors{
 			Camera: &descriptor.Uniform[CameraData]{
-				Binding: 0,
-				Stages:  vk.ShaderStageAll,
+				Stages: vk.ShaderStageAll,
 			},
 			Objects: &descriptor.Storage[ObjectStorage]{
-				Binding: 1,
-				Stages:  vk.ShaderStageAll,
-				Size:    10,
+				Stages: vk.ShaderStageAll,
+				Size:   10,
 			},
 		})
 
@@ -220,57 +224,7 @@ func NewGeometryPass(backend vulkan.T, meshes cache.Meshes) *GeometryPass {
 		0, 3, 1,
 	})
 
-	lightsh := vk_shader.New(
-		backend,
-		vk_shader.Args{
-			Path:     "vk/light",
-			Frames:   1,
-			Pass:     pass,
-			Subpass:  "lighting",
-			Pointers: vertex.ParsePointers(vertex.T{}),
-			Attributes: shader.AttributeMap{
-				"position": {
-					Loc:  0,
-					Type: types.Float,
-				},
-			},
-			Constants: []pipeline.PushConstant{
-				{
-					Stages: vk.ShaderStageFragmentBit,
-					Offset: 0,
-					Size:   4,
-				},
-			},
-		},
-		&LightDescriptors{
-			Diffuse: &descriptor.InputAttachment{
-				Binding: 0,
-				Stages:  vk.ShaderStageFragmentBit,
-			},
-			Normal: &descriptor.InputAttachment{
-				Binding: 1,
-				Stages:  vk.ShaderStageFragmentBit,
-			},
-			Position: &descriptor.InputAttachment{
-				Binding: 2,
-				Stages:  vk.ShaderStageFragmentBit,
-			},
-			Depth: &descriptor.InputAttachment{
-				Binding: 3,
-				Stages:  vk.ShaderStageFragmentBit,
-			},
-			Camera: &descriptor.Uniform[CameraData]{
-				Binding: 4,
-				Stages:  vk.ShaderStageFragmentBit,
-			},
-			Light: &descriptor.UniformArray[light.Descriptor]{
-				Binding: 5,
-				Size:    10,
-				Stages:  vk.ShaderStageFragmentBit,
-			},
-		})
-
-	// lightsh.Descriptors(0).Depth.Set(gbuffer.Depth(0))
+	lightsh := NewLightShader(backend, pass)
 
 	return &GeometryPass{
 		GeometryBuffer: gbuffer,

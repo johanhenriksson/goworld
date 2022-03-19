@@ -12,12 +12,12 @@ import (
 )
 
 type UniformArray[K any] struct {
-	Binding int
-	Size    int
-	Stages  vk.ShaderStageFlagBits
+	Size   int
+	Stages vk.ShaderStageFlagBits
 
-	buffer buffer.Array[K]
-	set    Set
+	binding int
+	buffer  buffer.Array[K]
+	set     Set
 }
 
 func (d *UniformArray[K]) Initialize(device device.T) {
@@ -35,7 +35,7 @@ func (d *UniformArray[K]) Initialize(device device.T) {
 func (d *UniformArray[K]) String() string {
 	var empty K
 	kind := reflect.TypeOf(empty)
-	return fmt.Sprintf("UniformArray[%s]:%d", kind.Name(), d.Binding)
+	return fmt.Sprintf("UniformArray[%s]:%d", kind.Name(), d.binding)
 }
 
 func (d *UniformArray[K]) Destroy() {
@@ -45,8 +45,9 @@ func (d *UniformArray[K]) Destroy() {
 	}
 }
 
-func (d *UniformArray[K]) Bind(set Set) {
+func (d *UniformArray[K]) Bind(set Set, binding int) {
 	d.set = set
+	d.binding = binding
 }
 
 func (d *UniformArray[K]) Set(index int, data K) {
@@ -56,7 +57,7 @@ func (d *UniformArray[K]) Set(index int, data K) {
 func (d *UniformArray[K]) write() {
 	d.set.Write(vk.WriteDescriptorSet{
 		SType:           vk.StructureTypeWriteDescriptorSet,
-		DstBinding:      uint32(d.Binding),
+		DstBinding:      uint32(d.binding),
 		DstArrayElement: 0,
 		DescriptorCount: uint32(d.Size),
 		DescriptorType:  vk.DescriptorTypeUniformBuffer,
@@ -70,9 +71,9 @@ func (d *UniformArray[K]) write() {
 	})
 }
 
-func (d *UniformArray[K]) LayoutBinding() vk.DescriptorSetLayoutBinding {
+func (d *UniformArray[K]) LayoutBinding(binding int) vk.DescriptorSetLayoutBinding {
 	return vk.DescriptorSetLayoutBinding{
-		Binding:         uint32(d.Binding),
+		Binding:         uint32(binding),
 		DescriptorType:  vk.DescriptorTypeUniformBuffer,
 		DescriptorCount: uint32(d.Size),
 		StageFlags:      vk.ShaderStageFlags(d.Stages),

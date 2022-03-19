@@ -7,10 +7,10 @@ import (
 )
 
 type SamplerArray struct {
-	Binding int
-	Count   int
-	Stages  vk.ShaderStageFlagBits
+	Count  int
+	Stages vk.ShaderStageFlagBits
 
+	binding int
 	sampler []vk.Sampler
 	view    []vk.ImageView
 	set     Set
@@ -29,13 +29,14 @@ func (d *SamplerArray) Initialize(device device.T) {
 
 func (d *SamplerArray) Destroy() {}
 
-func (d *SamplerArray) Bind(set Set) {
+func (d *SamplerArray) Bind(set Set, binding int) {
 	d.set = set
+	d.binding = binding
 }
 
-func (d *SamplerArray) LayoutBinding() vk.DescriptorSetLayoutBinding {
+func (d *SamplerArray) LayoutBinding(binding int) vk.DescriptorSetLayoutBinding {
 	return vk.DescriptorSetLayoutBinding{
-		Binding:         uint32(d.Binding),
+		Binding:         uint32(binding),
 		DescriptorType:  vk.DescriptorTypeCombinedImageSampler,
 		DescriptorCount: uint32(d.Count),
 		StageFlags:      vk.ShaderStageFlags(d.Stages),
@@ -84,7 +85,7 @@ func (d *SamplerArray) write(index, count int) {
 	d.set.Write(vk.WriteDescriptorSet{
 		SType:           vk.StructureTypeWriteDescriptorSet,
 		DstSet:          d.set.Ptr(),
-		DstBinding:      uint32(d.Binding),
+		DstBinding:      uint32(d.binding),
 		DstArrayElement: uint32(index),
 		DescriptorCount: uint32(count),
 		DescriptorType:  vk.DescriptorTypeCombinedImageSampler,

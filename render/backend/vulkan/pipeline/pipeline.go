@@ -6,6 +6,7 @@ import (
 
 	"github.com/johanhenriksson/goworld/render/backend/types"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/device"
+	"github.com/johanhenriksson/goworld/render/backend/vulkan/shader"
 	"github.com/johanhenriksson/goworld/render/vertex"
 	"github.com/johanhenriksson/goworld/util"
 
@@ -28,7 +29,7 @@ func New(device device.T, args Args) T {
 	// todo: pipeline cache
 	// could probably be controlled a global setting?
 
-	modules := util.Map(args.Shader.Modules(), func(shader ShaderModule) vk.PipelineShaderStageCreateInfo {
+	modules := util.Map(args.Shader.Modules(), func(shader shader.Module) vk.PipelineShaderStageCreateInfo {
 		return vk.PipelineShaderStageCreateInfo{
 			SType:  vk.StructureTypePipelineShaderStageCreateInfo,
 			Module: shader.Ptr(),

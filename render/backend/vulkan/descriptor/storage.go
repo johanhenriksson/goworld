@@ -11,12 +11,12 @@ import (
 )
 
 type Storage[K any] struct {
-	Binding int
-	Stages  vk.ShaderStageFlagBits
-	Size    int
+	Stages vk.ShaderStageFlagBits
+	Size   int
 
-	buffer buffer.Array[K]
-	set    Set
+	binding int
+	buffer  buffer.Array[K]
+	set     Set
 }
 
 func (d *Storage[K]) Initialize(device device.T) {
@@ -38,7 +38,7 @@ func (d *Storage[K]) Initialize(device device.T) {
 func (d *Storage[K]) String() string {
 	var empty K
 	kind := reflect.TypeOf(empty)
-	return fmt.Sprintf("Storage[%s]:%d", kind.Name(), d.Binding)
+	return fmt.Sprintf("Storage[%s]:%d", kind.Name(), d.binding)
 }
 
 func (d *Storage[K]) Destroy() {
@@ -48,8 +48,9 @@ func (d *Storage[K]) Destroy() {
 	}
 }
 
-func (d *Storage[K]) Bind(set Set) {
+func (d *Storage[K]) Bind(set Set, binding int) {
 	d.set = set
+	d.binding = binding
 }
 
 func (d *Storage[K]) Set(index int, data K) {
@@ -60,9 +61,9 @@ func (d *Storage[K]) SetRange(offset int, data []K) {
 	d.buffer.SetRange(offset, data)
 }
 
-func (d *Storage[K]) LayoutBinding() vk.DescriptorSetLayoutBinding {
+func (d *Storage[K]) LayoutBinding(binding int) vk.DescriptorSetLayoutBinding {
 	return vk.DescriptorSetLayoutBinding{
-		Binding:         uint32(d.Binding),
+		Binding:         uint32(binding),
 		DescriptorType:  vk.DescriptorTypeStorageBuffer,
 		DescriptorCount: 1,
 		StageFlags:      vk.ShaderStageFlags(d.Stages),
@@ -75,7 +76,7 @@ func (d *Storage[K]) write() {
 	d.set.Write(vk.WriteDescriptorSet{
 		SType:           vk.StructureTypeWriteDescriptorSet,
 		DstSet:          d.set.Ptr(),
-		DstBinding:      uint32(d.Binding),
+		DstBinding:      uint32(d.binding),
 		DstArrayElement: 0,
 		DescriptorCount: 1,
 		DescriptorType:  vk.DescriptorTypeStorageBuffer,

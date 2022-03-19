@@ -2,6 +2,7 @@ package pipeline
 
 import (
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/renderpass"
+	"github.com/johanhenriksson/goworld/render/backend/vulkan/shader"
 	"github.com/johanhenriksson/goworld/render/vertex"
 	vk "github.com/vulkan-go/vulkan"
 )
@@ -10,7 +11,7 @@ type Args struct {
 	Pass     renderpass.T
 	Subpass  string
 	Layout   Layout
-	Shader   Shader
+	Shader   shader.T
 	Pointers vertex.Pointers
 
 	Primitive       vertex.Primitive

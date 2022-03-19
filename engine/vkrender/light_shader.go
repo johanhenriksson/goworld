@@ -7,8 +7,8 @@ import (
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/descriptor"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/pipeline"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/renderpass"
+	"github.com/johanhenriksson/goworld/render/backend/vulkan/shader"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/vk_shader"
-	"github.com/johanhenriksson/goworld/render/shader"
 	"github.com/johanhenriksson/goworld/render/vertex"
 	vk "github.com/vulkan-go/vulkan"
 )
@@ -31,17 +31,28 @@ func NewLightShader(backend vulkan.T, pass renderpass.T) vk_shader.T[*LightDescr
 	return vk_shader.New(
 		backend,
 		vk_shader.Args{
-			Path:     "vk/light",
+			Shader: shader.New(
+				backend.Device(),
+				"vk/light",
+				shader.Inputs{
+					"position": {
+						Index: 0,
+						Type:  types.Float,
+					},
+				},
+				shader.Descriptors{
+					"Diffuse":  0,
+					"Normal":   1,
+					"Position": 2,
+					"Depth":    3,
+					"Camera":   4,
+					"Light":    5,
+				},
+			),
 			Frames:   1,
 			Pass:     pass,
 			Subpass:  "lighting",
 			Pointers: vertex.ParsePointers(vertex.T{}),
-			Attributes: shader.AttributeMap{
-				"position": {
-					Loc:  0,
-					Type: types.Float,
-				},
-			},
 			Constants: []pipeline.PushConstant{
 				{
 					Stages: vk.ShaderStageFragmentBit,
@@ -52,29 +63,23 @@ func NewLightShader(backend vulkan.T, pass renderpass.T) vk_shader.T[*LightDescr
 		},
 		&LightDescriptors{
 			Diffuse: &descriptor.InputAttachment{
-				Binding: 0,
-				Stages:  vk.ShaderStageFragmentBit,
+				Stages: vk.ShaderStageFragmentBit,
 			},
 			Normal: &descriptor.InputAttachment{
-				Binding: 1,
-				Stages:  vk.ShaderStageFragmentBit,
+				Stages: vk.ShaderStageFragmentBit,
 			},
 			Position: &descriptor.InputAttachment{
-				Binding: 2,
-				Stages:  vk.ShaderStageFragmentBit,
+				Stages: vk.ShaderStageFragmentBit,
 			},
 			Depth: &descriptor.InputAttachment{
-				Binding: 3,
-				Stages:  vk.ShaderStageFragmentBit,
+				Stages: vk.ShaderStageFragmentBit,
 			},
 			Camera: &descriptor.Uniform[CameraData]{
-				Binding: 4,
-				Stages:  vk.ShaderStageFragmentBit,
+				Stages: vk.ShaderStageFragmentBit,
 			},
 			Light: &descriptor.UniformArray[light.Descriptor]{
-				Binding: 5,
-				Size:    10,
-				Stages:  vk.ShaderStageFragmentBit,
+				Size:   10,
+				Stages: vk.ShaderStageFragmentBit,
 			},
 		})
 }

@@ -11,10 +11,10 @@ import (
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/command"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/descriptor"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/renderpass"
+	"github.com/johanhenriksson/goworld/render/backend/vulkan/shader"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/sync"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/vk_shader"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/vk_texture"
-	"github.com/johanhenriksson/goworld/render/shader"
 	"github.com/johanhenriksson/goworld/render/vertex"
 
 	vk "github.com/vulkan-go/vulkan"
@@ -81,24 +81,29 @@ func NewOutputPass(backend vulkan.T, meshes cache.Meshes, textures cache.Texture
 	p.shader = vk_shader.New(
 		backend,
 		vk_shader.Args{
-			Path:     "vk/output",
+			Shader: shader.New(
+				backend.Device(),
+				"vk/output",
+				shader.Inputs{
+					"position": {
+						Index: 0,
+						Type:  types.Float,
+					},
+					"texcoord_0": {
+						Index: 1,
+						Type:  types.Float,
+					},
+				},
+				shader.Descriptors{
+					"Output": 0,
+				},
+			),
 			Pass:     p.pass,
 			Pointers: vertex.ParsePointers(vertex.T{}),
-			Attributes: shader.AttributeMap{
-				"position": {
-					Loc:  0,
-					Type: types.Float,
-				},
-				"texcoord_0": {
-					Loc:  1,
-					Type: types.Float,
-				},
-			},
 		},
 		&OutputDescriptors{
 			Output: &descriptor.Sampler{
-				Binding: 0,
-				Stages:  vk.ShaderStageFragmentBit,
+				Stages: vk.ShaderStageFragmentBit,
 			},
 		})
 
