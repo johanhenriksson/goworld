@@ -1,12 +1,8 @@
 package engine
 
 import (
-	"flag"
 	"fmt"
 	"log"
-	"os"
-	"os/signal"
-	"runtime/pprof"
 
 	"github.com/johanhenriksson/goworld/core/camera"
 	"github.com/johanhenriksson/goworld/core/object"
@@ -14,8 +10,6 @@ import (
 	"github.com/johanhenriksson/goworld/core/window"
 	"github.com/johanhenriksson/goworld/render"
 )
-
-var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
 
 type SceneFunc func(Renderer, object.T)
 type RendererFunc func() Renderer
@@ -32,34 +26,8 @@ type Args struct {
 func Run(args Args) {
 	log.Println("goworld")
 
-	// cpu profiling
-	flag.Parse()
-	if *cpuprofile != "" {
-		os.MkdirAll("profiling", 0755)
-		ppath := fmt.Sprintf("profiling/%s", *cpuprofile)
-		f, err := os.Create(ppath)
-		if err != nil {
-			panic(err)
-		}
-		log.Println("writing cpu profiling output to", ppath)
-		pprof.StartCPUProfile(f)
-		defer pprof.StopCPUProfile()
-	}
-
-	running := true
-	sigint := make(chan os.Signal, 1)
-	signal.Notify(sigint, os.Interrupt)
-	go func() {
-		for range sigint {
-			if !running {
-				log.Println("Kill")
-				os.Exit(1)
-			} else {
-				log.Println("Interrupt")
-				running = false
-			}
-		}
-	}()
+	go RunProfilingServer(6060)
+	interrupt := NewInterrupter()
 
 	// default to opengl backend
 	backend := args.Backend
@@ -104,7 +72,7 @@ func Run(args Args) {
 	// run the render loop
 	log.Println("ready")
 
-	for running && !wnd.ShouldClose() {
+	for interrupt.Running() && !wnd.ShouldClose() {
 		wnd.Poll()
 
 		w, h := wnd.Size()
