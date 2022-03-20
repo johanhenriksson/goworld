@@ -28,6 +28,8 @@ layout (binding = 1) readonly buffer ObjectBuffer {
 	ObjectData objects[];
 } ssbo;
 
+layout (binding = 2) uniform sampler2D[] Textures;
+
 // Varyings
 layout (location = 0) out vec3 color0;
 layout (location = 1) out vec3 normal0;

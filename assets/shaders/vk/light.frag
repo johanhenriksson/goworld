@@ -2,6 +2,7 @@
 
 #extension GL_ARB_separate_shader_objects : enable
 #extension GL_ARB_shading_language_420pack : enable
+#extension GL_EXT_nonuniform_qualifier : enable
 
 #define AMBIENT_LIGHT 0
 #define POINT_LIGHT 1
@@ -23,33 +24,24 @@ layout (std140, binding = 4) uniform Camera {
     vec3 Eye;
 } camera;
 
-// the light descriptor could be slimmed down to 128 bytes so that it can fit in a push constant
-// removing proj & view matrices would be enough. adding a 4-byte light index field puts the struct at exactly 128 bytes
-// this would greatly reduce the complexity of feeding data to the shader
-// shadowmaps could be attached to an unbounded sampler descriptor
-layout (std140, binding = 5) uniform Light {
-    mat4 Proj;
-    mat4 View;
+layout (binding = 5) uniform sampler2D[] shadowmaps;
+
+layout(push_constant) uniform constants
+{
     mat4 ViewProj;
     vec4 Color;
     vec4 Position;
     int Type;
+    int Shadowmap;
     float Range;
     float Intensity;
-    int Shadows;
     Attenuation Attenuation;
-} lights[10];
-
-layout(push_constant) uniform constants
-{
-	int lightId;
-} push;
+} light;
 
 layout (input_attachment_index = 0, binding = 0) uniform subpassInput tex_diffuse;
 layout (input_attachment_index = 1, binding = 1) uniform subpassInput tex_normal;
 layout (input_attachment_index = 2, binding = 2) uniform subpassInput tex_position;
 layout (input_attachment_index = 3, binding = 3) uniform subpassInput tex_depth;
-layout (binding = 6) uniform sampler2D tex_shadow;
 
 layout (location = 0) out vec4 color;
 
@@ -72,7 +64,7 @@ vec3 getWorldNormal() {
 
 float sampleShadowmap(sampler2D shadowmap, vec3 position, float bias) {
     /* world -> light clip coords */
-    vec4 light_pos = lights[push.lightId].ViewProj * vec4(position, 1);
+    vec4 light_pos = light.ViewProj * vec4(position, 1);
     light_pos = light_pos / light_pos.w;
 
     /* convert light clip to light ndc by dividing by W, then map values to 0-1 */
@@ -108,7 +100,7 @@ float sampleShadowmap(sampler2D shadowmap, vec3 position, float bias) {
 
 /* calculates lighting contribution from a point light source */
 float calculatePointLightContrib(vec3 surfaceToLight, float distanceToLight, vec3 normal) {
-    if (distanceToLight > lights[push.lightId].Range) {
+    if (distanceToLight > light.Range) {
         return 0.0;
     }
 
@@ -116,9 +108,9 @@ float calculatePointLightContrib(vec3 surfaceToLight, float distanceToLight, vec
     float normalCoef = max(0.0, dot(normal, surfaceToLight));
 
     /* light attenuation as a function of range and distance */
-    float attenuation = lights[push.lightId].Attenuation.Constant +
-                        lights[push.lightId].Attenuation.Linear * distanceToLight +
-                        lights[push.lightId].Attenuation.Quadratic * pow(distanceToLight, 2);
+    float attenuation = light.Attenuation.Constant +
+                        light.Attenuation.Linear * distanceToLight +
+                        light.Attenuation.Quadratic * pow(distanceToLight, 2);
     attenuation = 1.0 / attenuation;
 
     /* multiply and return light contribution */
@@ -148,30 +140,32 @@ void main() {
     // calculate contribution from the light source
     float contrib = 0.0;
     float shadow = 1.0;
-    if (lights[push.lightId].Type == AMBIENT_LIGHT) {
+    if (light.Type == AMBIENT_LIGHT) {
         contrib = 1;
     }
-    else if (lights[push.lightId].Type == DIRECTIONAL_LIGHT) {
+    else if (light.Type == DIRECTIONAL_LIGHT) {
         // directional lights store the direction in the position uniform
         // i.e. the light coming from the position, shining towards the origin
-        vec3 surfaceToLight = normalize(lights[push.lightId].Position.xyz);
+        vec3 surfaceToLight = normalize(light.Position.xyz);
         contrib = max(dot(surfaceToLight, normal), 0.0);
 
         // angle-dependent bias
         // shadow_bias = max(shadow_bias * (1.0 - dot(normal, surfaceToLight)), 0.0005);  
 
         // experimental shadows
-        shadow = sampleShadowmap(tex_shadow, position, shadow_bias);
+        if (light.Shadowmap > 0) {
+            shadow = sampleShadowmap(shadowmaps[light.Shadowmap], position, shadow_bias);
+        }
     }
-    else if (lights[push.lightId].Type == POINT_LIGHT) {
+    else if (light.Type == POINT_LIGHT) {
         // calculate light vector & distance
-        vec3 surfaceToLight = lights[push.lightId].Position.xyz - position;
+        vec3 surfaceToLight = light.Position.xyz - position;
         float distanceToLight = length(surfaceToLight);
         surfaceToLight = normalize(surfaceToLight);
         contrib = calculatePointLightContrib(surfaceToLight, distanceToLight, normal);
     } 
 
-    vec3 lightColor = lights[push.lightId].Color.rgb * lights[push.lightId].Intensity * contrib * shadow * occlusion;
+    vec3 lightColor = light.Color.rgb * light.Intensity * contrib * shadow * occlusion;
     lightColor *= diffuseColor;
 
 

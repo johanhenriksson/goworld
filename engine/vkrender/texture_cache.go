@@ -4,7 +4,6 @@ import (
 	"log"
 
 	"github.com/johanhenriksson/goworld/engine/cache"
-	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/buffer"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/command"
@@ -13,13 +12,7 @@ import (
 	vk "github.com/vulkan-go/vulkan"
 )
 
-type TextureRef interface {
-	Id() string
-	Version() int
-	Path() string
-}
-
-type TextureCache cache.T[TextureRef, texture.T]
+type TextureCache cache.T[texture.Ref, texture.T]
 
 // mesh cache backend
 type vktextures struct {
@@ -28,17 +21,14 @@ type vktextures struct {
 }
 
 func NewTextureCache(backend vulkan.T) TextureCache {
-	return cache.New[TextureRef, texture.T](&vktextures{
+	return cache.New[texture.Ref, texture.T](&vktextures{
 		backend: backend,
 		worker:  backend.Transferer(),
 	})
 }
 
-func (t *vktextures) Instantiate(ref TextureRef) texture.T {
-	img, err := render.ImageFromFile(ref.Path())
-	if err != nil {
-		panic(err)
-	}
+func (t *vktextures) Instantiate(ref texture.Ref) texture.T {
+	img := ref.Load()
 
 	stage := buffer.NewShared(t.backend.Device(), len(img.Pix))
 	stage.Write(0, img.Pix)
@@ -71,12 +61,12 @@ func (t *vktextures) Instantiate(ref TextureRef) texture.T {
 
 	stage.Destroy()
 
-	log.Println("buffered texture", ref.Path())
+	log.Println("buffered texture", ref.Id())
 
 	return tex
 }
 
-func (m *vktextures) Update(tex texture.T, ref TextureRef) {
+func (m *vktextures) Update(tex texture.T, ref texture.Ref) {
 }
 
 func (m *vktextures) Delete(tex texture.T) {

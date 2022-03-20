@@ -48,12 +48,9 @@ type ObjectStorage struct {
 
 type GeometryDescriptors struct {
 	descriptor.Set
-	Camera  *descriptor.Uniform[CameraData]
-	Objects *descriptor.Storage[ObjectStorage]
-}
-
-type LightConst struct {
-	LightIndex uint32
+	Camera   *descriptor.Uniform[CameraData]
+	Objects  *descriptor.Storage[ObjectStorage]
+	Textures *descriptor.SamplerArray
 }
 
 type GeometryPass struct {
@@ -70,13 +67,13 @@ type GeometryPass struct {
 	shadows ShadowPass
 }
 
-func NewGeometryPass(backend vulkan.T, meshes MeshCache, shadows ShadowPass) *GeometryPass {
+func NewGeometryPass(backend vulkan.T, meshes MeshCache, textures TextureCache, shadows ShadowPass) *GeometryPass {
 	diffuseFmt := vk.FormatR8g8b8a8Unorm
 	normalFmt := vk.FormatR8g8b8a8Unorm
 	positionFmt := vk.FormatR16g16b16a16Sfloat
 
 	pass := renderpass.New(backend.Device(), renderpass.Args{
-		Frames: backend.Frames(),
+		Frames: 1, // backend.Frames(),
 		Width:  backend.Width(),
 		Height: backend.Height(),
 
@@ -171,7 +168,7 @@ func NewGeometryPass(backend vulkan.T, meshes MeshCache, shadows ShadowPass) *Ge
 		},
 	})
 
-	gbuffer := NewGbuffer(backend, pass, backend.Frames())
+	gbuffer := NewGbuffer(backend, pass, 1) // backend.Frames())
 
 	geomsh := material.New(
 		backend.Device(),
@@ -198,8 +195,9 @@ func NewGeometryPass(backend vulkan.T, meshes MeshCache, shadows ShadowPass) *Ge
 					},
 				},
 				shader.Descriptors{
-					"Camera":  0,
-					"Objects": 1,
+					"Camera":   0,
+					"Objects":  1,
+					"Textures": 2,
 				},
 			),
 			Pass:     pass,
@@ -214,6 +212,10 @@ func NewGeometryPass(backend vulkan.T, meshes MeshCache, shadows ShadowPass) *Ge
 				Stages: vk.ShaderStageAll,
 				Size:   10,
 			},
+			Textures: &descriptor.SamplerArray{
+				Stages: vk.ShaderStageFragmentBit,
+				Count:  100,
+			},
 		}).Instantiate()
 
 	quad := vertex.NewTriangles("screen_quad", []vertex.T{
@@ -227,12 +229,21 @@ func NewGeometryPass(backend vulkan.T, meshes MeshCache, shadows ShadowPass) *Ge
 	})
 
 	lightsh := NewLightShader(backend.Device(), pass)
+	lightDesc := lightsh.Descriptors()
+
+	lightDesc.Diffuse.Set(gbuffer.Diffuse(0))
+	lightDesc.Normal.Set(gbuffer.Normal(0))
+	lightDesc.Position.Set(gbuffer.Position(0))
+	lightDesc.Depth.Set(gbuffer.Depth(0))
+
+	white := textures.Fetch(texture.PathRef("assets/textures/white.png"))
+	lightDesc.Shadow.Set(0, white)
 
 	shadowtex := texture.FromView(backend.Device(), shadows.Shadowmap(), texture.Args{
 		Filter: vk.FilterNearest,
 		Wrap:   vk.SamplerAddressModeClampToEdge,
 	})
-	lightsh.Descriptors().Shadow.Set(shadowtex)
+	lightDesc.Shadow.Set(1, shadowtex)
 
 	return &GeometryPass{
 		GeometryBuffer: gbuffer,
@@ -283,11 +294,6 @@ func (p *GeometryPass) Draw(args render.Args, scene object.T) {
 
 	lightDesc.Camera.Set(camera)
 
-	lightDesc.Diffuse.Set(p.GeometryBuffer.Diffuse(ctx.Index))
-	lightDesc.Normal.Set(p.GeometryBuffer.Normal(ctx.Index))
-	lightDesc.Position.Set(p.GeometryBuffer.Position(ctx.Index))
-	lightDesc.Depth.Set(p.GeometryBuffer.Depth(ctx.Index))
-
 	cmds.Record(func(cmd command.Buffer) {
 		cmd.CmdBeginRenderPass(p.pass, ctx.Index)
 		p.geom.Bind(cmd)
@@ -310,11 +316,11 @@ func (p *GeometryPass) Draw(args render.Args, scene object.T) {
 		Color:     color.White,
 		Intensity: 0.33,
 	}
-	p.DrawLight(cmds, args, 0, ambient)
+	p.DrawLight(cmds, args, ambient)
 
 	lights := query.New[light.T]().Collect(scene)
-	for i, lit := range lights {
-		if err := p.DrawLight(cmds, args, i+1, lit.LightDescriptor()); err != nil {
+	for _, lit := range lights {
+		if err := p.DrawLight(cmds, args, lit.LightDescriptor()); err != nil {
 			fmt.Printf("light draw error in object %s: %s\n", lit.Name(), err)
 		}
 	}
@@ -359,20 +365,25 @@ func (p *GeometryPass) DrawDeferred(cmds command.Recorder, args render.Args, mes
 	return nil
 }
 
-func (p *GeometryPass) DrawLight(cmds command.Recorder, args render.Args, index int, lit light.Descriptor) error {
-	p.light.Descriptors().Light.Set(index, lit)
-
+func (p *GeometryPass) DrawLight(cmds command.Recorder, args render.Args, lit light.Descriptor) error {
 	vkmesh := p.meshes.Fetch(p.quad)
 	cmds.Record(func(cmd command.Buffer) {
 		cmd.CmdBindVertexBuffer(vkmesh.Vertices, 0)
 		cmd.CmdBindIndexBuffers(vkmesh.Indices, 0, vk.IndexTypeUint16)
 
 		push := LightConst{
-			LightIndex: uint32(index),
+			ViewProj:    lit.ViewProj,
+			Color:       lit.Color,
+			Position:    lit.Position,
+			Type:        lit.Type,
+			Shadowmap:   uint32(1),
+			Range:       lit.Range,
+			Intensity:   lit.Intensity,
+			Attenuation: lit.Attenuation,
 		}
 		cmd.CmdPushConstant(p.light.Material().Layout(), vk.ShaderStageFlags(vk.ShaderStageFragmentBit), 0, &push)
 
-		cmd.CmdDrawIndexed(vkmesh.Mesh.Elements(), 1, 0, 0, index)
+		cmd.CmdDrawIndexed(vkmesh.Mesh.Elements(), 1, 0, 0, 0)
 	})
 
 	return nil

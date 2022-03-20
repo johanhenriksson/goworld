@@ -1,6 +1,8 @@
 package pipeline
 
 import (
+	"log"
+
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/descriptor"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/device"
 	"github.com/johanhenriksson/goworld/util"
@@ -17,6 +19,7 @@ type layout struct {
 }
 
 func NewLayout(device device.T, descriptors []descriptor.SetLayout, constants []PushConstant) Layout {
+	offset := 0
 	info := vk.PipelineLayoutCreateInfo{
 		SType: vk.StructureTypePipelineLayoutCreateInfo,
 
@@ -27,11 +30,15 @@ func NewLayout(device device.T, descriptors []descriptor.SetLayout, constants []
 
 		PushConstantRangeCount: uint32(len(constants)),
 		PPushConstantRanges: util.Map(constants, func(push PushConstant) vk.PushConstantRange {
-			return vk.PushConstantRange{
+			size := push.Size()
+			log.Printf("push: %d bytes", size)
+			rng := vk.PushConstantRange{
 				StageFlags: vk.ShaderStageFlags(push.Stages),
-				Offset:     uint32(push.Offset),
-				Size:       uint32(push.Size),
+				Offset:     uint32(offset),
+				Size:       uint32(size),
 			}
+			offset += size
+			return rng
 		}),
 	}
 

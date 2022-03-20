@@ -34,7 +34,7 @@ func NewRenderer(backend vulkan.T) engine.Renderer {
 
 	r.Pre = &engine.PrePass{}
 	r.Shadows = NewShadowPass(backend, r.meshes)
-	r.Geometry = NewGeometryPass(backend, r.meshes, r.Shadows)
+	r.Geometry = NewGeometryPass(backend, r.meshes, r.textures, r.Shadows)
 	r.Output = NewOutputPass(backend, r.meshes, r.textures, r.Geometry, r.Shadows)
 
 	return r

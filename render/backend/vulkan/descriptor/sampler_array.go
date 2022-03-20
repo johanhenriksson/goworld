@@ -1,6 +1,8 @@
 package descriptor
 
 import (
+	"fmt"
+
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/device"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/texture"
 	vk "github.com/vulkan-go/vulkan"
@@ -27,6 +29,10 @@ func (d *SamplerArray) Initialize(device device.T) {
 	d.view = make([]vk.ImageView, d.Count)
 }
 
+func (d *SamplerArray) String() string {
+	return fmt.Sprintf("SamplerArray[%d]:%d", d.Count, d.binding)
+}
+
 func (d *SamplerArray) Destroy() {}
 
 func (d *SamplerArray) Bind(set Set, binding int) {
@@ -35,6 +41,7 @@ func (d *SamplerArray) Bind(set Set, binding int) {
 }
 
 func (d *SamplerArray) LayoutBinding(binding int) vk.DescriptorSetLayoutBinding {
+	d.binding = binding
 	return vk.DescriptorSetLayoutBinding{
 		Binding:         uint32(binding),
 		DescriptorType:  vk.DescriptorTypeCombinedImageSampler,
@@ -76,8 +83,8 @@ func (d *SamplerArray) write(index, count int) {
 	images := make([]vk.DescriptorImageInfo, count)
 	for i := range images {
 		images[i] = vk.DescriptorImageInfo{
-			Sampler:     d.sampler[i],
-			ImageView:   d.view[i],
+			Sampler:     d.sampler[index+i],
+			ImageView:   d.view[index+i],
 			ImageLayout: vk.ImageLayoutShaderReadOnlyOptimal,
 		}
 	}

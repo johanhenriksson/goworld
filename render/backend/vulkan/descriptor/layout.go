@@ -49,11 +49,10 @@ func New[S Set](device device.T, set S, shader shader.T) SetLayoutTyped[S] {
 		bindings = append(bindings, descriptor.LayoutBinding(index))
 		bindFlags = append(bindFlags, descriptor.BindingFlags())
 
-		log.Println("  ", name, "->", index)
-
+		log.Printf("  %s -> %s\n", name, descriptor)
 		if variable, ok := descriptor.(VariableDescriptor); ok {
-			log.Println("descriptor", name, "is of variable length")
 			maxCount = variable.MaxCount()
+			log.Println("descriptor", name, "is of variable length", maxCount)
 		}
 	}
 

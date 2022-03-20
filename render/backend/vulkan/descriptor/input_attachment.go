@@ -10,12 +10,12 @@ import (
 )
 
 type InputAttachment struct {
-	Binding int
-	Stages  vk.ShaderStageFlagBits
-	Layout  vk.ImageLayout
+	Stages vk.ShaderStageFlagBits
+	Layout vk.ImageLayout
 
-	view vk.ImageView
-	set  Set
+	binding int
+	view    vk.ImageView
+	set     Set
 }
 
 var _ Descriptor = &InputAttachment{}
@@ -27,14 +27,14 @@ func (d *InputAttachment) Initialize(device device.T) {
 }
 
 func (d *InputAttachment) String() string {
-	return fmt.Sprintf("Input:%d", d.Binding)
+	return fmt.Sprintf("Input:%d", d.binding)
 }
 
 func (d *InputAttachment) Destroy() {}
 
 func (d *InputAttachment) Bind(set Set, binding int) {
 	d.set = set
-	d.Binding = binding
+	d.binding = binding
 }
 
 func (d *InputAttachment) Set(view image.View) {
@@ -43,6 +43,7 @@ func (d *InputAttachment) Set(view image.View) {
 }
 
 func (d *InputAttachment) LayoutBinding(binding int) vk.DescriptorSetLayoutBinding {
+	d.binding = binding
 	return vk.DescriptorSetLayoutBinding{
 		Binding:         uint32(binding),
 		DescriptorType:  vk.DescriptorTypeInputAttachment,
@@ -57,7 +58,7 @@ func (d *InputAttachment) write() {
 	d.set.Write(vk.WriteDescriptorSet{
 		SType:           vk.StructureTypeWriteDescriptorSet,
 		DstSet:          d.set.Ptr(),
-		DstBinding:      uint32(d.Binding),
+		DstBinding:      uint32(d.binding),
 		DstArrayElement: 0,
 		DescriptorCount: 1,
 		DescriptorType:  vk.DescriptorTypeInputAttachment,

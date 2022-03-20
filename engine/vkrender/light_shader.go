@@ -2,6 +2,8 @@ package vkrender
 
 import (
 	"github.com/johanhenriksson/goworld/core/light"
+	"github.com/johanhenriksson/goworld/math/mat4"
+	"github.com/johanhenriksson/goworld/math/vec4"
 	"github.com/johanhenriksson/goworld/render/backend/types"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/descriptor"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/device"
@@ -9,19 +11,30 @@ import (
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/pipeline"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/renderpass"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/shader"
+	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/vertex"
 	vk "github.com/vulkan-go/vulkan"
 )
 
 type LightDescriptors struct {
 	descriptor.Set
-	Camera   *descriptor.Uniform[CameraData]
-	Light    *descriptor.UniformArray[light.Descriptor]
 	Diffuse  *descriptor.InputAttachment
 	Normal   *descriptor.InputAttachment
 	Position *descriptor.InputAttachment
 	Depth    *descriptor.InputAttachment
-	Shadow   *descriptor.Sampler
+	Camera   *descriptor.Uniform[CameraData]
+	Shadow   *descriptor.SamplerArray
+}
+
+type LightConst struct {
+	ViewProj    mat4.T
+	Color       color.T
+	Position    vec4.T
+	Type        light.Type
+	Shadowmap   uint32
+	Range       float32
+	Intensity   float32
+	Attenuation light.Attenuation
 }
 
 func NewLightShader(device device.T, pass renderpass.T) material.Instance[*LightDescriptors] {
@@ -43,8 +56,7 @@ func NewLightShader(device device.T, pass renderpass.T) material.Instance[*Light
 					"Position": 2,
 					"Depth":    3,
 					"Camera":   4,
-					"Light":    5,
-					"Shadow":   6,
+					"Shadow":   5,
 				},
 			),
 			Pass:     pass,
@@ -53,8 +65,7 @@ func NewLightShader(device device.T, pass renderpass.T) material.Instance[*Light
 			Constants: []pipeline.PushConstant{
 				{
 					Stages: vk.ShaderStageFragmentBit,
-					Offset: 0,
-					Size:   4,
+					Type:   LightConst{},
 				},
 			},
 		},
@@ -74,12 +85,9 @@ func NewLightShader(device device.T, pass renderpass.T) material.Instance[*Light
 			Camera: &descriptor.Uniform[CameraData]{
 				Stages: vk.ShaderStageFragmentBit,
 			},
-			Light: &descriptor.UniformArray[light.Descriptor]{
-				Size:   10,
+			Shadow: &descriptor.SamplerArray{
 				Stages: vk.ShaderStageFragmentBit,
-			},
-			Shadow: &descriptor.Sampler{
-				Stages: vk.ShaderStageFragmentBit,
+				Count:  100,
 			},
 		})
 	return mat.Instantiate()

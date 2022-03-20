@@ -12,7 +12,7 @@ import (
 type Sampler struct {
 	Stages vk.ShaderStageFlagBits
 
-	Binding int
+	binding int
 	sampler vk.Sampler
 	view    vk.ImageView
 	set     Set
@@ -23,14 +23,14 @@ var _ Descriptor = &Sampler{}
 func (d *Sampler) Initialize(device device.T) {}
 
 func (d *Sampler) String() string {
-	return fmt.Sprintf("Sampler:%d", d.Binding)
+	return fmt.Sprintf("Sampler:%d", d.binding)
 }
 
 func (d *Sampler) Destroy() {}
 
 func (d *Sampler) Bind(set Set, binding int) {
 	d.set = set
-	d.Binding = binding
+	d.binding = binding
 }
 
 func (d *Sampler) Set(tex texture.T) {
@@ -40,6 +40,7 @@ func (d *Sampler) Set(tex texture.T) {
 }
 
 func (d *Sampler) LayoutBinding(binding int) vk.DescriptorSetLayoutBinding {
+	d.binding = binding
 	return vk.DescriptorSetLayoutBinding{
 		Binding:         uint32(binding),
 		DescriptorType:  vk.DescriptorTypeCombinedImageSampler,
@@ -54,7 +55,7 @@ func (d *Sampler) write() {
 	d.set.Write(vk.WriteDescriptorSet{
 		SType:           vk.StructureTypeWriteDescriptorSet,
 		DstSet:          d.set.Ptr(),
-		DstBinding:      uint32(d.Binding),
+		DstBinding:      uint32(d.binding),
 		DstArrayElement: 0,
 		DescriptorCount: 1,
 		DescriptorType:  vk.DescriptorTypeCombinedImageSampler,

@@ -69,6 +69,7 @@ func (d *Uniform[K]) write() {
 }
 
 func (d *Uniform[K]) LayoutBinding(binding int) vk.DescriptorSetLayoutBinding {
+	d.binding = binding
 	return vk.DescriptorSetLayoutBinding{
 		Binding:         uint32(binding),
 		DescriptorType:  vk.DescriptorTypeUniformBuffer,

@@ -31,11 +31,17 @@ type ShadowPass interface {
 	Shadowmap() image.View
 }
 
+type ShadowDescriptors struct {
+	descriptor.Set
+	Camera  *descriptor.Uniform[CameraData]
+	Objects *descriptor.Storage[ObjectStorage]
+}
+
 type shadowpass struct {
 	meshes    MeshCache
 	backend   vulkan.T
 	pass      renderpass.T
-	mat       material.Instance[*GeometryDescriptors]
+	mat       material.Instance[*ShadowDescriptors]
 	completed sync.Semaphore
 }
 
@@ -62,7 +68,7 @@ func NewShadowPass(backend vulkan.T, meshes MeshCache) ShadowPass {
 		Dependencies: []renderpass.SubpassDependency{},
 	})
 
-	geomsh := material.New(
+	mat := material.New(
 		backend.Device(),
 		material.Args{
 			Shader: shader.New(
@@ -82,7 +88,7 @@ func NewShadowPass(backend vulkan.T, meshes MeshCache) ShadowPass {
 			Pass:     pass,
 			Pointers: vertex.ParsePointers(game.VoxelVertex{}),
 		},
-		&GeometryDescriptors{
+		&ShadowDescriptors{
 			Camera: &descriptor.Uniform[CameraData]{
 				Stages: vk.ShaderStageAll,
 			},
@@ -95,7 +101,7 @@ func NewShadowPass(backend vulkan.T, meshes MeshCache) ShadowPass {
 	return &shadowpass{
 		backend:   backend,
 		meshes:    meshes,
-		mat:       geomsh,
+		mat:       mat,
 		pass:      pass,
 		completed: sync.NewSemaphore(backend.Device()),
 	}

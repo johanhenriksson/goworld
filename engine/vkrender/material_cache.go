@@ -7,7 +7,9 @@ import (
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/material"
 )
 
-type PBRMaterial material.T[*GeometryDescriptors]
+type PBRMaterial interface {
+	material.T[*GeometryDescriptors]
+}
 
 type MaterialRef interface {
 	Id() string

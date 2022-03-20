@@ -1,6 +1,8 @@
 package pipeline
 
 import (
+	"reflect"
+
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/renderpass"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/shader"
 	"github.com/johanhenriksson/goworld/render/vertex"
@@ -35,7 +37,11 @@ func (args *Args) defaults() {
 }
 
 type PushConstant struct {
-	Offset int
-	Size   int
 	Stages vk.ShaderStageFlagBits
+	Type   any
+}
+
+func (p *PushConstant) Size() int {
+	t := reflect.TypeOf(p.Type)
+	return int(t.Size())
 }
