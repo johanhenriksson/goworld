@@ -11,6 +11,7 @@ import (
 
 type VKRenderer struct {
 	Pre      *engine.PrePass
+	Shadows  ShadowPass
 	Geometry *GeometryPass
 	Output   *OutputPass
 
@@ -22,6 +23,7 @@ type VKRenderer struct {
 type Pass interface {
 	Draw(args render.Args, scene object.T)
 	Completed() sync.Semaphore
+	Destroy()
 }
 
 func NewRenderer(backend vulkan.T) engine.Renderer {
@@ -32,14 +34,16 @@ func NewRenderer(backend vulkan.T) engine.Renderer {
 	}
 
 	r.Pre = &engine.PrePass{}
-	r.Geometry = NewGeometryPass(backend, r.meshes)
-	r.Output = NewOutputPass(backend, r.meshes, r.textures, r.Geometry)
+	r.Shadows = NewShadowPass(backend, r.meshes)
+	r.Geometry = NewGeometryPass(backend, r.meshes, r.Shadows)
+	r.Output = NewOutputPass(backend, r.meshes, r.textures, r.Geometry, r.Shadows)
 
 	return r
 }
 
 func (r *VKRenderer) Draw(args render.Args, scene object.T) {
 	r.Pre.Draw(args, scene)
+	r.Shadows.Draw(args, scene)
 	r.Geometry.Draw(args, scene)
 	r.Output.Draw(args, scene)
 }
@@ -47,6 +51,7 @@ func (r *VKRenderer) Draw(args render.Args, scene object.T) {
 func (r *VKRenderer) Destroy() {
 	r.backend.Device().WaitIdle()
 
+	r.Shadows.Destroy()
 	r.Geometry.Destroy()
 	r.Output.Destroy()
 	r.meshes.Destroy()

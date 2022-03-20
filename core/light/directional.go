@@ -29,13 +29,14 @@ func NewDirectional(args DirectionalArgs) T {
 }
 
 func (lit *dirlight) Name() string { return "DirectionalLight" }
+func (lit *dirlight) Type() Type   { return Directional }
 
 func (lit *dirlight) LightDescriptor() Descriptor {
 	position := lit.Direction.Scaled(-1).Normalized() // turn direction into a position
 
 	// these calculations will need to know about the camera frustum later
-	lp := mat4.OrthographicLH(-16, 20, -10, 30, -20, 30)
-	lv := mat4.LookAtLH(position, vec3.Zero)
+	lp := mat4.OrthographicVK(-16, 20, -10, 30, -20, 30)
+	lv := mat4.LookAt(position, vec3.Zero)
 	lvp := lp.Mul(&lv)
 
 	desc := Descriptor{

@@ -31,6 +31,8 @@ type OutputPass struct {
 	desc []material.Instance[*OutputDescriptors]
 	tex  []texture.T
 	pass renderpass.T
+
+	shadows ShadowPass
 }
 
 type OutputDescriptors struct {
@@ -38,12 +40,13 @@ type OutputDescriptors struct {
 	Output *descriptor.Sampler
 }
 
-func NewOutputPass(backend vulkan.T, meshes cache.Meshes, textures cache.Textures, geometry DeferredPass) *OutputPass {
+func NewOutputPass(backend vulkan.T, meshes cache.Meshes, textures cache.Textures, geometry DeferredPass, shadows ShadowPass) *OutputPass {
 	p := &OutputPass{
 		backend:  backend,
 		meshes:   meshes,
 		textures: textures,
 		geometry: geometry,
+		shadows:  shadows,
 	}
 
 	quadvtx := vertex.NewTriangles("screen_quad", []vertex.T{
@@ -116,6 +119,10 @@ func NewOutputPass(backend vulkan.T, meshes cache.Meshes, textures cache.Texture
 			Filter: vk.FilterNearest,
 			Wrap:   vk.SamplerAddressModeClampToEdge,
 		})
+		// p.tex[i] = texture.FromView(backend.Device(), p.shadows.Shadowmap(), texture.Args{
+		// 	Filter: vk.FilterNearest,
+		// 	Wrap:   vk.SamplerAddressModeClampToEdge,
+		// })
 		p.desc[i].Descriptors().Output.Set(p.tex[i])
 	}
 
@@ -139,14 +146,16 @@ func (p *OutputPass) Draw(args render.Args, scene object.T) {
 	})
 
 	worker.Submit(command.SubmitInfo{
-		Wait:   []sync.Semaphore{p.geometry.Completed()},
 		Signal: []sync.Semaphore{ctx.RenderComplete},
-		WaitMask: []vk.PipelineStageFlags{
-			vk.PipelineStageFlags(vk.PipelineStageColorAttachmentOutputBit),
+		Wait: []command.Wait{
+			{
+				Semaphore: p.geometry.Completed(),
+				Mask:      vk.PipelineStageColorAttachmentOutputBit,
+			},
 		},
 	})
 
-	worker.Wait()
+	// worker.Wait()
 }
 
 func (p *OutputPass) Destroy() {

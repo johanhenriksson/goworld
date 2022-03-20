@@ -21,6 +21,7 @@ type LightDescriptors struct {
 	Normal   *descriptor.InputAttachment
 	Position *descriptor.InputAttachment
 	Depth    *descriptor.InputAttachment
+	Shadow   *descriptor.Sampler
 }
 
 func NewLightShader(backend vulkan.T, pass renderpass.T) material.Instance[*LightDescriptors] {
@@ -43,6 +44,7 @@ func NewLightShader(backend vulkan.T, pass renderpass.T) material.Instance[*Ligh
 					"Depth":    3,
 					"Camera":   4,
 					"Light":    5,
+					"Shadow":   6,
 				},
 			),
 			Pass:     pass,
@@ -74,6 +76,9 @@ func NewLightShader(backend vulkan.T, pass renderpass.T) material.Instance[*Ligh
 			},
 			Light: &descriptor.UniformArray[light.Descriptor]{
 				Size:   10,
+				Stages: vk.ShaderStageFragmentBit,
+			},
+			Shadow: &descriptor.Sampler{
 				Stages: vk.ShaderStageFragmentBit,
 			},
 		})

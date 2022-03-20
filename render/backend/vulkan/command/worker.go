@@ -108,9 +108,13 @@ func (w *worker) enqueue(batch CommandFn) {
 }
 
 type SubmitInfo struct {
-	Wait     []sync.Semaphore
-	Signal   []sync.Semaphore
-	WaitMask []vk.PipelineStageFlags
+	Wait   []Wait
+	Signal []sync.Semaphore
+}
+
+type Wait struct {
+	Semaphore sync.Semaphore
+	Mask      vk.PipelineStageFlagBits
 }
 
 // Submit the current batch of command buffers
@@ -146,9 +150,9 @@ func (w *worker) submit(submit SubmitInfo) {
 			WaitSemaphoreCount:   uint32(len(submit.Wait)),
 			SignalSemaphoreCount: uint32(len(submit.Signal)),
 			PCommandBuffers:      buffers,
-			PWaitSemaphores:      util.Map(submit.Wait, func(sem sync.Semaphore) vk.Semaphore { return sem.Ptr() }),
 			PSignalSemaphores:    util.Map(submit.Signal, func(sem sync.Semaphore) vk.Semaphore { return sem.Ptr() }),
-			PWaitDstStageMask:    submit.WaitMask,
+			PWaitSemaphores:      util.Map(submit.Wait, func(w Wait) vk.Semaphore { return w.Semaphore.Ptr() }),
+			PWaitDstStageMask:    util.Map(submit.Wait, func(w Wait) vk.PipelineStageFlags { return vk.PipelineStageFlags(w.Mask) }),
 		},
 	}
 	vk.QueueSubmit(w.queue, uint32(len(w.batch)), info, w.fence.Ptr())

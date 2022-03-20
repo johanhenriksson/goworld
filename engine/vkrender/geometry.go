@@ -21,6 +21,7 @@ import (
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/renderpass"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/shader"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/sync"
+	"github.com/johanhenriksson/goworld/render/backend/vulkan/texture"
 	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/vertex"
 
@@ -66,9 +67,11 @@ type GeometryPass struct {
 	geom      material.Instance[*GeometryDescriptors]
 	light     material.Instance[*LightDescriptors]
 	completed sync.Semaphore
+
+	shadows ShadowPass
 }
 
-func NewGeometryPass(backend vulkan.T, meshes cache.Meshes) *GeometryPass {
+func NewGeometryPass(backend vulkan.T, meshes cache.Meshes, shadows ShadowPass) *GeometryPass {
 	diffuseFmt := vk.FormatR8g8b8a8Unorm
 	normalFmt := vk.FormatR8g8b8a8Unorm
 	positionFmt := vk.FormatR16g16b16a16Sfloat
@@ -225,6 +228,12 @@ func NewGeometryPass(backend vulkan.T, meshes cache.Meshes) *GeometryPass {
 
 	lightsh := NewLightShader(backend, pass)
 
+	shadowtex := texture.FromView(backend.Device(), shadows.Shadowmap(), texture.Args{
+		Filter: vk.FilterNearest,
+		Wrap:   vk.SamplerAddressModeClampToEdge,
+	})
+	lightsh.Descriptors().Shadow.Set(shadowtex)
+
 	return &GeometryPass{
 		GeometryBuffer: gbuffer,
 
@@ -235,6 +244,8 @@ func NewGeometryPass(backend vulkan.T, meshes cache.Meshes) *GeometryPass {
 		light:     lightsh,
 		pass:      pass,
 		completed: sync.NewSemaphore(backend.Device()),
+
+		shadows: shadows,
 	}
 }
 
@@ -315,13 +326,15 @@ func (p *GeometryPass) Draw(args render.Args, scene object.T) {
 	worker := p.backend.Worker(ctx.Index)
 	worker.Queue(cmds.Apply)
 	worker.Submit(command.SubmitInfo{
-		Wait:   []sync.Semaphore{ctx.ImageAvailable},
 		Signal: []sync.Semaphore{p.completed},
-		WaitMask: []vk.PipelineStageFlags{
-			vk.PipelineStageFlags(vk.PipelineStageColorAttachmentOutputBit),
+		Wait: []command.Wait{
+			{
+				Semaphore: p.shadows.Completed(),
+				Mask:      vk.PipelineStageFragmentShaderBit,
+			},
 		},
 	})
-	worker.Wait()
+	// worker.Wait()
 }
 
 func (p *GeometryPass) DrawDeferred(cmds command.Recorder, args render.Args, mesh mesh.T) error {
