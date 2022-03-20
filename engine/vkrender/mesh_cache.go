@@ -1,16 +1,18 @@
-package cache
+package vkrender
 
 import (
+	"github.com/johanhenriksson/goworld/engine/cache"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/buffer"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/command"
-	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/vertex"
 
 	vk "github.com/vulkan-go/vulkan"
 )
 
-// glmeshes is a mesh buffer backend for OpenGL
+type MeshCache cache.T[vertex.Mesh, *VkMesh]
+
+// mesh cache backend
 type vkmeshes struct {
 	backend vulkan.T
 	worker  command.Worker
@@ -22,22 +24,14 @@ type VkMesh struct {
 	Mesh     vertex.Mesh
 }
 
-func (m *VkMesh) Draw() error {
-	return nil
+func NewMeshCache(backend vulkan.T) MeshCache {
+	return cache.New[vertex.Mesh, *VkMesh](&vkmeshes{
+		backend: backend,
+		worker:  backend.Transferer(),
+	})
 }
 
-func NewVkCache(backend vulkan.T) Meshes {
-	return &meshes{
-		maxAge: 1000,
-		cache:  make(map[string]*entry),
-		backend: &vkmeshes{
-			backend: backend,
-			worker:  backend.Transferer(),
-		},
-	}
-}
-
-func (m *vkmeshes) Instantiate(mesh vertex.Mesh, mat material.T) GpuMesh {
+func (m *vkmeshes) Instantiate(mesh vertex.Mesh) *VkMesh {
 	bufsize := 100 * 1024 // 100k for now
 
 	vtx := buffer.NewRemote(m.backend.Device(), bufsize, vk.BufferUsageVertexBufferBit)
@@ -66,14 +60,12 @@ func (m *vkmeshes) Instantiate(mesh vertex.Mesh, mat material.T) GpuMesh {
 	}
 }
 
-func (m *vkmeshes) Update(bmesh GpuMesh, mesh vertex.Mesh) {
+func (m *vkmeshes) Update(bmesh *VkMesh, mesh vertex.Mesh) {
 }
 
-func (m *vkmeshes) Delete(bmesh GpuMesh) {
-	if vkmesh, ok := bmesh.(*VkMesh); ok {
-		vkmesh.Vertices.Destroy()
-		vkmesh.Indices.Destroy()
-	}
+func (m *vkmeshes) Delete(vkmesh *VkMesh) {
+	vkmesh.Vertices.Destroy()
+	vkmesh.Indices.Destroy()
 }
 
 func (m *vkmeshes) Destroy() {

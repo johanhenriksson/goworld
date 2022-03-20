@@ -3,8 +3,8 @@ package vkrender
 import (
 	"github.com/johanhenriksson/goworld/core/light"
 	"github.com/johanhenriksson/goworld/render/backend/types"
-	"github.com/johanhenriksson/goworld/render/backend/vulkan"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/descriptor"
+	"github.com/johanhenriksson/goworld/render/backend/vulkan/device"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/material"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/pipeline"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/renderpass"
@@ -24,12 +24,12 @@ type LightDescriptors struct {
 	Shadow   *descriptor.Sampler
 }
 
-func NewLightShader(backend vulkan.T, pass renderpass.T) material.Instance[*LightDescriptors] {
+func NewLightShader(device device.T, pass renderpass.T) material.Instance[*LightDescriptors] {
 	mat := material.New(
-		backend,
+		device,
 		material.Args{
 			Shader: shader.New(
-				backend.Device(),
+				device,
 				"vk/light",
 				shader.Inputs{
 					"position": {

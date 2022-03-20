@@ -15,7 +15,18 @@ type Input struct {
 }
 
 type Inputs map[string]Input
+
+func (i Inputs) Input(name string) (int, types.Type, bool) {
+	input, exists := i[name]
+	return input.Index, input.Type, exists
+}
+
 type Descriptors map[string]int
+
+func (d Descriptors) Descriptor(name string) (int, bool) {
+	index, exists := d[name]
+	return index, exists
+}
 
 type T interface {
 	Modules() []Module
@@ -54,11 +65,9 @@ func (s *shader) Destroy() {
 }
 
 func (s *shader) Input(name string) (int, types.Type, bool) {
-	input, exists := s.inputs[name]
-	return input.Index, input.Type, exists
+	return s.inputs.Input(name)
 }
 
 func (s *shader) Descriptor(name string) (int, bool) {
-	index, exists := s.descriptors[name]
-	return index, exists
+	return s.descriptors.Descriptor(name)
 }

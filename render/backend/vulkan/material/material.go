@@ -3,9 +3,9 @@ package material
 import (
 	"log"
 
-	"github.com/johanhenriksson/goworld/render/backend/vulkan"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/command"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/descriptor"
+	"github.com/johanhenriksson/goworld/render/backend/vulkan/device"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/pipeline"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/renderpass"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/shader"
@@ -22,7 +22,7 @@ type T[D descriptor.Set] interface {
 }
 
 type material[D descriptor.Set] struct {
-	backend vulkan.T
+	device  device.T
 	dlayout descriptor.SetLayoutTyped[D]
 	shader  shader.T
 	layout  pipeline.Layout
@@ -38,7 +38,7 @@ type Args struct {
 	Constants []pipeline.PushConstant
 }
 
-func New[D descriptor.Set](backend vulkan.T, args Args, descriptors D) T[D] {
+func New[D descriptor.Set](device device.T, args Args, descriptors D) T[D] {
 	// instantiate shader modules
 	// ... this could be cached ...
 
@@ -53,13 +53,13 @@ func New[D descriptor.Set](backend vulkan.T, args Args, descriptors D) T[D] {
 
 	// create new descriptor set layout
 	// ... this could be cached ...
-	descLayout := descriptor.New(backend.Device(), descriptors, args.Shader)
+	descLayout := descriptor.New(device, descriptors, args.Shader)
 
 	// crete pipeline layout
 	// ... this could be cached ...
-	layout := pipeline.NewLayout(backend.Device(), []descriptor.SetLayout{descLayout}, args.Constants)
+	layout := pipeline.NewLayout(device, []descriptor.SetLayout{descLayout}, args.Constants)
 
-	pipe := pipeline.New(backend.Device(), pipeline.Args{
+	pipe := pipeline.New(device, pipeline.Args{
 		Layout:   layout,
 		Pass:     args.Pass,
 		Subpass:  args.Subpass,
@@ -72,8 +72,8 @@ func New[D descriptor.Set](backend vulkan.T, args Args, descriptors D) T[D] {
 	})
 
 	return &material[D]{
-		backend: backend,
-		shader:  args.Shader,
+		device: device,
+		shader: args.Shader,
 
 		dlayout: descLayout,
 		layout:  layout,

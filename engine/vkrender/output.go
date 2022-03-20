@@ -2,7 +2,6 @@ package vkrender
 
 import (
 	"github.com/johanhenriksson/goworld/core/object"
-	"github.com/johanhenriksson/goworld/engine/cache"
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
@@ -22,12 +21,12 @@ import (
 
 type OutputPass struct {
 	backend  vulkan.T
-	meshes   cache.Meshes
-	textures cache.Textures
+	meshes   MeshCache
+	textures TextureCache
 	material material.T[*OutputDescriptors]
 	geometry DeferredPass
 
-	quad *cache.VkMesh
+	quad *VkMesh
 	desc []material.Instance[*OutputDescriptors]
 	tex  []texture.T
 	pass renderpass.T
@@ -40,7 +39,7 @@ type OutputDescriptors struct {
 	Output *descriptor.Sampler
 }
 
-func NewOutputPass(backend vulkan.T, meshes cache.Meshes, textures cache.Textures, geometry DeferredPass, shadows ShadowPass) *OutputPass {
+func NewOutputPass(backend vulkan.T, meshes MeshCache, textures TextureCache, geometry DeferredPass, shadows ShadowPass) *OutputPass {
 	p := &OutputPass{
 		backend:  backend,
 		meshes:   meshes,
@@ -59,7 +58,7 @@ func NewOutputPass(backend vulkan.T, meshes cache.Meshes, textures cache.Texture
 		0, 3, 1,
 	})
 
-	p.quad = p.meshes.Fetch(quadvtx, nil).(*cache.VkMesh)
+	p.quad = p.meshes.Fetch(quadvtx)
 
 	p.pass = renderpass.New(backend.Device(), renderpass.Args{
 		Frames: backend.Frames(),
@@ -83,7 +82,7 @@ func NewOutputPass(backend vulkan.T, meshes cache.Meshes, textures cache.Texture
 	})
 
 	p.material = material.New(
-		backend,
+		backend.Device(),
 		material.Args{
 			Shader: shader.New(
 				backend.Device(),

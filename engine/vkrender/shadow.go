@@ -7,7 +7,6 @@ import (
 	"github.com/johanhenriksson/goworld/core/mesh"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/core/object/query"
-	"github.com/johanhenriksson/goworld/engine/cache"
 	"github.com/johanhenriksson/goworld/game"
 	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/math/vec3"
@@ -33,14 +32,14 @@ type ShadowPass interface {
 }
 
 type shadowpass struct {
-	meshes    cache.Meshes
+	meshes    MeshCache
 	backend   vulkan.T
 	pass      renderpass.T
 	mat       material.Instance[*GeometryDescriptors]
 	completed sync.Semaphore
 }
 
-func NewShadowPass(backend vulkan.T, meshes cache.Meshes) ShadowPass {
+func NewShadowPass(backend vulkan.T, meshes MeshCache) ShadowPass {
 	size := 1024
 	pass := renderpass.New(backend.Device(), renderpass.Args{
 		Frames: 1,
@@ -64,7 +63,7 @@ func NewShadowPass(backend vulkan.T, meshes cache.Meshes) ShadowPass {
 	})
 
 	geomsh := material.New(
-		backend,
+		backend.Device(),
 		material.Args{
 			Shader: shader.New(
 				backend.Device(),
@@ -166,8 +165,8 @@ func (p *shadowpass) Shadowmap() image.View {
 func (p *shadowpass) DrawDeferred(cmds command.Recorder, args render.Args, mesh mesh.T) error {
 	args = args.Apply(mesh.Transform().World())
 
-	vkmesh, ok := p.meshes.Fetch(mesh.Mesh(), nil).(*cache.VkMesh)
-	if !ok {
+	vkmesh := p.meshes.Fetch(mesh.Mesh())
+	if vkmesh == nil {
 		fmt.Println("mesh is nil")
 		return nil
 	}

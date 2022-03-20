@@ -7,7 +7,6 @@ import (
 	"github.com/johanhenriksson/goworld/core/mesh"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/core/object/query"
-	"github.com/johanhenriksson/goworld/engine/cache"
 	"github.com/johanhenriksson/goworld/game"
 	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/math/vec2"
@@ -60,7 +59,7 @@ type LightConst struct {
 type GeometryPass struct {
 	GeometryBuffer
 
-	meshes    cache.Meshes
+	meshes    MeshCache
 	quad      vertex.Mesh
 	backend   vulkan.T
 	pass      renderpass.T
@@ -71,7 +70,7 @@ type GeometryPass struct {
 	shadows ShadowPass
 }
 
-func NewGeometryPass(backend vulkan.T, meshes cache.Meshes, shadows ShadowPass) *GeometryPass {
+func NewGeometryPass(backend vulkan.T, meshes MeshCache, shadows ShadowPass) *GeometryPass {
 	diffuseFmt := vk.FormatR8g8b8a8Unorm
 	normalFmt := vk.FormatR8g8b8a8Unorm
 	positionFmt := vk.FormatR16g16b16a16Sfloat
@@ -86,6 +85,7 @@ func NewGeometryPass(backend vulkan.T, meshes cache.Meshes, shadows ShadowPass) 
 				Name:        "output",
 				Format:      diffuseFmt,
 				LoadOp:      vk.AttachmentLoadOpClear,
+				StoreOp:     vk.AttachmentStoreOpStore,
 				FinalLayout: vk.ImageLayoutShaderReadOnlyOptimal,
 				Usage:       vk.ImageUsageSampledBit,
 				Blend:       true,
@@ -102,7 +102,7 @@ func NewGeometryPass(backend vulkan.T, meshes cache.Meshes, shadows ShadowPass) 
 				Name:        "normal",
 				Format:      normalFmt,
 				LoadOp:      vk.AttachmentLoadOpClear,
-				StoreOp:     vk.AttachmentStoreOpDontCare,
+				StoreOp:     vk.AttachmentStoreOpStore,
 				FinalLayout: vk.ImageLayoutShaderReadOnlyOptimal,
 				Usage:       vk.ImageUsageInputAttachmentBit,
 			},
@@ -110,14 +110,14 @@ func NewGeometryPass(backend vulkan.T, meshes cache.Meshes, shadows ShadowPass) 
 				Name:        "position",
 				Format:      positionFmt,
 				LoadOp:      vk.AttachmentLoadOpClear,
-				StoreOp:     vk.AttachmentStoreOpDontCare,
+				StoreOp:     vk.AttachmentStoreOpStore,
 				FinalLayout: vk.ImageLayoutShaderReadOnlyOptimal,
 				Usage:       vk.ImageUsageInputAttachmentBit,
 			},
 		},
 		DepthAttachment: &renderpass.DepthAttachment{
 			LoadOp:      vk.AttachmentLoadOpClear,
-			StoreOp:     vk.AttachmentStoreOpDontCare,
+			StoreOp:     vk.AttachmentStoreOpStore,
 			FinalLayout: vk.ImageLayoutShaderReadOnlyOptimal,
 			Usage:       vk.ImageUsageInputAttachmentBit,
 			ClearDepth:  1,
@@ -174,7 +174,7 @@ func NewGeometryPass(backend vulkan.T, meshes cache.Meshes, shadows ShadowPass) 
 	gbuffer := NewGbuffer(backend, pass, backend.Frames())
 
 	geomsh := material.New(
-		backend,
+		backend.Device(),
 		material.Args{
 			Shader: shader.New(
 				backend.Device(),
@@ -226,7 +226,7 @@ func NewGeometryPass(backend vulkan.T, meshes cache.Meshes, shadows ShadowPass) 
 		0, 3, 1,
 	})
 
-	lightsh := NewLightShader(backend, pass)
+	lightsh := NewLightShader(backend.Device(), pass)
 
 	shadowtex := texture.FromView(backend.Device(), shadows.Shadowmap(), texture.Args{
 		Filter: vk.FilterNearest,
@@ -340,8 +340,8 @@ func (p *GeometryPass) Draw(args render.Args, scene object.T) {
 func (p *GeometryPass) DrawDeferred(cmds command.Recorder, args render.Args, mesh mesh.T) error {
 	args = args.Apply(mesh.Transform().World())
 
-	vkmesh, ok := p.meshes.Fetch(mesh.Mesh(), nil).(*cache.VkMesh)
-	if !ok {
+	vkmesh := p.meshes.Fetch(mesh.Mesh())
+	if vkmesh == nil {
 		fmt.Println("mesh is nil")
 		return nil
 	}
@@ -362,7 +362,7 @@ func (p *GeometryPass) DrawDeferred(cmds command.Recorder, args render.Args, mes
 func (p *GeometryPass) DrawLight(cmds command.Recorder, args render.Args, index int, lit light.Descriptor) error {
 	p.light.Descriptors().Light.Set(index, lit)
 
-	vkmesh := p.meshes.Fetch(p.quad, nil).(*cache.VkMesh)
+	vkmesh := p.meshes.Fetch(p.quad)
 	cmds.Record(func(cmd command.Buffer) {
 		cmd.CmdBindVertexBuffer(vkmesh.Vertices, 0)
 		cmd.CmdBindIndexBuffers(vkmesh.Indices, 0, vk.IndexTypeUint16)
