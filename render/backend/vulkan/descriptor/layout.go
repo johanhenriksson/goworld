@@ -39,6 +39,7 @@ func New[S Set](device device.T, set S, shader shader.T) SetLayoutTyped[S] {
 
 	log.Println("descriptor set")
 	maxCount := 0
+	createFlags := vk.DescriptorSetLayoutCreateFlagBits(0)
 	bindings := make([]vk.DescriptorSetLayoutBinding, 0, len(descriptors))
 	bindFlags := make([]vk.DescriptorBindingFlags, 0, len(descriptors))
 	for name, descriptor := range descriptors {
@@ -52,6 +53,7 @@ func New[S Set](device device.T, set S, shader shader.T) SetLayoutTyped[S] {
 		log.Printf("  %s -> %s\n", name, descriptor)
 		if variable, ok := descriptor.(VariableDescriptor); ok {
 			maxCount = variable.MaxCount()
+			createFlags |= vk.DescriptorSetLayoutCreateUpdateAfterBindPoolBit
 			log.Println("descriptor", name, "is of variable length", maxCount)
 		}
 	}
@@ -66,6 +68,7 @@ func New[S Set](device device.T, set S, shader shader.T) SetLayoutTyped[S] {
 		SType: vk.StructureTypeDescriptorSetLayoutCreateInfo,
 		PNext: unsafe.Pointer(&bindFlagsInfo),
 
+		Flags:        vk.DescriptorSetLayoutCreateFlags(createFlags),
 		BindingCount: uint32(len(bindings)),
 		PBindings:    bindings,
 	}

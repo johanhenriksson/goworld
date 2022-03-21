@@ -5,6 +5,7 @@ import (
 
 	"github.com/johanhenriksson/goworld/core/light"
 	"github.com/johanhenriksson/goworld/core/object"
+	"github.com/johanhenriksson/goworld/editor"
 	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/engine/vkrender"
 	"github.com/johanhenriksson/goworld/game"
@@ -29,13 +30,17 @@ func main() {
 			return vkrender.NewRenderer(backend)
 		},
 		SceneFunc: func(r engine.Renderer, scene object.T) {
-			player, chunk := game.CreateScene(r, scene)
+			player, chunk := game.CreateScene(scene)
 			player.Transform().SetPosition(vec3.New(0, 20, -11))
 			player.Eye.Transform().SetRotation(vec3.New(-30, 0, 0))
 
-			mesh := game.NewChunkMesh(chunk)
-			chunkobj := object.New("chunk", mesh)
-			scene.Adopt(chunkobj)
+			// mesh := game.NewChunkMesh(chunk)
+			// chunkobj := object.New("chunk", mesh)
+			// scene.Adopt(chunkobj)
+
+			// create editor
+			edit := editor.NewEditor(chunk, player.Camera, r.Buffers())
+			scene.Adopt(edit.Object())
 
 			object.Build("light1").
 				Position(vec3.New(10, 9, 13)).

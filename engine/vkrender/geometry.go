@@ -63,6 +63,7 @@ type GeometryPass struct {
 	geom      material.Instance[*GeometryDescriptors]
 	light     material.Instance[*LightDescriptors]
 	completed sync.Semaphore
+	copyReady sync.Semaphore
 
 	shadows ShadowPass
 }
@@ -93,7 +94,7 @@ func NewGeometryPass(backend vulkan.T, meshes MeshCache, textures TextureCache, 
 				LoadOp:      vk.AttachmentLoadOpClear,
 				StoreOp:     vk.AttachmentStoreOpStore,
 				FinalLayout: vk.ImageLayoutShaderReadOnlyOptimal,
-				Usage:       vk.ImageUsageInputAttachmentBit | vk.ImageUsageSampledBit,
+				Usage:       vk.ImageUsageInputAttachmentBit | vk.ImageUsageTransferSrcBit,
 			},
 			{
 				Name:        "normal",
@@ -101,7 +102,7 @@ func NewGeometryPass(backend vulkan.T, meshes MeshCache, textures TextureCache, 
 				LoadOp:      vk.AttachmentLoadOpClear,
 				StoreOp:     vk.AttachmentStoreOpStore,
 				FinalLayout: vk.ImageLayoutShaderReadOnlyOptimal,
-				Usage:       vk.ImageUsageInputAttachmentBit,
+				Usage:       vk.ImageUsageInputAttachmentBit | vk.ImageUsageTransferSrcBit,
 			},
 			{
 				Name:        "position",
@@ -109,14 +110,14 @@ func NewGeometryPass(backend vulkan.T, meshes MeshCache, textures TextureCache, 
 				LoadOp:      vk.AttachmentLoadOpClear,
 				StoreOp:     vk.AttachmentStoreOpStore,
 				FinalLayout: vk.ImageLayoutShaderReadOnlyOptimal,
-				Usage:       vk.ImageUsageInputAttachmentBit,
+				Usage:       vk.ImageUsageInputAttachmentBit | vk.ImageUsageTransferSrcBit,
 			},
 		},
 		DepthAttachment: &renderpass.DepthAttachment{
 			LoadOp:      vk.AttachmentLoadOpClear,
 			StoreOp:     vk.AttachmentStoreOpStore,
 			FinalLayout: vk.ImageLayoutShaderReadOnlyOptimal,
-			Usage:       vk.ImageUsageInputAttachmentBit,
+			Usage:       vk.ImageUsageInputAttachmentBit | vk.ImageUsageTransferSrcBit,
 			ClearDepth:  1,
 		},
 		Subpasses: []renderpass.Subpass{
@@ -214,7 +215,7 @@ func NewGeometryPass(backend vulkan.T, meshes MeshCache, textures TextureCache, 
 			},
 			Textures: &descriptor.SamplerArray{
 				Stages: vk.ShaderStageFragmentBit,
-				Count:  100,
+				Count:  16,
 			},
 		}).Instantiate()
 
@@ -255,6 +256,7 @@ func NewGeometryPass(backend vulkan.T, meshes MeshCache, textures TextureCache, 
 		light:     lightsh,
 		pass:      pass,
 		completed: sync.NewSemaphore(backend.Device()),
+		copyReady: sync.NewSemaphore(backend.Device()),
 
 		shadows: shadows,
 	}
@@ -332,7 +334,7 @@ func (p *GeometryPass) Draw(args render.Args, scene object.T) {
 	worker := p.backend.Worker(ctx.Index)
 	worker.Queue(cmds.Apply)
 	worker.Submit(command.SubmitInfo{
-		Signal: []sync.Semaphore{p.completed},
+		Signal: []sync.Semaphore{p.completed, p.copyReady},
 		Wait: []command.Wait{
 			{
 				Semaphore: p.shadows.Completed(),
@@ -340,7 +342,11 @@ func (p *GeometryPass) Draw(args render.Args, scene object.T) {
 			},
 		},
 	})
-	// worker.Wait()
+
+	p.GeometryBuffer.CopyBuffers(worker, ctx.Index, command.Wait{
+		Semaphore: p.copyReady,
+		Mask:      vk.PipelineStageColorAttachmentOutputBit,
+	})
 }
 
 func (p *GeometryPass) DrawDeferred(cmds command.Recorder, args render.Args, mesh mesh.T) error {
@@ -395,6 +401,7 @@ func (p *GeometryPass) Destroy() {
 	p.geom.Material().Destroy()
 	p.light.Material().Destroy()
 	p.completed.Destroy()
+	p.copyReady.Destroy()
 }
 
 func isDrawDeferred(m mesh.T) bool {

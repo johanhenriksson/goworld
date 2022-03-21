@@ -183,7 +183,10 @@ func New(device device.T, args Args) T {
 	}
 
 	ptrs := make([]vk.Pipeline, 1)
-	vk.CreateGraphicsPipelines(device.Ptr(), nil, 1, []vk.GraphicsPipelineCreateInfo{info}, nil, ptrs)
+	result := vk.CreateGraphicsPipelines(device.Ptr(), nil, 1, []vk.GraphicsPipelineCreateInfo{info}, nil, ptrs)
+	if result != vk.Success {
+		panic("failed to create pipeline")
+	}
 
 	return &pipeline{
 		ptr:    ptrs[0],

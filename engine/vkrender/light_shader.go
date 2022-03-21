@@ -87,7 +87,7 @@ func NewLightShader(device device.T, pass renderpass.T) material.Instance[*Light
 			},
 			Shadow: &descriptor.SamplerArray{
 				Stages: vk.ShaderStageFragmentBit,
-				Count:  100,
+				Count:  16,
 			},
 		})
 	return mat.Instantiate()

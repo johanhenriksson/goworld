@@ -17,8 +17,7 @@ type TestSet struct {
 func TestParseDescriptors(t *testing.T) {
 	set := TestSet{
 		Diffuse: &Sampler{
-			Binding: 0,
-			Stages:  vk.ShaderStageAll,
+			Stages: vk.ShaderStageAll,
 		},
 	}
 	desc, err := ParseDescriptorStruct(&set)

@@ -43,18 +43,20 @@ func (t *vktextures) Instantiate(ref texture.Ref) texture.T {
 
 	t.worker.Queue(func(cmd command.Buffer) {
 		cmd.CmdImageBarrier(
-			vk.PipelineStageFlags(vk.PipelineStageTopOfPipeBit),
-			vk.PipelineStageFlags(vk.PipelineStageTransferBit),
+			vk.PipelineStageTopOfPipeBit,
+			vk.PipelineStageTransferBit,
 			tex.Image(),
 			vk.ImageLayoutUndefined,
-			vk.ImageLayoutTransferDstOptimal)
+			vk.ImageLayoutTransferDstOptimal,
+			vk.ImageAspectColorBit)
 		cmd.CmdCopyBufferToImage(stage, tex.Image(), vk.ImageLayoutTransferDstOptimal)
 		cmd.CmdImageBarrier(
-			vk.PipelineStageFlags(vk.PipelineStageTransferBit),
-			vk.PipelineStageFlags(vk.PipelineStageFragmentShaderBit),
+			vk.PipelineStageTransferBit,
+			vk.PipelineStageFragmentShaderBit,
 			tex.Image(),
 			vk.ImageLayoutTransferDstOptimal,
-			vk.ImageLayoutShaderReadOnlyOptimal)
+			vk.ImageLayoutShaderReadOnlyOptimal,
+			vk.ImageAspectColorBit)
 	})
 	t.worker.Submit(command.SubmitInfo{})
 	t.worker.Wait()

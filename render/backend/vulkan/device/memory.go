@@ -135,20 +135,26 @@ func (m *memory) Read(offset int, target any) {
 		panic("memory is not visible to host")
 	}
 
-	t := reflect.TypeOf(target)
-	if t.Kind() != reflect.Slice {
-		panic(fmt.Errorf("output buffer must be a slice"))
-	}
+	size := 0
+	var dst unsafe.Pointer
 
+	t := reflect.TypeOf(target)
 	v := reflect.ValueOf(target)
 
-	// calculate copy size
-	count := v.Len()
-	sizeof := int(t.Elem().Size())
-	size := count * sizeof
+	if t.Kind() == reflect.Slice {
+		// calculate copy size
+		count := v.Len()
+		sizeof := int(t.Elem().Size())
+		size = count * sizeof
 
-	// get a pointer to the beginning of the array
-	dst := unsafe.Pointer(v.Pointer())
+		// get a pointer to the beginning of the array
+		dst = unsafe.Pointer(v.Pointer())
+	} else if t.Kind() == reflect.Pointer {
+		dst = v.UnsafePointer()
+		size = int(v.Elem().Type().Size())
+	} else {
+		panic(fmt.Errorf("buffered data must be a slice, struct or a pointer"))
+	}
 
 	if size+offset > m.size {
 		panic("out of bounds")

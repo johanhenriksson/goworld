@@ -35,8 +35,11 @@ type Buffer interface {
 	CmdSetViewport(x, y, w, h int)
 	CmdSetScissor(x, y, w, h int)
 	CmdPushConstant(layout pipeline.Layout, stages vk.ShaderStageFlags, offset int, value any)
-	CmdImageBarrier(srcMask, dstMask vk.PipelineStageFlags, image image.T, oldLayout, newLayout vk.ImageLayout)
+	CmdImageBarrier(srcMask, dstMask vk.PipelineStageFlagBits, image image.T, oldLayout, newLayout vk.ImageLayout, aspects vk.ImageAspectFlagBits)
 	CmdCopyBufferToImage(source buffer.T, dst image.T, layout vk.ImageLayout)
+	CmdCopyImageToBuffer(src image.T, srcLayout vk.ImageLayout, aspect vk.ImageAspectFlagBits, dst buffer.T)
+	CmdConvertImage(src image.T, srcLayout vk.ImageLayout, dst image.T, dstLayout vk.ImageLayout, aspects vk.ImageAspectFlagBits)
+	CmdCopyImage(src image.T, srcLayout vk.ImageLayout, dst image.T, dstLayout vk.ImageLayout, aspects vk.ImageAspectFlagBits)
 }
 
 type buf struct {
@@ -205,15 +208,15 @@ func (b *buf) CmdPushConstant(layout pipeline.Layout, stages vk.ShaderStageFlags
 	vk.CmdPushConstants(b.ptr, layout.Ptr(), stages, uint32(offset), uint32(size), ptr)
 }
 
-func (b *buf) CmdImageBarrier(srcMask, dstMask vk.PipelineStageFlags, image image.T, oldLayout, newLayout vk.ImageLayout) {
-	vk.CmdPipelineBarrier(b.ptr, srcMask, dstMask, vk.DependencyFlags(0), 0, nil, 0, nil, 1, []vk.ImageMemoryBarrier{
+func (b *buf) CmdImageBarrier(srcMask, dstMask vk.PipelineStageFlagBits, image image.T, oldLayout, newLayout vk.ImageLayout, aspects vk.ImageAspectFlagBits) {
+	vk.CmdPipelineBarrier(b.ptr, vk.PipelineStageFlags(srcMask), vk.PipelineStageFlags(dstMask), vk.DependencyFlags(0), 0, nil, 0, nil, 1, []vk.ImageMemoryBarrier{
 		{
 			SType:     vk.StructureTypeImageMemoryBarrier,
 			OldLayout: oldLayout,
 			NewLayout: newLayout,
 			Image:     image.Ptr(),
 			SubresourceRange: vk.ImageSubresourceRange{
-				AspectMask: vk.ImageAspectFlags(vk.ImageAspectColorBit),
+				AspectMask: vk.ImageAspectFlags(aspects),
 				LayerCount: 1,
 				LevelCount: 1,
 			},
@@ -229,6 +232,75 @@ func (b *buf) CmdCopyBufferToImage(source buffer.T, dst image.T, layout vk.Image
 				LayerCount: 1,
 			},
 			ImageExtent: vk.Extent3D{
+				Width:  uint32(dst.Width()),
+				Height: uint32(dst.Height()),
+				Depth:  1,
+			},
+		},
+	})
+}
+
+func (b *buf) CmdCopyImageToBuffer(src image.T, srcLayout vk.ImageLayout, aspects vk.ImageAspectFlagBits, dst buffer.T) {
+	vk.CmdCopyImageToBuffer(b.ptr, src.Ptr(), srcLayout, dst.Ptr(), 1, []vk.BufferImageCopy{
+		{
+			ImageSubresource: vk.ImageSubresourceLayers{
+				AspectMask: vk.ImageAspectFlags(aspects),
+				LayerCount: 1,
+			},
+			ImageExtent: vk.Extent3D{
+				Width:  uint32(src.Width()),
+				Height: uint32(src.Height()),
+				Depth:  1,
+			},
+		},
+	})
+}
+
+func (b *buf) CmdConvertImage(src image.T, srcLayout vk.ImageLayout, dst image.T, dstLayout vk.ImageLayout, aspects vk.ImageAspectFlagBits) {
+	vk.CmdBlitImage(b.ptr, src.Ptr(), srcLayout, dst.Ptr(), dstLayout, 1, []vk.ImageBlit{
+		{
+			SrcOffsets: [2]vk.Offset3D{
+				{X: 0, Y: 0, Z: 0},
+				{X: int32(src.Width()), Y: int32(src.Height()), Z: 1},
+			},
+			SrcSubresource: vk.ImageSubresourceLayers{
+				AspectMask:     vk.ImageAspectFlags(aspects),
+				MipLevel:       0,
+				BaseArrayLayer: 0,
+				LayerCount:     1,
+			},
+			DstOffsets: [2]vk.Offset3D{
+				{X: 0, Y: 0, Z: 0},
+				{X: int32(dst.Width()), Y: int32(dst.Height()), Z: 1},
+			},
+			DstSubresource: vk.ImageSubresourceLayers{
+				AspectMask:     vk.ImageAspectFlags(aspects),
+				MipLevel:       0,
+				BaseArrayLayer: 0,
+				LayerCount:     1,
+			},
+		},
+	}, vk.FilterNearest)
+}
+
+func (b *buf) CmdCopyImage(src image.T, srcLayout vk.ImageLayout, dst image.T, dstLayout vk.ImageLayout, aspects vk.ImageAspectFlagBits) {
+	vk.CmdCopyImage(b.ptr, src.Ptr(), srcLayout, dst.Ptr(), dstLayout, 1, []vk.ImageCopy{
+		{
+			SrcOffset: vk.Offset3D{X: 0, Y: 0, Z: 0},
+			SrcSubresource: vk.ImageSubresourceLayers{
+				AspectMask:     vk.ImageAspectFlags(aspects),
+				MipLevel:       0,
+				BaseArrayLayer: 0,
+				LayerCount:     1,
+			},
+			DstOffset: vk.Offset3D{X: 0, Y: 0, Z: 0},
+			DstSubresource: vk.ImageSubresourceLayers{
+				AspectMask:     vk.ImageAspectFlags(aspects),
+				MipLevel:       0,
+				BaseArrayLayer: 0,
+				LayerCount:     1,
+			},
+			Extent: vk.Extent3D{
 				Width:  uint32(dst.Width()),
 				Height: uint32(dst.Height()),
 				Depth:  1,

@@ -3,12 +3,11 @@ package game
 import (
 	"github.com/johanhenriksson/goworld/core/light"
 	"github.com/johanhenriksson/goworld/core/object"
-	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render/color"
 )
 
-func CreateScene(renderer engine.Renderer, scene object.T) (*Player, *Chunk) {
+func CreateScene(scene object.T) (*Player, *Chunk) {
 	scene.Attach(light.NewDirectional(light.DirectionalArgs{
 		Intensity: 1.6,
 		Color:     color.RGB(0.9*0.973, 0.9*0.945, 0.9*0.776),

@@ -62,10 +62,10 @@ func makeScene(renderer engine.Renderer, scene object.T) {
 	makeGui(glrender, scene)
 
 	// create voxel chunk scene
-	player, chunk := game.CreateScene(renderer, scene)
+	player, chunk := game.CreateScene(scene)
 
 	// create editor
-	edit := editor.NewEditor(chunk, player.Camera, glrender.Geometry.Buffer)
+	edit := editor.NewEditor(chunk, player.Camera, renderer.Buffers())
 	scene.Adopt(edit.Object())
 
 	// little gizmo thingy

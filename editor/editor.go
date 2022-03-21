@@ -1,17 +1,19 @@
 package editor
 
 import (
+	"fmt"
+
 	"github.com/johanhenriksson/goworld/core/camera"
 	"github.com/johanhenriksson/goworld/core/input/keys"
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/core/object"
+	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/game"
 	"github.com/johanhenriksson/goworld/geometry/box"
 	"github.com/johanhenriksson/goworld/geometry/plane"
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render/color"
-	"github.com/johanhenriksson/goworld/render/framebuffer"
 )
 
 type T interface {
@@ -48,14 +50,14 @@ type editor struct {
 
 	bounds  *box.T
 	mesh    *game.ChunkMesh
-	gbuffer framebuffer.Geometry
+	gbuffer engine.BufferOutput
 
 	cursorPos    vec3.T
 	cursorNormal vec3.T
 }
 
 // NewEditor creates a new editor application
-func NewEditor(chunk *game.Chunk, cam camera.T, gbuffer framebuffer.Geometry) T {
+func NewEditor(chunk *game.Chunk, cam camera.T, gbuffer engine.BufferOutput) T {
 	parent := object.New("Editor")
 
 	e := &editor{
@@ -172,21 +174,21 @@ func (e *editor) Update(dt float32) {
 
 // sample world position at current mouse coords
 func (e *editor) cursorPositionNormal(cursor vec2.T) (bool, vec3.T, vec3.T) {
-	depth, depthExists := e.gbuffer.SampleDepth(cursor)
-	if !depthExists {
-		return false, vec3.Zero, vec3.Zero
-	}
-
 	viewNormal, normalExists := e.gbuffer.SampleNormal(cursor)
 	if !normalExists {
 		return false, vec3.Zero, vec3.Zero
 	}
 
-	point := vec3.Extend(cursor.Div(e.gbuffer.Size()), depth)
-	position := e.Camera.Unproject(point)
+	viewPosition, positionExists := e.gbuffer.SamplePosition(cursor)
+	if !positionExists {
+		return false, vec3.Zero, vec3.Zero
+	}
 
 	viewInv := e.Camera.ViewInv()
 	normal := viewInv.TransformDir(viewNormal)
+	position := viewInv.TransformPoint(viewPosition)
+
+	fmt.Println("position:", position, "normal:", normal)
 
 	return true, position, normal
 }

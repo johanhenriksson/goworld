@@ -100,8 +100,8 @@ func (w *worker) enqueue(batch CommandFn) {
 
 	// record commands
 	buf.Begin()
+	defer buf.End()
 	batch(buf)
-	buf.End()
 
 	// append to the next batch
 	w.batch = append(w.batch, buf)

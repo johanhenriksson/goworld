@@ -47,6 +47,10 @@ func (r *VKRenderer) Draw(args render.Args, scene object.T) {
 	r.Output.Draw(args, scene)
 }
 
+func (r *VKRenderer) Buffers() engine.BufferOutput {
+	return r.Geometry.GeometryBuffer
+}
+
 func (r *VKRenderer) Destroy() {
 	r.backend.Device().WaitIdle()
 

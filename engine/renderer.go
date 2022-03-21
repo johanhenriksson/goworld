@@ -10,6 +10,7 @@ import (
 
 type Renderer interface {
 	Draw(args render.Args, scene object.T)
+	Buffers() BufferOutput
 	Destroy()
 }
 
@@ -88,6 +89,10 @@ func (r *GLRenderer) Draw(args render.Args, scene object.T) {
 	// reclaim mesh memory
 	r.meshes.Tick()
 	r.meshes.Evict()
+}
+
+func (r *GLRenderer) Buffers() BufferOutput {
+	return nil
 }
 
 func (r *GLRenderer) Destroy() {
