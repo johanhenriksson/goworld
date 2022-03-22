@@ -73,6 +73,7 @@ func NewEditor(chunk *game.Chunk, cam camera.T, gbuffer engine.BufferOutput) T {
 
 		mesh:    game.NewChunkMesh(chunk),
 		gbuffer: gbuffer,
+		color:   color.Red,
 	}
 
 	dimensions := vec3.NewI(chunk.Sx, chunk.Sy, chunk.Sz)
@@ -80,7 +81,7 @@ func NewEditor(chunk *game.Chunk, cam camera.T, gbuffer engine.BufferOutput) T {
 
 	box.Builder(&e.bounds, box.Args{
 		Size:  dimensions,
-		Color: color.DarkGrey,
+		Color: color.White,
 	}).
 		Parent(parent).
 		Create()

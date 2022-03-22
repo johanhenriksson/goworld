@@ -13,6 +13,7 @@ type VKRenderer struct {
 	Shadows  ShadowPass
 	Geometry *GeometryPass
 	Output   *OutputPass
+	Lines    *LinePass
 
 	backend  vulkan.T
 	meshes   MeshCache
@@ -35,7 +36,8 @@ func NewRenderer(backend vulkan.T) engine.Renderer {
 	r.Pre = &engine.PrePass{}
 	r.Shadows = NewShadowPass(backend, r.meshes)
 	r.Geometry = NewGeometryPass(backend, r.meshes, r.textures, r.Shadows)
-	r.Output = NewOutputPass(backend, r.meshes, r.textures, r.Geometry, r.Shadows)
+	r.Output = NewOutputPass(backend, r.meshes, r.textures, r.Geometry)
+	r.Lines = NewLinePass(backend, r.meshes, r.Output, r.Geometry)
 
 	return r
 }
@@ -45,6 +47,7 @@ func (r *VKRenderer) Draw(args render.Args, scene object.T) {
 	r.Shadows.Draw(args, scene)
 	r.Geometry.Draw(args, scene)
 	r.Output.Draw(args, scene)
+	r.Lines.Draw(args, scene)
 }
 
 func (r *VKRenderer) Buffers() engine.BufferOutput {
@@ -54,6 +57,7 @@ func (r *VKRenderer) Buffers() engine.BufferOutput {
 func (r *VKRenderer) Destroy() {
 	r.backend.Device().WaitIdle()
 
+	r.Lines.Destroy()
 	r.Shadows.Destroy()
 	r.Geometry.Destroy()
 	r.Output.Destroy()

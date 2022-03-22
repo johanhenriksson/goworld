@@ -2,6 +2,7 @@ package vkrender
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/johanhenriksson/goworld/core/light"
 	"github.com/johanhenriksson/goworld/core/mesh"
@@ -46,6 +47,7 @@ type shadowpass struct {
 }
 
 func NewShadowPass(backend vulkan.T, meshes MeshCache) ShadowPass {
+	log.Println("create shadow pass")
 	size := 1024
 	pass := renderpass.New(backend.Device(), renderpass.Args{
 		Frames: 1,

@@ -64,7 +64,7 @@ func (b *T) compute() {
 		{P: vec3.New(x+w, y+h, z), C: c},   // 5
 		{P: vec3.New(x, y+h, z+d), C: c},   // 6
 		{P: vec3.New(x+w, y+h, z+d), C: c}, // 7
-	}, []uint8{
+	}, []uint16{
 		// bottom
 		0, 1,
 		0, 2,

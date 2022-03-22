@@ -60,7 +60,15 @@ func (m *vkmeshes) Instantiate(mesh vertex.Mesh) *VkMesh {
 	}
 }
 
-func (m *vkmeshes) Update(bmesh *VkMesh, mesh vertex.Mesh) {
+func (m *vkmeshes) Update(cached *VkMesh, mesh vertex.Mesh) {
+	m.backend.Device().WaitIdle()
+	cached.Indices.Destroy()
+	cached.Vertices.Destroy()
+
+	updated := m.Instantiate(mesh)
+	cached.Indices = updated.Indices
+	cached.Vertices = updated.Vertices
+	cached.Mesh = mesh
 }
 
 func (m *vkmeshes) Delete(vkmesh *VkMesh) {

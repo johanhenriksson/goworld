@@ -220,6 +220,8 @@ func (b *buf) CmdImageBarrier(srcMask, dstMask vk.PipelineStageFlagBits, image i
 				LayerCount: 1,
 				LevelCount: 1,
 			},
+			SrcAccessMask: vk.AccessFlags(vk.AccessMemoryReadBit | vk.AccessMemoryWriteBit),
+			DstAccessMask: vk.AccessFlags(vk.AccessMemoryReadBit | vk.AccessMemoryWriteBit),
 		},
 	})
 }

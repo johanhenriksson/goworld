@@ -65,7 +65,7 @@ func (p *T) generate() {
 		{P: vec3.New(s, -y, s), N: vec3.UnitYN, C: c},   // d2
 	}
 
-	indices := []uint8{
+	indices := []uint16{
 		0, 2, 1, 1, 2, 3,
 		5, 6, 4, 7, 6, 5,
 	}

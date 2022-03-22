@@ -26,12 +26,11 @@ type OutputPass struct {
 	material material.T[*OutputDescriptors]
 	geometry DeferredPass
 
-	quad *VkMesh
-	desc []material.Instance[*OutputDescriptors]
-	tex  []texture.T
-	pass renderpass.T
-
-	shadows ShadowPass
+	quad      *VkMesh
+	desc      []material.Instance[*OutputDescriptors]
+	tex       []texture.T
+	pass      renderpass.T
+	completed sync.Semaphore
 }
 
 type OutputDescriptors struct {
@@ -39,13 +38,13 @@ type OutputDescriptors struct {
 	Output *descriptor.Sampler
 }
 
-func NewOutputPass(backend vulkan.T, meshes MeshCache, textures TextureCache, geometry DeferredPass, shadows ShadowPass) *OutputPass {
+func NewOutputPass(backend vulkan.T, meshes MeshCache, textures TextureCache, geometry DeferredPass) *OutputPass {
 	p := &OutputPass{
-		backend:  backend,
-		meshes:   meshes,
-		textures: textures,
-		geometry: geometry,
-		shadows:  shadows,
+		backend:   backend,
+		meshes:    meshes,
+		textures:  textures,
+		geometry:  geometry,
+		completed: sync.NewSemaphore(backend.Device()),
 	}
 
 	quadvtx := vertex.NewTriangles("screen_quad", []vertex.T{
@@ -71,6 +70,7 @@ func NewOutputPass(backend vulkan.T, meshes MeshCache, textures TextureCache, ge
 				Format:      backend.Swapchain().SurfaceFormat(),
 				LoadOp:      vk.AttachmentLoadOpClear,
 				FinalLayout: vk.ImageLayoutPresentSrc,
+				Usage:       vk.ImageUsageInputAttachmentBit,
 			},
 		},
 		Subpasses: []renderpass.Subpass{
@@ -118,10 +118,6 @@ func NewOutputPass(backend vulkan.T, meshes MeshCache, textures TextureCache, ge
 			Filter: vk.FilterNearest,
 			Wrap:   vk.SamplerAddressModeClampToEdge,
 		})
-		// p.tex[i] = texture.FromView(backend.Device(), p.shadows.Shadowmap(), texture.Args{
-		// 	Filter: vk.FilterNearest,
-		// 	Wrap:   vk.SamplerAddressModeClampToEdge,
-		// })
 		p.desc[i].Descriptors().Output.Set(p.tex[i])
 	}
 
@@ -145,7 +141,7 @@ func (p *OutputPass) Draw(args render.Args, scene object.T) {
 	})
 
 	worker.Submit(command.SubmitInfo{
-		Signal: []sync.Semaphore{ctx.RenderComplete},
+		Signal: []sync.Semaphore{p.completed},
 		Wait: []command.Wait{
 			{
 				Semaphore: p.geometry.Completed(),
@@ -157,10 +153,15 @@ func (p *OutputPass) Draw(args render.Args, scene object.T) {
 	// worker.Wait()
 }
 
+func (p *OutputPass) Completed() sync.Semaphore {
+	return p.completed
+}
+
 func (p *OutputPass) Destroy() {
 	for _, tex := range p.tex {
 		tex.Destroy()
 	}
 	p.pass.Destroy()
 	p.material.Destroy()
+	p.completed.Destroy()
 }

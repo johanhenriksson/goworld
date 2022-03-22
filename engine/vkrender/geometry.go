@@ -345,7 +345,7 @@ func (p *GeometryPass) Draw(args render.Args, scene object.T) {
 
 	p.GeometryBuffer.CopyBuffers(worker, ctx.Index, command.Wait{
 		Semaphore: p.copyReady,
-		Mask:      vk.PipelineStageColorAttachmentOutputBit,
+		Mask:      vk.PipelineStageTopOfPipeBit,
 	})
 }
 

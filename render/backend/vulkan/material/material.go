@@ -36,6 +36,7 @@ type Args struct {
 	Subpass   string
 	Pointers  vertex.Pointers
 	Constants []pipeline.PushConstant
+	Primitive vertex.Primitive
 }
 
 func New[D descriptor.Set](device device.T, args Args, descriptors D) T[D] {
@@ -49,6 +50,10 @@ func New[D descriptor.Set](device device.T, args Args, descriptors D) T[D] {
 		} else {
 			log.Printf("no attribute in shader %s\n", ptr.Name)
 		}
+	}
+
+	if args.Primitive == 0 {
+		args.Primitive = vertex.Triangles
 	}
 
 	// create new descriptor set layout
@@ -66,7 +71,7 @@ func New[D descriptor.Set](device device.T, args Args, descriptors D) T[D] {
 		Shader:   args.Shader,
 		Pointers: args.Pointers,
 
-		Primitive:  vertex.Triangles,
+		Primitive:  args.Primitive,
 		DepthTest:  true,
 		DepthWrite: true,
 	})
