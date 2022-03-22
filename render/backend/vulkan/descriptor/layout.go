@@ -48,12 +48,16 @@ func New[S Set](device device.T, set S, shader shader.T) SetLayoutTyped[S] {
 			panic("unresolved descriptor")
 		}
 		bindings = append(bindings, descriptor.LayoutBinding(index))
-		bindFlags = append(bindFlags, descriptor.BindingFlags())
+		flags := descriptor.BindingFlags()
+		bindFlags = append(bindFlags, flags)
+
+		if flags&vk.DescriptorBindingFlags(vk.DescriptorBindingUpdateAfterBindBit) > 0 {
+			createFlags |= vk.DescriptorSetLayoutCreateUpdateAfterBindPoolBit
+		}
 
 		log.Printf("  %s -> %s\n", name, descriptor)
 		if variable, ok := descriptor.(VariableDescriptor); ok {
 			maxCount = variable.MaxCount()
-			createFlags |= vk.DescriptorSetLayoutCreateUpdateAfterBindPoolBit
 			log.Println("descriptor", name, "is of variable length", maxCount)
 		}
 	}

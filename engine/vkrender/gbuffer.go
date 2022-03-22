@@ -2,6 +2,7 @@ package vkrender
 
 import (
 	"image/color"
+	"log"
 
 	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/math/vec2"
@@ -44,6 +45,8 @@ type gbuffer struct {
 }
 
 func NewGbuffer(backend vulkan.T, pass renderpass.T, frames int) GeometryBuffer {
+	log.Println("creating gbuffer with", frames, "frames")
+
 	diffuse := make([]image.View, frames)
 	normal := make([]image.View, frames)
 	position := make([]image.View, frames)
@@ -58,6 +61,35 @@ func NewGbuffer(backend vulkan.T, pass renderpass.T, frames int) GeometryBuffer 
 		depth[i] = pass.Depth().View(i)
 	}
 
+	positionBuf := image.New(backend.Device(), image.Args{
+		Type:   vk.ImageType2d,
+		Width:  position[0].Image().Width(),
+		Height: position[0].Image().Height(),
+		Format: position[0].Format(),
+		Tiling: vk.ImageTilingLinear,
+		Usage:  vk.ImageUsageTransferDstBit,
+		Memory: vk.MemoryPropertyHostVisibleBit | vk.MemoryPropertyHostCoherentBit,
+	})
+
+	normalBuf := image.New(backend.Device(), image.Args{
+		Type:   vk.ImageType2d,
+		Width:  normal[0].Image().Width(),
+		Height: normal[0].Image().Height(),
+		Format: normal[0].Format(),
+		Tiling: vk.ImageTilingLinear,
+		Usage:  vk.ImageUsageTransferDstBit,
+		Memory: vk.MemoryPropertyHostVisibleBit | vk.MemoryPropertyHostCoherentBit,
+	})
+
+	// move images to ImageLayoutGeneral to avoid errors on first copy
+	worker := backend.Transferer()
+	worker.Queue(func(b command.Buffer) {
+		b.CmdImageBarrier(vk.PipelineStageTopOfPipeBit, vk.PipelineStageTransferBit, positionBuf, vk.ImageLayoutUndefined, vk.ImageLayoutGeneral, vk.ImageAspectColorBit)
+		b.CmdImageBarrier(vk.PipelineStageTopOfPipeBit, vk.PipelineStageTransferBit, normalBuf, vk.ImageLayoutUndefined, vk.ImageLayoutGeneral, vk.ImageAspectColorBit)
+	})
+	worker.Submit(command.SubmitInfo{})
+	worker.Wait()
+
 	return &gbuffer{
 		frames: frames,
 		width:  backend.Width(),
@@ -69,26 +101,8 @@ func NewGbuffer(backend vulkan.T, pass renderpass.T, frames int) GeometryBuffer 
 		depth:    depth,
 		output:   output,
 
-		positionBuf: image.New(backend.Device(), image.Args{
-			Type:   vk.ImageType2d,
-			Width:  position[0].Image().Width(),
-			Height: position[0].Image().Height(),
-			Format: position[0].Format(),
-			Layout: vk.ImageLayoutGeneral,
-			Tiling: vk.ImageTilingLinear,
-			Usage:  vk.ImageUsageTransferDstBit,
-			Memory: vk.MemoryPropertyHostVisibleBit | vk.MemoryPropertyHostCoherentBit,
-		}),
-		normalBuf: image.New(backend.Device(), image.Args{
-			Type:   vk.ImageType2d,
-			Width:  normal[0].Image().Width(),
-			Height: normal[0].Image().Height(),
-			Format: normal[0].Format(),
-			Layout: vk.ImageLayoutGeneral,
-			Tiling: vk.ImageTilingLinear,
-			Usage:  vk.ImageUsageTransferDstBit,
-			Memory: vk.MemoryPropertyHostVisibleBit | vk.MemoryPropertyHostCoherentBit,
-		}),
+		positionBuf: positionBuf,
+		normalBuf:   normalBuf,
 	}
 }
 

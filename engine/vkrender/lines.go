@@ -73,11 +73,9 @@ func NewLinePass(backend vulkan.T, meshes MeshCache, output Pass, geometry Defer
 		DepthAttachment: &renderpass.DepthAttachment{
 			Images:        depth,
 			LoadOp:        vk.AttachmentLoadOpLoad,
-			StoreOp:       vk.AttachmentStoreOpDontCare,
-			InitialLayout: vk.ImageLayoutDepthStencilAttachmentOptimal,
+			InitialLayout: vk.ImageLayoutUndefined,
 			FinalLayout:   vk.ImageLayoutDepthStencilAttachmentOptimal,
 			Usage:         vk.ImageUsageInputAttachmentBit,
-			StencilLoadOp: vk.AttachmentLoadOpLoad,
 		},
 		Subpasses: []renderpass.Subpass{
 			{
@@ -113,7 +111,7 @@ func NewLinePass(backend vulkan.T, meshes MeshCache, output Pass, geometry Defer
 			Pass:      p.pass,
 			Pointers:  vertex.ParsePointers(vertex.C{}),
 			Primitive: vertex.Lines,
-			// DepthTest: true,
+			DepthTest: true,
 		},
 		&LineDescriptors{
 			Camera: &descriptor.Uniform[Camera]{

@@ -22,6 +22,7 @@ type pool struct {
 func NewPool(device device.T, sizes []vk.DescriptorPoolSize) Pool {
 	info := vk.DescriptorPoolCreateInfo{
 		SType:         vk.StructureTypeDescriptorPoolCreateInfo,
+		Flags:         vk.DescriptorPoolCreateFlags(vk.DescriptorPoolCreateUpdateAfterBindBit),
 		PPoolSizes:    sizes,
 		PoolSizeCount: uint32(len(sizes)),
 		MaxSets:       100,

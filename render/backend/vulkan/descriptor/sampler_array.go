@@ -52,8 +52,9 @@ func (d *SamplerArray) LayoutBinding(binding int) vk.DescriptorSetLayoutBinding 
 
 func (d *SamplerArray) BindingFlags() vk.DescriptorBindingFlags {
 	return vk.DescriptorBindingFlags(
-		vk.DescriptorBindingPartiallyBoundBit |
-			vk.DescriptorBindingVariableDescriptorCountBit |
+		vk.DescriptorBindingVariableDescriptorCountBit |
+			vk.DescriptorBindingPartiallyBoundBit |
+			vk.DescriptorBindingUpdateAfterBindBit |
 			vk.DescriptorBindingUpdateUnusedWhilePendingBit)
 }
 

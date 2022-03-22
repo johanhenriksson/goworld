@@ -51,11 +51,15 @@ func New(physDevice vk.PhysicalDevice) (T, error) {
 	// VK_EXT_descriptor_indexing settings
 	indexingFeatures := vk.PhysicalDeviceDescriptorIndexingFeatures{
 		SType: vk.StructureTypePhysicalDeviceDescriptorIndexingFeatures,
-		ShaderSampledImageArrayNonUniformIndexing: vk.True,
-		RuntimeDescriptorArray:                    vk.True,
-		DescriptorBindingPartiallyBound:           vk.True,
-		DescriptorBindingVariableDescriptorCount:  vk.True,
-		DescriptorBindingUpdateUnusedWhilePending: vk.True,
+		ShaderSampledImageArrayNonUniformIndexing:          vk.True,
+		RuntimeDescriptorArray:                             vk.True,
+		DescriptorBindingPartiallyBound:                    vk.True,
+		DescriptorBindingVariableDescriptorCount:           vk.True,
+		DescriptorBindingUpdateUnusedWhilePending:          vk.True,
+		DescriptorBindingUniformBufferUpdateAfterBind:      vk.True,
+		DescriptorBindingSampledImageUpdateAfterBind:       vk.True,
+		DescriptorBindingStorageBufferUpdateAfterBind:      vk.True,
+		DescriptorBindingStorageTexelBufferUpdateAfterBind: vk.True,
 	}
 
 	var dev vk.Device
