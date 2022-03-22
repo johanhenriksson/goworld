@@ -26,7 +26,7 @@ type OutputPass struct {
 	material material.T[*OutputDescriptors]
 	geometry DeferredPass
 
-	quad      *VkMesh
+	quad      VkMesh
 	desc      []material.Instance[*OutputDescriptors]
 	tex       []texture.T
 	pass      renderpass.T
@@ -101,8 +101,10 @@ func NewOutputPass(backend vulkan.T, meshes MeshCache, textures TextureCache, ge
 					"Output": 0,
 				},
 			),
-			Pass:     p.pass,
-			Pointers: vertex.ParsePointers(vertex.T{}),
+			Pass:       p.pass,
+			Pointers:   vertex.ParsePointers(vertex.T{}),
+			DepthTest:  false,
+			DepthWrite: false,
 		},
 		&OutputDescriptors{
 			Output: &descriptor.Sampler{
@@ -132,10 +134,7 @@ func (p *OutputPass) Draw(args render.Args, scene object.T) {
 		cmd.CmdBeginRenderPass(p.pass, ctx.Index)
 
 		p.desc[ctx.Index%len(p.desc)].Bind(cmd)
-
-		cmd.CmdBindVertexBuffer(p.quad.Vertices, 0)
-		cmd.CmdBindIndexBuffers(p.quad.Indices, 0, vk.IndexTypeUint16)
-		cmd.CmdDrawIndexed(p.quad.Mesh.Elements(), 1, 0, 0, 0)
+		p.quad.Draw(cmd, 0)
 
 		cmd.CmdEndRenderPass()
 	})

@@ -128,8 +128,7 @@ func NewGeometryPass(backend vulkan.T, meshes MeshCache, textures TextureCache, 
 				ColorAttachments: []string{"diffuse", "normal", "position"},
 			},
 			{
-				Name:  "lighting",
-				Depth: false,
+				Name: "lighting",
 
 				ColorAttachments: []string{"output"},
 				InputAttachments: []string{"diffuse", "normal", "position", "depth"},
@@ -201,9 +200,11 @@ func NewGeometryPass(backend vulkan.T, meshes MeshCache, textures TextureCache, 
 					"Textures": 2,
 				},
 			),
-			Pass:     pass,
-			Subpass:  "geometry",
-			Pointers: vertex.ParsePointers(game.VoxelVertex{}),
+			Pass:       pass,
+			Subpass:    "geometry",
+			Pointers:   vertex.ParsePointers(game.VoxelVertex{}),
+			DepthTest:  true,
+			DepthWrite: true,
 		},
 		&GeometryDescriptors{
 			Camera: &descriptor.Uniform[CameraData]{
@@ -284,16 +285,7 @@ func (p *GeometryPass) Draw(args render.Args, scene object.T) {
 
 	geomDesc.Camera.Set(camera)
 
-	geomDesc.Objects.Set(0, ObjectStorage{
-		Model: mat4.Ident(),
-	})
-
-	geomDesc.Objects.Set(1, ObjectStorage{
-		Model: mat4.Translate(vec3.New(-16, 0, 0)),
-	})
-
 	lightDesc := p.light.Descriptors()
-
 	lightDesc.Camera.Set(camera)
 
 	cmds.Record(func(cmd command.Buffer) {
@@ -302,8 +294,8 @@ func (p *GeometryPass) Draw(args render.Args, scene object.T) {
 	})
 
 	objects := query.New[mesh.T]().Where(isDrawDeferred).Collect(scene)
-	for _, mesh := range objects {
-		if err := p.DrawDeferred(cmds, args, mesh); err != nil {
+	for index, mesh := range objects {
+		if err := p.DrawDeferred(cmds, index, args, mesh); err != nil {
 			fmt.Printf("deferred draw error in object %s: %s\n", mesh.Name(), err)
 		}
 	}
@@ -349,23 +341,22 @@ func (p *GeometryPass) Draw(args render.Args, scene object.T) {
 	})
 }
 
-func (p *GeometryPass) DrawDeferred(cmds command.Recorder, args render.Args, mesh mesh.T) error {
-	args = args.Apply(mesh.Transform().World())
-
+func (p *GeometryPass) DrawDeferred(cmds command.Recorder, index int, args render.Args, mesh mesh.T) error {
 	vkmesh := p.meshes.Fetch(mesh.Mesh())
 	if vkmesh == nil {
 		fmt.Println("mesh is nil")
 		return nil
 	}
 
-	cmds.Record(func(cmd command.Buffer) {
-		cmd.CmdBindVertexBuffer(vkmesh.Vertices, 0)
-		cmd.CmdBindIndexBuffers(vkmesh.Indices, 0, vk.IndexTypeUint16)
+	// write object properties to ssbo
+	// todo: this should be reused between frames - maybe
+	//       how to detect changes?
+	p.geom.Descriptors().Objects.Set(index, ObjectStorage{
+		Model: mesh.Transform().World(),
+	})
 
-		// index of the object properties in the ssbo
-		idx := 0
-		count := 2
-		cmd.CmdDrawIndexed(vkmesh.Mesh.Elements(), count, 0, 0, idx)
+	cmds.Record(func(cmd command.Buffer) {
+		vkmesh.Draw(cmd, index)
 	})
 
 	return nil
@@ -374,8 +365,6 @@ func (p *GeometryPass) DrawDeferred(cmds command.Recorder, args render.Args, mes
 func (p *GeometryPass) DrawLight(cmds command.Recorder, args render.Args, lit light.Descriptor) error {
 	vkmesh := p.meshes.Fetch(p.quad)
 	cmds.Record(func(cmd command.Buffer) {
-		cmd.CmdBindVertexBuffer(vkmesh.Vertices, 0)
-		cmd.CmdBindIndexBuffers(vkmesh.Indices, 0, vk.IndexTypeUint16)
 
 		push := LightConst{
 			ViewProj:    lit.ViewProj,
@@ -389,7 +378,7 @@ func (p *GeometryPass) DrawLight(cmds command.Recorder, args render.Args, lit li
 		}
 		cmd.CmdPushConstant(p.light.Material().Layout(), vk.ShaderStageFlags(vk.ShaderStageFragmentBit), 0, &push)
 
-		cmd.CmdDrawIndexed(vkmesh.Mesh.Elements(), 1, 0, 0, 0)
+		vkmesh.Draw(cmd, 0)
 	})
 
 	return nil

@@ -77,11 +77,12 @@ func NewLinePass(backend vulkan.T, meshes MeshCache, output Pass, geometry Defer
 			InitialLayout: vk.ImageLayoutDepthStencilAttachmentOptimal,
 			FinalLayout:   vk.ImageLayoutDepthStencilAttachmentOptimal,
 			Usage:         vk.ImageUsageInputAttachmentBit,
+			StencilLoadOp: vk.AttachmentLoadOpLoad,
 		},
 		Subpasses: []renderpass.Subpass{
 			{
 				Name:  "output",
-				Depth: false,
+				Depth: true,
 
 				ColorAttachments: []string{"color"},
 			},
@@ -112,6 +113,7 @@ func NewLinePass(backend vulkan.T, meshes MeshCache, output Pass, geometry Defer
 			Pass:      p.pass,
 			Pointers:  vertex.ParsePointers(vertex.C{}),
 			Primitive: vertex.Lines,
+			// DepthTest: true,
 		},
 		&LineDescriptors{
 			Camera: &descriptor.Uniform[CameraData]{
@@ -178,12 +180,9 @@ func (p *LinePass) DrawLines(cmds command.Recorder, index int, args render.Args,
 	}
 
 	cmds.Record(func(cmd command.Buffer) {
-		cmd.CmdBindVertexBuffer(vkmesh.Vertices, 0)
-		cmd.CmdBindIndexBuffers(vkmesh.Indices, 0, vk.IndexTypeUint16)
+		p.material.Descriptors().Objects.Set(index, mesh.Transform().World())
 
-		p.material.Descriptors().Objects.Set(index, mat4.Ident()) // .Transform)
-
-		cmd.CmdDrawIndexed(vkmesh.Mesh.Elements(), 1, 0, 0, index)
+		vkmesh.Draw(cmd, index)
 	})
 
 	return nil

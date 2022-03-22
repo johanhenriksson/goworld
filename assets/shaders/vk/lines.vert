@@ -35,6 +35,6 @@ void main()
 {
     color = color_0.rgb;
 
-	mat4 mvp = camera.ViewProj; // * ssbo.objects[gl_InstanceIndex].model;
+	mat4 mvp = camera.ViewProj * ssbo.objects[gl_InstanceIndex].model;
 	gl_Position = mvp * vec4(position, 1);
 }

@@ -1,8 +1,6 @@
 package editor
 
 import (
-	"fmt"
-
 	"github.com/johanhenriksson/goworld/core/camera"
 	"github.com/johanhenriksson/goworld/core/input/keys"
 	"github.com/johanhenriksson/goworld/core/input/mouse"
@@ -81,7 +79,7 @@ func NewEditor(chunk *game.Chunk, cam camera.T, gbuffer engine.BufferOutput) T {
 
 	box.Builder(&e.bounds, box.Args{
 		Size:  dimensions,
-		Color: color.White,
+		Color: color.DarkGrey,
 	}).
 		Parent(parent).
 		Create()
@@ -119,6 +117,9 @@ func NewEditor(chunk *game.Chunk, cam camera.T, gbuffer engine.BufferOutput) T {
 		Create()
 
 	parent.Adopt(e.PlaceTool, e.ReplaceTool, e.EraseTool, e.SampleTool)
+	e.ReplaceTool.SetActive(false)
+	e.EraseTool.SetActive(false)
+	e.SampleTool.SetActive(false)
 
 	e.SelectTool(e.PlaceTool)
 
@@ -188,8 +189,6 @@ func (e *editor) cursorPositionNormal(cursor vec2.T) (bool, vec3.T, vec3.T) {
 	viewInv := e.Camera.ViewInv()
 	normal := viewInv.TransformDir(viewNormal)
 	position := viewInv.TransformPoint(viewPosition)
-
-	fmt.Println("position:", position, "normal:", normal)
 
 	return true, position, normal
 }

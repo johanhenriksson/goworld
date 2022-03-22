@@ -13,6 +13,7 @@ import (
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/shader"
 	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/vertex"
+
 	vk "github.com/vulkan-go/vulkan"
 )
 
@@ -68,6 +69,7 @@ func NewLightShader(device device.T, pass renderpass.T) material.Instance[*Light
 					Type:   LightConst{},
 				},
 			},
+			DepthTest: true,
 		},
 		&LightDescriptors{
 			Diffuse: &descriptor.InputAttachment{

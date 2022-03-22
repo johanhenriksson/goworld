@@ -31,12 +31,14 @@ type material[D descriptor.Set] struct {
 }
 
 type Args struct {
-	Shader    shader.T
-	Pass      renderpass.T
-	Subpass   string
-	Pointers  vertex.Pointers
-	Constants []pipeline.PushConstant
-	Primitive vertex.Primitive
+	Shader     shader.T
+	Pass       renderpass.T
+	Subpass    string
+	Pointers   vertex.Pointers
+	Constants  []pipeline.PushConstant
+	Primitive  vertex.Primitive
+	DepthTest  bool
+	DepthWrite bool
 }
 
 func New[D descriptor.Set](device device.T, args Args, descriptors D) T[D] {
@@ -72,8 +74,8 @@ func New[D descriptor.Set](device device.T, args Args, descriptors D) T[D] {
 		Pointers: args.Pointers,
 
 		Primitive:  args.Primitive,
-		DepthTest:  true,
-		DepthWrite: true,
+		DepthTest:  args.DepthTest,
+		DepthWrite: args.DepthWrite,
 	})
 
 	return &material[D]{

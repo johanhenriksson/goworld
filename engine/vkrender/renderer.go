@@ -48,6 +48,9 @@ func (r *VKRenderer) Draw(args render.Args, scene object.T) {
 	r.Geometry.Draw(args, scene)
 	r.Output.Draw(args, scene)
 	r.Lines.Draw(args, scene)
+
+	r.meshes.Tick()
+	r.textures.Tick()
 }
 
 func (r *VKRenderer) Buffers() engine.BufferOutput {

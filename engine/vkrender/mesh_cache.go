@@ -10,71 +10,97 @@ import (
 	vk "github.com/vulkan-go/vulkan"
 )
 
-type MeshCache cache.T[vertex.Mesh, *VkMesh]
+type MeshCache cache.T[vertex.Mesh, VkMesh]
+
+type VkMesh interface {
+	Draw(command.Buffer, int)
+	Destroy()
+}
 
 // mesh cache backend
 type vkmeshes struct {
-	backend vulkan.T
-	worker  command.Worker
-}
-
-type VkMesh struct {
-	Vertices buffer.T
-	Indices  buffer.T
-	Mesh     vertex.Mesh
+	backend  vulkan.T
+	worker   command.Worker
+	idxstage buffer.T
+	vtxstage buffer.T
 }
 
 func NewMeshCache(backend vulkan.T) MeshCache {
-	return cache.New[vertex.Mesh, *VkMesh](&vkmeshes{
+	stagesize := 100 * 1024 // 100k for now
+
+	return cache.New[vertex.Mesh, VkMesh](&vkmeshes{
 		backend: backend,
 		worker:  backend.Transferer(),
+
+		vtxstage: buffer.NewShared(backend.Device(), stagesize),
+		idxstage: buffer.NewShared(backend.Device(), stagesize),
 	})
 }
 
-func (m *vkmeshes) Instantiate(mesh vertex.Mesh) *VkMesh {
+func (m *vkmeshes) Instantiate(mesh vertex.Mesh) VkMesh {
 	bufsize := 100 * 1024 // 100k for now
 
-	vtx := buffer.NewRemote(m.backend.Device(), bufsize, vk.BufferUsageVertexBufferBit)
-	idx := buffer.NewRemote(m.backend.Device(), bufsize, vk.BufferUsageIndexBufferBit)
+	cached := &vkMesh{
+		vertices: buffer.NewRemote(m.backend.Device(), bufsize, vk.BufferUsageVertexBufferBit),
+		indices:  buffer.NewRemote(m.backend.Device(), bufsize, vk.BufferUsageIndexBufferBit),
+	}
+	m.upload(cached, mesh)
 
-	vtxstage := buffer.NewShared(m.backend.Device(), bufsize)
-	vtxstage.Write(0, mesh.VertexData())
+	return cached
+}
 
-	idxstage := buffer.NewShared(m.backend.Device(), bufsize)
-	idxstage.Write(0, mesh.IndexData())
+func (m *vkmeshes) upload(cached *vkMesh, mesh vertex.Mesh) {
+	// todo: rewrite in a thread safe manner
+	// introduce a queue and a goroutine that periodically runs transfers
+
+	m.vtxstage.Write(0, mesh.VertexData())
+	m.idxstage.Write(0, mesh.IndexData())
 
 	m.worker.Queue(func(cmd command.Buffer) {
-		cmd.CmdCopyBuffer(vtxstage, vtx)
-		cmd.CmdCopyBuffer(idxstage, idx)
+		cmd.CmdCopyBuffer(m.vtxstage, cached.vertices)
+		cmd.CmdCopyBuffer(m.idxstage, cached.indices)
 	})
 	m.worker.Submit(command.SubmitInfo{})
-	m.worker.Wait()
+	// m.worker.Wait()
 
-	vtxstage.Destroy()
-	idxstage.Destroy()
-
-	return &VkMesh{
-		Vertices: vtx,
-		Indices:  idx,
-		Mesh:     mesh,
-	}
+	cached.elements = mesh.Elements()
+	cached.idxType = vk.IndexTypeUint16
+	cached.idxOffset = 0
+	cached.vtxOffset = 0
 }
 
-func (m *vkmeshes) Update(cached *VkMesh, mesh vertex.Mesh) {
-	m.backend.Device().WaitIdle()
-	cached.Indices.Destroy()
-	cached.Vertices.Destroy()
-
-	updated := m.Instantiate(mesh)
-	cached.Indices = updated.Indices
-	cached.Vertices = updated.Vertices
-	cached.Mesh = mesh
+func (m *vkmeshes) Update(cached VkMesh, mesh vertex.Mesh) {
+	vkmesh := cached.(*vkMesh)
+	m.upload(vkmesh, mesh)
 }
 
-func (m *vkmeshes) Delete(vkmesh *VkMesh) {
-	vkmesh.Vertices.Destroy()
-	vkmesh.Indices.Destroy()
+func (m *vkmeshes) Delete(vkmesh VkMesh) {
+	vkmesh.Destroy()
 }
 
 func (m *vkmeshes) Destroy() {
+	m.vtxstage.Destroy()
+	m.idxstage.Destroy()
+}
+
+type vkMesh struct {
+	elements  int
+	vtxOffset int
+	idxOffset int
+	idxType   vk.IndexType
+	vertices  buffer.T
+	indices   buffer.T
+}
+
+func (m *vkMesh) Draw(cmd command.Buffer, index int) {
+	cmd.CmdBindVertexBuffer(m.vertices, 0)
+	cmd.CmdBindIndexBuffers(m.indices, 0, m.idxType)
+
+	// index of the object properties in the ssbo
+	cmd.CmdDrawIndexed(m.elements, 1, m.idxOffset, m.vtxOffset, index)
+}
+
+func (m *vkMesh) Destroy() {
+	m.vertices.Destroy()
+	m.indices.Destroy()
 }

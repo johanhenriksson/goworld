@@ -9,8 +9,6 @@ import (
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/core/object/query"
 	"github.com/johanhenriksson/goworld/game"
-	"github.com/johanhenriksson/goworld/math/mat4"
-	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/backend/types"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan"
@@ -87,8 +85,10 @@ func NewShadowPass(backend vulkan.T, meshes MeshCache) ShadowPass {
 					"Objects": 1,
 				},
 			),
-			Pass:     pass,
-			Pointers: vertex.ParsePointers(game.VoxelVertex{}),
+			Pass:       pass,
+			Pointers:   vertex.ParsePointers(game.VoxelVertex{}),
+			DepthTest:  true,
+			DepthWrite: true,
 		},
 		&ShadowDescriptors{
 			Camera: &descriptor.Uniform[CameraData]{
@@ -128,22 +128,14 @@ func (p *shadowpass) Draw(args render.Args, scene object.T) {
 	}
 	desc.Camera.Set(camera)
 
-	desc.Objects.Set(0, ObjectStorage{
-		Model: mat4.Ident(),
-	})
-
-	desc.Objects.Set(1, ObjectStorage{
-		Model: mat4.Translate(vec3.New(-16, 0, 0)),
-	})
-
 	cmds.Record(func(cmd command.Buffer) {
 		cmd.CmdBeginRenderPass(p.pass, ctx.Index)
 		p.mat.Bind(cmd)
 	})
 
 	objects := query.New[mesh.T]().Where(isDrawDeferred).Collect(scene)
-	for _, mesh := range objects {
-		if err := p.DrawDeferred(cmds, args, mesh); err != nil {
+	for index, mesh := range objects {
+		if err := p.DrawShadow(cmds, index, args, mesh); err != nil {
 			fmt.Printf("deferred draw error in object %s: %s\n", mesh.Name(), err)
 		}
 	}
@@ -170,23 +162,19 @@ func (p *shadowpass) Shadowmap() image.View {
 	return p.pass.Attachment("depth").View(0)
 }
 
-func (p *shadowpass) DrawDeferred(cmds command.Recorder, args render.Args, mesh mesh.T) error {
-	args = args.Apply(mesh.Transform().World())
-
+func (p *shadowpass) DrawShadow(cmds command.Recorder, index int, args render.Args, mesh mesh.T) error {
 	vkmesh := p.meshes.Fetch(mesh.Mesh())
 	if vkmesh == nil {
 		fmt.Println("mesh is nil")
 		return nil
 	}
 
-	cmds.Record(func(cmd command.Buffer) {
-		cmd.CmdBindVertexBuffer(vkmesh.Vertices, 0)
-		cmd.CmdBindIndexBuffers(vkmesh.Indices, 0, vk.IndexTypeUint16)
+	p.mat.Descriptors().Objects.Set(index, ObjectStorage{
+		Model: mesh.Transform().World(),
+	})
 
-		// index of the object properties in the ssbo
-		idx := 0
-		count := 2
-		cmd.CmdDrawIndexed(vkmesh.Mesh.Elements(), count, 0, 0, idx)
+	cmds.Record(func(cmd command.Buffer) {
+		vkmesh.Draw(cmd, index)
 	})
 
 	return nil
