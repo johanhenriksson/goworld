@@ -15,6 +15,7 @@ import (
 type T interface {
 	device.Resource[vk.RenderPass]
 
+	Frames() int
 	Depth() Attachment
 	Attachment(name string) Attachment
 	Attachments() []Attachment
@@ -176,6 +177,7 @@ func New(device device.T, args Args) T {
 
 func (r *renderpass) Ptr() vk.RenderPass { return r.ptr }
 func (r *renderpass) Depth() Attachment  { return r.depth }
+func (r *renderpass) Frames() int        { return len(r.framebuffers) }
 
 func (r *renderpass) Attachment(name string) Attachment {
 	if name == "depth" {

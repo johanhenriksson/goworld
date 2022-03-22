@@ -44,7 +44,8 @@ type gbuffer struct {
 	positionBuf image.T
 }
 
-func NewGbuffer(backend vulkan.T, pass renderpass.T, frames int) GeometryBuffer {
+func NewGbuffer(backend vulkan.T, pass renderpass.T) GeometryBuffer {
+	frames := pass.Frames()
 	log.Println("creating gbuffer with", frames, "frames")
 
 	diffuse := make([]image.View, frames)

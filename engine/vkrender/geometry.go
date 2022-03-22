@@ -187,7 +187,7 @@ func NewGeometryPass(backend vulkan.T, meshes MeshCache, textures TextureCache, 
 		gpass.Instantiate(pass)
 	}
 
-	gbuffer := NewGbuffer(backend, pass, 1) // backend.Frames())
+	gbuffer := NewGbuffer(backend, pass)
 
 	quad := vertex.NewTriangles("screen_quad", []vertex.T{
 		{P: vec3.New(-1, -1, 0), T: vec2.New(0, 0)},

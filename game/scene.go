@@ -11,7 +11,7 @@ func CreateScene(scene object.T) (*Player, *Chunk) {
 	scene.Attach(light.NewDirectional(light.DirectionalArgs{
 		Intensity: 1.6,
 		Color:     color.RGB(0.9*0.973, 0.9*0.945, 0.9*0.776),
-		Direction: vec3.New(0.95, -1.6, 1.05),
+		Direction: vec3.New(0.95, -1.9, 1.05),
 		Shadows:   true,
 	}))
 

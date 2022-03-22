@@ -50,7 +50,7 @@ func NewLinePass(backend vulkan.T, meshes MeshCache, output Pass, geometry Defer
 		output:   output,
 	}
 
-	depth := make([]image.T, 0, backend.Frames())
+	depth := make([]image.T, backend.Frames())
 	for i := range depth {
 		depth[i] = geometry.Depth(i).Image()
 	}

@@ -1,6 +1,8 @@
 package renderpass
 
 import (
+	"log"
+
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/device"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/image"
 	vk "github.com/vulkan-go/vulkan"
@@ -51,6 +53,7 @@ func NewColorAttachment(device device.T, desc ColorAttachment, frames, width, he
 	images := desc.Images
 	imgowner := false
 	if len(images) == 0 {
+		log.Println("  allocating", frames, "color attachments")
 		imgowner = true
 		images = make([]image.T, frames)
 		for i := range images {
@@ -101,6 +104,7 @@ func NewDepthAttachment(device device.T, desc DepthAttachment, frames, width, he
 	images := desc.Images
 	imgowner := false
 	if len(images) == 0 {
+		log.Println("  allocating", frames, "depth attachments")
 		imgowner = true
 		images = make([]image.T, frames)
 		for i := range images {
