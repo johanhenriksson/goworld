@@ -46,6 +46,17 @@ type buf struct {
 	ptr    vk.CommandBuffer
 	pool   vk.CommandPool
 	device device.T
+
+	// cached bindings
+	pipeline vk.Pipeline
+	vertex   bufferBinding
+	index    bufferBinding
+}
+
+type bufferBinding struct {
+	buffer    vk.Buffer
+	offset    int
+	indexType vk.IndexType
 }
 
 func newBuffer(device device.T, pool vk.CommandPool, ptr vk.CommandBuffer) Buffer {
@@ -114,7 +125,11 @@ func (b *buf) CmdCopyBuffer(src, dst buffer.T, regions ...vk.BufferCopy) {
 }
 
 func (b *buf) CmdBindGraphicsPipeline(pipe pipeline.T) {
+	if b.pipeline == pipe.Ptr() {
+		return
+	}
 	vk.CmdBindPipeline(b.Ptr(), vk.PipelineBindPointGraphics, pipe.Ptr())
+	b.pipeline = pipe.Ptr()
 }
 
 func (b *buf) CmdBindGraphicsDescriptor(layout pipeline.Layout, set descriptor.Set) {
@@ -127,11 +142,21 @@ func (b *buf) CmdBindGraphicsDescriptor(layout pipeline.Layout, set descriptor.S
 }
 
 func (b *buf) CmdBindVertexBuffer(vtx buffer.T, offset int) {
+	binding := bufferBinding{buffer: vtx.Ptr(), offset: offset}
+	if b.vertex == binding {
+		return
+	}
 	vk.CmdBindVertexBuffers(b.Ptr(), 0, 1, []vk.Buffer{vtx.Ptr()}, []vk.DeviceSize{vk.DeviceSize(offset)})
+	b.vertex = binding
 }
 
 func (b *buf) CmdBindIndexBuffers(idx buffer.T, offset int, kind vk.IndexType) {
+	binding := bufferBinding{buffer: idx.Ptr(), offset: offset, indexType: kind}
+	if b.index == binding {
+		return
+	}
 	vk.CmdBindIndexBuffer(b.Ptr(), idx.Ptr(), vk.DeviceSize(offset), kind)
+	b.index = binding
 }
 
 func (b *buf) CmdDraw(vertexCount, instanceCount, firstVertex, firstInstance int) {

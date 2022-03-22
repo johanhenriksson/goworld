@@ -32,7 +32,7 @@ type ShadowPass interface {
 
 type ShadowDescriptors struct {
 	descriptor.Set
-	Camera  *descriptor.Uniform[CameraData]
+	Camera  *descriptor.Uniform[Camera]
 	Objects *descriptor.Storage[ObjectStorage]
 }
 
@@ -91,7 +91,7 @@ func NewShadowPass(backend vulkan.T, meshes MeshCache) ShadowPass {
 			DepthWrite: true,
 		},
 		&ShadowDescriptors{
-			Camera: &descriptor.Uniform[CameraData]{
+			Camera: &descriptor.Uniform[Camera]{
 				Stages: vk.ShaderStageAll,
 			},
 			Objects: &descriptor.Storage[ObjectStorage]{
@@ -122,7 +122,7 @@ func (p *shadowpass) Draw(args render.Args, scene object.T) {
 	light := query.New[light.T]().Where(func(lit light.T) bool { return lit.Type() == light.Directional }).First(scene)
 	lightDesc := light.LightDescriptor()
 
-	camera := CameraData{
+	camera := Camera{
 		ViewProj: lightDesc.ViewProj,
 		Eye:      light.Transform().Position(),
 	}

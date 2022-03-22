@@ -36,7 +36,7 @@ type LinePass struct {
 
 type LineDescriptors struct {
 	descriptor.Set
-	Camera  *descriptor.Uniform[CameraData]
+	Camera  *descriptor.Uniform[Camera]
 	Objects *descriptor.Storage[mat4.T]
 }
 
@@ -116,7 +116,7 @@ func NewLinePass(backend vulkan.T, meshes MeshCache, output Pass, geometry Defer
 			// DepthTest: true,
 		},
 		&LineDescriptors{
-			Camera: &descriptor.Uniform[CameraData]{
+			Camera: &descriptor.Uniform[Camera]{
 				Stages: vk.ShaderStageVertexBit,
 			},
 			Objects: &descriptor.Storage[mat4.T]{
@@ -132,7 +132,7 @@ func (p *LinePass) Draw(args render.Args, scene object.T) {
 	ctx := args.Context
 	cmds := command.NewRecorder()
 
-	camera := CameraData{
+	camera := Camera{
 		Proj:        args.Projection,
 		View:        args.View,
 		ViewProj:    args.VP,

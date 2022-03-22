@@ -23,7 +23,7 @@ type LightDescriptors struct {
 	Normal   *descriptor.InputAttachment
 	Position *descriptor.InputAttachment
 	Depth    *descriptor.InputAttachment
-	Camera   *descriptor.Uniform[CameraData]
+	Camera   *descriptor.Uniform[Camera]
 	Shadow   *descriptor.SamplerArray
 }
 
@@ -84,7 +84,7 @@ func NewLightShader(device device.T, pass renderpass.T) material.Instance[*Light
 			Depth: &descriptor.InputAttachment{
 				Stages: vk.ShaderStageFragmentBit,
 			},
-			Camera: &descriptor.Uniform[CameraData]{
+			Camera: &descriptor.Uniform[Camera]{
 				Stages: vk.ShaderStageFragmentBit,
 			},
 			Shadow: &descriptor.SamplerArray{

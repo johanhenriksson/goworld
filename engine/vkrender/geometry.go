@@ -7,18 +7,15 @@ import (
 	"github.com/johanhenriksson/goworld/core/mesh"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/core/object/query"
-	"github.com/johanhenriksson/goworld/game"
 	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
-	"github.com/johanhenriksson/goworld/render/backend/types"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/command"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/descriptor"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/material"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/renderpass"
-	"github.com/johanhenriksson/goworld/render/backend/vulkan/shader"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/sync"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/texture"
 	"github.com/johanhenriksson/goworld/render/color"
@@ -32,7 +29,7 @@ type DeferredPass interface {
 	GeometryBuffer
 }
 
-type CameraData struct {
+type Camera struct {
 	Proj        mat4.T
 	View        mat4.T
 	ViewProj    mat4.T
@@ -48,7 +45,7 @@ type ObjectStorage struct {
 
 type GeometryDescriptors struct {
 	descriptor.Set
-	Camera   *descriptor.Uniform[CameraData]
+	Camera   *descriptor.Uniform[Camera]
 	Objects  *descriptor.Storage[ObjectStorage]
 	Textures *descriptor.SamplerArray
 }
@@ -60,15 +57,76 @@ type GeometryPass struct {
 	quad      vertex.Mesh
 	backend   vulkan.T
 	pass      renderpass.T
-	geom      material.Instance[*GeometryDescriptors]
 	light     material.Instance[*LightDescriptors]
 	completed sync.Semaphore
 	copyReady sync.Semaphore
 
+	gpasses []DeferredSubpass
 	shadows ShadowPass
 }
 
+type DeferredSubpass interface {
+	Name() string
+	Record(command.Recorder, Camera, object.T)
+	Instantiate(renderpass.T)
+	Destroy()
+}
+
 func NewGeometryPass(backend vulkan.T, meshes MeshCache, textures TextureCache, shadows ShadowPass) *GeometryPass {
+	geometryPasses := []DeferredSubpass{
+		NewVoxelSubpass(backend, meshes),
+	}
+
+	subpasses := make([]renderpass.Subpass, 0, len(geometryPasses)+1)
+	dependencies := make([]renderpass.SubpassDependency, 0, 2*len(geometryPasses)+1)
+
+	for _, gpass := range geometryPasses {
+		subpasses = append(subpasses, renderpass.Subpass{
+			Name:  gpass.Name(),
+			Depth: true,
+
+			ColorAttachments: []string{"diffuse", "normal", "position"},
+		})
+		dependencies = append(dependencies, renderpass.SubpassDependency{
+			Src: "external",
+			Dst: "geometry",
+
+			SrcStageMask:  vk.PipelineStageBottomOfPipeBit,
+			DstStageMask:  vk.PipelineStageColorAttachmentOutputBit,
+			SrcAccessMask: vk.AccessMemoryReadBit,
+			DstAccessMask: vk.AccessColorAttachmentReadBit | vk.AccessColorAttachmentWriteBit,
+			Flags:         vk.DependencyByRegionBit,
+		})
+		dependencies = append(dependencies, renderpass.SubpassDependency{
+			Src: "geometry",
+			Dst: "lighting",
+
+			SrcStageMask:  vk.PipelineStageColorAttachmentOutputBit,
+			DstStageMask:  vk.PipelineStageFragmentShaderBit,
+			SrcAccessMask: vk.AccessColorAttachmentWriteBit,
+			DstAccessMask: vk.AccessShaderReadBit,
+			Flags:         vk.DependencyByRegionBit,
+		})
+	}
+
+	// add lighting pass
+	subpasses = append(subpasses, renderpass.Subpass{
+		Name: "lighting",
+
+		ColorAttachments: []string{"output"},
+		InputAttachments: []string{"diffuse", "normal", "position", "depth"},
+	})
+	dependencies = append(dependencies, renderpass.SubpassDependency{
+		Src: "lighting",
+		Dst: "external",
+
+		SrcStageMask:  vk.PipelineStageColorAttachmentOutputBit,
+		DstStageMask:  vk.PipelineStageBottomOfPipeBit,
+		SrcAccessMask: vk.AccessColorAttachmentReadBit | vk.AccessColorAttachmentWriteBit,
+		DstAccessMask: vk.AccessMemoryReadBit,
+		Flags:         vk.DependencyByRegionBit,
+	})
+
 	diffuseFmt := vk.FormatR8g8b8a8Unorm
 	normalFmt := vk.FormatR8g8b8a8Unorm
 	positionFmt := vk.FormatR16g16b16a16Sfloat
@@ -120,105 +178,16 @@ func NewGeometryPass(backend vulkan.T, meshes MeshCache, textures TextureCache, 
 			Usage:       vk.ImageUsageInputAttachmentBit | vk.ImageUsageTransferSrcBit,
 			ClearDepth:  1,
 		},
-		Subpasses: []renderpass.Subpass{
-			{
-				Name:  "geometry",
-				Depth: true,
-
-				ColorAttachments: []string{"diffuse", "normal", "position"},
-			},
-			{
-				Name: "lighting",
-
-				ColorAttachments: []string{"output"},
-				InputAttachments: []string{"diffuse", "normal", "position", "depth"},
-			},
-		},
-		Dependencies: []renderpass.SubpassDependency{
-			{
-				Src: "external",
-				Dst: "geometry",
-
-				SrcStageMask:  vk.PipelineStageBottomOfPipeBit,
-				DstStageMask:  vk.PipelineStageColorAttachmentOutputBit,
-				SrcAccessMask: vk.AccessMemoryReadBit,
-				DstAccessMask: vk.AccessColorAttachmentReadBit | vk.AccessColorAttachmentWriteBit,
-				Flags:         vk.DependencyByRegionBit,
-			},
-			{
-				Src: "geometry",
-				Dst: "lighting",
-
-				SrcStageMask:  vk.PipelineStageColorAttachmentOutputBit,
-				DstStageMask:  vk.PipelineStageFragmentShaderBit,
-				SrcAccessMask: vk.AccessColorAttachmentWriteBit,
-				DstAccessMask: vk.AccessShaderReadBit,
-				Flags:         vk.DependencyByRegionBit,
-			},
-			{
-				Src: "geometry",
-				Dst: "external",
-
-				SrcStageMask:  vk.PipelineStageColorAttachmentOutputBit,
-				DstStageMask:  vk.PipelineStageBottomOfPipeBit,
-				SrcAccessMask: vk.AccessColorAttachmentReadBit | vk.AccessColorAttachmentWriteBit,
-				DstAccessMask: vk.AccessMemoryReadBit,
-				Flags:         vk.DependencyByRegionBit,
-			},
-		},
+		Subpasses:    subpasses,
+		Dependencies: dependencies,
 	})
 
-	gbuffer := NewGbuffer(backend, pass, 1) // backend.Frames())
+	// instantiate geometry subpasses
+	for _, gpass := range geometryPasses {
+		gpass.Instantiate(pass)
+	}
 
-	geomsh := material.New(
-		backend.Device(),
-		material.Args{
-			Shader: shader.New(
-				backend.Device(),
-				"vk/color_f",
-				shader.Inputs{
-					"position": {
-						Index: 0,
-						Type:  types.Float,
-					},
-					"normal_id": {
-						Index: 1,
-						Type:  types.UInt8,
-					},
-					"color_0": {
-						Index: 2,
-						Type:  types.Float,
-					},
-					"occlusion": {
-						Index: 3,
-						Type:  types.Float,
-					},
-				},
-				shader.Descriptors{
-					"Camera":   0,
-					"Objects":  1,
-					"Textures": 2,
-				},
-			),
-			Pass:       pass,
-			Subpass:    "geometry",
-			Pointers:   vertex.ParsePointers(game.VoxelVertex{}),
-			DepthTest:  true,
-			DepthWrite: true,
-		},
-		&GeometryDescriptors{
-			Camera: &descriptor.Uniform[CameraData]{
-				Stages: vk.ShaderStageAll,
-			},
-			Objects: &descriptor.Storage[ObjectStorage]{
-				Stages: vk.ShaderStageAll,
-				Size:   10,
-			},
-			Textures: &descriptor.SamplerArray{
-				Stages: vk.ShaderStageFragmentBit,
-				Count:  16,
-			},
-		}).Instantiate()
+	gbuffer := NewGbuffer(backend, pass, 1) // backend.Frames())
 
 	quad := vertex.NewTriangles("screen_quad", []vertex.T{
 		{P: vec3.New(-1, -1, 0), T: vec2.New(0, 0)},
@@ -253,13 +222,13 @@ func NewGeometryPass(backend vulkan.T, meshes MeshCache, textures TextureCache, 
 		backend:   backend,
 		meshes:    meshes,
 		quad:      quad,
-		geom:      geomsh,
 		light:     lightsh,
 		pass:      pass,
 		completed: sync.NewSemaphore(backend.Device()),
 		copyReady: sync.NewSemaphore(backend.Device()),
 
 		shadows: shadows,
+		gpasses: geometryPasses,
 	}
 }
 
@@ -271,9 +240,7 @@ func (p *GeometryPass) Draw(args render.Args, scene object.T) {
 	ctx := args.Context
 	cmds := command.NewRecorder()
 
-	geomDesc := p.geom.Descriptors()
-
-	camera := CameraData{
+	camera := Camera{
 		Proj:        args.Projection,
 		View:        args.View,
 		ViewProj:    args.VP,
@@ -283,27 +250,32 @@ func (p *GeometryPass) Draw(args render.Args, scene object.T) {
 		Eye:         args.Position,
 	}
 
-	geomDesc.Camera.Set(camera)
-
-	lightDesc := p.light.Descriptors()
-	lightDesc.Camera.Set(camera)
+	//
+	// geometry subpasses
+	//
 
 	cmds.Record(func(cmd command.Buffer) {
 		cmd.CmdBeginRenderPass(p.pass, ctx.Index)
-		p.geom.Bind(cmd)
 	})
 
-	objects := query.New[mesh.T]().Where(isDrawDeferred).Collect(scene)
-	for index, mesh := range objects {
-		if err := p.DrawDeferred(cmds, index, args, mesh); err != nil {
-			fmt.Printf("deferred draw error in object %s: %s\n", mesh.Name(), err)
-		}
+	for _, gpass := range p.gpasses {
+		gpass.Record(cmds, camera, scene)
+
+		cmds.Record(func(cmd command.Buffer) {
+			cmd.CmdNextSubpass()
+		})
 	}
 
+	//
+	// lighting pass
+	//
+
 	cmds.Record(func(cmd command.Buffer) {
-		cmd.CmdNextSubpass()
 		p.light.Bind(cmd)
 	})
+
+	lightDesc := p.light.Descriptors()
+	lightDesc.Camera.Set(camera)
 
 	ambient := light.Descriptor{
 		Type:      light.Ambient,
@@ -318,6 +290,10 @@ func (p *GeometryPass) Draw(args render.Args, scene object.T) {
 			fmt.Printf("light draw error in object %s: %s\n", lit.Name(), err)
 		}
 	}
+
+	//
+	// todo: forward subpasses
+	//
 
 	cmds.Record(func(cmd command.Buffer) {
 		cmd.CmdEndRenderPass()
@@ -339,27 +315,6 @@ func (p *GeometryPass) Draw(args render.Args, scene object.T) {
 		Semaphore: p.copyReady,
 		Mask:      vk.PipelineStageTopOfPipeBit,
 	})
-}
-
-func (p *GeometryPass) DrawDeferred(cmds command.Recorder, index int, args render.Args, mesh mesh.T) error {
-	vkmesh := p.meshes.Fetch(mesh.Mesh())
-	if vkmesh == nil {
-		fmt.Println("mesh is nil")
-		return nil
-	}
-
-	// write object properties to ssbo
-	// todo: this should be reused between frames - maybe
-	//       how to detect changes?
-	p.geom.Descriptors().Objects.Set(index, ObjectStorage{
-		Model: mesh.Transform().World(),
-	})
-
-	cmds.Record(func(cmd command.Buffer) {
-		vkmesh.Draw(cmd, index)
-	})
-
-	return nil
 }
 
 func (p *GeometryPass) DrawLight(cmds command.Recorder, args render.Args, lit light.Descriptor) error {
@@ -385,9 +340,13 @@ func (p *GeometryPass) DrawLight(cmds command.Recorder, args render.Args, lit li
 }
 
 func (p *GeometryPass) Destroy() {
+	// destroy subpasses
+	for _, gpass := range p.gpasses {
+		gpass.Destroy()
+	}
+
 	p.pass.Destroy()
 	p.GeometryBuffer.Destroy()
-	p.geom.Material().Destroy()
 	p.light.Material().Destroy()
 	p.completed.Destroy()
 	p.copyReady.Destroy()
