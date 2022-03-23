@@ -12,9 +12,7 @@ type PBRMaterial interface {
 }
 
 type MaterialRef interface {
-	Id() string
-	Version() int
-
+	cache.Item
 	VertexType() any
 }
 

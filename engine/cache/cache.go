@@ -20,12 +20,14 @@ type T[I Item, O any] interface {
 }
 
 type Item interface {
-	comparable
 	Id() string
 	Version() int
 }
 
-type Backend[I comparable, O any] interface {
+type Cachable interface {
+}
+
+type Backend[I Item, O any] interface {
 	Instantiate(I) O
 	Update(O, I)
 	Delete(O)
@@ -53,13 +55,6 @@ func New[I Item, O any](backend Backend[I, O]) T[I, O] {
 }
 
 func (m *cache[I, O]) Fetch(item I) O {
-	// if the mesh is nil, just return a no-op mesh
-	var empty I
-	if item == empty {
-		var out O
-		return out
-	}
-
 	line, hit := m.cache[item.Id()]
 
 	// not in cache - instantiate a buffered mesh

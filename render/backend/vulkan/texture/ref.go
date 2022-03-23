@@ -3,12 +3,12 @@ package texture
 import (
 	"image"
 
+	"github.com/johanhenriksson/goworld/engine/cache"
 	"github.com/johanhenriksson/goworld/render"
 )
 
 type Ref interface {
-	Id() string
-	Version() int
+	cache.Item
 	Load() *image.RGBA
 }
 
