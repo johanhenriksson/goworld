@@ -21,5 +21,5 @@ func (i *instance[D]) Descriptors() D { return i.set }
 
 func (s *instance[D]) Bind(cmd command.Buffer) {
 	s.material.Bind(cmd)
-	cmd.CmdBindGraphicsDescriptor(s.material.Layout(), s.set)
+	cmd.CmdBindGraphicsDescriptor(s.set)
 }

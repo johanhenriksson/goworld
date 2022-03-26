@@ -11,7 +11,7 @@ type recorder struct {
 
 func NewRecorder() Recorder {
 	return &recorder{
-		parts: make([]CommandFn, 0, 16),
+		parts: make([]CommandFn, 0, 64),
 	}
 }
 

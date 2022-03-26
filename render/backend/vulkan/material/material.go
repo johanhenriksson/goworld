@@ -16,7 +16,6 @@ import (
 type T[D descriptor.Set] interface {
 	Destroy()
 	Bind(cmd command.Buffer)
-	Layout() pipeline.Layout
 	Instantiate() Instance[D]
 	InstantiateMany(int) []Instance[D]
 }
@@ -87,10 +86,6 @@ func New[D descriptor.Set](device device.T, args Args, descriptors D) T[D] {
 		pipe:    pipe,
 		pass:    args.Pass,
 	}
-}
-
-func (m *material[D]) Layout() pipeline.Layout {
-	return m.layout
 }
 
 func (m *material[D]) Bind(cmd command.Buffer) {

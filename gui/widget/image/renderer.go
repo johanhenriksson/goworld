@@ -3,6 +3,7 @@ package image
 import (
 	"github.com/johanhenriksson/goworld/assets"
 	"github.com/johanhenriksson/goworld/gui/quad"
+	"github.com/johanhenriksson/goworld/gui/widget"
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/color"
@@ -11,8 +12,7 @@ import (
 )
 
 type Renderer interface {
-	Draw(render.Args, T)
-	Destroy()
+	widget.Renderer[T]
 
 	SetSize(vec2.T)
 	SetImage(texture.T)
@@ -67,10 +67,9 @@ func (r *renderer) SetInvert(invert bool) {
 	r.invert = invert
 }
 
-func (r *renderer) Draw(args render.Args, image T) {
+func (r *renderer) Draw(args widget.DrawArgs, image T) {
 	if r.mesh == nil {
-		r.mat = assets.GetMaterial("ui_texture")
-		r.mesh = quad.New(r.mat, quad.Props{
+		r.mesh = quad.New(quad.Props{
 			UVs:   r.uvs,
 			Size:  r.size,
 			Color: color.White,
@@ -97,9 +96,7 @@ func (r *renderer) Draw(args render.Args, image T) {
 	// perhaps this belongs somewhere else
 	render.BlendMultiply()
 
-	r.mesh.Material().Use()
-	r.mesh.Material().Texture("image", r.tex)
-	r.mesh.Draw(args)
+	// r.mesh.Draw(args)
 }
 
 func (r *renderer) Destroy() {

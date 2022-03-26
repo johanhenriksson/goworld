@@ -12,6 +12,7 @@ import (
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan"
+	"github.com/johanhenriksson/goworld/render/backend/vulkan/cache"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/command"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/descriptor"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/material"
@@ -53,7 +54,7 @@ type GeometryDescriptors struct {
 type GeometryPass struct {
 	GeometryBuffer
 
-	meshes    MeshCache
+	meshes    cache.MeshCache
 	quad      vertex.Mesh
 	backend   vulkan.T
 	pass      renderpass.T
@@ -72,7 +73,7 @@ type DeferredSubpass interface {
 	Destroy()
 }
 
-func NewGeometryPass(backend vulkan.T, meshes MeshCache, textures TextureCache, shadows ShadowPass) *GeometryPass {
+func NewGeometryPass(backend vulkan.T, meshes cache.MeshCache, textures cache.TextureCache, shadows ShadowPass) *GeometryPass {
 	geometryPasses := []DeferredSubpass{
 		NewVoxelSubpass(backend, meshes),
 	}
@@ -331,7 +332,7 @@ func (p *GeometryPass) DrawLight(cmds command.Recorder, args render.Args, lit li
 			Intensity:   lit.Intensity,
 			Attenuation: lit.Attenuation,
 		}
-		cmd.CmdPushConstant(p.light.Material().Layout(), vk.ShaderStageFlags(vk.ShaderStageFragmentBit), 0, &push)
+		cmd.CmdPushConstant(vk.ShaderStageFragmentBit, 0, &push)
 
 		vkmesh.Draw(cmd, 0)
 	})

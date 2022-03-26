@@ -5,14 +5,14 @@ import (
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/gui/node"
 	"github.com/johanhenriksson/goworld/gui/widget"
+	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/math/vec2"
-	"github.com/johanhenriksson/goworld/render"
 )
 
 type Manager interface {
 	object.Component
 
-	DrawUI(render.Args, object.T)
+	DrawUI(widget.DrawArgs, object.T)
 }
 
 type manager struct {
@@ -33,11 +33,18 @@ func New(app node.RenderFunc) Manager {
 
 func (m *manager) Name() string { return "GUIManager" }
 
-func (m *manager) DrawUI(args render.Args, scene object.T) {
+func (m *manager) DrawUI(args widget.DrawArgs, scene object.T) {
 	viewport := vec2.NewI(args.Viewport.Width, args.Viewport.Height)
 	m.scale = args.Viewport.Scale
 	m.gui = m.renderer.Render(viewport)
-	m.gui.Draw(args)
+	m.gui.Draw(widget.DrawArgs{
+		Commands:  args.Commands,
+		Meshes:    args.Meshes,
+		Textures:  args.Textures,
+		Transform: mat4.Ident(),
+		ViewProj:  args.ViewProj,
+		Viewport:  args.Viewport,
+	})
 }
 
 func (m *manager) MouseEvent(e mouse.Event) {

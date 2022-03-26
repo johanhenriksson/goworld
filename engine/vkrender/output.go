@@ -7,6 +7,7 @@ import (
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/backend/types"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan"
+	"github.com/johanhenriksson/goworld/render/backend/vulkan/cache"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/command"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/descriptor"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/material"
@@ -21,12 +22,12 @@ import (
 
 type OutputPass struct {
 	backend  vulkan.T
-	meshes   MeshCache
-	textures TextureCache
+	meshes   cache.MeshCache
+	textures cache.TextureCache
 	material material.T[*OutputDescriptors]
 	geometry DeferredPass
 
-	quad      VkMesh
+	quad      cache.VkMesh
 	desc      []material.Instance[*OutputDescriptors]
 	tex       []texture.T
 	pass      renderpass.T
@@ -38,7 +39,7 @@ type OutputDescriptors struct {
 	Output *descriptor.Sampler
 }
 
-func NewOutputPass(backend vulkan.T, meshes MeshCache, textures TextureCache, geometry DeferredPass) *OutputPass {
+func NewOutputPass(backend vulkan.T, meshes cache.MeshCache, textures cache.TextureCache, geometry DeferredPass) *OutputPass {
 	p := &OutputPass{
 		backend:   backend,
 		meshes:    meshes,

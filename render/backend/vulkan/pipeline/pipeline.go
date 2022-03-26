@@ -15,11 +15,14 @@ import (
 
 type T interface {
 	device.Resource[vk.Pipeline]
+
+	Layout() Layout
 }
 
 type pipeline struct {
 	ptr    vk.Pipeline
 	device device.T
+	layout Layout
 }
 
 func New(device device.T, args Args) T {
@@ -191,11 +194,16 @@ func New(device device.T, args Args) T {
 	return &pipeline{
 		ptr:    ptrs[0],
 		device: device,
+		layout: args.Layout,
 	}
 }
 
 func (p *pipeline) Ptr() vk.Pipeline {
 	return p.ptr
+}
+
+func (p *pipeline) Layout() Layout {
+	return p.layout
 }
 
 func (p *pipeline) Destroy() {

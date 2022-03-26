@@ -12,6 +12,7 @@ import (
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/backend/types"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan"
+	"github.com/johanhenriksson/goworld/render/backend/vulkan/cache"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/command"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/descriptor"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/image"
@@ -37,14 +38,14 @@ type ShadowDescriptors struct {
 }
 
 type shadowpass struct {
-	meshes    MeshCache
+	meshes    cache.MeshCache
 	backend   vulkan.T
 	pass      renderpass.T
 	mat       material.Instance[*ShadowDescriptors]
 	completed sync.Semaphore
 }
 
-func NewShadowPass(backend vulkan.T, meshes MeshCache) ShadowPass {
+func NewShadowPass(backend vulkan.T, meshes cache.MeshCache) ShadowPass {
 	log.Println("create shadow pass")
 	size := 1024
 	pass := renderpass.New(backend.Device(), renderpass.Args{

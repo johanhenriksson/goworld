@@ -9,6 +9,7 @@ import (
 	"github.com/johanhenriksson/goworld/game"
 	"github.com/johanhenriksson/goworld/render/backend/types"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan"
+	"github.com/johanhenriksson/goworld/render/backend/vulkan/cache"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/command"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/descriptor"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/material"
@@ -22,10 +23,10 @@ import (
 type voxelpass struct {
 	backend vulkan.T
 	mat     material.Instance[*GeometryDescriptors]
-	meshes  MeshCache
+	meshes  cache.MeshCache
 }
 
-func NewVoxelSubpass(backend vulkan.T, meshes MeshCache) DeferredSubpass {
+func NewVoxelSubpass(backend vulkan.T, meshes cache.MeshCache) DeferredSubpass {
 	return &voxelpass{
 		backend: backend,
 		meshes:  meshes,

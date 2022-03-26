@@ -7,7 +7,6 @@ import (
 	"github.com/johanhenriksson/goworld/gui/style"
 	"github.com/johanhenriksson/goworld/gui/widget"
 	"github.com/johanhenriksson/goworld/math/vec2"
-	"github.com/johanhenriksson/goworld/render"
 	"github.com/kjk/flex"
 )
 
@@ -72,7 +71,7 @@ func (l *label) Update(props any) {
 
 func (l *label) Text() string { return l.props.Text }
 
-func (l *label) Draw(args render.Args) {
+func (l *label) Draw(args widget.DrawArgs) {
 	if l.props.Style.Hidden {
 		return
 	}
@@ -84,7 +83,7 @@ func (l *label) Draw(args render.Args) {
 	}
 
 	l.T.Draw(args)
-	l.Renderer.Draw(args)
+	l.Renderer.Draw(args, l)
 }
 
 func (l *label) Flex() *flex.Node {

@@ -24,7 +24,7 @@ type Buffer interface {
 
 	CmdCopyBuffer(src, dst buffer.T, regions ...vk.BufferCopy)
 	CmdBindGraphicsPipeline(pipe pipeline.T)
-	CmdBindGraphicsDescriptor(layout pipeline.Layout, sets descriptor.Set)
+	CmdBindGraphicsDescriptor(sets descriptor.Set)
 	CmdBindVertexBuffer(vtx buffer.T, offset int)
 	CmdBindIndexBuffers(idx buffer.T, offset int, kind vk.IndexType)
 	CmdDraw(vertexCount, instanceCount, firstVertex, firstInstance int)
@@ -34,7 +34,7 @@ type Buffer interface {
 	CmdEndRenderPass()
 	CmdSetViewport(x, y, w, h int)
 	CmdSetScissor(x, y, w, h int)
-	CmdPushConstant(layout pipeline.Layout, stages vk.ShaderStageFlags, offset int, value any)
+	CmdPushConstant(stages vk.ShaderStageFlagBits, offset int, value any)
 	CmdImageBarrier(srcMask, dstMask vk.PipelineStageFlagBits, image image.T, oldLayout, newLayout vk.ImageLayout, aspects vk.ImageAspectFlagBits)
 	CmdCopyBufferToImage(source buffer.T, dst image.T, layout vk.ImageLayout)
 	CmdCopyImageToBuffer(src image.T, srcLayout vk.ImageLayout, aspect vk.ImageAspectFlagBits, dst buffer.T)
@@ -48,7 +48,7 @@ type buf struct {
 	device device.T
 
 	// cached bindings
-	pipeline vk.Pipeline
+	pipeline pipeline.T
 	vertex   bufferBinding
 	index    bufferBinding
 }
@@ -125,18 +125,21 @@ func (b *buf) CmdCopyBuffer(src, dst buffer.T, regions ...vk.BufferCopy) {
 }
 
 func (b *buf) CmdBindGraphicsPipeline(pipe pipeline.T) {
-	if b.pipeline == pipe.Ptr() {
+	if b.pipeline != nil && b.pipeline.Ptr() == pipe.Ptr() {
 		return
 	}
 	vk.CmdBindPipeline(b.Ptr(), vk.PipelineBindPointGraphics, pipe.Ptr())
-	b.pipeline = pipe.Ptr()
+	b.pipeline = pipe
 }
 
-func (b *buf) CmdBindGraphicsDescriptor(layout pipeline.Layout, set descriptor.Set) {
+func (b *buf) CmdBindGraphicsDescriptor(set descriptor.Set) {
+	if b.pipeline == nil {
+		panic("bind graphics pipeline first")
+	}
 	vk.CmdBindDescriptorSets(
 		b.Ptr(),
 		vk.PipelineBindPointGraphics,
-		layout.Ptr(), 0, 1,
+		b.pipeline.Layout().Ptr(), 0, 1,
 		[]vk.DescriptorSet{set.Ptr()},
 		0, nil)
 }
@@ -227,10 +230,18 @@ func (b *buf) CmdSetScissor(x, y, w, h int) {
 	})
 }
 
-func (b *buf) CmdPushConstant(layout pipeline.Layout, stages vk.ShaderStageFlags, offset int, value any) {
+func (b *buf) CmdPushConstant(stages vk.ShaderStageFlagBits, offset int, value any) {
+	if b.pipeline == nil {
+		panic("bind graphics pipeline first")
+	}
 	ptr := reflect.ValueOf(value).UnsafePointer()
 	size := reflect.ValueOf(value).Elem().Type().Size()
-	vk.CmdPushConstants(b.ptr, layout.Ptr(), stages, uint32(offset), uint32(size), ptr)
+	vk.CmdPushConstants(
+		b.ptr,
+		b.pipeline.Layout().Ptr(),
+		vk.ShaderStageFlags(stages),
+		uint32(offset), uint32(size),
+		ptr)
 }
 
 func (b *buf) CmdImageBarrier(srcMask, dstMask vk.PipelineStageFlagBits, image image.T, oldLayout, newLayout vk.ImageLayout, aspects vk.ImageAspectFlagBits) {

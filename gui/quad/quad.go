@@ -3,21 +3,16 @@ package quad
 import (
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/math/vec3"
-	"github.com/johanhenriksson/goworld/render"
-	"github.com/johanhenriksson/goworld/render/backend/gl/gl_vertex_array"
 	"github.com/johanhenriksson/goworld/render/color"
-	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/vertex"
 )
 
 type T interface {
 	Size() vec2.T
 	Position() vec2.T
-	Material() material.T
 	Color() color.T
 	Update(Props)
-	Draw(render.Args)
-	Destroy()
+	Mesh() vertex.Mesh
 }
 
 type Props struct {
@@ -29,24 +24,21 @@ type Props struct {
 
 type quad struct {
 	props Props
-	vao   vertex.Array
-	mat   material.T
+	mesh  vertex.MutableMesh[vertex.UI, uint16]
 }
 
-func New(mat material.T, props Props) T {
+func New(props Props) T {
 	q := &quad{
 		props: props,
-		mat:   mat,
-		vao:   gl_vertex_array.New(vertex.Triangles),
+		mesh:  vertex.NewTriangles[vertex.UI, uint16]("quad", nil, nil),
 	}
 	q.compute()
 	return q
 }
 
-func (q *quad) Material() material.T { return q.mat }
-func (q *quad) Position() vec2.T     { return q.props.Position }
-func (q *quad) Size() vec2.T         { return q.props.Size }
-func (q *quad) Color() color.T       { return q.props.Color }
+func (q *quad) Position() vec2.T { return q.props.Position }
+func (q *quad) Size() vec2.T     { return q.props.Size }
+func (q *quad) Color() color.T   { return q.props.Color }
 
 func (q *quad) Update(props Props) {
 	q.props = props
@@ -84,29 +76,15 @@ func (q *quad) compute() {
 		TopLeft,
 		TopRight,
 		BottomLeft,
-
-		TopRight,
 		BottomRight,
-		BottomLeft,
 	}
-
-	ptrs := vertex.ParsePointers(vtx)
-	ptrs.Bind(q.mat)
-
-	q.vao.SetPointers(ptrs)
-	q.vao.SetIndexSize(0)
-	q.vao.SetElements(len(vtx))
-
-	q.vao.Buffer("vertex", vtx)
+	idx := []uint16{
+		0, 1, 2,
+		1, 3, 2,
+	}
+	q.mesh.Update(vtx, idx)
 }
 
-func (q *quad) Draw(args render.Args) {
-	q.mat.Use()
-	q.mat.Mat4("model", args.Transform)
-	q.mat.Mat4("viewport", args.VP)
-	q.vao.Draw()
-}
-
-func (q *quad) Destroy() {
-	q.vao.Delete()
+func (q *quad) Mesh() vertex.Mesh {
+	return q.mesh
 }

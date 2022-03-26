@@ -10,6 +10,7 @@ import (
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/backend/types"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan"
+	"github.com/johanhenriksson/goworld/render/backend/vulkan/cache"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/command"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/descriptor"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/image"
@@ -24,7 +25,7 @@ import (
 
 type LinePass struct {
 	backend   vulkan.T
-	meshes    MeshCache
+	meshes    cache.MeshCache
 	material  material.Instance[*LineDescriptors]
 	geometry  DeferredPass
 	pass      renderpass.T
@@ -40,14 +41,15 @@ type LineDescriptors struct {
 	Objects *descriptor.Storage[mat4.T]
 }
 
-func NewLinePass(backend vulkan.T, meshes MeshCache, output Pass, geometry DeferredPass) *LinePass {
+func NewLinePass(backend vulkan.T, meshes cache.MeshCache, output Pass, geometry DeferredPass) *LinePass {
 	log.Println("create line pass")
 
 	p := &LinePass{
-		backend:  backend,
-		meshes:   meshes,
-		geometry: geometry,
-		output:   output,
+		backend:   backend,
+		meshes:    meshes,
+		geometry:  geometry,
+		output:    output,
+		completed: sync.NewSemaphore(backend.Device()),
 	}
 
 	depth := make([]image.T, backend.Frames())
@@ -158,7 +160,7 @@ func (p *LinePass) Draw(args render.Args, scene object.T) {
 	worker := p.backend.Worker(ctx.Index)
 	worker.Queue(cmds.Apply)
 	worker.Submit(command.SubmitInfo{
-		Signal: []sync.Semaphore{ctx.RenderComplete},
+		Signal: []sync.Semaphore{p.completed},
 		Wait: []command.Wait{
 			{
 				Semaphore: p.output.Completed(),
@@ -191,6 +193,7 @@ func (p *LinePass) Completed() sync.Semaphore {
 }
 
 func (p *LinePass) Destroy() {
+	p.completed.Destroy()
 	p.pass.Destroy()
 	p.material.Material().Destroy()
 }

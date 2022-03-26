@@ -5,7 +5,6 @@ import (
 	"github.com/johanhenriksson/goworld/gui/node"
 	"github.com/johanhenriksson/goworld/gui/style"
 	"github.com/johanhenriksson/goworld/gui/widget"
-	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/texture"
 	"github.com/kjk/flex"
 )
@@ -61,7 +60,7 @@ func (i *image) Update(props any) {
 
 func (i *image) Image() texture.T { return i.props.Image }
 
-func (i *image) Draw(args render.Args) {
+func (i *image) Draw(args widget.DrawArgs) {
 	i.T.Draw(args)
 	i.Renderer.Draw(args, i)
 }

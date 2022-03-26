@@ -7,9 +7,6 @@ import (
 	"github.com/johanhenriksson/goworld/gui/node"
 	"github.com/johanhenriksson/goworld/gui/style"
 	"github.com/johanhenriksson/goworld/gui/widget"
-	"github.com/johanhenriksson/goworld/math/mat4"
-	"github.com/johanhenriksson/goworld/math/vec3"
-	"github.com/johanhenriksson/goworld/render"
 )
 
 type T interface {
@@ -50,27 +47,12 @@ func Create(key string, props Props) T {
 	return rect
 }
 
-func (f *rect) Draw(args render.Args) {
+func (f *rect) Draw(args widget.DrawArgs) {
 	if f.props.Style.Hidden {
 		return
 	}
-
 	f.T.Draw(args)
 	f.Renderer.Draw(args, f)
-
-	for _, child := range f.children {
-		// calculate child tranasform
-		// try to fix the position to an actual pixel
-		// pos := vec3.Extend(child.Position().Scaled(args.Viewport.Scale).Floor().Scaled(1/args.Viewport.Scale), -1)
-		pos := vec3.Extend(child.Position(), args.Position.Z-1)
-		transform := mat4.Translate(pos)
-		childArgs := args
-		childArgs.Transform = transform // .Mul(&args.Transform)
-		childArgs.Position = pos
-
-		// draw child
-		child.Draw(childArgs)
-	}
 }
 
 func (f *rect) Children() []widget.T { return f.children }

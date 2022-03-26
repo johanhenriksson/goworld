@@ -1,4 +1,4 @@
-package vkrender
+package cache
 
 import (
 	"github.com/johanhenriksson/goworld/engine/cache"
@@ -61,7 +61,7 @@ func (m *vkmeshes) upload(cached *vkMesh, mesh vertex.Mesh) {
 		cmd.CmdCopyBuffer(m.idxstage, cached.indices)
 	})
 	m.worker.Submit(command.SubmitInfo{})
-	// m.worker.Wait()
+	m.worker.Wait()
 
 	cached.elements = mesh.Elements()
 	cached.idxType = vk.IndexTypeUint16
