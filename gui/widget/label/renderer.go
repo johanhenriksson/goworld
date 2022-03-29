@@ -7,11 +7,13 @@ import (
 	"github.com/johanhenriksson/goworld/gui/quad"
 	"github.com/johanhenriksson/goworld/gui/widget"
 	"github.com/johanhenriksson/goworld/math/vec2"
+	"github.com/johanhenriksson/goworld/render/backend/vulkan/command"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/texture"
 	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/font"
 
 	"github.com/kjk/flex"
+	vk "github.com/vulkan-go/vulkan"
 )
 
 var DefaultSize = 12
@@ -147,7 +149,19 @@ func (r *renderer) Draw(args widget.DrawArgs, label T) {
 	// we can center the label on the mesh by modifying the uvs
 	// scale := label.Size().Div(r.bounds)
 
-	// r.mesh.Draw(args)
+	// how to get the texture into the uniform array?
+	// we also need to be able to deal with descriptor array limits
+
+	tex := args.Textures.Fetch(r.tex)
+	mesh := args.Meshes.Fetch(r.mesh.Mesh())
+	args.Commands.Record(func(cmd command.Buffer) {
+		cmd.CmdPushConstant(vk.ShaderStageAll, 0, &widget.Constants{
+			Viewport: args.ViewProj,
+			Model:    args.Transform,
+			Texture:  tex,
+		})
+		mesh.Draw(cmd, 0)
+	})
 }
 
 func (r *renderer) Destroy() {

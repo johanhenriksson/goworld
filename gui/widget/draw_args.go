@@ -16,7 +16,7 @@ type Renderer[W T] interface {
 type DrawArgs struct {
 	Commands  command.Recorder
 	Meshes    cache.MeshCache
-	Textures  cache.TextureCache
+	Textures  cache.SamplerCache
 	ViewProj  mat4.T
 	Transform mat4.T
 	Position  vec3.T

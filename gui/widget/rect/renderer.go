@@ -70,8 +70,8 @@ func (r *renderer) Draw(args widget.DrawArgs, rect T) {
 			})
 			r.invalid = false
 		}
-		mesh := args.Meshes.Fetch(r.mesh.Mesh())
 
+		mesh := args.Meshes.Fetch(r.mesh.Mesh())
 		args.Commands.Record(func(cmd command.Buffer) {
 			cmd.CmdPushConstant(vk.ShaderStageAll, 0, &widget.Constants{
 				Viewport: args.ViewProj,

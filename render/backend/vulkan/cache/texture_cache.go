@@ -15,19 +15,19 @@ import (
 type TextureCache cache.T[texture.Ref, texture.T]
 
 // mesh cache backend
-type vktextures struct {
+type textures struct {
 	backend vulkan.T
 	worker  command.Worker
 }
 
 func NewTextureCache(backend vulkan.T) TextureCache {
-	return cache.New[texture.Ref, texture.T](&vktextures{
+	return cache.New[texture.Ref, texture.T](&textures{
 		backend: backend,
 		worker:  backend.Transferer(),
 	})
 }
 
-func (t *vktextures) Instantiate(ref texture.Ref) texture.T {
+func (t *textures) Instantiate(ref texture.Ref) texture.T {
 	img := ref.Load()
 
 	stage := buffer.NewShared(t.backend.Device(), len(img.Pix))
@@ -68,12 +68,12 @@ func (t *vktextures) Instantiate(ref texture.Ref) texture.T {
 	return tex
 }
 
-func (m *vktextures) Update(tex texture.T, ref texture.Ref) {
+func (m *textures) Update(tex texture.T, ref texture.Ref) {
 }
 
-func (m *vktextures) Delete(tex texture.T) {
+func (m *textures) Delete(tex texture.T) {
 	tex.Destroy()
 }
 
-func (m *vktextures) Destroy() {
+func (m *textures) Destroy() {
 }

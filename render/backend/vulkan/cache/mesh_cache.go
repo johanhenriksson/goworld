@@ -18,7 +18,7 @@ type VkMesh interface {
 }
 
 // mesh cache backend
-type vkmeshes struct {
+type meshes struct {
 	backend  vulkan.T
 	worker   command.Worker
 	idxstage buffer.T
@@ -28,7 +28,7 @@ type vkmeshes struct {
 func NewMeshCache(backend vulkan.T) MeshCache {
 	stagesize := 100 * 1024 // 100k for now
 
-	return cache.New[vertex.Mesh, VkMesh](&vkmeshes{
+	return cache.New[vertex.Mesh, VkMesh](&meshes{
 		backend: backend,
 		worker:  backend.Transferer(),
 
@@ -37,7 +37,7 @@ func NewMeshCache(backend vulkan.T) MeshCache {
 	})
 }
 
-func (m *vkmeshes) Instantiate(mesh vertex.Mesh) VkMesh {
+func (m *meshes) Instantiate(mesh vertex.Mesh) VkMesh {
 	bufsize := 100 * 1024 // 100k for now
 
 	cached := &vkMesh{
@@ -49,7 +49,7 @@ func (m *vkmeshes) Instantiate(mesh vertex.Mesh) VkMesh {
 	return cached
 }
 
-func (m *vkmeshes) upload(cached *vkMesh, mesh vertex.Mesh) {
+func (m *meshes) upload(cached *vkMesh, mesh vertex.Mesh) {
 	// todo: rewrite in a thread safe manner
 	// introduce a queue and a goroutine that periodically runs transfers
 
@@ -69,16 +69,16 @@ func (m *vkmeshes) upload(cached *vkMesh, mesh vertex.Mesh) {
 	cached.vtxOffset = 0
 }
 
-func (m *vkmeshes) Update(cached VkMesh, mesh vertex.Mesh) {
+func (m *meshes) Update(cached VkMesh, mesh vertex.Mesh) {
 	vkmesh := cached.(*vkMesh)
 	m.upload(vkmesh, mesh)
 }
 
-func (m *vkmeshes) Delete(vkmesh VkMesh) {
+func (m *meshes) Delete(vkmesh VkMesh) {
 	vkmesh.Destroy()
 }
 
-func (m *vkmeshes) Destroy() {
+func (m *meshes) Destroy() {
 	m.vtxstage.Destroy()
 	m.idxstage.Destroy()
 }

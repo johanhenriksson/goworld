@@ -2,6 +2,7 @@ package rect
 
 import (
 	"github.com/kjk/flex"
+	"log"
 
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/gui/node"
@@ -79,6 +80,8 @@ func (f *rect) Update(p any) {
 
 	if styleChanged {
 		// apply new styles
+		log.Println(f.Key(), "style changed")
+
 		new.Style.Apply(f, f.state)
 	}
 }

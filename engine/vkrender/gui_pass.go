@@ -39,10 +39,10 @@ type GuiPass struct {
 	pass     renderpass.T
 	prev     Pass
 	meshes   cache.MeshCache
-	textures cache.TextureCache
+	textures cache.SamplerCache
 }
 
-func NewGuiPass(backend vulkan.T, prev Pass, meshes cache.MeshCache, textures cache.TextureCache) *GuiPass {
+func NewGuiPass(backend vulkan.T, prev Pass, meshes cache.MeshCache) *GuiPass {
 	pass := renderpass.New(backend.Device(), renderpass.Args{
 		Frames: backend.Frames(),
 		Width:  backend.Width(),
@@ -103,8 +103,10 @@ func NewGuiPass(backend vulkan.T, prev Pass, meshes cache.MeshCache, textures ca
 		},
 	}).Instantiate()
 
-	white := textures.Fetch(texture.PathRef("assets/textures/white.png"))
-	mat.Descriptors().Textures.Set(0, white)
+	textures := cache.NewSamplerCache(backend, mat.Descriptors().Textures)
+
+	// id zero should be white
+	textures.Fetch(texture.PathRef("assets/textures/white.png"))
 
 	return &GuiPass{
 		backend:  backend,
@@ -128,8 +130,6 @@ func (p *GuiPass) Draw(args render.Args, scene object.T) {
 	view := mat4.Ident()
 	vp := proj.Mul(&view)
 
-	// gl.DepthFunc(gl.GREATER)
-
 	cmds := command.NewRecorder()
 	cmds.Record(func(cmd command.Buffer) {
 		cmd.CmdBeginRenderPass(p.pass, ctx.Index)
@@ -152,17 +152,9 @@ func (p *GuiPass) Draw(args render.Args, scene object.T) {
 	// query scene for gui managers
 	guis := query.New[GuiDrawable]().Collect(scene)
 	for _, gui := range guis {
+		// todo: collect and depth sort
 		gui.DrawUI(uiArgs, scene)
 	}
-
-	// q := p.meshes.Fetch(p.quad)
-	// cmds.Record(func(cmd command.Buffer) {
-	// 	cmd.CmdPushConstant(vk.ShaderStageAll, 0, &widget.Constants{
-	// 		Viewport: vp,
-	// 		Model:    mat4.Ident(),
-	// 	})
-	// 	q.Draw(cmd, 0)
-	// })
 
 	cmds.Record(func(cmd command.Buffer) {
 		cmd.CmdEndRenderPass()
@@ -184,4 +176,5 @@ func (p *GuiPass) Draw(args render.Args, scene object.T) {
 func (p *GuiPass) Destroy() {
 	p.mat.Material().Destroy()
 	p.pass.Destroy()
+	p.textures.Destroy()
 }
