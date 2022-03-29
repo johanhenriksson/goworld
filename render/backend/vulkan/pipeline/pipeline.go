@@ -51,15 +51,16 @@ func New(device device.T, args Args) T {
 		attach := args.Pass.Attachment(name)
 		// todo: move into attachment object
 		// or into the material/pipeline object?
+		blend := attach.Blend()
 		return vk.PipelineColorBlendAttachmentState{
 			// additive blending
-			BlendEnable:         vkBool(attach.Blend()),
-			ColorBlendOp:        vk.BlendOpAdd,
-			SrcColorBlendFactor: vk.BlendFactorOne,
-			DstColorBlendFactor: vk.BlendFactorOne,
-			AlphaBlendOp:        vk.BlendOpAdd,
-			SrcAlphaBlendFactor: vk.BlendFactorOne,
-			DstAlphaBlendFactor: vk.BlendFactorOne,
+			BlendEnable:         vkBool(blend.Enabled),
+			ColorBlendOp:        blend.Color.Operation,
+			SrcColorBlendFactor: blend.Color.SrcFactor,
+			DstColorBlendFactor: blend.Color.DstFactor,
+			AlphaBlendOp:        blend.Alpha.Operation,
+			SrcAlphaBlendFactor: blend.Alpha.SrcFactor,
+			DstAlphaBlendFactor: blend.Alpha.DstFactor,
 			ColorWriteMask: vk.ColorComponentFlags(
 				vk.ColorComponentRBit | vk.ColorComponentGBit |
 					vk.ColorComponentBBit | vk.ColorComponentABit),

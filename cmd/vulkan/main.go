@@ -86,7 +86,7 @@ func makeGui(scene object.T) {
 				Layout: style.Column{},
 				Width:  style.Pct(15),
 				Height: style.Pct(100),
-				Color:  color.Black,
+				Color:  color.Black.WithAlpha(0.5),
 			},
 			Children: []node.T{
 				palette.New("palette", palette.Props{

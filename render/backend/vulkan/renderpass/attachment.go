@@ -15,7 +15,19 @@ type Attachment interface {
 	Clear() vk.ClearValue
 	Description() vk.AttachmentDescription
 	Destroy()
-	Blend() bool
+	Blend() Blend
+}
+
+type BlendOp struct {
+	Operation vk.BlendOp
+	SrcFactor vk.BlendFactor
+	DstFactor vk.BlendFactor
+}
+
+type Blend struct {
+	Enabled bool
+	Color   BlendOp
+	Alpha   BlendOp
 }
 
 type attachment struct {
@@ -25,7 +37,7 @@ type attachment struct {
 	clear    vk.ClearValue
 	desc     vk.AttachmentDescription
 	imgowner bool
-	blend    bool
+	blend    Blend
 }
 
 func (a *attachment) Description() vk.AttachmentDescription {
@@ -36,7 +48,7 @@ func (a *attachment) Name() string              { return a.name }
 func (a *attachment) Image(frame int) image.T   { return a.image[frame%len(a.image)] }
 func (a *attachment) View(frame int) image.View { return a.view[frame%len(a.view)] }
 func (a *attachment) Clear() vk.ClearValue      { return a.clear }
-func (a *attachment) Blend() bool               { return a.blend }
+func (a *attachment) Blend() Blend              { return a.blend }
 
 func (a *attachment) Destroy() {
 	for i := range a.image {
@@ -130,7 +142,6 @@ func NewDepthAttachment(device device.T, desc DepthAttachment, frames, width, he
 		view:     views,
 		clear:    clear,
 		imgowner: imgowner,
-		blend:    false,
 		desc: vk.AttachmentDescription{
 			Format:         depthFormat,
 			Samples:        desc.Samples,

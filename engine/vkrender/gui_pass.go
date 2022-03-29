@@ -56,6 +56,7 @@ func NewGuiPass(backend vulkan.T, prev Pass, meshes cache.MeshCache, textures ca
 				StoreOp:       vk.AttachmentStoreOpStore,
 				InitialLayout: vk.ImageLayoutPresentSrc,
 				FinalLayout:   vk.ImageLayoutPresentSrc,
+				Blend:         renderpass.BlendMultiply,
 			},
 		},
 		Subpasses: []renderpass.Subpass{

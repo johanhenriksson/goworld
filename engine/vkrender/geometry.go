@@ -145,7 +145,7 @@ func NewGeometryPass(backend vulkan.T, meshes cache.MeshCache, textures cache.Te
 				StoreOp:     vk.AttachmentStoreOpStore,
 				FinalLayout: vk.ImageLayoutShaderReadOnlyOptimal,
 				Usage:       vk.ImageUsageSampledBit,
-				Blend:       true,
+				Blend:       renderpass.BlendAdditive,
 			},
 			{
 				Name:        "diffuse",

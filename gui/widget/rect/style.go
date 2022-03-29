@@ -52,6 +52,8 @@ type Pressed struct {
 }
 
 func (style *Style) Apply(w T, state State) {
+	// this causes unnecessary updates
+	// base styles are applied and then immediately overwritten
 	if style.Extends == nil {
 		if style != DefaultStyle {
 			DefaultStyle.Apply(w, state)

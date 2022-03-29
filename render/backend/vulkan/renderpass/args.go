@@ -30,7 +30,7 @@ type ColorAttachment struct {
 	Images        []image.T
 	Usage         vk.ImageUsageFlagBits
 
-	Blend bool
+	Blend Blend
 }
 
 func (desc *ColorAttachment) defaults() {
