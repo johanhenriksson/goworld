@@ -1,7 +1,7 @@
 package label
 
 import (
-	"log"
+	"fmt"
 
 	"github.com/johanhenriksson/goworld/assets"
 	"github.com/johanhenriksson/goworld/gui/quad"
@@ -11,6 +11,7 @@ import (
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/texture"
 	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/font"
+	"github.com/johanhenriksson/goworld/util"
 
 	"github.com/kjk/flex"
 	vk "github.com/vulkan-go/vulkan"
@@ -110,7 +111,6 @@ func (r *renderer) Draw(args widget.DrawArgs, label T) {
 	}
 
 	if r.invalidTexture {
-		log.Println("update label texture")
 		// (re)create label texture
 		fargs := font.Args{
 			LineHeight: r.lineHeight,
@@ -119,13 +119,12 @@ func (r *renderer) Draw(args widget.DrawArgs, label T) {
 		r.bounds = r.font.Measure(r.text, fargs)
 
 		img := r.font.Render(r.text, fargs)
-		r.tex = texture.ImageRef("label", img)
+		r.tex = texture.ImageRef(fmt.Sprintf("label:%s", util.NewUUID(8)), img)
 
 		r.invalidTexture = false
 	}
 
 	if r.invalidMesh {
-		log.Println("update label mesh")
 		r.mesh.Update(quad.Props{
 			Size:  r.bounds.Scaled(1 / r.scale),
 			UVs:   r.uvs,
