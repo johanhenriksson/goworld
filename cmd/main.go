@@ -9,7 +9,7 @@ import (
 	"github.com/johanhenriksson/goworld/core/object/query"
 	"github.com/johanhenriksson/goworld/editor"
 	"github.com/johanhenriksson/goworld/engine"
-	"github.com/johanhenriksson/goworld/engine/vkrender"
+	"github.com/johanhenriksson/goworld/engine/renderer"
 	"github.com/johanhenriksson/goworld/game"
 	"github.com/johanhenriksson/goworld/gui"
 	"github.com/johanhenriksson/goworld/gui/node"
@@ -33,12 +33,12 @@ func main() {
 		Width:   1600,
 		Height:  1200,
 		Title:   "goworld: vulkan",
-		Renderer: func() engine.Renderer {
-			return vkrender.NewRenderer(backend)
+		Renderer: func() renderer.T {
+			return renderer.New(backend)
 		},
 	},
 		makeGui,
-		func(r engine.Renderer, scene object.T) {
+		func(r renderer.T, scene object.T) {
 			player, chunk := game.CreateScene(scene)
 			player.Transform().SetPosition(vec3.New(0, 20, -11))
 			player.Eye.Transform().SetRotation(vec3.New(-30, 0, 0))
@@ -78,7 +78,7 @@ func main() {
 	)
 }
 
-func makeGui(r engine.Renderer, scene object.T) {
+func makeGui(r renderer.T, scene object.T) {
 	scene.Attach(gui.New(func() node.T {
 		return rect.New("sidebar", rect.Props{
 			OnMouseDown: func(e mouse.Event) {},

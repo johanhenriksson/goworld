@@ -1,10 +1,9 @@
-package vkrender
+package pass
 
 import (
 	"image/color"
 	"log"
 
-	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render/command"
@@ -16,8 +15,13 @@ import (
 	"github.com/x448/float16"
 )
 
+type BufferOutput interface {
+	SamplePosition(cursor vec2.T) (vec3.T, bool)
+	SampleNormal(cursor vec2.T) (vec3.T, bool)
+}
+
 type GeometryBuffer interface {
-	engine.BufferOutput
+	BufferOutput
 
 	Diffuse(int) image.View
 	Normal(int) image.View

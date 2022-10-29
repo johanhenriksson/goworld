@@ -1,13 +1,12 @@
 package cache
 
 import (
-	"github.com/johanhenriksson/goworld/engine/cache"
 	"github.com/johanhenriksson/goworld/render/descriptor"
 	"github.com/johanhenriksson/goworld/render/texture"
 	"github.com/johanhenriksson/goworld/render/vulkan"
 )
 
-type SamplerCache cache.T[texture.Ref, int]
+type SamplerCache T[texture.Ref, int]
 
 type samplers struct {
 	textures *textures
@@ -17,7 +16,7 @@ type samplers struct {
 }
 
 func NewSamplerCache(backend vulkan.T, desc *descriptor.SamplerArray) SamplerCache {
-	return cache.New[texture.Ref, int](&samplers{
+	return New[texture.Ref, int](&samplers{
 		textures: &textures{
 			backend: backend,
 			worker:  backend.Transferer(),

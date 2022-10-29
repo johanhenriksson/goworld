@@ -1,7 +1,6 @@
 package cache
 
 import (
-	"github.com/johanhenriksson/goworld/engine/cache"
 	"github.com/johanhenriksson/goworld/render/buffer"
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/vertex"
@@ -10,7 +9,7 @@ import (
 	vk "github.com/vulkan-go/vulkan"
 )
 
-type MeshCache cache.T[vertex.Mesh, VkMesh]
+type MeshCache T[vertex.Mesh, VkMesh]
 
 type VkMesh interface {
 	Draw(command.Buffer, int)
@@ -28,7 +27,7 @@ type meshes struct {
 func NewMeshCache(backend vulkan.T) MeshCache {
 	stagesize := 100 * 1024 // 100k for now
 
-	return cache.New[vertex.Mesh, VkMesh](&meshes{
+	return New[vertex.Mesh, VkMesh](&meshes{
 		backend: backend,
 		worker:  backend.Transferer(),
 

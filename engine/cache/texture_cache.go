@@ -1,7 +1,6 @@
 package cache
 
 import (
-	"github.com/johanhenriksson/goworld/engine/cache"
 	"github.com/johanhenriksson/goworld/render/buffer"
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/texture"
@@ -10,7 +9,7 @@ import (
 	vk "github.com/vulkan-go/vulkan"
 )
 
-type TextureCache cache.T[texture.Ref, texture.T]
+type TextureCache T[texture.Ref, texture.T]
 
 // mesh cache backend
 type textures struct {
@@ -19,7 +18,7 @@ type textures struct {
 }
 
 func NewTextureCache(backend vulkan.T) TextureCache {
-	return cache.New[texture.Ref, texture.T](&textures{
+	return New[texture.Ref, texture.T](&textures{
 		backend: backend,
 		worker:  backend.Transferer(),
 	})

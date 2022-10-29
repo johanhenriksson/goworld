@@ -1,4 +1,4 @@
-package vkrender
+package pass
 
 import (
 	"github.com/johanhenriksson/goworld/core/light"

@@ -5,7 +5,7 @@ import (
 	"github.com/johanhenriksson/goworld/core/input/keys"
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/core/object"
-	"github.com/johanhenriksson/goworld/engine"
+	"github.com/johanhenriksson/goworld/engine/renderer/pass"
 	"github.com/johanhenriksson/goworld/game"
 	"github.com/johanhenriksson/goworld/geometry/box"
 	"github.com/johanhenriksson/goworld/geometry/plane"
@@ -48,14 +48,14 @@ type editor struct {
 
 	bounds  *box.T
 	mesh    *game.ChunkMesh
-	gbuffer engine.BufferOutput
+	gbuffer pass.BufferOutput
 
 	cursorPos    vec3.T
 	cursorNormal vec3.T
 }
 
 // NewEditor creates a new editor application
-func NewEditor(chunk *game.Chunk, cam camera.T, gbuffer engine.BufferOutput) T {
+func NewEditor(chunk *game.Chunk, cam camera.T, gbuffer pass.BufferOutput) T {
 	parent := object.New("Editor")
 
 	e := &editor{
