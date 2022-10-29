@@ -4,9 +4,9 @@ import (
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/render"
-	"github.com/johanhenriksson/goworld/render/backend/vulkan"
-	"github.com/johanhenriksson/goworld/render/backend/vulkan/cache"
-	"github.com/johanhenriksson/goworld/render/backend/vulkan/sync"
+	"github.com/johanhenriksson/goworld/render/cache"
+	"github.com/johanhenriksson/goworld/render/sync"
+	"github.com/johanhenriksson/goworld/render/vulkan"
 )
 
 type VKRenderer struct {

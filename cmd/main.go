@@ -17,8 +17,8 @@ import (
 	"github.com/johanhenriksson/goworld/gui/widget/palette"
 	"github.com/johanhenriksson/goworld/gui/widget/rect"
 	"github.com/johanhenriksson/goworld/math/vec3"
-	"github.com/johanhenriksson/goworld/render/backend/vulkan"
 	"github.com/johanhenriksson/goworld/render/color"
+	"github.com/johanhenriksson/goworld/render/vulkan"
 )
 
 func main() {

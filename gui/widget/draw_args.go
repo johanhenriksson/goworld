@@ -4,8 +4,8 @@ import (
 	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
-	"github.com/johanhenriksson/goworld/render/backend/vulkan/cache"
-	"github.com/johanhenriksson/goworld/render/backend/vulkan/command"
+	"github.com/johanhenriksson/goworld/render/cache"
+	"github.com/johanhenriksson/goworld/render/command"
 )
 
 type Renderer[W T] interface {

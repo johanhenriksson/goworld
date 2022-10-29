@@ -4,8 +4,8 @@ import (
 	"github.com/johanhenriksson/goworld/core/transform"
 	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/math/vec3"
-	"github.com/johanhenriksson/goworld/render/backend/vulkan/swapchain"
 	"github.com/johanhenriksson/goworld/render/color"
+	"github.com/johanhenriksson/goworld/render/swapchain"
 )
 
 // Args holds the arguments used to perform a draw pass.

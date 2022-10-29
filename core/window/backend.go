@@ -2,7 +2,7 @@ package window
 
 import (
 	"github.com/go-gl/glfw/v3.3/glfw"
-	"github.com/johanhenriksson/goworld/render/backend/vulkan/swapchain"
+	"github.com/johanhenriksson/goworld/render/swapchain"
 )
 
 type GlfwBackend interface {
