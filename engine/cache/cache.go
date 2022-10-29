@@ -28,6 +28,7 @@ type Cachable interface {
 }
 
 type Backend[I Item, O any] interface {
+	ItemName() string
 	Instantiate(I) O
 	Update(O, I)
 	Delete(O)
@@ -59,7 +60,7 @@ func (m *cache[I, O]) Fetch(item I) O {
 
 	// not in cache - instantiate a buffered mesh
 	if !hit {
-		log.Println("buffering new mesh", item.Id(), "version", item.Version())
+		log.Println("instantiate new", m.backend.ItemName(), item.Id(), "version", item.Version())
 		vao := m.backend.Instantiate(item)
 		line = &cache_line[O]{
 			item: vao,
@@ -70,7 +71,7 @@ func (m *cache[I, O]) Fetch(item I) O {
 	// version has changed, update the mesh
 	if line.version != item.Version() {
 		// we might want to queue this operation and run it at a more appropriate time
-		log.Println("updating existing mesh", item.Id(), "to version", item.Version())
+		log.Println("update existing", m.backend.ItemName(), item.Id(), "to version", item.Version())
 		m.backend.Update(line.item, item)
 		line.version = item.Version()
 	}

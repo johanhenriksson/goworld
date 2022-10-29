@@ -1,7 +1,6 @@
 package geometry
 
 import (
-	"github.com/johanhenriksson/goworld/assets"
 	"github.com/johanhenriksson/goworld/core/mesh"
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/math/vec3"
@@ -16,9 +15,8 @@ type Cube struct {
 
 // NewCube creates a new textured cube mesh with a given size
 func NewCube(size float32) *Cube {
-	mat := assets.GetMaterialShared("default")
 	cube := &Cube{
-		T:    mesh.New(mat, mesh.Deferred),
+		T:    mesh.New(mesh.Deferred),
 		Size: size,
 	}
 	cube.generate()

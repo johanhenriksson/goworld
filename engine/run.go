@@ -28,17 +28,14 @@ func Run(args Args, scenefuncs ...SceneFunc) {
 	go RunProfilingServer(6060)
 	interrupt := NewInterrupter()
 
-	// default to opengl backend
 	backend := args.Backend
 	if backend == nil {
-		// default to opengl backend
-		backend = &window.OpenGLBackend{}
+		panic("no backend provided")
 	}
 	defer backend.Destroy()
 
-	// default to deferred opengl renderer
 	if args.Renderer == nil {
-		args.Renderer = NewRenderer
+		panic("no renderer given")
 	}
 
 	// create a window

@@ -20,6 +20,13 @@ import (
 	vk "github.com/vulkan-go/vulkan"
 )
 
+//
+// each material requires its own subpass
+// so - it would be better to look up all materials in the scene, and dynamically
+// create a subpass for each material. the subpass would then query all meshes
+// with its assigned material, and render them.
+//
+
 type voxelpass struct {
 	backend vulkan.T
 	mat     material.Instance[*GeometryDescriptors]
@@ -80,7 +87,7 @@ func (p *voxelpass) Instantiate(pass renderpass.T) {
 			},
 			Textures: &descriptor.SamplerArray{
 				Stages: vk.ShaderStageFragmentBit,
-				Count:  0,
+				Count:  1,
 			},
 		}).Instantiate()
 }

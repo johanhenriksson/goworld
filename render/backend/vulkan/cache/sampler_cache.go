@@ -28,6 +28,10 @@ func NewSamplerCache(backend vulkan.T, desc *descriptor.SamplerArray) SamplerCac
 	})
 }
 
+func (s *samplers) ItemName() string {
+	return "Sampler"
+}
+
 func (s *samplers) Instantiate(ref texture.Ref) int {
 	tex := s.textures.Instantiate(ref)
 	id := s.next

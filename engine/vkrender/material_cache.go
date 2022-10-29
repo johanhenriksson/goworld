@@ -31,8 +31,11 @@ func NewMaterialCache(backend vulkan.T) MaterialCache {
 	})
 }
 
-func (t *vkmaterials) Instantiate(ref MaterialRef) PBRMaterial {
+func (t *vkmaterials) ItemName() string {
+	return "Material"
+}
 
+func (t *vkmaterials) Instantiate(ref MaterialRef) PBRMaterial {
 	return nil
 }
 

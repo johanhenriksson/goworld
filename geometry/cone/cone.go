@@ -1,7 +1,6 @@
 package cone
 
 import (
-	"github.com/johanhenriksson/goworld/assets"
 	"github.com/johanhenriksson/goworld/core/mesh"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/math"
@@ -40,9 +39,8 @@ func Builder(out **T, args Args) *object.Builder {
 }
 
 func New(args Args) *T {
-	mat := assets.GetMaterialShared("color.f")
 	cone := &T{
-		T:    mesh.New(mat, mesh.Forward),
+		T:    mesh.New(mesh.Forward),
 		Args: args,
 	}
 	cone.generate()

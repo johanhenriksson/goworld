@@ -1,8 +1,6 @@
 package cache
 
 import (
-	"log"
-
 	"github.com/johanhenriksson/goworld/engine/cache"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/buffer"
@@ -25,6 +23,10 @@ func NewTextureCache(backend vulkan.T) TextureCache {
 		backend: backend,
 		worker:  backend.Transferer(),
 	})
+}
+
+func (t *textures) ItemName() string {
+	return "Texture"
 }
 
 func (t *textures) Instantiate(ref texture.Ref) texture.T {
@@ -62,8 +64,6 @@ func (t *textures) Instantiate(ref texture.Ref) texture.T {
 	t.worker.Wait()
 
 	stage.Destroy()
-
-	log.Println("buffered texture", ref.Id())
 
 	return tex
 }

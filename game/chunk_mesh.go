@@ -1,7 +1,6 @@
 package game
 
 import (
-	"github.com/johanhenriksson/goworld/assets"
 	"github.com/johanhenriksson/goworld/core/mesh"
 	"github.com/johanhenriksson/goworld/render/vertex"
 )
@@ -17,7 +16,7 @@ type ChunkMesh struct {
 
 func NewChunkMesh(chunk *Chunk) *ChunkMesh {
 	chk := &ChunkMesh{
-		T:            mesh.New(assets.GetMaterialShared("color_voxels"), mesh.Deferred),
+		T:            mesh.New(mesh.Deferred),
 		Chunk:        chunk,
 		meshdata:     vertex.NewTriangles("chunk", []VoxelVertex{}, []uint16{}),
 		meshComputed: make(chan []VoxelVertex),

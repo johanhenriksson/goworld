@@ -37,6 +37,10 @@ func NewMeshCache(backend vulkan.T) MeshCache {
 	})
 }
 
+func (m *meshes) ItemName() string {
+	return "Mesh"
+}
+
 func (m *meshes) Instantiate(mesh vertex.Mesh) VkMesh {
 	bufsize := 100 * 1024 // 100k for now
 

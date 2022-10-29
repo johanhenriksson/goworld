@@ -8,27 +8,26 @@ import (
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render/backend/types"
-	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/vertex"
 
 	"github.com/qmuntal/gltf"
 )
 
-func Load(mat material.T, path string) object.T {
+func Load(path string) object.T {
 	assetPath := fmt.Sprintf("assets/%s", path)
 	doc, _ := gltf.Open(assetPath)
 
 	// load default scene
 	scene := doc.Scenes[*doc.Scene]
 
-	return loadScene(doc, scene, mat)
+	return loadScene(doc, scene)
 }
 
-func loadScene(doc *gltf.Document, scene *gltf.Scene, mat material.T) object.T {
+func loadScene(doc *gltf.Document, scene *gltf.Scene) object.T {
 	root := object.New(scene.Name)
 
 	for _, nodeId := range scene.Nodes {
-		node := loadNode(doc, doc.Nodes[nodeId], mat)
+		node := loadNode(doc, doc.Nodes[nodeId])
 		root.Adopt(node)
 	}
 
@@ -38,14 +37,14 @@ func loadScene(doc *gltf.Document, scene *gltf.Scene, mat material.T) object.T {
 	return root
 }
 
-func loadNode(doc *gltf.Document, node *gltf.Node, mat material.T) object.T {
+func loadNode(doc *gltf.Document, node *gltf.Node) object.T {
 	obj := object.New(node.Name)
 
 	// mesh components
 	if node.Mesh != nil {
 		msh := doc.Meshes[*node.Mesh]
 		for _, primitive := range msh.Primitives {
-			renderer := loadPrimitive(doc, msh.Name, primitive, mat)
+			renderer := loadPrimitive(doc, msh.Name, primitive)
 			obj.Attach(renderer)
 		}
 	}
@@ -57,13 +56,13 @@ func loadNode(doc *gltf.Document, node *gltf.Node, mat material.T) object.T {
 
 	// child objects
 	for _, child := range node.Children {
-		obj.Adopt(loadNode(doc, doc.Nodes[child], mat))
+		obj.Adopt(loadNode(doc, doc.Nodes[child]))
 	}
 
 	return obj
 }
 
-func loadPrimitive(doc *gltf.Document, name string, primitive *gltf.Primitive, mat material.T) mesh.T {
+func loadPrimitive(doc *gltf.Document, name string, primitive *gltf.Primitive) mesh.T {
 	kind := mapPrimitiveType(primitive.Mode)
 
 	// create interleaved buffers
@@ -87,7 +86,7 @@ func loadPrimitive(doc *gltf.Document, name string, primitive *gltf.Primitive, m
 	}
 
 	// create mesh component
-	mesh := mesh.NewPrimitiveMesh(kind, mat, mesh.Deferred)
+	mesh := mesh.NewPrimitiveMesh(kind, mesh.Deferred)
 	mesh.SetMesh(gmesh)
 	return mesh
 }

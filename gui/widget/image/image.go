@@ -5,18 +5,19 @@ import (
 	"github.com/johanhenriksson/goworld/gui/node"
 	"github.com/johanhenriksson/goworld/gui/style"
 	"github.com/johanhenriksson/goworld/gui/widget"
-	"github.com/johanhenriksson/goworld/render/texture"
+	"github.com/johanhenriksson/goworld/math/vec2"
+	"github.com/johanhenriksson/goworld/render/backend/vulkan/texture"
 	"github.com/kjk/flex"
 )
 
 type T interface {
 	widget.T
-	Image() texture.T
+	Image() texture.Ref
 }
 
 type Props struct {
 	Style   Style
-	Image   texture.T
+	Image   texture.Ref
 	Invert  bool
 	OnClick mouse.Callback
 }
@@ -58,7 +59,7 @@ func (i *image) Update(props any) {
 
 // prop accessors
 
-func (i *image) Image() texture.T { return i.props.Image }
+func (i *image) Image() texture.Ref { return i.props.Image }
 
 func (i *image) Draw(args widget.DrawArgs) {
 	i.T.Draw(args)
@@ -77,7 +78,7 @@ func (i *image) Flex() *flex.Node {
 
 func (i *image) measure(node *flex.Node, width float32, widthMode flex.MeasureMode, height float32, heightMode flex.MeasureMode) flex.Size {
 	// todo: consider constraints
-	size := i.props.Image.Size()
+	size := vec2.One // i.props.Image.Size()
 	aspect := size.X / size.Y
 	return flex.Size{
 		Width:  width,

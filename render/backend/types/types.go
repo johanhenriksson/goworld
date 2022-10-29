@@ -3,8 +3,6 @@ package types
 import (
 	"errors"
 	"fmt"
-
-	"github.com/go-gl/gl/v4.1-core/gl"
 )
 
 // ErrUnknownType is returend when an illegal GL type name is used
@@ -15,21 +13,22 @@ type Type uint32
 
 // GL Type Constants
 const (
-	Bool      = Type(gl.BOOL)
-	Int8      = Type(gl.BYTE)
-	UInt8     = Type(gl.UNSIGNED_BYTE)
-	Int16     = Type(gl.SHORT)
-	UInt16    = Type(gl.UNSIGNED_SHORT)
-	Int32     = Type(gl.INT)
-	UInt32    = Type(gl.UNSIGNED_INT)
-	Float     = Type(gl.FLOAT)
-	Double    = Type(gl.DOUBLE)
-	Vec2f     = Type(gl.FLOAT_VEC2)
-	Vec3f     = Type(gl.FLOAT_VEC3)
-	Vec4f     = Type(gl.FLOAT_VEC4)
-	Mat3f     = Type(gl.FLOAT_MAT3)
-	Mat4f     = Type(gl.FLOAT_MAT4)
-	Texture2D = Type(gl.SAMPLER_2D)
+	_ Type = iota
+	Bool
+	Int8
+	UInt8
+	Int16
+	UInt16
+	Int32
+	UInt32
+	Float
+	Vec2f
+	Vec3f
+	Vec4f
+	Mat3f
+	Mat4f
+	Double
+	Texture2D
 )
 
 // Size returns the byte size of the GL type

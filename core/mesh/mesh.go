@@ -1,9 +1,7 @@
 package mesh
 
 import (
-	"github.com/johanhenriksson/goworld/assets"
 	"github.com/johanhenriksson/goworld/core/object"
-	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/vertex"
 )
 
@@ -12,7 +10,6 @@ type T interface {
 
 	Mesh() vertex.Mesh
 	SetMesh(vertex.Mesh)
-	Material() material.T
 	Mode() DrawMode
 	CastShadows() bool
 }
@@ -21,28 +18,25 @@ type T interface {
 type mesh struct {
 	object.Component
 
-	mat  material.T
 	data vertex.Mesh
 	mode DrawMode
 }
 
 // New creates a new mesh component
-func New(mat material.T, mode DrawMode) T {
-	return NewPrimitiveMesh(vertex.Triangles, mat, mode)
+func New(mode DrawMode) T {
+	return NewPrimitiveMesh(vertex.Triangles, mode)
 }
 
 // NewLines creates a new line mesh component
 func NewLines() T {
-	material := assets.GetMaterialShared("lines")
-	return NewPrimitiveMesh(vertex.Lines, material, Lines)
+	return NewPrimitiveMesh(vertex.Lines, Lines)
 }
 
 // NewPrimitiveMesh creates a new mesh composed of a given GL primitive
-func NewPrimitiveMesh(primitive vertex.Primitive, mat material.T, mode DrawMode) *mesh {
+func NewPrimitiveMesh(primitive vertex.Primitive, mode DrawMode) *mesh {
 	m := &mesh{
 		Component: object.NewComponent(),
 		mode:      mode,
-		mat:       mat,
 	}
 	return m
 }
@@ -57,10 +51,6 @@ func (m mesh) Mesh() vertex.Mesh {
 
 func (m *mesh) SetMesh(data vertex.Mesh) {
 	m.data = data
-}
-
-func (m mesh) Material() material.T {
-	return m.mat
 }
 
 func (m mesh) CastShadows() bool {
