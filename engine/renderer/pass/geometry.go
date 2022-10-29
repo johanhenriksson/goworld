@@ -8,7 +8,7 @@ import (
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/core/object/query"
 	"github.com/johanhenriksson/goworld/engine/cache"
-	"github.com/johanhenriksson/goworld/math/mat4"
+	"github.com/johanhenriksson/goworld/engine/renderer/uniform"
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
@@ -30,24 +30,10 @@ type DeferredPass interface {
 	GeometryBuffer
 }
 
-type Camera struct {
-	Proj        mat4.T
-	View        mat4.T
-	ViewProj    mat4.T
-	ProjInv     mat4.T
-	ViewInv     mat4.T
-	ViewProjInv mat4.T
-	Eye         vec3.T
-}
-
-type ObjectStorage struct {
-	Model mat4.T
-}
-
 type GeometryDescriptors struct {
 	descriptor.Set
-	Camera   *descriptor.Uniform[Camera]
-	Objects  *descriptor.Storage[ObjectStorage]
+	Camera   *descriptor.Uniform[uniform.Camera]
+	Objects  *descriptor.Storage[uniform.Object]
 	Textures *descriptor.SamplerArray
 }
 
@@ -68,12 +54,18 @@ type GeometryPass struct {
 
 type DeferredSubpass interface {
 	Name() string
-	Record(command.Recorder, Camera, object.T)
+	Record(command.Recorder, uniform.Camera, object.T)
+	RecordShadows(command.Recorder, uniform.Camera, object.T)
 	Instantiate(renderpass.T)
 	Destroy()
 }
 
-func NewGeometryPass(backend vulkan.T, meshes cache.MeshCache, textures cache.TextureCache, shadows ShadowPass) *GeometryPass {
+func NewGeometryPass(
+	backend vulkan.T,
+	meshes cache.MeshCache,
+	textures cache.TextureCache,
+	shadows ShadowPass,
+) *GeometryPass {
 	geometryPasses := []DeferredSubpass{
 		NewVoxelSubpass(backend, meshes),
 	}
@@ -90,7 +82,7 @@ func NewGeometryPass(backend vulkan.T, meshes cache.MeshCache, textures cache.Te
 		})
 		dependencies = append(dependencies, renderpass.SubpassDependency{
 			Src: "external",
-			Dst: "geometry",
+			Dst: gpass.Name(),
 
 			SrcStageMask:  vk.PipelineStageBottomOfPipeBit,
 			DstStageMask:  vk.PipelineStageColorAttachmentOutputBit,
@@ -99,7 +91,7 @@ func NewGeometryPass(backend vulkan.T, meshes cache.MeshCache, textures cache.Te
 			Flags:         vk.DependencyByRegionBit,
 		})
 		dependencies = append(dependencies, renderpass.SubpassDependency{
-			Src: "geometry",
+			Src: gpass.Name(),
 			Dst: "lighting",
 
 			SrcStageMask:  vk.PipelineStageColorAttachmentOutputBit,
@@ -241,7 +233,7 @@ func (p *GeometryPass) Draw(args render.Args, scene object.T) {
 	ctx := args.Context
 	cmds := command.NewRecorder()
 
-	camera := Camera{
+	camera := uniform.Camera{
 		Proj:        args.Projection,
 		View:        args.View,
 		ViewProj:    args.VP,

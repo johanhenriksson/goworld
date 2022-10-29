@@ -16,7 +16,6 @@ import (
 	"github.com/johanhenriksson/goworld/render/shader"
 	"github.com/johanhenriksson/goworld/render/sync"
 	"github.com/johanhenriksson/goworld/render/texture"
-	"github.com/johanhenriksson/goworld/render/types"
 	"github.com/johanhenriksson/goworld/render/vertex"
 	"github.com/johanhenriksson/goworld/render/vulkan"
 
@@ -70,23 +69,8 @@ func NewGuiPass(backend vulkan.T, prev Pass, meshes cache.MeshCache) *GuiPass {
 	})
 
 	mat := material.New(backend.Device(), material.Args{
-		Pass: pass,
-		Shader: shader.New(backend.Device(), "vk/ui_texture", shader.Inputs{
-			"position": {
-				Type:  types.Float,
-				Index: 0,
-			},
-			"color_0": {
-				Type:  types.Float,
-				Index: 1,
-			},
-			"texcoord_0": {
-				Type:  types.Float,
-				Index: 2,
-			},
-		}, shader.Descriptors{
-			"Textures": 0,
-		}),
+		Pass:     pass,
+		Shader:   shader.New(backend.Device(), "vk/ui_texture"),
 		Pointers: vertex.ParsePointers(vertex.UI{}),
 		Constants: []pipeline.PushConstant{
 			{

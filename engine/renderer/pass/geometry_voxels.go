@@ -7,17 +7,12 @@ import (
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/core/object/query"
 	"github.com/johanhenriksson/goworld/engine/cache"
+	"github.com/johanhenriksson/goworld/engine/renderer/uniform"
 	"github.com/johanhenriksson/goworld/game"
 	"github.com/johanhenriksson/goworld/render/command"
-	"github.com/johanhenriksson/goworld/render/descriptor"
 	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/renderpass"
-	"github.com/johanhenriksson/goworld/render/shader"
-	"github.com/johanhenriksson/goworld/render/types"
-	"github.com/johanhenriksson/goworld/render/vertex"
 	"github.com/johanhenriksson/goworld/render/vulkan"
-
-	vk "github.com/vulkan-go/vulkan"
 )
 
 //
@@ -29,7 +24,8 @@ import (
 
 type voxelpass struct {
 	backend vulkan.T
-	mat     material.Instance[*GeometryDescriptors]
+	mat     material.Standard
+	shadows material.Standard
 	meshes  cache.MeshCache
 }
 
@@ -41,66 +37,49 @@ func NewVoxelSubpass(backend vulkan.T, meshes cache.MeshCache) DeferredSubpass {
 }
 
 func (p *voxelpass) Instantiate(pass renderpass.T) {
-	p.mat = material.New(
-		p.backend.Device(),
-		material.Args{
-			Shader: shader.New(
-				p.backend.Device(),
-				"vk/color_f",
-				shader.Inputs{
-					"position": {
-						Index: 0,
-						Type:  types.Float,
-					},
-					"normal_id": {
-						Index: 1,
-						Type:  types.UInt8,
-					},
-					"color_0": {
-						Index: 2,
-						Type:  types.Float,
-					},
-					"occlusion": {
-						Index: 3,
-						Type:  types.Float,
-					},
-				},
-				shader.Descriptors{
-					"Camera":   0,
-					"Objects":  1,
-					"Textures": 2,
-				},
-			),
-			Pass:       pass,
-			Subpass:    p.Name(),
-			Pointers:   vertex.ParsePointers(game.VoxelVertex{}),
-			DepthTest:  true,
-			DepthWrite: true,
-		},
-		&GeometryDescriptors{
-			Camera: &descriptor.Uniform[Camera]{
-				Stages: vk.ShaderStageAll,
-			},
-			Objects: &descriptor.Storage[ObjectStorage]{
-				Stages: vk.ShaderStageAll,
-				Size:   10,
-			},
-			Textures: &descriptor.SamplerArray{
-				Stages: vk.ShaderStageFragmentBit,
-				Count:  1,
-			},
-		}).Instantiate()
+	p.mat = material.FromDef(
+		p.backend,
+		pass,
+		&material.Def{
+			Shader:       "vk/color_f",
+			VertexFormat: game.VoxelVertex{},
+		})
+}
+
+func (p *voxelpass) InstantiateShadows(pass renderpass.T) {
+	p.shadows = material.FromDef(
+		p.backend,
+		pass,
+		&material.Def{
+			Shader:       "vk/shadow",
+			VertexFormat: game.VoxelVertex{},
+		})
 }
 
 func (p *voxelpass) Name() string {
-	return "voxels"
+	return "vk/color_f"
 }
 
-func (p *voxelpass) Record(cmds command.Recorder, camera Camera, scene object.T) {
+func (p *voxelpass) Record(cmds command.Recorder, camera uniform.Camera, scene object.T) {
 	p.mat.Descriptors().Camera.Set(camera)
 
 	cmds.Record(func(cmd command.Buffer) {
 		p.mat.Bind(cmd)
+	})
+
+	objects := query.New[mesh.T]().Where(isDrawDeferred).Collect(scene)
+	for index, mesh := range objects {
+		if err := p.DrawDeferred(cmds, index, mesh); err != nil {
+			fmt.Printf("deferred draw error in object %s: %s\n", mesh.Name(), err)
+		}
+	}
+}
+
+func (p *voxelpass) RecordShadows(cmds command.Recorder, camera uniform.Camera, scene object.T) {
+	p.mat.Descriptors().Camera.Set(camera)
+
+	cmds.Record(func(cmd command.Buffer) {
+		p.shadows.Bind(cmd)
 	})
 
 	objects := query.New[mesh.T]().Where(isDrawDeferred).Collect(scene)
@@ -121,7 +100,7 @@ func (p *voxelpass) DrawDeferred(cmds command.Recorder, index int, mesh mesh.T) 
 	// write object properties to ssbo
 	// todo: this should be reused between frames - maybe
 	//       how to detect changes?
-	p.mat.Descriptors().Objects.Set(index, ObjectStorage{
+	p.mat.Descriptors().Objects.Set(index, uniform.Object{
 		Model: mesh.Transform().World(),
 	})
 
@@ -134,4 +113,5 @@ func (p *voxelpass) DrawDeferred(cmds command.Recorder, index int, mesh mesh.T) 
 
 func (p *voxelpass) Destroy() {
 	p.mat.Material().Destroy()
+	p.shadows.Material().Destroy()
 }

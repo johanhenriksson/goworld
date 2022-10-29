@@ -21,9 +21,9 @@ func (i Inputs) Input(name string) (int, types.Type, bool) {
 	return input.Index, input.Type, exists
 }
 
-type Descriptors map[string]int
+type Bindings map[string]int
 
-func (d Descriptors) Descriptor(name string) (int, bool) {
+func (d Bindings) Descriptor(name string) (int, bool) {
 	index, exists := d[name]
 	return index, exists
 }
@@ -36,21 +36,32 @@ type T interface {
 }
 
 type shader struct {
-	modules     []Module
-	inputs      Inputs
-	descriptors Descriptors
+	modules  []Module
+	inputs   Inputs
+	bindings Bindings
 }
 
-func New(device device.T, path string, inputs Inputs, descriptors Descriptors) T {
+func New(device device.T, path string) T {
 	// todo: inputs & descriptors should be obtained from SPIR-V reflection
+	details, err := ReadDetails(fmt.Sprintf("assets/shaders/%s.json", path))
+	if err != nil {
+		panic(fmt.Sprintf("failed to load shader details: %s", err))
+	}
+
+	inputs, err := details.ParseInputs()
+	if err != nil {
+		panic(fmt.Sprintf("failed to parse shader inputs: %s", err))
+	}
+
 	modules := []Module{
 		NewModule(device, fmt.Sprintf("assets/shaders/%s.vert", path), vk.ShaderStageVertexBit),
 		NewModule(device, fmt.Sprintf("assets/shaders/%s.frag", path), vk.ShaderStageFragmentBit),
 	}
+
 	return &shader{
-		modules:     modules,
-		inputs:      inputs,
-		descriptors: descriptors,
+		modules:  modules,
+		inputs:   inputs,
+		bindings: details.Bindings,
 	}
 }
 
@@ -69,5 +80,5 @@ func (s *shader) Input(name string) (int, types.Type, bool) {
 }
 
 func (s *shader) Descriptor(name string) (int, bool) {
-	return s.descriptors.Descriptor(name)
+	return s.bindings.Descriptor(name)
 }

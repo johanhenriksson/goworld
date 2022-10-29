@@ -13,7 +13,6 @@ import (
 	"github.com/johanhenriksson/goworld/render/shader"
 	"github.com/johanhenriksson/goworld/render/sync"
 	"github.com/johanhenriksson/goworld/render/texture"
-	"github.com/johanhenriksson/goworld/render/types"
 	"github.com/johanhenriksson/goworld/render/vertex"
 	"github.com/johanhenriksson/goworld/render/vulkan"
 
@@ -85,23 +84,7 @@ func NewOutputPass(backend vulkan.T, meshes cache.MeshCache, textures cache.Text
 	p.material = material.New(
 		backend.Device(),
 		material.Args{
-			Shader: shader.New(
-				backend.Device(),
-				"vk/output",
-				shader.Inputs{
-					"position": {
-						Index: 0,
-						Type:  types.Float,
-					},
-					"texcoord_0": {
-						Index: 1,
-						Type:  types.Float,
-					},
-				},
-				shader.Descriptors{
-					"Output": 0,
-				},
-			),
+			Shader:     shader.New(backend.Device(), "vk/output"),
 			Pass:       p.pass,
 			Pointers:   vertex.ParsePointers(vertex.T{}),
 			DepthTest:  false,

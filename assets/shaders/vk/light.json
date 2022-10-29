@@ -1,0 +1,16 @@
+{
+    "Inputs": {
+        "position": {
+            "Index": 0,
+            "Type": "float"
+        }
+    },
+    "Bindings": {
+        "Diffuse": 0,
+        "Normal": 1,
+        "Position": 2,
+        "Depth": 3,
+        "Camera": 4,
+        "Shadow": 5
+    }
+}

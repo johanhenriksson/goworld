@@ -1,0 +1,16 @@
+{
+    "Inputs": {
+        "position": {
+            "Index": 0,
+            "Type": "float"
+        },
+        "color_0": {
+            "Index": 1,
+            "Type": "float"
+        }
+    },
+    "Bindings": {
+        "Camera": 0,
+        "Objects": 1
+    }
+}

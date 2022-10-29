@@ -9,6 +9,7 @@ import (
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/core/object/query"
 	"github.com/johanhenriksson/goworld/engine/cache"
+	"github.com/johanhenriksson/goworld/engine/renderer/uniform"
 	"github.com/johanhenriksson/goworld/game"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/command"
@@ -18,7 +19,6 @@ import (
 	"github.com/johanhenriksson/goworld/render/renderpass"
 	"github.com/johanhenriksson/goworld/render/shader"
 	"github.com/johanhenriksson/goworld/render/sync"
-	"github.com/johanhenriksson/goworld/render/types"
 	"github.com/johanhenriksson/goworld/render/vertex"
 	"github.com/johanhenriksson/goworld/render/vulkan"
 
@@ -33,8 +33,8 @@ type ShadowPass interface {
 
 type ShadowDescriptors struct {
 	descriptor.Set
-	Camera  *descriptor.Uniform[Camera]
-	Objects *descriptor.Storage[ObjectStorage]
+	Camera  *descriptor.Uniform[uniform.Camera]
+	Objects *descriptor.Storage[uniform.Object]
 }
 
 type shadowpass struct {
@@ -72,30 +72,17 @@ func NewShadowPass(backend vulkan.T, meshes cache.MeshCache) ShadowPass {
 	mat := material.New(
 		backend.Device(),
 		material.Args{
-			Shader: shader.New(
-				backend.Device(),
-				"vk/shadow",
-				shader.Inputs{
-					"position": {
-						Index: 0,
-						Type:  types.Float,
-					},
-				},
-				shader.Descriptors{
-					"Camera":  0,
-					"Objects": 1,
-				},
-			),
+			Shader:     shader.New(backend.Device(), "vk/shadow"),
 			Pass:       pass,
 			Pointers:   vertex.ParsePointers(game.VoxelVertex{}),
 			DepthTest:  true,
 			DepthWrite: true,
 		},
 		&ShadowDescriptors{
-			Camera: &descriptor.Uniform[Camera]{
+			Camera: &descriptor.Uniform[uniform.Camera]{
 				Stages: vk.ShaderStageAll,
 			},
-			Objects: &descriptor.Storage[ObjectStorage]{
+			Objects: &descriptor.Storage[uniform.Object]{
 				Stages: vk.ShaderStageAll,
 				Size:   10,
 			},
@@ -123,7 +110,7 @@ func (p *shadowpass) Draw(args render.Args, scene object.T) {
 	light := query.New[light.T]().Where(func(lit light.T) bool { return lit.Type() == light.Directional }).First(scene)
 	lightDesc := light.LightDescriptor()
 
-	camera := Camera{
+	camera := uniform.Camera{
 		ViewProj: lightDesc.ViewProj,
 		Eye:      light.Transform().Position(),
 	}
@@ -170,7 +157,7 @@ func (p *shadowpass) DrawShadow(cmds command.Recorder, index int, args render.Ar
 		return nil
 	}
 
-	p.mat.Descriptors().Objects.Set(index, ObjectStorage{
+	p.mat.Descriptors().Objects.Set(index, uniform.Object{
 		Model: mesh.Transform().World(),
 	})
 

@@ -1,0 +1,12 @@
+{
+    "Inputs": {
+        "position": {
+            "Index": 0,
+            "Type": "float"
+        }
+    },
+    "Bindings": {
+        "Camera": 0,
+        "Objects": 1
+    }
+}

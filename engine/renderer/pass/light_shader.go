@@ -2,6 +2,7 @@ package pass
 
 import (
 	"github.com/johanhenriksson/goworld/core/light"
+	"github.com/johanhenriksson/goworld/engine/renderer/uniform"
 	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/math/vec4"
 	"github.com/johanhenriksson/goworld/render/color"
@@ -11,7 +12,6 @@ import (
 	"github.com/johanhenriksson/goworld/render/pipeline"
 	"github.com/johanhenriksson/goworld/render/renderpass"
 	"github.com/johanhenriksson/goworld/render/shader"
-	"github.com/johanhenriksson/goworld/render/types"
 	"github.com/johanhenriksson/goworld/render/vertex"
 
 	vk "github.com/vulkan-go/vulkan"
@@ -23,7 +23,7 @@ type LightDescriptors struct {
 	Normal   *descriptor.InputAttachment
 	Position *descriptor.InputAttachment
 	Depth    *descriptor.InputAttachment
-	Camera   *descriptor.Uniform[Camera]
+	Camera   *descriptor.Uniform[uniform.Camera]
 	Shadow   *descriptor.SamplerArray
 }
 
@@ -42,24 +42,7 @@ func NewLightShader(device device.T, pass renderpass.T) material.Instance[*Light
 	mat := material.New(
 		device,
 		material.Args{
-			Shader: shader.New(
-				device,
-				"vk/light",
-				shader.Inputs{
-					"position": {
-						Index: 0,
-						Type:  types.Float,
-					},
-				},
-				shader.Descriptors{
-					"Diffuse":  0,
-					"Normal":   1,
-					"Position": 2,
-					"Depth":    3,
-					"Camera":   4,
-					"Shadow":   5,
-				},
-			),
+			Shader:   shader.New(device, "vk/light"),
 			Pass:     pass,
 			Subpass:  "lighting",
 			Pointers: vertex.ParsePointers(vertex.T{}),
@@ -84,7 +67,7 @@ func NewLightShader(device device.T, pass renderpass.T) material.Instance[*Light
 			Depth: &descriptor.InputAttachment{
 				Stages: vk.ShaderStageFragmentBit,
 			},
-			Camera: &descriptor.Uniform[Camera]{
+			Camera: &descriptor.Uniform[uniform.Camera]{
 				Stages: vk.ShaderStageFragmentBit,
 			},
 			Shadow: &descriptor.SamplerArray{

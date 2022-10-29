@@ -7,6 +7,7 @@ import (
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/core/object/query"
 	"github.com/johanhenriksson/goworld/engine/cache"
+	"github.com/johanhenriksson/goworld/engine/renderer/uniform"
 	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/command"
@@ -16,7 +17,6 @@ import (
 	"github.com/johanhenriksson/goworld/render/renderpass"
 	"github.com/johanhenriksson/goworld/render/shader"
 	"github.com/johanhenriksson/goworld/render/sync"
-	"github.com/johanhenriksson/goworld/render/types"
 	"github.com/johanhenriksson/goworld/render/vertex"
 	"github.com/johanhenriksson/goworld/render/vulkan"
 
@@ -37,7 +37,7 @@ type LinePass struct {
 
 type LineDescriptors struct {
 	descriptor.Set
-	Camera  *descriptor.Uniform[Camera]
+	Camera  *descriptor.Uniform[uniform.Camera]
 	Objects *descriptor.Storage[mat4.T]
 }
 
@@ -92,31 +92,14 @@ func NewLinePass(backend vulkan.T, meshes cache.MeshCache, output Pass, geometry
 	p.material = material.New(
 		backend.Device(),
 		material.Args{
-			Shader: shader.New(
-				backend.Device(),
-				"vk/lines",
-				shader.Inputs{
-					"position": {
-						Index: 0,
-						Type:  types.Float,
-					},
-					"color_0": {
-						Index: 1,
-						Type:  types.Float,
-					},
-				},
-				shader.Descriptors{
-					"Camera":  0,
-					"Objects": 1,
-				},
-			),
+			Shader:    shader.New(backend.Device(), "vk/lines"),
 			Pass:      p.pass,
 			Pointers:  vertex.ParsePointers(vertex.C{}),
 			Primitive: vertex.Lines,
 			DepthTest: true,
 		},
 		&LineDescriptors{
-			Camera: &descriptor.Uniform[Camera]{
+			Camera: &descriptor.Uniform[uniform.Camera]{
 				Stages: vk.ShaderStageVertexBit,
 			},
 			Objects: &descriptor.Storage[mat4.T]{
@@ -132,7 +115,7 @@ func (p *LinePass) Draw(args render.Args, scene object.T) {
 	ctx := args.Context
 	cmds := command.NewRecorder()
 
-	camera := Camera{
+	camera := uniform.Camera{
 		Proj:        args.Projection,
 		View:        args.View,
 		ViewProj:    args.VP,
