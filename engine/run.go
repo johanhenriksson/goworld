@@ -15,15 +15,14 @@ type SceneFunc func(Renderer, object.T)
 type RendererFunc func() Renderer
 
 type Args struct {
-	Title     string
-	Width     int
-	Height    int
-	SceneFunc SceneFunc
-	Backend   window.GlfwBackend
-	Renderer  RendererFunc
+	Title    string
+	Width    int
+	Height   int
+	Backend  window.GlfwBackend
+	Renderer RendererFunc
 }
 
-func Run(args Args) {
+func Run(args Args, scenefuncs ...SceneFunc) {
 	log.Println("goworld")
 
 	go RunProfilingServer(6060)
@@ -67,7 +66,9 @@ func Run(args Args) {
 	// create scene
 	scene := object.New("Scene")
 	wnd.SetInputHandler(scene)
-	args.SceneFunc(renderer, scene)
+	for _, scenefunc := range scenefuncs {
+		scenefunc(renderer, scene)
+	}
 
 	// run the render loop
 	log.Println("ready")

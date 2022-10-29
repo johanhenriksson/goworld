@@ -36,9 +36,9 @@ func main() {
 		Renderer: func() engine.Renderer {
 			return vkrender.NewRenderer(backend)
 		},
-		SceneFunc: func(r engine.Renderer, scene object.T) {
-			makeGui(scene)
-
+	},
+		makeGui,
+		func(r engine.Renderer, scene object.T) {
 			player, chunk := game.CreateScene(scene)
 			player.Transform().SetPosition(vec3.New(0, 20, -11))
 			player.Eye.Transform().SetRotation(vec3.New(-30, 0, 0))
@@ -75,10 +75,10 @@ func main() {
 
 			scene.Adopt(player)
 		},
-	})
+	)
 }
 
-func makeGui(scene object.T) {
+func makeGui(r engine.Renderer, scene object.T) {
 	scene.Attach(gui.New(func() node.T {
 		return rect.New("sidebar", rect.Props{
 			OnMouseDown: func(e mouse.Event) {},
