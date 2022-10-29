@@ -80,7 +80,7 @@ func (p *voxelpass) Instantiate(pass renderpass.T) {
 			},
 			Textures: &descriptor.SamplerArray{
 				Stages: vk.ShaderStageFragmentBit,
-				Count:  16,
+				Count:  0,
 			},
 		}).Instantiate()
 }
