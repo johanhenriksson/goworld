@@ -27,6 +27,7 @@ type Descriptors struct {
 
 type Def struct {
 	Shader       string
+	Subpass      string
 	VertexFormat any
 }
 
@@ -52,7 +53,7 @@ func FromDef(backend vulkan.T, rpass renderpass.T, def *Def) Standard {
 		Args{
 			Shader:     shader.New(backend.Device(), def.Shader),
 			Pass:       rpass,
-			Subpass:    def.Shader,
+			Subpass:    def.Subpass,
 			Pointers:   pointers,
 			DepthTest:  true,
 			DepthWrite: true,

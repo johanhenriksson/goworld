@@ -27,7 +27,7 @@ type vkrenderer struct {
 	textures cache.TextureCache
 }
 
-func New(backend vulkan.T) T {
+func New(backend vulkan.T, geometryPasses, shadowPasses []pass.DeferredSubpass) T {
 	r := &vkrenderer{
 		backend:  backend,
 		meshes:   cache.NewMeshCache(backend),
@@ -35,8 +35,8 @@ func New(backend vulkan.T) T {
 	}
 
 	r.Pre = &pass.PrePass{}
-	r.Shadows = pass.NewShadowPass(backend, r.meshes)
-	r.Geometry = pass.NewGeometryPass(backend, r.meshes, r.textures, r.Shadows)
+	r.Shadows = pass.NewShadowPass(backend, r.meshes, shadowPasses)
+	r.Geometry = pass.NewGeometryPass(backend, r.meshes, r.textures, r.Shadows, geometryPasses)
 	r.Output = pass.NewOutputPass(backend, r.meshes, r.textures, r.Geometry)
 	r.Lines = pass.NewLinePass(backend, r.meshes, r.Output, r.Geometry)
 	r.GUI = pass.NewGuiPass(backend, r.Lines, r.meshes)

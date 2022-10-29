@@ -1,4 +1,4 @@
-package pass
+package game
 
 import (
 	"fmt"
@@ -7,8 +7,8 @@ import (
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/core/object/query"
 	"github.com/johanhenriksson/goworld/engine/cache"
+	"github.com/johanhenriksson/goworld/engine/renderer/pass"
 	"github.com/johanhenriksson/goworld/engine/renderer/uniform"
-	"github.com/johanhenriksson/goworld/game"
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/renderpass"
@@ -25,39 +25,39 @@ import (
 type voxelpass struct {
 	backend vulkan.T
 	mat     material.Standard
-	shadows material.Standard
 	meshes  cache.MeshCache
+	shader  string
 }
 
-func NewVoxelSubpass(backend vulkan.T, meshes cache.MeshCache) DeferredSubpass {
+func NewVoxelSubpass(backend vulkan.T, meshes cache.MeshCache) pass.DeferredSubpass {
 	return &voxelpass{
 		backend: backend,
 		meshes:  meshes,
+		shader:  "vk/color_f",
 	}
 }
 
-func (p *voxelpass) Instantiate(pass renderpass.T) {
-	p.mat = material.FromDef(
-		p.backend,
-		pass,
-		&material.Def{
-			Shader:       "vk/color_f",
-			VertexFormat: game.VoxelVertex{},
-		})
+func NewVoxelShadowpass(backend vulkan.T, meshes cache.MeshCache) pass.DeferredSubpass {
+	return &voxelpass{
+		backend: backend,
+		meshes:  meshes,
+		shader:  "vk/shadow",
+	}
 }
 
-func (p *voxelpass) InstantiateShadows(pass renderpass.T) {
-	p.shadows = material.FromDef(
+func (p *voxelpass) Instantiate(rpass renderpass.T) {
+	p.mat = material.FromDef(
 		p.backend,
-		pass,
+		rpass,
 		&material.Def{
-			Shader:       "vk/shadow",
-			VertexFormat: game.VoxelVertex{},
+			Shader:       p.shader,
+			Subpass:      p.Name(),
+			VertexFormat: VoxelVertex{},
 		})
 }
 
 func (p *voxelpass) Name() string {
-	return "vk/color_f"
+	return "voxels"
 }
 
 func (p *voxelpass) Record(cmds command.Recorder, camera uniform.Camera, scene object.T) {
@@ -67,30 +67,15 @@ func (p *voxelpass) Record(cmds command.Recorder, camera uniform.Camera, scene o
 		p.mat.Bind(cmd)
 	})
 
-	objects := query.New[mesh.T]().Where(isDrawDeferred).Collect(scene)
+	objects := query.New[mesh.T]().Where(isVoxelMesh).Collect(scene)
 	for index, mesh := range objects {
-		if err := p.DrawDeferred(cmds, index, mesh); err != nil {
+		if err := p.DrawDeferred(cmds, index, mesh, p.mat); err != nil {
 			fmt.Printf("deferred draw error in object %s: %s\n", mesh.Name(), err)
 		}
 	}
 }
 
-func (p *voxelpass) RecordShadows(cmds command.Recorder, camera uniform.Camera, scene object.T) {
-	p.mat.Descriptors().Camera.Set(camera)
-
-	cmds.Record(func(cmd command.Buffer) {
-		p.shadows.Bind(cmd)
-	})
-
-	objects := query.New[mesh.T]().Where(isDrawDeferred).Collect(scene)
-	for index, mesh := range objects {
-		if err := p.DrawDeferred(cmds, index, mesh); err != nil {
-			fmt.Printf("deferred draw error in object %s: %s\n", mesh.Name(), err)
-		}
-	}
-}
-
-func (p *voxelpass) DrawDeferred(cmds command.Recorder, index int, mesh mesh.T) error {
+func (p *voxelpass) DrawDeferred(cmds command.Recorder, index int, mesh mesh.T, mat material.Standard) error {
 	vkmesh := p.meshes.Fetch(mesh.Mesh())
 	if vkmesh == nil {
 		fmt.Println("mesh is nil")
@@ -100,7 +85,7 @@ func (p *voxelpass) DrawDeferred(cmds command.Recorder, index int, mesh mesh.T) 
 	// write object properties to ssbo
 	// todo: this should be reused between frames - maybe
 	//       how to detect changes?
-	p.mat.Descriptors().Objects.Set(index, uniform.Object{
+	mat.Descriptors().Objects.Set(index, uniform.Object{
 		Model: mesh.Transform().World(),
 	})
 
@@ -113,5 +98,9 @@ func (p *voxelpass) DrawDeferred(cmds command.Recorder, index int, mesh mesh.T) 
 
 func (p *voxelpass) Destroy() {
 	p.mat.Material().Destroy()
-	p.shadows.Material().Destroy()
+}
+
+func isVoxelMesh(m mesh.T) bool {
+	// todo: improve this
+	return m.Mode() == mesh.Deferred
 }

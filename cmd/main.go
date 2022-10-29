@@ -9,7 +9,9 @@ import (
 	"github.com/johanhenriksson/goworld/core/object/query"
 	"github.com/johanhenriksson/goworld/editor"
 	"github.com/johanhenriksson/goworld/engine"
+	"github.com/johanhenriksson/goworld/engine/cache"
 	"github.com/johanhenriksson/goworld/engine/renderer"
+	"github.com/johanhenriksson/goworld/engine/renderer/pass"
 	"github.com/johanhenriksson/goworld/game"
 	"github.com/johanhenriksson/goworld/gui"
 	"github.com/johanhenriksson/goworld/gui/node"
@@ -34,7 +36,12 @@ func main() {
 		Height:  1200,
 		Title:   "goworld: vulkan",
 		Renderer: func() renderer.T {
-			return renderer.New(backend)
+			voxelCache := cache.NewMeshCache(backend)
+			return renderer.New(
+				backend,
+				[]pass.DeferredSubpass{game.NewVoxelSubpass(backend, voxelCache)},
+				[]pass.DeferredSubpass{game.NewVoxelShadowpass(backend, voxelCache)},
+			)
 		},
 	},
 		makeGui,

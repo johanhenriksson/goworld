@@ -55,7 +55,6 @@ type GeometryPass struct {
 type DeferredSubpass interface {
 	Name() string
 	Record(command.Recorder, uniform.Camera, object.T)
-	RecordShadows(command.Recorder, uniform.Camera, object.T)
 	Instantiate(renderpass.T)
 	Destroy()
 }
@@ -65,15 +64,12 @@ func NewGeometryPass(
 	meshes cache.MeshCache,
 	textures cache.TextureCache,
 	shadows ShadowPass,
+	passes []DeferredSubpass,
 ) *GeometryPass {
-	geometryPasses := []DeferredSubpass{
-		NewVoxelSubpass(backend, meshes),
-	}
+	subpasses := make([]renderpass.Subpass, 0, len(passes)+1)
+	dependencies := make([]renderpass.SubpassDependency, 0, 2*len(passes)+1)
 
-	subpasses := make([]renderpass.Subpass, 0, len(geometryPasses)+1)
-	dependencies := make([]renderpass.SubpassDependency, 0, 2*len(geometryPasses)+1)
-
-	for _, gpass := range geometryPasses {
+	for _, gpass := range passes {
 		subpasses = append(subpasses, renderpass.Subpass{
 			Name:  gpass.Name(),
 			Depth: true,
@@ -176,7 +172,7 @@ func NewGeometryPass(
 	})
 
 	// instantiate geometry subpasses
-	for _, gpass := range geometryPasses {
+	for _, gpass := range passes {
 		gpass.Instantiate(pass)
 	}
 
@@ -221,7 +217,7 @@ func NewGeometryPass(
 		copyReady: sync.NewSemaphore(backend.Device()),
 
 		shadows: shadows,
-		gpasses: geometryPasses,
+		gpasses: passes,
 	}
 }
 
