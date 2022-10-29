@@ -3,8 +3,8 @@ package shader
 import (
 	"fmt"
 
-	"github.com/johanhenriksson/goworld/render/backend/types"
 	"github.com/johanhenriksson/goworld/render/backend/vulkan/device"
+	"github.com/johanhenriksson/goworld/render/types"
 
 	vk "github.com/vulkan-go/vulkan"
 )
