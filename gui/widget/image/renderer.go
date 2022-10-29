@@ -1,21 +1,18 @@
 package image
 
 import (
-	"github.com/johanhenriksson/goworld/assets"
 	"github.com/johanhenriksson/goworld/gui/quad"
+	"github.com/johanhenriksson/goworld/gui/widget"
 	"github.com/johanhenriksson/goworld/math/vec2"
-	"github.com/johanhenriksson/goworld/render"
+	"github.com/johanhenriksson/goworld/render/backend/vulkan/texture"
 	"github.com/johanhenriksson/goworld/render/color"
-	"github.com/johanhenriksson/goworld/render/material"
-	"github.com/johanhenriksson/goworld/render/texture"
 )
 
 type Renderer interface {
-	Draw(render.Args, T)
-	Destroy()
+	widget.Renderer[T]
 
 	SetSize(vec2.T)
-	SetImage(texture.T)
+	SetImage(texture.Ref)
 	SetInvert(bool)
 	SetColor(color.T)
 }
@@ -23,11 +20,10 @@ type Renderer interface {
 type renderer struct {
 	tint   color.T
 	invert bool
-	tex    texture.T
+	tex    texture.Ref
 
 	invalid bool
 	size    vec2.T
-	mat     material.T
 	mesh    quad.T
 	uvs     quad.UV
 }
@@ -35,7 +31,7 @@ type renderer struct {
 func NewRenderer() Renderer {
 	return &renderer{
 		tint:    color.White,
-		tex:     assets.DefaultTexture(),
+		tex:     nil,
 		uvs:     quad.DefaultUVs,
 		invalid: true,
 	}
@@ -46,9 +42,9 @@ func (r *renderer) SetSize(size vec2.T) {
 	r.size = size
 }
 
-func (r *renderer) SetImage(tex texture.T) {
+func (r *renderer) SetImage(tex texture.Ref) {
 	if tex == nil {
-		tex = assets.DefaultTexture()
+		tex = nil
 	}
 	r.invalid = r.invalid || tex != r.tex
 	r.tex = tex
@@ -67,10 +63,9 @@ func (r *renderer) SetInvert(invert bool) {
 	r.invert = invert
 }
 
-func (r *renderer) Draw(args render.Args, image T) {
+func (r *renderer) Draw(args widget.DrawArgs, image T) {
 	if r.mesh == nil {
-		r.mat = assets.GetMaterial("ui_texture")
-		r.mesh = quad.New(r.mat, quad.Props{
+		r.mesh = quad.New(quad.Props{
 			UVs:   r.uvs,
 			Size:  r.size,
 			Color: color.White,
@@ -95,11 +90,9 @@ func (r *renderer) Draw(args render.Args, image T) {
 
 	// set correct blending
 	// perhaps this belongs somewhere else
-	render.BlendMultiply()
+	// render.BlendMultiply()
 
-	r.mesh.Material().Use()
-	r.mesh.Material().Texture("image", r.tex)
-	r.mesh.Draw(args)
+	// r.mesh.Draw(args)
 }
 
 func (r *renderer) Destroy() {

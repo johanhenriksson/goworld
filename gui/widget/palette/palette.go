@@ -28,7 +28,7 @@ func render(props Props) node.T {
 
 	selected, setSelected := hooks.UseState(props.Palette[3])
 
-	colors := util.Map(props.Palette, func(i int, c color.T) node.T {
+	colors := util.MapIdx(props.Palette, func(c color.T, i int) node.T {
 		return rect.New(fmt.Sprintf("color%d", i), rect.Props{
 			Style: SwatchStyle.Extend(rect.Style{
 				Color: c,
@@ -42,7 +42,7 @@ func render(props Props) node.T {
 		})
 	})
 
-	rows := util.Map(util.Chunks(colors, perRow), func(i int, colors []node.T) node.T {
+	rows := util.MapIdx(util.Chunks(colors, perRow), func(colors []node.T, i int) node.T {
 		return rect.New(fmt.Sprintf("row%d", i), rect.Props{
 			Style: rect.Style{
 				Width:  Pct(100),

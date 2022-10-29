@@ -1,8 +1,9 @@
 package math
 
 import (
-	"constraints"
 	"math"
+
+	"golang.org/x/exp/constraints"
 )
 
 // Various useful constants.

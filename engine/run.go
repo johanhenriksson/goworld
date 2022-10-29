@@ -1,10 +1,8 @@
 package engine
 
 import (
-	"flag"
 	"fmt"
-	"os"
-	"runtime/pprof"
+	"log"
 
 	"github.com/johanhenriksson/goworld/core/camera"
 	"github.com/johanhenriksson/goworld/core/object"
@@ -13,35 +11,32 @@ import (
 	"github.com/johanhenriksson/goworld/render"
 )
 
-var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
-
 type SceneFunc func(Renderer, object.T)
+type RendererFunc func() Renderer
 
 type Args struct {
-	Title     string
-	Width     int
-	Height    int
-	SceneFunc SceneFunc
+	Title    string
+	Width    int
+	Height   int
+	Backend  window.GlfwBackend
+	Renderer RendererFunc
 }
 
-func Run(args Args) {
-	fmt.Println("goworld")
+func Run(args Args, scenefuncs ...SceneFunc) {
+	log.Println("goworld")
 
-	// cpu profiling
-	flag.Parse()
-	if *cpuprofile != "" {
-		os.MkdirAll("profiling", 0755)
-		ppath := fmt.Sprintf("profiling/%s", *cpuprofile)
-		f, err := os.Create(ppath)
-		if err != nil {
-			panic(err)
-		}
-		fmt.Println("writing cpu profiling output to", ppath)
-		pprof.StartCPUProfile(f)
-		defer pprof.StopCPUProfile()
+	go RunProfilingServer(6060)
+	interrupt := NewInterrupter()
+
+	backend := args.Backend
+	if backend == nil {
+		panic("no backend provided")
 	}
+	defer backend.Destroy()
 
-	backend := &window.OpenGLBackend{}
+	if args.Renderer == nil {
+		panic("no renderer given")
+	}
 
 	// create a window
 	wnd, err := window.New(backend, window.Args{
@@ -53,18 +48,29 @@ func Run(args Args) {
 		panic(err)
 	}
 
-	// initialize graphics pipeline
-	renderer := NewRenderer()
+	var renderer Renderer
+	recreateRenderer := func() {
+		if renderer != nil {
+			renderer.Destroy()
+		}
+		renderer = args.Renderer()
+	}
+	recreateRenderer()
+	defer func() {
+		renderer.Destroy()
+	}()
 
 	// create scene
 	scene := object.New("Scene")
 	wnd.SetInputHandler(scene)
-	args.SceneFunc(renderer, scene)
+	for _, scenefunc := range scenefuncs {
+		scenefunc(renderer, scene)
+	}
 
 	// run the render loop
-	fmt.Println("ready")
+	log.Println("ready")
 
-	for !wnd.ShouldClose() {
+	for interrupt.Running() && !wnd.ShouldClose() {
 		wnd.Poll()
 
 		w, h := wnd.Size()
@@ -75,15 +81,26 @@ func Run(args Args) {
 		}
 
 		// update scene
-		scene.Update(0.030)
+		scene.Update(0.016)
 
 		// find the first active camera
 		camera := query.New[camera.T]().First(scene)
-
-		args := CreateRenderArgs(screen, camera)
+		if camera == nil {
+			fmt.Println("no active camera in the scene")
+			continue
+		}
 
 		// draw
-		backend.Aquire()
+		context, err := backend.Aquire()
+		if err != nil {
+			log.Println("swapchain recreated?? recreating renderer")
+			recreateRenderer()
+			continue
+		}
+
+		args := CreateRenderArgs(screen, camera)
+		args.Context = context
+
 		renderer.Draw(args, scene)
 		backend.Present()
 	}

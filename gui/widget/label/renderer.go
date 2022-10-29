@@ -1,17 +1,20 @@
 package label
 
 import (
+	"fmt"
+
 	"github.com/johanhenriksson/goworld/assets"
 	"github.com/johanhenriksson/goworld/gui/quad"
+	"github.com/johanhenriksson/goworld/gui/widget"
 	"github.com/johanhenriksson/goworld/math/vec2"
-	"github.com/johanhenriksson/goworld/render"
-	"github.com/johanhenriksson/goworld/render/backend/gl/gl_texture"
+	"github.com/johanhenriksson/goworld/render/backend/vulkan/command"
+	"github.com/johanhenriksson/goworld/render/backend/vulkan/texture"
 	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/font"
-	"github.com/johanhenriksson/goworld/render/material"
-	"github.com/johanhenriksson/goworld/render/texture"
+	"github.com/johanhenriksson/goworld/util"
 
 	"github.com/kjk/flex"
+	vk "github.com/vulkan-go/vulkan"
 )
 
 var DefaultSize = 12
@@ -19,8 +22,7 @@ var DefaultColor = color.White
 var DefaultLineHeight = float32(1.0)
 
 type Renderer interface {
-	Draw(render.Args)
-	Destroy()
+	widget.Renderer[T]
 
 	SetText(string)
 	SetFont(font.T)
@@ -42,8 +44,7 @@ type renderer struct {
 	invalidMesh    bool
 	scale          float32
 	bounds         vec2.T
-	tex            texture.T
-	mat            material.T
+	tex            texture.Ref
 	mesh           quad.T
 	uvs            quad.UV
 }
@@ -57,6 +58,8 @@ func NewRenderer() Renderer {
 		invalidTexture: true,
 		invalidMesh:    true,
 		scale:          2,
+		uvs:            quad.DefaultUVs,
+		mesh:           quad.New(quad.Props{}),
 	}
 }
 
@@ -100,39 +103,23 @@ func (r *renderer) SetLineHeight(lineHeight float32) {
 	r.lineHeight = lineHeight
 }
 
-func (r *renderer) Draw(args render.Args) {
+func (r *renderer) Draw(args widget.DrawArgs, label T) {
 	r.scale = args.Viewport.Scale
 
 	if r.text == "" {
 		return
 	}
 
-	if r.mesh == nil {
-		r.mat = assets.GetMaterial("ui_texture")
-		r.uvs = quad.DefaultUVs
-		r.mesh = quad.New(r.mat, quad.Props{
-			UVs:   r.uvs,
-			Size:  r.bounds.Scaled(1 / r.scale),
-			Color: r.color,
-		})
-	}
-
 	if r.invalidTexture {
 		// (re)create label texture
-		args := font.Args{
+		fargs := font.Args{
 			LineHeight: r.lineHeight,
 			Color:      color.White,
 		}
-		r.bounds = r.font.Measure(r.text, args)
+		r.bounds = r.font.Measure(r.text, fargs)
 
-		// create texture if required
-		if r.tex == nil {
-			r.tex = gl_texture.New(int(r.bounds.X), int(r.bounds.Y))
-			// todo: single channel texture to save memory
-		}
-
-		img := r.font.Render(r.text, args)
-		r.tex.BufferImage(img)
+		img := r.font.Render(r.text, fargs)
+		r.tex = texture.ImageRef(fmt.Sprintf("label:%s", util.NewUUID(8)), img)
 
 		r.invalidTexture = false
 	}
@@ -147,7 +134,7 @@ func (r *renderer) Draw(args render.Args) {
 	}
 
 	// set correct blending
-	render.BlendMultiply()
+	// render.BlendMultiply()
 
 	// resize mesh if needed
 	// if !label.Size().ApproxEqual(r.size) {
@@ -161,14 +148,24 @@ func (r *renderer) Draw(args render.Args) {
 	// we can center the label on the mesh by modifying the uvs
 	// scale := label.Size().Div(r.bounds)
 
-	r.mesh.Material().Use()
-	r.mesh.Material().Texture("image", r.tex)
-	r.mesh.Draw(args)
+	// how to get the texture into the uniform array?
+	// we also need to be able to deal with descriptor array limits
+
+	tex := args.Textures.Fetch(r.tex)
+	mesh := args.Meshes.Fetch(r.mesh.Mesh())
+	args.Commands.Record(func(cmd command.Buffer) {
+		cmd.CmdPushConstant(vk.ShaderStageAll, 0, &widget.Constants{
+			Viewport: args.ViewProj,
+			Model:    args.Transform,
+			Texture:  tex,
+		})
+		mesh.Draw(cmd, 0)
+	})
 }
 
 func (r *renderer) Destroy() {
 	if r.mesh != nil {
-		r.mesh.Destroy()
+		// r.mesh.Destroy()
 		r.mesh = nil
 	}
 	if r.tex != nil {

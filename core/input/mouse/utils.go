@@ -16,10 +16,10 @@ func Lock() {
 }
 
 func Hide() {
-	glfw.GetCurrentContext().SetInputMode(glfw.CursorMode, glfw.CursorHidden)
+	// glfw.GetCurrentContext().SetInputMode(glfw.CursorMode, glfw.CursorHidden)
 }
 
 func Show() {
-	glfw.GetCurrentContext().SetInputMode(glfw.CursorMode, glfw.CursorNormal)
+	// glfw.GetCurrentContext().SetInputMode(glfw.CursorMode, glfw.CursorNormal)
 	locked = false
 }

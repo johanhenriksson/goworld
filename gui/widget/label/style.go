@@ -2,7 +2,6 @@ package label
 
 import (
 	. "github.com/johanhenriksson/goworld/gui/style"
-	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/kjk/flex"
 )
 
@@ -53,7 +52,7 @@ func (style *Style) Apply(w T, state State) {
 	}
 	if style.Color != nil {
 		rgba := style.Color.Vec4()
-		w.SetFontColor(color.RGBA(rgba.X, rgba.Y, rgba.Z, rgba.W))
+		w.SetFontColor(RGBA(rgba.X, rgba.Y, rgba.Z, rgba.W))
 	}
 
 	if style.Basis != nil {
@@ -86,6 +85,6 @@ func (style *Style) Apply(w T, state State) {
 func (style *Hover) Apply(w T) {
 	if style.Color != nil {
 		rgba := style.Color.Vec4()
-		w.SetFontColor(color.RGBA(rgba.X, rgba.Y, rgba.Z, rgba.W))
+		w.SetFontColor(RGBA(rgba.X, rgba.Y, rgba.Z, rgba.W))
 	}
 }

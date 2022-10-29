@@ -3,28 +3,29 @@ package light
 import (
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/math/mat4"
-	"github.com/johanhenriksson/goworld/math/vec3"
+	"github.com/johanhenriksson/goworld/math/vec4"
 	"github.com/johanhenriksson/goworld/render/color"
 )
 
 type T interface {
 	object.Component
 
+	Type() Type
 	LightDescriptor() Descriptor
 }
 
 // Descriptor holds rendering information for lights
 type Descriptor struct {
-	Attenuation Attenuation
-	Position    vec3.T
-	Color       color.T
-	Range       float32
-	Intensity   float32
-	Type        Type
-	Shadows     bool
 	Projection  mat4.T // Light projection matrix
 	View        mat4.T // Light view matrix
 	ViewProj    mat4.T
+	Color       color.T
+	Position    vec4.T
+	Type        Type
+	Range       float32
+	Intensity   float32
+	Shadows     int32
+	Attenuation Attenuation
 }
 
 // Attenuation properties for point lights

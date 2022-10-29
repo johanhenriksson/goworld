@@ -1,6 +1,8 @@
 package editor
 
 import (
+	"log"
+
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/game"
 	"github.com/johanhenriksson/goworld/geometry/box"
@@ -30,10 +32,15 @@ func NewPlaceTool() *PlaceTool {
 
 func (pt *PlaceTool) Use(editor T, position, normal vec3.T) {
 	target := position.Add(normal.Scaled(0.5))
-	if editor.GetVoxel(int(target.X), int(target.Y), int(target.Z)) != game.EmptyVoxel {
+	x, y, z := int(target.X), int(target.Y), int(target.Z)
+
+	if editor.GetVoxel(x, y, z) != game.EmptyVoxel {
 		return
 	}
-	editor.SetVoxel(int(target.X), int(target.Y), int(target.Z), game.NewVoxel(editor.SelectedColor()))
+
+	clr := editor.SelectedColor()
+	log.Println("place", clr, "at", x, y, z)
+	editor.SetVoxel(x, y, z, game.NewVoxel(clr))
 
 	// recompute mesh
 	editor.Recalculate()

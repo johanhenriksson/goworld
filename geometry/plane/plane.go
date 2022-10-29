@@ -1,7 +1,6 @@
 package plane
 
 import (
-	"github.com/johanhenriksson/goworld/assets"
 	"github.com/johanhenriksson/goworld/core/mesh"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/math/vec3"
@@ -33,9 +32,8 @@ func Builder(out **T, args Args) *object.Builder {
 }
 
 func New(args Args) *T {
-	mat := assets.GetMaterialShared("color.f")
 	plane := &T{
-		T:    mesh.New(mat, mesh.Forward),
+		T:    mesh.New(mesh.Forward),
 		Args: args,
 	}
 	plane.generate()
@@ -65,7 +63,7 @@ func (p *T) generate() {
 		{P: vec3.New(s, -y, s), N: vec3.UnitYN, C: c},   // d2
 	}
 
-	indices := []uint8{
+	indices := []uint16{
 		0, 2, 1, 1, 2, 3,
 		5, 6, 4, 7, 6, 5,
 	}

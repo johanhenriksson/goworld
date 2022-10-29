@@ -2,7 +2,6 @@ package rect
 
 import (
 	. "github.com/johanhenriksson/goworld/gui/style"
-	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/kjk/flex"
 )
 
@@ -52,6 +51,8 @@ type Pressed struct {
 }
 
 func (style *Style) Apply(w T, state State) {
+	// this causes unnecessary updates
+	// base styles are applied and then immediately overwritten
 	if style.Extends == nil {
 		if style != DefaultStyle {
 			DefaultStyle.Apply(w, state)
@@ -109,7 +110,7 @@ func (style *Style) Apply(w T, state State) {
 
 	if style.Color != nil {
 		rgba := style.Color.Vec4()
-		w.SetColor(color.RGBA(rgba.X, rgba.Y, rgba.Z, rgba.W))
+		w.SetColor(RGBA(rgba.X, rgba.Y, rgba.Z, rgba.W))
 	}
 
 	if state.Hovered {
@@ -129,13 +130,13 @@ func (s *Style) Extend(e Style) Style {
 func (s Hover) Apply(w T) {
 	if s.Color != nil {
 		rgba := s.Color.Vec4()
-		w.SetColor(color.RGBA(rgba.X, rgba.Y, rgba.Z, rgba.W))
+		w.SetColor(RGBA(rgba.X, rgba.Y, rgba.Z, rgba.W))
 	}
 }
 
 func (s Pressed) Apply(w T) {
 	if s.Color != nil {
 		rgba := s.Color.Vec4()
-		w.SetColor(color.RGBA(rgba.X, rgba.Y, rgba.Z, rgba.W))
+		w.SetColor(RGBA(rgba.X, rgba.Y, rgba.Z, rgba.W))
 	}
 }

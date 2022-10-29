@@ -13,13 +13,18 @@ type Props struct {
 	OnClick mouse.Callback
 }
 
+type Style struct {
+	Text label.Style
+	Bg   rect.Style
+}
+
 func New(key string, props Props) node.T {
 	return node.Component(key, props, nil, render)
 }
 
 func render(props Props) node.T {
 	return rect.New("background", rect.Props{
-		Style: props.Style.backgroundStyle(),
+		Style: props.Style.Bg,
 		OnMouseUp: func(e mouse.Event) {
 			if props.OnClick != nil {
 				props.OnClick(e)
@@ -32,7 +37,7 @@ func render(props Props) node.T {
 		Children: []node.T{
 			label.New("label", label.Props{
 				Text:  props.Text,
-				Style: props.Style.labelStyle(),
+				Style: props.Style.Text,
 			}),
 		},
 	})

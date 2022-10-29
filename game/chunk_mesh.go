@@ -1,7 +1,6 @@
 package game
 
 import (
-	"github.com/johanhenriksson/goworld/assets"
 	"github.com/johanhenriksson/goworld/core/mesh"
 	"github.com/johanhenriksson/goworld/render/vertex"
 )
@@ -12,26 +11,28 @@ type ChunkMesh struct {
 	mesh.T
 	*Chunk
 	meshdata     MeshData
-	meshComputed chan MeshData
+	meshComputed chan []VoxelVertex
 }
 
 func NewChunkMesh(chunk *Chunk) *ChunkMesh {
 	chk := &ChunkMesh{
-		T:            mesh.New(assets.GetMaterialShared("color_voxels"), mesh.Deferred),
+		T:            mesh.New(mesh.Deferred),
 		Chunk:        chunk,
 		meshdata:     vertex.NewTriangles("chunk", []VoxelVertex{}, []uint16{}),
-		meshComputed: make(chan MeshData),
+		meshComputed: make(chan []VoxelVertex),
 	}
-	chk.Compute()
+	// chk.Compute()
+	chk.meshdata.Update(ComputeVertexData(chunk), []uint16{})
+	chk.SetMesh(chk.meshdata)
 	return chk
 }
 
 func (cm *ChunkMesh) Update(dt float32) {
 	cm.T.Update(dt)
 	select {
-	case newMesh := <-cm.meshComputed:
-		cm.meshdata = newMesh
-		cm.SetMesh(newMesh)
+	case vertices := <-cm.meshComputed:
+		cm.meshdata.Update(vertices, []uint16{})
+		cm.SetMesh(cm.meshdata)
 	default:
 	}
 }
@@ -39,12 +40,12 @@ func (cm *ChunkMesh) Update(dt float32) {
 // Queues recomputation of the mesh
 func (cm *ChunkMesh) Compute() {
 	go func() {
-		data := cm.computeVertexData()
+		data := ComputeVertexData(cm.Chunk)
 		cm.meshComputed <- data
 	}()
 }
 
-func (cm *ChunkMesh) computeVertexData() MeshData {
+func ComputeVertexData(cm *Chunk) []VoxelVertex {
 	vertices := make([]VoxelVertex, 0, 1024)
 	light := cm.Light.Brightness
 	Omax := float32(220)
@@ -336,6 +337,5 @@ func (cm *ChunkMesh) computeVertexData() MeshData {
 		}
 	}
 
-	cm.meshdata.Update(vertices, []uint16{})
-	return cm.meshdata
+	return vertices
 }

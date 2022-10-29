@@ -4,7 +4,6 @@ import (
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/gui/widget"
 	"github.com/johanhenriksson/goworld/math/vec2"
-	"github.com/johanhenriksson/goworld/render"
 	"github.com/kjk/flex"
 )
 
@@ -51,7 +50,7 @@ func (c *component) SetChildren(children []widget.T) {
 	}
 }
 
-func (c *component) Draw(args render.Args) {
+func (c *component) Draw(args widget.DrawArgs) {
 	if c.wrap != nil {
 		c.wrap.Draw(args)
 	}

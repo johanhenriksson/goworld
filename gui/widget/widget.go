@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/johanhenriksson/goworld/math/vec2"
-	"github.com/johanhenriksson/goworld/render"
 
 	"github.com/kjk/flex"
 )
@@ -42,7 +41,7 @@ type T interface {
 	// Draw the widget. This should only be called by the GUI Draw Pass
 	// Calling Draw() will instantiate any required GPU resources prior to drawing.
 	// Attempting to draw a destroyed component will cause a panic.
-	Draw(render.Args)
+	Draw(DrawArgs)
 }
 
 type widget struct {
@@ -89,7 +88,7 @@ func (w *widget) Update(any) {
 func (w *widget) Children() []T     { return nil }
 func (w *widget) SetChildren(c []T) {}
 
-func (w *widget) Draw(render.Args) {
+func (w *widget) Draw(DrawArgs) {
 	// base widget Draw() should be called ahead of overridden draws
 
 	if w.Destroyed() {

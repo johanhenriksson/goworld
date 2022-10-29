@@ -14,6 +14,7 @@ import (
 )
 
 type T interface {
+	Name() string
 	Measure(string, Args) vec2.T
 	Render(string, Args) *image.RGBA
 	Size() float32
@@ -38,6 +39,10 @@ func (f *font) setup() {
 			Hinting: fontlib.HintingFull,
 		}),
 	}
+}
+
+func (f *font) Name() string {
+	return f.fnt.Name(truetype.NameIDFontFullName)
 }
 
 func (f *font) Size() float32 { return f.size }
