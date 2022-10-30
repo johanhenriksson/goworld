@@ -128,11 +128,10 @@ func (i *image) Format() vk.Format { return i.Args.Format }
 func (i *image) Destroy() {
 	if i.memory != nil {
 		i.memory.Destroy()
-	}
-
-	if i.ptr != nil {
-		vk.DestroyImage(i.device.Ptr(), i.ptr, nil)
-		i.ptr = nil
+		if i.ptr != nil {
+			vk.DestroyImage(i.device.Ptr(), i.ptr, nil)
+			i.ptr = nil
+		}
 	}
 }
 

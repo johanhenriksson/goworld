@@ -6,6 +6,7 @@ import (
 	"github.com/johanhenriksson/goworld/render/buffer"
 	"github.com/johanhenriksson/goworld/render/descriptor"
 	"github.com/johanhenriksson/goworld/render/device"
+	"github.com/johanhenriksson/goworld/render/framebuffer"
 	"github.com/johanhenriksson/goworld/render/image"
 	"github.com/johanhenriksson/goworld/render/pipeline"
 	"github.com/johanhenriksson/goworld/render/renderpass"
@@ -29,7 +30,7 @@ type Buffer interface {
 	CmdBindIndexBuffers(idx buffer.T, offset int, kind vk.IndexType)
 	CmdDraw(vertexCount, instanceCount, firstVertex, firstInstance int)
 	CmdDrawIndexed(indexCount, instanceCount, firstIndex, vertexOffset, firstInstance int)
-	CmdBeginRenderPass(pass renderpass.T, frame int)
+	CmdBeginRenderPass(pass renderpass.T, framebuffer framebuffer.T)
 	CmdNextSubpass()
 	CmdEndRenderPass()
 	CmdSetViewport(x, y, w, h int)
@@ -170,9 +171,8 @@ func (b *buf) CmdDrawIndexed(indexCount, instanceCount, firstIndex, vertexOffset
 	vk.CmdDrawIndexed(b.Ptr(), uint32(indexCount), uint32(instanceCount), uint32(firstIndex), int32(vertexOffset), uint32(firstInstance))
 }
 
-func (b *buf) CmdBeginRenderPass(pass renderpass.T, frame int) {
+func (b *buf) CmdBeginRenderPass(pass renderpass.T, framebuffer framebuffer.T) {
 	clear := pass.Clear()
-	framebuffer := pass.Framebuffer(frame)
 	w, h := framebuffer.Size()
 
 	vk.CmdBeginRenderPass(b.Ptr(), &vk.RenderPassBeginInfo{

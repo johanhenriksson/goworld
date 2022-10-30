@@ -11,6 +11,7 @@ import (
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/descriptor"
+	"github.com/johanhenriksson/goworld/render/framebuffer"
 	"github.com/johanhenriksson/goworld/render/image"
 	"github.com/johanhenriksson/goworld/render/renderpass"
 	"github.com/johanhenriksson/goworld/render/renderpass/attachment"
@@ -38,6 +39,7 @@ type shadowpass struct {
 	pass      renderpass.T
 	passes    []DeferredSubpass
 	completed sync.Semaphore
+	fbuf      framebuffer.T
 }
 
 func NewShadowPass(backend vulkan.T, meshes cache.MeshCache, passes []DeferredSubpass) ShadowPass {
@@ -74,20 +76,23 @@ func NewShadowPass(backend vulkan.T, meshes cache.MeshCache, passes []DeferredSu
 	}
 
 	pass := renderpass.New(backend.Device(), renderpass.Args{
-		Frames: 1,
-		Width:  size,
-		Height: size,
-
 		DepthAttachment: &attachment.Depth{
-			LoadOp:      vk.AttachmentLoadOpClear,
-			StoreOp:     vk.AttachmentStoreOpStore,
-			FinalLayout: vk.ImageLayoutShaderReadOnlyOptimal,
-			Usage:       vk.ImageUsageSampledBit,
-			ClearDepth:  1,
+			LoadOp:        vk.AttachmentLoadOpClear,
+			StencilLoadOp: vk.AttachmentLoadOpClear,
+			StoreOp:       vk.AttachmentStoreOpStore,
+			FinalLayout:   vk.ImageLayoutShaderReadOnlyOptimal,
+			Usage:         vk.ImageUsageSampledBit,
+			ClearDepth:    1,
 		},
 		Subpasses:    subpasses,
 		Dependencies: dependencies,
 	})
+
+	// todo: each light is going to need its own framebuffer
+	fbuf, err := framebuffer.New(backend.Device(), size, size, pass)
+	if err != nil {
+		panic(err)
+	}
 
 	// instantiate geometry subpasses
 	for _, gpass := range passes {
@@ -96,6 +101,7 @@ func NewShadowPass(backend vulkan.T, meshes cache.MeshCache, passes []DeferredSu
 
 	return &shadowpass{
 		backend:   backend,
+		fbuf:      fbuf,
 		meshes:    meshes,
 		pass:      pass,
 		passes:    passes,
@@ -120,7 +126,7 @@ func (p *shadowpass) Draw(args render.Args, scene object.T) {
 	}
 
 	cmds.Record(func(cmd command.Buffer) {
-		cmd.CmdBeginRenderPass(p.pass, ctx.Index)
+		cmd.CmdBeginRenderPass(p.pass, p.fbuf)
 	})
 
 	for i, pass := range p.passes {
@@ -151,7 +157,7 @@ func (p *shadowpass) Draw(args render.Args, scene object.T) {
 }
 
 func (p *shadowpass) Shadowmap() image.View {
-	return p.pass.Depth().View(0)
+	return p.fbuf.Attachment(attachment.DepthName)
 }
 
 func (p *shadowpass) Destroy() {
@@ -159,6 +165,7 @@ func (p *shadowpass) Destroy() {
 		gpass.Destroy()
 	}
 
+	p.fbuf.Destroy()
 	p.pass.Destroy()
 	p.completed.Destroy()
 }

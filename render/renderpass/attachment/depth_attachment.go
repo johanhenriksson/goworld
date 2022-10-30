@@ -1,10 +1,7 @@
 package attachment
 
 import (
-	"log"
-
 	"github.com/johanhenriksson/goworld/render/device"
-	"github.com/johanhenriksson/goworld/render/image"
 	vk "github.com/vulkan-go/vulkan"
 )
 
@@ -18,52 +15,37 @@ type Depth struct {
 	StencilStoreOp vk.AttachmentStoreOp
 	InitialLayout  vk.ImageLayout
 	FinalLayout    vk.ImageLayout
+	Usage          vk.ImageUsageFlagBits
 	ClearDepth     float32
 	ClearStencil   uint32
-	Images         []image.T
-	Usage          vk.ImageUsageFlagBits
+
+	// Allocation strategy. Defaults to allocating new images.
+	Allocator Allocator
 }
 
 func (desc *Depth) defaults() {
 	if desc.Samples == 0 {
 		desc.Samples = vk.SampleCount1Bit
 	}
+	if desc.Allocator == nil {
+		desc.Allocator = &alloc{}
+	}
 }
 
-func NewDepth(device device.T, desc Depth, frames, width, height, index int) T {
+func NewDepth(device device.T, desc Depth) T {
 	desc.defaults()
 
 	depthFormat := device.GetDepthFormat()
-
-	images := desc.Images
-	imgowner := false
-	if len(images) == 0 {
-		log.Println("  allocating", frames, "depth attachments")
-		imgowner = true
-		images = make([]image.T, frames)
-		for i := range images {
-			images[i] = image.New2D(
-				device, width, height, depthFormat,
-				vk.ImageUsageFlags(vk.ImageUsageDepthStencilAttachmentBit|desc.Usage))
-		}
-	} else if len(images) != frames {
-		panic("wrong number of images supplied")
-	}
-
-	views := make([]image.View, frames)
-	for i := range images {
-		views[i] = images[i].View(depthFormat, vk.ImageAspectFlags(vk.ImageAspectDepthBit))
-	}
 
 	var clear vk.ClearValue
 	clear.SetDepthStencil(desc.ClearDepth, desc.ClearStencil)
 
 	return &attachment{
-		name:     DepthName,
-		image:    images,
-		view:     views,
-		clear:    clear,
-		imgowner: imgowner,
+		name:   DepthName,
+		alloc:  desc.Allocator,
+		clear:  clear,
+		format: depthFormat,
+		usage:  desc.Usage,
 		desc: vk.AttachmentDescription{
 			Format:         depthFormat,
 			Samples:        desc.Samples,

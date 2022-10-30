@@ -5,8 +5,6 @@ import (
 	"log"
 
 	"github.com/johanhenriksson/goworld/render/device"
-	"github.com/johanhenriksson/goworld/render/framebuffer"
-	"github.com/johanhenriksson/goworld/render/image"
 	"github.com/johanhenriksson/goworld/render/renderpass/attachment"
 	"github.com/johanhenriksson/goworld/util"
 
@@ -16,25 +14,22 @@ import (
 type T interface {
 	device.Resource[vk.RenderPass]
 
-	Frames() int
 	Depth() attachment.T
 	Attachment(name attachment.Name) attachment.T
 	Attachments() []attachment.T
-	Framebuffer(frame int) framebuffer.T
 	Subpass(name Name) Subpass
 	Clear() []vk.ClearValue
 }
 
 type renderpass struct {
-	device       device.T
-	ptr          vk.RenderPass
-	framebuffers []framebuffer.T
-	subpasses    []Subpass
-	passIndices  map[Name]int
-	attachments  []attachment.T
-	depth        attachment.T
-	indices      map[attachment.Name]int
-	clear        []vk.ClearValue
+	device      device.T
+	ptr         vk.RenderPass
+	subpasses   []Subpass
+	passIndices map[Name]int
+	attachments []attachment.T
+	depth       attachment.T
+	indices     map[attachment.Name]int
+	clear       []vk.ClearValue
 }
 
 func New(device device.T, args Args) T {
@@ -44,7 +39,7 @@ func New(device device.T, args Args) T {
 
 	log.Println("attachments")
 	for index, desc := range args.ColorAttachments {
-		attachment := attachment.NewColor(device, desc, args.Frames, args.Width, args.Height)
+		attachment := attachment.NewColor(device, desc)
 		clear = append(clear, attachment.Clear())
 		attachments[index] = attachment
 		attachmentIndices[attachment.Name()] = index
@@ -55,7 +50,7 @@ func New(device device.T, args Args) T {
 	if args.DepthAttachment != nil {
 		index := len(attachments)
 		attachmentIndices[attachment.DepthName] = index
-		depth = attachment.NewDepth(device, *args.DepthAttachment, args.Frames, args.Width, args.Height, index)
+		depth = attachment.NewDepth(device, *args.DepthAttachment)
 		clear = append(clear, depth.Clear())
 		log.Printf("  %d: %s", index, attachment.DepthName)
 	}
@@ -152,31 +147,20 @@ func New(device device.T, args Args) T {
 	var ptr vk.RenderPass
 	vk.CreateRenderPass(device.Ptr(), &info, nil, &ptr)
 
-	framebuffers := make([]framebuffer.T, args.Frames)
-	for i := range framebuffers {
-		fbviews := util.Map(attachments, func(attach attachment.T) image.View { return attach.View(i) })
-		if depth != nil {
-			fbviews = append(fbviews, depth.View(i))
-		}
-		framebuffers[i] = framebuffer.New(device, args.Width, args.Height, ptr, fbviews)
-	}
-
 	return &renderpass{
-		device:       device,
-		ptr:          ptr,
-		framebuffers: framebuffers,
-		depth:        depth,
-		indices:      attachmentIndices,
-		attachments:  attachments,
-		passIndices:  subpassIndices,
-		subpasses:    args.Subpasses,
-		clear:        clear,
+		device:      device,
+		ptr:         ptr,
+		depth:       depth,
+		indices:     attachmentIndices,
+		attachments: attachments,
+		passIndices: subpassIndices,
+		subpasses:   args.Subpasses,
+		clear:       clear,
 	}
 }
 
 func (r *renderpass) Ptr() vk.RenderPass  { return r.ptr }
 func (r *renderpass) Depth() attachment.T { return r.depth }
-func (r *renderpass) Frames() int         { return len(r.framebuffers) }
 
 func (r *renderpass) Attachment(name attachment.Name) attachment.T {
 	if name == attachment.DepthName {
@@ -184,10 +168,6 @@ func (r *renderpass) Attachment(name attachment.Name) attachment.T {
 	}
 	index := r.indices[name]
 	return r.attachments[index]
-}
-
-func (r *renderpass) Framebuffer(frame int) framebuffer.T {
-	return r.framebuffers[frame%len(r.framebuffers)]
 }
 
 func (r *renderpass) Clear() []vk.ClearValue {
@@ -213,17 +193,5 @@ func (r *renderpass) Destroy() {
 	if r.ptr != nil {
 		vk.DestroyRenderPass(r.device.Ptr(), r.ptr, nil)
 		r.ptr = nil
-	}
-
-	for _, fb := range r.framebuffers {
-		fb.Destroy()
-	}
-
-	if r.depth != nil {
-		r.depth.Destroy()
-	}
-
-	for _, attachment := range r.attachments {
-		attachment.Destroy()
 	}
 }

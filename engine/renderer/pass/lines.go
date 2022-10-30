@@ -12,6 +12,7 @@ import (
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/descriptor"
+	"github.com/johanhenriksson/goworld/render/framebuffer"
 	"github.com/johanhenriksson/goworld/render/image"
 	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/renderpass"
@@ -32,6 +33,7 @@ type LinePass struct {
 	pass      renderpass.T
 	output    Pass
 	completed sync.Semaphore
+	fbufs     framebuffer.Array
 
 	shadows ShadowPass
 }
@@ -59,13 +61,10 @@ func NewLinePass(backend vulkan.T, meshes cache.MeshCache, output Pass, geometry
 	}
 
 	p.pass = renderpass.New(backend.Device(), renderpass.Args{
-		Frames: backend.Frames(),
-		Width:  backend.Width(),
-		Height: backend.Height(),
 		ColorAttachments: []attachment.Color{
 			{
 				Name:          "color",
-				Images:        backend.Swapchain().Images(),
+				Allocator:     attachment.FromSwapchain(backend.Swapchain()),
 				Format:        backend.Swapchain().SurfaceFormat(),
 				LoadOp:        vk.AttachmentLoadOpLoad,
 				StoreOp:       vk.AttachmentStoreOpStore,
@@ -74,9 +73,9 @@ func NewLinePass(backend vulkan.T, meshes cache.MeshCache, output Pass, geometry
 			},
 		},
 		DepthAttachment: &attachment.Depth{
-			Images:        depth,
+			Allocator:     attachment.FromImageArray(depth),
 			LoadOp:        vk.AttachmentLoadOpLoad,
-			InitialLayout: vk.ImageLayoutUndefined,
+			InitialLayout: vk.ImageLayoutShaderReadOnlyOptimal,
 			FinalLayout:   vk.ImageLayoutDepthStencilAttachmentOptimal,
 			Usage:         vk.ImageUsageInputAttachmentBit,
 		},
@@ -89,6 +88,12 @@ func NewLinePass(backend vulkan.T, meshes cache.MeshCache, output Pass, geometry
 			},
 		},
 	})
+
+	var err error
+	p.fbufs, err = framebuffer.NewArray(backend.Frames(), backend.Device(), backend.Width(), backend.Height(), p.pass)
+	if err != nil {
+		panic(err)
+	}
 
 	p.material = material.New(
 		backend.Device(),
@@ -128,7 +133,7 @@ func (p *LinePass) Draw(args render.Args, scene object.T) {
 	p.material.Descriptors().Camera.Set(camera)
 
 	cmds.Record(func(cmd command.Buffer) {
-		cmd.CmdBeginRenderPass(p.pass, ctx.Index)
+		cmd.CmdBeginRenderPass(p.pass, p.fbufs[ctx.Index])
 		p.material.Bind(cmd)
 	})
 
@@ -178,6 +183,7 @@ func (p *LinePass) Completed() sync.Semaphore {
 
 func (p *LinePass) Destroy() {
 	p.completed.Destroy()
+	p.fbufs.Destroy()
 	p.pass.Destroy()
 	p.material.Material().Destroy()
 }

@@ -13,6 +13,7 @@ import (
 	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/descriptor"
+	"github.com/johanhenriksson/goworld/render/framebuffer"
 	"github.com/johanhenriksson/goworld/render/renderpass"
 	"github.com/johanhenriksson/goworld/render/renderpass/attachment"
 	"github.com/johanhenriksson/goworld/render/sync"
@@ -56,6 +57,7 @@ type GeometryPass struct {
 	light     LightShader
 	completed sync.Semaphore
 	copyReady sync.Semaphore
+	fbuf      framebuffer.T
 
 	gpasses []DeferredSubpass
 	shadows ShadowPass
@@ -130,10 +132,6 @@ func NewGeometryPass(
 	positionFmt := vk.FormatR16g16b16a16Sfloat
 
 	pass := renderpass.New(backend.Device(), renderpass.Args{
-		Frames: 1,
-		Width:  backend.Width(),
-		Height: backend.Height(),
-
 		ColorAttachments: []attachment.Color{
 			{
 				Name:        OutputAttachment,
@@ -170,15 +168,21 @@ func NewGeometryPass(
 			},
 		},
 		DepthAttachment: &attachment.Depth{
-			LoadOp:      vk.AttachmentLoadOpClear,
-			StoreOp:     vk.AttachmentStoreOpStore,
-			FinalLayout: vk.ImageLayoutShaderReadOnlyOptimal,
-			Usage:       vk.ImageUsageInputAttachmentBit,
-			ClearDepth:  1,
+			LoadOp:        vk.AttachmentLoadOpClear,
+			StencilLoadOp: vk.AttachmentLoadOpClear,
+			StoreOp:       vk.AttachmentStoreOpStore,
+			FinalLayout:   vk.ImageLayoutShaderReadOnlyOptimal,
+			Usage:         vk.ImageUsageInputAttachmentBit,
+			ClearDepth:    1,
 		},
 		Subpasses:    subpasses,
 		Dependencies: dependencies,
 	})
+
+	fbuf, err := framebuffer.New(backend.Device(), backend.Width(), backend.Height(), pass)
+	if err != nil {
+		panic(err)
+	}
 
 	// instantiate geometry subpasses
 	for _, subpass := range passes {
@@ -187,11 +191,11 @@ func NewGeometryPass(
 
 	gbuffer := NewGbuffer(
 		backend,
-		pass.Attachment(DiffuseAttachment).View(0),
-		pass.Attachment(NormalsAttachment).View(0),
-		pass.Attachment(PositionAttachment).View(0),
-		pass.Attachment(OutputAttachment).View(0),
-		pass.Depth().View(0),
+		fbuf.Attachment(DiffuseAttachment),
+		fbuf.Attachment(NormalsAttachment),
+		fbuf.Attachment(PositionAttachment),
+		fbuf.Attachment(OutputAttachment),
+		fbuf.Attachment(attachment.DepthName),
 	)
 
 	quad := vertex.ScreenQuad()
@@ -226,6 +230,7 @@ func NewGeometryPass(
 
 		shadows: shadows,
 		gpasses: passes,
+		fbuf:    fbuf,
 	}
 }
 
@@ -252,7 +257,7 @@ func (p *GeometryPass) Draw(args render.Args, scene object.T) {
 	//
 
 	cmds.Record(func(cmd command.Buffer) {
-		cmd.CmdBeginRenderPass(p.pass, ctx.Index)
+		cmd.CmdBeginRenderPass(p.pass, p.fbuf)
 	})
 
 	for _, gpass := range p.gpasses {
@@ -349,6 +354,7 @@ func (p *GeometryPass) Destroy() {
 		gpass.Destroy()
 	}
 
+	p.fbuf.Destroy()
 	p.pass.Destroy()
 	p.GeometryBuffer.Destroy()
 	p.light.Material().Destroy()

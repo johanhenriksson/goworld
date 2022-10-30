@@ -5,10 +5,6 @@ import (
 )
 
 type Args struct {
-	Frames int
-	Width  int
-	Height int
-
 	ColorAttachments []attachment.Color
 	DepthAttachment  *attachment.Depth
 

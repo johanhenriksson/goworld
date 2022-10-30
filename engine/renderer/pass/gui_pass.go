@@ -10,6 +10,7 @@ import (
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/descriptor"
+	"github.com/johanhenriksson/goworld/render/framebuffer"
 	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/pipeline"
 	"github.com/johanhenriksson/goworld/render/renderpass"
@@ -40,19 +41,17 @@ type GuiPass struct {
 	prev     Pass
 	meshes   cache.MeshCache
 	textures cache.SamplerCache
+	fbufs    framebuffer.Array
 }
 
 var _ Pass = &GuiPass{}
 
 func NewGuiPass(backend vulkan.T, prev Pass, meshes cache.MeshCache) *GuiPass {
 	pass := renderpass.New(backend.Device(), renderpass.Args{
-		Frames: backend.Frames(),
-		Width:  backend.Width(),
-		Height: backend.Height(),
 		ColorAttachments: []attachment.Color{
 			{
 				Name:          "color",
-				Images:        backend.Swapchain().Images(),
+				Allocator:     attachment.FromSwapchain(backend.Swapchain()),
 				Format:        backend.Swapchain().SurfaceFormat(),
 				LoadOp:        vk.AttachmentLoadOpLoad,
 				StoreOp:       vk.AttachmentStoreOpStore,
@@ -90,6 +89,11 @@ func NewGuiPass(backend vulkan.T, prev Pass, meshes cache.MeshCache) *GuiPass {
 		},
 	}).Instantiate()
 
+	fbufs, err := framebuffer.NewArray(backend.Frames(), backend.Device(), backend.Width(), backend.Height(), pass)
+	if err != nil {
+		panic(err)
+	}
+
 	textures := cache.NewSamplerCache(backend, mat.Descriptors().Textures)
 
 	// id zero should be white
@@ -102,6 +106,7 @@ func NewGuiPass(backend vulkan.T, prev Pass, meshes cache.MeshCache) *GuiPass {
 		prev:     prev,
 		meshes:   meshes,
 		textures: textures,
+		fbufs:    fbufs,
 	}
 }
 
@@ -119,7 +124,7 @@ func (p *GuiPass) Draw(args render.Args, scene object.T) {
 
 	cmds := command.NewRecorder()
 	cmds.Record(func(cmd command.Buffer) {
-		cmd.CmdBeginRenderPass(p.pass, ctx.Index)
+		cmd.CmdBeginRenderPass(p.pass, p.fbufs[ctx.Index])
 		p.mat.Bind(cmd)
 	})
 
@@ -166,6 +171,7 @@ func (p *GuiPass) Completed() sync.Semaphore {
 
 func (p *GuiPass) Destroy() {
 	p.mat.Material().Destroy()
+	p.fbufs.Destroy()
 	p.pass.Destroy()
 	p.textures.Destroy()
 }
