@@ -1,8 +1,0 @@
-{ 
-    "pass": "geometry",
-    "textures": {
-        "diffuse": {
-            "file": "assets/textures/uv_checker.png"
-        }
-    }
-}

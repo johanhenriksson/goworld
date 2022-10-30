@@ -196,7 +196,7 @@ func NewGeometryPass(
 	lightDesc.Position.Set(gbuffer.Position(0))
 	lightDesc.Depth.Set(gbuffer.Depth(0))
 
-	white := textures.Fetch(texture.PathRef("assets/textures/white.png"))
+	white := textures.Fetch(texture.PathRef("textures/white.png"))
 	lightDesc.Shadow.Set(0, white)
 
 	shadowtex := texture.FromView(backend.Device(), shadows.Shadowmap(), texture.Args{

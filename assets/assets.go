@@ -2,8 +2,14 @@ package assets
 
 import (
 	"fmt"
+	"image"
+	"image/draw"
+	"io/fs"
 	"os"
 	"path/filepath"
+
+	// image codecs
+	_ "image/png"
 
 	"github.com/johanhenriksson/goworld/core/window"
 	"github.com/johanhenriksson/goworld/render/font"
@@ -17,11 +23,39 @@ type ResourceCache struct {
 
 /* Global asset cache */
 var cache *ResourceCache
+var vfs fs.FS
 
 func init() {
+	cwd, err := os.Getwd()
+	if err != nil {
+		panic(err)
+	}
+	assetRoot := FindFileInParents("assets", cwd)
+	vfs = os.DirFS(assetRoot)
+
 	cache = &ResourceCache{
 		Fonts: make(FontMap),
 	}
+}
+
+func Open(file string) (fs.File, error) {
+	return vfs.Open(file)
+}
+
+func GetImage(file string) (*image.RGBA, error) {
+	imgFile, err := Open(file)
+	if err != nil {
+		return nil, err
+	}
+	img, _, err := image.Decode(imgFile)
+	if err != nil {
+		return nil, err
+	}
+
+	rgba := image.NewRGBA(img.Bounds())
+	draw.Draw(rgba, rgba.Bounds(), img, image.Point{0, 0}, draw.Src)
+
+	return rgba, nil
 }
 
 func GetFont(name string, size int) font.T {
@@ -31,27 +65,23 @@ func GetFont(name string, size int) font.T {
 	}
 
 	fmt.Printf("+ font %s %dpt\n", name, size)
-	font := font.Load(AssetPath(name), int(float32(size)*window.Scale))
-	cache.Fonts[key] = font
 
+	file, err := vfs.Open(name)
+	if err != nil {
+		panic(err)
+	}
+
+	font, err := font.Load(file, int(float32(size)*window.Scale))
+	if err != nil {
+		panic(err)
+	}
+
+	cache.Fonts[key] = font
 	return font
 }
 
 func DefaultFont() font.T {
 	return GetFont("fonts/SourceCodeProRegular.ttf", 12)
-}
-
-var assetRoot = ""
-
-func AssetPath(path string, args ...any) string {
-	if assetRoot == "" {
-		cwd, err := os.Getwd()
-		if err != nil {
-			panic(err)
-		}
-		assetRoot = FindFileInParents("assets", cwd)
-	}
-	return filepath.Join(assetRoot, "assets", fmt.Sprintf(path, args...))
 }
 
 func FindFileInParents(name, path string) string {
@@ -61,7 +91,7 @@ func FindFileInParents(name, path string) string {
 	}
 	for _, file := range files {
 		if file.Name() == name {
-			return path
+			return filepath.Join(path, name)
 		}
 	}
 	return FindFileInParents(name, filepath.Dir(path))

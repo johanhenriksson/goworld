@@ -90,7 +90,7 @@ func NewGuiPass(backend vulkan.T, prev Pass, meshes cache.MeshCache) *GuiPass {
 	textures := cache.NewSamplerCache(backend, mat.Descriptors().Textures)
 
 	// id zero should be white
-	textures.Fetch(texture.PathRef("assets/textures/white.png"))
+	textures.Fetch(texture.PathRef("textures/white.png"))
 
 	return &GuiPass{
 		backend:  backend,

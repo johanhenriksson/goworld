@@ -36,6 +36,7 @@ func main() {
 		Height:  1200,
 		Title:   "goworld: vulkan",
 		Renderer: func() renderer.T {
+			// todo: this causes a resource leak - destroy it somehow
 			voxelCache := cache.NewMeshCache(backend)
 			return renderer.New(
 				backend,

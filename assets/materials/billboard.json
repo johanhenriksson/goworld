@@ -1,8 +1,0 @@
-{ 
-    "textures": {
-        "sprite": {
-            "file": "assets/textures/fire.png",
-            "filter": "nearest"
-        }
-    }
-}

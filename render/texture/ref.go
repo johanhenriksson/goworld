@@ -2,6 +2,8 @@ package texture
 
 import (
 	"image"
+
+	"github.com/johanhenriksson/goworld/assets"
 )
 
 type Ref interface {
@@ -22,7 +24,7 @@ func (r *path_ref) Id() string   { return r.path }
 func (r *path_ref) Version() int { return 1 }
 
 func (r *path_ref) Load() *image.RGBA {
-	img, err := ImageFromFile(r.path)
+	img, err := assets.GetImage(r.path)
 	if err != nil {
 		panic(err)
 	}
