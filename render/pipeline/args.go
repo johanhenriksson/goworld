@@ -11,7 +11,7 @@ import (
 
 type Args struct {
 	Pass     renderpass.T
-	Subpass  string
+	Subpass  renderpass.Name
 	Layout   Layout
 	Shader   shader.T
 	Pointers vertex.Pointers

@@ -57,7 +57,7 @@ func (p *voxelpass) Instantiate(rpass renderpass.T) {
 		})
 }
 
-func (p *voxelpass) Name() string {
+func (p *voxelpass) Name() renderpass.Name {
 	return "voxels"
 }
 

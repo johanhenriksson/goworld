@@ -38,13 +38,15 @@ type LightConst struct {
 	Attenuation light.Attenuation
 }
 
-func NewLightShader(device device.T, pass renderpass.T) material.Instance[*LightDescriptors] {
+type LightShader material.Instance[*LightDescriptors]
+
+func NewLightShader(device device.T, pass renderpass.T) LightShader {
 	mat := material.New(
 		device,
 		material.Args{
 			Shader:   shader.New(device, "vk/light"),
 			Pass:     pass,
-			Subpass:  "lighting",
+			Subpass:  LightingSubpass,
 			Pointers: vertex.ParsePointers(vertex.T{}),
 			Constants: []pipeline.PushConstant{
 				{

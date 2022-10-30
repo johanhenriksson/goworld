@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/johanhenriksson/goworld/render/device"
+	"github.com/johanhenriksson/goworld/render/renderpass/attachment"
 	"github.com/johanhenriksson/goworld/render/shader"
 	"github.com/johanhenriksson/goworld/render/types"
 	"github.com/johanhenriksson/goworld/render/vertex"
@@ -47,7 +48,7 @@ func New(device device.T, args Args) T {
 	subpass := args.Pass.Subpass(args.Subpass)
 	log.Println("  subpass:", subpass.Name, subpass.Index())
 
-	blendStates := util.Map(subpass.ColorAttachments, func(name string) vk.PipelineColorBlendAttachmentState {
+	blendStates := util.Map(subpass.ColorAttachments, func(name attachment.Name) vk.PipelineColorBlendAttachmentState {
 		attach := args.Pass.Attachment(name)
 		// todo: move into attachment object
 		// or into the material/pipeline object?

@@ -7,6 +7,7 @@ import (
 	"github.com/johanhenriksson/goworld/render/device"
 	"github.com/johanhenriksson/goworld/render/framebuffer"
 	"github.com/johanhenriksson/goworld/render/image"
+	"github.com/johanhenriksson/goworld/render/renderpass/attachment"
 	"github.com/johanhenriksson/goworld/util"
 
 	vk "github.com/vulkan-go/vulkan"
@@ -16,11 +17,11 @@ type T interface {
 	device.Resource[vk.RenderPass]
 
 	Frames() int
-	Depth() Attachment
-	Attachment(name string) Attachment
-	Attachments() []Attachment
+	Depth() attachment.T
+	Attachment(name attachment.Name) attachment.T
+	Attachments() []attachment.T
 	Framebuffer(frame int) framebuffer.T
-	Subpass(name string) Subpass
+	Subpass(name Name) Subpass
 	Clear() []vk.ClearValue
 }
 
@@ -29,34 +30,34 @@ type renderpass struct {
 	ptr          vk.RenderPass
 	framebuffers []framebuffer.T
 	subpasses    []Subpass
-	passIndices  map[string]int
-	attachments  []Attachment
-	depth        Attachment
-	indices      map[string]int
+	passIndices  map[Name]int
+	attachments  []attachment.T
+	depth        attachment.T
+	indices      map[attachment.Name]int
 	clear        []vk.ClearValue
 }
 
 func New(device device.T, args Args) T {
 	clear := make([]vk.ClearValue, 0, len(args.ColorAttachments)+1)
-	attachments := make([]Attachment, len(args.ColorAttachments))
-	attachmentIndices := make(map[string]int)
+	attachments := make([]attachment.T, len(args.ColorAttachments))
+	attachmentIndices := make(map[attachment.Name]int)
 
 	log.Println("attachments")
 	for index, desc := range args.ColorAttachments {
-		attachment := NewColorAttachment(device, desc, args.Frames, args.Width, args.Height)
+		attachment := attachment.NewColor(device, desc, args.Frames, args.Width, args.Height)
 		clear = append(clear, attachment.Clear())
 		attachments[index] = attachment
 		attachmentIndices[attachment.Name()] = index
 		log.Printf("  %d: %s", index, desc.Name)
 	}
 
-	var depth Attachment
+	var depth attachment.T
 	if args.DepthAttachment != nil {
 		index := len(attachments)
-		attachmentIndices["depth"] = index
-		depth = NewDepthAttachment(device, *args.DepthAttachment, args.Frames, args.Width, args.Height, index)
+		attachmentIndices[attachment.DepthName] = index
+		depth = attachment.NewDepth(device, *args.DepthAttachment, args.Frames, args.Width, args.Height, index)
 		clear = append(clear, depth.Clear())
-		log.Printf("  %d: %s", index, "depth")
+		log.Printf("  %d: %s", index, attachment.DepthName)
 	}
 
 	descriptions := make([]vk.AttachmentDescription, 0, len(args.ColorAttachments)+1)
@@ -68,19 +69,19 @@ func New(device device.T, args Args) T {
 	}
 
 	subpasses := make([]vk.SubpassDescription, 0, len(args.Subpasses))
-	subpassIndices := make(map[string]int)
+	subpassIndices := make(map[Name]int)
 
 	for idx, subpass := range args.Subpasses {
 		log.Println("subpass", idx)
 
 		var depthRef *vk.AttachmentReference
 		if depth != nil && subpass.Depth {
-			idx := attachmentIndices["depth"]
+			idx := attachmentIndices[attachment.DepthName]
 			depthRef = &vk.AttachmentReference{
 				Attachment: uint32(idx),
 				Layout:     vk.ImageLayoutDepthStencilAttachmentOptimal,
 			}
-			log.Printf("  depth -> %s (%d)\n", "depth", idx)
+			log.Printf("  depth -> %s (%d)\n", attachment.DepthName, idx)
 		}
 
 		subpasses = append(subpasses, vk.SubpassDescription{
@@ -89,7 +90,7 @@ func New(device device.T, args Args) T {
 			ColorAttachmentCount: uint32(len(subpass.ColorAttachments)),
 			PColorAttachments: util.MapIdx(
 				subpass.ColorAttachments,
-				func(name string, i int) vk.AttachmentReference {
+				func(name attachment.Name, i int) vk.AttachmentReference {
 					idx := attachmentIndices[name]
 					log.Printf("  color %d -> %s (%d)\n", i, name, idx)
 					return vk.AttachmentReference{
@@ -101,7 +102,7 @@ func New(device device.T, args Args) T {
 			InputAttachmentCount: uint32(len(subpass.InputAttachments)),
 			PInputAttachments: util.MapIdx(
 				subpass.InputAttachments,
-				func(name string, i int) vk.AttachmentReference {
+				func(name attachment.Name, i int) vk.AttachmentReference {
 					idx := attachmentIndices[name]
 					log.Printf("  input %d -> %s (%d)\n", i, name, idx)
 					return vk.AttachmentReference{
@@ -117,16 +118,14 @@ func New(device device.T, args Args) T {
 		args.Subpasses[idx].index = idx
 	}
 
-	// subpassIndices["external"] = int(vk.SubpassExternal)
-
 	dependencies := make([]vk.SubpassDependency, len(args.Dependencies))
 	for idx, dependency := range args.Dependencies {
 		src := vk.SubpassExternal
-		if dependency.Src != "external" {
+		if dependency.Src != ExternalSubpass {
 			src = uint32(subpassIndices[dependency.Src])
 		}
 		dst := vk.SubpassExternal
-		if dependency.Dst != "external" {
+		if dependency.Dst != ExternalSubpass {
 			dst = uint32(subpassIndices[dependency.Dst])
 		}
 		dependencies[idx] = vk.SubpassDependency{
@@ -155,7 +154,7 @@ func New(device device.T, args Args) T {
 
 	framebuffers := make([]framebuffer.T, args.Frames)
 	for i := range framebuffers {
-		fbviews := util.Map(attachments, func(attachment Attachment) image.View { return attachment.View(i) })
+		fbviews := util.Map(attachments, func(attach attachment.T) image.View { return attach.View(i) })
 		if depth != nil {
 			fbviews = append(fbviews, depth.View(i))
 		}
@@ -175,12 +174,12 @@ func New(device device.T, args Args) T {
 	}
 }
 
-func (r *renderpass) Ptr() vk.RenderPass { return r.ptr }
-func (r *renderpass) Depth() Attachment  { return r.depth }
-func (r *renderpass) Frames() int        { return len(r.framebuffers) }
+func (r *renderpass) Ptr() vk.RenderPass  { return r.ptr }
+func (r *renderpass) Depth() attachment.T { return r.depth }
+func (r *renderpass) Frames() int         { return len(r.framebuffers) }
 
-func (r *renderpass) Attachment(name string) Attachment {
-	if name == "depth" {
+func (r *renderpass) Attachment(name attachment.Name) attachment.T {
+	if name == attachment.DepthName {
 		return r.depth
 	}
 	index := r.indices[name]
@@ -195,11 +194,11 @@ func (r *renderpass) Clear() []vk.ClearValue {
 	return r.clear
 }
 
-func (r *renderpass) Attachments() []Attachment {
+func (r *renderpass) Attachments() []attachment.T {
 	return r.attachments
 }
 
-func (r *renderpass) Subpass(name string) Subpass {
+func (r *renderpass) Subpass(name Name) Subpass {
 	if name == "" {
 		return r.subpasses[0]
 	}

@@ -1,4 +1,4 @@
-package renderpass
+package attachment
 
 import vk "github.com/vulkan-go/vulkan"
 

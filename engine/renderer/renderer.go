@@ -45,6 +45,14 @@ func New(backend vulkan.T, geometryPasses, shadowPasses []pass.DeferredSubpass) 
 }
 
 func (r *vkrenderer) Draw(args render.Args, scene object.T) {
+	// render passes can be partially parallelized by dividing them into two parts,
+	// recording and submission. queue submits must happen in order, so that semaphores
+	// behave as expected. however, the actual recording of the command buffer can run
+	// concurrently.
+	//
+	// to allow this, MeshCache and TextureCache must also be made thread safe, since
+	// they currently work in a blocking manner.
+
 	r.Pre.Draw(args, scene)
 	r.Shadows.Draw(args, scene)
 	r.Geometry.Draw(args, scene)

@@ -9,14 +9,12 @@ import (
 	"github.com/johanhenriksson/goworld/core/object/query"
 	"github.com/johanhenriksson/goworld/engine/cache"
 	"github.com/johanhenriksson/goworld/engine/renderer/uniform"
-	"github.com/johanhenriksson/goworld/math/vec2"
-	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/descriptor"
-	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/renderpass"
+	"github.com/johanhenriksson/goworld/render/renderpass/attachment"
 	"github.com/johanhenriksson/goworld/render/sync"
 	"github.com/johanhenriksson/goworld/render/texture"
 	"github.com/johanhenriksson/goworld/render/vertex"
@@ -29,6 +27,17 @@ type DeferredPass interface {
 	Pass
 	GeometryBuffer
 }
+
+const (
+	LightingSubpass renderpass.Name = "lighting"
+)
+
+const (
+	DiffuseAttachment  attachment.Name = "diffuse"
+	NormalsAttachment  attachment.Name = "normals"
+	PositionAttachment attachment.Name = "position"
+	OutputAttachment   attachment.Name = "output"
+)
 
 type GeometryDescriptors struct {
 	descriptor.Set
@@ -44,7 +53,7 @@ type GeometryPass struct {
 	quad      vertex.Mesh
 	backend   vulkan.T
 	pass      renderpass.T
-	light     material.Instance[*LightDescriptors]
+	light     LightShader
 	completed sync.Semaphore
 	copyReady sync.Semaphore
 
@@ -53,7 +62,7 @@ type GeometryPass struct {
 }
 
 type DeferredSubpass interface {
-	Name() string
+	Name() renderpass.Name
 	Record(command.Recorder, uniform.Camera, object.T)
 	Instantiate(renderpass.T)
 	Destroy()
@@ -74,10 +83,10 @@ func NewGeometryPass(
 			Name:  gpass.Name(),
 			Depth: true,
 
-			ColorAttachments: []string{"diffuse", "normal", "position"},
+			ColorAttachments: []attachment.Name{DiffuseAttachment, NormalsAttachment, PositionAttachment},
 		})
 		dependencies = append(dependencies, renderpass.SubpassDependency{
-			Src: "external",
+			Src: renderpass.ExternalSubpass,
 			Dst: gpass.Name(),
 
 			SrcStageMask:  vk.PipelineStageBottomOfPipeBit,
@@ -88,7 +97,7 @@ func NewGeometryPass(
 		})
 		dependencies = append(dependencies, renderpass.SubpassDependency{
 			Src: gpass.Name(),
-			Dst: "lighting",
+			Dst: LightingSubpass,
 
 			SrcStageMask:  vk.PipelineStageColorAttachmentOutputBit,
 			DstStageMask:  vk.PipelineStageFragmentShaderBit,
@@ -100,14 +109,14 @@ func NewGeometryPass(
 
 	// add lighting pass
 	subpasses = append(subpasses, renderpass.Subpass{
-		Name: "lighting",
+		Name: LightingSubpass,
 
-		ColorAttachments: []string{"output"},
-		InputAttachments: []string{"diffuse", "normal", "position", "depth"},
+		ColorAttachments: []attachment.Name{OutputAttachment},
+		InputAttachments: []attachment.Name{DiffuseAttachment, NormalsAttachment, PositionAttachment, attachment.DepthName},
 	})
 	dependencies = append(dependencies, renderpass.SubpassDependency{
-		Src: "lighting",
-		Dst: "external",
+		Src: LightingSubpass,
+		Dst: renderpass.ExternalSubpass,
 
 		SrcStageMask:  vk.PipelineStageColorAttachmentOutputBit,
 		DstStageMask:  vk.PipelineStageBottomOfPipeBit,
@@ -121,22 +130,22 @@ func NewGeometryPass(
 	positionFmt := vk.FormatR16g16b16a16Sfloat
 
 	pass := renderpass.New(backend.Device(), renderpass.Args{
-		Frames: 1, // backend.Frames(),
+		Frames: 1,
 		Width:  backend.Width(),
 		Height: backend.Height(),
 
-		ColorAttachments: []renderpass.ColorAttachment{
+		ColorAttachments: []attachment.Color{
 			{
-				Name:        "output",
+				Name:        OutputAttachment,
 				Format:      diffuseFmt,
 				LoadOp:      vk.AttachmentLoadOpClear,
 				StoreOp:     vk.AttachmentStoreOpStore,
 				FinalLayout: vk.ImageLayoutShaderReadOnlyOptimal,
 				Usage:       vk.ImageUsageSampledBit,
-				Blend:       renderpass.BlendAdditive,
+				Blend:       attachment.BlendAdditive,
 			},
 			{
-				Name:        "diffuse",
+				Name:        DiffuseAttachment,
 				Format:      diffuseFmt,
 				LoadOp:      vk.AttachmentLoadOpClear,
 				StoreOp:     vk.AttachmentStoreOpStore,
@@ -144,7 +153,7 @@ func NewGeometryPass(
 				Usage:       vk.ImageUsageInputAttachmentBit | vk.ImageUsageTransferSrcBit,
 			},
 			{
-				Name:        "normal",
+				Name:        NormalsAttachment,
 				Format:      normalFmt,
 				LoadOp:      vk.AttachmentLoadOpClear,
 				StoreOp:     vk.AttachmentStoreOpStore,
@@ -152,7 +161,7 @@ func NewGeometryPass(
 				Usage:       vk.ImageUsageInputAttachmentBit | vk.ImageUsageTransferSrcBit,
 			},
 			{
-				Name:        "position",
+				Name:        PositionAttachment,
 				Format:      positionFmt,
 				LoadOp:      vk.AttachmentLoadOpClear,
 				StoreOp:     vk.AttachmentStoreOpStore,
@@ -160,7 +169,7 @@ func NewGeometryPass(
 				Usage:       vk.ImageUsageInputAttachmentBit | vk.ImageUsageTransferSrcBit,
 			},
 		},
-		DepthAttachment: &renderpass.DepthAttachment{
+		DepthAttachment: &attachment.Depth{
 			LoadOp:      vk.AttachmentLoadOpClear,
 			StoreOp:     vk.AttachmentStoreOpStore,
 			FinalLayout: vk.ImageLayoutShaderReadOnlyOptimal,
@@ -172,29 +181,28 @@ func NewGeometryPass(
 	})
 
 	// instantiate geometry subpasses
-	for _, gpass := range passes {
-		gpass.Instantiate(pass)
+	for _, subpass := range passes {
+		subpass.Instantiate(pass)
 	}
 
-	gbuffer := NewGbuffer(backend, pass)
+	gbuffer := NewGbuffer(
+		backend,
+		pass.Attachment(DiffuseAttachment).View(0),
+		pass.Attachment(NormalsAttachment).View(0),
+		pass.Attachment(PositionAttachment).View(0),
+		pass.Attachment(OutputAttachment).View(0),
+		pass.Depth().View(0),
+	)
 
-	quad := vertex.NewTriangles("screen_quad", []vertex.T{
-		{P: vec3.New(-1, -1, 0), T: vec2.New(0, 0)},
-		{P: vec3.New(1, 1, 0), T: vec2.New(1, 1)},
-		{P: vec3.New(-1, 1, 0), T: vec2.New(0, 1)},
-		{P: vec3.New(1, -1, 0), T: vec2.New(1, 0)},
-	}, []uint16{
-		0, 1, 2,
-		0, 3, 1,
-	})
+	quad := vertex.ScreenQuad()
 
 	lightsh := NewLightShader(backend.Device(), pass)
 	lightDesc := lightsh.Descriptors()
 
-	lightDesc.Diffuse.Set(gbuffer.Diffuse(0))
-	lightDesc.Normal.Set(gbuffer.Normal(0))
-	lightDesc.Position.Set(gbuffer.Position(0))
-	lightDesc.Depth.Set(gbuffer.Depth(0))
+	lightDesc.Diffuse.Set(gbuffer.Diffuse())
+	lightDesc.Normal.Set(gbuffer.Normal())
+	lightDesc.Position.Set(gbuffer.Position())
+	lightDesc.Depth.Set(gbuffer.Depth())
 
 	white := textures.Fetch(texture.PathRef("textures/white.png"))
 	lightDesc.Shadow.Set(0, white)
@@ -300,9 +308,16 @@ func (p *GeometryPass) Draw(args render.Args, scene object.T) {
 		},
 	})
 
-	p.GeometryBuffer.CopyBuffers(worker, ctx.Index, command.Wait{
-		Semaphore: p.copyReady,
-		Mask:      vk.PipelineStageTopOfPipeBit,
+	// issue Geometry Buffer copy, so that gbuffers may be read back.
+	// if more data gbuffer is to be drawn later, we need to move this to a later stage
+	worker.Queue(p.GeometryBuffer.CopyBuffers())
+	worker.Submit(command.SubmitInfo{
+		Wait: []command.Wait{
+			{
+				Semaphore: p.copyReady,
+				Mask:      vk.PipelineStageTopOfPipeBit,
+			},
+		},
 	})
 }
 

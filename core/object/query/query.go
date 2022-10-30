@@ -117,3 +117,11 @@ func (q *T[K]) collect(object object.T) {
 		q.collect(child)
 	}
 }
+
+// Returns the root of the object heirarchy
+func Root(obj object.T) object.T {
+	for obj.Parent() != nil {
+		obj = obj.Parent()
+	}
+	return obj
+}

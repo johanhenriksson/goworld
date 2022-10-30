@@ -32,7 +32,7 @@ type material[D descriptor.Set] struct {
 type Args struct {
 	Shader     shader.T
 	Pass       renderpass.T
-	Subpass    string
+	Subpass    renderpass.Name
 	Pointers   vertex.Pointers
 	Constants  []pipeline.PushConstant
 	Primitive  vertex.Primitive

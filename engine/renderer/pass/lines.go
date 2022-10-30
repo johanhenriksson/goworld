@@ -15,6 +15,7 @@ import (
 	"github.com/johanhenriksson/goworld/render/image"
 	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/renderpass"
+	"github.com/johanhenriksson/goworld/render/renderpass/attachment"
 	"github.com/johanhenriksson/goworld/render/shader"
 	"github.com/johanhenriksson/goworld/render/sync"
 	"github.com/johanhenriksson/goworld/render/vertex"
@@ -54,14 +55,14 @@ func NewLinePass(backend vulkan.T, meshes cache.MeshCache, output Pass, geometry
 
 	depth := make([]image.T, backend.Frames())
 	for i := range depth {
-		depth[i] = geometry.Depth(i).Image()
+		depth[i] = geometry.Depth().Image()
 	}
 
 	p.pass = renderpass.New(backend.Device(), renderpass.Args{
 		Frames: backend.Frames(),
 		Width:  backend.Width(),
 		Height: backend.Height(),
-		ColorAttachments: []renderpass.ColorAttachment{
+		ColorAttachments: []attachment.Color{
 			{
 				Name:          "color",
 				Images:        backend.Swapchain().Images(),
@@ -72,7 +73,7 @@ func NewLinePass(backend vulkan.T, meshes cache.MeshCache, output Pass, geometry
 				FinalLayout:   vk.ImageLayoutPresentSrc,
 			},
 		},
-		DepthAttachment: &renderpass.DepthAttachment{
+		DepthAttachment: &attachment.Depth{
 			Images:        depth,
 			LoadOp:        vk.AttachmentLoadOpLoad,
 			InitialLayout: vk.ImageLayoutUndefined,
@@ -84,7 +85,7 @@ func NewLinePass(backend vulkan.T, meshes cache.MeshCache, output Pass, geometry
 				Name:  "output",
 				Depth: true,
 
-				ColorAttachments: []string{"color"},
+				ColorAttachments: []attachment.Name{"color"},
 			},
 		},
 	})

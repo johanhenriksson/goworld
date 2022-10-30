@@ -3,13 +3,12 @@ package pass
 import (
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/engine/cache"
-	"github.com/johanhenriksson/goworld/math/vec2"
-	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/descriptor"
 	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/renderpass"
+	"github.com/johanhenriksson/goworld/render/renderpass/attachment"
 	"github.com/johanhenriksson/goworld/render/shader"
 	"github.com/johanhenriksson/goworld/render/sync"
 	"github.com/johanhenriksson/goworld/render/texture"
@@ -47,23 +46,14 @@ func NewOutputPass(backend vulkan.T, meshes cache.MeshCache, textures cache.Text
 		completed: sync.NewSemaphore(backend.Device()),
 	}
 
-	quadvtx := vertex.NewTriangles("screen_quad", []vertex.T{
-		{P: vec3.New(-1, -1, 0), T: vec2.New(0, 0)},
-		{P: vec3.New(1, 1, 0), T: vec2.New(1, 1)},
-		{P: vec3.New(-1, 1, 0), T: vec2.New(0, 1)},
-		{P: vec3.New(1, -1, 0), T: vec2.New(1, 0)},
-	}, []uint16{
-		0, 1, 2,
-		0, 3, 1,
-	})
-
+	quadvtx := vertex.ScreenQuad()
 	p.quad = p.meshes.Fetch(quadvtx)
 
 	p.pass = renderpass.New(backend.Device(), renderpass.Args{
 		Frames: backend.Frames(),
 		Width:  backend.Width(),
 		Height: backend.Height(),
-		ColorAttachments: []renderpass.ColorAttachment{
+		ColorAttachments: []attachment.Color{
 			{
 				Name:        "color",
 				Images:      backend.Swapchain().Images(),
@@ -76,7 +66,7 @@ func NewOutputPass(backend vulkan.T, meshes cache.MeshCache, textures cache.Text
 		Subpasses: []renderpass.Subpass{
 			{
 				Name:             "output",
-				ColorAttachments: []string{"color"},
+				ColorAttachments: []attachment.Name{"color"},
 			},
 		},
 	})
@@ -100,7 +90,7 @@ func NewOutputPass(backend vulkan.T, meshes cache.MeshCache, textures cache.Text
 	p.desc = p.material.InstantiateMany(frames)
 	p.tex = make([]texture.T, frames)
 	for i := range p.tex {
-		p.tex[i] = texture.FromView(backend.Device(), p.geometry.Output(i), texture.Args{
+		p.tex[i] = texture.FromView(backend.Device(), p.geometry.Output(), texture.Args{
 			Filter: vk.FilterNearest,
 			Wrap:   vk.SamplerAddressModeClampToEdge,
 		})
@@ -132,8 +122,6 @@ func (p *OutputPass) Draw(args render.Args, scene object.T) {
 			},
 		},
 	})
-
-	// worker.Wait()
 }
 
 func (p *OutputPass) Completed() sync.Semaphore {

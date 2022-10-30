@@ -8,11 +8,6 @@ import (
 
 type Cache cache.T[Ref, Standard]
 
-type VkMesh interface {
-	Draw(command.Buffer, int)
-	Destroy()
-}
-
 // mesh cache backend
 type matcache struct {
 	backend vulkan.T

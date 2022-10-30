@@ -13,6 +13,7 @@ import (
 	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/pipeline"
 	"github.com/johanhenriksson/goworld/render/renderpass"
+	"github.com/johanhenriksson/goworld/render/renderpass/attachment"
 	"github.com/johanhenriksson/goworld/render/shader"
 	"github.com/johanhenriksson/goworld/render/sync"
 	"github.com/johanhenriksson/goworld/render/texture"
@@ -41,12 +42,14 @@ type GuiPass struct {
 	textures cache.SamplerCache
 }
 
+var _ Pass = &GuiPass{}
+
 func NewGuiPass(backend vulkan.T, prev Pass, meshes cache.MeshCache) *GuiPass {
 	pass := renderpass.New(backend.Device(), renderpass.Args{
 		Frames: backend.Frames(),
 		Width:  backend.Width(),
 		Height: backend.Height(),
-		ColorAttachments: []renderpass.ColorAttachment{
+		ColorAttachments: []attachment.Color{
 			{
 				Name:          "color",
 				Images:        backend.Swapchain().Images(),
@@ -55,7 +58,7 @@ func NewGuiPass(backend vulkan.T, prev Pass, meshes cache.MeshCache) *GuiPass {
 				StoreOp:       vk.AttachmentStoreOpStore,
 				InitialLayout: vk.ImageLayoutPresentSrc,
 				FinalLayout:   vk.ImageLayoutPresentSrc,
-				Blend:         renderpass.BlendMix,
+				Blend:         attachment.BlendMix,
 			},
 		},
 		Subpasses: []renderpass.Subpass{
@@ -63,7 +66,7 @@ func NewGuiPass(backend vulkan.T, prev Pass, meshes cache.MeshCache) *GuiPass {
 				Name:  "output",
 				Depth: false,
 
-				ColorAttachments: []string{"color"},
+				ColorAttachments: []attachment.Name{"color"},
 			},
 		},
 	})
@@ -155,6 +158,10 @@ func (p *GuiPass) Draw(args render.Args, scene object.T) {
 			},
 		},
 	})
+}
+
+func (p *GuiPass) Completed() sync.Semaphore {
+	return nil
 }
 
 func (p *GuiPass) Destroy() {

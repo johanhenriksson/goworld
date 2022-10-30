@@ -27,7 +27,7 @@ type Descriptors struct {
 
 type Def struct {
 	Shader       string
-	Subpass      string
+	Subpass      renderpass.Name
 	VertexFormat any
 }
 

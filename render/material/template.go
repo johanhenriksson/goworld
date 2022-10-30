@@ -23,13 +23,13 @@ type template[D descriptor.Set] struct {
 	layout  pipeline.Layout
 	shader  shader.T
 	pass    renderpass.T
-	subpass string
+	subpass renderpass.Name
 }
 
 type TemplateArgs struct {
 	Name      string
 	Pass      renderpass.T
-	Subpass   string
+	Subpass   renderpass.Name
 	Shader    shader.T
 	Constants []pipeline.PushConstant
 }

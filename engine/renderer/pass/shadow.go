@@ -13,6 +13,7 @@ import (
 	"github.com/johanhenriksson/goworld/render/descriptor"
 	"github.com/johanhenriksson/goworld/render/image"
 	"github.com/johanhenriksson/goworld/render/renderpass"
+	"github.com/johanhenriksson/goworld/render/renderpass/attachment"
 	"github.com/johanhenriksson/goworld/render/sync"
 	"github.com/johanhenriksson/goworld/render/vulkan"
 
@@ -51,7 +52,7 @@ func NewShadowPass(backend vulkan.T, meshes cache.MeshCache, passes []DeferredSu
 			Depth: true,
 		})
 		dependencies = append(dependencies, renderpass.SubpassDependency{
-			Src: "external",
+			Src: renderpass.ExternalSubpass,
 			Dst: gpass.Name(),
 
 			SrcStageMask:  vk.PipelineStageBottomOfPipeBit,
@@ -62,7 +63,7 @@ func NewShadowPass(backend vulkan.T, meshes cache.MeshCache, passes []DeferredSu
 		})
 		dependencies = append(dependencies, renderpass.SubpassDependency{
 			Src: gpass.Name(),
-			Dst: "external",
+			Dst: renderpass.ExternalSubpass,
 
 			SrcStageMask:  vk.PipelineStageColorAttachmentOutputBit,
 			DstStageMask:  vk.PipelineStageFragmentShaderBit,
@@ -77,7 +78,7 @@ func NewShadowPass(backend vulkan.T, meshes cache.MeshCache, passes []DeferredSu
 		Width:  size,
 		Height: size,
 
-		DepthAttachment: &renderpass.DepthAttachment{
+		DepthAttachment: &attachment.Depth{
 			LoadOp:      vk.AttachmentLoadOpClear,
 			StoreOp:     vk.AttachmentStoreOpStore,
 			FinalLayout: vk.ImageLayoutShaderReadOnlyOptimal,
@@ -150,7 +151,7 @@ func (p *shadowpass) Draw(args render.Args, scene object.T) {
 }
 
 func (p *shadowpass) Shadowmap() image.View {
-	return p.pass.Attachment("depth").View(0)
+	return p.pass.Depth().View(0)
 }
 
 func (p *shadowpass) Destroy() {
