@@ -2,7 +2,7 @@ package editor
 
 import (
 	"github.com/johanhenriksson/goworld/core/object"
-	"github.com/johanhenriksson/goworld/game"
+	"github.com/johanhenriksson/goworld/game/voxel"
 	"github.com/johanhenriksson/goworld/geometry/box"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render/color"
@@ -32,12 +32,12 @@ func (pt *EraseTool) String() string {
 	return "EraseTool"
 }
 
-func (pt *EraseTool) Use(e T, position, normal vec3.T) {
+func (pt *EraseTool) Use(editor T, position, normal vec3.T) {
 	target := position.Sub(normal.Scaled(0.5))
-	e.SetVoxel(int(target.X), int(target.Y), int(target.Z), game.EmptyVoxel)
+	editor.SetVoxel(int(target.X), int(target.Y), int(target.Z), voxel.Empty)
 
 	// recompute mesh
-	e.Recalculate()
+	editor.Recalculate()
 }
 
 func (pt *EraseTool) Hover(editor T, position, normal vec3.T) {

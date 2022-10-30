@@ -9,6 +9,7 @@ import (
 	"github.com/johanhenriksson/goworld/engine/cache"
 	"github.com/johanhenriksson/goworld/engine/renderer/pass"
 	"github.com/johanhenriksson/goworld/engine/renderer/uniform"
+	"github.com/johanhenriksson/goworld/game/voxel"
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/renderpass"
@@ -52,7 +53,7 @@ func (p *voxelpass) Instantiate(rpass renderpass.T) {
 		&material.Def{
 			Shader:       p.shader,
 			Subpass:      p.Name(),
-			VertexFormat: VoxelVertex{},
+			VertexFormat: voxel.Vertex{},
 		})
 }
 

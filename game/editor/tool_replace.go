@@ -2,7 +2,7 @@ package editor
 
 import (
 	"github.com/johanhenriksson/goworld/core/object"
-	"github.com/johanhenriksson/goworld/game"
+	"github.com/johanhenriksson/goworld/game/voxel"
 	"github.com/johanhenriksson/goworld/geometry/box"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render/color"
@@ -34,7 +34,7 @@ func (pt *ReplaceTool) String() string {
 
 func (pt *ReplaceTool) Use(editor T, position, normal vec3.T) {
 	target := position.Sub(normal.Scaled(0.5))
-	editor.SetVoxel(int(target.X), int(target.Y), int(target.Z), game.NewVoxel(editor.SelectedColor()))
+	editor.SetVoxel(int(target.X), int(target.Y), int(target.Z), voxel.New(editor.SelectedColor()))
 
 	// recompute mesh
 	editor.Recalculate()

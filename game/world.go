@@ -2,12 +2,15 @@ package game
 
 import (
 	"fmt"
+
+	"github.com/johanhenriksson/goworld/game/chunk"
+	"github.com/johanhenriksson/goworld/game/voxel"
 	"github.com/johanhenriksson/goworld/math/vec3"
 )
 
 type ChunkProvider interface {
-	Chunk(x, z int) *Chunk
-	Voxel(x, y, z int) Voxel
+	Chunk(x, z int) *chunk.T
+	Voxel(x, y, z int) voxel.T
 }
 
 type ChunkPos struct {
@@ -20,7 +23,7 @@ type World struct {
 	ChunkSize    int
 	KeepDistance int
 	DrawDistance int
-	Cache        map[ChunkPos]*Chunk
+	Cache        map[ChunkPos]*chunk.T
 	Provider     ChunkProvider
 }
 
@@ -30,13 +33,13 @@ func NewWorld(seed, size int) *World {
 		KeepDistance: 5,
 		DrawDistance: 3,
 		ChunkSize:    size,
-		Cache:        make(map[ChunkPos]*Chunk),
+		Cache:        make(map[ChunkPos]*chunk.T),
 		Provider:     ExampleWorldgen(seed, size),
 	}
 }
 
-func (w *World) AddChunk(cx, cz int) *Chunk {
-	chunk, err := LoadChunk("chunks", cx, cz)
+func (w *World) AddChunk(cx, cz int) *chunk.T {
+	chunk, err := chunk.Load("chunks", cx, cz)
 	if err != nil {
 		chunk = w.Provider.Chunk(cx, cz)
 		fmt.Printf("Generated chunk %d,%d\n", cx, cz)
@@ -46,7 +49,7 @@ func (w *World) AddChunk(cx, cz int) *Chunk {
 	return chunk
 }
 
-func (w *World) Voxel(x, y, z int) Voxel {
+func (w *World) Voxel(x, y, z int) voxel.T {
 	cx, cz := x/w.ChunkSize, z/w.ChunkSize
 	lx, ly, lz := x%w.ChunkSize, y, z%w.ChunkSize
 	if chunk, exists := w.Cache[ChunkPos{cx, cz}]; exists {
@@ -55,18 +58,18 @@ func (w *World) Voxel(x, y, z int) Voxel {
 	return w.Provider.Voxel(x, y, z)
 }
 
-func (w *World) Set(x, y, z int, voxel Voxel) {
+func (w *World) Set(x, y, z int, vox voxel.T) {
 	cx, cz := x/w.ChunkSize, z/w.ChunkSize
 	lx, ly, lz := x%w.ChunkSize, y, z%w.ChunkSize
 	if chunk, exists := w.Cache[ChunkPos{cx, cz}]; exists {
-		chunk.Set(lx, ly, lz, voxel)
-		chunk.Light.Block(lx, ly, lz, voxel != EmptyVoxel)
+		chunk.Set(lx, ly, lz, vox)
+		chunk.Light.Block(lx, ly, lz, vox != voxel.Empty)
 	}
 }
 
 func (w *World) HeightAt(p vec3.T) float32 {
 	x, y, z := int(p.X), int(p.Y), int(p.Z)
-	for w.Voxel(x, y, z) == EmptyVoxel && y >= 0 {
+	for w.Voxel(x, y, z) == voxel.Empty && y >= 0 {
 		y--
 	}
 	y++

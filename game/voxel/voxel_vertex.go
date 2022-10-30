@@ -1,7 +1,7 @@
-package game
+package voxel
 
-// VoxelVertex represents a single RGB-colored voxel
-type VoxelVertex struct {
+// voxel.Vertex represents a single RGB-colored voxel
+type Vertex struct {
 	X byte `vtx:"position,uint8,3"`
 	Y byte `vtx:"skip"`
 	Z byte `vtx:"skip"`

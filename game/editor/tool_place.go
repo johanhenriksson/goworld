@@ -4,7 +4,7 @@ import (
 	"log"
 
 	"github.com/johanhenriksson/goworld/core/object"
-	"github.com/johanhenriksson/goworld/game"
+	"github.com/johanhenriksson/goworld/game/voxel"
 	"github.com/johanhenriksson/goworld/geometry/box"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render/color"
@@ -34,13 +34,13 @@ func (pt *PlaceTool) Use(editor T, position, normal vec3.T) {
 	target := position.Add(normal.Scaled(0.5))
 	x, y, z := int(target.X), int(target.Y), int(target.Z)
 
-	if editor.GetVoxel(x, y, z) != game.EmptyVoxel {
+	if editor.GetVoxel(x, y, z) != voxel.Empty {
 		return
 	}
 
 	clr := editor.SelectedColor()
 	log.Println("place", clr, "at", x, y, z)
-	editor.SetVoxel(x, y, z, game.NewVoxel(clr))
+	editor.SetVoxel(x, y, z, voxel.New(clr))
 
 	// recompute mesh
 	editor.Recalculate()

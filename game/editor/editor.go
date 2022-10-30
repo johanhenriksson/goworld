@@ -5,8 +5,10 @@ import (
 	"github.com/johanhenriksson/goworld/core/input/keys"
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/core/object"
+	"github.com/johanhenriksson/goworld/core/object/query"
 	"github.com/johanhenriksson/goworld/engine/renderer/pass"
-	"github.com/johanhenriksson/goworld/game"
+	"github.com/johanhenriksson/goworld/game/chunk"
+	"github.com/johanhenriksson/goworld/game/voxel"
 	"github.com/johanhenriksson/goworld/geometry/box"
 	"github.com/johanhenriksson/goworld/geometry/plane"
 	"github.com/johanhenriksson/goworld/math/vec2"
@@ -18,8 +20,8 @@ type T interface {
 	object.Component
 
 	SelectedColor() color.T
-	GetVoxel(x, y, z int) game.Voxel
-	SetVoxel(x, y, z int, v game.Voxel)
+	GetVoxel(x, y, z int) voxel.T
+	SetVoxel(x, y, z int, v voxel.T)
 	SelectTool(Tool)
 	SelectColor(color.T)
 	Recalculate()
@@ -30,11 +32,13 @@ type T interface {
 type editor struct {
 	object.Component
 
-	Chunk  *game.Chunk
+	Chunk  *chunk.T
 	Camera camera.T
 	Tool   Tool
 
-	color       color.T
+	color  color.T
+	object object.T
+
 	PlaceTool   *PlaceTool
 	EraseTool   *EraseTool
 	SampleTool  *SampleTool
@@ -47,7 +51,7 @@ type editor struct {
 	xp, yp, zp int
 
 	bounds  *box.T
-	mesh    *game.ChunkMesh
+	mesh    *chunk.Mesh
 	gbuffer pass.BufferOutput
 
 	cursorPos    vec3.T
@@ -55,13 +59,11 @@ type editor struct {
 }
 
 // NewEditor creates a new editor application
-func NewEditor(chunk *game.Chunk, cam camera.T, gbuffer pass.BufferOutput) T {
-	parent := object.New("Editor")
-
+func NewEditor(chk *chunk.T, cam camera.T, gbuffer pass.BufferOutput) T {
 	e := &editor{
 		Component: object.NewComponent(),
 
-		Chunk:  chunk,
+		Chunk:  chk,
 		Camera: cam,
 
 		PlaceTool:   NewPlaceTool(),
@@ -69,27 +71,27 @@ func NewEditor(chunk *game.Chunk, cam camera.T, gbuffer pass.BufferOutput) T {
 		SampleTool:  NewSampleTool(),
 		ReplaceTool: NewReplaceTool(),
 
-		mesh:    game.NewChunkMesh(chunk),
 		gbuffer: gbuffer,
 		color:   color.Red,
+		object:  object.New("Editor"),
 	}
 
-	dimensions := vec3.NewI(chunk.Sx, chunk.Sy, chunk.Sz)
+	dimensions := vec3.NewI(chk.Sx, chk.Sy, chk.Sz)
 	center := dimensions.Scaled(0.5)
 
 	box.Builder(&e.bounds, box.Args{
 		Size:  dimensions,
 		Color: color.DarkGrey,
 	}).
-		Parent(parent).
+		Parent(e.object).
 		Create()
 
 	// X Construction Plane
 	plane.Builder(&e.XPlane, plane.Args{
-		Size:  float32(chunk.Sx),
+		Size:  float32(chk.Sx),
 		Color: color.Red.WithAlpha(0.25),
 	}).
-		Parent(parent).
+		Parent(e.object).
 		Position(center.WithX(0)).
 		Rotation(vec3.New(-90, 0, 90)).
 		Active(false).
@@ -97,34 +99,31 @@ func NewEditor(chunk *game.Chunk, cam camera.T, gbuffer pass.BufferOutput) T {
 
 	// Y Construction Plane
 	plane.Builder(&e.YPlane, plane.Args{
-		Size:  float32(chunk.Sy),
+		Size:  float32(chk.Sy),
 		Color: color.Green.WithAlpha(0.25),
 	}).
-		Parent(parent).
+		Parent(e.object).
 		Position(center.WithY(0)).
 		Active(false).
 		Create()
 
 	// Z Construction Plane
 	plane.Builder(&e.ZPlane, plane.Args{
-		Size:  float32(chunk.Sz),
+		Size:  float32(chk.Sz),
 		Color: color.Blue.WithAlpha(0.25),
 	}).
-		Parent(parent).
+		Parent(e.object).
 		Position(center.WithZ(0)).
 		Rotation(vec3.New(-90, 0, 0)).
 		Active(false).
 		Create()
 
-	parent.Adopt(e.PlaceTool, e.ReplaceTool, e.EraseTool, e.SampleTool)
+	e.object.Adopt(e.PlaceTool, e.ReplaceTool, e.EraseTool, e.SampleTool)
 	e.ReplaceTool.SetActive(false)
 	e.EraseTool.SetActive(false)
 	e.SampleTool.SetActive(false)
 
 	e.SelectTool(e.PlaceTool)
-
-	parent.Attach(e)
-	parent.Attach(e.mesh)
 
 	return e
 }
@@ -133,11 +132,21 @@ func (e *editor) Name() string {
 	return "Editor"
 }
 
-func (e *editor) GetVoxel(x, y, z int) game.Voxel {
+func (e *editor) AttachTo(obj object.T) {
+	e.Component.AttachTo(obj)
+	obj.Adopt(e.object)
+
+	e.mesh = query.New[*chunk.Mesh]().First(obj)
+	if e.mesh == nil {
+		panic("parent object has no ChunkMesh attached")
+	}
+}
+
+func (e *editor) GetVoxel(x, y, z int) voxel.T {
 	return e.Chunk.At(x, y, z)
 }
 
-func (e *editor) SetVoxel(x, y, z int, v game.Voxel) {
+func (e *editor) SetVoxel(x, y, z int, v voxel.T) {
 	e.Chunk.Set(x, y, z, v)
 }
 
@@ -200,6 +209,13 @@ func (e *editor) InBounds(p vec3.T) bool {
 }
 
 func (e *editor) KeyEvent(ev keys.Event) {
+	// clear chunk hotkey
+	if keys.PressedMods(ev, keys.N, keys.Ctrl) {
+		e.Chunk.Clear()
+		e.Chunk.Light.Calculate()
+		e.mesh.Compute()
+	}
+
 	// deselect tool
 	if keys.Pressed(ev, keys.Escape) {
 		e.DeselectTool()
@@ -278,5 +294,7 @@ func (e *editor) MouseEvent(ev mouse.Event) {
 
 func (e *editor) Recalculate() {
 	e.Chunk.Light.Calculate()
-	e.mesh.Compute()
+	if e.mesh != nil {
+		e.mesh.Compute()
+	}
 }

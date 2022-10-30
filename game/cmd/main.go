@@ -7,12 +7,12 @@ import (
 	"github.com/johanhenriksson/goworld/core/light"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/core/object/query"
-	"github.com/johanhenriksson/goworld/editor"
 	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/engine/cache"
 	"github.com/johanhenriksson/goworld/engine/renderer"
 	"github.com/johanhenriksson/goworld/engine/renderer/pass"
 	"github.com/johanhenriksson/goworld/game"
+	"github.com/johanhenriksson/goworld/game/editor"
 	"github.com/johanhenriksson/goworld/gui"
 	"github.com/johanhenriksson/goworld/gui/node"
 	"github.com/johanhenriksson/goworld/gui/style"
@@ -47,17 +47,15 @@ func main() {
 	},
 		makeGui,
 		func(r renderer.T, scene object.T) {
-			player, chunk := game.CreateScene(scene)
-			player.Transform().SetPosition(vec3.New(0, 20, -11))
-			player.Eye.Transform().SetRotation(vec3.New(-30, 0, 0))
+			game.CreateScene(scene, r.Buffers())
 
 			// mesh := game.NewChunkMesh(chunk)
 			// chunkobj := object.New("chunk", mesh)
 			// scene.Adopt(chunkobj)
 
 			// create editor
-			edit := editor.NewEditor(chunk, player.Camera, r.Buffers())
-			scene.Adopt(edit.Object())
+			// edit := editor.NewEditor(chunk, player.Camera, r.Buffers())
+			// scene.Adopt(edit.Object())
 
 			object.Build("light1").
 				Position(vec3.New(10, 9, 13)).
@@ -80,8 +78,6 @@ func main() {
 				})).
 				Parent(scene).
 				Create()
-
-			scene.Adopt(player)
 		},
 	)
 }

@@ -1,25 +1,26 @@
-package game
+package chunk
 
 import (
 	"github.com/johanhenriksson/goworld/core/mesh"
+	"github.com/johanhenriksson/goworld/game/voxel"
 	"github.com/johanhenriksson/goworld/render/vertex"
 )
 
-type MeshData vertex.MutableMesh[VoxelVertex, uint16]
+type MeshData vertex.MutableMesh[voxel.Vertex, uint16]
 
-type ChunkMesh struct {
+type Mesh struct {
 	mesh.T
-	*Chunk
+	chunk        *T
 	meshdata     MeshData
-	meshComputed chan []VoxelVertex
+	meshComputed chan []voxel.Vertex
 }
 
-func NewChunkMesh(chunk *Chunk) *ChunkMesh {
-	chk := &ChunkMesh{
+func NewMesh(chunk *T) *Mesh {
+	chk := &Mesh{
 		T:            mesh.New(mesh.Deferred),
-		Chunk:        chunk,
-		meshdata:     vertex.NewTriangles("chunk", []VoxelVertex{}, []uint16{}),
-		meshComputed: make(chan []VoxelVertex),
+		chunk:        chunk,
+		meshdata:     vertex.NewTriangles("chunk", []voxel.Vertex{}, []uint16{}),
+		meshComputed: make(chan []voxel.Vertex),
 	}
 	// chk.Compute()
 	chk.meshdata.Update(ComputeVertexData(chunk), []uint16{})
@@ -27,7 +28,7 @@ func NewChunkMesh(chunk *Chunk) *ChunkMesh {
 	return chk
 }
 
-func (cm *ChunkMesh) Update(dt float32) {
+func (cm *Mesh) Update(dt float32) {
 	cm.T.Update(dt)
 	select {
 	case vertices := <-cm.meshComputed:
@@ -38,15 +39,15 @@ func (cm *ChunkMesh) Update(dt float32) {
 }
 
 // Queues recomputation of the mesh
-func (cm *ChunkMesh) Compute() {
+func (cm *Mesh) Compute() {
 	go func() {
-		data := ComputeVertexData(cm.Chunk)
+		data := ComputeVertexData(cm.chunk)
 		cm.meshComputed <- data
 	}()
 }
 
-func ComputeVertexData(cm *Chunk) []VoxelVertex {
-	vertices := make([]VoxelVertex, 0, 1024)
+func ComputeVertexData(cm *T) []voxel.Vertex {
+	vertices := make([]voxel.Vertex, 0, 1024)
 	light := cm.Light.Brightness
 	Omax := float32(220)
 
@@ -54,7 +55,7 @@ func ComputeVertexData(cm *Chunk) []VoxelVertex {
 		for x := -1; x <= cm.Sx; x++ {
 			for y := -1; y <= cm.Sy; y++ {
 				v := cm.At(x, y, z)
-				if v != EmptyVoxel {
+				if v != voxel.Empty {
 					// consider ONLY empty voxels
 					continue
 				}
@@ -65,12 +66,12 @@ func ComputeVertexData(cm *Chunk) []VoxelVertex {
 				yn := cm.At(x, y-1, z)
 				zp := cm.At(x, y, z+1)
 				zn := cm.At(x, y, z-1)
-				xpf := xp != EmptyVoxel
-				xnf := xn != EmptyVoxel
-				ypf := yp != EmptyVoxel
-				ynf := yn != EmptyVoxel
-				zpf := zp != EmptyVoxel
-				znf := zn != EmptyVoxel
+				xpf := xp != voxel.Empty
+				xnf := xn != voxel.Empty
+				ypf := yp != voxel.Empty
+				ynf := yn != voxel.Empty
+				zpf := zp != voxel.Empty
+				znf := zn != voxel.Empty
 
 				l := light(x, y, z)
 
@@ -87,7 +88,7 @@ func ComputeVertexData(cm *Chunk) []VoxelVertex {
 					if xpf {
 						// xp is empty - tesselate square with X- normal
 						n := byte(2)
-						v1 := VoxelVertex{
+						v1 := voxel.Vertex{
 							X: byte(x + 1), Y: byte(y + 1), Z: byte(z + 1), N: n,
 							R: xp.R, G: xp.G, B: xp.B,
 							O: byte(Omax * (1 - (lzp+lyp+lypzp+l)/4)),
@@ -95,7 +96,7 @@ func ComputeVertexData(cm *Chunk) []VoxelVertex {
 						if ypf && zpf {
 							v1.O = byte(Omax * (1 - (lzp+lyp+l)/3))
 						}
-						v2 := VoxelVertex{
+						v2 := voxel.Vertex{
 							X: byte(x + 1), Y: byte(y + 1), Z: byte(z), N: n,
 							R: xp.R, G: xp.G, B: xp.B,
 							O: byte(Omax * (1 - (lzn+lyp+lypzn+l)/4)),
@@ -103,7 +104,7 @@ func ComputeVertexData(cm *Chunk) []VoxelVertex {
 						if ypf && znf {
 							v2.O = byte(Omax * (1 - (lzn+lyp+l)/3))
 						}
-						v3 := VoxelVertex{
+						v3 := voxel.Vertex{
 							X: byte(x + 1), Y: byte(y), Z: byte(z + 1), N: n,
 							R: xp.R, G: xp.G, B: xp.B,
 							O: byte(Omax * (1 - (lzp+lyn+lynzp+l)/4)),
@@ -111,7 +112,7 @@ func ComputeVertexData(cm *Chunk) []VoxelVertex {
 						if ynf && zpf {
 							v3.O = byte(Omax * (1 - (lzp+lyn+l)/3))
 						}
-						v4 := VoxelVertex{
+						v4 := voxel.Vertex{
 							X: byte(x + 1), Y: byte(y), Z: byte(z), N: n,
 							R: xp.R, G: xp.G, B: xp.B,
 							O: byte(Omax * (1 - (lzn+lyn+lynzn+l)/4)),
@@ -125,7 +126,7 @@ func ComputeVertexData(cm *Chunk) []VoxelVertex {
 					if xnf {
 						// xn is empty - tesselate square with x+ normal
 						n := byte(1)
-						v1 := VoxelVertex{
+						v1 := voxel.Vertex{
 							X: byte(x), Y: byte(y + 1), Z: byte(z), N: n,
 							R: xn.R, G: xn.G, B: xn.B,
 							O: byte(Omax * (1 - (lyp+lzn+lypzn+l)/4)),
@@ -133,7 +134,7 @@ func ComputeVertexData(cm *Chunk) []VoxelVertex {
 						if ypf && znf {
 							v1.O = byte(Omax * (1 - (lyp+lzn+l)/3))
 						}
-						v2 := VoxelVertex{
+						v2 := voxel.Vertex{
 							X: byte(x), Y: byte(y + 1), Z: byte(z + 1), N: n,
 							R: xn.R, G: xn.G, B: xn.B,
 							O: byte(Omax * (1 - (lyp+lzp+lypzp+l)/4)),
@@ -141,7 +142,7 @@ func ComputeVertexData(cm *Chunk) []VoxelVertex {
 						if ypf && zpf {
 							v2.O = byte(Omax * (1 - (lyp+lzp+l)/3))
 						}
-						v3 := VoxelVertex{
+						v3 := voxel.Vertex{
 							X: byte(x), Y: byte(y), Z: byte(z), N: n,
 							R: xn.R, G: xn.G, B: xn.B,
 							O: byte(Omax * (1 - (lyn+lzn+lynzn+l)/4)),
@@ -149,7 +150,7 @@ func ComputeVertexData(cm *Chunk) []VoxelVertex {
 						if ynf && znf {
 							v3.O = byte(Omax * (1 - (lyn+lzn+l)/3))
 						}
-						v4 := VoxelVertex{
+						v4 := voxel.Vertex{
 							X: byte(x), Y: byte(y), Z: byte(z + 1), N: n,
 							R: xn.R, G: xn.G, B: xn.B,
 							O: byte(Omax * (1 - (lyn+lzp+lynzp+l)/4)),
@@ -173,7 +174,7 @@ func ComputeVertexData(cm *Chunk) []VoxelVertex {
 
 					if ypf {
 						n := byte(4) // YN
-						v1 := VoxelVertex{
+						v1 := voxel.Vertex{
 							X: byte(x + 1), Y: byte(y + 1), Z: byte(z + 1), N: n,
 							R: yp.R, G: yp.G, B: yp.B,
 							O: byte(Omax * (1 - (lxp+lzp+lxpzp+l)/4)),
@@ -181,7 +182,7 @@ func ComputeVertexData(cm *Chunk) []VoxelVertex {
 						if xpf && zpf {
 							v1.O = byte(Omax * (1 - (lxp+lzp+l)/3))
 						}
-						v2 := VoxelVertex{
+						v2 := voxel.Vertex{
 							X: byte(x + 1), Y: byte(y + 1), Z: byte(z), N: n,
 							R: yp.R, G: yp.G, B: yp.B,
 							O: byte(Omax * (1 - (lxp+lzn+lxpzn+l)/4)),
@@ -189,7 +190,7 @@ func ComputeVertexData(cm *Chunk) []VoxelVertex {
 						if xpf && znf {
 							v2.O = byte(Omax * (1 - (lxp+lzn+l)/3))
 						}
-						v3 := VoxelVertex{
+						v3 := voxel.Vertex{
 							X: byte(x), Y: byte(y + 1), Z: byte(z + 1), N: n,
 							R: yp.R, G: yp.G, B: yp.B,
 							O: byte(Omax * (1 - (lxn+lzp+lxnzp+l)/4)),
@@ -197,7 +198,7 @@ func ComputeVertexData(cm *Chunk) []VoxelVertex {
 						if xnf && zpf {
 							v3.O = byte(Omax * (1 - (lxn+lzp+l)/3))
 						}
-						v4 := VoxelVertex{
+						v4 := voxel.Vertex{
 							X: byte(x), Y: byte(y + 1), Z: byte(z), N: n,
 							R: yp.R, G: yp.G, B: yp.B,
 							O: byte(Omax * (1 - (lxn+lzn+lxnzn+l)/4)),
@@ -211,7 +212,7 @@ func ComputeVertexData(cm *Chunk) []VoxelVertex {
 					if ynf {
 						// Y-1 is filled, add quad with Y+ normal
 						n := byte(3) // YP
-						v1 := VoxelVertex{
+						v1 := voxel.Vertex{
 							X: byte(x + 1), Y: byte(y), Z: byte(z + 1), N: n,
 							R: yn.R, G: yn.G, B: yn.B,
 							O: byte(Omax * (1 - (lxp+lzp+lxpzp+l)/4)),
@@ -219,7 +220,7 @@ func ComputeVertexData(cm *Chunk) []VoxelVertex {
 						if xpf && zpf {
 							v1.O = byte(Omax * (1 - l/3))
 						}
-						v2 := VoxelVertex{
+						v2 := voxel.Vertex{
 							X: byte(x + 1), Y: byte(y), Z: byte(z), N: n,
 							R: yn.R, G: yn.G, B: yn.B,
 							O: byte(Omax * (1 - (lxp+lzn+lxpzn+l)/4)),
@@ -227,7 +228,7 @@ func ComputeVertexData(cm *Chunk) []VoxelVertex {
 						if xpf && znf {
 							v2.O = byte(Omax * (1 - l/3))
 						}
-						v3 := VoxelVertex{
+						v3 := voxel.Vertex{
 							X: byte(x), Y: byte(y), Z: byte(z + 1), N: n,
 							R: yn.R, G: yn.G, B: yn.B,
 							O: byte(Omax * (1 - (lxn+lzp+lxnzp+l)/4)),
@@ -235,7 +236,7 @@ func ComputeVertexData(cm *Chunk) []VoxelVertex {
 						if xnf && zpf {
 							v3.O = byte(Omax * (1 - l/3))
 						}
-						v4 := VoxelVertex{
+						v4 := voxel.Vertex{
 							X: byte(x), Y: byte(y), Z: byte(z), N: n,
 							R: yn.R, G: yn.G, B: yn.B,
 							O: byte(Omax * (1 - (lxn+lzn+lxnzn+l)/4)),
@@ -260,7 +261,7 @@ func ComputeVertexData(cm *Chunk) []VoxelVertex {
 					if zpf {
 						// zp is empty - tesselate square with ZN normal
 						n := byte(6)
-						v1 := VoxelVertex{
+						v1 := voxel.Vertex{
 							X: byte(x), Y: byte(y + 1), Z: byte(z + 1), N: n,
 							R: zp.R, G: zp.G, B: zp.B,
 							O: byte(Omax * (1 - (lxn+lyp+lxnyp+l)/4)),
@@ -268,7 +269,7 @@ func ComputeVertexData(cm *Chunk) []VoxelVertex {
 						if xnf && ypf {
 							v1.O = byte(Omax * (1 - (lxn+lyp+l)/3))
 						}
-						v2 := VoxelVertex{
+						v2 := voxel.Vertex{
 							X: byte(x + 1), Y: byte(y + 1), Z: byte(z + 1), N: n,
 							R: zp.R, G: zp.G, B: zp.B,
 							O: byte(Omax * (1 - (lxp+lyp+lxpyp+l)/4)),
@@ -276,7 +277,7 @@ func ComputeVertexData(cm *Chunk) []VoxelVertex {
 						if xpf && ypf {
 							v2.O = byte(Omax * (1 - (lxp+lyp+l)/3))
 						}
-						v3 := VoxelVertex{
+						v3 := voxel.Vertex{
 							X: byte(x), Y: byte(y), Z: byte(z + 1), N: n,
 							R: zp.R, G: zp.G, B: zp.B,
 							O: byte(Omax * (1 - (lxn+lyn+lxnyn+l)/4)),
@@ -284,7 +285,7 @@ func ComputeVertexData(cm *Chunk) []VoxelVertex {
 						if xnf && ynf {
 							v3.O = byte(Omax * (1 - (lxn+lyn+l)/3))
 						}
-						v4 := VoxelVertex{
+						v4 := voxel.Vertex{
 							X: byte(x + 1), Y: byte(y), Z: byte(z + 1), N: n,
 							R: zp.R, G: zp.G, B: zp.B,
 							O: byte(Omax * (1 - (lxp+lyn+lxpyn+l)/4)),
@@ -298,7 +299,7 @@ func ComputeVertexData(cm *Chunk) []VoxelVertex {
 					if znf {
 						// zn is empty - tesselate square with ZP normal
 						n := byte(5)
-						v1 := VoxelVertex{
+						v1 := voxel.Vertex{
 							X: byte(x), Y: byte(y + 1), Z: byte(z), N: n,
 							R: zn.R, G: zn.G, B: zn.B,
 							O: byte(Omax * (1 - (lxn+lyp+lxnyp+l)/4)),
@@ -306,7 +307,7 @@ func ComputeVertexData(cm *Chunk) []VoxelVertex {
 						if xnf && ypf {
 							v1.O = byte(Omax * (1 - (lxn+lyp+l)/3))
 						}
-						v2 := VoxelVertex{
+						v2 := voxel.Vertex{
 							X: byte(x + 1), Y: byte(y + 1), Z: byte(z), N: n,
 							R: zn.R, G: zn.G, B: zn.B,
 							O: byte(Omax * (1 - (lxp+lyp+lxpyp+l)/4)),
@@ -314,7 +315,7 @@ func ComputeVertexData(cm *Chunk) []VoxelVertex {
 						if xpf && ypf {
 							v2.O = byte(Omax * (1 - (lxp+lyp+l)/3))
 						}
-						v3 := VoxelVertex{
+						v3 := voxel.Vertex{
 							X: byte(x), Y: byte(y), Z: byte(z), N: n,
 							R: zn.R, G: zn.G, B: zn.B,
 							O: byte(Omax * (1 - (lxn+lyn+lxnyn+l)/4)),
@@ -322,7 +323,7 @@ func ComputeVertexData(cm *Chunk) []VoxelVertex {
 						if xnf && ynf {
 							v3.O = byte(Omax * (1 - (lxn+lyn+l)/3))
 						}
-						v4 := VoxelVertex{
+						v4 := voxel.Vertex{
 							X: byte(x + 1), Y: byte(y), Z: byte(z), N: n,
 							R: zn.R, G: zn.G, B: zn.B,
 							O: byte(Omax * (1 - (lxp+lyn+lxpyn+l)/4)),

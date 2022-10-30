@@ -1,7 +1,8 @@
-package game
+package chunk
 
 import (
 	"fmt"
+
 	"github.com/johanhenriksson/goworld/math"
 )
 
