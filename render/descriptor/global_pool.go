@@ -19,7 +19,7 @@ func InitGlobalPool(device device.T) {
 		},
 		{
 			Type:            vk.DescriptorTypeCombinedImageSampler,
-			DescriptorCount: 1000,
+			DescriptorCount: 10000,
 		},
 		{
 			Type:            vk.DescriptorTypeInputAttachment,

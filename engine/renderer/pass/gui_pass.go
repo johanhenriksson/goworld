@@ -83,7 +83,7 @@ func NewGuiPass(backend vulkan.T, prev Pass, meshes cache.MeshCache) *GuiPass {
 	}, &UIDescriptors{
 		Textures: &descriptor.SamplerArray{
 			Stages: vk.ShaderStageFragmentBit,
-			Count:  10000,
+			Count:  2000,
 		},
 	}).Instantiate()
 

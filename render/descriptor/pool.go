@@ -66,6 +66,9 @@ func (p *pool) Allocate(layout SetLayout) Set {
 	var ptr vk.DescriptorSet
 	r := vk.AllocateDescriptorSets(p.device.Ptr(), &info, &ptr)
 	if r != vk.Success {
+		if r == vk.ErrorOutOfPoolMemory {
+			panic("failed to allocate descriptor set: out of pool memory")
+		}
 		panic("failed to allocate descriptor set")
 	}
 
