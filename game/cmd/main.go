@@ -23,6 +23,32 @@ import (
 	"github.com/johanhenriksson/goworld/render/vulkan"
 )
 
+type voxrender struct {
+	renderer.T
+	voxelCache cache.MeshCache
+}
+
+func NewVoxelRenderer(backend vulkan.T) renderer.T {
+	voxelCache := cache.NewSharedMeshCache(backend, 16_777_216)
+	return &voxrender{
+		voxelCache: voxelCache,
+		T: renderer.New(
+			backend,
+			[]pass.DeferredSubpass{
+				game.NewVoxelSubpass(backend, voxelCache),
+			},
+			[]pass.DeferredSubpass{
+				game.NewVoxelShadowpass(backend, voxelCache),
+			},
+		),
+	}
+}
+
+func (r *voxrender) Destroy() {
+	r.T.Destroy()
+	r.voxelCache.Destroy()
+}
+
 func main() {
 	defer func() {
 		log.Println("Clean exit")
@@ -36,13 +62,7 @@ func main() {
 		Height:  1200,
 		Title:   "goworld: vulkan",
 		Renderer: func() renderer.T {
-			// todo: this causes a resource leak - destroy it somehow
-			voxelCache := cache.NewMeshCache(backend)
-			return renderer.New(
-				backend,
-				[]pass.DeferredSubpass{game.NewVoxelSubpass(backend, voxelCache)},
-				[]pass.DeferredSubpass{game.NewVoxelShadowpass(backend, voxelCache)},
-			)
+			return NewVoxelRenderer(backend)
 		},
 	},
 		makeGui,

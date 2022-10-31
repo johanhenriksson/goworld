@@ -48,7 +48,8 @@ func (s *samplers) Update(id int, ref texture.Ref) {
 func (s *samplers) Delete(id int) {
 	tex := s.mapping[id]
 	s.textures.Delete(tex)
-	// todo: unset uniform
+	delete(s.mapping, id)
+	// s.desc.Set(id, texture.Nil)
 	// return id to pool?
 }
 

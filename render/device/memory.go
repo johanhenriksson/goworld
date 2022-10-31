@@ -9,10 +9,15 @@ import (
 	vk "github.com/vulkan-go/vulkan"
 )
 
+var NilMemory Memory = &memory{
+	device: Nil,
+	ptr:    vk.NullDeviceMemory,
+}
+
 type Memory interface {
 	Resource[vk.DeviceMemory]
-	Read(offset int, data any)
-	Write(offset int, data any)
+	Read(offset int, data any) int
+	Write(offset int, data any) int
 	Flush()
 	Invalidate()
 	IsHostVisible() bool
@@ -24,11 +29,10 @@ type memtype struct {
 }
 
 type memory struct {
-	ptr     vk.DeviceMemory
-	device  T
-	size    int
-	flags   vk.MemoryPropertyFlags
-	hostptr unsafe.Pointer
+	ptr    vk.DeviceMemory
+	device T
+	size   int
+	flags  vk.MemoryPropertyFlags
 }
 
 func alloc(device T, req vk.MemoryRequirements, flags vk.MemoryPropertyFlags) Memory {
@@ -69,14 +73,10 @@ func (m *memory) Ptr() vk.DeviceMemory {
 
 func (m *memory) Destroy() {
 	vk.FreeMemory(m.device.Ptr(), m.ptr, nil)
-	m.ptr = nil
+	m.ptr = vk.NullDeviceMemory
 }
 
-type eface struct {
-	rtype, ptr unsafe.Pointer
-}
-
-func (m *memory) Write(offset int, data any) {
+func (m *memory) Write(offset int, data any) int {
 	if !m.IsHostVisible() {
 		panic("memory is not visible to host")
 	}
@@ -128,9 +128,11 @@ func (m *memory) Write(offset int, data any) {
 
 	// unmap shared memory
 	vk.UnmapMemory(m.device.Ptr(), m.Ptr())
+
+	return size
 }
 
-func (m *memory) Read(offset int, target any) {
+func (m *memory) Read(offset int, target any) int {
 	if !m.IsHostVisible() {
 		panic("memory is not visible to host")
 	}
@@ -175,6 +177,8 @@ func (m *memory) Read(offset int, target any) {
 
 	// unmap shared memory
 	vk.UnmapMemory(m.device.Ptr(), m.Ptr())
+
+	return size
 }
 
 func (m *memory) Flush() {

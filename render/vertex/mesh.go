@@ -10,12 +10,14 @@ var nextID int = 1
 type Mesh interface {
 	Id() string
 	Version() int
-	Elements() int
+	Indices() int
+	Vertices() int
 	Primitive() Primitive
 	Pointers() Pointers
 	VertexData() any
 	IndexData() any
 	IndexSize() int
+	VertexSize() int
 }
 
 type MutableMesh[V any, I Indices] interface {
@@ -24,13 +26,14 @@ type MutableMesh[V any, I Indices] interface {
 }
 
 type mesh[V any, I Indices] struct {
-	id        string
-	version   int
-	indexsize int
-	primitive Primitive
-	pointers  Pointers
-	vertices  []V
-	indices   []I
+	id         string
+	version    int
+	indexsize  int
+	vertexsize int
+	primitive  Primitive
+	pointers   Pointers
+	vertices   []V
+	indices    []I
 }
 
 func (m *mesh[V, I]) Id() string           { return m.id }
@@ -40,7 +43,9 @@ func (m *mesh[V, I]) VertexData() any      { return m.vertices }
 func (m *mesh[V, I]) IndexSize() int       { return m.indexsize }
 func (m *mesh[V, I]) Primitive() Primitive { return m.primitive }
 func (m *mesh[V, I]) Pointers() Pointers   { return m.pointers }
-func (m *mesh[V, I]) Elements() int        { return len(m.indices) }
+func (m *mesh[V, I]) Indices() int         { return len(m.indices) }
+func (m *mesh[V, I]) Vertices() int        { return len(m.vertices) }
+func (m *mesh[V, I]) VertexSize() int      { return m.vertexsize }
 
 func (m *mesh[V, I]) Update(vertices []V, indices []I) {
 	if len(indices) == 0 {
@@ -61,11 +66,13 @@ func NewMesh[V any, I Indices](id string, primitive Primitive, vertices []V, ind
 
 	var vertex V
 	var index I
+	ptrs := ParsePointers(vertex)
 	mesh := &mesh[V, I]{
-		id:        id,
-		pointers:  ParsePointers(vertex),
-		indexsize: int(reflect.TypeOf(index).Size()),
-		primitive: primitive,
+		id:         id,
+		pointers:   ptrs,
+		vertexsize: ptrs.Stride(),
+		indexsize:  int(reflect.TypeOf(index).Size()),
+		primitive:  primitive,
 	}
 	mesh.Update(vertices, indices)
 	return mesh

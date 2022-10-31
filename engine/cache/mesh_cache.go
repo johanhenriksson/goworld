@@ -66,7 +66,7 @@ func (m *meshes) upload(cached *vkMesh, mesh vertex.Mesh) {
 	m.worker.Submit(command.SubmitInfo{})
 	m.worker.Wait()
 
-	cached.elements = mesh.Elements()
+	cached.elements = mesh.Indices()
 	cached.idxType = vk.IndexTypeUint16
 	cached.idxOffset = 0
 	cached.vtxOffset = 0

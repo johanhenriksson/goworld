@@ -10,6 +10,10 @@ import (
 	vk "github.com/vulkan-go/vulkan"
 )
 
+var Nil = &device{
+	ptr: vk.Device(vk.NullHandle),
+}
+
 type Resource[T any] interface {
 	Destroy()
 	Ptr() T
@@ -201,10 +205,8 @@ func (d *device) Allocate(req vk.MemoryRequirements, flags vk.MemoryPropertyFlag
 }
 
 func (d *device) Destroy() {
-	if d.ptr != nil {
-		vk.DestroyDevice(d.ptr, nil)
-		d.ptr = nil
-	}
+	vk.DestroyDevice(d.ptr, nil)
+	d.ptr = vk.Device(vk.NullHandle)
 }
 
 func (d *device) WaitIdle() {
