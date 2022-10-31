@@ -34,13 +34,16 @@ func (t *textures) Instantiate(ref texture.Ref) texture.T {
 	stage := buffer.NewShared(t.backend.Device(), len(img.Pix))
 	stage.Write(0, img.Pix)
 
-	tex := texture.New(t.backend.Device(), texture.Args{
+	tex, err := texture.New(t.backend.Device(), texture.Args{
 		Width:  img.Rect.Size().X,
 		Height: img.Rect.Size().Y,
 		Format: vk.FormatR8g8b8a8Unorm,
 		Filter: vk.FilterLinear,
 		Wrap:   vk.SamplerAddressModeRepeat,
 	})
+	if err != nil {
+		panic(err)
+	}
 
 	t.worker.Queue(func(cmd command.Buffer) {
 		cmd.CmdImageBarrier(

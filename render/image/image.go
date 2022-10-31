@@ -2,6 +2,7 @@ package image
 
 import (
 	"github.com/johanhenriksson/goworld/render/device"
+	"github.com/johanhenriksson/goworld/render/vkerror"
 
 	vk "github.com/vulkan-go/vulkan"
 )
@@ -10,7 +11,7 @@ type T interface {
 	device.Resource[vk.Image]
 
 	Memory() device.Memory
-	View(format vk.Format, mask vk.ImageAspectFlags) View
+	View(format vk.Format, mask vk.ImageAspectFlags) (View, error)
 	Width() int
 	Height() int
 	Format() vk.Format
@@ -38,7 +39,7 @@ type Args struct {
 	Memory  vk.MemoryPropertyFlagBits
 }
 
-func New2D(device device.T, width, height int, format vk.Format, usage vk.ImageUsageFlags) T {
+func New2D(device device.T, width, height int, format vk.Format, usage vk.ImageUsageFlags) (T, error) {
 	return New(device, Args{
 		Type:    vk.ImageType2d,
 		Width:   width,
@@ -55,7 +56,7 @@ func New2D(device device.T, width, height int, format vk.Format, usage vk.ImageU
 	})
 }
 
-func New(device device.T, args Args) T {
+func New(device device.T, args Args) (T, error) {
 	if args.Depth < 1 {
 		args.Depth = 1
 	}
@@ -88,21 +89,29 @@ func New(device device.T, args Args) T {
 	}
 
 	var ptr vk.Image
-	vk.CreateImage(device.Ptr(), &info, nil, &ptr)
+	result := vk.CreateImage(device.Ptr(), &info, nil, &ptr)
+	if result != vk.Success {
+		return nil, vkerror.FromResult(result)
+	}
 
 	var memreq vk.MemoryRequirements
 	vk.GetImageMemoryRequirements(device.Ptr(), ptr, &memreq)
 	memreq.Deref()
 
 	mem := device.Allocate(memreq, vk.MemoryPropertyFlags(args.Memory))
-	vk.BindImageMemory(device.Ptr(), ptr, mem.Ptr(), vk.DeviceSize(0))
+	result = vk.BindImageMemory(device.Ptr(), ptr, mem.Ptr(), vk.DeviceSize(0))
+	if result != vk.Success {
+		// clean up
+		vk.DestroyImage(device.Ptr(), ptr, nil)
+		return nil, vkerror.FromResult(result)
+	}
 
 	return &image{
 		Args:   args,
 		ptr:    ptr,
 		device: device,
 		memory: mem,
-	}
+	}, nil
 }
 
 func Wrap(device device.T, ptr vk.Image) T {
@@ -135,7 +144,7 @@ func (i *image) Destroy() {
 	}
 }
 
-func (i *image) View(format vk.Format, mask vk.ImageAspectFlags) View {
+func (i *image) View(format vk.Format, mask vk.ImageAspectFlags) (View, error) {
 	info := vk.ImageViewCreateInfo{
 		SType:    vk.StructureTypeImageViewCreateInfo,
 		Image:    i.ptr,
@@ -151,12 +160,15 @@ func (i *image) View(format vk.Format, mask vk.ImageAspectFlags) View {
 	}
 
 	var ptr vk.ImageView
-	vk.CreateImageView(i.device.Ptr(), &info, nil, &ptr)
+	result := vk.CreateImageView(i.device.Ptr(), &info, nil, &ptr)
+	if result != vk.Success {
+		return nil, vkerror.FromResult(result)
+	}
 
 	return &imgview{
 		ptr:    ptr,
 		device: i.device,
 		image:  i,
 		format: format,
-	}
+	}, nil
 }

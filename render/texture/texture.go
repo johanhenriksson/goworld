@@ -3,6 +3,7 @@ package texture
 import (
 	"github.com/johanhenriksson/goworld/render/device"
 	"github.com/johanhenriksson/goworld/render/image"
+	"github.com/johanhenriksson/goworld/render/vkerror"
 
 	vk "github.com/vulkan-go/vulkan"
 )
@@ -31,26 +32,46 @@ type vktexture struct {
 	view   image.View
 }
 
-func New(device device.T, args Args) T {
+func New(device device.T, args Args) (T, error) {
 	if args.Usage == 0 {
 		args.Usage = vk.ImageUsageFlags(vk.ImageUsageSampledBit | vk.ImageUsageTransferDstBit)
 	}
 
-	img := image.New2D(device, args.Width, args.Height, args.Format, args.Usage)
+	img, err := image.New2D(device, args.Width, args.Height, args.Format, args.Usage)
+	if err != nil {
+		return nil, err
+	}
 
-	return FromImage(device, img, args)
+	tex, err := FromImage(device, img, args)
+	if err != nil {
+		img.Destroy()
+		return nil, err
+	}
 
+	return tex, nil
 }
 
-func FromImage(device device.T, img image.T, args Args) T {
+func FromImage(device device.T, img image.T, args Args) (T, error) {
 	if args.Aspect == 0 {
 		args.Aspect = vk.ImageAspectFlags(vk.ImageAspectColorBit)
 	}
-	view := img.View(args.Format, args.Aspect)
-	return FromView(device, view, args)
+
+	view, err := img.View(args.Format, args.Aspect)
+	if err != nil {
+		return nil, err
+	}
+
+	tex, err := FromView(device, view, args)
+	if err != nil {
+		// clean up
+		view.Destroy()
+		return nil, err
+	}
+
+	return tex, nil
 }
 
-func FromView(device device.T, view image.View, args Args) T {
+func FromView(device device.T, view image.View, args Args) (T, error) {
 	info := vk.SamplerCreateInfo{
 		SType: vk.StructureTypeSamplerCreateInfo,
 
@@ -64,7 +85,10 @@ func FromView(device device.T, view image.View, args Args) T {
 	}
 
 	var ptr vk.Sampler
-	vk.CreateSampler(device.Ptr(), &info, nil, &ptr)
+	result := vk.CreateSampler(device.Ptr(), &info, nil, &ptr)
+	if result != vk.Success {
+		return nil, vkerror.FromResult(result)
+	}
 
 	return &vktexture{
 		Args:   args,
@@ -72,7 +96,7 @@ func FromView(device device.T, view image.View, args Args) T {
 		device: device,
 		image:  view.Image(),
 		view:   view,
-	}
+	}, nil
 }
 
 func (t *vktexture) Ptr() vk.Sampler {

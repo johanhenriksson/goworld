@@ -95,10 +95,14 @@ func NewOutputPass(backend vulkan.T, meshes cache.MeshCache, textures cache.Text
 	p.desc = p.material.InstantiateMany(frames)
 	p.tex = make([]texture.T, frames)
 	for i := range p.tex {
-		p.tex[i] = texture.FromView(backend.Device(), p.geometry.Output(), texture.Args{
+		p.tex[i], err = texture.FromView(backend.Device(), p.geometry.Output(), texture.Args{
 			Filter: vk.FilterNearest,
 			Wrap:   vk.SamplerAddressModeClampToEdge,
 		})
+		if err != nil {
+			// todo: clean up
+			panic(err)
+		}
 		p.desc[i].Descriptors().Output.Set(p.tex[i])
 	}
 

@@ -211,10 +211,13 @@ func NewGeometryPass(
 	white := textures.Fetch(texture.PathRef("textures/white.png"))
 	lightDesc.Shadow.Set(0, white)
 
-	shadowtex := texture.FromView(backend.Device(), shadows.Shadowmap(), texture.Args{
+	shadowtex, err := texture.FromView(backend.Device(), shadows.Shadowmap(), texture.Args{
 		Filter: vk.FilterNearest,
 		Wrap:   vk.SamplerAddressModeClampToEdge,
 	})
+	if err != nil {
+		panic(err)
+	}
 	lightDesc.Shadow.Set(1, shadowtex)
 
 	return &GeometryPass{

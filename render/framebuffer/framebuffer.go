@@ -5,6 +5,7 @@ import (
 	"github.com/johanhenriksson/goworld/render/image"
 	"github.com/johanhenriksson/goworld/render/renderpass"
 	"github.com/johanhenriksson/goworld/render/renderpass/attachment"
+	"github.com/johanhenriksson/goworld/render/vkerror"
 	"github.com/johanhenriksson/goworld/util"
 
 	vk "github.com/vulkan-go/vulkan"
@@ -57,7 +58,10 @@ func New(device device.T, width, height int, pass renderpass.T) (T, error) {
 		}
 		images = append(images, img)
 
-		view := img.View(attach.Format(), vk.ImageAspectFlags(aspect))
+		view, err := img.View(attach.Format(), vk.ImageAspectFlags(aspect))
+		if err != nil {
+			return err
+		}
 		views = append(views, view)
 
 		attachs[attach.Name()] = view
@@ -88,7 +92,11 @@ func New(device device.T, width, height int, pass renderpass.T) (T, error) {
 	}
 
 	var ptr vk.Framebuffer
-	vk.CreateFramebuffer(device.Ptr(), &info, nil, &ptr)
+	result := vk.CreateFramebuffer(device.Ptr(), &info, nil, &ptr)
+	if result != vk.Success {
+		cleanup()
+		return nil, vkerror.FromResult(result)
+	}
 
 	return &framebuf{
 		ptr:         ptr,

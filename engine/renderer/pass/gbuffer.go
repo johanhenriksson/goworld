@@ -49,7 +49,7 @@ func NewGbuffer(
 	backend vulkan.T,
 	diffuse, normal, position, output, depth image.View,
 ) GeometryBuffer {
-	positionBuf := image.New(backend.Device(), image.Args{
+	positionBuf, err := image.New(backend.Device(), image.Args{
 		Type:   vk.ImageType2d,
 		Width:  position.Image().Width(),
 		Height: position.Image().Height(),
@@ -58,8 +58,11 @@ func NewGbuffer(
 		Usage:  vk.ImageUsageTransferDstBit,
 		Memory: vk.MemoryPropertyHostVisibleBit | vk.MemoryPropertyHostCoherentBit,
 	})
+	if err != nil {
+		panic(err)
+	}
 
-	normalBuf := image.New(backend.Device(), image.Args{
+	normalBuf, err := image.New(backend.Device(), image.Args{
 		Type:   vk.ImageType2d,
 		Width:  normal.Image().Width(),
 		Height: normal.Image().Height(),
@@ -68,6 +71,9 @@ func NewGbuffer(
 		Usage:  vk.ImageUsageTransferDstBit,
 		Memory: vk.MemoryPropertyHostVisibleBit | vk.MemoryPropertyHostCoherentBit,
 	})
+	if err != nil {
+		panic(err)
+	}
 
 	// move images to ImageLayoutGeneral to avoid errors on first copy
 	worker := backend.Transferer()
@@ -139,11 +145,6 @@ func (b *gbuffer) SampleNormal(cursor vec2.T) (vec3.T, bool) {
 }
 
 func (p *gbuffer) Destroy() {
-	p.diffuse.Destroy()
-	p.normal.Destroy()
-	p.position.Destroy()
-	p.depth.Destroy()
-
 	p.positionBuf.Destroy()
 	p.normalBuf.Destroy()
 }

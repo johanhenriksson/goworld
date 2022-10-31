@@ -53,4 +53,5 @@ func (s *samplers) Delete(id int) {
 }
 
 func (s *samplers) Destroy() {
+	s.textures.Destroy()
 }

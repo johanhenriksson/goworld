@@ -6,6 +6,7 @@ import (
 	"github.com/johanhenriksson/goworld/render/device"
 	"github.com/johanhenriksson/goworld/render/image"
 	"github.com/johanhenriksson/goworld/render/swapchain"
+
 	vk "github.com/vulkan-go/vulkan"
 )
 
@@ -34,7 +35,7 @@ func (im *alloc) Alloc(
 		device,
 		width, height, format,
 		vk.ImageUsageFlags(usage),
-	), nil
+	)
 }
 
 type imageArray struct {
