@@ -8,11 +8,13 @@ import (
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/core/object/query"
 	"github.com/johanhenriksson/goworld/core/window"
+	"github.com/johanhenriksson/goworld/engine/renderer"
+	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/render"
 )
 
-type SceneFunc func(Renderer, object.T)
-type RendererFunc func() Renderer
+type SceneFunc func(renderer.T, object.T)
+type RendererFunc func() renderer.T
 
 type Args struct {
 	Title    string
@@ -48,7 +50,7 @@ func Run(args Args, scenefuncs ...SceneFunc) {
 		panic(err)
 	}
 
-	var renderer Renderer
+	var renderer renderer.T
 	recreateRenderer := func() {
 		if renderer != nil {
 			renderer.Destroy()
@@ -98,10 +100,23 @@ func Run(args Args, scenefuncs ...SceneFunc) {
 			continue
 		}
 
-		args := CreateRenderArgs(screen, camera)
+		args := createRenderArgs(screen, camera)
 		args.Context = context
 
 		renderer.Draw(args, scene)
 		backend.Present()
+	}
+}
+
+func createRenderArgs(screen render.Screen, cam camera.T) render.Args {
+	return render.Args{
+		Projection: cam.Projection(),
+		View:       cam.View(),
+		VP:         cam.ViewProj(),
+		MVP:        cam.ViewProj(),
+		Transform:  mat4.Ident(),
+		Position:   cam.Transform().WorldPosition(),
+		Clear:      cam.ClearColor(),
+		Viewport:   screen,
 	}
 }

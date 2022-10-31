@@ -1,7 +1,7 @@
 package vertex
 
 import (
-	"github.com/johanhenriksson/goworld/render/backend/types"
+	"github.com/johanhenriksson/goworld/render/types"
 )
 
 type Pointer struct {

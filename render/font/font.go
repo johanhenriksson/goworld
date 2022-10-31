@@ -2,7 +2,8 @@ package font
 
 import (
 	"image"
-	"io/ioutil"
+	"io"
+	"io/fs"
 
 	"github.com/golang/freetype/truetype"
 	"github.com/johanhenriksson/goworld/math"
@@ -26,7 +27,6 @@ type Args struct {
 }
 
 type font struct {
-	file   string
 	size   float32
 	fnt    *truetype.Font
 	drawer *fontlib.Drawer
@@ -127,21 +127,21 @@ func (f *font) Render(text string, args Args) *image.RGBA {
 }
 
 // Load a truetype font
-func Load(filename string, size int) T {
-	fontBytes, err := ioutil.ReadFile(filename)
+func Load(file fs.File, size int) (T, error) {
+	fontBytes, err := io.ReadAll(file)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
+
 	f, err := truetype.Parse(fontBytes)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	fnt := &font{
-		file: filename,
 		size: float32(size),
 		fnt:  f,
 	}
 	fnt.setup()
-	return fnt
+	return fnt, nil
 }
