@@ -1,8 +1,6 @@
 package cache
 
 import (
-	"fmt"
-
 	"github.com/johanhenriksson/goworld/engine/cache/allocator"
 	"github.com/johanhenriksson/goworld/render/buffer"
 	"github.com/johanhenriksson/goworld/render/command"
@@ -16,24 +14,17 @@ import (
 type shmeshes struct {
 	backend vulkan.T
 	worker  command.Worker
-	stage   buffer.T
 	buffer  buffer.T
 	alloc   allocator.T
 }
 
 func NewSharedMeshCache(backend vulkan.T, size int) MeshCache {
-	stagesize := 1024 * 1024 // 1MB for now
-
-	alloc := allocator.New(size)
-	alloc.Alloc(4096)
-
-	return New[vertex.Mesh, VkMesh](&shmeshes{
+	return NewConcurrent[vertex.Mesh, VkMesh](&shmeshes{
 		backend: backend,
 		worker:  backend.Transferer(),
 
-		stage:  buffer.NewShared(backend.Device(), stagesize),
 		buffer: buffer.NewRemote(backend.Device(), size, vk.BufferUsageVertexBufferBit|vk.BufferUsageIndexBufferBit),
-		alloc:  alloc,
+		alloc:  allocator.New(size),
 	})
 }
 
@@ -58,15 +49,6 @@ func (m *shmeshes) upload(cached *sharedMesh, mesh vertex.Mesh) {
 	size := vtxSize + idxSize
 	vtxAlign := 0
 
-	if size > m.buffer.Size() {
-		panic("mesh is too large for stage buffer")
-	}
-
-	m.stage.Write(0, mesh.VertexData())
-	m.stage.Write(vtxSize, mesh.IndexData())
-
-	fmt.Println("shmesh: upload", size, "bytes. current block:", cached.block.Size)
-
 	if cached.block.Size > 0 && (cached.block.Size < size || cached.block.Size > size*2) {
 		// free
 		m.alloc.Free(cached.block.Offset)
@@ -83,13 +65,19 @@ func (m *shmeshes) upload(cached *sharedMesh, mesh vertex.Mesh) {
 			}
 		}
 
+		// allocate staging buffer
+		stage := buffer.NewShared(m.backend.Device(), size)
+		defer stage.Destroy()
+		stage.Write(0, mesh.VertexData())
+		stage.Write(vtxSize, mesh.IndexData())
+
 		// we need to align the vertices in a multiple of the vertex size,
 		// so that we can express the vertex offset in the buffer as an
 		// index value.
 		vtxAlign = -(cached.block.Offset % -mesh.VertexSize())
 
 		m.worker.Queue(func(cmd command.Buffer) {
-			cmd.CmdCopyBuffer(m.stage, m.buffer, vk.BufferCopy{
+			cmd.CmdCopyBuffer(stage, m.buffer, vk.BufferCopy{
 				SrcOffset: vk.DeviceSize(0),
 				DstOffset: vk.DeviceSize(cached.block.Offset + vtxAlign),
 				Size:      vk.DeviceSize(size),
@@ -100,8 +88,8 @@ func (m *shmeshes) upload(cached *sharedMesh, mesh vertex.Mesh) {
 	}
 
 	cached.elements = mesh.Indices()
-	cached.idxType = vk.IndexTypeUint16
-	cached.idxOffset = (cached.block.Offset + vtxSize) / 2
+	cached.idxType = vertex.IndexType(mesh.IndexSize())
+	cached.idxOffset = (cached.block.Offset + vtxSize) / mesh.IndexSize()
 	cached.vtxOffset = (cached.block.Offset + vtxAlign) / mesh.VertexSize()
 }
 
@@ -119,7 +107,6 @@ func (m *shmeshes) Delete(vkmesh VkMesh) {
 }
 
 func (m *shmeshes) Destroy() {
-	m.stage.Destroy()
 	m.buffer.Destroy()
 }
 

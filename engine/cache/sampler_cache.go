@@ -16,7 +16,7 @@ type samplers struct {
 }
 
 func NewSamplerCache(backend vulkan.T, desc *descriptor.SamplerArray) SamplerCache {
-	return New[texture.Ref, int](&samplers{
+	return NewConcurrent[texture.Ref, int](&samplers{
 		textures: &textures{
 			backend: backend,
 			worker:  backend.Transferer(),
@@ -49,7 +49,7 @@ func (s *samplers) Delete(id int) {
 	tex := s.mapping[id]
 	s.textures.Delete(tex)
 	delete(s.mapping, id)
-	// s.desc.Set(id, texture.Nil)
+	s.desc.Set(id, texture.Nil)
 	// return id to pool?
 }
 

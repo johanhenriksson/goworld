@@ -72,14 +72,16 @@ func (r *renderer) Draw(args widget.DrawArgs, rect T) {
 		}
 
 		mesh := args.Meshes.Fetch(r.mesh.Mesh())
-		args.Commands.Record(func(cmd command.Buffer) {
-			cmd.CmdPushConstant(vk.ShaderStageAll, 0, &widget.Constants{
-				Viewport: args.ViewProj,
-				Model:    args.Transform,
-				Texture:  0,
+		if mesh != nil {
+			args.Commands.Record(func(cmd command.Buffer) {
+				cmd.CmdPushConstant(vk.ShaderStageAll, 0, &widget.Constants{
+					Viewport: args.ViewProj,
+					Model:    args.Transform,
+					Texture:  0,
+				})
+				mesh.Draw(cmd, 0)
 			})
-			mesh.Draw(cmd, 0)
-		})
+		}
 	}
 
 	for _, child := range rect.Children() {

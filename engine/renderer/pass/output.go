@@ -26,7 +26,7 @@ type OutputPass struct {
 	material material.T[*OutputDescriptors]
 	geometry DeferredPass
 
-	quad      cache.VkMesh
+	quad      vertex.Mesh
 	desc      []material.Instance[*OutputDescriptors]
 	tex       []texture.T
 	fbufs     framebuffer.Array
@@ -48,8 +48,7 @@ func NewOutputPass(backend vulkan.T, meshes cache.MeshCache, textures cache.Text
 		completed: sync.NewSemaphore(backend.Device()),
 	}
 
-	quadvtx := vertex.ScreenQuad()
-	p.quad = p.meshes.Fetch(quadvtx)
+	p.quad = vertex.ScreenQuad()
 
 	p.pass = renderpass.New(backend.Device(), renderpass.Args{
 		ColorAttachments: []attachment.Color{
@@ -116,8 +115,11 @@ func (p *OutputPass) Draw(args render.Args, scene object.T) {
 	worker.Queue(func(cmd command.Buffer) {
 		cmd.CmdBeginRenderPass(p.pass, p.fbufs[ctx.Index%len(p.fbufs)])
 
-		p.desc[ctx.Index%len(p.desc)].Bind(cmd)
-		p.quad.Draw(cmd, 0)
+		quad := p.meshes.Fetch(p.quad)
+		if quad != nil {
+			p.desc[ctx.Index%len(p.desc)].Bind(cmd)
+			quad.Draw(cmd, 0)
+		}
 
 		cmd.CmdEndRenderPass()
 	})

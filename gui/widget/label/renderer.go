@@ -153,14 +153,16 @@ func (r *renderer) Draw(args widget.DrawArgs, label T) {
 
 	tex := args.Textures.Fetch(r.tex)
 	mesh := args.Meshes.Fetch(r.mesh.Mesh())
-	args.Commands.Record(func(cmd command.Buffer) {
-		cmd.CmdPushConstant(vk.ShaderStageAll, 0, &widget.Constants{
-			Viewport: args.ViewProj,
-			Model:    args.Transform,
-			Texture:  tex,
+	if mesh != nil {
+		args.Commands.Record(func(cmd command.Buffer) {
+			cmd.CmdPushConstant(vk.ShaderStageAll, 0, &widget.Constants{
+				Viewport: args.ViewProj,
+				Model:    args.Transform,
+				Texture:  tex,
+			})
+			mesh.Draw(cmd, 0)
 		})
-		mesh.Draw(cmd, 0)
-	})
+	}
 }
 
 func (r *renderer) Destroy() {

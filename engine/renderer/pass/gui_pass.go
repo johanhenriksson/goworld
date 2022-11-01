@@ -95,9 +95,7 @@ func NewGuiPass(backend vulkan.T, prev Pass, meshes cache.MeshCache) *GuiPass {
 	}
 
 	textures := cache.NewSamplerCache(backend, mat.Descriptors().Textures)
-
-	// id zero should be white
-	textures.Fetch(texture.PathRef("textures/white.png"))
+	textures.Fetch(texture.PathRef("textures/white.png")) // warmup texture
 
 	return &GuiPass{
 		backend:  backend,
@@ -112,6 +110,10 @@ func NewGuiPass(backend vulkan.T, prev Pass, meshes cache.MeshCache) *GuiPass {
 
 func (p *GuiPass) Draw(args render.Args, scene object.T) {
 	ctx := args.Context
+	p.textures.Tick()
+
+	// texture id zero should be white
+	p.textures.Fetch(texture.PathRef("textures/white.png"))
 
 	size := vec2.NewI(args.Viewport.Width, args.Viewport.Height)
 	scale := args.Viewport.Scale

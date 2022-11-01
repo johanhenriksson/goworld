@@ -51,6 +51,7 @@ type GeometryPass struct {
 	GeometryBuffer
 
 	meshes    cache.MeshCache
+	textures  cache.TextureCache
 	quad      vertex.Mesh
 	backend   vulkan.T
 	pass      renderpass.T
@@ -208,9 +209,6 @@ func NewGeometryPass(
 	lightDesc.Position.Set(gbuffer.Position())
 	lightDesc.Depth.Set(gbuffer.Depth())
 
-	white := textures.Fetch(texture.PathRef("textures/white.png"))
-	lightDesc.Shadow.Set(0, white)
-
 	shadowtex, err := texture.FromView(backend.Device(), shadows.Shadowmap(), texture.Args{
 		Filter: vk.FilterNearest,
 		Wrap:   vk.SamplerAddressModeClampToEdge,
@@ -219,12 +217,14 @@ func NewGeometryPass(
 		panic(err)
 	}
 	lightDesc.Shadow.Set(1, shadowtex)
+	textures.Fetch(texture.PathRef("textures/white.png")) // warmup texture
 
 	return &GeometryPass{
 		GeometryBuffer: gbuffer,
 
 		backend:   backend,
 		meshes:    meshes,
+		textures:  textures,
 		quad:      quad,
 		light:     lightsh,
 		pass:      pass,
@@ -282,6 +282,9 @@ func (p *GeometryPass) Draw(args render.Args, scene object.T) {
 	lightDesc := p.light.Descriptors()
 	lightDesc.Camera.Set(camera)
 
+	white := p.textures.Fetch(texture.PathRef("textures/white.png"))
+	lightDesc.Shadow.Set(0, white)
+
 	ambient := light.Descriptor{
 		Type:      light.Ambient,
 		Color:     color.White,
@@ -331,6 +334,10 @@ func (p *GeometryPass) Draw(args render.Args, scene object.T) {
 
 func (p *GeometryPass) DrawLight(cmds command.Recorder, args render.Args, lit light.Descriptor) error {
 	vkmesh := p.meshes.Fetch(p.quad)
+	if vkmesh == nil {
+		return nil
+	}
+
 	cmds.Record(func(cmd command.Buffer) {
 
 		push := LightConst{

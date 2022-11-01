@@ -16,7 +16,7 @@ type textures struct {
 }
 
 func NewTextureCache(backend vulkan.T) TextureCache {
-	return New[texture.Ref, texture.T](&textures{
+	return NewConcurrent[texture.Ref, texture.T](&textures{
 		backend: backend,
 		worker:  backend.Transferer(),
 	})

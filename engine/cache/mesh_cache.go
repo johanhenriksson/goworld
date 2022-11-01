@@ -27,7 +27,7 @@ type meshes struct {
 func NewMeshCache(backend vulkan.T) MeshCache {
 	stagesize := 100 * 1024 // 100k for now
 
-	return New[vertex.Mesh, VkMesh](&meshes{
+	return NewConcurrent[vertex.Mesh, VkMesh](&meshes{
 		backend: backend,
 		worker:  backend.Transferer(),
 
