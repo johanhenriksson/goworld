@@ -133,9 +133,6 @@ func (r *renderer) Draw(args widget.DrawArgs, label T) {
 		r.invalidMesh = false
 	}
 
-	// set correct blending
-	// render.BlendMultiply()
-
 	// resize mesh if needed
 	// if !label.Size().ApproxEqual(r.size) {
 	// 	fmt.Println("label size", label.Size())
@@ -148,32 +145,20 @@ func (r *renderer) Draw(args widget.DrawArgs, label T) {
 	// we can center the label on the mesh by modifying the uvs
 	// scale := label.Size().Div(r.bounds)
 
-	// how to get the texture into the uniform array?
-	// we also need to be able to deal with descriptor array limits
-
 	tex := args.Textures.Fetch(r.tex)
 	mesh := args.Meshes.Fetch(r.mesh.Mesh())
-	if mesh != nil {
-		args.Commands.Record(func(cmd command.Buffer) {
-			cmd.CmdPushConstant(vk.ShaderStageAll, 0, &widget.Constants{
-				Viewport: args.ViewProj,
-				Model:    args.Transform,
-				Texture:  tex,
-			})
-			mesh.Draw(cmd, 0)
-		})
+	if mesh == nil {
+		return
 	}
-}
 
-func (r *renderer) Destroy() {
-	if r.mesh != nil {
-		// r.mesh.Destroy()
-		r.mesh = nil
-	}
-	if r.tex != nil {
-		// todo: delete texture
-		r.tex = nil
-	}
+	args.Commands.Record(func(cmd command.Buffer) {
+		cmd.CmdPushConstant(vk.ShaderStageAll, 0, &widget.Constants{
+			Viewport: args.ViewProj,
+			Model:    args.Transform,
+			Texture:  tex,
+		})
+		mesh.Draw(cmd, 0)
+	})
 }
 
 func (r *renderer) Measure(node *flex.Node, width float32, widthMode flex.MeasureMode, height float32, heightMode flex.MeasureMode) flex.Size {

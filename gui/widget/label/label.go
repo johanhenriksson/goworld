@@ -28,7 +28,6 @@ type label struct {
 	Renderer
 
 	props Props
-	size  vec2.T
 	scale float32
 	state style.State
 }
@@ -90,10 +89,6 @@ func (l *label) Flex() *flex.Node {
 	node := l.T.Flex()
 	node.SetMeasureFunc(l.Renderer.Measure)
 	return node
-}
-
-func (l *label) Destroy() {
-	l.Renderer.Destroy()
 }
 
 //

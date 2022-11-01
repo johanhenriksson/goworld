@@ -74,6 +74,7 @@ func render(props Props) node.T {
 							Color:  selected,
 							Height: Px(20),
 							Basis:  Pct(16),
+							Margin: Px(2),
 						},
 					}),
 				},

@@ -114,13 +114,13 @@ func (t *vktexture) View() image.View { return t.view }
 
 func (t *vktexture) Destroy() {
 	vk.DestroySampler(t.device.Ptr(), t.ptr, nil)
-	t.ptr = nil
+	t.ptr = vk.NullSampler
 
 	t.view.Destroy()
-	t.view = nil
+	t.view = image.NilView
 
 	t.image.Destroy()
-	t.image = nil
+	t.image = image.Nil
 
-	t.device = nil
+	t.device = device.Nil
 }

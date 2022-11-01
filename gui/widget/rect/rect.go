@@ -88,7 +88,6 @@ func (f *rect) Update(p any) {
 
 func (f *rect) Destroy() {
 	f.T.Destroy()
-	f.Renderer.Destroy()
 
 	for _, child := range f.children {
 		child.Destroy()

@@ -22,7 +22,7 @@ func New(key string, props Props) node.T {
 }
 
 func render(props Props) node.T {
-	position, setPosition := hooks.UseState(vec2.New(150, 30))
+	position, setPosition := hooks.UseState(vec2.New(250, 30))
 	dragOffset, setDragOffset := hooks.UseState(vec2.Zero)
 
 	return rect.New("window", rect.Props{

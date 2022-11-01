@@ -66,10 +66,6 @@ func (i *image) Draw(args widget.DrawArgs) {
 	i.Renderer.Draw(args, i)
 }
 
-func (i *image) Destroy() {
-	i.Renderer.Destroy()
-}
-
 func (i *image) Flex() *flex.Node {
 	node := i.T.Flex()
 	node.SetMeasureFunc(i.measure)
