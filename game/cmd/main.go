@@ -19,6 +19,7 @@ import (
 	"github.com/johanhenriksson/goworld/gui/widget/palette"
 	"github.com/johanhenriksson/goworld/gui/widget/rect"
 	"github.com/johanhenriksson/goworld/math/vec3"
+	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/vulkan"
 )
@@ -42,6 +43,11 @@ func NewVoxelRenderer(backend vulkan.T) renderer.T {
 			},
 		),
 	}
+}
+
+func (r *voxrender) Draw(args render.Args, scene object.T) {
+	r.T.Draw(args, scene)
+	r.voxelCache.Tick()
 }
 
 func (r *voxrender) Destroy() {

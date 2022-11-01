@@ -27,7 +27,7 @@ func NewSamplerCache(backend vulkan.T, desc *descriptor.SamplerArray) SamplerCac
 	})
 }
 
-func (s *samplers) ItemName() string {
+func (s *samplers) Name() string {
 	return "Sampler"
 }
 

@@ -21,7 +21,7 @@ func NewCache(backend vulkan.T) Cache {
 	})
 }
 
-func (m *matcache) ItemName() string {
+func (m *matcache) Name() string {
 	return "Material"
 }
 

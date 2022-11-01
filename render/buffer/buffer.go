@@ -6,6 +6,12 @@ import (
 	vk "github.com/vulkan-go/vulkan"
 )
 
+var Nil T = &buffer{
+	ptr:    vk.NullBuffer,
+	device: device.Nil,
+	memory: device.NilMemory,
+}
+
 type T interface {
 	device.Resource[vk.Buffer]
 
@@ -115,9 +121,9 @@ func (b *buffer) Memory() device.Memory {
 }
 
 func (b *buffer) Destroy() {
-	b.memory.Destroy()
 	vk.DestroyBuffer(b.device.Ptr(), b.ptr, nil)
-	b.ptr = nil
+	b.memory.Destroy()
+	*b = *Nil.(*buffer)
 }
 
 func (b *buffer) Write(offset int, data any) int {

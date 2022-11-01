@@ -37,8 +37,8 @@ func NewSharedMeshCache(backend vulkan.T, size int) MeshCache {
 	})
 }
 
-func (m *shmeshes) ItemName() string {
-	return "Mesh"
+func (m *shmeshes) Name() string {
+	return "SharedMesh"
 }
 
 func (m *shmeshes) Instantiate(mesh vertex.Mesh) VkMesh {
@@ -106,8 +106,8 @@ func (m *shmeshes) upload(cached *sharedMesh, mesh vertex.Mesh) {
 }
 
 func (m *shmeshes) Update(cached VkMesh, mesh vertex.Mesh) {
-	vkmesh := cached.(*sharedMesh)
-	m.upload(vkmesh, mesh)
+	shmesh := cached.(*sharedMesh)
+	m.upload(shmesh, mesh)
 }
 
 func (m *shmeshes) Delete(vkmesh VkMesh) {

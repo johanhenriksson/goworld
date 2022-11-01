@@ -13,7 +13,7 @@ import (
 )
 
 type Ref interface {
-	cache.Item
+	cache.Key
 }
 
 type Standard Instance[*Descriptors]
