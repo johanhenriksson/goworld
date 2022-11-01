@@ -57,8 +57,8 @@ func TestOrthographic(t *testing.T) {
 func TestPerspectiveVK(t *testing.T) {
 	proj := PerspectiveVK(45, 1, 1, 100)
 	AssertTransforms(t, proj, []TransformTest{
-		{vec3.New(0, 0, 1), vec3.New(0, 0, 1)},
-		{vec3.New(0, 0, 100), vec3.New(0, 0, 0)},
+		{vec3.New(0, 0, 1), vec3.New(0, 0, 0)},
+		{vec3.New(0, 0, 100), vec3.New(0, 0, 1)},
 	})
 }
 

@@ -2,7 +2,6 @@ package widget
 
 import (
 	"github.com/johanhenriksson/goworld/core/input/mouse"
-	"github.com/johanhenriksson/goworld/math/vec2"
 )
 
 func Find(widget T, key string) T {
@@ -23,8 +22,10 @@ func SimulateClick(widget T, button mouse.Button) {
 		panic("widget does not implement mouse.Handler")
 	}
 
-	event := mouse.NewButtonEvent(button, mouse.Press, vec2.New(0, 0), 0, false)
-	handler.MouseEvent(event)
+	press := mouse.NewButtonEvent(button, mouse.Press, widget.Position(), 0, false)
+	handler.MouseEvent(press)
+	release := mouse.NewButtonEvent(button, mouse.Release, widget.Position(), 0, false)
+	handler.MouseEvent(release)
 }
 
 type MouseHandler interface {

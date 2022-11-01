@@ -25,7 +25,7 @@ func TestClickSwatch(t *testing.T) {
 	if swatch == nil {
 		t.Error("could not find swatch widget")
 	}
-	if swatch.Size() != vec2.New(20, 20) {
+	if swatch.Size() != vec2.New(195, 20) {
 		t.Errorf("wrong swatch size: %s", swatch.Size())
 	}
 
@@ -45,8 +45,8 @@ func TestClickSwatch(t *testing.T) {
 	}
 
 	// compare colors
-	sp := swatch.Props().(*rect.Props)
-	pp := preview.Props().(*rect.Props)
+	sp := swatch.Props().(rect.Props)
+	pp := preview.Props().(rect.Props)
 	if pp.Style.Color != sp.Style.Color {
 		t.Error("expected preview color to be updated")
 	}
