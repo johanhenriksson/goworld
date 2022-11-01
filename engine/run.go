@@ -3,6 +3,7 @@ package engine
 import (
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/johanhenriksson/goworld/core/camera"
 	"github.com/johanhenriksson/goworld/core/object"
@@ -72,6 +73,7 @@ func Run(args Args, scenefuncs ...SceneFunc) {
 	// run the render loop
 	log.Println("ready")
 
+	lastFrameTime := time.Now()
 	for interrupt.Running() && !wnd.ShouldClose() {
 		wnd.Poll()
 
@@ -81,9 +83,6 @@ func Run(args Args, scenefuncs ...SceneFunc) {
 			Height: h,
 			Scale:  wnd.Scale(),
 		}
-
-		// update scene
-		scene.Update(0.016)
 
 		// find the first active camera
 		camera := query.New[camera.T]().First(scene)
@@ -105,6 +104,12 @@ func Run(args Args, scenefuncs ...SceneFunc) {
 
 		renderer.Draw(args, scene)
 		backend.Present()
+
+		// update scene
+		endFrameTime := time.Now()
+		elapsed := endFrameTime.Sub(lastFrameTime)
+		scene.Update(float32(elapsed.Seconds()))
+		lastFrameTime = endFrameTime
 	}
 }
 
