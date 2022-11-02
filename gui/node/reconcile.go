@@ -29,7 +29,6 @@ func Reconcile(target, new T) T {
 		if _, exists := previous[child.Key()]; exists {
 			panic(fmt.Errorf("duplicate key %s in children of %s", child.Key(), target.Key()))
 		}
-		// todo: check for duplicate keys
 		previous[child.Key()] = child
 	}
 
@@ -39,6 +38,8 @@ func Reconcile(target, new T) T {
 
 		if existing, ok := previous[child.Key()]; ok {
 			// since each key can only appear once, we can remove the child from the mapping
+			// this prevents the old element from being destroyed later. if its no longer needed,
+			// it will be destroyed in the reconciliation below.
 			delete(previous, child.Key())
 
 			// recursively reconcile child node
@@ -48,10 +49,11 @@ func Reconcile(target, new T) T {
 		}
 	}
 
-	// replace source children
+	// replace reconciled children
 	target.SetChildren(children)
 
-	// at this point, any child left in the previous map should be destroyed
+	// at this point, any child remaining in the previous map is no longer part of the tree
+	// and should be destroyed
 	for _, child := range previous {
 		child.Destroy()
 	}

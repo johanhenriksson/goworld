@@ -96,7 +96,7 @@ func (c *concurrent[K, V]) process_create(key K) {
 
 func (c *concurrent[K, V]) process_update(key K) {
 	line := c.cache[key.Id()]
-	c.backend.Update(line.value, key)
+	line.value = c.backend.Update(line.value, key)
 	line.version = key.Version()
 }
 

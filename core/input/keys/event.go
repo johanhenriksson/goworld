@@ -36,8 +36,10 @@ func (e event) String() string {
 		return fmt.Sprintf("KeyEvent: %s %d %d", e.action, e.code, e.mods)
 	case Release:
 		return fmt.Sprintf("KeyEvent: %s %d %d", e.action, e.code, e.mods)
+	case Repeat:
+		return fmt.Sprintf("KeyEvent: %s %d %d", e.action, e.code, e.mods)
 	case Char:
 		return fmt.Sprintf("KeyEvent: %s %c", e.action, e.char)
 	}
-	return "KeyEvent: Invalid Action"
+	return fmt.Sprintf("KeyEvent: Invalid Action %x", e.action)
 }

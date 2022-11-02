@@ -34,7 +34,9 @@ type Renderer interface {
 }
 
 type renderer struct {
+	key        string
 	text       string
+	version    int
 	size       int
 	font       font.T
 	color      color.T
@@ -51,6 +53,7 @@ type renderer struct {
 
 func NewRenderer() Renderer {
 	return &renderer{
+		key:            fmt.Sprintf("label:%s", util.NewUUID(8)),
 		size:           DefaultSize,
 		color:          DefaultColor,
 		lineHeight:     DefaultLineHeight,
@@ -65,6 +68,7 @@ func NewRenderer() Renderer {
 
 func (r *renderer) SetText(text string) {
 	r.invalidTexture = r.invalidTexture || text != r.text
+	r.invalidMesh = r.invalidMesh || text != r.text
 	r.text = text
 }
 
@@ -119,7 +123,8 @@ func (r *renderer) Draw(args widget.DrawArgs, label T) {
 		r.bounds = r.font.Measure(r.text, fargs)
 
 		img := r.font.Render(r.text, fargs)
-		r.tex = texture.ImageRef(fmt.Sprintf("label:%s", util.NewUUID(8)), img)
+		r.version++
+		r.tex = texture.ImageRef(r.key, r.version, img)
 
 		r.invalidTexture = false
 	}

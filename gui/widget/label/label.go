@@ -1,6 +1,7 @@
 package label
 
 import (
+	"github.com/johanhenriksson/goworld/core/input/keys"
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/core/window"
 	"github.com/johanhenriksson/goworld/gui/node"
@@ -10,6 +11,8 @@ import (
 	"github.com/kjk/flex"
 )
 
+type ChangeCallback func(string)
+
 type T interface {
 	widget.T
 	style.FontWidget
@@ -18,9 +21,10 @@ type T interface {
 }
 
 type Props struct {
-	Style   Style
-	Text    string
-	OnClick mouse.Callback
+	Style    Style
+	Text     string
+	OnClick  mouse.Callback
+	OnChange ChangeCallback
 }
 
 type label struct {
@@ -107,16 +111,40 @@ func (l *label) MouseEvent(e mouse.Event) {
 			l.props.Style.Apply(l, l.state)
 		}
 
-		// click
+		// click event
+		// todo: separate into mouse down/up?
 		if e.Action() == mouse.Press && l.props.OnClick != nil {
 			l.props.OnClick(e)
 			e.Consume()
+		}
+
+		// take input keyboard focus
+		if e.Action() == mouse.Press || e.Action() == mouse.Release {
+			if l.props.OnChange != nil {
+				keys.Focus(l)
+				e.Consume()
+			}
 		}
 	} else {
 		// hover end
 		if l.state.Hovered {
 			l.state.Hovered = false
 			l.props.Style.Apply(l, l.state)
+		}
+	}
+}
+
+func (l *label) KeyEvent(e keys.Event) {
+	if l.props.OnChange == nil {
+		return
+	}
+	if e.Action() == keys.Char {
+		l.props.OnChange(l.props.Text + string(e.Character()))
+	}
+	if e.Action() == keys.Press || e.Action() == keys.Repeat {
+		switch e.Code() {
+		case keys.Backspace:
+			l.props.OnChange(l.props.Text[:len(l.props.Text)-1])
 		}
 	}
 }

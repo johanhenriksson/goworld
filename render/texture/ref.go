@@ -9,6 +9,10 @@ import (
 type Ref interface {
 	Id() string
 	Version() int
+
+	// Load is called by texture caches and loaders, and should return the image data.
+	// todo: This interface is a bit too simple as it does not allow us to pass
+	//       formats, filters and aspects.
 	Load() *image.RGBA
 }
 
@@ -32,17 +36,19 @@ func (r *path_ref) Load() *image.RGBA {
 }
 
 type image_ref struct {
-	name string
-	img  *image.RGBA
+	name    string
+	version int
+	img     *image.RGBA
 }
 
-func ImageRef(name string, img *image.RGBA) Ref {
+func ImageRef(name string, version int, img *image.RGBA) Ref {
 	return &image_ref{
-		name: name,
-		img:  img,
+		name:    name,
+		version: version,
+		img:     img,
 	}
 }
 
 func (r *image_ref) Id() string        { return r.name }
-func (r *image_ref) Version() int      { return 1 }
+func (r *image_ref) Version() int      { return r.version }
 func (r *image_ref) Load() *image.RGBA { return r.img }

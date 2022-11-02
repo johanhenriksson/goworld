@@ -1,6 +1,7 @@
 package gui
 
 import (
+	"github.com/johanhenriksson/goworld/core/input/keys"
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/gui/node"
@@ -49,6 +50,7 @@ func (m *manager) DrawUI(args widget.DrawArgs, scene object.T) {
 
 func (m *manager) MouseEvent(e mouse.Event) {
 	// if the cursor is locked, we consider the game to have focus
+
 	if e.Locked() {
 		return
 	}
@@ -66,6 +68,11 @@ func (m *manager) MouseEvent(e mouse.Event) {
 		handler.MouseEvent(ev)
 		if ev.Handled() {
 			e.Consume()
+		} else {
+			// unset keyboard focus
+			if e.Action() == mouse.Press || e.Action() == mouse.Release {
+				keys.Focus(nil)
+			}
 		}
 	}
 }

@@ -93,9 +93,10 @@ func (m *shmeshes) upload(cached *sharedMesh, mesh vertex.Mesh) {
 	cached.vtxOffset = (cached.block.Offset + vtxAlign) / mesh.VertexSize()
 }
 
-func (m *shmeshes) Update(cached VkMesh, mesh vertex.Mesh) {
+func (m *shmeshes) Update(cached VkMesh, mesh vertex.Mesh) VkMesh {
 	shmesh := cached.(*sharedMesh)
 	m.upload(shmesh, mesh)
+	return shmesh
 }
 
 func (m *shmeshes) Delete(vkmesh VkMesh) {

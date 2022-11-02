@@ -23,7 +23,7 @@ type Key interface {
 type Backend[K Key, V any] interface {
 	Name() string
 	Instantiate(K) V
-	Update(V, K)
+	Update(V, K) V
 	Delete(V)
 	Destroy()
 }
@@ -65,7 +65,7 @@ func (m *cache[K, V]) Fetch(key K) V {
 	if line.version != key.Version() {
 		// we might want to queue this operation and run it at a more appropriate time
 		log.Println("update existing", m.backend.Name(), key.Id(), "to version", key.Version())
-		m.backend.Update(line.value, key)
+		line.value = m.backend.Update(line.value, key)
 		line.version = key.Version()
 	}
 

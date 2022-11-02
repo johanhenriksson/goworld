@@ -21,6 +21,7 @@ import (
 	"github.com/johanhenriksson/goworld/gui/widget/label"
 	"github.com/johanhenriksson/goworld/gui/widget/palette"
 	"github.com/johanhenriksson/goworld/gui/widget/rect"
+	"github.com/johanhenriksson/goworld/gui/widget/textbox"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/color"
@@ -139,6 +140,19 @@ func makeGui(r renderer.T, scene object.T) {
 					Style: image.Style{
 						Width:  style.Pct(100),
 						Height: style.Auto{},
+					},
+				}),
+				textbox.New("testybox", textbox.Props{
+					Style: textbox.Style{
+						Bg: rect.Style{
+							Color:   color.White,
+							Padding: style.Px(4),
+						},
+						Text: label.Style{
+							Color: color.Black,
+							Width: style.Pct(100),
+							Grow:  style.Grow(1),
+						},
 					},
 				}),
 				rect.New("objects", rect.Props{

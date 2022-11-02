@@ -37,7 +37,11 @@ func (t *textures) Instantiate(ref texture.Ref) texture.T {
 	return tex
 }
 
-func (m *textures) Update(tex texture.T, ref texture.Ref) {
+func (m *textures) Update(tex texture.T, ref texture.Ref) texture.T {
+	// we cant reuse texture objects yet
+	tex2 := m.Instantiate(ref)
+	tex.Destroy()
+	return tex2
 }
 
 func (m *textures) Delete(tex texture.T) {

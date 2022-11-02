@@ -94,9 +94,10 @@ func (m *meshes) upload(cached *vkMesh, mesh vertex.Mesh) {
 	cached.idxType = vk.IndexTypeUint16
 }
 
-func (m *meshes) Update(cached VkMesh, mesh vertex.Mesh) {
+func (m *meshes) Update(cached VkMesh, mesh vertex.Mesh) VkMesh {
 	vkmesh := cached.(*vkMesh)
 	m.upload(vkmesh, mesh)
+	return vkmesh
 }
 
 func (m *meshes) Delete(vkmesh VkMesh) {

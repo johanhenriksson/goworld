@@ -40,9 +40,15 @@ func (s *samplers) Instantiate(ref texture.Ref) int {
 	return id
 }
 
-func (s *samplers) Update(id int, ref texture.Ref) {
-	tex := s.mapping[id]
-	s.textures.Update(tex, ref)
+func (s *samplers) Update(id int, ref texture.Ref) int {
+	tex := s.textures.Instantiate(ref)
+	s.desc.Set(id, tex)
+
+	// deallocate old texture
+	s.textures.Delete(s.mapping[id])
+
+	s.mapping[id] = tex
+	return id
 }
 
 func (s *samplers) Delete(id int) {
