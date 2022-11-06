@@ -81,6 +81,11 @@ func (r *renderer) Draw(args widget.DrawArgs, rect T) {
 		})
 	}
 
+	// args.Commands.Record(func(cmd command.Buffer) {
+	// 	pos := args.Transform.TransformPoint(vec3.Zero)
+	// 	cmd.CmdSetScissor(int(pos.X), int(pos.Y), int(r.size.X), int(r.size.Y))
+	// })
+
 	for _, child := range rect.Children() {
 		// calculate child tranasform
 		// try to fix the position to an actual pixel

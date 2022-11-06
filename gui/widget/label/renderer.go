@@ -172,7 +172,7 @@ func (r *renderer) Measure(node *flex.Node, width float32, widthMode flex.Measur
 		Color:      color.White,
 	})
 
-	size = size.Scaled(1 / r.scale)
+	// size = size.Scaled(1 / r.scale)
 
 	return flex.Size{
 		Width:  size.X,

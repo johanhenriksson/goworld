@@ -4,6 +4,8 @@ import (
 	"github.com/go-gl/glfw/v3.3/glfw"
 )
 
+type Callback func(Event)
+
 type Handler interface {
 	KeyEvent(Event)
 }

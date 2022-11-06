@@ -30,6 +30,10 @@ type Props struct {
 	Text     string
 	OnClick  mouse.Callback
 	OnChange ChangeCallback
+
+	OnKeyUp   keys.Callback
+	OnKeyDown keys.Callback
+	OnKeyChar keys.Callback
 }
 
 type label struct {
@@ -171,6 +175,24 @@ func (l *label) MouseEvent(e mouse.Event) {
 }
 
 func (l *label) KeyEvent(e keys.Event) {
+	//
+	// key events
+	//
+
+	if l.props.OnKeyUp != nil && e.Action() == keys.Release {
+		l.props.OnKeyUp(e)
+	}
+	if l.props.OnKeyDown != nil && e.Action() == keys.Press {
+		l.props.OnKeyDown(e)
+	}
+	if l.props.OnKeyChar != nil && e.Action() == keys.Char {
+		l.props.OnKeyChar(e)
+	}
+
+	//
+	// text state handling
+	//
+
 	if l.props.OnChange == nil {
 		return
 	}
@@ -189,20 +211,24 @@ func (l *label) KeyEvent(e keys.Event) {
 				l.text = str.Slice(0, l.cursor) + str.Slice(l.cursor+1, str.RuneCount())
 				l.props.OnChange(l.text)
 			}
+
 		case keys.Delete:
 			str := utf8string.NewString(l.text)
 			if l.cursor < str.RuneCount() {
 				l.text = str.Slice(0, l.cursor) + str.Slice(l.cursor+1, str.RuneCount())
 				l.props.OnChange(l.text)
 			}
+
 		case keys.LeftArrow:
 			l.cursor = math.Clamp(l.cursor-1, 0, len(l.text))
 			l.setText(l.text)
+
 		case keys.RightArrow:
 			l.cursor = math.Clamp(l.cursor+1, 0, len(l.text))
 			l.setText(l.text)
 
 		case keys.U:
+			// ctrl+u clears text
 			if e.Modifier(keys.Ctrl) {
 				l.setText("")
 				l.props.OnChange("")

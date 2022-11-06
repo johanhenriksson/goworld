@@ -4,6 +4,7 @@ import (
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/gui/widget"
 	"github.com/johanhenriksson/goworld/math/vec2"
+
 	"github.com/kjk/flex"
 )
 
@@ -16,12 +17,14 @@ type component struct {
 	wrap     widget.T
 	children []widget.T
 	props    any
+	flex     *flex.Node
 }
 
 func New(key string, props any) T {
 	return &component{
 		key:   key,
 		props: props,
+		flex:  flex.NewNodeWithConfig(widget.FlexConfig),
 	}
 }
 
@@ -43,6 +46,8 @@ func (c *component) Children() []widget.T {
 
 func (c *component) SetChildren(children []widget.T) {
 	c.children = children
+	// whats the reasoning here?
+	// why do we pick the first element
 	if len(children) > 0 {
 		c.wrap = children[0]
 	} else {
@@ -74,7 +79,7 @@ func (c *component) Flex() *flex.Node {
 	if c.wrap != nil {
 		return c.wrap.Flex()
 	}
-	return nil
+	return c.flex
 }
 
 func (c *component) Destroy() {

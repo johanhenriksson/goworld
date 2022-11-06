@@ -24,12 +24,6 @@ type T interface {
 	Hydrated() bool
 }
 
-type Args[P any] struct {
-	Key      string
-	Props    P
-	Children []T
-}
-
 type node[K widget.T, P any] struct {
 	key      string
 	props    P
