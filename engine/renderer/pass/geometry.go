@@ -285,16 +285,12 @@ func (p *GeometryPass) Draw(args render.Args, scene object.T) {
 	white := p.textures.Fetch(texture.PathRef("textures/white.png"))
 	lightDesc.Shadow.Set(0, white)
 
-	ambient := light.Descriptor{
-		Type:      light.Ambient,
-		Color:     color.White,
-		Intensity: 0.33,
-	}
+	ambient := light.NewAmbient(color.White, 0.33)
 	p.DrawLight(cmds, args, ambient)
 
 	lights := query.New[light.T]().Collect(scene)
 	for _, lit := range lights {
-		if err := p.DrawLight(cmds, args, lit.LightDescriptor()); err != nil {
+		if err := p.DrawLight(cmds, args, lit); err != nil {
 			fmt.Printf("light draw error in object %s: %s\n", lit.Name(), err)
 		}
 	}
@@ -332,25 +328,26 @@ func (p *GeometryPass) Draw(args render.Args, scene object.T) {
 	})
 }
 
-func (p *GeometryPass) DrawLight(cmds command.Recorder, args render.Args, lit light.Descriptor) error {
+func (p *GeometryPass) DrawLight(cmds command.Recorder, args render.Args, lit light.T) error {
 	vkmesh := p.meshes.Fetch(p.quad)
 	if vkmesh == nil {
 		return nil
 	}
 
-	cmds.Record(func(cmd command.Buffer) {
+	desc := lit.LightDescriptor()
 
-		push := LightConst{
-			ViewProj:    lit.ViewProj,
-			Color:       lit.Color,
-			Position:    lit.Position,
-			Type:        lit.Type,
+	cmds.Record(func(cmd command.Buffer) {
+		push := &LightConst{
+			ViewProj:    desc.ViewProj,
+			Color:       desc.Color,
+			Position:    desc.Position,
+			Type:        desc.Type,
 			Shadowmap:   uint32(1),
-			Range:       lit.Range,
-			Intensity:   lit.Intensity,
-			Attenuation: lit.Attenuation,
+			Range:       desc.Range,
+			Intensity:   desc.Intensity,
+			Attenuation: desc.Attenuation,
 		}
-		cmd.CmdPushConstant(vk.ShaderStageFragmentBit, 0, &push)
+		cmd.CmdPushConstant(vk.ShaderStageFragmentBit, 0, push)
 
 		vkmesh.Draw(cmd, 0)
 	})
