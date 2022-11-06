@@ -55,7 +55,6 @@ func (s *samplers) Delete(id int) {
 	tex := s.mapping[id]
 	s.textures.Delete(tex)
 	delete(s.mapping, id)
-	s.desc.Set(id, texture.Nil)
 	// return id to pool?
 }
 
