@@ -14,7 +14,7 @@ func PressedMods(ev Event, code Code, mods Modifier) bool {
 	if !Pressed(ev, code) {
 		return false
 	}
-	return ev.Modifier() == mods
+	return ev.Modifier(mods)
 }
 
 func Released(ev Event, code Code) bool {
@@ -31,5 +31,5 @@ func ReleasedMods(ev Event, code Code, mods Modifier) bool {
 	if !Released(ev, code) {
 		return false
 	}
-	return ev.Modifier() == mods
+	return ev.Modifier(mods)
 }

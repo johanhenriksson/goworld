@@ -108,8 +108,8 @@ func Run(args Args, scenefuncs ...SceneFunc) {
 		// update scene
 		endFrameTime := time.Now()
 		elapsed := endFrameTime.Sub(lastFrameTime)
-		scene.Update(float32(elapsed.Seconds()))
 		lastFrameTime = endFrameTime
+		scene.Update(float32(elapsed.Seconds()))
 	}
 }
 

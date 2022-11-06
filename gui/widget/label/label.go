@@ -19,8 +19,10 @@ type ChangeCallback func(string)
 type T interface {
 	widget.T
 	style.FontWidget
+	keys.Handler
 
 	Text() string
+	Cursor() int
 }
 
 type Props struct {
@@ -38,6 +40,7 @@ type label struct {
 	scale  float32
 	state  style.State
 	cursor int
+	text   string
 }
 
 func New(key string, props Props) node.T {
@@ -49,9 +52,10 @@ func new(key string, props Props) T {
 		T:        widget.New(key),
 		Renderer: NewRenderer(),
 		scale:    1,
-		cursor:   len(props.Text),
+		cursor:   utf8string.NewString(props.Text).RuneCount(),
+		text:     props.Text,
 		props: Props{
-			Text: "<><><>",
+			Text: "\x00",
 		},
 	}
 	lbl.Update(props)
@@ -81,19 +85,30 @@ func (l *label) Update(props any) {
 
 func (l *label) setText(text string) {
 	str := utf8string.NewString(text)
+
+	if text != l.text {
+		// new text is different from what we had before,
+		// move cursor to end of line
+		l.cursor = str.RuneCount()
+	}
+
 	l.cursor = math.Min(l.cursor, str.RuneCount())
+	l.text = text
 
 	if l.editable() {
 		// we also need to know if it has focus
 		text = str.Slice(0, l.cursor) + "_" + str.Slice(l.cursor, str.RuneCount())
 		// text = l.props.Text[:l.cursor] + "_" + l.props.Text[l.cursor:]
 	}
+
+	// update renderer
 	l.Renderer.SetText(text)
 }
 
 // prop accessors
 
 func (l *label) Text() string { return l.props.Text }
+func (l *label) Cursor() int  { return l.cursor }
 
 func (l *label) Draw(args widget.DrawArgs) {
 	if l.props.Style.Hidden {
@@ -160,28 +175,38 @@ func (l *label) KeyEvent(e keys.Event) {
 		return
 	}
 	if e.Action() == keys.Char {
-		str := utf8string.NewString(l.props.Text)
-		text := str.Slice(0, l.cursor) + string(e.Character()) + str.Slice(l.cursor, str.RuneCount())
-		l.cursor++
-		l.props.OnChange(text)
+		str := utf8string.NewString(l.text)
+		l.text = str.Slice(0, l.cursor) + string(e.Character()) + str.Slice(l.cursor, str.RuneCount())
+		l.cursor = math.Min(l.cursor+1, utf8string.NewString(l.text).RuneCount())
+		l.props.OnChange(l.text)
 	}
 	if e.Action() == keys.Press || e.Action() == keys.Repeat {
 		switch e.Code() {
 		case keys.Backspace:
-			str := utf8string.NewString(l.props.Text)
+			str := utf8string.NewString(l.text)
 			if l.cursor > 0 {
 				l.cursor--
-				text := str.Slice(0, l.cursor) + str.Slice(l.cursor+1, str.RuneCount())
-				l.props.OnChange(text)
+				l.text = str.Slice(0, l.cursor) + str.Slice(l.cursor+1, str.RuneCount())
+				l.props.OnChange(l.text)
 			}
 		case keys.Delete:
-			break
+			str := utf8string.NewString(l.text)
+			if l.cursor < str.RuneCount() {
+				l.text = str.Slice(0, l.cursor) + str.Slice(l.cursor+1, str.RuneCount())
+				l.props.OnChange(l.text)
+			}
 		case keys.LeftArrow:
-			l.cursor = math.Clamp(l.cursor-1, 0, len(l.props.Text))
-			l.setText(l.props.Text)
+			l.cursor = math.Clamp(l.cursor-1, 0, len(l.text))
+			l.setText(l.text)
 		case keys.RightArrow:
-			l.cursor = math.Clamp(l.cursor+1, 0, len(l.props.Text))
-			l.setText(l.props.Text)
+			l.cursor = math.Clamp(l.cursor+1, 0, len(l.text))
+			l.setText(l.text)
+
+		case keys.U:
+			if e.Modifier(keys.Ctrl) {
+				l.setText("")
+				l.props.OnChange("")
+			}
 		}
 	}
 }
