@@ -29,7 +29,10 @@ var itemLabelStyle = label.Style{
 var removeButtonStyle = button.Style{
 	Bg: rect.Style{
 		Padding: style.Px(4),
-		Color:   color.Red,
+		Margin: style.Rect{
+			Left: 40,
+		},
+		Color: color.Red,
 	},
 }
 
@@ -48,6 +51,9 @@ var addButtonStyle = button.Style{
 	Bg: rect.Style{
 		Padding: style.Px(4),
 		Color:   color.Green,
+		Margin: style.Rect{
+			Left: 40,
+		},
 	},
 }
 
@@ -63,8 +69,11 @@ func New(key string, props Props) node.T {
 		}
 
 		return window.New(key, window.Props{
-			Title:    "todo",
+			Title:    "todo app",
 			Position: vec2.New(250, 400),
+			Style: window.Style{
+				MinWidth: style.Px(200),
+			},
 			Children: []node.T{
 				rect.New("list", rect.Props{
 					Children: util.MapIdx(items, func(text string, idx int) node.T {

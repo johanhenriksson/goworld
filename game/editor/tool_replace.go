@@ -15,7 +15,7 @@ type ReplaceTool struct {
 
 func NewReplaceTool() *ReplaceTool {
 	rt := &ReplaceTool{
-		T: object.New("ReplaceTool"),
+		T: object.New("Replace"),
 	}
 
 	box.Builder(&rt.box, box.Args{
@@ -26,10 +26,6 @@ func NewReplaceTool() *ReplaceTool {
 		Create()
 
 	return rt
-}
-
-func (pt *ReplaceTool) String() string {
-	return "ReplaceTool"
 }
 
 func (pt *ReplaceTool) Use(editor T, position, normal vec3.T) {

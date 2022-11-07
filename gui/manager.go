@@ -1,8 +1,6 @@
 package gui
 
 import (
-	"fmt"
-
 	"github.com/johanhenriksson/goworld/core/input/keys"
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/core/object"
@@ -11,7 +9,6 @@ import (
 	"github.com/johanhenriksson/goworld/gui/widget"
 	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/math/vec2"
-	"github.com/johanhenriksson/goworld/util"
 
 	"github.com/kjk/flex"
 )
@@ -25,64 +22,61 @@ type Manager interface {
 type manager struct {
 	object.Component
 
-	scale     float32
-	fragments []widget.T
-	root      node.RenderFunc
-
-	tree node.T
-	gui  widget.T
+	scale  float32
+	render node.RenderFunc
+	tree   node.T
+	gui    widget.T
 }
 
-func New(root node.RenderFunc) Manager {
+func New(render node.RenderFunc) Manager {
 	return &manager{
 		Component: object.NewComponent(),
 		scale:     1,
-		root:      root,
+		render:    render,
 	}
 }
 
 func (m *manager) Name() string { return "UIManager" }
 
 func (m *manager) DrawUI(args widget.DrawArgs, scene object.T) {
-	viewport := vec2.NewI(args.Viewport.Width, args.Viewport.Height)
-	m.scale = args.Viewport.Scale
+	// render root tree
+	root := m.render()
 
+	// populate with fragments
 	fragments := query.New[Fragment]().Collect(scene)
-
-	fragmap := make(map[string][]Fragment)
-	for _, fragment := range fragments {
-		fragmap[fragment.Slot()] = append(fragmap[fragment.Slot()], fragment)
-	}
-
-	root := m.root()
-	roots := []node.T{root}
-
-	for len(fragmap) > 0 {
+	for {
 		changed := false
-		for slot, fragments := range fragmap {
-			parent := findNodeWithKey(roots, slot)
+		for idx, fragment := range fragments {
+			if fragment == nil {
+				// nil fragments have already been processed
+				continue
+			}
+
+			parent := findNodeWithKey(root, fragment.Slot())
 			if parent != nil {
-				rendered := util.Map(fragments, func(f Fragment) node.T { return f.Render() })
-				parent.SetChildren(append(parent.Children(), rendered...))
-				delete(fragmap, slot)
+				parent.SetChildren(append(parent.Children(), fragment.Render()))
+				fragments[idx] = nil // set item to nil to mark it as completed
 				changed = true
 			}
-			break
 		}
 		if !changed {
+			// iterate until nothing changes, or the fragment map is empty
 			break
 		}
 	}
-	for slot, left := range fragmap {
-		fmt.Printf("dangling slot %s: %d elements\n", slot, len(left))
-	}
 
+	// reconcile & hydrate tree
 	m.tree = node.Reconcile(m.tree, root)
 	m.gui = m.tree.Hydrate()
+
+	// update flexbox layout
+	viewport := vec2.NewI(args.Viewport.Width, args.Viewport.Height)
+	m.scale = args.Viewport.Scale
 
 	flexRoot := m.gui.Flex()
 	flex.CalculateLayout(flexRoot, viewport.X, viewport.Y, flex.DirectionLTR)
 
+	// draw
 	m.gui.Draw(widget.DrawArgs{
 		Commands:  args.Commands,
 		Meshes:    args.Meshes,
@@ -93,14 +87,13 @@ func (m *manager) DrawUI(args widget.DrawArgs, scene object.T) {
 	})
 }
 
-func findNodeWithKey(nodes []node.T, key string) node.T {
-	for _, n := range nodes {
-		if n.Key() == key {
-			return n
-		}
-		children := n.Children()
-		if child := findNodeWithKey(children, key); child != nil {
-			return child
+func findNodeWithKey(root node.T, key string) node.T {
+	if root.Key() == key {
+		return root
+	}
+	for _, child := range root.Children() {
+		if hit := findNodeWithKey(child, key); hit != nil {
+			return hit
 		}
 	}
 	return nil

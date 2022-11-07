@@ -15,7 +15,7 @@ type EraseTool struct {
 
 func NewEraseTool() *EraseTool {
 	et := &EraseTool{
-		T: object.New("EraseTool"),
+		T: object.New("Erase"),
 	}
 
 	box.Builder(&et.box, box.Args{
@@ -26,10 +26,6 @@ func NewEraseTool() *EraseTool {
 		Create()
 
 	return et
-}
-
-func (pt *EraseTool) String() string {
-	return "EraseTool"
 }
 
 func (pt *EraseTool) Use(editor T, position, normal vec3.T) {

@@ -25,8 +25,10 @@ type Style struct {
 	// Sizing properties
 
 	Width     WidthProp
+	MinWidth  MinWidthProp
 	MaxWidth  MaxWidthProp
 	Height    HeightProp
+	MinHeight MinHeightProp
 	MaxHeight MaxHeightProp
 	Padding   PaddingProp
 	Margin    MarginProp
@@ -74,11 +76,17 @@ func (style *Style) Apply(w T, state State) {
 	if style.Width != nil {
 		style.Width.ApplyWidth(w)
 	}
+	if style.MinWidth != nil {
+		style.MinWidth.ApplyMinWidth(w)
+	}
 	if style.MaxWidth != nil {
 		style.MaxWidth.ApplyMaxWidth(w)
 	}
 	if style.Height != nil {
 		style.Height.ApplyHeight(w)
+	}
+	if style.MinHeight != nil {
+		style.MinHeight.ApplyMinHeight(w)
 	}
 	if style.MaxHeight != nil {
 		style.MaxHeight.ApplyMaxHeight(w)

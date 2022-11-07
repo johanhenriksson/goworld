@@ -20,6 +20,7 @@ type Props struct {
 }
 
 type Style struct {
+	MinWidth MinWidthProp
 	MaxWidth MaxWidthProp
 }
 
@@ -39,6 +40,7 @@ func render(props Props) node.T {
 				Top:  Px(position.Y),
 			},
 			MaxWidth: props.Style.MaxWidth,
+			MinWidth: props.Style.MinWidth,
 		},
 		Children: []node.T{
 			rect.New("titlebar", rect.Props{

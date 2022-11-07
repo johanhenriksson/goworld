@@ -45,10 +45,7 @@ type T interface {
 }
 
 type widget struct {
-	id        int
 	key       string
-	size      vec2.T
-	position  vec2.T
 	destroyed bool
 	flex      *flex.Node
 }
@@ -85,8 +82,12 @@ func (w *widget) Update(any) {
 	panic("widget.Update() must be implemented")
 }
 
-func (w *widget) Children() []T     { return nil }
-func (w *widget) SetChildren(c []T) {}
+func (w *widget) Children() []T { return nil }
+func (w *widget) SetChildren(c []T) {
+	if len(c) > 0 {
+		panic("widget cant have children")
+	}
+}
 
 func (w *widget) Draw(DrawArgs) {
 	// base widget Draw() should be called ahead of overridden draws

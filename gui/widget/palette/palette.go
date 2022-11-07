@@ -9,8 +9,6 @@ import (
 	. "github.com/johanhenriksson/goworld/gui/style"
 	"github.com/johanhenriksson/goworld/gui/widget/label"
 	"github.com/johanhenriksson/goworld/gui/widget/rect"
-	"github.com/johanhenriksson/goworld/gui/widget/window"
-	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/util"
 )
@@ -53,9 +51,7 @@ func render(props Props) node.T {
 		})
 	})
 
-	return window.New("palette", window.Props{
-		Title:    "Palette",
-		Position: vec2.New(250, 30),
+	return rect.New("palette", rect.Props{
 		Children: []node.T{
 			rect.New("selected", rect.Props{
 				Style: rect.Style{

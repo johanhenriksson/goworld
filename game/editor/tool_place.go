@@ -17,7 +17,7 @@ type PlaceTool struct {
 
 func NewPlaceTool() *PlaceTool {
 	pt := &PlaceTool{
-		T: object.New("PlaceTool"),
+		T: object.New("Place"),
 	}
 
 	box.Builder(&pt.box, box.Args{

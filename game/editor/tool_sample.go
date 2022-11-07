@@ -14,7 +14,7 @@ type SampleTool struct {
 
 func NewSampleTool() *SampleTool {
 	st := &SampleTool{
-		T: object.New("SampleTool"),
+		T: object.New("Sample"),
 	}
 
 	box.Builder(&st.box, box.Args{
@@ -25,10 +25,6 @@ func NewSampleTool() *SampleTool {
 		Create()
 
 	return st
-}
-
-func (pt *SampleTool) String() string {
-	return "SampleTool"
 }
 
 func (pt *SampleTool) Use(editor T, position, normal vec3.T) {

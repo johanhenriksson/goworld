@@ -11,9 +11,11 @@ type FlexWidget interface {
 }
 
 type WidthProp interface{ ApplyWidth(fw FlexWidget) }
+type MinWidthProp interface{ ApplyMinWidth(fw FlexWidget) }
 type MaxWidthProp interface{ ApplyMaxWidth(fw FlexWidget) }
 type HeightProp interface{ ApplyHeight(fw FlexWidget) }
 type MaxHeightProp interface{ ApplyMaxHeight(fw FlexWidget) }
+type MinHeightProp interface{ ApplyMinHeight(fw FlexWidget) }
 type BasisProp interface{ ApplyBasis(fw FlexWidget) }
 type PaddingProp interface{ ApplyPadding(fw FlexWidget) }
 type MarginProp interface{ ApplyMargin(fw FlexWidget) }

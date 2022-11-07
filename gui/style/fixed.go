@@ -9,8 +9,10 @@ type Px float32
 
 func (p Px) ApplyBasis(fw FlexWidget)     { fw.Flex().StyleSetFlexBasis(float32(p)) }
 func (p Px) ApplyWidth(fw FlexWidget)     { fw.Flex().StyleSetWidth(float32(p)) }
+func (p Px) ApplyMinWidth(fw FlexWidget)  { fw.Flex().StyleSetMinWidth(float32(p)) }
 func (p Px) ApplyMaxWidth(fw FlexWidget)  { fw.Flex().StyleSetMaxWidth(float32(p)) }
 func (p Px) ApplyHeight(fw FlexWidget)    { fw.Flex().StyleSetHeight(float32(p)) }
+func (p Px) ApplyMinHeight(fw FlexWidget) { fw.Flex().StyleSetMinHeight(float32(p)) }
 func (p Px) ApplyMaxHeight(fw FlexWidget) { fw.Flex().StyleSetMaxHeight(float32(p)) }
 func (p Px) ApplyPadding(fw FlexWidget)   { fw.Flex().StyleSetPadding(flex.EdgeAll, float32(p)) }
 func (p Px) ApplyMargin(fw FlexWidget)    { fw.Flex().StyleSetMargin(flex.EdgeAll, float32(p)) }

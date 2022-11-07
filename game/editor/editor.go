@@ -1,8 +1,6 @@
 package editor
 
 import (
-	"fmt"
-
 	"github.com/johanhenriksson/goworld/core/camera"
 	"github.com/johanhenriksson/goworld/core/input/keys"
 	"github.com/johanhenriksson/goworld/core/input/mouse"
@@ -13,11 +11,6 @@ import (
 	"github.com/johanhenriksson/goworld/game/voxel"
 	"github.com/johanhenriksson/goworld/geometry/box"
 	"github.com/johanhenriksson/goworld/geometry/plane"
-	"github.com/johanhenriksson/goworld/gui"
-	"github.com/johanhenriksson/goworld/gui/node"
-	"github.com/johanhenriksson/goworld/gui/style"
-	"github.com/johanhenriksson/goworld/gui/widget/button"
-	"github.com/johanhenriksson/goworld/gui/widget/window"
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render/color"
@@ -29,7 +22,6 @@ type T interface {
 	SelectedColor() color.T
 	GetVoxel(x, y, z int) voxel.T
 	SetVoxel(x, y, z int, v voxel.T)
-	SelectTool(Tool)
 	SelectColor(color.T)
 	Recalculate()
 	InBounds(p vec3.T) bool
@@ -125,38 +117,14 @@ func NewEditor(chk *chunk.T, cam camera.T, gbuffer pass.BufferOutput) T {
 		Active(false).
 		Create()
 
-	e.object.Attach(gui.NewFragment("sidebar", func() node.T {
-		return window.New("editor", window.Props{
-			Position: vec2.New(500, 500),
-			Style: window.Style{
-				MaxWidth: style.Px(500),
-			},
-			Title: "voxel edit",
-			Children: []node.T{
-				button.New("place", button.Props{
-					Text: "Place",
-					OnClick: func(ev mouse.Event) {
-						fmt.Println("click place")
-						e.SelectTool(e.PlaceTool)
-					},
-				}),
-				button.New("erase", button.Props{
-					Text: "Erase",
-					OnClick: func(ev mouse.Event) {
-						fmt.Println("click erase")
-						e.SelectTool(e.EraseTool)
-					},
-				}),
-			},
-		})
-	}))
-
 	e.object.Adopt(e.PlaceTool, e.ReplaceTool, e.EraseTool, e.SampleTool)
 	e.ReplaceTool.SetActive(false)
 	e.EraseTool.SetActive(false)
 	e.SampleTool.SetActive(false)
 
 	e.SelectTool(e.PlaceTool)
+
+	e.object.Attach(NewGUI(e))
 
 	return e
 }
@@ -202,18 +170,6 @@ func (e *editor) SelectTool(tool Tool) {
 	e.DeselectTool()
 	e.Tool = tool
 	e.Tool.SetActive(true)
-}
-
-func (e *editor) Update(dt float32) {
-	// e.T.Update(dt)
-	// engine.Update(dt, e.Tool)
-
-	// clear chunk
-	// if keys.Pressed(keys.N) && keys.Ctrl() {
-	// 	e.Chunk.Clear()
-	// 	e.Chunk.Light.Calculate()
-	// 	e.mesh.Compute()
-	// }
 }
 
 // sample world position at current mouse coords

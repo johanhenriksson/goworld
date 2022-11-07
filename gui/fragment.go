@@ -5,6 +5,7 @@ import (
 	"github.com/johanhenriksson/goworld/gui/node"
 )
 
+// A Fragment contains a UI subtree to be rendered as a child of a given element
 type Fragment interface {
 	object.Component
 	Render() node.T
