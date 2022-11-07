@@ -71,6 +71,7 @@ func Run(args Args, scenefuncs ...SceneFunc) {
 	// create scene
 	scene := object.New("Scene")
 	wnd.SetInputHandler(scene)
+
 	for _, scenefunc := range scenefuncs {
 		scenefunc(renderer, scene)
 	}
@@ -121,7 +122,7 @@ func Run(args Args, scenefuncs ...SceneFunc) {
 
 		if remainingTime > 0.001 || framesSinceGC > 60 {
 			// manually trigger garbage collection
-			log.Printf("garbage collection pass r=%.2fms f=%d\n", 1000*remainingTime, framesSinceGC)
+			// log.Printf("garbage collection pass r=%.2fms f=%d\n", 1000*remainingTime, framesSinceGC)
 			runtime.GC()
 			framesSinceGC = 0
 		} else {

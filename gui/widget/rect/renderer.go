@@ -1,8 +1,6 @@
 package rect
 
 import (
-	"log"
-
 	"github.com/johanhenriksson/goworld/gui/quad"
 	"github.com/johanhenriksson/goworld/gui/widget"
 	"github.com/johanhenriksson/goworld/math/mat4"
@@ -42,7 +40,6 @@ func (r *renderer) SetSize(size vec2.T) {
 }
 
 func (r *renderer) SetColor(clr color.T) {
-	log.Println("rect color update", clr != r.color, clr, r.color)
 	r.invalid = r.invalid || clr != r.color
 	r.color = clr
 }
@@ -56,7 +53,6 @@ func (r *renderer) Draw(args widget.DrawArgs, rect T) {
 		r.SetSize(rect.Size())
 
 		if r.invalid {
-			log.Println("updating rect", rect.Key())
 			r.mesh.Update(quad.Props{
 				UVs:   r.uvs,
 				Size:  r.size,

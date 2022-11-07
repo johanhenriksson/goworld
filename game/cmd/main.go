@@ -15,15 +15,12 @@ import (
 	"github.com/johanhenriksson/goworld/game"
 	"github.com/johanhenriksson/goworld/game/editor"
 	"github.com/johanhenriksson/goworld/gui"
-	"github.com/johanhenriksson/goworld/gui/hooks"
 	"github.com/johanhenriksson/goworld/gui/node"
 	"github.com/johanhenriksson/goworld/gui/style"
-	"github.com/johanhenriksson/goworld/gui/widget/button"
 	"github.com/johanhenriksson/goworld/gui/widget/image"
 	"github.com/johanhenriksson/goworld/gui/widget/label"
 	"github.com/johanhenriksson/goworld/gui/widget/palette"
 	"github.com/johanhenriksson/goworld/gui/widget/rect"
-	"github.com/johanhenriksson/goworld/gui/widget/textbox"
 	"github.com/johanhenriksson/goworld/gui/widget/todo"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
@@ -118,7 +115,6 @@ func main() {
 
 func makeGui(r renderer.T, scene object.T) {
 	scene.Attach(gui.New(func() node.T {
-
 		return rect.New("sidebar", rect.Props{
 			OnMouseDown: func(e mouse.Event) {},
 			Style: rect.Style{
@@ -146,21 +142,7 @@ func makeGui(r renderer.T, scene object.T) {
 						Height: style.Auto{},
 					},
 				}),
-				textbox.New("testybox", textbox.Props{
-					Style: textbox.Style{
-						Bg: rect.Style{
-							Color:   color.White,
-							Padding: style.Px(4),
-						},
-						Text: label.Style{
-							Color: color.Black,
-							Width: style.Pct(100),
-							Grow:  style.Grow(1),
-						},
-					},
-				}),
 
-				NewCounter("counter", CounterProps{}),
 				todo.New("todo", todo.Props{}),
 
 				rect.New("objects", rect.Props{
@@ -204,45 +186,5 @@ func ObjectListEntry(idx int, obj object.T) node.T {
 			},
 		},
 		Children: children,
-	})
-}
-
-type CounterProps struct{}
-
-var ButtonStyle = button.Style{
-	Bg: rect.Style{
-		Padding: style.Px(3),
-		Color:   style.RGB(1, 0, 0),
-	},
-}
-
-func NewCounter(key string, props CounterProps) node.T {
-	return node.Component(key, props, nil, func(props CounterProps) node.T {
-		count, setCount := hooks.UseState(0)
-
-		return rect.New(key, rect.Props{
-			Style: rect.Style{
-				Layout: style.Row{},
-			},
-			Children: []node.T{
-				button.New("minus", button.Props{
-					Text:  "-",
-					Style: ButtonStyle,
-					OnClick: func(e mouse.Event) {
-						setCount(count - 1)
-					},
-				}),
-				label.New("display", label.Props{
-					Text: fmt.Sprintf("%d", count),
-				}),
-				button.New("plus", button.Props{
-					Text:  "+",
-					Style: ButtonStyle,
-					OnClick: func(e mouse.Event) {
-						setCount(count + 1)
-					},
-				}),
-			},
-		})
 	})
 }

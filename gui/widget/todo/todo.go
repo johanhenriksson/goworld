@@ -12,13 +12,14 @@ import (
 	"github.com/johanhenriksson/goworld/gui/widget/rect"
 	"github.com/johanhenriksson/goworld/gui/widget/textbox"
 	"github.com/johanhenriksson/goworld/gui/widget/window"
+	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/util"
 )
 
 var itemRowStyle = rect.Style{
-	Padding: style.Px(5),
-	Layout:  style.Row{},
+	Layout:     style.Row{},
+	AlignItems: style.AlignCenter,
 }
 
 var itemLabelStyle = label.Style{
@@ -54,15 +55,16 @@ type Props struct{}
 
 func New(key string, props Props) node.T {
 	return node.Component(key, props, nil, func(props Props) node.T {
-		items, setItems := hooks.UseState([]string{
-			"apples",
-			"oranges",
-			"mangoes",
-		})
+		items, setItems := hooks.UseState([]string{})
 		itemTitle, setItemTitle := hooks.UseState("")
+		addColor := color.Green
+		if len(itemTitle) == 0 {
+			addColor = color.DarkGrey
+		}
 
 		return window.New(key, window.Props{
-			Title: "todo",
+			Title:    "todo",
+			Position: vec2.New(250, 400),
 			Children: []node.T{
 				rect.New("list", rect.Props{
 					Children: util.MapIdx(items, func(text string, idx int) node.T {
@@ -96,9 +98,17 @@ func New(key string, props Props) node.T {
 							Text:     itemTitle,
 						}),
 						button.New("add", button.Props{
-							Text:  "+",
-							Style: addButtonStyle,
+							Text: "+",
+							Style: button.Style{
+								Bg: rect.Style{
+									Padding: style.Px(4),
+									Color:   addColor,
+								},
+							},
 							OnClick: func(e mouse.Event) {
+								if len(itemTitle) == 0 {
+									return
+								}
 								newItems := append(items, itemTitle)
 								setItems(newItems)
 								setItemTitle("")

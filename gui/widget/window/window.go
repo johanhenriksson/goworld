@@ -13,8 +13,14 @@ import (
 
 type Props struct {
 	Title    string
+	Style    Style
+	Position vec2.T
 	Children []node.T
 	OnClose  func()
+}
+
+type Style struct {
+	MaxWidth MaxWidthProp
 }
 
 func New(key string, props Props) node.T {
@@ -22,7 +28,7 @@ func New(key string, props Props) node.T {
 }
 
 func render(props Props) node.T {
-	position, setPosition := hooks.UseState(vec2.New(250, 30))
+	position, setPosition := hooks.UseState(props.Position)
 	dragOffset, setDragOffset := hooks.UseState(vec2.Zero)
 
 	return rect.New("window", rect.Props{
@@ -32,6 +38,7 @@ func render(props Props) node.T {
 				Left: Px(position.X),
 				Top:  Px(position.Y),
 			},
+			MaxWidth: props.Style.MaxWidth,
 		},
 		Children: []node.T{
 			rect.New("titlebar", rect.Props{

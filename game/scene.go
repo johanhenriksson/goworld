@@ -34,11 +34,11 @@ func CreateScene(scene object.T, gbuffer pass.BufferOutput) {
 
 	player.Eye.Transform().SetRotation(vec3.New(-30, 0, 0))
 
-	scene.Adopt(player)
-
 	object.Build("Chunk").
 		Attach(chunk.NewMesh(chonk)).
 		Attach(editor.NewEditor(chonk, player.Camera, gbuffer)).
 		Parent(scene).
 		Create()
+
+	scene.Adopt(player)
 }

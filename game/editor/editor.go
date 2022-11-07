@@ -1,6 +1,8 @@
 package editor
 
 import (
+	"fmt"
+
 	"github.com/johanhenriksson/goworld/core/camera"
 	"github.com/johanhenriksson/goworld/core/input/keys"
 	"github.com/johanhenriksson/goworld/core/input/mouse"
@@ -11,6 +13,11 @@ import (
 	"github.com/johanhenriksson/goworld/game/voxel"
 	"github.com/johanhenriksson/goworld/geometry/box"
 	"github.com/johanhenriksson/goworld/geometry/plane"
+	"github.com/johanhenriksson/goworld/gui"
+	"github.com/johanhenriksson/goworld/gui/node"
+	"github.com/johanhenriksson/goworld/gui/style"
+	"github.com/johanhenriksson/goworld/gui/widget/button"
+	"github.com/johanhenriksson/goworld/gui/widget/window"
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render/color"
@@ -117,6 +124,32 @@ func NewEditor(chk *chunk.T, cam camera.T, gbuffer pass.BufferOutput) T {
 		Rotation(vec3.New(-90, 0, 0)).
 		Active(false).
 		Create()
+
+	e.object.Attach(gui.NewFragment("sidebar", func() node.T {
+		return window.New("editor", window.Props{
+			Position: vec2.New(500, 500),
+			Style: window.Style{
+				MaxWidth: style.Px(500),
+			},
+			Title: "voxel edit",
+			Children: []node.T{
+				button.New("place", button.Props{
+					Text: "Place",
+					OnClick: func(ev mouse.Event) {
+						fmt.Println("click place")
+						e.SelectTool(e.PlaceTool)
+					},
+				}),
+				button.New("erase", button.Props{
+					Text: "Erase",
+					OnClick: func(ev mouse.Event) {
+						fmt.Println("click erase")
+						e.SelectTool(e.EraseTool)
+					},
+				}),
+			},
+		})
+	}))
 
 	e.object.Adopt(e.PlaceTool, e.ReplaceTool, e.EraseTool, e.SampleTool)
 	e.ReplaceTool.SetActive(false)
