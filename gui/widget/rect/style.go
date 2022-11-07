@@ -18,6 +18,7 @@ type Style struct {
 
 	// Display properties
 
+	ZOffset  int
 	Hidden   bool
 	Color    ColorProp
 	Position PositionProp

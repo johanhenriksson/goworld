@@ -60,10 +60,19 @@ func NewGuiPass(backend vulkan.T, prev Pass, meshes cache.MeshCache) *GuiPass {
 				Blend:         attachment.BlendMix,
 			},
 		},
+		DepthAttachment: &attachment.Depth{
+			LoadOp:         vk.AttachmentLoadOpClear,
+			StoreOp:        vk.AttachmentStoreOpDontCare,
+			StencilLoadOp:  vk.AttachmentLoadOpClear,
+			StencilStoreOp: vk.AttachmentStoreOpDontCare,
+			FinalLayout:    vk.ImageLayoutShaderReadOnlyOptimal,
+			Usage:          vk.ImageUsageInputAttachmentBit,
+			ClearDepth:     1,
+		},
 		Subpasses: []renderpass.Subpass{
 			{
 				Name:  "output",
-				Depth: false,
+				Depth: true,
 
 				ColorAttachments: []attachment.Name{"color"},
 			},
@@ -80,8 +89,8 @@ func NewGuiPass(backend vulkan.T, prev Pass, meshes cache.MeshCache) *GuiPass {
 				Type:   widget.Constants{},
 			},
 		},
-		DepthTest:  false,
-		DepthWrite: false,
+		DepthTest:  true,
+		DepthWrite: true,
 	}, &UIDescriptors{
 		Textures: &descriptor.SamplerArray{
 			Stages: vk.ShaderStageFragmentBit,

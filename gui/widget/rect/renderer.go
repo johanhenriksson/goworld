@@ -83,10 +83,11 @@ func (r *renderer) Draw(args widget.DrawArgs, rect T) {
 	// })
 
 	for _, child := range rect.Children() {
-		// calculate child tranasform
+		// calculate child transform
 		// try to fix the position to an actual pixel
 		// pos := vec3.Extend(child.Position().Scaled(args.Viewport.Scale).Floor().Scaled(1/args.Viewport.Scale), -1)
-		pos := vec3.Extend(child.Position(), args.Position.Z-1)
+		z := child.ZOffset()
+		pos := vec3.Extend(child.Position(), args.Position.Z-float32(1+z))
 		transform := mat4.Translate(pos)
 		childArgs := args
 		childArgs.Transform = transform // .Mul(&args.Transform)

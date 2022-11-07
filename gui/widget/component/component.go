@@ -75,6 +75,13 @@ func (c *component) Position() vec2.T {
 	return vec2.Zero
 }
 
+func (c *component) ZOffset() int {
+	if c.wrap != nil {
+		return c.wrap.ZOffset()
+	}
+	return 0
+}
+
 func (c *component) Flex() *flex.Node {
 	if c.wrap != nil {
 		return c.wrap.Flex()

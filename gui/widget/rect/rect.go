@@ -53,6 +53,10 @@ func (f *rect) Draw(args widget.DrawArgs) {
 	f.Renderer.Draw(args, f)
 }
 
+func (f *rect) ZOffset() int {
+	return f.props.Style.ZOffset
+}
+
 func (f *rect) Children() []widget.T { return f.children }
 func (f *rect) SetChildren(c []widget.T) {
 	// replace flex node children
@@ -96,6 +100,10 @@ func (f *rect) Destroy() {
 //
 
 func (f *rect) MouseEvent(e mouse.Event) {
+	if f.props.Style.Hidden {
+		return
+	}
+
 	// because children may have absolute positioning, we must pass the event to all of them.
 	// children always have higher z index, so they have priority
 	for _, frame := range f.children {

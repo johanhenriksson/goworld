@@ -4,6 +4,7 @@ import (
 	"image"
 
 	"github.com/johanhenriksson/goworld/assets"
+	"github.com/johanhenriksson/goworld/math/vec2"
 )
 
 type Ref interface {
@@ -14,31 +15,22 @@ type Ref interface {
 	// todo: This interface is a bit too simple as it does not allow us to pass
 	//       formats, filters and aspects.
 	Load() *image.RGBA
-}
-
-type path_ref struct {
-	path string
+	Size() vec2.T
 }
 
 func PathRef(path string) Ref {
-	return &path_ref{path}
-}
-
-func (r *path_ref) Id() string   { return r.path }
-func (r *path_ref) Version() int { return 1 }
-
-func (r *path_ref) Load() *image.RGBA {
-	img, err := assets.GetImage(r.path)
+	img, err := assets.GetImage(path)
 	if err != nil {
 		panic(err)
 	}
-	return img
+	return ImageRef(path, 1, img)
 }
 
 type image_ref struct {
 	name    string
 	version int
 	img     *image.RGBA
+	size    vec2.T
 }
 
 func ImageRef(name string, version int, img *image.RGBA) Ref {
@@ -46,9 +38,11 @@ func ImageRef(name string, version int, img *image.RGBA) Ref {
 		name:    name,
 		version: version,
 		img:     img,
+		size:    vec2.New(float32(img.Rect.Size().X), float32(img.Rect.Size().Y)),
 	}
 }
 
 func (r *image_ref) Id() string        { return r.name }
 func (r *image_ref) Version() int      { return r.version }
 func (r *image_ref) Load() *image.RGBA { return r.img }
+func (r *image_ref) Size() vec2.T      { return r.size }

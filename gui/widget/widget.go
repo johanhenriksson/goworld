@@ -33,6 +33,8 @@ type T interface {
 	// Position returns the current position of the element relative to its parent
 	Position() vec2.T
 
+	ZOffset() int
+
 	Children() []T
 	SetChildren([]T)
 
@@ -68,6 +70,10 @@ func (w *widget) Flex() *flex.Node {
 func (w *widget) Position() vec2.T {
 	//return vec2.New(w.flex.LayoutGetLeft(), w.flex.LayoutGetTop())
 	return calculatePosition(w.flex)
+}
+
+func (w *widget) ZOffset() int {
+	return 0
 }
 
 func (w *widget) Size() vec2.T {

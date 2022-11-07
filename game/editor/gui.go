@@ -14,7 +14,7 @@ import (
 func ToolButton(tool Tool, editor *editor) node.T {
 	bg := color.DarkGrey
 	if tool == editor.Tool {
-		bg = color.Green
+		bg = color.RGB(0.7, 0.7, 0.7)
 	}
 	return button.New(tool.Name(), button.Props{
 		Text: tool.Name(),
@@ -37,21 +37,25 @@ func ToolButton(tool Tool, editor *editor) node.T {
 }
 
 func NewGUI(editor *editor) gui.Fragment {
-	return gui.NewFragment("sidebar", func() node.T {
-		return rect.New("editor", rect.Props{
-			Children: []node.T{
-				palette.New("palette", palette.Props{
-					Palette: color.DefaultPalette,
-					OnPick: func(clr color.T) {
-						editor.SelectColor(clr)
-					},
-				}),
+	return gui.NewFragment(gui.FragmentArgs{
+		Slot:     "sidebar:content",
+		Position: gui.FragmentLast,
+		Render: func() node.T {
+			return rect.New("editor", rect.Props{
+				Children: []node.T{
+					palette.New("palette", palette.Props{
+						Palette: color.DefaultPalette,
+						OnPick: func(clr color.T) {
+							editor.SelectColor(clr)
+						},
+					}),
 
-				ToolButton(editor.PlaceTool, editor),
-				ToolButton(editor.EraseTool, editor),
-				ToolButton(editor.ReplaceTool, editor),
-				ToolButton(editor.SampleTool, editor),
-			},
-		})
+					ToolButton(editor.PlaceTool, editor),
+					ToolButton(editor.EraseTool, editor),
+					ToolButton(editor.ReplaceTool, editor),
+					ToolButton(editor.SampleTool, editor),
+				},
+			})
+		},
 	})
 }

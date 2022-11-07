@@ -5,7 +5,6 @@ import (
 	"github.com/johanhenriksson/goworld/gui/node"
 	"github.com/johanhenriksson/goworld/gui/style"
 	"github.com/johanhenriksson/goworld/gui/widget"
-	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/render/texture"
 	"github.com/kjk/flex"
 )
@@ -74,7 +73,7 @@ func (i *image) Flex() *flex.Node {
 
 func (i *image) measure(node *flex.Node, width float32, widthMode flex.MeasureMode, height float32, heightMode flex.MeasureMode) flex.Size {
 	// todo: consider constraints
-	size := vec2.One // i.props.Image.Size()
+	size := i.props.Image.Size()
 	aspect := size.X / size.Y
 	return flex.Size{
 		Width:  width,

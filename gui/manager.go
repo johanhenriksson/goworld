@@ -52,12 +52,23 @@ func (m *manager) DrawUI(args widget.DrawArgs, scene object.T) {
 				continue
 			}
 
-			parent := findNodeWithKey(root, fragment.Slot())
-			if parent != nil {
-				parent.SetChildren(append(parent.Children(), fragment.Render()))
-				fragments[idx] = nil // set item to nil to mark it as completed
-				changed = true
+			target := findNodeWithKey(root, fragment.Slot())
+			if target == nil {
+				// target slot is not available (yet)
+				continue
 			}
+
+			switch fragment.Position() {
+			case FragmentFirst:
+				target.SetChildren(append(target.Children(), fragment.Render()))
+			case FragmentLast:
+				target.SetChildren(append([]node.T{fragment.Render()}, target.Children()...))
+			default:
+				panic("invalid fragment position")
+			}
+
+			fragments[idx] = nil // set item to nil to mark it as completed
+			changed = true
 		}
 		if !changed {
 			// iterate until nothing changes, or the fragment map is empty

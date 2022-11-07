@@ -18,14 +18,13 @@ import (
 	"github.com/johanhenriksson/goworld/gui/style"
 	"github.com/johanhenriksson/goworld/gui/widget/image"
 	"github.com/johanhenriksson/goworld/gui/widget/label"
+	"github.com/johanhenriksson/goworld/gui/widget/menu"
 	"github.com/johanhenriksson/goworld/gui/widget/rect"
-	"github.com/johanhenriksson/goworld/gui/widget/todo"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/texture"
 	"github.com/johanhenriksson/goworld/render/vulkan"
-	"github.com/johanhenriksson/goworld/util"
 )
 
 type voxrender struct {
@@ -79,14 +78,6 @@ func main() {
 		func(r renderer.T, scene object.T) {
 			game.CreateScene(scene, r.Buffers())
 
-			// mesh := game.NewChunkMesh(chunk)
-			// chunkobj := object.New("chunk", mesh)
-			// scene.Adopt(chunkobj)
-
-			// create editor
-			// edit := editor.NewEditor(chunk, player.Camera, r.Buffers())
-			// scene.Adopt(edit.Object())
-
 			object.Build("light1").
 				Position(vec3.New(10, 9, 13)).
 				Attach(light.NewPoint(light.PointArgs{
@@ -114,38 +105,73 @@ func main() {
 
 func makeGui(r renderer.T, scene object.T) {
 	scene.Attach(gui.New(func() node.T {
-		return rect.New("sidebar", rect.Props{
-			OnMouseDown: func(e mouse.Event) {},
-			Style: rect.Style{
-				Layout: style.Column{},
-				Width:  style.Pct(15),
-				Height: style.Pct(100),
-				Color:  color.RGBA(0.1, 0.1, 0.11, 0.85),
-			},
+		return rect.New("gui", rect.Props{
 			Children: []node.T{
-				image.New("cat", image.Props{
-					Image: texture.PathRef("textures/kitten.png"),
-					Style: image.Style{
-						Width:  style.Pct(100),
-						Height: style.Auto{},
+				makeMenu(),
+				rect.New("gui-main", rect.Props{
+					Style: rect.Style{
+						Grow: style.Grow(1),
 					},
-				}),
-
-				todo.New("todo", todo.Props{}),
-
-				rect.New("objects", rect.Props{
-					Children: []node.T{ObjectListEntry(scene, 0)},
+					Children: []node.T{
+						makeSidebar(scene, r),
+					},
 				}),
 			},
 		})
 	}))
 }
 
-type ObjectListEntryProps struct{}
+func makeMenu() node.T {
+	return menu.Menu("gui-menu", menu.Props{
+		Style: menu.Style{
+			Color:      color.RGB(0.76, 0.76, 0.76),
+			HoverColor: color.RGB(0.85, 0.85, 0.85),
+			TextColor:  color.Black,
+		},
+	})
+}
 
-func ObjectListEntry(obj object.T, idx int) node.T {
-	key := fmt.Sprintf("object%d:%s", idx, obj.Name())
-	return node.Component(key, ObjectListEntryProps{}, nil, func(ObjectListEntryProps) node.T {
+func makeSidebar(scene object.T, r renderer.T) node.T {
+	return rect.New("sidebar", rect.Props{
+		OnMouseDown: gui.ConsumeMouse,
+		Style: rect.Style{
+			Layout: style.Column{},
+			Width:  style.Pct(15),
+			Height: style.Pct(100),
+			Color:  color.RGBA(0.1, 0.1, 0.11, 0.85),
+		},
+		Children: []node.T{
+			image.New("logo", image.Props{
+				Image: texture.PathRef("textures/shit_logo.png"),
+				Style: image.Style{
+					Width:  style.Pct(100),
+					Height: style.Auto{},
+				},
+			}),
+
+			// content placeholder
+			rect.New("sidebar:content", rect.Props{}),
+
+			ObjectListEntry("scene-graph", ObjectListEntryProps{
+				Object: scene,
+				OnSelect: func(obj object.T) {
+					fmt.Println("selected", obj.Name())
+				},
+			}),
+		},
+	})
+}
+
+type SelectObjectHandler func(object.T)
+
+type ObjectListEntryProps struct {
+	Object   object.T
+	OnSelect SelectObjectHandler
+}
+
+func ObjectListEntry(key string, props ObjectListEntryProps) node.T {
+	return node.Component(key, props, nil, func(props ObjectListEntryProps) node.T {
+		obj := props.Object
 		clr := color.White
 		if !obj.Active() {
 			clr = color.RGB(0.7, 0.7, 0.7)
@@ -157,28 +183,45 @@ func ObjectListEntry(obj object.T, idx int) node.T {
 			icon = "-"
 		}
 
-		title := label.New("title", label.Props{
-			Text: icon + " " + obj.Name(),
-			OnClick: func(e mouse.Event) {
-				setOpen(!open)
+		title := rect.New("title-row", rect.Props{
+			Style: rect.Style{
+				Layout: style.Row{},
 			},
-			Style: label.Style{
-				Color: clr,
-			},
-		})
-
-		var components, children []node.T
-		if open {
-			components = util.MapIdx(obj.Components(), func(cmp object.Component, idx int) node.T {
-				return label.New(fmt.Sprintf("component%d:%s", idx, cmp.Name()), label.Props{
-					Text: cmp.Name(),
+			Children: []node.T{
+				label.New("toggle", label.Props{
+					Text: icon,
+					OnClick: func(e mouse.Event) {
+						setOpen(!open)
+					},
 					Style: label.Style{
 						Color: clr,
 					},
-				})
-			})
+				}),
+				label.New("title", label.Props{
+					Text: obj.Name(),
+					OnClick: func(e mouse.Event) {
+						if props.OnSelect != nil {
+							props.OnSelect(obj)
+						}
+					},
+					Style: label.Style{
+						Color: clr,
+					},
+				}),
+			},
+		})
 
-			children = util.MapIdx(obj.Children(), ObjectListEntry)
+		nodes := make([]node.T, 0, len(obj.Children())+1)
+		nodes = append(nodes, title)
+
+		if open {
+			for idx, obj := range obj.Children() {
+				key := fmt.Sprintf("object%d:%s", idx, obj.Name())
+				nodes = append(nodes, ObjectListEntry(key, ObjectListEntryProps{
+					Object:   obj,
+					OnSelect: props.OnSelect,
+				}))
+			}
 		}
 
 		return rect.New(key, rect.Props{
@@ -187,15 +230,7 @@ func ObjectListEntry(obj object.T, idx int) node.T {
 					Left: 5,
 				},
 			},
-			Children: []node.T{
-				title,
-				rect.New("components", rect.Props{
-					Children: components,
-				}),
-				rect.New("children", rect.Props{
-					Children: children,
-				}),
-			},
+			Children: nodes,
 		})
 	})
 }
