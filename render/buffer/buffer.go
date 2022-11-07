@@ -1,12 +1,16 @@
 package buffer
 
 import (
-	"log"
-
 	"github.com/johanhenriksson/goworld/render/device"
 
 	vk "github.com/vulkan-go/vulkan"
 )
+
+var Nil T = &buffer{
+	ptr:    vk.NullBuffer,
+	device: device.Nil,
+	memory: device.NilMemory,
+}
 
 type T interface {
 	device.Resource[vk.Buffer]
@@ -15,10 +19,10 @@ type T interface {
 	Size() int
 
 	// Read directly from the buffer at the given offset
-	Read(offset int, data any)
+	Read(offset int, data any) int
 
 	// Write directly to the buffer at the given offset
-	Write(offset int, data any)
+	Write(offset int, data any) int
 
 	// Memory returns a handle to the underlying memory block
 	Memory() device.Memory
@@ -117,16 +121,15 @@ func (b *buffer) Memory() device.Memory {
 }
 
 func (b *buffer) Destroy() {
-	log.Printf("destroying buffer %p\n", b.ptr)
-	b.memory.Destroy()
 	vk.DestroyBuffer(b.device.Ptr(), b.ptr, nil)
-	b.ptr = nil
+	b.memory.Destroy()
+	*b = *Nil.(*buffer)
 }
 
-func (b *buffer) Write(offset int, data any) {
-	b.memory.Write(offset, data)
+func (b *buffer) Write(offset int, data any) int {
+	return b.memory.Write(offset, data)
 }
 
-func (b *buffer) Read(offset int, data any) {
-	b.memory.Read(offset, data)
+func (b *buffer) Read(offset int, data any) int {
+	return b.memory.Read(offset, data)
 }

@@ -27,7 +27,7 @@ type meshes struct {
 func NewMeshCache(backend vulkan.T) MeshCache {
 	stagesize := 100 * 1024 // 100k for now
 
-	return New[vertex.Mesh, VkMesh](&meshes{
+	return NewConcurrent[vertex.Mesh, VkMesh](&meshes{
 		backend: backend,
 		worker:  backend.Transferer(),
 
@@ -36,16 +36,17 @@ func NewMeshCache(backend vulkan.T) MeshCache {
 	})
 }
 
-func (m *meshes) ItemName() string {
+func (m *meshes) Name() string {
 	return "Mesh"
 }
 
 func (m *meshes) Instantiate(mesh vertex.Mesh) VkMesh {
-	bufsize := 100 * 1024 // 100k for now
+	vtxSize := mesh.VertexSize() * mesh.Vertices()
+	idxSize := mesh.IndexSize() * mesh.Indices()
 
 	cached := &vkMesh{
-		vertices: buffer.NewRemote(m.backend.Device(), bufsize, vk.BufferUsageVertexBufferBit),
-		indices:  buffer.NewRemote(m.backend.Device(), bufsize, vk.BufferUsageIndexBufferBit),
+		vertices: buffer.NewRemote(m.backend.Device(), vtxSize, vk.BufferUsageVertexBufferBit),
+		indices:  buffer.NewRemote(m.backend.Device(), idxSize, vk.BufferUsageIndexBufferBit),
 	}
 	m.upload(cached, mesh)
 
@@ -56,25 +57,47 @@ func (m *meshes) upload(cached *vkMesh, mesh vertex.Mesh) {
 	// todo: rewrite in a thread safe manner
 	// introduce a queue and a goroutine that periodically runs transfers
 
+	vtxSize := mesh.VertexSize() * mesh.Vertices()
+	if vtxSize > m.vtxstage.Size() {
+		panic("mesh is too large for vertex stage buffer")
+	}
+	idxSize := mesh.IndexSize() * mesh.Indices()
+	if idxSize > m.idxstage.Size() {
+		panic("mesh is too large for index stage buffer")
+	}
+
 	m.vtxstage.Write(0, mesh.VertexData())
 	m.idxstage.Write(0, mesh.IndexData())
 
+	// reallocate buffers if required
+	if cached.vertices.Size() < vtxSize || cached.vertices.Size() > 2*vtxSize {
+		cached.vertices.Destroy()
+		cached.vertices = buffer.NewRemote(m.backend.Device(), vtxSize, vk.BufferUsageVertexBufferBit)
+	}
+	if cached.indices.Size() < idxSize || cached.indices.Size() > 2*idxSize {
+		cached.indices.Destroy()
+		cached.indices = buffer.NewRemote(m.backend.Device(), idxSize, vk.BufferUsageIndexBufferBit)
+	}
+
 	m.worker.Queue(func(cmd command.Buffer) {
-		cmd.CmdCopyBuffer(m.vtxstage, cached.vertices)
-		cmd.CmdCopyBuffer(m.idxstage, cached.indices)
+		cmd.CmdCopyBuffer(m.vtxstage, cached.vertices, vk.BufferCopy{
+			Size: vk.DeviceSize(vtxSize),
+		})
+		cmd.CmdCopyBuffer(m.idxstage, cached.indices, vk.BufferCopy{
+			Size: vk.DeviceSize(idxSize),
+		})
 	})
 	m.worker.Submit(command.SubmitInfo{})
 	m.worker.Wait()
 
-	cached.elements = mesh.Elements()
+	cached.elements = mesh.Indices()
 	cached.idxType = vk.IndexTypeUint16
-	cached.idxOffset = 0
-	cached.vtxOffset = 0
 }
 
-func (m *meshes) Update(cached VkMesh, mesh vertex.Mesh) {
+func (m *meshes) Update(cached VkMesh, mesh vertex.Mesh) VkMesh {
 	vkmesh := cached.(*vkMesh)
 	m.upload(vkmesh, mesh)
+	return vkmesh
 }
 
 func (m *meshes) Delete(vkmesh VkMesh) {
@@ -87,12 +110,10 @@ func (m *meshes) Destroy() {
 }
 
 type vkMesh struct {
-	elements  int
-	vtxOffset int
-	idxOffset int
-	idxType   vk.IndexType
-	vertices  buffer.T
-	indices   buffer.T
+	elements int
+	idxType  vk.IndexType
+	vertices buffer.T
+	indices  buffer.T
 }
 
 func (m *vkMesh) Draw(cmd command.Buffer, index int) {
@@ -100,7 +121,7 @@ func (m *vkMesh) Draw(cmd command.Buffer, index int) {
 	cmd.CmdBindIndexBuffers(m.indices, 0, m.idxType)
 
 	// index of the object properties in the ssbo
-	cmd.CmdDrawIndexed(m.elements, 1, m.idxOffset, m.vtxOffset, index)
+	cmd.CmdDrawIndexed(m.elements, 1, 0, 0, index)
 }
 
 func (m *vkMesh) Destroy() {

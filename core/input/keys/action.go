@@ -19,6 +19,8 @@ func (a Action) String() string {
 		return "Press"
 	case Release:
 		return "Release"
+	case Repeat:
+		return "Repeat"
 	case Char:
 		return "Character"
 	}

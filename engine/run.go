@@ -3,6 +3,9 @@ package engine
 import (
 	"fmt"
 	"log"
+	"runtime"
+	"runtime/debug"
+	"time"
 
 	"github.com/johanhenriksson/goworld/core/camera"
 	"github.com/johanhenriksson/goworld/core/object"
@@ -26,6 +29,9 @@ type Args struct {
 
 func Run(args Args, scenefuncs ...SceneFunc) {
 	log.Println("goworld")
+
+	// disable automatic garbage collection
+	debug.SetGCPercent(-1)
 
 	go RunProfilingServer(6060)
 	interrupt := NewInterrupter()
@@ -72,6 +78,8 @@ func Run(args Args, scenefuncs ...SceneFunc) {
 	// run the render loop
 	log.Println("ready")
 
+	lastFrameTime := time.Now()
+	framesSinceGC := 0
 	for interrupt.Running() && !wnd.ShouldClose() {
 		wnd.Poll()
 
@@ -81,9 +89,6 @@ func Run(args Args, scenefuncs ...SceneFunc) {
 			Height: h,
 			Scale:  wnd.Scale(),
 		}
-
-		// update scene
-		scene.Update(0.016)
 
 		// find the first active camera
 		camera := query.New[camera.T]().First(scene)
@@ -105,6 +110,23 @@ func Run(args Args, scenefuncs ...SceneFunc) {
 
 		renderer.Draw(args, scene)
 		backend.Present()
+
+		// update scene
+		endFrameTime := time.Now()
+		elapsed := endFrameTime.Sub(lastFrameTime)
+		scene.Update(float32(elapsed.Seconds()))
+
+		remainingTime := float32(1.0/60 - time.Since(lastFrameTime).Seconds())
+		lastFrameTime = endFrameTime
+
+		if remainingTime > 0.001 || framesSinceGC > 60 {
+			// manually trigger garbage collection
+			log.Printf("garbage collection pass r=%.2fms f=%d\n", 1000*remainingTime, framesSinceGC)
+			runtime.GC()
+			framesSinceGC = 0
+		} else {
+			framesSinceGC++
+		}
 	}
 }
 

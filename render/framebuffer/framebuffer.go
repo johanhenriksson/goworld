@@ -133,6 +133,6 @@ func (b *framebuf) Destroy() {
 	b.attachments = nil
 
 	vk.DestroyFramebuffer(b.device.Ptr(), b.ptr, nil)
-	b.ptr = nil
-	b.device = nil
+	b.ptr = vk.NullFramebuffer
+	b.device = device.Nil
 }

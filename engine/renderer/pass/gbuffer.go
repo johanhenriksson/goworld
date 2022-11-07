@@ -113,6 +113,10 @@ func (b *gbuffer) pixelOffset(pos vec2.T, img image.T, size int) int {
 }
 
 func (b *gbuffer) SamplePosition(cursor vec2.T) (vec3.T, bool) {
+	if cursor.X < 0 || cursor.Y < 0 || cursor.X > float32(b.width) || cursor.Y > float32(b.height) {
+		return vec3.Zero, false
+	}
+
 	offset := b.pixelOffset(cursor, b.normalBuf, 8)
 	output := make([]uint16, 4)
 	b.positionBuf.Memory().Read(offset, output)
@@ -129,6 +133,10 @@ func (b *gbuffer) SamplePosition(cursor vec2.T) (vec3.T, bool) {
 }
 
 func (b *gbuffer) SampleNormal(cursor vec2.T) (vec3.T, bool) {
+	if cursor.X < 0 || cursor.Y < 0 || cursor.X > float32(b.width) || cursor.Y > float32(b.height) {
+		return vec3.Zero, false
+	}
+
 	offset := b.pixelOffset(cursor, b.normalBuf, 4)
 	var output color.RGBA
 	b.normalBuf.Memory().Read(offset, &output)

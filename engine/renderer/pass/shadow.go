@@ -121,8 +121,13 @@ func (p *shadowpass) Draw(args render.Args, scene object.T) {
 	lightDesc := light.LightDescriptor()
 
 	camera := uniform.Camera{
-		ViewProj: lightDesc.ViewProj,
-		Eye:      light.Transform().Position(),
+		Proj:        lightDesc.Projection,
+		View:        lightDesc.View,
+		ViewProj:    lightDesc.ViewProj,
+		ProjInv:     lightDesc.Projection.Invert(),
+		ViewInv:     lightDesc.View.Invert(),
+		ViewProjInv: lightDesc.ViewProj.Invert(),
+		Eye:         light.Transform().Position(),
 	}
 
 	cmds.Record(func(cmd command.Buffer) {

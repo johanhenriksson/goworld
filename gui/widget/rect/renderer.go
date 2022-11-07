@@ -10,7 +10,6 @@ import (
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/command"
-	"github.com/johanhenriksson/goworld/render/texture"
 
 	vk "github.com/vulkan-go/vulkan"
 )
@@ -22,7 +21,6 @@ type Renderer interface {
 }
 
 type renderer struct {
-	tex     texture.T
 	mesh    quad.T
 	size    vec2.T
 	color   color.T
@@ -39,7 +37,6 @@ func NewRenderer() Renderer {
 }
 
 func (r *renderer) SetSize(size vec2.T) {
-	// log.Println("rect size update", size != r.size, size, r.size)
 	r.invalid = r.invalid || size != r.size
 	r.size = size
 }
@@ -51,11 +48,8 @@ func (r *renderer) SetColor(clr color.T) {
 }
 
 func (r *renderer) Draw(args widget.DrawArgs, rect T) {
-
-	// set correct blending
-	// render.BlendMultiply()
-
 	// render.Scissor(frame.Position(), frame.Size())
+	// defer render.ScissorDisable()
 
 	// dont draw anything if its transparent anyway
 	if r.color.A > 0 {
@@ -72,6 +66,11 @@ func (r *renderer) Draw(args widget.DrawArgs, rect T) {
 		}
 
 		mesh := args.Meshes.Fetch(r.mesh.Mesh())
+		if mesh == nil {
+			// if the mesh is not available, dont draw anything this frame.
+			return
+		}
+
 		args.Commands.Record(func(cmd command.Buffer) {
 			cmd.CmdPushConstant(vk.ShaderStageAll, 0, &widget.Constants{
 				Viewport: args.ViewProj,
@@ -81,6 +80,11 @@ func (r *renderer) Draw(args widget.DrawArgs, rect T) {
 			mesh.Draw(cmd, 0)
 		})
 	}
+
+	// args.Commands.Record(func(cmd command.Buffer) {
+	// 	pos := args.Transform.TransformPoint(vec3.Zero)
+	// 	cmd.CmdSetScissor(int(pos.X), int(pos.Y), int(r.size.X), int(r.size.Y))
+	// })
 
 	for _, child := range rect.Children() {
 		// calculate child tranasform
@@ -95,10 +99,4 @@ func (r *renderer) Draw(args widget.DrawArgs, rect T) {
 		// draw child
 		child.Draw(childArgs)
 	}
-
-	// render.ScissorDisable()
-}
-
-func (r *renderer) Destroy() {
-	//  todo: clean up mesh, texture
 }

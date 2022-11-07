@@ -1,36 +1,50 @@
 package label
 
 import (
+	"github.com/johanhenriksson/goworld/core/input/keys"
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/core/window"
 	"github.com/johanhenriksson/goworld/gui/node"
 	"github.com/johanhenriksson/goworld/gui/style"
 	"github.com/johanhenriksson/goworld/gui/widget"
+	"github.com/johanhenriksson/goworld/math"
 	"github.com/johanhenriksson/goworld/math/vec2"
+
 	"github.com/kjk/flex"
+	"golang.org/x/exp/utf8string"
 )
+
+type ChangeCallback func(string)
 
 type T interface {
 	widget.T
 	style.FontWidget
+	keys.Handler
 
 	Text() string
+	Cursor() int
 }
 
 type Props struct {
-	Style   Style
-	Text    string
-	OnClick mouse.Callback
+	Style    Style
+	Text     string
+	OnClick  mouse.Callback
+	OnChange ChangeCallback
+
+	OnKeyUp   keys.Callback
+	OnKeyDown keys.Callback
+	OnKeyChar keys.Callback
 }
 
 type label struct {
 	widget.T
 	Renderer
 
-	props Props
-	size  vec2.T
-	scale float32
-	state style.State
+	props  Props
+	scale  float32
+	state  style.State
+	cursor int
+	text   string
 }
 
 func New(key string, props Props) node.T {
@@ -42,12 +56,18 @@ func new(key string, props Props) T {
 		T:        widget.New(key),
 		Renderer: NewRenderer(),
 		scale:    1,
+		cursor:   utf8string.NewString(props.Text).RuneCount(),
+		text:     props.Text,
+		props: Props{
+			Text: "\x00",
+		},
 	}
 	lbl.Update(props)
 	return lbl
 }
 
-func (l *label) Size() vec2.T { return l.T.Size() }
+func (l *label) Size() vec2.T   { return l.T.Size() }
+func (l *label) editable() bool { return l.props.OnChange != nil }
 
 func (l *label) Props() any { return l.props }
 func (l *label) Update(props any) {
@@ -62,14 +82,37 @@ func (l *label) Update(props any) {
 	}
 
 	if textChanged {
-		l.Renderer.SetText(new.Text)
+		l.setText(new.Text)
 		l.Flex().MarkDirty()
 	}
+}
+
+func (l *label) setText(text string) {
+	str := utf8string.NewString(text)
+
+	if text != l.text {
+		// new text is different from what we had before,
+		// move cursor to end of line
+		l.cursor = str.RuneCount()
+	}
+
+	l.cursor = math.Min(l.cursor, str.RuneCount())
+	l.text = text
+
+	if l.editable() {
+		// we also need to know if it has focus
+		text = str.Slice(0, l.cursor) + "_" + str.Slice(l.cursor, str.RuneCount())
+		// text = l.props.Text[:l.cursor] + "_" + l.props.Text[l.cursor:]
+	}
+
+	// update renderer
+	l.Renderer.SetText(text)
 }
 
 // prop accessors
 
 func (l *label) Text() string { return l.props.Text }
+func (l *label) Cursor() int  { return l.cursor }
 
 func (l *label) Draw(args widget.DrawArgs) {
 	if l.props.Style.Hidden {
@@ -92,10 +135,6 @@ func (l *label) Flex() *flex.Node {
 	return node
 }
 
-func (l *label) Destroy() {
-	l.Renderer.Destroy()
-}
-
 //
 // Events
 //
@@ -112,16 +151,88 @@ func (l *label) MouseEvent(e mouse.Event) {
 			l.props.Style.Apply(l, l.state)
 		}
 
-		// click
+		// click event
+		// todo: separate into mouse down/up?
 		if e.Action() == mouse.Press && l.props.OnClick != nil {
 			l.props.OnClick(e)
 			e.Consume()
+		}
+
+		// take input keyboard focus
+		if e.Action() == mouse.Press || e.Action() == mouse.Release {
+			if l.editable() {
+				keys.Focus(l)
+				e.Consume()
+			}
 		}
 	} else {
 		// hover end
 		if l.state.Hovered {
 			l.state.Hovered = false
 			l.props.Style.Apply(l, l.state)
+		}
+	}
+}
+
+func (l *label) KeyEvent(e keys.Event) {
+	//
+	// key events
+	//
+
+	if l.props.OnKeyUp != nil && e.Action() == keys.Release {
+		l.props.OnKeyUp(e)
+	}
+	if l.props.OnKeyDown != nil && e.Action() == keys.Press {
+		l.props.OnKeyDown(e)
+	}
+	if l.props.OnKeyChar != nil && e.Action() == keys.Char {
+		l.props.OnKeyChar(e)
+	}
+
+	//
+	// text state handling
+	//
+
+	if l.props.OnChange == nil {
+		return
+	}
+	if e.Action() == keys.Char {
+		str := utf8string.NewString(l.text)
+		l.text = str.Slice(0, l.cursor) + string(e.Character()) + str.Slice(l.cursor, str.RuneCount())
+		l.cursor = math.Min(l.cursor+1, utf8string.NewString(l.text).RuneCount())
+		l.props.OnChange(l.text)
+	}
+	if e.Action() == keys.Press || e.Action() == keys.Repeat {
+		switch e.Code() {
+		case keys.Backspace:
+			str := utf8string.NewString(l.text)
+			if l.cursor > 0 {
+				l.cursor--
+				l.text = str.Slice(0, l.cursor) + str.Slice(l.cursor+1, str.RuneCount())
+				l.props.OnChange(l.text)
+			}
+
+		case keys.Delete:
+			str := utf8string.NewString(l.text)
+			if l.cursor < str.RuneCount() {
+				l.text = str.Slice(0, l.cursor) + str.Slice(l.cursor+1, str.RuneCount())
+				l.props.OnChange(l.text)
+			}
+
+		case keys.LeftArrow:
+			l.cursor = math.Clamp(l.cursor-1, 0, len(l.text))
+			l.setText(l.text)
+
+		case keys.RightArrow:
+			l.cursor = math.Clamp(l.cursor+1, 0, len(l.text))
+			l.setText(l.text)
+
+		case keys.U:
+			// ctrl+u clears text
+			if e.Modifier(keys.Ctrl) {
+				l.setText("")
+				l.props.OnChange("")
+			}
 		}
 	}
 }

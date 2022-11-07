@@ -10,7 +10,6 @@ import (
 
 type Renderer[W T] interface {
 	Draw(DrawArgs, W)
-	Destroy()
 }
 
 type DrawArgs struct {

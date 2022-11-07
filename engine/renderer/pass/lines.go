@@ -160,8 +160,6 @@ func (p *LinePass) Draw(args render.Args, scene object.T) {
 }
 
 func (p *LinePass) DrawLines(cmds command.Recorder, index int, args render.Args, mesh mesh.T) error {
-	args = args.Apply(mesh.Transform().World())
-
 	vkmesh := p.meshes.Fetch(mesh.Mesh())
 	if vkmesh == nil {
 		log.Println("line mesh", mesh.Mesh().Id(), "is nil")

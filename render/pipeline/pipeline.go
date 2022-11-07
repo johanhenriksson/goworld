@@ -209,10 +209,8 @@ func (p *pipeline) Layout() Layout {
 }
 
 func (p *pipeline) Destroy() {
-	if p.ptr != nil {
-		vk.DestroyPipeline(p.device.Ptr(), p.ptr, nil)
-		p.ptr = nil
-	}
+	vk.DestroyPipeline(p.device.Ptr(), p.ptr, nil)
+	p.ptr = nil
 }
 
 func pointersToVertexAttributes(ptrs vertex.Pointers, binding int) []vk.VertexInputAttributeDescription {

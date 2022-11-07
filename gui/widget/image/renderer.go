@@ -5,7 +5,10 @@ import (
 	"github.com/johanhenriksson/goworld/gui/widget"
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/render/color"
+	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/texture"
+
+	vk "github.com/vulkan-go/vulkan"
 )
 
 type Renderer interface {
@@ -24,7 +27,7 @@ type renderer struct {
 
 	invalid bool
 	size    vec2.T
-	mesh    quad.T
+	quad    quad.T
 	uvs     quad.UV
 }
 
@@ -34,6 +37,7 @@ func NewRenderer() Renderer {
 		tex:     nil,
 		uvs:     quad.DefaultUVs,
 		invalid: true,
+		quad:    quad.New(quad.Props{}),
 	}
 }
 
@@ -64,12 +68,9 @@ func (r *renderer) SetInvert(invert bool) {
 }
 
 func (r *renderer) Draw(args widget.DrawArgs, image T) {
-	if r.mesh == nil {
-		r.mesh = quad.New(quad.Props{
-			UVs:   r.uvs,
-			Size:  r.size,
-			Color: color.White,
-		})
+	if r.tex == nil {
+		// nothing to render
+		return
 	}
 
 	r.SetSize(image.Size())
@@ -80,7 +81,7 @@ func (r *renderer) Draw(args widget.DrawArgs, image T) {
 			uvs = uvs.Inverted()
 		}
 
-		r.mesh.Update(quad.Props{
+		r.quad.Update(quad.Props{
 			UVs:   uvs,
 			Size:  r.size,
 			Color: r.tint,
@@ -88,13 +89,19 @@ func (r *renderer) Draw(args widget.DrawArgs, image T) {
 		r.invalid = false
 	}
 
-	// set correct blending
-	// perhaps this belongs somewhere else
-	// render.BlendMultiply()
+	// fetch resources
+	tex := args.Textures.Fetch(r.tex)
+	mesh := args.Meshes.Fetch(r.quad.Mesh())
+	if mesh == nil {
+		return
+	}
 
-	// r.mesh.Draw(args)
-}
-
-func (r *renderer) Destroy() {
-
+	args.Commands.Record(func(cmd command.Buffer) {
+		cmd.CmdPushConstant(vk.ShaderStageAll, 0, &widget.Constants{
+			Viewport: args.ViewProj,
+			Model:    args.Transform,
+			Texture:  tex,
+		})
+		mesh.Draw(cmd, 0)
+	})
 }

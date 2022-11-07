@@ -253,7 +253,7 @@ func (e *editor) KeyEvent(ev keys.Event) {
 	}
 
 	m := 1
-	if ev.Modifier()&keys.Shift == keys.Shift {
+	if ev.Modifier(keys.Shift) {
 		m = -1
 	}
 

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/johanhenriksson/goworld/core/input/mouse"
@@ -14,14 +15,53 @@ import (
 	"github.com/johanhenriksson/goworld/game"
 	"github.com/johanhenriksson/goworld/game/editor"
 	"github.com/johanhenriksson/goworld/gui"
+	"github.com/johanhenriksson/goworld/gui/hooks"
 	"github.com/johanhenriksson/goworld/gui/node"
 	"github.com/johanhenriksson/goworld/gui/style"
+	"github.com/johanhenriksson/goworld/gui/widget/button"
+	"github.com/johanhenriksson/goworld/gui/widget/image"
+	"github.com/johanhenriksson/goworld/gui/widget/label"
 	"github.com/johanhenriksson/goworld/gui/widget/palette"
 	"github.com/johanhenriksson/goworld/gui/widget/rect"
+	"github.com/johanhenriksson/goworld/gui/widget/textbox"
+	"github.com/johanhenriksson/goworld/gui/widget/todo"
 	"github.com/johanhenriksson/goworld/math/vec3"
+	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/color"
+	"github.com/johanhenriksson/goworld/render/texture"
 	"github.com/johanhenriksson/goworld/render/vulkan"
 )
+
+type voxrender struct {
+	renderer.T
+	voxelCache cache.MeshCache
+}
+
+func NewVoxelRenderer(backend vulkan.T) renderer.T {
+	voxelCache := cache.NewSharedMeshCache(backend, 16_777_216)
+	return &voxrender{
+		voxelCache: voxelCache,
+		T: renderer.New(
+			backend,
+			[]pass.DeferredSubpass{
+				game.NewVoxelSubpass(backend, voxelCache),
+			},
+			[]pass.DeferredSubpass{
+				game.NewVoxelShadowpass(backend, voxelCache),
+			},
+		),
+	}
+}
+
+func (r *voxrender) Draw(args render.Args, scene object.T) {
+	r.T.Draw(args, scene)
+	r.voxelCache.Tick()
+}
+
+func (r *voxrender) Destroy() {
+	r.T.Destroy()
+	r.voxelCache.Destroy()
+}
 
 func main() {
 	defer func() {
@@ -36,13 +76,7 @@ func main() {
 		Height:  1200,
 		Title:   "goworld: vulkan",
 		Renderer: func() renderer.T {
-			// todo: this causes a resource leak - destroy it somehow
-			voxelCache := cache.NewMeshCache(backend)
-			return renderer.New(
-				backend,
-				[]pass.DeferredSubpass{game.NewVoxelSubpass(backend, voxelCache)},
-				[]pass.DeferredSubpass{game.NewVoxelShadowpass(backend, voxelCache)},
-			)
+			return NewVoxelRenderer(backend)
 		},
 	},
 		makeGui,
@@ -84,13 +118,14 @@ func main() {
 
 func makeGui(r renderer.T, scene object.T) {
 	scene.Attach(gui.New(func() node.T {
+
 		return rect.New("sidebar", rect.Props{
 			OnMouseDown: func(e mouse.Event) {},
 			Style: rect.Style{
 				Layout: style.Column{},
 				Width:  style.Pct(15),
 				Height: style.Pct(100),
-				Color:  color.Black.WithAlpha(0.5),
+				Color:  color.RGBA(0.1, 0.1, 0.11, 0.85),
 			},
 			Children: []node.T{
 				palette.New("palette", palette.Props{
@@ -104,7 +139,110 @@ func makeGui(r renderer.T, scene object.T) {
 						editor.SelectColor(clr)
 					},
 				}),
+				image.New("cat", image.Props{
+					Image: texture.PathRef("textures/kitten.png"),
+					Style: image.Style{
+						Width:  style.Pct(100),
+						Height: style.Auto{},
+					},
+				}),
+				textbox.New("testybox", textbox.Props{
+					Style: textbox.Style{
+						Bg: rect.Style{
+							Color:   color.White,
+							Padding: style.Px(4),
+						},
+						Text: label.Style{
+							Color: color.Black,
+							Width: style.Pct(100),
+							Grow:  style.Grow(1),
+						},
+					},
+				}),
+
+				NewCounter("counter", CounterProps{}),
+				todo.New("todo", todo.Props{}),
+
+				rect.New("objects", rect.Props{
+					Children: []node.T{ObjectListEntry(0, scene)},
+				}),
 			},
 		})
 	}))
+}
+
+func ObjectListEntry(idx int, obj object.T) node.T {
+	children := make([]node.T, len(obj.Children())+len(obj.Components())+1)
+	clr := color.White
+	if !obj.Active() {
+		clr = color.RGB(0.7, 0.7, 0.7)
+	}
+	children[0] = label.New("title", label.Props{
+		Text: "+ " + obj.Name(),
+		Style: label.Style{
+			Color: clr,
+		},
+	})
+	i := 1
+	for j, cmp := range obj.Components() {
+		children[i] = label.New(fmt.Sprintf("component%d:%s", j, cmp.Name()), label.Props{
+			Text: cmp.Name(),
+			Style: label.Style{
+				Color: clr,
+			},
+		})
+		i++
+	}
+	for j, child := range obj.Children() {
+		children[i] = ObjectListEntry(j, child)
+		i++
+	}
+	return rect.New(fmt.Sprintf("object%d:%s", idx, obj.Name()), rect.Props{
+		Style: rect.Style{
+			Padding: style.Rect{
+				Left: 5,
+			},
+		},
+		Children: children,
+	})
+}
+
+type CounterProps struct{}
+
+var ButtonStyle = button.Style{
+	Bg: rect.Style{
+		Padding: style.Px(3),
+		Color:   style.RGB(1, 0, 0),
+	},
+}
+
+func NewCounter(key string, props CounterProps) node.T {
+	return node.Component(key, props, nil, func(props CounterProps) node.T {
+		count, setCount := hooks.UseState(0)
+
+		return rect.New(key, rect.Props{
+			Style: rect.Style{
+				Layout: style.Row{},
+			},
+			Children: []node.T{
+				button.New("minus", button.Props{
+					Text:  "-",
+					Style: ButtonStyle,
+					OnClick: func(e mouse.Event) {
+						setCount(count - 1)
+					},
+				}),
+				label.New("display", label.Props{
+					Text: fmt.Sprintf("%d", count),
+				}),
+				button.New("plus", button.Props{
+					Text:  "+",
+					Style: ButtonStyle,
+					OnClick: func(e mouse.Event) {
+						setCount(count + 1)
+					},
+				}),
+			},
+		})
+	})
 }

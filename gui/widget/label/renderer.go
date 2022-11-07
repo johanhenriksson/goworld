@@ -34,7 +34,9 @@ type Renderer interface {
 }
 
 type renderer struct {
+	key        string
 	text       string
+	version    int
 	size       int
 	font       font.T
 	color      color.T
@@ -51,6 +53,7 @@ type renderer struct {
 
 func NewRenderer() Renderer {
 	return &renderer{
+		key:            fmt.Sprintf("label:%s", util.NewUUID(8)),
 		size:           DefaultSize,
 		color:          DefaultColor,
 		lineHeight:     DefaultLineHeight,
@@ -65,6 +68,7 @@ func NewRenderer() Renderer {
 
 func (r *renderer) SetText(text string) {
 	r.invalidTexture = r.invalidTexture || text != r.text
+	r.invalidMesh = r.invalidMesh || text != r.text
 	r.text = text
 }
 
@@ -119,7 +123,8 @@ func (r *renderer) Draw(args widget.DrawArgs, label T) {
 		r.bounds = r.font.Measure(r.text, fargs)
 
 		img := r.font.Render(r.text, fargs)
-		r.tex = texture.ImageRef(fmt.Sprintf("label:%s", util.NewUUID(8)), img)
+		r.version++
+		r.tex = texture.ImageRef(r.key, r.version, img)
 
 		r.invalidTexture = false
 	}
@@ -133,9 +138,6 @@ func (r *renderer) Draw(args widget.DrawArgs, label T) {
 		r.invalidMesh = false
 	}
 
-	// set correct blending
-	// render.BlendMultiply()
-
 	// resize mesh if needed
 	// if !label.Size().ApproxEqual(r.size) {
 	// 	fmt.Println("label size", label.Size())
@@ -148,11 +150,12 @@ func (r *renderer) Draw(args widget.DrawArgs, label T) {
 	// we can center the label on the mesh by modifying the uvs
 	// scale := label.Size().Div(r.bounds)
 
-	// how to get the texture into the uniform array?
-	// we also need to be able to deal with descriptor array limits
-
 	tex := args.Textures.Fetch(r.tex)
 	mesh := args.Meshes.Fetch(r.mesh.Mesh())
+	if mesh == nil {
+		return
+	}
+
 	args.Commands.Record(func(cmd command.Buffer) {
 		cmd.CmdPushConstant(vk.ShaderStageAll, 0, &widget.Constants{
 			Viewport: args.ViewProj,
@@ -163,24 +166,13 @@ func (r *renderer) Draw(args widget.DrawArgs, label T) {
 	})
 }
 
-func (r *renderer) Destroy() {
-	if r.mesh != nil {
-		// r.mesh.Destroy()
-		r.mesh = nil
-	}
-	if r.tex != nil {
-		// todo: delete texture
-		r.tex = nil
-	}
-}
-
 func (r *renderer) Measure(node *flex.Node, width float32, widthMode flex.MeasureMode, height float32, heightMode flex.MeasureMode) flex.Size {
 	size := r.font.Measure(r.text, font.Args{
 		LineHeight: r.lineHeight,
 		Color:      color.White,
 	})
 
-	size = size.Scaled(1 / r.scale)
+	// size = size.Scaled(1 / r.scale)
 
 	return flex.Size{
 		Width:  size.X,

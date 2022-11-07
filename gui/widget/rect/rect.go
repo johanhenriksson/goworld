@@ -1,7 +1,6 @@
 package rect
 
 import (
-	"github.com/kjk/flex"
 	"log"
 
 	"github.com/johanhenriksson/goworld/core/input/mouse"
@@ -58,13 +57,15 @@ func (f *rect) Draw(args widget.DrawArgs) {
 
 func (f *rect) Children() []widget.T { return f.children }
 func (f *rect) SetChildren(c []widget.T) {
-	f.children = c
-	nodes := make([]*flex.Node, len(c))
-	for i, child := range c {
-		nodes[i] = child.Flex()
-		child.Flex().Parent = f.Flex()
+	// replace flex node children
+	for _, c := range f.children {
+		f.Flex().RemoveChild(c.Flex())
 	}
-	f.Flex().Children = nodes
+	for i, child := range c {
+		f.Flex().InsertChild(child.Flex(), i)
+	}
+	// update child array
+	f.children = c
 }
 
 //
@@ -88,7 +89,6 @@ func (f *rect) Update(p any) {
 
 func (f *rect) Destroy() {
 	f.T.Destroy()
-	f.Renderer.Destroy()
 
 	for _, child := range f.children {
 		child.Destroy()

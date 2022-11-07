@@ -7,6 +7,13 @@ import (
 	vk "github.com/vulkan-go/vulkan"
 )
 
+// Represents vk.NullImage
+var Nil T = &image{
+	ptr:    vk.NullImage,
+	device: device.Nil,
+	memory: device.NilMemory,
+}
+
 type T interface {
 	device.Resource[vk.Image]
 
@@ -114,11 +121,11 @@ func New(device device.T, args Args) (T, error) {
 	}, nil
 }
 
-func Wrap(device device.T, ptr vk.Image) T {
+func Wrap(dev device.T, ptr vk.Image) T {
 	return &image{
 		ptr:    ptr,
-		device: device,
-		memory: nil,
+		device: dev,
+		memory: device.NilMemory,
 	}
 }
 
@@ -135,13 +142,15 @@ func (i *image) Height() int       { return i.Args.Height }
 func (i *image) Format() vk.Format { return i.Args.Format }
 
 func (i *image) Destroy() {
-	if i.memory != nil {
+	if i.memory != device.NilMemory {
 		i.memory.Destroy()
-		if i.ptr != nil {
+		if i.ptr != vk.NullImage {
 			vk.DestroyImage(i.device.Ptr(), i.ptr, nil)
-			i.ptr = nil
 		}
 	}
+	i.ptr = vk.NullImage
+	i.memory = device.NilMemory
+	i.device = device.Nil
 }
 
 func (i *image) View(format vk.Format, mask vk.ImageAspectFlags) (View, error) {

@@ -21,7 +21,7 @@ func NewCache(backend vulkan.T) Cache {
 	})
 }
 
-func (m *matcache) ItemName() string {
+func (m *matcache) Name() string {
 	return "Material"
 }
 
@@ -29,7 +29,8 @@ func (m *matcache) Instantiate(ref Ref) Standard {
 	return nil
 }
 
-func (m *matcache) Update(cached Standard, ref Ref) {
+func (m *matcache) Update(cached Standard, ref Ref) Standard {
+	return cached
 }
 
 func (m *matcache) Delete(mat Standard) {
