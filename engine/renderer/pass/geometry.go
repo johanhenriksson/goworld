@@ -271,6 +271,9 @@ func (p *GeometryPass) Draw(args render.Args, scene object.T) {
 		})
 	}
 
+	// todo: add a submit here
+	// the geometry pass can run in parallel with shadows
+
 	//
 	// lighting pass
 	//
@@ -295,10 +298,6 @@ func (p *GeometryPass) Draw(args render.Args, scene object.T) {
 		}
 	}
 
-	//
-	// todo: forward subpasses
-	//
-
 	cmds.Record(func(cmd command.Buffer) {
 		cmd.CmdEndRenderPass()
 	})
@@ -306,7 +305,7 @@ func (p *GeometryPass) Draw(args render.Args, scene object.T) {
 	worker := p.backend.Worker(ctx.Index)
 	worker.Queue(cmds.Apply)
 	worker.Submit(command.SubmitInfo{
-		Signal: []sync.Semaphore{p.completed, p.copyReady},
+		Signal: []sync.Semaphore{p.completed},
 		Wait: []command.Wait{
 			{
 				Semaphore: p.shadows.Completed(),
@@ -317,15 +316,15 @@ func (p *GeometryPass) Draw(args render.Args, scene object.T) {
 
 	// issue Geometry Buffer copy, so that gbuffers may be read back.
 	// if more data gbuffer is to be drawn later, we need to move this to a later stage
-	worker.Queue(p.GeometryBuffer.CopyBuffers())
-	worker.Submit(command.SubmitInfo{
-		Wait: []command.Wait{
-			{
-				Semaphore: p.copyReady,
-				Mask:      vk.PipelineStageTopOfPipeBit,
-			},
-		},
-	})
+	// worker.Queue(p.GeometryBuffer.CopyBuffers())
+	// worker.Submit(command.SubmitInfo{
+	// 	Wait: []command.Wait{
+	// 		{
+	// 			Semaphore: p.copyReady,
+	// 			Mask:      vk.PipelineStageTopOfPipeBit,
+	// 		},
+	// 	},
+	// })
 }
 
 func (p *GeometryPass) DrawLight(cmds command.Recorder, args render.Args, lit light.T) error {

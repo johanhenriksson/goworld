@@ -19,7 +19,7 @@ type Props struct {
 }
 
 func New(key string, props Props) node.T {
-	return node.Component(key, props, nil, render)
+	return node.Component(key, props, render)
 }
 
 func render(props Props) node.T {

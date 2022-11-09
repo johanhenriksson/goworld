@@ -125,6 +125,7 @@ func NewEditor(chk *chunk.T, cam camera.T, gbuffer pass.BufferOutput) T {
 	e.SelectTool(e.PlaceTool)
 
 	e.object.Attach(NewGUI(e))
+	e.object.Attach(NewMenu(e))
 
 	return e
 }

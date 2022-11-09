@@ -31,11 +31,9 @@ type LinePass struct {
 	material  material.Instance[*LineDescriptors]
 	geometry  DeferredPass
 	pass      renderpass.T
-	output    Pass
 	completed sync.Semaphore
 	fbufs     framebuffer.Array
-
-	shadows ShadowPass
+	wait      sync.Semaphore
 }
 
 type LineDescriptors struct {
@@ -44,14 +42,14 @@ type LineDescriptors struct {
 	Objects *descriptor.Storage[mat4.T]
 }
 
-func NewLinePass(backend vulkan.T, meshes cache.MeshCache, output Pass, geometry DeferredPass) *LinePass {
+func NewLinePass(backend vulkan.T, meshes cache.MeshCache, output Pass, geometry DeferredPass, wait sync.Semaphore) *LinePass {
 	log.Println("create line pass")
 
 	p := &LinePass{
 		backend:   backend,
 		meshes:    meshes,
 		geometry:  geometry,
-		output:    output,
+		wait:      wait,
 		completed: sync.NewSemaphore(backend.Device()),
 	}
 
@@ -152,7 +150,7 @@ func (p *LinePass) Draw(args render.Args, scene object.T) {
 		Signal: []sync.Semaphore{p.completed},
 		Wait: []command.Wait{
 			{
-				Semaphore: p.output.Completed(),
+				Semaphore: p.wait,
 				Mask:      vk.PipelineStageColorAttachmentOutputBit,
 			},
 		},

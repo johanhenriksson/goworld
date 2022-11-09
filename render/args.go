@@ -17,6 +17,7 @@ type Args struct {
 	View       mat4.T
 	Transform  mat4.T
 	Position   vec3.T
+	Forward    vec3.T
 	Viewport   Screen
 	Clear      color.T
 	Context    swapchain.Context

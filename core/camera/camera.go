@@ -66,7 +66,7 @@ func (cam *camera) Unproject(pos vec3.T) vec3.T {
 func (cam *camera) Update(dt float32) {
 }
 
-func (cam *camera) PreDraw(args render.Args) error {
+func (cam *camera) PreDraw(args render.Args, scene object.T) error {
 	// update view & view-projection matrices
 	aspect := float32(args.Viewport.Width) / float32(args.Viewport.Height)
 	cam.proj = mat4.PerspectiveVK(cam.fov, aspect, cam.near, cam.far)

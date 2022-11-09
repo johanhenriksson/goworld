@@ -1,6 +1,7 @@
 package game
 
 import (
+	"github.com/johanhenriksson/goworld/core/collider"
 	"github.com/johanhenriksson/goworld/core/light"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/engine/renderer/pass"
@@ -22,6 +23,8 @@ func CreateScene(scene object.T, gbuffer pass.BufferOutput) {
 	world := NewWorld(31481234, 16)
 	chonk := world.AddChunk(0, 0)
 
+	chonk2 := world.AddChunk(1, 0)
+
 	// first person controls
 	player := NewPlayer(vec3.New(0, 20, -11), func(player *Player, target vec3.T) (bool, vec3.T) {
 		height := world.HeightAt(target)
@@ -37,6 +40,17 @@ func CreateScene(scene object.T, gbuffer pass.BufferOutput) {
 	object.Build("Chunk").
 		Attach(chunk.NewMesh(chonk)).
 		Attach(editor.NewEditor(chonk, player.Camera, gbuffer)).
+		Attach(collider.NewBox(collider.Box{Center: vec3.New(8, 8, 8), Size: vec3.New(16, 16, 16)})).
+		Parent(scene).
+		Create()
+
+	object.Build("Chunk2").
+		Attach(chunk.NewMesh(chonk2)).
+		Position(vec3.New(16, 0, 0)).
+		Attach(collider.NewBox(collider.Box{
+			Center: vec3.New(8, 8, 8),
+			Size:   vec3.New(16, 16, 16),
+		})).
 		Parent(scene).
 		Create()
 

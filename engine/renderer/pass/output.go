@@ -24,7 +24,8 @@ type OutputPass struct {
 	meshes   cache.MeshCache
 	textures cache.TextureCache
 	material material.T[*OutputDescriptors]
-	geometry DeferredPass
+	geometry GeometryBuffer
+	wait     sync.Semaphore
 
 	quad      vertex.Mesh
 	desc      []material.Instance[*OutputDescriptors]
@@ -39,12 +40,13 @@ type OutputDescriptors struct {
 	Output *descriptor.Sampler
 }
 
-func NewOutputPass(backend vulkan.T, meshes cache.MeshCache, textures cache.TextureCache, geometry DeferredPass) *OutputPass {
+func NewOutputPass(backend vulkan.T, meshes cache.MeshCache, textures cache.TextureCache, geometry GeometryBuffer, wait sync.Semaphore) *OutputPass {
 	p := &OutputPass{
 		backend:   backend,
 		meshes:    meshes,
 		textures:  textures,
 		geometry:  geometry,
+		wait:      wait,
 		completed: sync.NewSemaphore(backend.Device()),
 	}
 
@@ -128,7 +130,7 @@ func (p *OutputPass) Draw(args render.Args, scene object.T) {
 		Signal: []sync.Semaphore{p.completed},
 		Wait: []command.Wait{
 			{
-				Semaphore: p.geometry.Completed(),
+				Semaphore: p.wait,
 				Mask:      vk.PipelineStageColorAttachmentOutputBit,
 			},
 		},

@@ -58,11 +58,12 @@ func (m *manager) DrawUI(args widget.DrawArgs, scene object.T) {
 				continue
 			}
 
+			frag := fragment.Render()
 			switch fragment.Position() {
-			case FragmentFirst:
-				target.SetChildren(append(target.Children(), fragment.Render()))
 			case FragmentLast:
-				target.SetChildren(append([]node.T{fragment.Render()}, target.Children()...))
+				target.SetChildren(append(target.Children(), frag))
+			case FragmentFirst:
+				target.SetChildren(append([]node.T{frag}, target.Children()...))
 			default:
 				panic("invalid fragment position")
 			}

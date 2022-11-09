@@ -2,6 +2,13 @@ package node
 
 import "fmt"
 
+func Expand(new T) {
+	new.Render(new.Hooks())
+	for _, child := range new.Children() {
+		Expand(child)
+	}
+}
+
 func Reconcile(target, new T) T {
 	// no source tree - just go with the new one
 	if target == nil {

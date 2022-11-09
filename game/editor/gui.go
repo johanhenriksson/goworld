@@ -6,6 +6,7 @@ import (
 	"github.com/johanhenriksson/goworld/gui/node"
 	"github.com/johanhenriksson/goworld/gui/style"
 	"github.com/johanhenriksson/goworld/gui/widget/button"
+	"github.com/johanhenriksson/goworld/gui/widget/menu"
 	"github.com/johanhenriksson/goworld/gui/widget/palette"
 	"github.com/johanhenriksson/goworld/gui/widget/rect"
 	"github.com/johanhenriksson/goworld/render/color"
@@ -54,6 +55,49 @@ func NewGUI(editor *editor) gui.Fragment {
 					ToolButton(editor.EraseTool, editor),
 					ToolButton(editor.ReplaceTool, editor),
 					ToolButton(editor.SampleTool, editor),
+				},
+			})
+		},
+	})
+}
+
+func NewMenu(editor *editor) gui.Fragment {
+	return gui.NewFragment(gui.FragmentArgs{
+		Slot:     "main-menu",
+		Position: gui.FragmentLast,
+		Render: func() node.T {
+			return menu.Item("editor-menu", menu.ItemProps{
+				Key:      "menu-editor",
+				Title:    "Editor",
+				Style:    menu.DefaultStyle,
+				OpenDown: true,
+				Items: []menu.ItemProps{
+					{
+						Key:   "tool",
+						Title: "Tool",
+						Items: []menu.ItemProps{
+							{
+								Key:     "tool-place",
+								Title:   "Place",
+								OnClick: func(e mouse.Event) { editor.SelectTool(editor.PlaceTool) },
+							},
+							{
+								Key:     "tool-erase",
+								Title:   "Erase",
+								OnClick: func(e mouse.Event) { editor.SelectTool(editor.EraseTool) },
+							},
+							{
+								Key:     "tool-replace",
+								Title:   "Replace",
+								OnClick: func(e mouse.Event) { editor.SelectTool(editor.ReplaceTool) },
+							},
+							{
+								Key:     "tool-sample",
+								Title:   "Sample",
+								OnClick: func(e mouse.Event) { editor.SelectTool(editor.SampleTool) },
+							},
+						},
+					},
 				},
 			})
 		},

@@ -17,6 +17,8 @@ type T interface {
 	SetChildren([]T)
 	Hooks() *hooks.State
 
+	Inject(T)
+
 	Update(any)
 	Render(*hooks.State)
 	Destroy()
@@ -33,6 +35,7 @@ type node[K widget.T, P any] struct {
 	widget   widget.T
 	children []T
 	hooks    hooks.State
+	injected []T
 }
 
 func Builtin[K widget.T, P any](key string, props P, children []T, hydrate func(string, P) K) T {
@@ -46,12 +49,11 @@ func Builtin[K widget.T, P any](key string, props P, children []T, hydrate func(
 	}
 }
 
-func Component[P any](key string, props P, children []T, render func(P) T) T {
+func Component[P any](key string, props P, render func(P) T) T {
 	return &node[component.T, P]{
-		key:      key,
-		props:    props,
-		kind:     reflect.TypeOf(props),
-		children: children,
+		key:   key,
+		props: props,
+		kind:  reflect.TypeOf(props),
 		hydrate: func(key string, props P) component.T {
 			return component.New(key, props)
 		},
@@ -79,6 +81,10 @@ func (n *node[K, P]) SetChildren(children []T) {
 	n.children = children
 }
 
+func (n *node[K, P]) Inject(node T) {
+	n.injected = append(n.injected, node)
+}
+
 func (n *node[K, P]) Hydrated() bool {
 	return n.widget != nil
 }
@@ -94,9 +100,7 @@ func (n *node[K, P]) Render(hook *hooks.State) {
 	hooks.Enable(hook)
 	defer hooks.Disable()
 
-	n.children = []T{
-		n.render(n.props),
-	}
+	n.children = append(n.injected, n.render(n.props))
 }
 
 func (n *node[K, P]) Update(props any) {
@@ -126,9 +130,12 @@ func (n *node[K, P]) Hydrate() widget.T {
 	}
 
 	// render children
-	children := make([]widget.T, len(n.children))
-	for i, child := range n.children {
-		children[i] = child.Hydrate()
+	children := make([]widget.T, 0, len(n.children)+len(n.injected))
+	for _, child := range n.injected {
+		children = append(children, child.Hydrate())
+	}
+	for _, child := range n.children {
+		children = append(children, child.Hydrate())
 	}
 	n.widget.SetChildren(children)
 

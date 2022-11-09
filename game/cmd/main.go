@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/core/light"
@@ -12,6 +13,7 @@ import (
 	"github.com/johanhenriksson/goworld/engine/renderer"
 	"github.com/johanhenriksson/goworld/engine/renderer/pass"
 	"github.com/johanhenriksson/goworld/game"
+	"github.com/johanhenriksson/goworld/geometry/gizmo/mover"
 	"github.com/johanhenriksson/goworld/gui"
 	"github.com/johanhenriksson/goworld/gui/hooks"
 	"github.com/johanhenriksson/goworld/gui/node"
@@ -78,6 +80,10 @@ func main() {
 		func(r renderer.T, scene object.T) {
 			game.CreateScene(scene, r.Buffers())
 
+			mv := mover.New(mover.Args{})
+			mv.Transform().SetPosition(vec3.New(1, 10, 1))
+			scene.Adopt(mv)
+
 			object.Build("light1").
 				Position(vec3.New(10, 9, 13)).
 				Attach(light.NewPoint(light.PointArgs{
@@ -128,6 +134,36 @@ func makeMenu() node.T {
 			HoverColor: color.RGB(0.85, 0.85, 0.85),
 			TextColor:  color.Black,
 		},
+
+		Items: []menu.ItemProps{
+			{
+				Key:   "menu-file",
+				Title: "File",
+				Items: []menu.ItemProps{
+					{
+						Key:   "file-exit",
+						Title: "Exit",
+						OnClick: func(e mouse.Event) {
+							os.Exit(0)
+						},
+					},
+				},
+			},
+			{
+				Key:   "menu-edit",
+				Title: "Edit",
+				Items: []menu.ItemProps{
+					{
+						Key:   "edit-undo",
+						Title: "Undo",
+					},
+					{
+						Key:   "edit-redo",
+						Title: "Redo",
+					},
+				},
+			},
+		},
 	})
 }
 
@@ -170,7 +206,7 @@ type ObjectListEntryProps struct {
 }
 
 func ObjectListEntry(key string, props ObjectListEntryProps) node.T {
-	return node.Component(key, props, nil, func(props ObjectListEntryProps) node.T {
+	return node.Component(key, props, func(props ObjectListEntryProps) node.T {
 		obj := props.Object
 		clr := color.White
 		if !obj.Active() {

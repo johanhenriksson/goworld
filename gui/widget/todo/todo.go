@@ -60,7 +60,7 @@ var addButtonStyle = button.Style{
 type Props struct{}
 
 func New(key string, props Props) node.T {
-	return node.Component(key, props, nil, func(props Props) node.T {
+	return node.Component(key, props, func(props Props) node.T {
 		items, setItems := hooks.UseState([]string{})
 		itemTitle, setItemTitle := hooks.UseState("")
 		addColor := color.Green

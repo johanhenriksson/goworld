@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/johanhenriksson/goworld/core/camera"
+	"github.com/johanhenriksson/goworld/core/collider"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/core/object/query"
 	"github.com/johanhenriksson/goworld/core/window"
@@ -70,6 +71,7 @@ func Run(args Args, scenefuncs ...SceneFunc) {
 
 	// create scene
 	scene := object.New("Scene")
+	scene.Attach(collider.NewManager())
 	wnd.SetInputHandler(scene)
 
 	for _, scenefunc := range scenefuncs {
@@ -140,6 +142,7 @@ func createRenderArgs(screen render.Screen, cam camera.T) render.Args {
 		Transform:  mat4.Ident(),
 		Position:   cam.Transform().WorldPosition(),
 		Clear:      cam.ClearColor(),
+		Forward:    cam.Transform().Forward(),
 		Viewport:   screen,
 	}
 }

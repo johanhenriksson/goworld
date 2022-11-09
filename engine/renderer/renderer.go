@@ -18,6 +18,7 @@ type vkrenderer struct {
 	Pre      *pass.PrePass
 	Shadows  pass.ShadowPass
 	Geometry *pass.GeometryPass
+	Forward  *pass.ForwardPass
 	Output   *pass.OutputPass
 	Lines    *pass.LinePass
 	GUI      *pass.GuiPass
@@ -37,8 +38,9 @@ func New(backend vulkan.T, geometryPasses, shadowPasses []pass.DeferredSubpass) 
 	r.Pre = &pass.PrePass{}
 	r.Shadows = pass.NewShadowPass(backend, r.meshes, shadowPasses)
 	r.Geometry = pass.NewGeometryPass(backend, r.meshes, r.textures, r.Shadows, geometryPasses)
-	r.Output = pass.NewOutputPass(backend, r.meshes, r.textures, r.Geometry)
-	r.Lines = pass.NewLinePass(backend, r.meshes, r.Output, r.Geometry)
+	r.Forward = pass.NewForwardPass(backend, r.meshes, r.textures, r.Geometry.GeometryBuffer, r.Geometry.Completed())
+	r.Output = pass.NewOutputPass(backend, r.meshes, r.textures, r.Geometry, r.Forward.Completed())
+	r.Lines = pass.NewLinePass(backend, r.meshes, r.Output, r.Geometry, r.Output.Completed())
 	r.GUI = pass.NewGuiPass(backend, r.Lines, r.meshes)
 
 	return r
@@ -59,6 +61,7 @@ func (r *vkrenderer) Draw(args render.Args, scene object.T) {
 	r.Pre.Draw(args, scene)
 	r.Shadows.Draw(args, scene)
 	r.Geometry.Draw(args, scene)
+	r.Forward.Draw(args, scene)
 	r.Output.Draw(args, scene)
 	r.Lines.Draw(args, scene)
 	r.GUI.Draw(args, scene)
@@ -75,6 +78,7 @@ func (r *vkrenderer) Destroy() {
 	r.Lines.Destroy()
 	r.Shadows.Destroy()
 	r.Geometry.Destroy()
+	r.Forward.Destroy()
 	r.Output.Destroy()
 	r.meshes.Destroy()
 	r.textures.Destroy()
