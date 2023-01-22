@@ -11,22 +11,22 @@ import (
 	"github.com/johanhenriksson/goworld/core/collider"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/core/object/query"
-	"github.com/johanhenriksson/goworld/core/window"
 	"github.com/johanhenriksson/goworld/engine/renderer"
 	"github.com/johanhenriksson/goworld/geometry/gizmo/mover"
 	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
+	"github.com/johanhenriksson/goworld/render/vulkan"
 )
 
 type SceneFunc func(renderer.T, object.T)
-type RendererFunc func() renderer.T
+type RendererFunc func(vulkan.T) renderer.T
 
 type Args struct {
 	Title    string
 	Width    int
 	Height   int
-	Backend  window.GlfwBackend
+	Backend  vulkan.T
 	Renderer RendererFunc
 }
 
@@ -50,7 +50,7 @@ func Run(args Args, scenefuncs ...SceneFunc) {
 	}
 
 	// create a window
-	wnd, err := window.New(backend, window.Args{
+	wnd, err := backend.Window(vulkan.WindowArgs{
 		Title:  args.Title,
 		Width:  args.Width,
 		Height: args.Height,
@@ -64,7 +64,7 @@ func Run(args Args, scenefuncs ...SceneFunc) {
 		if renderer != nil {
 			renderer.Destroy()
 		}
-		renderer = args.Renderer()
+		renderer = args.Renderer(backend)
 	}
 	recreateRenderer()
 	defer func() {

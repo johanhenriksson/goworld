@@ -2,7 +2,6 @@ package style
 
 import (
 	"github.com/johanhenriksson/goworld/render/color"
-	"github.com/johanhenriksson/goworld/render/font"
 	"github.com/kjk/flex"
 )
 
@@ -32,7 +31,7 @@ type PositionValueProp interface {
 }
 
 type FontWidget interface {
-	SetFont(font.T)
+	SetFont(string)
 	SetFontSize(int)
 	SetFontColor(color.T)
 	SetLineHeight(float32)

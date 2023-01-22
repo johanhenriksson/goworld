@@ -3,7 +3,6 @@ package label
 import (
 	"github.com/johanhenriksson/goworld/core/input/keys"
 	"github.com/johanhenriksson/goworld/core/input/mouse"
-	"github.com/johanhenriksson/goworld/core/window"
 	"github.com/johanhenriksson/goworld/gui/node"
 	"github.com/johanhenriksson/goworld/gui/style"
 	"github.com/johanhenriksson/goworld/gui/widget"
@@ -119,10 +118,10 @@ func (l *label) Draw(args widget.DrawArgs) {
 		return
 	}
 
-	if window.Scale != l.scale {
+	if args.Viewport.Scale != l.scale {
 		// ui scale has changed
 		l.Flex().MarkDirty()
-		l.scale = window.Scale
+		l.scale = args.Viewport.Scale
 	}
 
 	l.T.Draw(args)

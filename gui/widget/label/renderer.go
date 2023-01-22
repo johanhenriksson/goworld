@@ -17,6 +17,7 @@ import (
 	vk "github.com/vulkan-go/vulkan"
 )
 
+var DefaultFont = "fonts/SourceCodeProRegular.ttf"
 var DefaultSize = 12
 var DefaultColor = color.White
 var DefaultLineHeight = float32(1.0)
@@ -25,7 +26,7 @@ type Renderer interface {
 	widget.Renderer[T]
 
 	SetText(string)
-	SetFont(font.T)
+	SetFont(string)
 	SetFontSize(int)
 	SetFontColor(color.T)
 	SetLineHeight(float32)
@@ -38,10 +39,12 @@ type renderer struct {
 	text       string
 	version    int
 	size       int
+	fontName   string
 	font       font.T
 	color      color.T
 	lineHeight float32
 
+	invalidFont    bool
 	invalidTexture bool
 	invalidMesh    bool
 	scale          float32
@@ -55,9 +58,10 @@ func NewRenderer() Renderer {
 	return &renderer{
 		key:            fmt.Sprintf("label:%s", util.NewUUID(8)),
 		size:           DefaultSize,
+		fontName:       DefaultFont,
 		color:          DefaultColor,
 		lineHeight:     DefaultLineHeight,
-		font:           assets.DefaultFont(),
+		invalidFont:    true,
 		invalidTexture: true,
 		invalidMesh:    true,
 		scale:          2,
@@ -72,13 +76,11 @@ func (r *renderer) SetText(text string) {
 	r.text = text
 }
 
-func (r *renderer) SetFont(fnt font.T) {
-	if fnt == nil {
-		fnt = assets.DefaultFont()
-	}
-	r.invalidTexture = r.invalidTexture || fnt != r.font
-	r.invalidMesh = r.invalidMesh || fnt != r.font
-	r.font = fnt
+func (r *renderer) SetFont(name string) {
+	r.invalidFont = name != r.fontName
+	r.invalidTexture = r.invalidTexture || r.invalidFont
+	r.invalidMesh = r.invalidMesh || r.invalidFont
+	r.fontName = r.fontName
 }
 
 func (r *renderer) SetFontSize(size int) {
@@ -112,6 +114,11 @@ func (r *renderer) Draw(args widget.DrawArgs, label T) {
 
 	if r.text == "" {
 		return
+	}
+
+	if r.invalidFont {
+		r.font = assets.GetFont(r.fontName, r.size, r.scale)
+		r.invalidFont = false
 	}
 
 	if r.invalidTexture {
@@ -167,6 +174,10 @@ func (r *renderer) Draw(args widget.DrawArgs, label T) {
 }
 
 func (r *renderer) Measure(node *flex.Node, width float32, widthMode flex.MeasureMode, height float32, heightMode flex.MeasureMode) flex.Size {
+	if r.font == nil {
+		return flex.Size{}
+	}
+
 	size := r.font.Measure(r.text, font.Args{
 		LineHeight: r.lineHeight,
 		Color:      color.White,

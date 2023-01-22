@@ -1,9 +1,8 @@
 package vulkan
 
 import (
-	"log"
+	"fmt"
 
-	"github.com/johanhenriksson/goworld/core/window"
 	"github.com/johanhenriksson/goworld/render/cache"
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/descriptor"
@@ -11,13 +10,10 @@ import (
 	"github.com/johanhenriksson/goworld/render/swapchain"
 	"github.com/johanhenriksson/goworld/render/vulkan/instance"
 
-	"github.com/go-gl/glfw/v3.3/glfw"
 	vk "github.com/vulkan-go/vulkan"
 )
 
 type T interface {
-	window.GlfwBackend
-
 	Instance() instance.T
 	Device() device.T
 	Swapchain() swapchain.T
@@ -25,6 +21,10 @@ type T interface {
 	Width() int
 	Height() int
 	Destroy()
+	Window(WindowArgs) (Window, error)
+
+	Aquire() (swapchain.Context, error)
+	Present()
 
 	Worker(int) command.Worker
 	Transferer() command.Worker
@@ -35,27 +35,54 @@ type T interface {
 
 type backend struct {
 	appName   string
-	deviceIdx int
 	frames    int
 	width     int
 	height    int
 	instance  instance.T
 	device    device.T
-	surface   vk.Surface
 	swapchain swapchain.T
 
 	transfer command.Worker
 	workers  []command.Worker
+	windows  []Window
 
 	meshes   cache.MeshCache
 	textures cache.TextureCache
 }
 
 func New(appName string, deviceIndex int) T {
+	// create instance * device
+	frames := 3
+	instance := instance.New(appName)
+	device := instance.GetDevice(deviceIndex)
+
+	// transfer worker
+	transfer := command.NewWorker(device, vk.QueueFlags(vk.QueueTransferBit))
+
+	// per frame graphics workers
+	workers := make([]command.Worker, frames)
+	for i := 0; i < frames; i++ {
+		workers[i] = command.NewWorker(device, vk.QueueFlags(vk.QueueGraphicsBit))
+	}
+
+	// init global descriptor pool
+	descriptor.InitGlobalPool(device)
+
+	// init caches
+	meshes := cache.NewMeshCache(device, transfer)
+	textures := cache.NewTextureCache(device, transfer)
+
 	return &backend{
-		appName:   appName,
-		deviceIdx: deviceIndex,
-		frames:    3,
+		appName: appName,
+		frames:  frames,
+		windows: []Window{},
+
+		device:   device,
+		instance: instance,
+		transfer: transfer,
+		workers:  workers,
+		meshes:   meshes,
+		textures: textures,
 	}
 }
 
@@ -77,56 +104,15 @@ func (b *backend) Worker(frame int) command.Worker {
 	return b.workers[frame]
 }
 
-func (b *backend) GlfwHints(args window.Args) []window.GlfwHint {
-	return []window.GlfwHint{
-		{Hint: glfw.ClientAPI, Value: glfw.NoAPI},
-	}
-}
-
-func (b *backend) GlfwSetup(w *glfw.Window, args window.Args) error {
-	// initialize vulkan
-	vk.SetGetInstanceProcAddr(glfw.GetVulkanGetInstanceProcAddress())
-	if err := vk.Init(); err != nil {
-		panic(err)
-	}
-
-	log.Println("window required extensions:", w.GetRequiredInstanceExtensions())
-
-	// create instance * device
-	b.instance = instance.New(b.appName)
-	b.device = b.instance.GetDevice(b.deviceIdx)
-
-	// surface
-	surfPtr, err := w.CreateWindowSurface(b.instance.Ptr(), nil)
+func (b *backend) Window(args WindowArgs) (Window, error) {
+	w, err := NewWindow(b, args)
 	if err != nil {
-		panic(err)
+		return nil, fmt.Errorf("failed to create window: %w", err)
 	}
 
-	b.surface = vk.SurfaceFromPointer(surfPtr)
-	surfaceFormat := b.device.GetSurfaceFormats(b.surface)[0]
-
-	b.width, b.height = w.GetFramebufferSize()
-
-	// allocate swapchain
-	b.swapchain = swapchain.New(b.device, b.frames, b.width, b.height, b.surface, surfaceFormat)
-
-	// transfer worker
-	b.transfer = command.NewWorker(b.device, vk.QueueFlags(vk.QueueTransferBit))
-
-	// per frame graphics workers
-	b.workers = make([]command.Worker, b.frames)
-	for i := 0; i < b.frames; i++ {
-		b.workers[i] = command.NewWorker(b.device, vk.QueueFlags(vk.QueueGraphicsBit))
-	}
-
-	// init global descriptor pool
-	descriptor.InitGlobalPool(b.device)
-
-	// init caches
-	b.meshes = cache.NewMeshCache(b.device, b.transfer)
-	b.textures = cache.NewTextureCache(b.device, b.transfer)
-
-	return nil
+	b.swapchain = w.Swapchain()
+	b.width, b.height = w.Size()
+	return w, nil
 }
 
 func (b *backend) Destroy() {
@@ -142,13 +128,8 @@ func (b *backend) Destroy() {
 	}
 	b.transfer.Destroy()
 
-	if b.swapchain != nil {
-		b.swapchain.Destroy()
-		b.swapchain = nil
-	}
-	if b.surface != nil {
-		vk.DestroySurface(b.instance.Ptr(), b.surface, nil)
-		b.surface = nil
+	for _, wnd := range b.windows {
+		wnd.Destroy()
 	}
 	if b.device != nil {
 		b.device.Destroy()

@@ -11,7 +11,6 @@ import (
 	// image codecs
 	_ "image/png"
 
-	"github.com/johanhenriksson/goworld/core/window"
 	"github.com/johanhenriksson/goworld/render/font"
 )
 
@@ -58,7 +57,7 @@ func GetImage(file string) (*image.RGBA, error) {
 	return rgba, nil
 }
 
-func GetFont(name string, size int) font.T {
+func GetFont(name string, size int, scale float32) font.T {
 	key := fmt.Sprintf("%s-%d", name, size)
 	if font, exists := cache.Fonts[key]; exists {
 		return font
@@ -71,17 +70,13 @@ func GetFont(name string, size int) font.T {
 		panic(err)
 	}
 
-	font, err := font.Load(file, int(float32(size)*window.Scale))
+	font, err := font.Load(file, int(float32(size)*scale))
 	if err != nil {
 		panic(err)
 	}
 
 	cache.Fonts[key] = font
 	return font
-}
-
-func DefaultFont() font.T {
-	return GetFont("fonts/SourceCodeProRegular.ttf", 12)
 }
 
 func FindFileInParents(name, path string) string {

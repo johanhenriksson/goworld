@@ -1,8 +1,6 @@
 package style
 
-import (
-	"github.com/johanhenriksson/goworld/assets"
-)
+import ()
 
 type Font struct {
 	Name string
@@ -10,7 +8,6 @@ type Font struct {
 }
 
 func (f Font) ApplyFont(fw FontWidget) {
-	font := assets.GetFont(f.Name, f.Size)
-	fw.SetFont(font)
+	fw.SetFont(f.Name)
 	fw.SetFontSize(f.Size)
 }

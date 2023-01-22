@@ -43,16 +43,12 @@ func main() {
 		log.Println("Clean exit")
 	}()
 
-	backend := vulkan.New("goworld: vulkan", 0)
-
 	engine.Run(engine.Args{
-		Backend: backend,
-		Width:   1600,
-		Height:  1200,
-		Title:   "goworld: vulkan",
-		Renderer: func() renderer.T {
-			return NewVoxelRenderer(backend)
-		},
+		Backend:  vulkan.New("goworld: vulkan", 0),
+		Width:    1600,
+		Height:   1200,
+		Title:    "goworld: vulkan",
+		Renderer: NewVoxelRenderer,
 	},
 		makeGui,
 		func(r renderer.T, scene object.T) {

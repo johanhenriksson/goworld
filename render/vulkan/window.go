@@ -1,28 +1,21 @@
-package window
+package vulkan
 
 import (
 	"fmt"
 	"log"
-	"runtime"
 
 	"github.com/johanhenriksson/goworld/core/input"
 	"github.com/johanhenriksson/goworld/core/input/keys"
 	"github.com/johanhenriksson/goworld/core/input/mouse"
+	"github.com/johanhenriksson/goworld/render/swapchain"
 
 	"github.com/go-gl/glfw/v3.3/glfw"
+	vk "github.com/vulkan-go/vulkan"
 )
 
-func init() {
-	// glfw event handling must run on the main OS thread
-	runtime.LockOSThread()
+type ResizeHandler func(width, height int)
 
-	// init glfw
-	if err := glfw.Init(); err != nil {
-		panic(err)
-	}
-}
-
-type T interface {
+type Window interface {
 	Title() string
 	SetTitle(string)
 
@@ -31,35 +24,39 @@ type T interface {
 
 	Poll()
 	ShouldClose() bool
+	Destroy()
 
 	SetInputHandler(input.Handler)
+	// SetResizeHandler(ResizeHandler)
+
+	Swapchain() swapchain.T
 }
 
-type Args struct {
-	Title        string
-	Width        int
-	Height       int
-	Vsync        bool
-	Debug        bool
-	InputHandler input.Handler
+type WindowArgs struct {
+	Title         string
+	Width         int
+	Height        int
+	Vsync         bool
+	Debug         bool
+	InputHandler  input.Handler
+	ResizeHandler ResizeHandler
 }
 
 type window struct {
 	wnd     *glfw.Window
-	backend GlfwBackend
+	backend T
 	mouse   mouse.MouseWrapper
 
 	title         string
 	width, height int
 	scale         float32
+	swap          swapchain.T
+	surface       vk.Surface
 }
 
-func New(backend GlfwBackend, args Args) (T, error) {
-
+func NewWindow(backend T, args WindowArgs) (Window, error) {
 	// window creation hints.
-	for _, hint := range backend.GlfwHints(args) {
-		glfw.WindowHint(hint.Hint, hint.Value)
-	}
+	glfw.WindowHint(glfw.ClientAPI, glfw.NoAPI)
 
 	// create a new GLFW window
 	wnd, err := glfw.CreateWindow(args.Width, args.Height, args.Title, nil, nil)
@@ -74,9 +71,20 @@ func New(backend GlfwBackend, args Args) (T, error) {
 
 	// retrieve window & framebuffer size
 	width, height := wnd.GetFramebufferSize()
-	Scale = scale
 	log.Printf("Created window with size %dx%d and content scale %.0f%%\n",
 		width, height, scale*100)
+
+	// create window surface
+	surfPtr, err := wnd.CreateWindowSurface(backend.Instance().Ptr(), nil)
+	if err != nil {
+		panic(err)
+	}
+
+	surface := vk.SurfaceFromPointer(surfPtr)
+	surfaceFormat := backend.Device().GetSurfaceFormats(surface)[0]
+
+	// allocate swapchain
+	swap := swapchain.New(backend.Device(), backend.Frames(), width, height, surface, surfaceFormat)
 
 	window := &window{
 		wnd:     wnd,
@@ -85,11 +93,8 @@ func New(backend GlfwBackend, args Args) (T, error) {
 		width:   width,
 		height:  height,
 		scale:   scale,
-	}
-
-	// setup glfw window for use with the current backend
-	if err := backend.GlfwSetup(wnd, args); err != nil {
-		return nil, err
+		swap:    swap,
+		surface: surface,
 	}
 
 	// attach default input handler, if provided
@@ -98,7 +103,9 @@ func New(backend GlfwBackend, args Args) (T, error) {
 	}
 
 	// set resize callback
-	wnd.SetFramebufferSizeCallback(window.onResize)
+	wnd.SetFramebufferSizeCallback(func(w *glfw.Window, width, height int) {
+		args.ResizeHandler(width, height)
+	})
 
 	return window, nil
 }
@@ -112,6 +119,8 @@ func (w *window) Scale() float32    { return w.scale }
 func (w *window) ShouldClose() bool { return w.wnd.ShouldClose() }
 func (w *window) Title() string     { return w.title }
 
+func (w *window) Swapchain() swapchain.T { return w.swap }
+
 func (w *window) SetInputHandler(handler input.Handler) {
 	// keyboard events
 	w.wnd.SetKeyCallback(keys.KeyCallbackWrapper(handler))
@@ -124,12 +133,12 @@ func (w *window) SetInputHandler(handler input.Handler) {
 	w.wnd.SetScrollCallback(w.mouse.Scroll)
 }
 
-func (w *window) onResize(_ *glfw.Window, width, height int) {
-	w.width, w.height = w.wnd.GetFramebufferSize()
-	w.backend.Resize(w.width, w.height)
-}
-
 func (w *window) SetTitle(title string) {
 	w.wnd.SetTitle(title)
 	w.title = title
+}
+
+func (w *window) Destroy() {
+	w.swap.Destroy()
+	vk.DestroySurface(w.backend.Instance().Ptr(), w.surface, nil)
 }
