@@ -4,7 +4,6 @@ import (
 	"github.com/johanhenriksson/goworld/core/mesh"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/core/object/query"
-	"github.com/johanhenriksson/goworld/engine/cache"
 	"github.com/johanhenriksson/goworld/engine/renderer/uniform"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/command"
@@ -23,8 +22,6 @@ import (
 type ForwardPass struct {
 	GeometryBuffer
 
-	meshes    cache.MeshCache
-	textures  cache.TextureCache
 	backend   vulkan.T
 	pass      renderpass.T
 	fbuf      framebuffer.T
@@ -35,8 +32,6 @@ type ForwardPass struct {
 
 func NewForwardPass(
 	backend vulkan.T,
-	meshes cache.MeshCache,
-	textures cache.TextureCache,
 	gbuffer GeometryBuffer,
 	wait sync.Semaphore,
 ) *ForwardPass {
@@ -117,8 +112,6 @@ func NewForwardPass(
 	return &ForwardPass{
 		GeometryBuffer: gbuffer,
 		backend:        backend,
-		meshes:         meshes,
-		textures:       textures,
 		pass:           pass,
 		completed:      sync.NewSemaphore(backend.Device()),
 
@@ -157,7 +150,7 @@ func (p *ForwardPass) Draw(args render.Args, scene object.T) {
 			Where(isDrawForward).
 			Collect(scene)
 		for index, mesh := range forwardMeshes {
-			vkmesh := p.meshes.Fetch(mesh.Mesh())
+			vkmesh := p.backend.Meshes().Fetch(mesh.Mesh())
 			if vkmesh == nil {
 				continue
 			}

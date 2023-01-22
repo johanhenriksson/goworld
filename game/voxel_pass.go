@@ -6,7 +6,6 @@ import (
 	"github.com/johanhenriksson/goworld/core/mesh"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/core/object/query"
-	"github.com/johanhenriksson/goworld/engine/cache"
 	"github.com/johanhenriksson/goworld/engine/renderer/pass"
 	"github.com/johanhenriksson/goworld/engine/renderer/uniform"
 	"github.com/johanhenriksson/goworld/game/voxel"
@@ -26,22 +25,19 @@ import (
 type voxelpass struct {
 	backend vulkan.T
 	mat     material.Standard
-	meshes  cache.MeshCache
 	shader  string
 }
 
-func NewVoxelSubpass(backend vulkan.T, meshes cache.MeshCache) pass.DeferredSubpass {
+func NewVoxelSubpass(backend vulkan.T) pass.DeferredSubpass {
 	return &voxelpass{
 		backend: backend,
-		meshes:  meshes,
 		shader:  "vk/color_f",
 	}
 }
 
-func NewVoxelShadowpass(backend vulkan.T, meshes cache.MeshCache) pass.DeferredSubpass {
+func NewVoxelShadowpass(backend vulkan.T) pass.DeferredSubpass {
 	return &voxelpass{
 		backend: backend,
-		meshes:  meshes,
 		shader:  "vk/shadow",
 	}
 }
@@ -77,7 +73,7 @@ func (p *voxelpass) Record(cmds command.Recorder, camera uniform.Camera, scene o
 }
 
 func (p *voxelpass) DrawDeferred(cmds command.Recorder, index int, mesh mesh.T, mat material.Standard) error {
-	vkmesh := p.meshes.Fetch(mesh.Mesh())
+	vkmesh := p.backend.Meshes().Fetch(mesh.Mesh())
 	if vkmesh == nil {
 		fmt.Println("mesh is nil")
 		return nil

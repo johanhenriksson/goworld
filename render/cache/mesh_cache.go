@@ -3,8 +3,8 @@ package cache
 import (
 	"github.com/johanhenriksson/goworld/render/buffer"
 	"github.com/johanhenriksson/goworld/render/command"
+	"github.com/johanhenriksson/goworld/render/device"
 	"github.com/johanhenriksson/goworld/render/vertex"
-	"github.com/johanhenriksson/goworld/render/vulkan"
 
 	vk "github.com/vulkan-go/vulkan"
 )
@@ -18,21 +18,21 @@ type VkMesh interface {
 
 // mesh cache backend
 type meshes struct {
-	backend  vulkan.T
+	device   device.T
 	worker   command.Worker
 	idxstage buffer.T
 	vtxstage buffer.T
 }
 
-func NewMeshCache(backend vulkan.T) MeshCache {
+func NewMeshCache(dev device.T, transferer command.Worker) MeshCache {
 	stagesize := 100 * 1024 // 100k for now
 
-	return NewConcurrent[vertex.Mesh, VkMesh](&meshes{
-		backend: backend,
-		worker:  backend.Transferer(),
+	return New[vertex.Mesh, VkMesh](&meshes{
+		device: dev,
+		worker: transferer,
 
-		vtxstage: buffer.NewShared(backend.Device(), stagesize),
-		idxstage: buffer.NewShared(backend.Device(), stagesize),
+		vtxstage: buffer.NewShared(dev, stagesize),
+		idxstage: buffer.NewShared(dev, stagesize),
 	})
 }
 
@@ -45,8 +45,8 @@ func (m *meshes) Instantiate(mesh vertex.Mesh) VkMesh {
 	idxSize := mesh.IndexSize() * mesh.Indices()
 
 	cached := &vkMesh{
-		vertices: buffer.NewRemote(m.backend.Device(), vtxSize, vk.BufferUsageVertexBufferBit),
-		indices:  buffer.NewRemote(m.backend.Device(), idxSize, vk.BufferUsageIndexBufferBit),
+		vertices: buffer.NewRemote(m.device, vtxSize, vk.BufferUsageVertexBufferBit),
+		indices:  buffer.NewRemote(m.device, idxSize, vk.BufferUsageIndexBufferBit),
 	}
 	m.upload(cached, mesh)
 
@@ -72,11 +72,11 @@ func (m *meshes) upload(cached *vkMesh, mesh vertex.Mesh) {
 	// reallocate buffers if required
 	if cached.vertices.Size() < vtxSize || cached.vertices.Size() > 2*vtxSize {
 		cached.vertices.Destroy()
-		cached.vertices = buffer.NewRemote(m.backend.Device(), vtxSize, vk.BufferUsageVertexBufferBit)
+		cached.vertices = buffer.NewRemote(m.device, vtxSize, vk.BufferUsageVertexBufferBit)
 	}
 	if cached.indices.Size() < idxSize || cached.indices.Size() > 2*idxSize {
 		cached.indices.Destroy()
-		cached.indices = buffer.NewRemote(m.backend.Device(), idxSize, vk.BufferUsageIndexBufferBit)
+		cached.indices = buffer.NewRemote(m.device, idxSize, vk.BufferUsageIndexBufferBit)
 	}
 
 	m.worker.Queue(func(cmd command.Buffer) {

@@ -7,7 +7,6 @@ import (
 	"github.com/johanhenriksson/goworld/core/mesh"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/core/object/query"
-	"github.com/johanhenriksson/goworld/engine/cache"
 	"github.com/johanhenriksson/goworld/engine/renderer/uniform"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/color"
@@ -50,8 +49,6 @@ type GeometryDescriptors struct {
 type GeometryPass struct {
 	GeometryBuffer
 
-	meshes    cache.MeshCache
-	textures  cache.TextureCache
 	quad      vertex.Mesh
 	backend   vulkan.T
 	pass      renderpass.T
@@ -73,8 +70,6 @@ type DeferredSubpass interface {
 
 func NewGeometryPass(
 	backend vulkan.T,
-	meshes cache.MeshCache,
-	textures cache.TextureCache,
 	shadows ShadowPass,
 	passes []DeferredSubpass,
 ) *GeometryPass {
@@ -217,14 +212,12 @@ func NewGeometryPass(
 		panic(err)
 	}
 	lightDesc.Shadow.Set(1, shadowtex)
-	textures.Fetch(texture.PathRef("textures/white.png")) // warmup texture
+	backend.Textures().Fetch(texture.PathRef("textures/white.png")) // warmup texture
 
 	return &GeometryPass{
 		GeometryBuffer: gbuffer,
 
 		backend:   backend,
-		meshes:    meshes,
-		textures:  textures,
 		quad:      quad,
 		light:     lightsh,
 		pass:      pass,
@@ -285,7 +278,7 @@ func (p *GeometryPass) Draw(args render.Args, scene object.T) {
 	lightDesc := p.light.Descriptors()
 	lightDesc.Camera.Set(camera)
 
-	white := p.textures.Fetch(texture.PathRef("textures/white.png"))
+	white := p.backend.Textures().Fetch(texture.PathRef("textures/white.png"))
 	lightDesc.Shadow.Set(0, white)
 
 	ambient := light.NewAmbient(color.White, 0.33)
@@ -328,7 +321,7 @@ func (p *GeometryPass) Draw(args render.Args, scene object.T) {
 }
 
 func (p *GeometryPass) DrawLight(cmds command.Recorder, args render.Args, lit light.T) error {
-	vkmesh := p.meshes.Fetch(p.quad)
+	vkmesh := p.backend.Meshes().Fetch(p.quad)
 	if vkmesh == nil {
 		return nil
 	}

@@ -5,15 +5,15 @@ import (
 
 	"github.com/johanhenriksson/goworld/render/buffer"
 	"github.com/johanhenriksson/goworld/render/command"
+	"github.com/johanhenriksson/goworld/render/device"
 	"github.com/johanhenriksson/goworld/render/texture"
-	"github.com/johanhenriksson/goworld/render/vulkan"
 
 	vk "github.com/vulkan-go/vulkan"
 )
 
-func NewTextureSync(backend vulkan.T, img *image.RGBA) (texture.T, error) {
+func NewTextureSync(dev device.T, worker command.Worker, img *image.RGBA) (texture.T, error) {
 	// allocate texture
-	tex, err := texture.New(backend.Device(), texture.Args{
+	tex, err := texture.New(dev, texture.Args{
 		Width:  img.Rect.Size().X,
 		Height: img.Rect.Size().Y,
 		Format: vk.FormatR8g8b8a8Unorm,
@@ -25,14 +25,13 @@ func NewTextureSync(backend vulkan.T, img *image.RGBA) (texture.T, error) {
 	}
 
 	// allocate staging buffer
-	stage := buffer.NewShared(backend.Device(), len(img.Pix))
+	stage := buffer.NewShared(dev, len(img.Pix))
 	defer stage.Destroy()
 
 	// write to staging buffer
 	stage.Write(0, img.Pix)
 
 	// transfer data to texture buffer
-	worker := backend.Transferer()
 	worker.Queue(func(cmd command.Buffer) {
 		cmd.CmdImageBarrier(
 			vk.PipelineStageTopOfPipeBit,

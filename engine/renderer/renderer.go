@@ -2,7 +2,6 @@ package renderer
 
 import (
 	"github.com/johanhenriksson/goworld/core/object"
-	"github.com/johanhenriksson/goworld/engine/cache"
 	"github.com/johanhenriksson/goworld/engine/renderer/pass"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/vulkan"
@@ -23,25 +22,21 @@ type vkrenderer struct {
 	Lines    *pass.LinePass
 	GUI      *pass.GuiPass
 
-	backend  vulkan.T
-	meshes   cache.MeshCache
-	textures cache.TextureCache
+	backend vulkan.T
 }
 
 func New(backend vulkan.T, geometryPasses, shadowPasses []pass.DeferredSubpass) T {
 	r := &vkrenderer{
-		backend:  backend,
-		meshes:   cache.NewMeshCache(backend),
-		textures: cache.NewTextureCache(backend),
+		backend: backend,
 	}
 
 	r.Pre = &pass.PrePass{}
-	r.Shadows = pass.NewShadowPass(backend, r.meshes, shadowPasses)
-	r.Geometry = pass.NewGeometryPass(backend, r.meshes, r.textures, r.Shadows, geometryPasses)
-	r.Forward = pass.NewForwardPass(backend, r.meshes, r.textures, r.Geometry.GeometryBuffer, r.Geometry.Completed())
-	r.Output = pass.NewOutputPass(backend, r.meshes, r.textures, r.Geometry, r.Forward.Completed())
-	r.Lines = pass.NewLinePass(backend, r.meshes, r.Output, r.Geometry, r.Output.Completed())
-	r.GUI = pass.NewGuiPass(backend, r.Lines, r.meshes)
+	r.Shadows = pass.NewShadowPass(backend, shadowPasses)
+	r.Geometry = pass.NewGeometryPass(backend, r.Shadows, geometryPasses)
+	r.Forward = pass.NewForwardPass(backend, r.Geometry.GeometryBuffer, r.Geometry.Completed())
+	r.Output = pass.NewOutputPass(backend, r.Geometry, r.Forward.Completed())
+	r.Lines = pass.NewLinePass(backend, r.Output, r.Geometry, r.Output.Completed())
+	r.GUI = pass.NewGuiPass(backend, r.Lines)
 
 	return r
 }
@@ -54,9 +49,6 @@ func (r *vkrenderer) Draw(args render.Args, scene object.T) {
 	//
 	// to allow this, MeshCache and TextureCache must also be made thread safe, since
 	// they currently work in a blocking manner.
-
-	r.meshes.Tick()
-	r.textures.Tick()
 
 	r.Pre.Draw(args, scene)
 	r.Shadows.Draw(args, scene)
@@ -80,6 +72,4 @@ func (r *vkrenderer) Destroy() {
 	r.Geometry.Destroy()
 	r.Forward.Destroy()
 	r.Output.Destroy()
-	r.meshes.Destroy()
-	r.textures.Destroy()
 }

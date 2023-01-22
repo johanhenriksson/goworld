@@ -4,7 +4,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/johanhenriksson/goworld/engine/cache/allocator"
+	"github.com/johanhenriksson/goworld/render/cache/allocator"
 )
 
 var _ = Describe("", func() {

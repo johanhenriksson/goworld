@@ -9,7 +9,6 @@ import (
 	"github.com/johanhenriksson/goworld/core/light"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/engine"
-	"github.com/johanhenriksson/goworld/engine/cache"
 	"github.com/johanhenriksson/goworld/engine/renderer"
 	"github.com/johanhenriksson/goworld/engine/renderer/pass"
 	"github.com/johanhenriksson/goworld/game"
@@ -22,41 +21,21 @@ import (
 	"github.com/johanhenriksson/goworld/gui/widget/menu"
 	"github.com/johanhenriksson/goworld/gui/widget/rect"
 	"github.com/johanhenriksson/goworld/math/vec3"
-	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/texture"
 	"github.com/johanhenriksson/goworld/render/vulkan"
 )
 
-type voxrender struct {
-	renderer.T
-	voxelCache cache.MeshCache
-}
-
 func NewVoxelRenderer(backend vulkan.T) renderer.T {
-	voxelCache := cache.NewSharedMeshCache(backend, 16_777_216)
-	return &voxrender{
-		voxelCache: voxelCache,
-		T: renderer.New(
-			backend,
-			[]pass.DeferredSubpass{
-				game.NewVoxelSubpass(backend, voxelCache),
-			},
-			[]pass.DeferredSubpass{
-				game.NewVoxelShadowpass(backend, voxelCache),
-			},
-		),
-	}
-}
-
-func (r *voxrender) Draw(args render.Args, scene object.T) {
-	r.T.Draw(args, scene)
-	r.voxelCache.Tick()
-}
-
-func (r *voxrender) Destroy() {
-	r.T.Destroy()
-	r.voxelCache.Destroy()
+	return renderer.New(
+		backend,
+		[]pass.DeferredSubpass{
+			game.NewVoxelSubpass(backend),
+		},
+		[]pass.DeferredSubpass{
+			game.NewVoxelShadowpass(backend),
+		},
+	)
 }
 
 func main() {

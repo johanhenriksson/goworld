@@ -3,11 +3,11 @@ package pass
 import (
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/core/object/query"
-	"github.com/johanhenriksson/goworld/engine/cache"
 	"github.com/johanhenriksson/goworld/gui/widget"
 	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/render"
+	"github.com/johanhenriksson/goworld/render/cache"
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/descriptor"
 	"github.com/johanhenriksson/goworld/render/framebuffer"
@@ -39,14 +39,13 @@ type GuiPass struct {
 	mat      material.Instance[*UIDescriptors]
 	pass     renderpass.T
 	prev     Pass
-	meshes   cache.MeshCache
 	textures cache.SamplerCache
 	fbufs    framebuffer.Array
 }
 
 var _ Pass = &GuiPass{}
 
-func NewGuiPass(backend vulkan.T, prev Pass, meshes cache.MeshCache) *GuiPass {
+func NewGuiPass(backend vulkan.T, prev Pass) *GuiPass {
 	pass := renderpass.New(backend.Device(), renderpass.Args{
 		ColorAttachments: []attachment.Color{
 			{
@@ -103,7 +102,7 @@ func NewGuiPass(backend vulkan.T, prev Pass, meshes cache.MeshCache) *GuiPass {
 		panic(err)
 	}
 
-	textures := cache.NewSamplerCache(backend, mat.Descriptors().Textures)
+	textures := cache.NewSamplerCache(backend.Device(), backend.Transferer(), mat.Descriptors().Textures)
 	textures.Fetch(texture.PathRef("textures/white.png")) // warmup texture
 
 	return &GuiPass{
@@ -111,7 +110,6 @@ func NewGuiPass(backend vulkan.T, prev Pass, meshes cache.MeshCache) *GuiPass {
 		mat:      mat,
 		pass:     pass,
 		prev:     prev,
-		meshes:   meshes,
 		textures: textures,
 		fbufs:    fbufs,
 	}
@@ -141,7 +139,7 @@ func (p *GuiPass) Draw(args render.Args, scene object.T) {
 
 	uiArgs := widget.DrawArgs{
 		Commands:  cmds,
-		Meshes:    p.meshes,
+		Meshes:    p.backend.Meshes(),
 		Textures:  p.textures,
 		ViewProj:  vp,
 		Transform: mat4.Ident(),

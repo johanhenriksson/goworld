@@ -30,7 +30,7 @@ type quad struct {
 func New(props Props) T {
 	q := &quad{
 		props: props,
-		mesh:  vertex.NewTriangles[vertex.UI, uint16]("quad", nil, nil),
+		mesh:  vertex.NewTriangles[vertex.UI, uint16]("gui-quad", nil, nil),
 	}
 	q.compute()
 	return q

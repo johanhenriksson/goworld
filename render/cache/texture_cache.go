@@ -2,23 +2,23 @@ package cache
 
 import (
 	"github.com/johanhenriksson/goworld/render/command"
+	"github.com/johanhenriksson/goworld/render/device"
 	"github.com/johanhenriksson/goworld/render/texture"
 	"github.com/johanhenriksson/goworld/render/upload"
-	"github.com/johanhenriksson/goworld/render/vulkan"
 )
 
 type TextureCache T[texture.Ref, texture.T]
 
 // mesh cache backend
 type textures struct {
-	backend vulkan.T
-	worker  command.Worker
+	device device.T
+	worker command.Worker
 }
 
-func NewTextureCache(backend vulkan.T) TextureCache {
-	return NewConcurrent[texture.Ref, texture.T](&textures{
-		backend: backend,
-		worker:  backend.Transferer(),
+func NewTextureCache(dev device.T, transferer command.Worker) TextureCache {
+	return New[texture.Ref, texture.T](&textures{
+		device: dev,
+		worker: transferer,
 	})
 }
 
@@ -29,7 +29,7 @@ func (t *textures) Name() string {
 func (t *textures) Instantiate(ref texture.Ref) texture.T {
 	img := ref.Load()
 
-	tex, err := upload.NewTextureSync(t.backend, img)
+	tex, err := upload.NewTextureSync(t.device, t.worker, img)
 	if err != nil {
 		panic(err)
 	}

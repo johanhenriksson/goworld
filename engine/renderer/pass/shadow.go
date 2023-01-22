@@ -6,7 +6,6 @@ import (
 	"github.com/johanhenriksson/goworld/core/light"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/core/object/query"
-	"github.com/johanhenriksson/goworld/engine/cache"
 	"github.com/johanhenriksson/goworld/engine/renderer/uniform"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/command"
@@ -34,7 +33,6 @@ type ShadowDescriptors struct {
 }
 
 type shadowpass struct {
-	meshes    cache.MeshCache
 	backend   vulkan.T
 	pass      renderpass.T
 	passes    []DeferredSubpass
@@ -42,7 +40,7 @@ type shadowpass struct {
 	fbuf      framebuffer.T
 }
 
-func NewShadowPass(backend vulkan.T, meshes cache.MeshCache, passes []DeferredSubpass) ShadowPass {
+func NewShadowPass(backend vulkan.T, passes []DeferredSubpass) ShadowPass {
 	log.Println("create shadow pass")
 	size := 1024
 
@@ -102,7 +100,6 @@ func NewShadowPass(backend vulkan.T, meshes cache.MeshCache, passes []DeferredSu
 	return &shadowpass{
 		backend:   backend,
 		fbuf:      fbuf,
-		meshes:    meshes,
 		pass:      pass,
 		passes:    passes,
 		completed: sync.NewSemaphore(backend.Device()),

@@ -6,7 +6,6 @@ import (
 	"github.com/johanhenriksson/goworld/core/mesh"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/core/object/query"
-	"github.com/johanhenriksson/goworld/engine/cache"
 	"github.com/johanhenriksson/goworld/engine/renderer/uniform"
 	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/render"
@@ -27,7 +26,6 @@ import (
 
 type LinePass struct {
 	backend   vulkan.T
-	meshes    cache.MeshCache
 	material  material.Instance[*LineDescriptors]
 	geometry  DeferredPass
 	pass      renderpass.T
@@ -42,12 +40,11 @@ type LineDescriptors struct {
 	Objects *descriptor.Storage[mat4.T]
 }
 
-func NewLinePass(backend vulkan.T, meshes cache.MeshCache, output Pass, geometry DeferredPass, wait sync.Semaphore) *LinePass {
+func NewLinePass(backend vulkan.T, output Pass, geometry DeferredPass, wait sync.Semaphore) *LinePass {
 	log.Println("create line pass")
 
 	p := &LinePass{
 		backend:   backend,
-		meshes:    meshes,
 		geometry:  geometry,
 		wait:      wait,
 		completed: sync.NewSemaphore(backend.Device()),
@@ -158,7 +155,7 @@ func (p *LinePass) Draw(args render.Args, scene object.T) {
 }
 
 func (p *LinePass) DrawLines(cmds command.Recorder, index int, args render.Args, mesh mesh.T) error {
-	vkmesh := p.meshes.Fetch(mesh.Mesh())
+	vkmesh := p.backend.Meshes().Fetch(mesh.Mesh())
 	if vkmesh == nil {
 		log.Println("line mesh", mesh.Mesh().Id(), "is nil")
 		return nil

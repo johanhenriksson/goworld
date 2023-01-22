@@ -1,7 +1,7 @@
 package material
 
 import (
-	"github.com/johanhenriksson/goworld/engine/cache"
+	"github.com/johanhenriksson/goworld/render/cache"
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/vulkan"
 )

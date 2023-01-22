@@ -2,7 +2,6 @@ package pass
 
 import (
 	"github.com/johanhenriksson/goworld/core/object"
-	"github.com/johanhenriksson/goworld/engine/cache"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/descriptor"
@@ -21,8 +20,6 @@ import (
 
 type OutputPass struct {
 	backend  vulkan.T
-	meshes   cache.MeshCache
-	textures cache.TextureCache
 	material material.T[*OutputDescriptors]
 	geometry GeometryBuffer
 	wait     sync.Semaphore
@@ -40,11 +37,9 @@ type OutputDescriptors struct {
 	Output *descriptor.Sampler
 }
 
-func NewOutputPass(backend vulkan.T, meshes cache.MeshCache, textures cache.TextureCache, geometry GeometryBuffer, wait sync.Semaphore) *OutputPass {
+func NewOutputPass(backend vulkan.T, geometry GeometryBuffer, wait sync.Semaphore) *OutputPass {
 	p := &OutputPass{
 		backend:   backend,
-		meshes:    meshes,
-		textures:  textures,
 		geometry:  geometry,
 		wait:      wait,
 		completed: sync.NewSemaphore(backend.Device()),
@@ -117,7 +112,7 @@ func (p *OutputPass) Draw(args render.Args, scene object.T) {
 	worker.Queue(func(cmd command.Buffer) {
 		cmd.CmdBeginRenderPass(p.pass, p.fbufs[ctx.Index%len(p.fbufs)])
 
-		quad := p.meshes.Fetch(p.quad)
+		quad := p.backend.Meshes().Fetch(p.quad)
 		if quad != nil {
 			p.desc[ctx.Index%len(p.desc)].Bind(cmd)
 			quad.Draw(cmd, 0)

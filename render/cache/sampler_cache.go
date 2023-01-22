@@ -1,9 +1,10 @@
 package cache
 
 import (
+	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/descriptor"
+	"github.com/johanhenriksson/goworld/render/device"
 	"github.com/johanhenriksson/goworld/render/texture"
-	"github.com/johanhenriksson/goworld/render/vulkan"
 )
 
 type SamplerCache T[texture.Ref, int]
@@ -15,11 +16,11 @@ type samplers struct {
 	next     int
 }
 
-func NewSamplerCache(backend vulkan.T, desc *descriptor.SamplerArray) SamplerCache {
-	return NewConcurrent[texture.Ref, int](&samplers{
+func NewSamplerCache(dev device.T, transferer command.Worker, desc *descriptor.SamplerArray) SamplerCache {
+	return New[texture.Ref, int](&samplers{
 		textures: &textures{
-			backend: backend,
-			worker:  backend.Transferer(),
+			device: dev,
+			worker: transferer,
 		},
 		desc:    desc,
 		mapping: make(map[int]texture.T, 100),

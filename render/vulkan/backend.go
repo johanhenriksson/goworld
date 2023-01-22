@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"github.com/johanhenriksson/goworld/core/window"
+	"github.com/johanhenriksson/goworld/render/cache"
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/descriptor"
 	"github.com/johanhenriksson/goworld/render/device"
@@ -27,6 +28,9 @@ type T interface {
 
 	Worker(int) command.Worker
 	Transferer() command.Worker
+
+	Meshes() cache.MeshCache
+	Textures() cache.TextureCache
 }
 
 type backend struct {
@@ -39,8 +43,12 @@ type backend struct {
 	device    device.T
 	surface   vk.Surface
 	swapchain swapchain.T
-	transfer  command.Worker
-	workers   []command.Worker
+
+	transfer command.Worker
+	workers  []command.Worker
+
+	meshes   cache.MeshCache
+	textures cache.TextureCache
 }
 
 func New(appName string, deviceIndex int) T {
@@ -57,6 +65,9 @@ func (b *backend) Swapchain() swapchain.T { return b.swapchain }
 func (b *backend) Frames() int            { return b.frames }
 func (b *backend) Width() int             { return b.width }
 func (b *backend) Height() int            { return b.height }
+
+func (b *backend) Meshes() cache.MeshCache      { return b.meshes }
+func (b *backend) Textures() cache.TextureCache { return b.textures }
 
 func (b *backend) Transferer() command.Worker {
 	return b.transfer
@@ -111,10 +122,18 @@ func (b *backend) GlfwSetup(w *glfw.Window, args window.Args) error {
 	// init global descriptor pool
 	descriptor.InitGlobalPool(b.device)
 
+	// init caches
+	b.meshes = cache.NewMeshCache(b.device, b.transfer)
+	b.textures = cache.NewTextureCache(b.device, b.transfer)
+
 	return nil
 }
 
 func (b *backend) Destroy() {
+	// clean up caches
+	b.meshes.Destroy()
+	b.textures.Destroy()
+
 	// clean up global descriptor pool
 	descriptor.DestroyGlobalPool()
 
@@ -153,4 +172,6 @@ func (b *backend) Aquire() (swapchain.Context, error) {
 
 func (b *backend) Present() {
 	b.swapchain.Present()
+	b.meshes.Tick()
+	b.textures.Tick()
 }
