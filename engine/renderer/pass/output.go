@@ -19,7 +19,7 @@ import (
 )
 
 type OutputPass struct {
-	backend  vulkan.T
+	target   vulkan.Target
 	material material.T[*OutputDescriptors]
 	geometry GeometryBuffer
 	wait     sync.Semaphore
@@ -37,22 +37,22 @@ type OutputDescriptors struct {
 	Output *descriptor.Sampler
 }
 
-func NewOutputPass(backend vulkan.T, geometry GeometryBuffer, wait sync.Semaphore) *OutputPass {
+func NewOutputPass(target vulkan.Target, geometry GeometryBuffer, wait sync.Semaphore) *OutputPass {
 	p := &OutputPass{
-		backend:   backend,
+		target:    target,
 		geometry:  geometry,
 		wait:      wait,
-		completed: sync.NewSemaphore(backend.Device()),
+		completed: sync.NewSemaphore(target.Device()),
 	}
 
 	p.quad = vertex.ScreenQuad()
 
-	p.pass = renderpass.New(backend.Device(), renderpass.Args{
+	p.pass = renderpass.New(target.Device(), renderpass.Args{
 		ColorAttachments: []attachment.Color{
 			{
 				Name:        "color",
-				Allocator:   attachment.FromSwapchain(backend.Swapchain()),
-				Format:      backend.Swapchain().SurfaceFormat(),
+				Allocator:   attachment.FromSwapchain(target.Swapchain()),
+				Format:      target.Swapchain().SurfaceFormat(),
 				LoadOp:      vk.AttachmentLoadOpClear,
 				FinalLayout: vk.ImageLayoutPresentSrc,
 				Usage:       vk.ImageUsageInputAttachmentBit,
@@ -67,9 +67,9 @@ func NewOutputPass(backend vulkan.T, geometry GeometryBuffer, wait sync.Semaphor
 	})
 
 	p.material = material.New(
-		backend.Device(),
+		target.Device(),
 		material.Args{
-			Shader:     shader.New(backend.Device(), "vk/output"),
+			Shader:     shader.New(target.Device(), "vk/output"),
 			Pass:       p.pass,
 			Pointers:   vertex.ParsePointers(vertex.T{}),
 			DepthTest:  false,
@@ -81,9 +81,9 @@ func NewOutputPass(backend vulkan.T, geometry GeometryBuffer, wait sync.Semaphor
 			},
 		})
 
-	frames := backend.Frames()
+	frames := target.Frames()
 	var err error
-	p.fbufs, err = framebuffer.NewArray(frames, backend.Device(), backend.Width(), backend.Height(), p.pass)
+	p.fbufs, err = framebuffer.NewArray(frames, target.Device(), target.Width(), target.Height(), p.pass)
 	if err != nil {
 		panic(err)
 	}
@@ -91,7 +91,7 @@ func NewOutputPass(backend vulkan.T, geometry GeometryBuffer, wait sync.Semaphor
 	p.desc = p.material.InstantiateMany(frames)
 	p.tex = make([]texture.T, frames)
 	for i := range p.tex {
-		p.tex[i], err = texture.FromView(backend.Device(), p.geometry.Output(), texture.Args{
+		p.tex[i], err = texture.FromView(target.Device(), p.geometry.Output(), texture.Args{
 			Filter: vk.FilterNearest,
 			Wrap:   vk.SamplerAddressModeClampToEdge,
 		})
@@ -108,11 +108,11 @@ func NewOutputPass(backend vulkan.T, geometry GeometryBuffer, wait sync.Semaphor
 func (p *OutputPass) Draw(args render.Args, scene object.T) {
 	ctx := args.Context
 
-	worker := p.backend.Worker(ctx.Index)
+	worker := p.target.Worker(ctx.Index)
 	worker.Queue(func(cmd command.Buffer) {
 		cmd.CmdBeginRenderPass(p.pass, p.fbufs[ctx.Index%len(p.fbufs)])
 
-		quad := p.backend.Meshes().Fetch(p.quad)
+		quad := p.target.Meshes().Fetch(p.quad)
 		if quad != nil {
 			p.desc[ctx.Index%len(p.desc)].Bind(cmd)
 			quad.Draw(cmd, 0)

@@ -16,11 +16,10 @@ import (
 type ResizeHandler func(width, height int)
 
 type Window interface {
+	Target
+
 	Title() string
 	SetTitle(string)
-
-	Size() (int, int)
-	Scale() float32
 
 	Poll()
 	ShouldClose() bool
@@ -28,14 +27,13 @@ type Window interface {
 
 	SetInputHandler(input.Handler)
 	// SetResizeHandler(ResizeHandler)
-
-	Swapchain() swapchain.T
 }
 
 type WindowArgs struct {
 	Title         string
 	Width         int
 	Height        int
+	Frames        int
 	Vsync         bool
 	Debug         bool
 	InputHandler  input.Handler
@@ -43,12 +41,13 @@ type WindowArgs struct {
 }
 
 type window struct {
-	wnd     *glfw.Window
-	backend T
-	mouse   mouse.MouseWrapper
+	T
+	wnd   *glfw.Window
+	mouse mouse.MouseWrapper
 
 	title         string
 	width, height int
+	frames        int
 	scale         float32
 	swap          swapchain.T
 	surface       vk.Surface
@@ -84,14 +83,15 @@ func NewWindow(backend T, args WindowArgs) (Window, error) {
 	surfaceFormat := backend.Device().GetSurfaceFormats(surface)[0]
 
 	// allocate swapchain
-	swap := swapchain.New(backend.Device(), backend.Frames(), width, height, surface, surfaceFormat)
+	swap := swapchain.New(backend.Device(), args.Frames, width, height, surface, surfaceFormat)
 
 	window := &window{
+		T:       backend,
 		wnd:     wnd,
-		backend: backend,
 		title:   args.Title,
 		width:   width,
 		height:  height,
+		frames:  args.Frames,
 		scale:   scale,
 		swap:    swap,
 		surface: surface,
@@ -104,7 +104,9 @@ func NewWindow(backend T, args WindowArgs) (Window, error) {
 
 	// set resize callback
 	wnd.SetFramebufferSizeCallback(func(w *glfw.Window, width, height int) {
-		args.ResizeHandler(width, height)
+		window.width = width
+		window.height = height
+		window.swap.Resize(width, height)
 	})
 
 	return window, nil
@@ -114,7 +116,9 @@ func (w *window) Poll() {
 	glfw.PollEvents()
 }
 
-func (w *window) Size() (int, int)  { return w.width, w.height }
+func (w *window) Width() int        { return w.width }
+func (w *window) Height() int       { return w.height }
+func (w *window) Frames() int       { return w.frames }
 func (w *window) Scale() float32    { return w.scale }
 func (w *window) ShouldClose() bool { return w.wnd.ShouldClose() }
 func (w *window) Title() string     { return w.title }
@@ -138,7 +142,15 @@ func (w *window) SetTitle(title string) {
 	w.title = title
 }
 
+func (w *window) Aquire() (swapchain.Context, error) {
+	return w.swap.Aquire()
+}
+
+func (b *window) Present() {
+	b.swap.Present()
+}
+
 func (w *window) Destroy() {
 	w.swap.Destroy()
-	vk.DestroySurface(w.backend.Instance().Ptr(), w.surface, nil)
+	vk.DestroySurface(w.T.Instance().Ptr(), w.surface, nil)
 }

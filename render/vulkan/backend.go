@@ -7,7 +7,6 @@ import (
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/descriptor"
 	"github.com/johanhenriksson/goworld/render/device"
-	"github.com/johanhenriksson/goworld/render/swapchain"
 	"github.com/johanhenriksson/goworld/render/vulkan/instance"
 
 	vk "github.com/vulkan-go/vulkan"
@@ -16,15 +15,8 @@ import (
 type T interface {
 	Instance() instance.T
 	Device() device.T
-	Swapchain() swapchain.T
-	Frames() int
-	Width() int
-	Height() int
 	Destroy()
 	Window(WindowArgs) (Window, error)
-
-	Aquire() (swapchain.Context, error)
-	Present()
 
 	Worker(int) command.Worker
 	Transferer() command.Worker
@@ -34,13 +26,10 @@ type T interface {
 }
 
 type backend struct {
-	appName   string
-	frames    int
-	width     int
-	height    int
-	instance  instance.T
-	device    device.T
-	swapchain swapchain.T
+	appName  string
+	frames   int
+	instance instance.T
+	device   device.T
 
 	transfer command.Worker
 	workers  []command.Worker
@@ -86,12 +75,9 @@ func New(appName string, deviceIndex int) T {
 	}
 }
 
-func (b *backend) Instance() instance.T   { return b.instance }
-func (b *backend) Device() device.T       { return b.device }
-func (b *backend) Swapchain() swapchain.T { return b.swapchain }
-func (b *backend) Frames() int            { return b.frames }
-func (b *backend) Width() int             { return b.width }
-func (b *backend) Height() int            { return b.height }
+func (b *backend) Instance() instance.T { return b.instance }
+func (b *backend) Device() device.T     { return b.device }
+func (b *backend) Frames() int          { return b.frames }
 
 func (b *backend) Meshes() cache.MeshCache      { return b.meshes }
 func (b *backend) Textures() cache.TextureCache { return b.textures }
@@ -105,13 +91,12 @@ func (b *backend) Worker(frame int) command.Worker {
 }
 
 func (b *backend) Window(args WindowArgs) (Window, error) {
+	args.Frames = b.frames
 	w, err := NewWindow(b, args)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create window: %w", err)
 	}
-
-	b.swapchain = w.Swapchain()
-	b.width, b.height = w.Size()
+	b.windows = append(b.windows, w)
 	return w, nil
 }
 
@@ -139,20 +124,4 @@ func (b *backend) Destroy() {
 		b.instance.Destroy()
 		b.instance = nil
 	}
-}
-
-func (b *backend) Resize(width, height int) {
-	b.width = width
-	b.height = height
-	b.swapchain.Resize(width, height)
-}
-
-func (b *backend) Aquire() (swapchain.Context, error) {
-	return b.swapchain.Aquire()
-}
-
-func (b *backend) Present() {
-	b.swapchain.Present()
-	b.meshes.Tick()
-	b.textures.Tick()
 }

@@ -46,10 +46,10 @@ type gbuffer struct {
 }
 
 func NewGbuffer(
-	backend vulkan.T,
+	target vulkan.Target,
 	diffuse, normal, position, output, depth image.View,
 ) GeometryBuffer {
-	positionBuf, err := image.New(backend.Device(), image.Args{
+	positionBuf, err := image.New(target.Device(), image.Args{
 		Type:   vk.ImageType2d,
 		Width:  position.Image().Width(),
 		Height: position.Image().Height(),
@@ -62,7 +62,7 @@ func NewGbuffer(
 		panic(err)
 	}
 
-	normalBuf, err := image.New(backend.Device(), image.Args{
+	normalBuf, err := image.New(target.Device(), image.Args{
 		Type:   vk.ImageType2d,
 		Width:  normal.Image().Width(),
 		Height: normal.Image().Height(),
@@ -76,7 +76,7 @@ func NewGbuffer(
 	}
 
 	// move images to ImageLayoutGeneral to avoid errors on first copy
-	worker := backend.Transferer()
+	worker := target.Transferer()
 	worker.Queue(func(b command.Buffer) {
 		b.CmdImageBarrier(vk.PipelineStageTopOfPipeBit, vk.PipelineStageTransferBit, positionBuf, vk.ImageLayoutUndefined, vk.ImageLayoutGeneral, vk.ImageAspectColorBit)
 		b.CmdImageBarrier(vk.PipelineStageTopOfPipeBit, vk.PipelineStageTransferBit, normalBuf, vk.ImageLayoutUndefined, vk.ImageLayoutGeneral, vk.ImageAspectColorBit)
@@ -85,8 +85,8 @@ func NewGbuffer(
 	worker.Wait()
 
 	return &gbuffer{
-		width:  backend.Width(),
-		height: backend.Height(),
+		width:  target.Width(),
+		height: target.Height(),
 
 		diffuse:  diffuse,
 		normal:   normal,

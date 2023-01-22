@@ -50,7 +50,7 @@ type GeometryPass struct {
 	GeometryBuffer
 
 	quad      vertex.Mesh
-	backend   vulkan.T
+	target    vulkan.Target
 	pass      renderpass.T
 	light     LightShader
 	completed sync.Semaphore
@@ -69,7 +69,7 @@ type DeferredSubpass interface {
 }
 
 func NewGeometryPass(
-	backend vulkan.T,
+	target vulkan.Target,
 	shadows ShadowPass,
 	passes []DeferredSubpass,
 ) *GeometryPass {
@@ -127,7 +127,7 @@ func NewGeometryPass(
 	normalFmt := vk.FormatR8g8b8a8Unorm
 	positionFmt := vk.FormatR16g16b16a16Sfloat
 
-	pass := renderpass.New(backend.Device(), renderpass.Args{
+	pass := renderpass.New(target.Device(), renderpass.Args{
 		ColorAttachments: []attachment.Color{
 			{
 				Name:        OutputAttachment,
@@ -175,7 +175,7 @@ func NewGeometryPass(
 		Dependencies: dependencies,
 	})
 
-	fbuf, err := framebuffer.New(backend.Device(), backend.Width(), backend.Height(), pass)
+	fbuf, err := framebuffer.New(target.Device(), target.Width(), target.Height(), pass)
 	if err != nil {
 		panic(err)
 	}
@@ -186,7 +186,7 @@ func NewGeometryPass(
 	}
 
 	gbuffer := NewGbuffer(
-		backend,
+		target,
 		fbuf.Attachment(DiffuseAttachment),
 		fbuf.Attachment(NormalsAttachment),
 		fbuf.Attachment(PositionAttachment),
@@ -196,7 +196,7 @@ func NewGeometryPass(
 
 	quad := vertex.ScreenQuad()
 
-	lightsh := NewLightShader(backend.Device(), pass)
+	lightsh := NewLightShader(target.Device(), pass)
 	lightDesc := lightsh.Descriptors()
 
 	lightDesc.Diffuse.Set(gbuffer.Diffuse())
@@ -204,7 +204,7 @@ func NewGeometryPass(
 	lightDesc.Position.Set(gbuffer.Position())
 	lightDesc.Depth.Set(gbuffer.Depth())
 
-	shadowtex, err := texture.FromView(backend.Device(), shadows.Shadowmap(), texture.Args{
+	shadowtex, err := texture.FromView(target.Device(), shadows.Shadowmap(), texture.Args{
 		Filter: vk.FilterNearest,
 		Wrap:   vk.SamplerAddressModeClampToEdge,
 	})
@@ -212,17 +212,17 @@ func NewGeometryPass(
 		panic(err)
 	}
 	lightDesc.Shadow.Set(1, shadowtex)
-	backend.Textures().Fetch(texture.PathRef("textures/white.png")) // warmup texture
+	target.Textures().Fetch(texture.PathRef("textures/white.png")) // warmup texture
 
 	return &GeometryPass{
 		GeometryBuffer: gbuffer,
 
-		backend:   backend,
+		target:    target,
 		quad:      quad,
 		light:     lightsh,
 		pass:      pass,
-		completed: sync.NewSemaphore(backend.Device()),
-		copyReady: sync.NewSemaphore(backend.Device()),
+		completed: sync.NewSemaphore(target.Device()),
+		copyReady: sync.NewSemaphore(target.Device()),
 
 		shadows: shadows,
 		gpasses: passes,
@@ -278,7 +278,7 @@ func (p *GeometryPass) Draw(args render.Args, scene object.T) {
 	lightDesc := p.light.Descriptors()
 	lightDesc.Camera.Set(camera)
 
-	white := p.backend.Textures().Fetch(texture.PathRef("textures/white.png"))
+	white := p.target.Textures().Fetch(texture.PathRef("textures/white.png"))
 	lightDesc.Shadow.Set(0, white)
 
 	ambient := light.NewAmbient(color.White, 0.33)
@@ -295,7 +295,7 @@ func (p *GeometryPass) Draw(args render.Args, scene object.T) {
 		cmd.CmdEndRenderPass()
 	})
 
-	worker := p.backend.Worker(ctx.Index)
+	worker := p.target.Worker(ctx.Index)
 	worker.Queue(cmds.Apply)
 	worker.Submit(command.SubmitInfo{
 		Signal: []sync.Semaphore{p.completed},
@@ -321,7 +321,7 @@ func (p *GeometryPass) Draw(args render.Args, scene object.T) {
 }
 
 func (p *GeometryPass) DrawLight(cmds command.Recorder, args render.Args, lit light.T) error {
-	vkmesh := p.backend.Meshes().Fetch(p.quad)
+	vkmesh := p.target.Meshes().Fetch(p.quad)
 	if vkmesh == nil {
 		return nil
 	}

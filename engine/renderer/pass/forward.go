@@ -22,7 +22,7 @@ import (
 type ForwardPass struct {
 	GeometryBuffer
 
-	backend   vulkan.T
+	target    vulkan.Target
 	pass      renderpass.T
 	fbuf      framebuffer.T
 	fwdmat    material.Standard
@@ -31,11 +31,11 @@ type ForwardPass struct {
 }
 
 func NewForwardPass(
-	backend vulkan.T,
+	target vulkan.Target,
 	gbuffer GeometryBuffer,
 	wait sync.Semaphore,
 ) *ForwardPass {
-	pass := renderpass.New(backend.Device(), renderpass.Args{
+	pass := renderpass.New(target.Device(), renderpass.Args{
 		ColorAttachments: []attachment.Color{
 			{
 				Name:        OutputAttachment,
@@ -95,13 +95,13 @@ func NewForwardPass(
 		},
 	})
 
-	fbuf, err := framebuffer.New(backend.Device(), backend.Width(), backend.Height(), pass)
+	fbuf, err := framebuffer.New(target.Device(), target.Width(), target.Height(), pass)
 	if err != nil {
 		panic(err)
 	}
 
 	fwdmat := material.FromDef(
-		backend,
+		target.Device(),
 		pass,
 		&material.Def{
 			Shader:       "vk/forward",
@@ -111,9 +111,9 @@ func NewForwardPass(
 
 	return &ForwardPass{
 		GeometryBuffer: gbuffer,
-		backend:        backend,
+		target:         target,
 		pass:           pass,
-		completed:      sync.NewSemaphore(backend.Device()),
+		completed:      sync.NewSemaphore(target.Device()),
 
 		fbuf:   fbuf,
 		fwdmat: fwdmat,
@@ -150,7 +150,7 @@ func (p *ForwardPass) Draw(args render.Args, scene object.T) {
 			Where(isDrawForward).
 			Collect(scene)
 		for index, mesh := range forwardMeshes {
-			vkmesh := p.backend.Meshes().Fetch(mesh.Mesh())
+			vkmesh := p.target.Meshes().Fetch(mesh.Mesh())
 			if vkmesh == nil {
 				continue
 			}
@@ -167,7 +167,7 @@ func (p *ForwardPass) Draw(args render.Args, scene object.T) {
 		cmd.CmdEndRenderPass()
 	})
 
-	worker := p.backend.Worker(ctx.Index)
+	worker := p.target.Worker(ctx.Index)
 	worker.Queue(cmds.Apply)
 	worker.Submit(command.SubmitInfo{
 		Signal: []sync.Semaphore{p.completed},

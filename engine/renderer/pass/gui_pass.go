@@ -35,7 +35,7 @@ type GuiDrawable interface {
 }
 
 type GuiPass struct {
-	backend  vulkan.T
+	target   vulkan.Target
 	mat      material.Instance[*UIDescriptors]
 	pass     renderpass.T
 	prev     Pass
@@ -45,13 +45,13 @@ type GuiPass struct {
 
 var _ Pass = &GuiPass{}
 
-func NewGuiPass(backend vulkan.T, prev Pass) *GuiPass {
-	pass := renderpass.New(backend.Device(), renderpass.Args{
+func NewGuiPass(target vulkan.Target, prev Pass) *GuiPass {
+	pass := renderpass.New(target.Device(), renderpass.Args{
 		ColorAttachments: []attachment.Color{
 			{
 				Name:          "color",
-				Allocator:     attachment.FromSwapchain(backend.Swapchain()),
-				Format:        backend.Swapchain().SurfaceFormat(),
+				Allocator:     attachment.FromSwapchain(target.Swapchain()),
+				Format:        target.Swapchain().SurfaceFormat(),
 				LoadOp:        vk.AttachmentLoadOpLoad,
 				StoreOp:       vk.AttachmentStoreOpStore,
 				InitialLayout: vk.ImageLayoutPresentSrc,
@@ -78,9 +78,9 @@ func NewGuiPass(backend vulkan.T, prev Pass) *GuiPass {
 		},
 	})
 
-	mat := material.New(backend.Device(), material.Args{
+	mat := material.New(target.Device(), material.Args{
 		Pass:     pass,
-		Shader:   shader.New(backend.Device(), "vk/ui_texture"),
+		Shader:   shader.New(target.Device(), "vk/ui_texture"),
 		Pointers: vertex.ParsePointers(vertex.UI{}),
 		Constants: []pipeline.PushConstant{
 			{
@@ -97,16 +97,16 @@ func NewGuiPass(backend vulkan.T, prev Pass) *GuiPass {
 		},
 	}).Instantiate()
 
-	fbufs, err := framebuffer.NewArray(backend.Frames(), backend.Device(), backend.Width(), backend.Height(), pass)
+	fbufs, err := framebuffer.NewArray(target.Frames(), target.Device(), target.Width(), target.Height(), pass)
 	if err != nil {
 		panic(err)
 	}
 
-	textures := cache.NewSamplerCache(backend.Device(), backend.Transferer(), mat.Descriptors().Textures)
+	textures := cache.NewSamplerCache(target.Device(), target.Transferer(), mat.Descriptors().Textures)
 	textures.Fetch(texture.PathRef("textures/white.png")) // warmup texture
 
 	return &GuiPass{
-		backend:  backend,
+		target:   target,
 		mat:      mat,
 		pass:     pass,
 		prev:     prev,
@@ -139,7 +139,7 @@ func (p *GuiPass) Draw(args render.Args, scene object.T) {
 
 	uiArgs := widget.DrawArgs{
 		Commands:  cmds,
-		Meshes:    p.backend.Meshes(),
+		Meshes:    p.target.Meshes(),
 		Textures:  p.textures,
 		ViewProj:  vp,
 		Transform: mat4.Ident(),
@@ -161,7 +161,7 @@ func (p *GuiPass) Draw(args render.Args, scene object.T) {
 		cmd.CmdEndRenderPass()
 	})
 
-	worker := p.backend.Worker(ctx.Index)
+	worker := p.target.Worker(ctx.Index)
 	worker.Queue(cmds.Apply)
 	worker.Submit(command.SubmitInfo{
 		Signal: []sync.Semaphore{ctx.RenderComplete},

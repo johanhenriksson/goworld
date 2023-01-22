@@ -33,14 +33,14 @@ type ShadowDescriptors struct {
 }
 
 type shadowpass struct {
-	backend   vulkan.T
+	target    vulkan.Target
 	pass      renderpass.T
 	passes    []DeferredSubpass
 	completed sync.Semaphore
 	fbuf      framebuffer.T
 }
 
-func NewShadowPass(backend vulkan.T, passes []DeferredSubpass) ShadowPass {
+func NewShadowPass(target vulkan.Target, passes []DeferredSubpass) ShadowPass {
 	log.Println("create shadow pass")
 	size := 1024
 
@@ -73,7 +73,7 @@ func NewShadowPass(backend vulkan.T, passes []DeferredSubpass) ShadowPass {
 		})
 	}
 
-	pass := renderpass.New(backend.Device(), renderpass.Args{
+	pass := renderpass.New(target.Device(), renderpass.Args{
 		DepthAttachment: &attachment.Depth{
 			LoadOp:        vk.AttachmentLoadOpClear,
 			StencilLoadOp: vk.AttachmentLoadOpClear,
@@ -87,7 +87,7 @@ func NewShadowPass(backend vulkan.T, passes []DeferredSubpass) ShadowPass {
 	})
 
 	// todo: each light is going to need its own framebuffer
-	fbuf, err := framebuffer.New(backend.Device(), size, size, pass)
+	fbuf, err := framebuffer.New(target.Device(), size, size, pass)
 	if err != nil {
 		panic(err)
 	}
@@ -98,11 +98,11 @@ func NewShadowPass(backend vulkan.T, passes []DeferredSubpass) ShadowPass {
 	}
 
 	return &shadowpass{
-		backend:   backend,
+		target:    target,
 		fbuf:      fbuf,
 		pass:      pass,
 		passes:    passes,
-		completed: sync.NewSemaphore(backend.Device()),
+		completed: sync.NewSemaphore(target.Device()),
 	}
 }
 
@@ -145,7 +145,7 @@ func (p *shadowpass) Draw(args render.Args, scene object.T) {
 		cmd.CmdEndRenderPass()
 	})
 
-	worker := p.backend.Worker(ctx.Index)
+	worker := p.target.Worker(ctx.Index)
 	worker.Queue(cmds.Apply)
 	worker.Submit(command.SubmitInfo{
 		Signal: []sync.Semaphore{p.completed},

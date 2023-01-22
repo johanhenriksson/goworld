@@ -23,28 +23,28 @@ import (
 //
 
 type voxelpass struct {
-	backend vulkan.T
-	mat     material.Standard
-	shader  string
+	target vulkan.Target
+	mat    material.Standard
+	shader string
 }
 
-func NewVoxelSubpass(backend vulkan.T) pass.DeferredSubpass {
+func NewVoxelSubpass(target vulkan.Target) pass.DeferredSubpass {
 	return &voxelpass{
-		backend: backend,
-		shader:  "vk/color_f",
+		target: target,
+		shader: "vk/color_f",
 	}
 }
 
-func NewVoxelShadowpass(backend vulkan.T) pass.DeferredSubpass {
+func NewVoxelShadowpass(target vulkan.Target) pass.DeferredSubpass {
 	return &voxelpass{
-		backend: backend,
-		shader:  "vk/shadow",
+		target: target,
+		shader: "vk/shadow",
 	}
 }
 
 func (p *voxelpass) Instantiate(rpass renderpass.T) {
 	p.mat = material.FromDef(
-		p.backend,
+		p.target.Device(),
 		rpass,
 		&material.Def{
 			Shader:       p.shader,
@@ -73,7 +73,7 @@ func (p *voxelpass) Record(cmds command.Recorder, camera uniform.Camera, scene o
 }
 
 func (p *voxelpass) DrawDeferred(cmds command.Recorder, index int, mesh mesh.T, mat material.Standard) error {
-	vkmesh := p.backend.Meshes().Fetch(mesh.Mesh())
+	vkmesh := p.target.Meshes().Fetch(mesh.Mesh())
 	if vkmesh == nil {
 		fmt.Println("mesh is nil")
 		return nil

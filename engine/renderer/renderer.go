@@ -22,21 +22,21 @@ type vkrenderer struct {
 	Lines    *pass.LinePass
 	GUI      *pass.GuiPass
 
-	backend vulkan.T
+	target vulkan.Target
 }
 
-func New(backend vulkan.T, geometryPasses, shadowPasses []pass.DeferredSubpass) T {
+func New(target vulkan.Target, geometryPasses, shadowPasses []pass.DeferredSubpass) T {
 	r := &vkrenderer{
-		backend: backend,
+		target: target,
 	}
 
 	r.Pre = &pass.PrePass{}
-	r.Shadows = pass.NewShadowPass(backend, shadowPasses)
-	r.Geometry = pass.NewGeometryPass(backend, r.Shadows, geometryPasses)
-	r.Forward = pass.NewForwardPass(backend, r.Geometry.GeometryBuffer, r.Geometry.Completed())
-	r.Output = pass.NewOutputPass(backend, r.Geometry, r.Forward.Completed())
-	r.Lines = pass.NewLinePass(backend, r.Output, r.Geometry, r.Output.Completed())
-	r.GUI = pass.NewGuiPass(backend, r.Lines)
+	r.Shadows = pass.NewShadowPass(target, shadowPasses)
+	r.Geometry = pass.NewGeometryPass(target, r.Shadows, geometryPasses)
+	r.Forward = pass.NewForwardPass(target, r.Geometry.GeometryBuffer, r.Geometry.Completed())
+	r.Output = pass.NewOutputPass(target, r.Geometry, r.Forward.Completed())
+	r.Lines = pass.NewLinePass(target, r.Output, r.Geometry, r.Output.Completed())
+	r.GUI = pass.NewGuiPass(target, r.Lines)
 
 	return r
 }
@@ -64,7 +64,7 @@ func (r *vkrenderer) Buffers() pass.BufferOutput {
 }
 
 func (r *vkrenderer) Destroy() {
-	r.backend.Device().WaitIdle()
+	r.target.Device().WaitIdle()
 
 	r.GUI.Destroy()
 	r.Lines.Destroy()

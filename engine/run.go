@@ -20,7 +20,7 @@ import (
 )
 
 type SceneFunc func(renderer.T, object.T)
-type RendererFunc func(vulkan.T) renderer.T
+type RendererFunc func(vulkan.Target) renderer.T
 
 type Args struct {
 	Title    string
@@ -64,7 +64,7 @@ func Run(args Args, scenefuncs ...SceneFunc) {
 		if renderer != nil {
 			renderer.Destroy()
 		}
-		renderer = args.Renderer(backend)
+		renderer = args.Renderer(wnd)
 	}
 	recreateRenderer()
 	defer func() {
@@ -100,10 +100,9 @@ func Run(args Args, scenefuncs ...SceneFunc) {
 	for interrupt.Running() && !wnd.ShouldClose() {
 		wnd.Poll()
 
-		w, h := wnd.Size()
 		screen := render.Screen{
-			Width:  w,
-			Height: h,
+			Width:  wnd.Width(),
+			Height: wnd.Height(),
 			Scale:  wnd.Scale(),
 		}
 
@@ -115,7 +114,7 @@ func Run(args Args, scenefuncs ...SceneFunc) {
 		}
 
 		// draw
-		context, err := backend.Aquire()
+		context, err := wnd.Aquire()
 		if err != nil {
 			log.Println("swapchain recreated?? recreating renderer")
 			recreateRenderer()
@@ -126,7 +125,7 @@ func Run(args Args, scenefuncs ...SceneFunc) {
 		args.Context = context
 
 		renderer.Draw(args, scene)
-		backend.Present()
+		wnd.Present()
 
 		// update scene
 		endFrameTime := time.Now()

@@ -77,6 +77,9 @@ func (m *memory) Destroy() {
 }
 
 func (m *memory) Write(offset int, data any) int {
+	if m.ptr == vk.NullDeviceMemory {
+		panic("write to freed memory block")
+	}
 	if !m.IsHostVisible() {
 		panic("memory is not visible to host")
 	}
@@ -133,6 +136,9 @@ func (m *memory) Write(offset int, data any) int {
 }
 
 func (m *memory) Read(offset int, target any) int {
+	if m.ptr == vk.NullDeviceMemory {
+		panic("read from freed memory block")
+	}
 	if !m.IsHostVisible() {
 		panic("memory is not visible to host")
 	}

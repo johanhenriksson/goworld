@@ -4,10 +4,10 @@ import (
 	"github.com/johanhenriksson/goworld/engine/renderer/uniform" // illegal import
 	"github.com/johanhenriksson/goworld/render/cache"
 	"github.com/johanhenriksson/goworld/render/descriptor"
+	"github.com/johanhenriksson/goworld/render/device"
 	"github.com/johanhenriksson/goworld/render/renderpass"
 	"github.com/johanhenriksson/goworld/render/shader"
 	"github.com/johanhenriksson/goworld/render/vertex"
-	"github.com/johanhenriksson/goworld/render/vulkan"
 
 	vk "github.com/vulkan-go/vulkan"
 )
@@ -31,7 +31,7 @@ type Def struct {
 	VertexFormat any
 }
 
-func FromDef(backend vulkan.T, rpass renderpass.T, def *Def) Standard {
+func FromDef(dev device.T, rpass renderpass.T, def *Def) Standard {
 	desc := &Descriptors{
 		Camera: &descriptor.Uniform[uniform.Camera]{
 			Stages: vk.ShaderStageAll,
@@ -49,9 +49,9 @@ func FromDef(backend vulkan.T, rpass renderpass.T, def *Def) Standard {
 	pointers := vertex.ParsePointers(def.VertexFormat)
 
 	return New(
-		backend.Device(),
+		dev,
 		Args{
-			Shader:     shader.New(backend.Device(), def.Shader),
+			Shader:     shader.New(dev, def.Shader),
 			Pass:       rpass,
 			Subpass:    def.Subpass,
 			Pointers:   pointers,

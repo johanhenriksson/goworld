@@ -25,9 +25,8 @@ import (
 )
 
 type LinePass struct {
-	backend   vulkan.T
+	target    vulkan.Target
 	material  material.Instance[*LineDescriptors]
-	geometry  DeferredPass
 	pass      renderpass.T
 	completed sync.Semaphore
 	fbufs     framebuffer.Array
@@ -40,27 +39,26 @@ type LineDescriptors struct {
 	Objects *descriptor.Storage[mat4.T]
 }
 
-func NewLinePass(backend vulkan.T, output Pass, geometry DeferredPass, wait sync.Semaphore) *LinePass {
+func NewLinePass(target vulkan.Target, output Pass, geometry DeferredPass, wait sync.Semaphore) *LinePass {
 	log.Println("create line pass")
 
 	p := &LinePass{
-		backend:   backend,
-		geometry:  geometry,
+		target:    target,
 		wait:      wait,
-		completed: sync.NewSemaphore(backend.Device()),
+		completed: sync.NewSemaphore(target.Device()),
 	}
 
-	depth := make([]image.T, backend.Frames())
+	depth := make([]image.T, target.Frames())
 	for i := range depth {
 		depth[i] = geometry.Depth().Image()
 	}
 
-	p.pass = renderpass.New(backend.Device(), renderpass.Args{
+	p.pass = renderpass.New(target.Device(), renderpass.Args{
 		ColorAttachments: []attachment.Color{
 			{
 				Name:          "color",
-				Allocator:     attachment.FromSwapchain(backend.Swapchain()),
-				Format:        backend.Swapchain().SurfaceFormat(),
+				Allocator:     attachment.FromSwapchain(target.Swapchain()),
+				Format:        target.Swapchain().SurfaceFormat(),
 				LoadOp:        vk.AttachmentLoadOpLoad,
 				StoreOp:       vk.AttachmentStoreOpStore,
 				InitialLayout: vk.ImageLayoutPresentSrc,
@@ -85,15 +83,15 @@ func NewLinePass(backend vulkan.T, output Pass, geometry DeferredPass, wait sync
 	})
 
 	var err error
-	p.fbufs, err = framebuffer.NewArray(backend.Frames(), backend.Device(), backend.Width(), backend.Height(), p.pass)
+	p.fbufs, err = framebuffer.NewArray(target.Frames(), target.Device(), target.Width(), target.Height(), p.pass)
 	if err != nil {
 		panic(err)
 	}
 
 	p.material = material.New(
-		backend.Device(),
+		target.Device(),
 		material.Args{
-			Shader:    shader.New(backend.Device(), "vk/lines"),
+			Shader:    shader.New(target.Device(), "vk/lines"),
 			Pass:      p.pass,
 			Pointers:  vertex.ParsePointers(vertex.C{}),
 			Primitive: vertex.Lines,
@@ -141,7 +139,7 @@ func (p *LinePass) Draw(args render.Args, scene object.T) {
 		cmd.CmdEndRenderPass()
 	})
 
-	worker := p.backend.Worker(ctx.Index)
+	worker := p.target.Worker(ctx.Index)
 	worker.Queue(cmds.Apply)
 	worker.Submit(command.SubmitInfo{
 		Signal: []sync.Semaphore{p.completed},
@@ -155,7 +153,7 @@ func (p *LinePass) Draw(args render.Args, scene object.T) {
 }
 
 func (p *LinePass) DrawLines(cmds command.Recorder, index int, args render.Args, mesh mesh.T) error {
-	vkmesh := p.backend.Meshes().Fetch(mesh.Mesh())
+	vkmesh := p.target.Meshes().Fetch(mesh.Mesh())
 	if vkmesh == nil {
 		log.Println("line mesh", mesh.Mesh().Id(), "is nil")
 		return nil

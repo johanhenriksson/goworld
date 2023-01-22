@@ -26,14 +26,14 @@ import (
 	"github.com/johanhenriksson/goworld/render/vulkan"
 )
 
-func NewVoxelRenderer(backend vulkan.T) renderer.T {
+func NewVoxelRenderer(target vulkan.Target) renderer.T {
 	return renderer.New(
-		backend,
+		target,
 		[]pass.DeferredSubpass{
-			game.NewVoxelSubpass(backend),
+			game.NewVoxelSubpass(target),
 		},
 		[]pass.DeferredSubpass{
-			game.NewVoxelShadowpass(backend),
+			game.NewVoxelShadowpass(target),
 		},
 	)
 }
