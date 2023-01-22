@@ -13,7 +13,9 @@ import (
 	"github.com/johanhenriksson/goworld/core/object/query"
 	"github.com/johanhenriksson/goworld/core/window"
 	"github.com/johanhenriksson/goworld/engine/renderer"
+	"github.com/johanhenriksson/goworld/geometry/gizmo/mover"
 	"github.com/johanhenriksson/goworld/math/mat4"
+	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
 )
 
@@ -71,11 +73,23 @@ func Run(args Args, scenefuncs ...SceneFunc) {
 
 	// create scene
 	scene := object.New("Scene")
-	scene.Attach(collider.NewManager())
+
+	// create editor
+	editor := object.New("Editor")
+	editor.Attach(collider.NewManager())
+	mv := mover.New(mover.Args{})
+	mv.Transform().SetPosition(vec3.New(1, 10, 1))
+	editor.Adopt(mv)
+	scene.Adopt(editor)
+
+	// create game scene root
+	game := object.New("Game")
+	scene.Adopt(game)
+
 	wnd.SetInputHandler(scene)
 
 	for _, scenefunc := range scenefuncs {
-		scenefunc(renderer, scene)
+		scenefunc(renderer, game)
 	}
 
 	// run the render loop

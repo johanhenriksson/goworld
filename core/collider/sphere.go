@@ -39,5 +39,5 @@ func (s *sphere) Intersect(ray *physics.Ray) (bool, vec3.T) {
 }
 
 func (s *sphere) Update(dt float32) {
-	s.shape.Center = s.Transform().TransformPoint(s.args.Center)
+	s.shape.Center = s.Transform().Project(s.args.Center)
 }

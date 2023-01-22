@@ -17,7 +17,7 @@ func NewGroup(objects ...Object) *Group {
 
 // Add a new object to the group.
 func (g *Group) Add(object Object) {
-	g.objects = append(g.objects)
+	g.objects = append(g.objects, object)
 }
 
 // Intersect performs ray intersection with every object in the group

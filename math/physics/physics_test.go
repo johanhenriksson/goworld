@@ -33,14 +33,25 @@ var _ = Describe("Sphere", func() {
 var _ = Describe("Box", func() {
 	It("intersects a box", func() {
 		box := physics.Box{
-			Min: vec3.New(-8, -8, -8),
-			Max: vec3.New(8, 8, 8),
+			Min: vec3.New(-1, -1, -1),
+			Max: vec3.New(1, 1, 1),
 		}
-		ray := physics.Ray{
-			Origin: vec3.New(-2.7, 21.6, -14.3),
-			Dir:    vec3.New(0.124, -0.66, 0.74).Normalized(),
+		intersect := func(origin, ray, expect vec3.T) {
+			hit, point := box.Intersect(&physics.Ray{
+				Origin: origin,
+				Dir:    ray,
+			})
+			Expect(hit).To(BeTrue())
+			Expect(point.ApproxEqual(expect)).To(BeTrue())
 		}
-		hit, _ := box.Intersect(&ray)
-		Expect(hit).To(BeTrue())
+
+		intersect(vec3.New(2, 0, 0), vec3.UnitXN, vec3.New(1, 0, 0))
+		intersect(vec3.New(-2, 0, 0), vec3.UnitX, vec3.New(-1, 0, 0))
+
+		intersect(vec3.New(0, 2, 0), vec3.UnitYN, vec3.New(0, 1, 0))
+		intersect(vec3.New(0, -2, 0), vec3.UnitY, vec3.New(0, -1, 0))
+
+		intersect(vec3.New(0, 0, 2), vec3.UnitZN, vec3.New(0, 0, 1))
+		intersect(vec3.New(0, 0, -2), vec3.UnitZ, vec3.New(0, 0, -1))
 	})
 })

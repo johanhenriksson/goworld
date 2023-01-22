@@ -1,6 +1,7 @@
 package mover
 
 import (
+	"github.com/johanhenriksson/goworld/core/collider"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/geometry/cone"
 	"github.com/johanhenriksson/goworld/geometry/lines"
@@ -51,6 +52,10 @@ func New(args Args) *T {
 		Parent(g).
 		Position(vec3.UnitX).
 		Rotation(vec3.New(0, 0, 270)).
+		Attach(collider.NewBox(collider.Box{
+			Size:   vec3.New(0.2, 1, 0.2),
+			Center: vec3.New(0, 0, 0),
+		})).
 		Create()
 
 	// Y arrow
@@ -63,6 +68,10 @@ func New(args Args) *T {
 		Name("Y Cone").
 		Parent(g).
 		Position(vec3.UnitY).
+		Attach(collider.NewBox(collider.Box{
+			Size:   vec3.New(0.2, 1, 0.2),
+			Center: vec3.New(0, 0, 0),
+		})).
 		Create()
 
 	// Z arrow
@@ -76,6 +85,10 @@ func New(args Args) *T {
 		Parent(g).
 		Position(vec3.UnitZ).
 		Rotation(vec3.New(90, 180, 0)).
+		Attach(collider.NewBox(collider.Box{
+			Size:   vec3.New(0.2, 1, 0.2),
+			Center: vec3.New(0, 0, 0),
+		})).
 		Create()
 
 	// XY plane

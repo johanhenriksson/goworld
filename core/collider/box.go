@@ -35,7 +35,7 @@ func (s *box) Intersect(ray *physics.Ray) (bool, vec3.T) {
 
 func (s *box) Update(dt float32) {
 	sz := s.args.Size.Scaled(0.5)
-	center := s.Transform().TransformPoint(s.args.Center)
+	center := s.Transform().Project(s.args.Center)
 	s.shape.Min = center.Sub(sz)
 	s.shape.Max = center.Add(sz)
 }

@@ -270,6 +270,7 @@ func (e *editor) MouseEvent(ev mouse.Event) {
 	switch ev.Action() {
 	case mouse.Move:
 		if exists, pos, normal := e.cursorPositionNormal(ev.Position()); exists {
+			pos = e.Transform().Unproject(pos)
 			e.cursorPos = pos
 			e.cursorNormal = normal
 			e.Tool.Hover(e, pos, normal)

@@ -13,7 +13,6 @@ import (
 	"github.com/johanhenriksson/goworld/engine/renderer"
 	"github.com/johanhenriksson/goworld/engine/renderer/pass"
 	"github.com/johanhenriksson/goworld/game"
-	"github.com/johanhenriksson/goworld/geometry/gizmo/mover"
 	"github.com/johanhenriksson/goworld/gui"
 	"github.com/johanhenriksson/goworld/gui/hooks"
 	"github.com/johanhenriksson/goworld/gui/node"
@@ -79,10 +78,6 @@ func main() {
 		makeGui,
 		func(r renderer.T, scene object.T) {
 			game.CreateScene(scene, r.Buffers())
-
-			mv := mover.New(mover.Args{})
-			mv.Transform().SetPosition(vec3.New(1, 10, 1))
-			scene.Adopt(mv)
 
 			object.Build("light1").
 				Position(vec3.New(10, 9, 13)).
@@ -239,6 +234,7 @@ func ObjectListEntry(key string, props ObjectListEntryProps) node.T {
 						if props.OnSelect != nil {
 							props.OnSelect(obj)
 						}
+						obj.SetActive(!obj.Active())
 					},
 					Style: label.Style{
 						Color: clr,

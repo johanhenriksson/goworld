@@ -5,7 +5,7 @@ import (
 	"github.com/johanhenriksson/goworld/math/vec3"
 )
 
-// Box holds a centered an axis-aligned bounding box.
+// Box holds an axis-aligned bounding box.
 type Box struct {
 	Min vec3.T
 	Max vec3.T
