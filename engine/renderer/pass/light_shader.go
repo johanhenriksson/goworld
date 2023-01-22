@@ -40,7 +40,7 @@ type LightConst struct {
 
 type LightShader material.Instance[*LightDescriptors]
 
-func NewLightShader(device device.T, pass renderpass.T) LightShader {
+func NewLightShader(device device.T, pool descriptor.Pool, pass renderpass.T) LightShader {
 	mat := material.New(
 		device,
 		material.Args{
@@ -77,5 +77,5 @@ func NewLightShader(device device.T, pass renderpass.T) LightShader {
 				Count:  16,
 			},
 		})
-	return mat.Instantiate()
+	return mat.Instantiate(pool)
 }

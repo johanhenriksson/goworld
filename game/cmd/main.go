@@ -52,7 +52,7 @@ func main() {
 	},
 		makeGui,
 		func(r renderer.T, scene object.T) {
-			game.CreateScene(scene, r.Buffers())
+			game.CreateScene(scene, r)
 
 			object.Build("light1").
 				Position(vec3.New(10, 9, 13)).

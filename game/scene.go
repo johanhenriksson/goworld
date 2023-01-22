@@ -3,14 +3,14 @@ package game
 import (
 	"github.com/johanhenriksson/goworld/core/light"
 	"github.com/johanhenriksson/goworld/core/object"
-	"github.com/johanhenriksson/goworld/engine/renderer/pass"
+	"github.com/johanhenriksson/goworld/engine/renderer"
 	"github.com/johanhenriksson/goworld/game/chunk"
 	"github.com/johanhenriksson/goworld/game/editor"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render/color"
 )
 
-func CreateScene(scene object.T, gbuffer pass.BufferOutput) {
+func CreateScene(scene object.T, render renderer.T) {
 	scene.Attach(light.NewDirectional(light.DirectionalArgs{
 		Intensity: 1.6,
 		Color:     color.RGB(0.9*0.973, 0.9*0.945, 0.9*0.776),
@@ -38,7 +38,7 @@ func CreateScene(scene object.T, gbuffer pass.BufferOutput) {
 
 	object.Build("Chunk").
 		Attach(chunk.NewMesh(chonk)).
-		Attach(editor.NewEditor(chonk, player.Camera, gbuffer)).
+		Attach(editor.NewEditor(chonk, player.Camera, render)).
 		// Attach(collider.NewBox(collider.Box{Center: vec3.New(8, 8, 8), Size: vec3.New(16, 16, 16)})).
 		Parent(scene).
 		Create()

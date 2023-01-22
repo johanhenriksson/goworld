@@ -6,7 +6,7 @@ import (
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/core/object/query"
-	"github.com/johanhenriksson/goworld/engine/renderer/pass"
+	"github.com/johanhenriksson/goworld/engine/renderer"
 	"github.com/johanhenriksson/goworld/game/chunk"
 	"github.com/johanhenriksson/goworld/game/voxel"
 	"github.com/johanhenriksson/goworld/geometry/box"
@@ -49,16 +49,16 @@ type editor struct {
 
 	xp, yp, zp int
 
-	bounds  *box.T
-	mesh    *chunk.Mesh
-	gbuffer pass.BufferOutput
+	bounds *box.T
+	mesh   *chunk.Mesh
+	render renderer.T
 
 	cursorPos    vec3.T
 	cursorNormal vec3.T
 }
 
 // NewEditor creates a new editor application
-func NewEditor(chk *chunk.T, cam camera.T, gbuffer pass.BufferOutput) T {
+func NewEditor(chk *chunk.T, cam camera.T, render renderer.T) T {
 	e := &editor{
 		Component: object.NewComponent(),
 
@@ -70,9 +70,9 @@ func NewEditor(chk *chunk.T, cam camera.T, gbuffer pass.BufferOutput) T {
 		SampleTool:  NewSampleTool(),
 		ReplaceTool: NewReplaceTool(),
 
-		gbuffer: gbuffer,
-		color:   color.Red,
-		object:  object.New("Editor"),
+		render: render,
+		color:  color.Red,
+		object: object.New("Editor"),
 	}
 
 	dimensions := vec3.NewI(chk.Sx, chk.Sy, chk.Sz)
@@ -175,12 +175,12 @@ func (e *editor) SelectTool(tool Tool) {
 
 // sample world position at current mouse coords
 func (e *editor) cursorPositionNormal(cursor vec2.T) (bool, vec3.T, vec3.T) {
-	viewNormal, normalExists := e.gbuffer.SampleNormal(cursor)
+	viewNormal, normalExists := e.render.SampleNormal(cursor)
 	if !normalExists {
 		return false, vec3.Zero, vec3.Zero
 	}
 
-	viewPosition, positionExists := e.gbuffer.SamplePosition(cursor)
+	viewPosition, positionExists := e.render.SamplePosition(cursor)
 	if !positionExists {
 		return false, vec3.Zero, vec3.Zero
 	}

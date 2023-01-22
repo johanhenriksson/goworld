@@ -31,7 +31,7 @@ type Def struct {
 	VertexFormat any
 }
 
-func FromDef(dev device.T, rpass renderpass.T, def *Def) Standard {
+func FromDef(dev device.T, pool descriptor.Pool, rpass renderpass.T, def *Def) Standard {
 	desc := &Descriptors{
 		Camera: &descriptor.Uniform[uniform.Camera]{
 			Stages: vk.ShaderStageAll,
@@ -58,5 +58,5 @@ func FromDef(dev device.T, rpass renderpass.T, def *Def) Standard {
 			DepthTest:  true,
 			DepthWrite: true,
 		},
-		desc).Instantiate()
+		desc).Instantiate(pool)
 }

@@ -45,7 +45,7 @@ type GuiPass struct {
 
 var _ Pass = &GuiPass{}
 
-func NewGuiPass(target vulkan.Target, prev Pass) *GuiPass {
+func NewGuiPass(target vulkan.Target, pool descriptor.Pool, prev Pass) *GuiPass {
 	pass := renderpass.New(target.Device(), renderpass.Args{
 		ColorAttachments: []attachment.Color{
 			{
@@ -95,7 +95,7 @@ func NewGuiPass(target vulkan.Target, prev Pass) *GuiPass {
 			Stages: vk.ShaderStageFragmentBit,
 			Count:  2000,
 		},
-	}).Instantiate()
+	}).Instantiate(pool)
 
 	fbufs, err := framebuffer.NewArray(target.Frames(), target.Device(), target.Width(), target.Height(), pass)
 	if err != nil {

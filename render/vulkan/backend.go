@@ -5,7 +5,6 @@ import (
 
 	"github.com/johanhenriksson/goworld/render/cache"
 	"github.com/johanhenriksson/goworld/render/command"
-	"github.com/johanhenriksson/goworld/render/descriptor"
 	"github.com/johanhenriksson/goworld/render/device"
 	"github.com/johanhenriksson/goworld/render/vulkan/instance"
 
@@ -54,9 +53,6 @@ func New(appName string, deviceIndex int) T {
 		workers[i] = command.NewWorker(device, vk.QueueFlags(vk.QueueGraphicsBit))
 	}
 
-	// init global descriptor pool
-	descriptor.InitGlobalPool(device)
-
 	// init caches
 	meshes := cache.NewMeshCache(device, transfer)
 	textures := cache.NewTextureCache(device, transfer)
@@ -104,9 +100,6 @@ func (b *backend) Destroy() {
 	// clean up caches
 	b.meshes.Destroy()
 	b.textures.Destroy()
-
-	// clean up global descriptor pool
-	descriptor.DestroyGlobalPool()
 
 	for i := 0; i < b.frames; i++ {
 		b.workers[i].Destroy()

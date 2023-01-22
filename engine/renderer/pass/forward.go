@@ -7,6 +7,7 @@ import (
 	"github.com/johanhenriksson/goworld/engine/renderer/uniform"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/command"
+	"github.com/johanhenriksson/goworld/render/descriptor"
 	"github.com/johanhenriksson/goworld/render/framebuffer"
 	"github.com/johanhenriksson/goworld/render/image"
 	"github.com/johanhenriksson/goworld/render/material"
@@ -32,6 +33,7 @@ type ForwardPass struct {
 
 func NewForwardPass(
 	target vulkan.Target,
+	pool descriptor.Pool,
 	gbuffer GeometryBuffer,
 	wait sync.Semaphore,
 ) *ForwardPass {
@@ -102,6 +104,7 @@ func NewForwardPass(
 
 	fwdmat := material.FromDef(
 		target.Device(),
+		pool,
 		pass,
 		&material.Def{
 			Shader:       "vk/forward",

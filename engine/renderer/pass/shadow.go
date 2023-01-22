@@ -40,7 +40,7 @@ type shadowpass struct {
 	fbuf      framebuffer.T
 }
 
-func NewShadowPass(target vulkan.Target, passes []DeferredSubpass) ShadowPass {
+func NewShadowPass(target vulkan.Target, pool descriptor.Pool, passes []DeferredSubpass) ShadowPass {
 	log.Println("create shadow pass")
 	size := 1024
 
@@ -94,7 +94,7 @@ func NewShadowPass(target vulkan.Target, passes []DeferredSubpass) ShadowPass {
 
 	// instantiate geometry subpasses
 	for _, gpass := range passes {
-		gpass.Instantiate(pass)
+		gpass.Instantiate(pool, pass)
 	}
 
 	return &shadowpass{

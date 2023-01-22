@@ -37,7 +37,7 @@ type OutputDescriptors struct {
 	Output *descriptor.Sampler
 }
 
-func NewOutputPass(target vulkan.Target, geometry GeometryBuffer, wait sync.Semaphore) *OutputPass {
+func NewOutputPass(target vulkan.Target, pool descriptor.Pool, geometry GeometryBuffer, wait sync.Semaphore) *OutputPass {
 	p := &OutputPass{
 		target:    target,
 		geometry:  geometry,
@@ -88,7 +88,7 @@ func NewOutputPass(target vulkan.Target, geometry GeometryBuffer, wait sync.Sema
 		panic(err)
 	}
 
-	p.desc = p.material.InstantiateMany(frames)
+	p.desc = p.material.InstantiateMany(pool, frames)
 	p.tex = make([]texture.T, frames)
 	for i := range p.tex {
 		p.tex[i], err = texture.FromView(target.Device(), p.geometry.Output(), texture.Args{

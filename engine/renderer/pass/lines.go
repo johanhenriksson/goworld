@@ -39,7 +39,7 @@ type LineDescriptors struct {
 	Objects *descriptor.Storage[mat4.T]
 }
 
-func NewLinePass(target vulkan.Target, output Pass, geometry DeferredPass, wait sync.Semaphore) *LinePass {
+func NewLinePass(target vulkan.Target, pool descriptor.Pool, output Pass, geometry DeferredPass, wait sync.Semaphore) *LinePass {
 	log.Println("create line pass")
 
 	p := &LinePass{
@@ -105,7 +105,7 @@ func NewLinePass(target vulkan.Target, output Pass, geometry DeferredPass, wait 
 				Size:   100,
 				Stages: vk.ShaderStageVertexBit,
 			},
-		}).Instantiate()
+		}).Instantiate(pool)
 
 	return p
 }

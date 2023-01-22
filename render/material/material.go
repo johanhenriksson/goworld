@@ -16,8 +16,8 @@ import (
 type T[D descriptor.Set] interface {
 	Destroy()
 	Bind(cmd command.Buffer)
-	Instantiate() Instance[D]
-	InstantiateMany(int) []Instance[D]
+	Instantiate(descriptor.Pool) Instance[D]
+	InstantiateMany(descriptor.Pool, int) []Instance[D]
 }
 
 type material[D descriptor.Set] struct {
@@ -99,14 +99,14 @@ func (m *material[D]) Destroy() {
 	m.shader.Destroy()
 }
 
-func (m *material[D]) Instantiate() Instance[D] {
-	set := m.dlayout.Instantiate(descriptor.GlobalPool)
+func (m *material[D]) Instantiate(pool descriptor.Pool) Instance[D] {
+	set := m.dlayout.Instantiate(pool)
 	return &instance[D]{
 		material: m,
 		set:      set,
 	}
 }
 
-func (m *material[D]) InstantiateMany(n int) []Instance[D] {
-	return util.Map(util.Range(0, n, 1), func(i int) Instance[D] { return m.Instantiate() })
+func (m *material[D]) InstantiateMany(pool descriptor.Pool, n int) []Instance[D] {
+	return util.Map(util.Range(0, n, 1), func(i int) Instance[D] { return m.Instantiate(pool) })
 }

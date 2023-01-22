@@ -59,14 +59,8 @@ func Run(args Args, scenefuncs ...SceneFunc) {
 		panic(err)
 	}
 
-	var renderer renderer.T
-	recreateRenderer := func() {
-		if renderer != nil {
-			renderer.Destroy()
-		}
-		renderer = args.Renderer(wnd)
-	}
-	recreateRenderer()
+	// create renderer
+	renderer := args.Renderer(wnd)
 	defer func() {
 		renderer.Destroy()
 	}()
@@ -117,7 +111,7 @@ func Run(args Args, scenefuncs ...SceneFunc) {
 		context, err := wnd.Aquire()
 		if err != nil {
 			log.Println("swapchain recreated?? recreating renderer")
-			recreateRenderer()
+			renderer.Recreate()
 			continue
 		}
 

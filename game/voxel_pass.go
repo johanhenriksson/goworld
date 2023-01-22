@@ -10,6 +10,7 @@ import (
 	"github.com/johanhenriksson/goworld/engine/renderer/uniform"
 	"github.com/johanhenriksson/goworld/game/voxel"
 	"github.com/johanhenriksson/goworld/render/command"
+	"github.com/johanhenriksson/goworld/render/descriptor"
 	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/renderpass"
 	"github.com/johanhenriksson/goworld/render/vulkan"
@@ -42,9 +43,10 @@ func NewVoxelShadowpass(target vulkan.Target) pass.DeferredSubpass {
 	}
 }
 
-func (p *voxelpass) Instantiate(rpass renderpass.T) {
+func (p *voxelpass) Instantiate(pool descriptor.Pool, rpass renderpass.T) {
 	p.mat = material.FromDef(
 		p.target.Device(),
+		pool,
 		rpass,
 		&material.Def{
 			Shader:       p.shader,

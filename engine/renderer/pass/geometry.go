@@ -56,6 +56,7 @@ type GeometryPass struct {
 	completed sync.Semaphore
 	copyReady sync.Semaphore
 	fbuf      framebuffer.T
+	texture   texture.T
 
 	gpasses []DeferredSubpass
 	shadows ShadowPass
@@ -64,12 +65,13 @@ type GeometryPass struct {
 type DeferredSubpass interface {
 	Name() renderpass.Name
 	Record(command.Recorder, uniform.Camera, object.T)
-	Instantiate(renderpass.T)
+	Instantiate(descriptor.Pool, renderpass.T)
 	Destroy()
 }
 
 func NewGeometryPass(
 	target vulkan.Target,
+	pool descriptor.Pool,
 	shadows ShadowPass,
 	passes []DeferredSubpass,
 ) *GeometryPass {
@@ -182,7 +184,7 @@ func NewGeometryPass(
 
 	// instantiate geometry subpasses
 	for _, subpass := range passes {
-		subpass.Instantiate(pass)
+		subpass.Instantiate(pool, pass)
 	}
 
 	gbuffer := NewGbuffer(
@@ -196,7 +198,7 @@ func NewGeometryPass(
 
 	quad := vertex.ScreenQuad()
 
-	lightsh := NewLightShader(target.Device(), pass)
+	lightsh := NewLightShader(target.Device(), pool, pass)
 	lightDesc := lightsh.Descriptors()
 
 	lightDesc.Diffuse.Set(gbuffer.Diffuse())
@@ -227,6 +229,7 @@ func NewGeometryPass(
 		shadows: shadows,
 		gpasses: passes,
 		fbuf:    fbuf,
+		texture: shadowtex,
 	}
 }
 
@@ -352,6 +355,8 @@ func (p *GeometryPass) Destroy() {
 	for _, gpass := range p.gpasses {
 		gpass.Destroy()
 	}
+
+	p.texture.Destroy()
 
 	p.fbuf.Destroy()
 	p.pass.Destroy()

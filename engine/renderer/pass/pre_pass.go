@@ -4,6 +4,7 @@ import (
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/core/object/query"
 	"github.com/johanhenriksson/goworld/render"
+	"github.com/johanhenriksson/goworld/render/sync"
 )
 
 type PrePass struct{}
@@ -18,4 +19,11 @@ func (p *PrePass) Draw(args render.Args, scene object.T) {
 	for _, component := range objects {
 		component.PreDraw(args.Apply(component.Object().Transform().World()), scene)
 	}
+}
+
+func (p *PrePass) Completed() sync.Semaphore {
+	return nil
+}
+
+func (p *PrePass) Destroy() {
 }

@@ -3,41 +3,41 @@ package renderer
 import (
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/engine/renderer/pass"
+	"github.com/johanhenriksson/goworld/math/vec2"
+	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
+	"github.com/johanhenriksson/goworld/render/descriptor"
 	"github.com/johanhenriksson/goworld/render/vulkan"
+
+	vk "github.com/vulkan-go/vulkan"
 )
 
 type T interface {
 	Draw(args render.Args, scene object.T)
-	Buffers() pass.BufferOutput
+	Deferred() pass.DeferredPass
+	Recreate()
 	Destroy()
+
+	SamplePosition(cursor vec2.T) (vec3.T, bool)
+	SampleNormal(cursor vec2.T) (vec3.T, bool)
 }
 
 type vkrenderer struct {
-	Pre      *pass.PrePass
-	Shadows  pass.ShadowPass
-	Geometry *pass.GeometryPass
-	Forward  *pass.ForwardPass
-	Output   *pass.OutputPass
-	Lines    *pass.LinePass
-	GUI      *pass.GuiPass
-
-	target vulkan.Target
+	target         vulkan.Target
+	pool           descriptor.Pool
+	deferred       pass.DeferredPass
+	geometryPasses []pass.DeferredSubpass
+	shadowPasses   []pass.DeferredSubpass
+	passes         []pass.Pass
 }
 
 func New(target vulkan.Target, geometryPasses, shadowPasses []pass.DeferredSubpass) T {
 	r := &vkrenderer{
-		target: target,
+		target:         target,
+		geometryPasses: geometryPasses,
+		shadowPasses:   shadowPasses,
 	}
-
-	r.Pre = &pass.PrePass{}
-	r.Shadows = pass.NewShadowPass(target, shadowPasses)
-	r.Geometry = pass.NewGeometryPass(target, r.Shadows, geometryPasses)
-	r.Forward = pass.NewForwardPass(target, r.Geometry.GeometryBuffer, r.Geometry.Completed())
-	r.Output = pass.NewOutputPass(target, r.Geometry, r.Forward.Completed())
-	r.Lines = pass.NewLinePass(target, r.Output, r.Geometry, r.Output.Completed())
-	r.GUI = pass.NewGuiPass(target, r.Lines)
-
+	r.Recreate()
 	return r
 }
 
@@ -49,27 +49,81 @@ func (r *vkrenderer) Draw(args render.Args, scene object.T) {
 	//
 	// to allow this, MeshCache and TextureCache must also be made thread safe, since
 	// they currently work in a blocking manner.
-
-	r.Pre.Draw(args, scene)
-	r.Shadows.Draw(args, scene)
-	r.Geometry.Draw(args, scene)
-	r.Forward.Draw(args, scene)
-	r.Output.Draw(args, scene)
-	r.Lines.Draw(args, scene)
-	r.GUI.Draw(args, scene)
+	for _, pass := range r.passes {
+		pass.Draw(args, scene)
+	}
 }
 
-func (r *vkrenderer) Buffers() pass.BufferOutput {
-	return r.Geometry.GeometryBuffer
+func (r *vkrenderer) Deferred() pass.DeferredPass {
+	return r.deferred
+}
+
+func (r *vkrenderer) Recreate() {
+	r.Destroy()
+
+	r.pool = descriptor.NewPool(r.target.Device(), []vk.DescriptorPoolSize{
+		{
+			Type:            vk.DescriptorTypeUniformBuffer,
+			DescriptorCount: 1000,
+		},
+		{
+			Type:            vk.DescriptorTypeStorageBuffer,
+			DescriptorCount: 1000,
+		},
+		{
+			Type:            vk.DescriptorTypeCombinedImageSampler,
+			DescriptorCount: 10000,
+		},
+		{
+			Type:            vk.DescriptorTypeInputAttachment,
+			DescriptorCount: 100,
+		},
+	})
+
+	pre := &pass.PrePass{}
+	shadows := pass.NewShadowPass(r.target, r.pool, r.shadowPasses)
+	geometry := pass.NewGeometryPass(r.target, r.pool, shadows, r.geometryPasses)
+	forward := pass.NewForwardPass(r.target, r.pool, geometry.GeometryBuffer, geometry.Completed())
+	output := pass.NewOutputPass(r.target, r.pool, geometry, forward.Completed())
+	lines := pass.NewLinePass(r.target, r.pool, output, geometry, output.Completed())
+	gui := pass.NewGuiPass(r.target, r.pool, lines)
+
+	r.deferred = geometry
+	r.passes = []pass.Pass{
+		pre,
+		shadows,
+		geometry,
+		forward,
+		output,
+		lines,
+		gui,
+	}
+}
+
+func (r *vkrenderer) SamplePosition(cursor vec2.T) (vec3.T, bool) {
+	if r.deferred == nil {
+		return vec3.Zero, false
+	}
+	return r.deferred.SamplePosition(cursor)
+}
+
+func (r *vkrenderer) SampleNormal(cursor vec2.T) (vec3.T, bool) {
+	if r.deferred == nil {
+		return vec3.Zero, false
+	}
+	return r.deferred.SampleNormal(cursor)
 }
 
 func (r *vkrenderer) Destroy() {
 	r.target.Device().WaitIdle()
 
-	r.GUI.Destroy()
-	r.Lines.Destroy()
-	r.Shadows.Destroy()
-	r.Geometry.Destroy()
-	r.Forward.Destroy()
-	r.Output.Destroy()
+	if r.pool != nil {
+		r.pool.Destroy()
+		r.pool = nil
+	}
+
+	for _, pass := range r.passes {
+		pass.Destroy()
+	}
+	r.passes = nil
 }

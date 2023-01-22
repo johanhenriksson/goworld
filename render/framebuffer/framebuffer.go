@@ -122,6 +122,9 @@ func (b *framebuf) Attachment(name attachment.Name) image.View {
 }
 
 func (b *framebuf) Destroy() {
+	if b.ptr == vk.NullFramebuffer {
+		panic("framebuffer already destroyed")
+	}
 	for _, view := range b.views {
 		view.Destroy()
 	}
