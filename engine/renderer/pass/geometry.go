@@ -54,7 +54,6 @@ type GeometryPass struct {
 	pass      renderpass.T
 	light     LightShader
 	completed sync.Semaphore
-	copyReady sync.Semaphore
 	fbuf      framebuffer.T
 	texture   texture.T
 
@@ -224,7 +223,6 @@ func NewGeometryPass(
 		light:     lightsh,
 		pass:      pass,
 		completed: sync.NewSemaphore(target.Device()),
-		copyReady: sync.NewSemaphore(target.Device()),
 
 		shadows: shadows,
 		gpasses: passes,
@@ -301,6 +299,7 @@ func (p *GeometryPass) Draw(args render.Args, scene object.T) {
 	worker := p.target.Worker(ctx.Index)
 	worker.Queue(cmds.Apply)
 	worker.Submit(command.SubmitInfo{
+		Marker: "GeometryPass",
 		Signal: []sync.Semaphore{p.completed},
 		Wait: []command.Wait{
 			{
@@ -350,6 +349,10 @@ func (p *GeometryPass) DrawLight(cmds command.Recorder, args render.Args, lit li
 	return nil
 }
 
+func (p *GeometryPass) Name() string {
+	return "Geometry"
+}
+
 func (p *GeometryPass) Destroy() {
 	// destroy subpasses
 	for _, gpass := range p.gpasses {
@@ -363,7 +366,6 @@ func (p *GeometryPass) Destroy() {
 	p.GeometryBuffer.Destroy()
 	p.light.Material().Destroy()
 	p.completed.Destroy()
-	p.copyReady.Destroy()
 }
 
 func isDrawDeferred(m mesh.T) bool {

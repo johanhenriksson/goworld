@@ -106,6 +106,10 @@ func NewShadowPass(target vulkan.Target, pool descriptor.Pool, passes []Deferred
 	}
 }
 
+func (p *shadowpass) Name() string {
+	return "Shadow"
+}
+
 func (p *shadowpass) Completed() sync.Semaphore {
 	return p.completed
 }
@@ -148,6 +152,7 @@ func (p *shadowpass) Draw(args render.Args, scene object.T) {
 	worker := p.target.Worker(ctx.Index)
 	worker.Queue(cmds.Apply)
 	worker.Submit(command.SubmitInfo{
+		Marker: "ShadowPass",
 		Signal: []sync.Semaphore{p.completed},
 		Wait: []command.Wait{
 			{

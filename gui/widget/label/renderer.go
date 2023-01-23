@@ -80,7 +80,7 @@ func (r *renderer) SetFont(name string) {
 	r.invalidFont = name != r.fontName
 	r.invalidTexture = r.invalidTexture || r.invalidFont
 	r.invalidMesh = r.invalidMesh || r.invalidFont
-	r.fontName = r.fontName
+	r.fontName = name
 }
 
 func (r *renderer) SetFontSize(size int) {

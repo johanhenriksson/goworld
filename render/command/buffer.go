@@ -10,7 +10,6 @@ import (
 	"github.com/johanhenriksson/goworld/render/image"
 	"github.com/johanhenriksson/goworld/render/pipeline"
 	"github.com/johanhenriksson/goworld/render/renderpass"
-	"github.com/johanhenriksson/goworld/render/sync"
 
 	vk "github.com/vulkan-go/vulkan"
 )
@@ -18,7 +17,6 @@ import (
 type Buffer interface {
 	device.Resource[vk.CommandBuffer]
 
-	SubmitSync(vk.Queue)
 	Reset()
 	Begin()
 	End()
@@ -75,23 +73,6 @@ func (b *buf) Ptr() vk.CommandBuffer {
 func (b *buf) Destroy() {
 	vk.FreeCommandBuffers(b.device.Ptr(), b.pool, 1, []vk.CommandBuffer{b.ptr})
 	b.ptr = nil
-}
-
-func (b *buf) SubmitSync(queue vk.Queue) {
-	fence := sync.NewFence(b.device, false)
-	defer fence.Destroy()
-
-	info := vk.SubmitInfo{
-		SType:                vk.StructureTypeSubmitInfo,
-		WaitSemaphoreCount:   0,
-		SignalSemaphoreCount: 0,
-		CommandBufferCount:   1,
-		PCommandBuffers:      []vk.CommandBuffer{b.ptr},
-		PWaitDstStageMask:    []vk.PipelineStageFlags{},
-	}
-	vk.QueueSubmit(queue, 1, []vk.SubmitInfo{info}, fence.Ptr())
-
-	fence.Wait()
 }
 
 func (b *buf) Reset() {

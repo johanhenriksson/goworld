@@ -33,7 +33,15 @@ func (s semaphore) Ptr() vk.Semaphore {
 	return s.ptr
 }
 
-func (s semaphore) Destroy() {
+func (s *semaphore) Destroy() {
 	vk.DestroySemaphore(s.device.Ptr(), s.ptr, nil)
 	s.ptr = nil
+}
+
+func NewSemaphoreArray(dev device.T, count int) []Semaphore {
+	arr := make([]Semaphore, count)
+	for i := range arr {
+		arr[i] = NewSemaphore(dev)
+	}
+	return arr
 }

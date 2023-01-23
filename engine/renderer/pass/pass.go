@@ -7,6 +7,7 @@ import (
 )
 
 type Pass interface {
+	Name() string
 	Draw(args render.Args, scene object.T)
 	Completed() sync.Semaphore
 	Destroy()

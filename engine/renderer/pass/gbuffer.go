@@ -81,8 +81,9 @@ func NewGbuffer(
 		b.CmdImageBarrier(vk.PipelineStageTopOfPipeBit, vk.PipelineStageTransferBit, positionBuf, vk.ImageLayoutUndefined, vk.ImageLayoutGeneral, vk.ImageAspectColorBit)
 		b.CmdImageBarrier(vk.PipelineStageTopOfPipeBit, vk.PipelineStageTransferBit, normalBuf, vk.ImageLayoutUndefined, vk.ImageLayoutGeneral, vk.ImageAspectColorBit)
 	})
-	worker.Submit(command.SubmitInfo{})
-	worker.Wait()
+	worker.Submit(command.SubmitInfo{
+		Marker: "GBufferInit",
+	})
 
 	return &gbuffer{
 		width:  target.Width(),

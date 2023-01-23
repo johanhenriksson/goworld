@@ -44,7 +44,6 @@ func main() {
 	}()
 
 	engine.Run(engine.Args{
-		Backend:  vulkan.New("goworld: vulkan", 0),
 		Width:    1600,
 		Height:   1200,
 		Title:    "goworld: vulkan",

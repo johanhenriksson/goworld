@@ -38,9 +38,11 @@ type GuiPass struct {
 	target   vulkan.Target
 	mat      material.Instance[*UIDescriptors]
 	pass     renderpass.T
-	prev     Pass
 	textures cache.SamplerCache
 	fbufs    framebuffer.Array
+
+	prev      Pass
+	completed sync.Semaphore
 }
 
 var _ Pass = &GuiPass{}
@@ -106,12 +108,13 @@ func NewGuiPass(target vulkan.Target, pool descriptor.Pool, prev Pass) *GuiPass 
 	textures.Fetch(texture.PathRef("textures/white.png")) // warmup texture
 
 	return &GuiPass{
-		target:   target,
-		mat:      mat,
-		pass:     pass,
-		prev:     prev,
-		textures: textures,
-		fbufs:    fbufs,
+		target:    target,
+		mat:       mat,
+		pass:      pass,
+		prev:      prev,
+		textures:  textures,
+		fbufs:     fbufs,
+		completed: sync.NewSemaphore(target.Device()),
 	}
 }
 
@@ -164,7 +167,8 @@ func (p *GuiPass) Draw(args render.Args, scene object.T) {
 	worker := p.target.Worker(ctx.Index)
 	worker.Queue(cmds.Apply)
 	worker.Submit(command.SubmitInfo{
-		Signal: []sync.Semaphore{ctx.RenderComplete},
+		Marker: "GuiPass",
+		Signal: []sync.Semaphore{p.completed},
 		Wait: []command.Wait{
 			{
 				Semaphore: p.prev.Completed(),
@@ -174,8 +178,12 @@ func (p *GuiPass) Draw(args render.Args, scene object.T) {
 	})
 }
 
+func (p *GuiPass) Name() string {
+	return "GUI"
+}
+
 func (p *GuiPass) Completed() sync.Semaphore {
-	return nil
+	return p.completed
 }
 
 func (p *GuiPass) Destroy() {
@@ -183,4 +191,5 @@ func (p *GuiPass) Destroy() {
 	p.fbufs.Destroy()
 	p.pass.Destroy()
 	p.textures.Destroy()
+	p.completed.Destroy()
 }

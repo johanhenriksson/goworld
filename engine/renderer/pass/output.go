@@ -122,6 +122,7 @@ func (p *OutputPass) Draw(args render.Args, scene object.T) {
 	})
 
 	worker.Submit(command.SubmitInfo{
+		Marker: "OutputPass",
 		Signal: []sync.Semaphore{p.completed},
 		Wait: []command.Wait{
 			{
@@ -130,6 +131,10 @@ func (p *OutputPass) Draw(args render.Args, scene object.T) {
 			},
 		},
 	})
+}
+
+func (p *OutputPass) Name() string {
+	return "Output"
 }
 
 func (p *OutputPass) Completed() sync.Semaphore {

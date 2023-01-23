@@ -29,10 +29,10 @@ type backend struct {
 	frames   int
 	instance instance.T
 	device   device.T
+	windows  []Window
 
 	transfer command.Worker
 	workers  []command.Worker
-	windows  []Window
 
 	meshes   cache.MeshCache
 	textures cache.TextureCache
@@ -40,17 +40,18 @@ type backend struct {
 
 func New(appName string, deviceIndex int) T {
 	// create instance * device
-	frames := 3
+	frames := 2
 	instance := instance.New(appName)
 	device := instance.GetDevice(deviceIndex)
 
 	// transfer worker
-	transfer := command.NewWorker(device, vk.QueueFlags(vk.QueueTransferBit))
+	transfer := command.NewWorker(device, vk.QueueFlags(vk.QueueTransferBit), 0)
 
 	// per frame graphics workers
-	workers := make([]command.Worker, frames)
-	for i := 0; i < frames; i++ {
-		workers[i] = command.NewWorker(device, vk.QueueFlags(vk.QueueGraphicsBit))
+	workerCount := 1 // frames
+	workers := make([]command.Worker, workerCount)
+	for i := range workers {
+		workers[i] = command.NewWorker(device, vk.QueueFlags(vk.QueueGraphicsBit), i+1)
 	}
 
 	// init caches
@@ -83,7 +84,7 @@ func (b *backend) Transferer() command.Worker {
 }
 
 func (b *backend) Worker(frame int) command.Worker {
-	return b.workers[frame]
+	return b.workers[frame%len(b.workers)]
 }
 
 func (b *backend) Window(args WindowArgs) (Window, error) {
@@ -101,10 +102,12 @@ func (b *backend) Destroy() {
 	b.meshes.Destroy()
 	b.textures.Destroy()
 
-	for i := 0; i < b.frames; i++ {
-		b.workers[i].Destroy()
-	}
+	// destroy workers
 	b.transfer.Destroy()
+	for _, w := range b.workers {
+		w.Destroy()
+	}
+	b.workers = nil
 
 	for _, wnd := range b.windows {
 		wnd.Destroy()

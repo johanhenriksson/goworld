@@ -13,6 +13,7 @@ import (
 	"github.com/johanhenriksson/goworld/core/object/query"
 	"github.com/johanhenriksson/goworld/engine/renderer"
 	"github.com/johanhenriksson/goworld/geometry/gizmo/mover"
+	"github.com/johanhenriksson/goworld/math"
 	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
@@ -26,7 +27,6 @@ type Args struct {
 	Title    string
 	Width    int
 	Height   int
-	Backend  vulkan.T
 	Renderer RendererFunc
 }
 
@@ -39,10 +39,7 @@ func Run(args Args, scenefuncs ...SceneFunc) {
 	go RunProfilingServer(6060)
 	interrupt := NewInterrupter()
 
-	backend := args.Backend
-	if backend == nil {
-		panic("no backend provided")
-	}
+	backend := vulkan.New("goworld", 0)
 	defer backend.Destroy()
 
 	if args.Renderer == nil {
@@ -89,11 +86,20 @@ func Run(args Args, scenefuncs ...SceneFunc) {
 	// run the render loop
 	log.Println("ready")
 
-	lastFrameTime := time.Now()
-	framesSinceGC := 0
-	for interrupt.Running() && !wnd.ShouldClose() {
-		wnd.Poll()
+	counter := NewFrameCounter(60)
 
+	currentTime := time.Now()
+	// framesSinceGC := 0
+	for interrupt.Running() && !wnd.ShouldClose() {
+		newTime := time.Now()
+		frameTime := newTime.Sub(currentTime)
+		currentTime = newTime
+
+		// update scene
+		wnd.Poll()
+		scene.Update(float32(frameTime.Seconds()))
+
+		// render
 		screen := render.Screen{
 			Width:  wnd.Width(),
 			Height: wnd.Height(),
@@ -119,24 +125,26 @@ func Run(args Args, scenefuncs ...SceneFunc) {
 		args.Context = context
 
 		renderer.Draw(args, scene)
+
+		// wait for submissions
+		wnd.Transferer().Wait()
+		wnd.Worker(context.Index).Wait()
+
+		// present image
 		wnd.Present()
 
-		// update scene
-		endFrameTime := time.Now()
-		elapsed := endFrameTime.Sub(lastFrameTime)
-		scene.Update(float32(elapsed.Seconds()))
+		// gc pass
+		// this might be a decent place to run GC?
+		// or a horrible one since we are waiting for vulkan stuff to complete
+		collectGarbage()
 
-		remainingTime := float32(1.0/60 - time.Since(lastFrameTime).Seconds())
-		lastFrameTime = endFrameTime
-
-		if remainingTime > 0.001 || framesSinceGC > 60 {
-			// manually trigger garbage collection
-			// log.Printf("garbage collection pass r=%.2fms f=%d\n", 1000*remainingTime, framesSinceGC)
-			runtime.GC()
-			framesSinceGC = 0
-		} else {
-			framesSinceGC++
-		}
+		timing := counter.Sample()
+		log.Printf(
+			"frame: %2.fms, avg: %.2fms, peak: %.2f, fps: %.1f\n",
+			1000*timing.Current,
+			1000*timing.Average,
+			1000*timing.Max,
+			1.0/timing.Average)
 	}
 }
 
@@ -151,5 +159,54 @@ func createRenderArgs(screen render.Screen, cam camera.T) render.Args {
 		Clear:      cam.ClearColor(),
 		Forward:    cam.Transform().Forward(),
 		Viewport:   screen,
+	}
+}
+
+func collectGarbage() {
+	start := time.Now()
+	runtime.GC()
+	elapsed := time.Since(start)
+	if elapsed.Milliseconds() > 2 {
+		log.Printf("slow GC cycle: ran gc cycle in %.2fms", elapsed.Seconds()*1000)
+	}
+}
+
+type framecounter struct {
+	next    int
+	samples int
+	last    int64
+	frames  []int64
+}
+
+func NewFrameCounter(samples int) *framecounter {
+	return &framecounter{
+		samples: samples,
+		last:    time.Now().UnixNano(),
+		frames:  make([]int64, samples),
+	}
+}
+
+type Timing struct {
+	Current float32
+	Average float32
+	Max     float32
+}
+
+func (fc *framecounter) Sample() Timing {
+	ft := time.Now().UnixNano()
+	ns := ft - fc.last
+	fc.last = ft
+	fc.frames[fc.next%fc.samples] = ns
+	fc.next++
+	tot := int64(0)
+	max := int64(0)
+	for _, f := range fc.frames {
+		tot += f
+		max = math.Max(max, f)
+	}
+	return Timing{
+		Average: float32(tot) / float32(fc.samples) / 1e9,
+		Max:     float32(max) / 1e9,
+		Current: float32(ns) / 1e9,
 	}
 }

@@ -28,6 +28,7 @@ type ForwardPass struct {
 	fbuf      framebuffer.T
 	fwdmat    material.Standard
 	wait      sync.Semaphore
+	copy      sync.Semaphore
 	completed sync.Semaphore
 }
 
@@ -117,6 +118,7 @@ func NewForwardPass(
 		target:         target,
 		pass:           pass,
 		completed:      sync.NewSemaphore(target.Device()),
+		copy:           sync.NewSemaphore(target.Device()),
 
 		fbuf:   fbuf,
 		fwdmat: fwdmat,
@@ -173,7 +175,8 @@ func (p *ForwardPass) Draw(args render.Args, scene object.T) {
 	worker := p.target.Worker(ctx.Index)
 	worker.Queue(cmds.Apply)
 	worker.Submit(command.SubmitInfo{
-		Signal: []sync.Semaphore{p.completed},
+		Marker: "ForwardPass",
+		Signal: []sync.Semaphore{p.copy, p.completed},
 		Wait: []command.Wait{
 			{
 				Semaphore: p.wait,
@@ -186,14 +189,18 @@ func (p *ForwardPass) Draw(args render.Args, scene object.T) {
 	// if more data gbuffer is to be drawn later, we need to move this to a later stage
 	worker.Queue(p.GeometryBuffer.CopyBuffers())
 	worker.Submit(command.SubmitInfo{
-		Signal: []sync.Semaphore{p.completed},
+		Marker: "GBufferCopy",
 		Wait: []command.Wait{
 			{
-				Semaphore: p.completed,
+				Semaphore: p.copy,
 				Mask:      vk.PipelineStageTopOfPipeBit,
 			},
 		},
 	})
+}
+
+func (p *ForwardPass) Name() string {
+	return "Forward"
 }
 
 func (p *ForwardPass) Destroy() {
@@ -201,6 +208,7 @@ func (p *ForwardPass) Destroy() {
 	p.pass.Destroy()
 	p.fwdmat.Material().Destroy()
 	p.completed.Destroy()
+	p.copy.Destroy()
 }
 
 func isDrawForward(m mesh.T) bool {

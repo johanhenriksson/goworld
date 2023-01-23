@@ -26,7 +26,6 @@ func NewTextureSync(dev device.T, worker command.Worker, img *image.RGBA) (textu
 
 	// allocate staging buffer
 	stage := buffer.NewShared(dev, len(img.Pix))
-	defer stage.Destroy()
 
 	// write to staging buffer
 	stage.Write(0, img.Pix)
@@ -49,7 +48,10 @@ func NewTextureSync(dev device.T, worker command.Worker, img *image.RGBA) (textu
 			vk.ImageLayoutShaderReadOnlyOptimal,
 			vk.ImageAspectColorBit)
 	})
-	worker.Submit(command.SubmitInfo{})
+	worker.Submit(command.SubmitInfo{
+		Marker: "TextureUpload",
+		Then:   stage.Destroy,
+	})
 	worker.Wait()
 
 	return tex, nil

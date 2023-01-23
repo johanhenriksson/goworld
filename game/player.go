@@ -139,7 +139,7 @@ func (p *Player) Update(dt float32) {
 		p.velocity.Y -= p.Gravity * dt
 	} else {
 		// apply Y friction while flying
-		p.velocity.Y *= p.AirFriction.X
+		p.velocity.Y *= p.Friction.X
 	}
 
 	step := p.velocity.Scaled(dt)

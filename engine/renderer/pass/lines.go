@@ -142,6 +142,7 @@ func (p *LinePass) Draw(args render.Args, scene object.T) {
 	worker := p.target.Worker(ctx.Index)
 	worker.Queue(cmds.Apply)
 	worker.Submit(command.SubmitInfo{
+		Marker: "LinePass",
 		Signal: []sync.Semaphore{p.completed},
 		Wait: []command.Wait{
 			{
@@ -166,6 +167,10 @@ func (p *LinePass) DrawLines(cmds command.Recorder, index int, args render.Args,
 	})
 
 	return nil
+}
+
+func (p *LinePass) Name() string {
+	return "Lines"
 }
 
 func (p *LinePass) Completed() sync.Semaphore {

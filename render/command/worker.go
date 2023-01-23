@@ -16,40 +16,34 @@ type CommandFn func(Buffer)
 type Worker interface {
 	Queue(CommandFn)
 	Submit(SubmitInfo)
-	Wait()
 	Destroy()
+	Wait()
 }
 
 type Workers []Worker
 
 type worker struct {
-	device   device.T
-	queue    vk.Queue
-	pool     Pool
-	input    chan CommandFn
-	signal   chan SubmitInfo
-	complete chan bool
-	stop     chan bool
-	batch    []Buffer
-	destroy  []vk.CommandBuffer
-	fence    sync.Fence
+	device    device.T
+	queue     vk.Queue
+	pool      Pool
+	work      chan func()
+	stop      chan bool
+	batch     []Buffer
+	callbacks map[sync.Fence]func()
 }
 
-func NewWorker(device device.T, queueFlags vk.QueueFlags) Worker {
-	pool := NewPool(device, vk.CommandPoolCreateFlags(vk.CommandPoolCreateTransientBit), queueFlags)
-	queue := device.GetQueue(0, queueFlags)
+func NewWorker(device device.T, queueFlags vk.QueueFlags, queueIndex int) Worker {
+	pool := NewPool(device, vk.CommandPoolCreateFlags(vk.CommandPoolCreateTransientBit), queueIndex)
+	queue := device.GetQueue(queueIndex, queueFlags)
 
 	w := &worker{
-		device:   device,
-		queue:    queue,
-		pool:     pool,
-		input:    make(chan CommandFn),
-		signal:   make(chan SubmitInfo),
-		complete: make(chan bool),
-		stop:     make(chan bool),
-		batch:    make([]Buffer, 0, 10),
-		destroy:  make([]vk.CommandBuffer, 0, 10),
-		fence:    sync.NewFence(device, true),
+		device:    device,
+		queue:     queue,
+		pool:      pool,
+		work:      make(chan func(), 100),
+		stop:      make(chan bool),
+		batch:     make([]Buffer, 0, 10),
+		callbacks: map[sync.Fence]func(){},
 	}
 
 	go w.run()
@@ -65,34 +59,40 @@ func (w *worker) run() {
 	// work loop
 	running := true
 	for running {
+		for fence, callback := range w.callbacks {
+			if fence.Done() {
+				callback()
+				delete(w.callbacks, fence)
+			}
+		}
 		select {
-		case batch := <-w.input:
-			w.enqueue(batch)
-		case info := <-w.signal:
-			w.submit(info)
+		case work := <-w.work:
+			work()
 		case <-w.stop:
 			running = false
+		default:
 		}
 	}
 
 	// dealloc
 	w.device.WaitIdle()
-	w.fence.Destroy()
 	w.pool.Destroy()
 
 	// close command channels
-	w.complete <- true
-	close(w.input)
-	close(w.signal)
 	close(w.stop)
-	close(w.complete)
+	close(w.work)
 	w.stop = nil
+	w.work = nil
 
 	// return the thread
 	runtime.UnlockOSThread()
 }
 
-func (w *worker) Queue(batch CommandFn) { w.input <- batch }
+func (w *worker) Queue(batch CommandFn) {
+	w.work <- func() {
+		w.enqueue(batch)
+	}
+}
 
 func (w *worker) enqueue(batch CommandFn) {
 	// allocate a new buffer
@@ -108,8 +108,10 @@ func (w *worker) enqueue(batch CommandFn) {
 }
 
 type SubmitInfo struct {
+	Marker string
 	Wait   []Wait
 	Signal []sync.Semaphore
+	Then   func()
 }
 
 type Wait struct {
@@ -120,29 +122,34 @@ type Wait struct {
 // Submit the current batch of command buffers
 // Blocks until the queue submission is confirmed
 func (w *worker) Submit(submit SubmitInfo) {
-	w.signal <- submit
-	<-w.complete
+	w.work <- func() {
+		w.submit(submit)
+	}
 }
 
 func (w *worker) submit(submit SubmitInfo) {
-	// make sure we have something to submit
-	if len(w.batch) == 0 {
-		return
-	}
+	buffers := util.Map(w.batch, func(buf Buffer) vk.CommandBuffer { return buf.Ptr() })
 
-	// wait for any ongoing gpu execution to complete
-	w.fence.Wait()
-	w.fence.Reset()
+	// create a cleanup callback
+	// todo: reuse fences
+	fence := sync.NewFence(w.device, false)
 
-	// delete the previous batch buffers
-	// we can free all of them with a single call instead of Destroy()
-	if len(w.destroy) > 0 {
-		vk.FreeCommandBuffers(w.device.Ptr(), w.pool.Ptr(), uint32(len(w.destroy)), w.destroy)
-		w.destroy = w.destroy[:0]
+	w.callbacks[fence] = func() {
+		// free buffers
+		if len(buffers) > 0 {
+			vk.FreeCommandBuffers(w.device.Ptr(), w.pool.Ptr(), uint32(len(buffers)), buffers)
+		}
+
+		// free fence
+		fence.Destroy()
+
+		// run callback if provided
+		if submit.Then != nil {
+			submit.Then()
+		}
 	}
 
 	// submit buffers to the given queue
-	buffers := util.Map(w.batch, func(buf Buffer) vk.CommandBuffer { return buf.Ptr() })
 	info := []vk.SubmitInfo{
 		{
 			SType:                vk.StructureTypeSubmitInfo,
@@ -155,24 +162,30 @@ func (w *worker) submit(submit SubmitInfo) {
 			PWaitDstStageMask:    util.Map(submit.Wait, func(w Wait) vk.PipelineStageFlags { return vk.PipelineStageFlags(w.Mask) }),
 		},
 	}
-	vk.QueueSubmit(w.queue, uint32(len(w.batch)), info, w.fence.Ptr())
-
-	// add submitted buffers to destroy list
-	w.destroy = append(w.destroy, buffers...)
+	vk.QueueSubmit(w.queue, 1, info, fence.Ptr())
 
 	// clear batch slice but keep memory
 	w.batch = w.batch[:0]
-
-	w.complete <- true
-}
-
-func (w *worker) Wait() {
-	w.fence.Wait()
 }
 
 func (w *worker) Destroy() {
+	// run all pending cleanups
+	for _, callback := range w.callbacks {
+		callback()
+	}
+	w.callbacks = nil
+
 	if w.stop != nil {
 		w.stop <- true
-		<-w.complete
+		<-w.stop
 	}
+}
+
+func (w *worker) Wait() {
+	done := make(chan struct{})
+	w.work <- func() {
+		done <- struct{}{}
+	}
+	<-done
+	close(done)
 }

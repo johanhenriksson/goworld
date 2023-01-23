@@ -11,6 +11,7 @@ type Fence interface {
 
 	Reset()
 	Wait()
+	Done() bool
 }
 
 type fence struct {
@@ -53,4 +54,8 @@ func (f *fence) Destroy() {
 
 func (f *fence) Wait() {
 	vk.WaitForFences(f.device.Ptr(), 1, []vk.Fence{f.ptr}, vk.Bool32(0), vk.MaxUint64)
+}
+
+func (f *fence) Done() bool {
+	return vk.GetFenceStatus(f.device.Ptr(), f.ptr) == vk.Success
 }

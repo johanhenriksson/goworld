@@ -80,13 +80,14 @@ func (r *vkrenderer) Recreate() {
 		},
 	})
 
-	pre := &pass.PrePass{}
+	pre := pass.NewPrePass(r.target)
 	shadows := pass.NewShadowPass(r.target, r.pool, r.shadowPasses)
 	geometry := pass.NewGeometryPass(r.target, r.pool, shadows, r.geometryPasses)
 	forward := pass.NewForwardPass(r.target, r.pool, geometry.GeometryBuffer, geometry.Completed())
 	output := pass.NewOutputPass(r.target, r.pool, geometry, forward.Completed())
 	lines := pass.NewLinePass(r.target, r.pool, output, geometry, output.Completed())
 	gui := pass.NewGuiPass(r.target, r.pool, lines)
+	post := pass.NewPostPass(r.target, gui)
 
 	r.deferred = geometry
 	r.passes = []pass.Pass{
@@ -97,6 +98,7 @@ func (r *vkrenderer) Recreate() {
 		output,
 		lines,
 		gui,
+		post,
 	}
 }
 

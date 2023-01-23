@@ -19,12 +19,11 @@ type pool struct {
 	device device.T
 }
 
-func NewPool(device device.T, flags vk.CommandPoolCreateFlags, queueFlags vk.QueueFlags) Pool {
-	queueIdx := device.GetQueueFamilyIndex(queueFlags)
+func NewPool(device device.T, flags vk.CommandPoolCreateFlags, queueFamilyIdx int) Pool {
 	info := vk.CommandPoolCreateInfo{
 		SType:            vk.StructureTypeCommandPoolCreateInfo,
 		Flags:            flags,
-		QueueFamilyIndex: uint32(queueIdx),
+		QueueFamilyIndex: uint32(queueFamilyIdx),
 	}
 
 	var ptr vk.CommandPool

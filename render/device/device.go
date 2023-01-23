@@ -43,13 +43,6 @@ type device struct {
 }
 
 func New(physDevice vk.PhysicalDevice) (T, error) {
-	queueInfo := vk.DeviceQueueCreateInfo{
-		SType:            vk.StructureTypeDeviceQueueCreateInfo,
-		QueueFamilyIndex: 0,
-		QueueCount:       1,
-		PQueuePriorities: []float32{1},
-	}
-
 	log.Println("creating device with extensions", deviceExtensions)
 
 	// VK_EXT_descriptor_indexing settings
@@ -72,8 +65,33 @@ func New(physDevice vk.PhysicalDevice) (T, error) {
 		PNext:                   unsafe.Pointer(&indexingFeatures),
 		EnabledExtensionCount:   uint32(len(deviceExtensions)),
 		PpEnabledExtensionNames: util.CStrings(deviceExtensions),
-		PQueueCreateInfos:       []vk.DeviceQueueCreateInfo{queueInfo},
-		QueueCreateInfoCount:    1,
+		PQueueCreateInfos: []vk.DeviceQueueCreateInfo{
+			{
+				SType:            vk.StructureTypeDeviceQueueCreateInfo,
+				QueueFamilyIndex: 0,
+				QueueCount:       1,
+				PQueuePriorities: []float32{1},
+			},
+			{
+				SType:            vk.StructureTypeDeviceQueueCreateInfo,
+				QueueFamilyIndex: 1,
+				QueueCount:       1,
+				PQueuePriorities: []float32{1},
+			},
+			{
+				SType:            vk.StructureTypeDeviceQueueCreateInfo,
+				QueueFamilyIndex: 2,
+				QueueCount:       1,
+				PQueuePriorities: []float32{1},
+			},
+			{
+				SType:            vk.StructureTypeDeviceQueueCreateInfo,
+				QueueFamilyIndex: 3,
+				QueueCount:       1,
+				PQueuePriorities: []float32{1},
+			},
+		},
+		QueueCreateInfoCount: 4,
 	}
 
 	r := vk.CreateDevice(physDevice, &deviceInfo, nil, &dev)
@@ -103,9 +121,9 @@ func (d *device) Ptr() vk.Device {
 }
 
 func (d *device) GetQueue(queueIndex int, flags vk.QueueFlags) vk.Queue {
-	familyIndex := d.GetQueueFamilyIndex(flags)
+	// familyIndex := d.GetQueueFamilyIndex(flags)
 	var queue vk.Queue
-	vk.GetDeviceQueue(d.ptr, uint32(familyIndex), uint32(queueIndex), &queue)
+	vk.GetDeviceQueue(d.ptr, uint32(queueIndex), 0, &queue)
 	return queue
 }
 
@@ -127,8 +145,7 @@ func (d *device) GetQueueFamilyIndex(flags vk.QueueFlags) int {
 		}
 	}
 
-	d.queues[flags] = 0
-	return 0
+	panic("no such queue available")
 }
 
 func (d *device) GetSurfaceFormats(surface vk.Surface) []vk.SurfaceFormat {

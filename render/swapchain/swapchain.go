@@ -6,7 +6,6 @@ import (
 
 	"github.com/johanhenriksson/goworld/render/device"
 	"github.com/johanhenriksson/goworld/render/image"
-	"github.com/johanhenriksson/goworld/render/sync"
 	"github.com/johanhenriksson/goworld/util"
 
 	vk "github.com/vulkan-go/vulkan"
@@ -119,12 +118,7 @@ func (s *swapchain) recreate() {
 	for i := range s.contexts {
 		// destroy existing
 		s.contexts[i].Destroy()
-
-		s.contexts[i] = Context{
-			Index:          i,
-			ImageAvailable: sync.NewSemaphore(s.device),
-			RenderComplete: sync.NewSemaphore(s.device),
-		}
+		s.contexts[i] = newContext(s.device, i)
 	}
 
 	// this ensures the first call to Aquire works properly
@@ -142,6 +136,8 @@ func (s *swapchain) Aquire() (Context, error) {
 	idx := uint32(0)
 	timeoutNs := uint64(1e9)
 	nextFrame := s.contexts[(s.current+1)%s.frames]
+	nextFrame.InFlight.Lock()
+
 	r := vk.AcquireNextImage(s.device.Ptr(), s.ptr, timeoutNs, nextFrame.ImageAvailable.Ptr(), nil, &idx)
 	if r == vk.ErrorOutOfDate {
 		s.recreate()
@@ -156,6 +152,7 @@ func (s *swapchain) Aquire() (Context, error) {
 // When calling, the final render pass command buffer should be submitted to worker 0 of the current context.
 func (s *swapchain) Present() {
 	ctx := s.contexts[s.current]
+
 	presentInfo := vk.PresentInfo{
 		SType:              vk.StructureTypePresentInfo,
 		WaitSemaphoreCount: 1,
