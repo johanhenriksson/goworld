@@ -52,8 +52,8 @@ func NewGuiPass(target vulkan.Target, pool descriptor.Pool, prev Pass) *GuiPass 
 		ColorAttachments: []attachment.Color{
 			{
 				Name:          "color",
-				Allocator:     attachment.FromSwapchain(target.Swapchain()),
-				Format:        target.Swapchain().SurfaceFormat(),
+				Allocator:     attachment.FromImageArray(target.Surfaces()),
+				Format:        target.SurfaceFormat(),
 				LoadOp:        vk.AttachmentLoadOpLoad,
 				StoreOp:       vk.AttachmentStoreOpStore,
 				InitialLayout: vk.ImageLayoutPresentSrc,

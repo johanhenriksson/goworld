@@ -30,7 +30,7 @@ type LinePass struct {
 	pass      renderpass.T
 	completed sync.Semaphore
 	fbufs     framebuffer.Array
-	wait      sync.Semaphore
+	prev      Pass
 }
 
 type LineDescriptors struct {
@@ -39,12 +39,12 @@ type LineDescriptors struct {
 	Objects *descriptor.Storage[mat4.T]
 }
 
-func NewLinePass(target vulkan.Target, pool descriptor.Pool, output Pass, geometry DeferredPass, wait sync.Semaphore) *LinePass {
+func NewLinePass(target vulkan.Target, pool descriptor.Pool, geometry GeometryBuffer, prev Pass) *LinePass {
 	log.Println("create line pass")
 
 	p := &LinePass{
 		target:    target,
-		wait:      wait,
+		prev:      prev,
 		completed: sync.NewSemaphore(target.Device()),
 	}
 
@@ -57,8 +57,8 @@ func NewLinePass(target vulkan.Target, pool descriptor.Pool, output Pass, geomet
 		ColorAttachments: []attachment.Color{
 			{
 				Name:          "color",
-				Allocator:     attachment.FromSwapchain(target.Swapchain()),
-				Format:        target.Swapchain().SurfaceFormat(),
+				Allocator:     attachment.FromImageArray(target.Surfaces()),
+				Format:        target.SurfaceFormat(),
 				LoadOp:        vk.AttachmentLoadOpLoad,
 				StoreOp:       vk.AttachmentStoreOpStore,
 				InitialLayout: vk.ImageLayoutPresentSrc,
@@ -146,7 +146,7 @@ func (p *LinePass) Draw(args render.Args, scene object.T) {
 		Signal: []sync.Semaphore{p.completed},
 		Wait: []command.Wait{
 			{
-				Semaphore: p.wait,
+				Semaphore: p.prev.Completed(),
 				Mask:      vk.PipelineStageColorAttachmentOutputBit,
 			},
 		},

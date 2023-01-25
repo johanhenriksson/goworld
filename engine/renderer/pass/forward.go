@@ -21,13 +21,12 @@ import (
 )
 
 type ForwardPass struct {
-	GeometryBuffer
-
+	gbuffer   GeometryBuffer
 	target    vulkan.Target
 	pass      renderpass.T
 	fbuf      framebuffer.T
 	fwdmat    material.Standard
-	wait      sync.Semaphore
+	prev      Pass
 	copy      sync.Semaphore
 	completed sync.Semaphore
 }
@@ -36,7 +35,7 @@ func NewForwardPass(
 	target vulkan.Target,
 	pool descriptor.Pool,
 	gbuffer GeometryBuffer,
-	wait sync.Semaphore,
+	prev Pass,
 ) *ForwardPass {
 	pass := renderpass.New(target.Device(), renderpass.Args{
 		ColorAttachments: []attachment.Color{
@@ -114,15 +113,15 @@ func NewForwardPass(
 		})
 
 	return &ForwardPass{
-		GeometryBuffer: gbuffer,
-		target:         target,
-		pass:           pass,
-		completed:      sync.NewSemaphore(target.Device()),
-		copy:           sync.NewSemaphore(target.Device()),
+		gbuffer:   gbuffer,
+		target:    target,
+		pass:      pass,
+		completed: sync.NewSemaphore(target.Device()),
+		copy:      sync.NewSemaphore(target.Device()),
 
 		fbuf:   fbuf,
 		fwdmat: fwdmat,
-		wait:   wait,
+		prev:   prev,
 	}
 }
 
@@ -179,24 +178,15 @@ func (p *ForwardPass) Draw(args render.Args, scene object.T) {
 		Signal: []sync.Semaphore{p.copy, p.completed},
 		Wait: []command.Wait{
 			{
-				Semaphore: p.wait,
+				Semaphore: p.prev.Completed(),
 				Mask:      vk.PipelineStageFragmentShaderBit,
 			},
 		},
 	})
 
 	// issue Geometry Buffer copy, so that gbuffers may be read back.
-	// if more data gbuffer is to be drawn later, we need to move this to a later stage
-	worker.Queue(p.GeometryBuffer.CopyBuffers())
-	worker.Submit(command.SubmitInfo{
-		Marker: "GBufferCopy",
-		Wait: []command.Wait{
-			{
-				Semaphore: p.copy,
-				Mask:      vk.PipelineStageTopOfPipeBit,
-			},
-		},
-	})
+	// if more data gbuffer is to be dawn later, we need to move this to a later stage
+	p.gbuffer.CopyBuffers(p.copy)
 }
 
 func (p *ForwardPass) Name() string {

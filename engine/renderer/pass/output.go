@@ -22,7 +22,7 @@ type OutputPass struct {
 	target   vulkan.Target
 	material material.T[*OutputDescriptors]
 	geometry GeometryBuffer
-	wait     sync.Semaphore
+	prev     Pass
 
 	quad      vertex.Mesh
 	desc      []material.Instance[*OutputDescriptors]
@@ -37,11 +37,11 @@ type OutputDescriptors struct {
 	Output *descriptor.Sampler
 }
 
-func NewOutputPass(target vulkan.Target, pool descriptor.Pool, geometry GeometryBuffer, wait sync.Semaphore) *OutputPass {
+func NewOutputPass(target vulkan.Target, pool descriptor.Pool, geometry GeometryBuffer, prev Pass) *OutputPass {
 	p := &OutputPass{
 		target:    target,
 		geometry:  geometry,
-		wait:      wait,
+		prev:      prev,
 		completed: sync.NewSemaphore(target.Device()),
 	}
 
@@ -51,8 +51,8 @@ func NewOutputPass(target vulkan.Target, pool descriptor.Pool, geometry Geometry
 		ColorAttachments: []attachment.Color{
 			{
 				Name:        "color",
-				Allocator:   attachment.FromSwapchain(target.Swapchain()),
-				Format:      target.Swapchain().SurfaceFormat(),
+				Allocator:   attachment.FromImageArray(target.Surfaces()),
+				Format:      target.SurfaceFormat(),
 				LoadOp:      vk.AttachmentLoadOpClear,
 				FinalLayout: vk.ImageLayoutPresentSrc,
 				Usage:       vk.ImageUsageInputAttachmentBit,
@@ -126,7 +126,7 @@ func (p *OutputPass) Draw(args render.Args, scene object.T) {
 		Signal: []sync.Semaphore{p.completed},
 		Wait: []command.Wait{
 			{
-				Semaphore: p.wait,
+				Semaphore: p.prev.Completed(),
 				Mask:      vk.PipelineStageColorAttachmentOutputBit,
 			},
 		},

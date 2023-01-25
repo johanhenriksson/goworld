@@ -3,8 +3,6 @@ package renderer
 import (
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/engine/renderer/pass"
-	"github.com/johanhenriksson/goworld/math/vec2"
-	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/descriptor"
 	"github.com/johanhenriksson/goworld/render/vulkan"
@@ -14,18 +12,15 @@ import (
 
 type T interface {
 	Draw(args render.Args, scene object.T)
-	Deferred() pass.DeferredPass
+	GBuffer() pass.GeometryBuffer
 	Recreate()
 	Destroy()
-
-	SamplePosition(cursor vec2.T) (vec3.T, bool)
-	SampleNormal(cursor vec2.T) (vec3.T, bool)
 }
 
 type vkrenderer struct {
 	target         vulkan.Target
 	pool           descriptor.Pool
-	deferred       pass.DeferredPass
+	deferred       pass.Deferred
 	geometryPasses []pass.DeferredSubpass
 	shadowPasses   []pass.DeferredSubpass
 	passes         []pass.Pass
@@ -54,10 +49,6 @@ func (r *vkrenderer) Draw(args render.Args, scene object.T) {
 	}
 }
 
-func (r *vkrenderer) Deferred() pass.DeferredPass {
-	return r.deferred
-}
-
 func (r *vkrenderer) Recreate() {
 	r.Destroy()
 
@@ -81,19 +72,17 @@ func (r *vkrenderer) Recreate() {
 	})
 
 	pre := pass.NewPrePass(r.target)
-	shadows := pass.NewShadowPass(r.target, r.pool, r.shadowPasses)
-	geometry := pass.NewGeometryPass(r.target, r.pool, shadows, r.geometryPasses)
-	forward := pass.NewForwardPass(r.target, r.pool, geometry.GeometryBuffer, geometry.Completed())
-	output := pass.NewOutputPass(r.target, r.pool, geometry, forward.Completed())
-	lines := pass.NewLinePass(r.target, r.pool, output, geometry, output.Completed())
+	deferred := pass.NewDeferredPass(r.target, r.pool, r.geometryPasses, r.shadowPasses)
+	forward := pass.NewForwardPass(r.target, r.pool, deferred.GBuffer(), deferred)
+	output := pass.NewOutputPass(r.target, r.pool, deferred.GBuffer(), forward)
+	lines := pass.NewLinePass(r.target, r.pool, deferred.GBuffer(), output)
 	gui := pass.NewGuiPass(r.target, r.pool, lines)
 	post := pass.NewPostPass(r.target, gui)
 
-	r.deferred = geometry
+	r.deferred = deferred
 	r.passes = []pass.Pass{
 		pre,
-		shadows,
-		geometry,
+		deferred,
 		forward,
 		output,
 		lines,
@@ -102,18 +91,8 @@ func (r *vkrenderer) Recreate() {
 	}
 }
 
-func (r *vkrenderer) SamplePosition(cursor vec2.T) (vec3.T, bool) {
-	if r.deferred == nil {
-		return vec3.Zero, false
-	}
-	return r.deferred.SamplePosition(cursor)
-}
-
-func (r *vkrenderer) SampleNormal(cursor vec2.T) (vec3.T, bool) {
-	if r.deferred == nil {
-		return vec3.Zero, false
-	}
-	return r.deferred.SampleNormal(cursor)
+func (r *vkrenderer) GBuffer() pass.GeometryBuffer {
+	return r.deferred.GBuffer()
 }
 
 func (r *vkrenderer) Destroy() {
@@ -128,4 +107,5 @@ func (r *vkrenderer) Destroy() {
 		pass.Destroy()
 	}
 	r.passes = nil
+	r.deferred = nil
 }

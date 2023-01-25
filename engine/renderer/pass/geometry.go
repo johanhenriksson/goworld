@@ -23,11 +23,6 @@ import (
 	vk "github.com/vulkan-go/vulkan"
 )
 
-type DeferredPass interface {
-	Pass
-	GeometryBuffer
-}
-
 const (
 	LightingSubpass renderpass.Name = "lighting"
 )
@@ -47,8 +42,7 @@ type GeometryDescriptors struct {
 }
 
 type GeometryPass struct {
-	GeometryBuffer
-
+	gbuffer   GeometryBuffer
 	quad      vertex.Mesh
 	target    vulkan.Target
 	pass      renderpass.T
@@ -216,8 +210,7 @@ func NewGeometryPass(
 	target.Textures().Fetch(texture.PathRef("textures/white.png")) // warmup texture
 
 	return &GeometryPass{
-		GeometryBuffer: gbuffer,
-
+		gbuffer:   gbuffer,
 		target:    target,
 		quad:      quad,
 		light:     lightsh,
@@ -363,7 +356,7 @@ func (p *GeometryPass) Destroy() {
 
 	p.fbuf.Destroy()
 	p.pass.Destroy()
-	p.GeometryBuffer.Destroy()
+	p.gbuffer.Destroy()
 	p.light.Material().Destroy()
 	p.completed.Destroy()
 }

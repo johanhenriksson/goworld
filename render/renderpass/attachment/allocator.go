@@ -5,7 +5,6 @@ import (
 
 	"github.com/johanhenriksson/goworld/render/device"
 	"github.com/johanhenriksson/goworld/render/image"
-	"github.com/johanhenriksson/goworld/render/swapchain"
 
 	vk "github.com/vulkan-go/vulkan"
 )
@@ -62,8 +61,4 @@ func FromImageArray(images []image.T) Allocator {
 		images: images,
 		next:   0,
 	}
-}
-
-func FromSwapchain(swap swapchain.T) Allocator {
-	return FromImageArray(swap.Images())
 }

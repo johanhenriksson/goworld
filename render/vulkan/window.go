@@ -7,6 +7,7 @@ import (
 	"github.com/johanhenriksson/goworld/core/input"
 	"github.com/johanhenriksson/goworld/core/input/keys"
 	"github.com/johanhenriksson/goworld/core/input/mouse"
+	"github.com/johanhenriksson/goworld/render/image"
 	"github.com/johanhenriksson/goworld/render/swapchain"
 
 	"github.com/go-gl/glfw/v3.3/glfw"
@@ -123,7 +124,8 @@ func (w *window) Scale() float32    { return w.scale }
 func (w *window) ShouldClose() bool { return w.wnd.ShouldClose() }
 func (w *window) Title() string     { return w.title }
 
-func (w *window) Swapchain() swapchain.T { return w.swap }
+func (w *window) Surfaces() []image.T      { return w.swap.Images() }
+func (w *window) SurfaceFormat() vk.Format { return w.swap.SurfaceFormat() }
 
 func (w *window) SetInputHandler(handler input.Handler) {
 	// keyboard events

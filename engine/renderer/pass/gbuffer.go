@@ -7,6 +7,7 @@ import (
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/image"
+	"github.com/johanhenriksson/goworld/render/sync"
 	"github.com/johanhenriksson/goworld/render/vulkan"
 
 	vk "github.com/vulkan-go/vulkan"
@@ -14,8 +15,6 @@ import (
 )
 
 type BufferOutput interface {
-	SamplePosition(cursor vec2.T) (vec3.T, bool)
-	SampleNormal(cursor vec2.T) (vec3.T, bool)
 }
 
 type GeometryBuffer interface {
@@ -28,10 +27,13 @@ type GeometryBuffer interface {
 	Output() image.View
 	Destroy()
 
-	CopyBuffers() command.CommandFn
+	SamplePosition(cursor vec2.T) (vec3.T, bool)
+	SampleNormal(cursor vec2.T) (vec3.T, bool)
+	CopyBuffers(wait sync.Semaphore)
 }
 
 type gbuffer struct {
+	worker command.Worker
 	width  int
 	height int
 
@@ -86,6 +88,7 @@ func NewGbuffer(
 	})
 
 	return &gbuffer{
+		worker: worker,
 		width:  target.Width(),
 		height: target.Height(),
 
@@ -158,8 +161,8 @@ func (p *gbuffer) Destroy() {
 	p.normalBuf.Destroy()
 }
 
-func (p *gbuffer) CopyBuffers() command.CommandFn {
-	return func(b command.Buffer) {
+func (p *gbuffer) CopyBuffers(wait sync.Semaphore) {
+	p.worker.Queue(func(b command.Buffer) {
 		b.CmdImageBarrier(
 			vk.PipelineStageTopOfPipeBit,
 			vk.PipelineStageTransferBit,
@@ -179,5 +182,14 @@ func (p *gbuffer) CopyBuffers() command.CommandFn {
 			vk.ImageAspectColorBit)
 
 		b.CmdCopyImage(p.normal.Image(), vk.ImageLayoutGeneral, p.normalBuf, vk.ImageLayoutGeneral, vk.ImageAspectColorBit)
-	}
+	})
+	p.worker.Submit(command.SubmitInfo{
+		Marker: "GBufferCopy",
+		Wait: []command.Wait{
+			{
+				Semaphore: wait,
+				Mask:      vk.PipelineStageTopOfPipeBit,
+			},
+		},
+	})
 }

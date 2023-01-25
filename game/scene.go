@@ -19,7 +19,7 @@ func CreateScene(scene object.T, render renderer.T) {
 	}))
 
 	// create chunk
-	world := NewWorld(31481234, 16)
+	world := NewWorld(31481234, 8)
 	chonk := world.AddChunk(0, 0)
 
 	chonk2 := world.AddChunk(1, 0)

@@ -4,7 +4,9 @@ import (
 	"github.com/johanhenriksson/goworld/render/cache"
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/device"
+	"github.com/johanhenriksson/goworld/render/image"
 	"github.com/johanhenriksson/goworld/render/swapchain"
+	vk "github.com/vulkan-go/vulkan"
 )
 
 type Target interface {
@@ -15,7 +17,10 @@ type Target interface {
 	Height() int
 	Frames() int
 
-	Swapchain() swapchain.T
+	// Swapchain() swapchain.T
+	Surfaces() []image.T
+	SurfaceFormat() vk.Format
+
 	Aquire() (swapchain.Context, error)
 	Present()
 	Worker(int) command.Worker
