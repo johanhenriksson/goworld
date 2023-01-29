@@ -1,8 +1,6 @@
 package graph
 
 import (
-	"log"
-
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/command"
@@ -141,7 +139,6 @@ func (n *node) Draw(worker command.Worker, args render.Args, scene object.T) {
 	cmds := command.NewRecorder()
 	n.pass.Record(cmds, args, scene)
 
-	log.Println("Submit pass", n.pass.Name(), "waits:", len(n.waits), "signals:", len(n.signals))
 	worker.Queue(cmds.Apply)
 	worker.Submit(command.SubmitInfo{
 		Marker: n.pass.Name(),

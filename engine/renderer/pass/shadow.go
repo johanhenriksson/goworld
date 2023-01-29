@@ -14,7 +14,6 @@ import (
 	"github.com/johanhenriksson/goworld/render/image"
 	"github.com/johanhenriksson/goworld/render/renderpass"
 	"github.com/johanhenriksson/goworld/render/renderpass/attachment"
-	"github.com/johanhenriksson/goworld/render/sync"
 	"github.com/johanhenriksson/goworld/render/vulkan"
 
 	vk "github.com/vulkan-go/vulkan"
@@ -33,15 +32,13 @@ type ShadowDescriptors struct {
 }
 
 type shadowpass struct {
-	target    vulkan.Target
-	prev      Pass
-	pass      renderpass.T
-	passes    []DeferredSubpass
-	completed sync.Semaphore
-	fbuf      framebuffer.T
+	target vulkan.Target
+	pass   renderpass.T
+	passes []DeferredSubpass
+	fbuf   framebuffer.T
 }
 
-func NewShadowPass(target vulkan.Target, pool descriptor.Pool, passes []DeferredSubpass, prev Pass) ShadowPass {
+func NewShadowPass(target vulkan.Target, pool descriptor.Pool, passes []DeferredSubpass) ShadowPass {
 	log.Println("create shadow pass")
 	size := 1024
 
@@ -99,21 +96,15 @@ func NewShadowPass(target vulkan.Target, pool descriptor.Pool, passes []Deferred
 	}
 
 	return &shadowpass{
-		target:    target,
-		prev:      prev,
-		fbuf:      fbuf,
-		pass:      pass,
-		passes:    passes,
-		completed: sync.NewSemaphore(target.Device()),
+		target: target,
+		fbuf:   fbuf,
+		pass:   pass,
+		passes: passes,
 	}
 }
 
 func (p *shadowpass) Name() string {
 	return "Shadow"
-}
-
-func (p *shadowpass) Completed() sync.Semaphore {
-	return p.completed
 }
 
 func (p *shadowpass) Record(cmds command.Recorder, args render.Args, scene object.T) {
@@ -149,23 +140,6 @@ func (p *shadowpass) Record(cmds command.Recorder, args render.Args, scene objec
 	})
 }
 
-func (p *shadowpass) Draw(args render.Args, scene object.T) {
-	cmds := command.NewRecorder()
-	p.Record(cmds, args, scene)
-	worker := p.target.Worker(args.Context.Index)
-	worker.Queue(cmds.Apply)
-	worker.Submit(command.SubmitInfo{
-		Marker: "ShadowPass",
-		Signal: []sync.Semaphore{p.completed},
-		Wait: []command.Wait{
-			{
-				Semaphore: p.prev.Completed(),
-				Mask:      vk.PipelineStageColorAttachmentOutputBit,
-			},
-		},
-	})
-}
-
 func (p *shadowpass) Shadowmap() image.View {
 	return p.fbuf.Attachment(attachment.DepthName)
 }
@@ -177,5 +151,4 @@ func (p *shadowpass) Destroy() {
 
 	p.fbuf.Destroy()
 	p.pass.Destroy()
-	p.completed.Destroy()
 }

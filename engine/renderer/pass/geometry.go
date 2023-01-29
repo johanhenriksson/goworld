@@ -15,7 +15,6 @@ import (
 	"github.com/johanhenriksson/goworld/render/framebuffer"
 	"github.com/johanhenriksson/goworld/render/renderpass"
 	"github.com/johanhenriksson/goworld/render/renderpass/attachment"
-	"github.com/johanhenriksson/goworld/render/sync"
 	"github.com/johanhenriksson/goworld/render/texture"
 	"github.com/johanhenriksson/goworld/render/vertex"
 	"github.com/johanhenriksson/goworld/render/vulkan"
@@ -34,6 +33,11 @@ const (
 	OutputAttachment   attachment.Name = "output"
 )
 
+type Deferred interface {
+	Pass
+	GBuffer() GeometryBuffer
+}
+
 type GeometryDescriptors struct {
 	descriptor.Set
 	Camera   *descriptor.Uniform[uniform.Camera]
@@ -42,14 +46,13 @@ type GeometryDescriptors struct {
 }
 
 type GeometryPass struct {
-	gbuffer   GeometryBuffer
-	quad      vertex.Mesh
-	target    vulkan.Target
-	pass      renderpass.T
-	light     LightShader
-	completed sync.Semaphore
-	fbuf      framebuffer.T
-	texture   texture.T
+	gbuffer GeometryBuffer
+	quad    vertex.Mesh
+	target  vulkan.Target
+	pass    renderpass.T
+	light   LightShader
+	fbuf    framebuffer.T
+	texture texture.T
 
 	gpasses []DeferredSubpass
 	shadows ShadowPass
@@ -67,7 +70,7 @@ func NewGeometryPass(
 	pool descriptor.Pool,
 	shadows ShadowPass,
 	passes []DeferredSubpass,
-) *GeometryPass {
+) Deferred {
 	subpasses := make([]renderpass.Subpass, 0, len(passes)+1)
 	dependencies := make([]renderpass.SubpassDependency, 0, 2*len(passes)+1)
 
@@ -210,22 +213,17 @@ func NewGeometryPass(
 	target.Textures().Fetch(texture.PathRef("textures/white.png")) // warmup texture
 
 	return &GeometryPass{
-		gbuffer:   gbuffer,
-		target:    target,
-		quad:      quad,
-		light:     lightsh,
-		pass:      pass,
-		completed: sync.NewSemaphore(target.Device()),
+		gbuffer: gbuffer,
+		target:  target,
+		quad:    quad,
+		light:   lightsh,
+		pass:    pass,
 
 		shadows: shadows,
 		gpasses: passes,
 		fbuf:    fbuf,
 		texture: shadowtex,
 	}
-}
-
-func (p *GeometryPass) Completed() sync.Semaphore {
-	return p.completed
 }
 
 func (p *GeometryPass) Record(cmds command.Recorder, args render.Args, scene object.T) {
@@ -284,35 +282,6 @@ func (p *GeometryPass) Record(cmds command.Recorder, args render.Args, scene obj
 	})
 }
 
-func (p *GeometryPass) Draw(args render.Args, scene object.T) {
-	cmds := command.NewRecorder()
-	p.Record(cmds, args, scene)
-	worker := p.target.Worker(args.Context.Index)
-	worker.Queue(cmds.Apply)
-	worker.Submit(command.SubmitInfo{
-		Marker: "GeometryPass",
-		Signal: []sync.Semaphore{p.completed},
-		Wait: []command.Wait{
-			{
-				Semaphore: p.shadows.Completed(),
-				Mask:      vk.PipelineStageFragmentShaderBit,
-			},
-		},
-	})
-
-	// issue Geometry Buffer copy, so that gbuffers may be read back.
-	// if more data gbuffer is to be drawn later, we need to move this to a later stage
-	// worker.Queue(p.GeometryBuffer.CopyBuffers())
-	// worker.Submit(command.SubmitInfo{
-	// 	Wait: []command.Wait{
-	// 		{
-	// 			Semaphore: p.copyReady,
-	// 			Mask:      vk.PipelineStageTopOfPipeBit,
-	// 		},
-	// 	},
-	// })
-}
-
 func (p *GeometryPass) DrawLight(cmds command.Recorder, args render.Args, lit light.T) error {
 	vkmesh := p.target.Meshes().Fetch(p.quad)
 	if vkmesh == nil {
@@ -360,7 +329,6 @@ func (p *GeometryPass) Destroy() {
 	p.pass.Destroy()
 	p.gbuffer.Destroy()
 	p.light.Material().Destroy()
-	p.completed.Destroy()
 }
 
 func isDrawDeferred(m mesh.T) bool {

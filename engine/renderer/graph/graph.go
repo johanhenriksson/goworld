@@ -1,8 +1,6 @@
 package graph
 
 import (
-	"log"
-
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/command"
@@ -68,11 +66,9 @@ func (g *graph) Draw(worker command.Worker, args render.Args, scene object.T) {
 	ready := func(n Node) bool {
 		for _, req := range n.Requires() {
 			if g.todo[req] {
-				log.Println("  ", n.Name(), "not ready because", req.Name(), "is waiting")
 				return false
 			}
 		}
-		log.Println(n.Name(), "is ready")
 		return true
 	}
 

@@ -13,20 +13,22 @@ import (
 
 func TestButton(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Button Suite")
+	RunSpecs(t, "Menu Widget Suite")
 }
 
-var _ = Describe("", func() {
-	render := func() node.T {
-		return rect.New("gui", rect.Props{
-			Children: []node.T{
-				makeMenu(),
-			},
-		})
-	}
+var _ = Describe("Menu widget", func() {
+	It("renders", func() {
+		render := func() node.T {
+			return rect.New("gui", rect.Props{
+				Children: []node.T{
+					makeMenu(),
+				},
+			})
+		}
 
-	tree := render()
-	Expect(tree).To(HaveLen(1))
+		tree := render()
+		Expect(tree.Children()).To(HaveLen(1))
+	})
 })
 
 func makeMenu() node.T {

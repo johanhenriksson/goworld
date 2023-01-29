@@ -16,7 +16,6 @@ import (
 	"github.com/johanhenriksson/goworld/render/renderpass"
 	"github.com/johanhenriksson/goworld/render/renderpass/attachment"
 	"github.com/johanhenriksson/goworld/render/shader"
-	"github.com/johanhenriksson/goworld/render/sync"
 	"github.com/johanhenriksson/goworld/render/texture"
 	"github.com/johanhenriksson/goworld/render/vertex"
 	"github.com/johanhenriksson/goworld/render/vulkan"
@@ -40,14 +39,11 @@ type GuiPass struct {
 	pass     renderpass.T
 	textures cache.SamplerCache
 	fbufs    framebuffer.Array
-
-	prev      Pass
-	completed sync.Semaphore
 }
 
 var _ Pass = &GuiPass{}
 
-func NewGuiPass(target vulkan.Target, pool descriptor.Pool, prev Pass) *GuiPass {
+func NewGuiPass(target vulkan.Target, pool descriptor.Pool) *GuiPass {
 	pass := renderpass.New(target.Device(), renderpass.Args{
 		ColorAttachments: []attachment.Color{
 			{
@@ -108,13 +104,11 @@ func NewGuiPass(target vulkan.Target, pool descriptor.Pool, prev Pass) *GuiPass 
 	textures.Fetch(texture.PathRef("textures/white.png")) // warmup texture
 
 	return &GuiPass{
-		target:    target,
-		mat:       mat,
-		pass:      pass,
-		prev:      prev,
-		textures:  textures,
-		fbufs:     fbufs,
-		completed: sync.NewSemaphore(target.Device()),
+		target:   target,
+		mat:      mat,
+		pass:     pass,
+		textures: textures,
+		fbufs:    fbufs,
 	}
 }
 
@@ -163,29 +157,8 @@ func (p *GuiPass) Record(cmds command.Recorder, args render.Args, scene object.T
 	})
 }
 
-func (p *GuiPass) Draw(args render.Args, scene object.T) {
-	cmds := command.NewRecorder()
-	p.Record(cmds, args, scene)
-	worker := p.target.Worker(args.Context.Index)
-	worker.Queue(cmds.Apply)
-	worker.Submit(command.SubmitInfo{
-		Marker: "GuiPass",
-		Signal: []sync.Semaphore{p.completed},
-		Wait: []command.Wait{
-			{
-				Semaphore: p.prev.Completed(),
-				Mask:      vk.PipelineStageFragmentShaderBit,
-			},
-		},
-	})
-}
-
 func (p *GuiPass) Name() string {
 	return "GUI"
-}
-
-func (p *GuiPass) Completed() sync.Semaphore {
-	return p.completed
 }
 
 func (p *GuiPass) Destroy() {
@@ -193,5 +166,4 @@ func (p *GuiPass) Destroy() {
 	p.fbufs.Destroy()
 	p.pass.Destroy()
 	p.textures.Destroy()
-	p.completed.Destroy()
 }

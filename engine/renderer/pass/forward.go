@@ -21,21 +21,18 @@ import (
 )
 
 type ForwardPass struct {
-	gbuffer   GeometryBuffer
-	target    vulkan.Target
-	pass      renderpass.T
-	fbuf      framebuffer.T
-	fwdmat    material.Standard
-	prev      Pass
-	copy      sync.Semaphore
-	completed sync.Semaphore
+	gbuffer GeometryBuffer
+	target  vulkan.Target
+	pass    renderpass.T
+	fbuf    framebuffer.T
+	fwdmat  material.Standard
+	copy    sync.Semaphore
 }
 
 func NewForwardPass(
 	target vulkan.Target,
 	pool descriptor.Pool,
 	gbuffer GeometryBuffer,
-	prev Pass,
 ) *ForwardPass {
 	pass := renderpass.New(target.Device(), renderpass.Args{
 		ColorAttachments: []attachment.Color{
@@ -113,20 +110,14 @@ func NewForwardPass(
 		})
 
 	return &ForwardPass{
-		gbuffer:   gbuffer,
-		target:    target,
-		pass:      pass,
-		completed: sync.NewSemaphore(target.Device()),
-		copy:      sync.NewSemaphore(target.Device()),
+		gbuffer: gbuffer,
+		target:  target,
+		pass:    pass,
+		copy:    sync.NewSemaphore(target.Device()),
 
 		fbuf:   fbuf,
 		fwdmat: fwdmat,
-		prev:   prev,
 	}
-}
-
-func (p *ForwardPass) Completed() sync.Semaphore {
-	return p.completed
 }
 
 func (p *ForwardPass) Record(cmds command.Recorder, args render.Args, scene object.T) {
@@ -171,27 +162,6 @@ func (p *ForwardPass) Record(cmds command.Recorder, args render.Args, scene obje
 
 }
 
-func (p *ForwardPass) Draw(args render.Args, scene object.T) {
-	cmds := command.NewRecorder()
-	p.Record(cmds, args, scene)
-	worker := p.target.Worker(args.Context.Index)
-	worker.Queue(cmds.Apply)
-	worker.Submit(command.SubmitInfo{
-		Marker: "ForwardPass",
-		Signal: []sync.Semaphore{p.copy, p.completed},
-		Wait: []command.Wait{
-			{
-				Semaphore: p.prev.Completed(),
-				Mask:      vk.PipelineStageFragmentShaderBit,
-			},
-		},
-	})
-
-	// issue Geometry Buffer copy, so that gbuffers may be read back.
-	// if more data gbuffer is to be dawn later, we need to move this to a later stage
-	p.gbuffer.CopyBuffers(p.copy)
-}
-
 func (p *ForwardPass) Name() string {
 	return "Forward"
 }
@@ -200,7 +170,6 @@ func (p *ForwardPass) Destroy() {
 	p.fbuf.Destroy()
 	p.pass.Destroy()
 	p.fwdmat.Material().Destroy()
-	p.completed.Destroy()
 	p.copy.Destroy()
 }
 
