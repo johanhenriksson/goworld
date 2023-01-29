@@ -29,8 +29,8 @@ type Window interface {
 	SetInputHandler(input.Handler)
 	// SetResizeHandler(ResizeHandler)
 
+	Swapchain() swapchain.T
 	Aquire() (swapchain.Context, error)
-	Present()
 }
 
 type WindowArgs struct {
@@ -129,6 +129,7 @@ func (w *window) Title() string     { return w.title }
 
 func (w *window) Surfaces() []image.T      { return w.swap.Images() }
 func (w *window) SurfaceFormat() vk.Format { return w.swap.SurfaceFormat() }
+func (w *window) Swapchain() swapchain.T   { return w.swap }
 
 func (w *window) SetInputHandler(handler input.Handler) {
 	// keyboard events
@@ -149,10 +150,6 @@ func (w *window) SetTitle(title string) {
 
 func (w *window) Aquire() (swapchain.Context, error) {
 	return w.swap.Aquire()
-}
-
-func (b *window) Present() {
-	b.swap.Present()
 }
 
 func (w *window) Destroy() {

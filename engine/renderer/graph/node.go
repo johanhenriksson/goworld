@@ -29,6 +29,7 @@ type Node interface {
 }
 
 type node struct {
+	name       string
 	device     device.T
 	pass       NodePass
 	after      map[Node]edge
@@ -44,9 +45,10 @@ type edge struct {
 	signal sync.Semaphore
 }
 
-func newNode(dev device.T, pass NodePass) *node {
+func newNode(dev device.T, name string, pass NodePass) *node {
 	return &node{
 		device:     dev,
+		name:       name,
 		pass:       pass,
 		after:      make(map[Node]edge, 4),
 		before:     make(map[Node]sync.Semaphore, 4),
@@ -116,11 +118,10 @@ func (n *node) Detach(nd Node) {
 }
 
 func (n *node) Name() string {
-	return n.pass.Name()
+	return n.name
 }
 
 func (n *node) Destroy() {
-	n.pass.Destroy()
 	for before, signal := range n.before {
 		before.Detach(n)
 		signal.Destroy()
@@ -128,7 +129,10 @@ func (n *node) Destroy() {
 	for after := range n.after {
 		after.Detach(n)
 	}
-	n.pass = nil
+	if n.pass != nil {
+		n.pass.Destroy()
+		n.pass = nil
+	}
 	n.before = nil
 	n.after = nil
 	n.signals = nil

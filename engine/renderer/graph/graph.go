@@ -28,14 +28,14 @@ func New(dev device.T) T {
 	return &graph{
 		device: dev,
 		nodes:  make([]Node, 0, 16),
+		todo:   make(map[Node]bool, 16),
 		pre:    newPreNode(dev),
 		post:   newPostNode(dev),
-		todo:   map[Node]bool{},
 	}
 }
 
 func (g *graph) Node(pass NodePass) Node {
-	nd := newNode(g.device, pass)
+	nd := newNode(g.device, pass.Name(), pass)
 	g.nodes = append(g.nodes, nd)
 	return nd
 }

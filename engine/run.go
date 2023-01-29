@@ -139,16 +139,16 @@ func Run(args Args, scenefuncs ...SceneFunc) {
 		renderer.Draw(args, scene)
 
 		// wait for submissions
-		wnd.Transferer().Wait()
-		wnd.Worker(context.Index).Wait()
+		// wnd.Transferer().Wait()
 
 		// present image
-		wnd.Present()
+		wnd.Worker(context.Index).
+			Present(wnd.Swapchain(), context)
 
 		// gc pass
 		// this might be a decent place to run GC?
 		// or a horrible one since we are waiting for vulkan stuff to complete
-		collectGarbage()
+		// collectGarbage()
 
 		timing := counter.Sample()
 		log.Printf(

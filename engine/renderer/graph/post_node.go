@@ -14,12 +14,8 @@ type postNode struct {
 
 func newPostNode(dev device.T) Node {
 	return &postNode{
-		node: newNode(dev, nil),
+		node: newNode(dev, "Post", nil),
 	}
-}
-
-func (n *postNode) Name() string {
-	return "Post"
 }
 
 func (n *postNode) Draw(worker command.Worker, args render.Args, scene object.T) {

@@ -15,12 +15,8 @@ type preNode struct {
 
 func newPreNode(dev device.T) Node {
 	return &preNode{
-		node: newNode(dev, nil),
+		node: newNode(dev, "Pre", nil),
 	}
-}
-
-func (n *preNode) Name() string {
-	return "Pre"
 }
 
 func (n *preNode) Draw(worker command.Worker, args render.Args, scene object.T) {
@@ -33,6 +29,7 @@ func (n *preNode) Draw(worker command.Worker, args render.Args, scene object.T) 
 			},
 		}
 	}
+	// args.Context.InFlight.Lock()
 	worker.Submit(command.SubmitInfo{
 		Marker: n.Name(),
 		Wait:   waits,

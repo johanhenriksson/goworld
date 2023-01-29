@@ -15,7 +15,6 @@ type T interface {
 	device.Resource[vk.Swapchain]
 
 	Aquire() (Context, error)
-	Present()
 	Resize(int, int)
 
 	Images() []image.T
@@ -25,7 +24,6 @@ type T interface {
 type swapchain struct {
 	ptr        vk.Swapchain
 	device     device.T
-	queue      vk.Queue
 	surface    vk.Surface
 	surfaceFmt vk.SurfaceFormat
 	images     []image.T
@@ -39,12 +37,8 @@ type swapchain struct {
 }
 
 func New(device device.T, frames, width, height int, surface vk.Surface, surfaceFormat vk.SurfaceFormat) T {
-	// todo: surface format logic
-	queue := device.GetQueue(0, vk.QueueFlags(vk.QueueGraphicsBit))
-
 	s := &swapchain{
 		device:     device,
-		queue:      queue,
 		surface:    surface,
 		surfaceFmt: surfaceFormat,
 		frames:     frames,
@@ -146,23 +140,6 @@ func (s *swapchain) Aquire() (Context, error) {
 
 	s.current = int(idx)
 	return s.contexts[s.current], nil
-}
-
-// Present executes the final output render pass and presents the image to the screen.
-// When calling, the final render pass command buffer should be submitted to worker 0 of the current context.
-func (s *swapchain) Present() {
-	ctx := s.contexts[s.current]
-
-	presentInfo := vk.PresentInfo{
-		SType:              vk.StructureTypePresentInfo,
-		WaitSemaphoreCount: 1,
-		PWaitSemaphores:    []vk.Semaphore{ctx.RenderComplete.Ptr()},
-		SwapchainCount:     1,
-		PSwapchains:        []vk.Swapchain{s.ptr},
-		PImageIndices:      []uint32{uint32(s.current)},
-	}
-
-	vk.QueuePresent(s.queue, &presentInfo)
 }
 
 func (s *swapchain) Destroy() {

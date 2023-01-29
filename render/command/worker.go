@@ -4,6 +4,7 @@ import (
 	"runtime"
 
 	"github.com/johanhenriksson/goworld/render/device"
+	"github.com/johanhenriksson/goworld/render/swapchain"
 	"github.com/johanhenriksson/goworld/render/sync"
 	"github.com/johanhenriksson/goworld/util"
 
@@ -18,6 +19,7 @@ type Worker interface {
 	Submit(SubmitInfo)
 	Destroy()
 	Wait()
+	Present(swap swapchain.T, ctx swapchain.Context)
 }
 
 type Workers []Worker
@@ -166,6 +168,20 @@ func (w *worker) submit(submit SubmitInfo) {
 
 	// clear batch slice but keep memory
 	w.batch = w.batch[:0]
+}
+
+func (w *worker) Present(swap swapchain.T, ctx swapchain.Context) {
+	w.work <- func() {
+		presentInfo := vk.PresentInfo{
+			SType:              vk.StructureTypePresentInfo,
+			WaitSemaphoreCount: 1,
+			PWaitSemaphores:    []vk.Semaphore{ctx.RenderComplete.Ptr()},
+			SwapchainCount:     1,
+			PSwapchains:        []vk.Swapchain{swap.Ptr()},
+			PImageIndices:      []uint32{uint32(ctx.Index)},
+		}
+		vk.QueuePresent(w.queue, &presentInfo)
+	}
 }
 
 func (w *worker) Destroy() {
