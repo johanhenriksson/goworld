@@ -30,9 +30,6 @@ func (p *postPass) Record(cmds command.Recorder, args render.Args, scene object.
 }
 
 func (p *postPass) Draw(args render.Args, scene object.T) {
-	cmds := command.NewRecorder()
-	p.Record(cmds, args, scene)
-
 	var signal []sync.Semaphore
 	if args.Context.RenderComplete != nil {
 		signal = []sync.Semaphore{args.Context.RenderComplete}
@@ -55,7 +52,7 @@ func (p *postPass) Draw(args render.Args, scene object.T) {
 }
 
 func (p *postPass) Name() string {
-	return "Pre"
+	return "Post"
 }
 
 func (p *postPass) Completed() sync.Semaphore {

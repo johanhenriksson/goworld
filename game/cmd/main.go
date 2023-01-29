@@ -27,7 +27,7 @@ import (
 )
 
 func NewVoxelRenderer(target vulkan.Target) renderer.T {
-	return renderer.New(
+	return renderer.NewGraph(
 		target,
 		[]pass.DeferredSubpass{
 			game.NewVoxelSubpass(target),

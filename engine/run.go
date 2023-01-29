@@ -23,6 +23,11 @@ import (
 type SceneFunc func(renderer.T, object.T)
 type RendererFunc func(vulkan.Target) renderer.T
 
+type PreDrawable interface {
+	object.Component
+	PreDraw(render.Args, object.T) error
+}
+
 type Args struct {
 	Title    string
 	Width    int
@@ -113,7 +118,7 @@ func Run(args Args, scenefuncs ...SceneFunc) {
 			continue
 		}
 
-		// draw
+		// aquire next frame
 		context, err := wnd.Aquire()
 		if err != nil {
 			log.Println("swapchain recreated?? recreating renderer")
@@ -124,6 +129,13 @@ func Run(args Args, scenefuncs ...SceneFunc) {
 		args := createRenderArgs(screen, camera)
 		args.Context = context
 
+		// pre-draw
+		objects := query.New[PreDrawable]().Collect(scene)
+		for _, component := range objects {
+			component.PreDraw(args.Apply(component.Object().Transform().World()), scene)
+		}
+
+		// draw
 		renderer.Draw(args, scene)
 
 		// wait for submissions

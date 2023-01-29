@@ -148,6 +148,7 @@ func (p *shadowpass) Record(cmds command.Recorder, args render.Args, scene objec
 		cmd.CmdEndRenderPass()
 	})
 }
+
 func (p *shadowpass) Draw(args render.Args, scene object.T) {
 	cmds := command.NewRecorder()
 	p.Record(cmds, args, scene)

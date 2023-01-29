@@ -2,7 +2,6 @@ package pass
 
 import (
 	"github.com/johanhenriksson/goworld/core/object"
-	"github.com/johanhenriksson/goworld/core/object/query"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/sync"
@@ -20,11 +19,6 @@ type prePass struct {
 	completed sync.Semaphore
 }
 
-type PreDrawable interface {
-	object.Component
-	PreDraw(render.Args, object.T) error
-}
-
 func NewPrePass(target vulkan.Target) PrePass {
 	return &prePass{
 		target:    target,
@@ -33,16 +27,10 @@ func NewPrePass(target vulkan.Target) PrePass {
 }
 
 func (p *prePass) Record(cmds command.Recorder, args render.Args, scene object.T) {
-	objects := query.New[PreDrawable]().Collect(scene)
-	for _, component := range objects {
-		component.PreDraw(args.Apply(component.Object().Transform().World()), scene)
-	}
+
 }
 
 func (p *prePass) Draw(args render.Args, scene object.T) {
-	cmds := command.NewRecorder()
-	p.Record(cmds, args, scene)
-
 	var waits []command.Wait
 	if args.Context.ImageAvailable != nil {
 		waits = []command.Wait{

@@ -255,11 +255,8 @@ func (p *GeometryPass) Record(cmds command.Recorder, args render.Args, scene obj
 		})
 	}
 
-	// todo: add a submit here
-	// the geometry pass can run in parallel with shadows
-
 	//
-	// lighting pass
+	// lighting subpass
 	//
 
 	cmds.Record(func(cmd command.Buffer) {
@@ -345,6 +342,10 @@ func (p *GeometryPass) DrawLight(cmds command.Recorder, args render.Args, lit li
 
 func (p *GeometryPass) Name() string {
 	return "Geometry"
+}
+
+func (d *GeometryPass) GBuffer() GeometryBuffer {
+	return d.gbuffer
 }
 
 func (p *GeometryPass) Destroy() {
