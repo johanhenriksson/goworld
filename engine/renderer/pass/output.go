@@ -105,11 +105,9 @@ func NewOutputPass(target vulkan.Target, pool descriptor.Pool, geometry Geometry
 	return p
 }
 
-func (p *OutputPass) Draw(args render.Args, scene object.T) {
+func (p *OutputPass) Record(cmds command.Recorder, args render.Args, scene object.T) {
 	ctx := args.Context
-
-	worker := p.target.Worker(ctx.Index)
-	worker.Queue(func(cmd command.Buffer) {
+	cmds.Record(func(cmd command.Buffer) {
 		cmd.CmdBeginRenderPass(p.pass, p.fbufs[ctx.Index%len(p.fbufs)])
 
 		quad := p.target.Meshes().Fetch(p.quad)
@@ -120,7 +118,13 @@ func (p *OutputPass) Draw(args render.Args, scene object.T) {
 
 		cmd.CmdEndRenderPass()
 	})
+}
 
+func (p *OutputPass) Draw(args render.Args, scene object.T) {
+	cmds := command.NewRecorder()
+	p.Record(cmds, args, scene)
+	worker := p.target.Worker(args.Context.Index)
+	worker.Queue(cmds.Apply)
 	worker.Submit(command.SubmitInfo{
 		Marker: "OutputPass",
 		Signal: []sync.Semaphore{p.completed},

@@ -72,7 +72,7 @@ func (r *vkrenderer) Recreate() {
 	})
 
 	pre := pass.NewPrePass(r.target)
-	deferred := pass.NewDeferredPass(r.target, r.pool, r.geometryPasses, r.shadowPasses)
+	deferred := pass.NewDeferredPass(r.target, r.pool, pre, r.geometryPasses, r.shadowPasses)
 	forward := pass.NewForwardPass(r.target, r.pool, deferred.GBuffer(), deferred)
 	output := pass.NewOutputPass(r.target, r.pool, deferred.GBuffer(), forward)
 	lines := pass.NewLinePass(r.target, r.pool, deferred.GBuffer(), output)

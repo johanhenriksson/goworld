@@ -3,6 +3,7 @@ package pass
 import (
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/render"
+	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/descriptor"
 	"github.com/johanhenriksson/goworld/render/sync"
 	"github.com/johanhenriksson/goworld/render/vulkan"
@@ -18,8 +19,8 @@ type deferredPass struct {
 	shadows  ShadowPass
 }
 
-func NewDeferredPass(target vulkan.Target, pool descriptor.Pool, geometrySubpass, shadowSubpass []DeferredSubpass) Deferred {
-	shadows := NewShadowPass(target, pool, shadowSubpass)
+func NewDeferredPass(target vulkan.Target, pool descriptor.Pool, prev Pass, geometrySubpass, shadowSubpass []DeferredSubpass) Deferred {
+	shadows := NewShadowPass(target, pool, shadowSubpass, prev)
 	geometry := NewGeometryPass(target, pool, shadows, geometrySubpass)
 	return &deferredPass{
 		shadows:  shadows,
@@ -38,6 +39,9 @@ func (d *deferredPass) Completed() sync.Semaphore {
 func (d *deferredPass) Destroy() {
 	d.shadows.Destroy()
 	d.geometry.Destroy()
+}
+
+func (d *deferredPass) Record(cmds command.Recorder, args render.Args, scene object.T) {
 }
 
 func (d *deferredPass) Draw(args render.Args, scene object.T) {

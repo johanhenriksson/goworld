@@ -118,8 +118,7 @@ func NewGuiPass(target vulkan.Target, pool descriptor.Pool, prev Pass) *GuiPass 
 	}
 }
 
-func (p *GuiPass) Draw(args render.Args, scene object.T) {
-	ctx := args.Context
+func (p *GuiPass) Record(cmds command.Recorder, args render.Args, scene object.T) {
 	p.textures.Tick()
 
 	// texture id zero should be white
@@ -134,9 +133,8 @@ func (p *GuiPass) Draw(args render.Args, scene object.T) {
 	view := mat4.Ident()
 	vp := proj.Mul(&view)
 
-	cmds := command.NewRecorder()
 	cmds.Record(func(cmd command.Buffer) {
-		cmd.CmdBeginRenderPass(p.pass, p.fbufs[ctx.Index])
+		cmd.CmdBeginRenderPass(p.pass, p.fbufs[args.Context.Index])
 		p.mat.Bind(cmd)
 	})
 
@@ -163,8 +161,12 @@ func (p *GuiPass) Draw(args render.Args, scene object.T) {
 	cmds.Record(func(cmd command.Buffer) {
 		cmd.CmdEndRenderPass()
 	})
+}
 
-	worker := p.target.Worker(ctx.Index)
+func (p *GuiPass) Draw(args render.Args, scene object.T) {
+	cmds := command.NewRecorder()
+	p.Record(cmds, args, scene)
+	worker := p.target.Worker(args.Context.Index)
 	worker.Queue(cmds.Apply)
 	worker.Submit(command.SubmitInfo{
 		Marker: "GuiPass",

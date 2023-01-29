@@ -129,9 +129,7 @@ func (p *ForwardPass) Completed() sync.Semaphore {
 	return p.completed
 }
 
-func (p *ForwardPass) Draw(args render.Args, scene object.T) {
-	ctx := args.Context
-	cmds := command.NewRecorder()
+func (p *ForwardPass) Record(cmds command.Recorder, args render.Args, scene object.T) {
 
 	camera := uniform.Camera{
 		Proj:        args.Projection,
@@ -171,7 +169,12 @@ func (p *ForwardPass) Draw(args render.Args, scene object.T) {
 		cmd.CmdEndRenderPass()
 	})
 
-	worker := p.target.Worker(ctx.Index)
+}
+
+func (p *ForwardPass) Draw(args render.Args, scene object.T) {
+	cmds := command.NewRecorder()
+	p.Record(cmds, args, scene)
+	worker := p.target.Worker(args.Context.Index)
 	worker.Queue(cmds.Apply)
 	worker.Submit(command.SubmitInfo{
 		Marker: "ForwardPass",

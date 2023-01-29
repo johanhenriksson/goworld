@@ -26,11 +26,22 @@ func NewPostPass(target vulkan.Target, prev Pass) PostPass {
 	}
 }
 
+func (p *postPass) Record(cmds command.Recorder, args render.Args, scene object.T) {
+}
+
 func (p *postPass) Draw(args render.Args, scene object.T) {
+	cmds := command.NewRecorder()
+	p.Record(cmds, args, scene)
+
+	var signal []sync.Semaphore
+	if args.Context.RenderComplete != nil {
+		signal = []sync.Semaphore{args.Context.RenderComplete}
+	}
+
 	worker := p.target.Worker(args.Context.Index)
 	worker.Submit(command.SubmitInfo{
-		Marker: "GuiPass",
-		Signal: []sync.Semaphore{args.Context.RenderComplete},
+		Marker: "PostPass",
+		Signal: signal,
 		Wait: []command.Wait{
 			{
 				Semaphore: p.prev.Completed(),

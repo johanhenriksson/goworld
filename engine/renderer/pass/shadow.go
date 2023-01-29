@@ -34,13 +34,14 @@ type ShadowDescriptors struct {
 
 type shadowpass struct {
 	target    vulkan.Target
+	prev      Pass
 	pass      renderpass.T
 	passes    []DeferredSubpass
 	completed sync.Semaphore
 	fbuf      framebuffer.T
 }
 
-func NewShadowPass(target vulkan.Target, pool descriptor.Pool, passes []DeferredSubpass) ShadowPass {
+func NewShadowPass(target vulkan.Target, pool descriptor.Pool, passes []DeferredSubpass, prev Pass) ShadowPass {
 	log.Println("create shadow pass")
 	size := 1024
 
@@ -99,6 +100,7 @@ func NewShadowPass(target vulkan.Target, pool descriptor.Pool, passes []Deferred
 
 	return &shadowpass{
 		target:    target,
+		prev:      prev,
 		fbuf:      fbuf,
 		pass:      pass,
 		passes:    passes,
@@ -114,10 +116,7 @@ func (p *shadowpass) Completed() sync.Semaphore {
 	return p.completed
 }
 
-func (p *shadowpass) Draw(args render.Args, scene object.T) {
-	ctx := args.Context
-	cmds := command.NewRecorder()
-
+func (p *shadowpass) Record(cmds command.Recorder, args render.Args, scene object.T) {
 	light := query.New[light.T]().Where(func(lit light.T) bool { return lit.Type() == light.Directional }).First(scene)
 	lightDesc := light.LightDescriptor()
 
@@ -148,15 +147,18 @@ func (p *shadowpass) Draw(args render.Args, scene object.T) {
 	cmds.Record(func(cmd command.Buffer) {
 		cmd.CmdEndRenderPass()
 	})
-
-	worker := p.target.Worker(ctx.Index)
+}
+func (p *shadowpass) Draw(args render.Args, scene object.T) {
+	cmds := command.NewRecorder()
+	p.Record(cmds, args, scene)
+	worker := p.target.Worker(args.Context.Index)
 	worker.Queue(cmds.Apply)
 	worker.Submit(command.SubmitInfo{
 		Marker: "ShadowPass",
 		Signal: []sync.Semaphore{p.completed},
 		Wait: []command.Wait{
 			{
-				Semaphore: ctx.ImageAvailable,
+				Semaphore: p.prev.Completed(),
 				Mask:      vk.PipelineStageColorAttachmentOutputBit,
 			},
 		},

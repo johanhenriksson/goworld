@@ -110,9 +110,8 @@ func NewLinePass(target vulkan.Target, pool descriptor.Pool, geometry GeometryBu
 	return p
 }
 
-func (p *LinePass) Draw(args render.Args, scene object.T) {
+func (p *LinePass) Record(cmds command.Recorder, args render.Args, scene object.T) {
 	ctx := args.Context
-	cmds := command.NewRecorder()
 
 	camera := uniform.Camera{
 		Proj:        args.Projection,
@@ -138,8 +137,12 @@ func (p *LinePass) Draw(args render.Args, scene object.T) {
 	cmds.Record(func(cmd command.Buffer) {
 		cmd.CmdEndRenderPass()
 	})
+}
 
-	worker := p.target.Worker(ctx.Index)
+func (p *LinePass) Draw(args render.Args, scene object.T) {
+	cmds := command.NewRecorder()
+	p.Record(cmds, args, scene)
+	worker := p.target.Worker(args.Context.Index)
 	worker.Queue(cmds.Apply)
 	worker.Submit(command.SubmitInfo{
 		Marker: "LinePass",
@@ -160,9 +163,9 @@ func (p *LinePass) DrawLines(cmds command.Recorder, index int, args render.Args,
 		return nil
 	}
 
-	cmds.Record(func(cmd command.Buffer) {
-		p.material.Descriptors().Objects.Set(index, mesh.Transform().World())
+	p.material.Descriptors().Objects.Set(index, mesh.Transform().World())
 
+	cmds.Record(func(cmd command.Buffer) {
 		vkmesh.Draw(cmd, index)
 	})
 

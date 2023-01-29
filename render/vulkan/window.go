@@ -28,6 +28,9 @@ type Window interface {
 
 	SetInputHandler(input.Handler)
 	// SetResizeHandler(ResizeHandler)
+
+	Aquire() (swapchain.Context, error)
+	Present()
 }
 
 type WindowArgs struct {
