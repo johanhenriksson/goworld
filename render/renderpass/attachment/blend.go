@@ -6,7 +6,7 @@ var BlendMix = Blend{
 	Enabled: true,
 	Color: BlendOp{
 		Operation: vk.BlendOpAdd,
-		SrcFactor: vk.BlendFactorOne,
+		SrcFactor: vk.BlendFactorSrcAlpha,
 		DstFactor: vk.BlendFactorOneMinusSrcAlpha,
 	},
 	Alpha: BlendOp{

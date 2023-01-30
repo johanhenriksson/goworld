@@ -80,7 +80,7 @@ func NewEditor(chk *chunk.T, cam camera.T, render renderer.T) T {
 
 	box.Builder(&e.bounds, box.Args{
 		Size:  dimensions,
-		Color: color.DarkGrey,
+		Color: color.White,
 	}).
 		Parent(e.object).
 		Create()

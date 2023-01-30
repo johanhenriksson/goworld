@@ -4,7 +4,7 @@
 #extension GL_ARB_shading_language_420pack : enable
 
 // Varying
-layout (location = 0) in vec3 color0;
+layout (location = 0) in vec4 color0;
 layout (location = 1) in vec3 normal0;
 layout (location = 2) in vec3 position0;
 
@@ -15,7 +15,7 @@ layout (location = 2) out vec4 position;
 
 void main() 
 {
-    diffuse = vec4(color0, 1);
+    diffuse = color0;
 
     vec4 pack_normal = vec4((normal0 + 1.0) / 2.0, 1);
     normal = pack_normal;

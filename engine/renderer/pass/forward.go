@@ -13,7 +13,6 @@ import (
 	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/renderpass"
 	"github.com/johanhenriksson/goworld/render/renderpass/attachment"
-	"github.com/johanhenriksson/goworld/render/sync"
 	"github.com/johanhenriksson/goworld/render/vertex"
 	"github.com/johanhenriksson/goworld/render/vulkan"
 
@@ -26,7 +25,6 @@ type ForwardPass struct {
 	pass    renderpass.T
 	fbuf    framebuffer.T
 	fwdmat  material.Standard
-	copy    sync.Semaphore
 }
 
 func NewForwardPass(
@@ -43,6 +41,7 @@ func NewForwardPass(
 				StoreOp:     vk.AttachmentStoreOpStore,
 				FinalLayout: vk.ImageLayoutShaderReadOnlyOptimal,
 				Usage:       vk.ImageUsageSampledBit,
+				Blend:       attachment.BlendMix,
 
 				Allocator: attachment.FromImageArray([]image.T{
 					gbuffer.Output().Image(),
@@ -113,7 +112,6 @@ func NewForwardPass(
 		gbuffer: gbuffer,
 		target:  target,
 		pass:    pass,
-		copy:    sync.NewSemaphore(target.Device()),
 
 		fbuf:   fbuf,
 		fwdmat: fwdmat,
@@ -121,7 +119,6 @@ func NewForwardPass(
 }
 
 func (p *ForwardPass) Record(cmds command.Recorder, args render.Args, scene object.T) {
-
 	camera := uniform.Camera{
 		Proj:        args.Projection,
 		View:        args.View,
@@ -136,30 +133,35 @@ func (p *ForwardPass) Record(cmds command.Recorder, args render.Args, scene obje
 
 	cmds.Record(func(cmd command.Buffer) {
 		cmd.CmdBeginRenderPass(p.pass, p.fbuf)
-
 		p.fwdmat.Bind(cmd)
-
-		forwardMeshes := query.New[mesh.T]().
-			Where(isDrawForward).
-			Collect(scene)
-		for index, mesh := range forwardMeshes {
-			vkmesh := p.target.Meshes().Fetch(mesh.Mesh())
-			if vkmesh == nil {
-				continue
-			}
-
-			p.fwdmat.Descriptors().Objects.Set(index, uniform.Object{
-				Model: mesh.Transform().World(),
-			})
-
-			cmds.Record(func(cmd command.Buffer) {
-				vkmesh.Draw(cmd, index)
-			})
-		}
-
-		cmd.CmdEndRenderPass()
 	})
 
+	forwardMeshes := query.New[mesh.T]().
+		Where(isDrawForward).
+		Collect(scene)
+
+	for index, mesh := range forwardMeshes {
+		p.DrawForward(cmds, index, mesh)
+	}
+
+	cmds.Record(func(cmd command.Buffer) {
+		cmd.CmdEndRenderPass()
+	})
+}
+
+func (p *ForwardPass) DrawForward(cmds command.Recorder, index int, mesh mesh.T) {
+	vkmesh := p.target.Meshes().Fetch(mesh.Mesh())
+	if vkmesh == nil {
+		return
+	}
+
+	p.fwdmat.Descriptors().Objects.Set(index, uniform.Object{
+		Model: mesh.Transform().World(),
+	})
+
+	cmds.Record(func(cmd command.Buffer) {
+		vkmesh.Draw(cmd, index)
+	})
 }
 
 func (p *ForwardPass) Name() string {
@@ -170,7 +172,6 @@ func (p *ForwardPass) Destroy() {
 	p.fbuf.Destroy()
 	p.pass.Destroy()
 	p.fwdmat.Material().Destroy()
-	p.copy.Destroy()
 }
 
 func isDrawForward(m mesh.T) bool {
