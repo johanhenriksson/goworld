@@ -231,6 +231,10 @@ func (e *editor) KeyEvent(ev keys.Event) {
 		e.SelectTool(e.SampleTool)
 	}
 
+	if keys.Pressed(ev, keys.P) {
+		e.render.Screenshot()
+	}
+
 	// toggle construction planes
 	if keys.PressedMods(ev, keys.X, keys.Ctrl) {
 		e.XPlane.Object().SetActive(!e.XPlane.Object().Active())

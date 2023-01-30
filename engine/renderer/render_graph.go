@@ -1,11 +1,15 @@
 package renderer
 
 import (
+	"fmt"
+	"time"
+
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/engine/renderer/graph"
 	"github.com/johanhenriksson/goworld/engine/renderer/pass"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/descriptor"
+	"github.com/johanhenriksson/goworld/render/upload"
 	"github.com/johanhenriksson/goworld/render/vulkan"
 
 	vk "github.com/vulkan-go/vulkan"
@@ -15,6 +19,7 @@ type T interface {
 	Draw(args render.Args, scene object.T)
 	GBuffer() pass.GeometryBuffer
 	Recreate()
+	Screenshot()
 	Destroy()
 }
 
@@ -35,6 +40,18 @@ func NewGraph(target vulkan.Target, geometryPasses, shadowPasses []pass.Deferred
 	}
 	r.Recreate()
 	return r
+}
+
+func (r *rgraph) Screenshot() {
+	idx := 0
+	ss, err := upload.DownloadImage(r.target.Device(), r.target.Worker(idx), r.target.Surfaces()[idx])
+	if err != nil {
+		panic(err)
+	}
+	filename := fmt.Sprintf("Screenshot-%s.png", time.Now().Format("2006-01-02_15-04-05"))
+	if err := upload.SavePng(ss, filename); err != nil {
+		panic(err)
+	}
 }
 
 func (r *rgraph) Draw(args render.Args, scene object.T) {

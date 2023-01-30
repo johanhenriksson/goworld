@@ -84,7 +84,7 @@ func (s *swapchain) recreate() {
 			Height: uint32(s.height),
 		},
 		ImageArrayLayers: 1,
-		ImageUsage:       vk.ImageUsageFlags(vk.ImageUsageColorAttachmentBit),
+		ImageUsage:       vk.ImageUsageFlags(vk.ImageUsageColorAttachmentBit | vk.ImageUsageTransferSrcBit),
 		ImageSharingMode: vk.SharingModeExclusive,
 		PresentMode:      vk.PresentModeFifo,
 		PreTransform:     vk.SurfaceTransformIdentityBit,
@@ -107,7 +107,14 @@ func (s *swapchain) recreate() {
 
 	swapimages := make([]vk.Image, swapImageCount)
 	vk.GetSwapchainImages(s.device.Ptr(), s.ptr, &swapImageCount, swapimages)
-	s.images = util.Map(swapimages, func(img vk.Image) image.T { return image.Wrap(s.device, img) })
+	s.images = util.Map(swapimages, func(img vk.Image) image.T {
+		return image.Wrap(s.device, img, image.Args{
+			Width:  s.width,
+			Height: s.height,
+			Depth:  1,
+			Format: s.surfaceFmt.Format,
+		})
+	})
 
 	for i := range s.contexts {
 		// destroy existing
@@ -130,7 +137,6 @@ func (s *swapchain) Aquire() (Context, error) {
 	idx := uint32(0)
 	timeoutNs := uint64(1e9)
 	nextFrame := s.contexts[(s.current+1)%s.frames]
-	nextFrame.InFlight.Lock()
 
 	r := vk.AcquireNextImage(s.device.Ptr(), s.ptr, timeoutNs, nextFrame.ImageAvailable.Ptr(), nil, &idx)
 	if r == vk.ErrorOutOfDate {

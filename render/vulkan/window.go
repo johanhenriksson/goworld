@@ -30,7 +30,6 @@ type Window interface {
 	// SetResizeHandler(ResizeHandler)
 
 	Swapchain() swapchain.T
-	Aquire() (swapchain.Context, error)
 }
 
 type WindowArgs struct {

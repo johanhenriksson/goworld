@@ -1,6 +1,8 @@
 package vulkan
 
 import (
+	"sync"
+
 	"github.com/johanhenriksson/goworld/render/image"
 	"github.com/johanhenriksson/goworld/render/swapchain"
 	vk "github.com/vulkan-go/vulkan"
@@ -8,13 +10,17 @@ import (
 
 type imageTarget struct {
 	T
-	image image.T
+	image   image.T
+	context swapchain.Context
 }
 
 func NewImageTarget(backend T, img image.T) Target {
 	return &imageTarget{
 		T:     backend,
 		image: img,
+		context: swapchain.Context{
+			InFlight: &sync.Mutex{},
+		},
 	}
 }
 
@@ -26,7 +32,7 @@ func (i *imageTarget) Surfaces() []image.T      { return []image.T{i.image} }
 func (i *imageTarget) SurfaceFormat() vk.Format { return i.image.Format() }
 
 func (i *imageTarget) Aquire() (swapchain.Context, error) {
-	return swapchain.Context{}, nil
+	return i.context, nil
 }
 
 func (b *imageTarget) Present() {

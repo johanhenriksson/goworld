@@ -171,11 +171,15 @@ func (w *worker) submit(submit SubmitInfo) {
 }
 
 func (w *worker) Present(swap swapchain.T, ctx swapchain.Context) {
+	var waits []vk.Semaphore
+	if ctx.RenderComplete != nil {
+		waits = []vk.Semaphore{ctx.RenderComplete.Ptr()}
+	}
 	w.work <- func() {
 		presentInfo := vk.PresentInfo{
 			SType:              vk.StructureTypePresentInfo,
-			WaitSemaphoreCount: 1,
-			PWaitSemaphores:    []vk.Semaphore{ctx.RenderComplete.Ptr()},
+			WaitSemaphoreCount: uint32(len(waits)),
+			PWaitSemaphores:    waits,
 			SwapchainCount:     1,
 			PSwapchains:        []vk.Swapchain{swap.Ptr()},
 			PImageIndices:      []uint32{uint32(ctx.Index)},
