@@ -1,14 +1,12 @@
-package editor
+package chunk
 
 import (
-	"log"
-
 	"github.com/johanhenriksson/goworld/core/camera"
 	"github.com/johanhenriksson/goworld/core/input/keys"
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/engine/renderer"
-	"github.com/johanhenriksson/goworld/game/chunk"
+	"github.com/johanhenriksson/goworld/game/editor"
 	"github.com/johanhenriksson/goworld/game/voxel"
 	"github.com/johanhenriksson/goworld/geometry/box"
 	"github.com/johanhenriksson/goworld/geometry/plane"
@@ -17,8 +15,8 @@ import (
 	"github.com/johanhenriksson/goworld/render/color"
 )
 
-type Voxels interface {
-	object.T
+type Editor interface {
+	editor.T
 
 	SelectedColor() color.T
 	GetVoxel(x, y, z int) voxel.T
@@ -29,10 +27,13 @@ type Voxels interface {
 }
 
 // Editor base struct
-type voxelEdit struct {
+type edit struct {
 	object.T
 
-	Chunk  *chunk.T
+	// editor target
+	mesh *Mesh
+
+	Chunk  *T
 	Camera camera.T
 	Tool   Tool
 
@@ -56,21 +57,29 @@ type voxelEdit struct {
 	cursorNormal vec3.T
 }
 
-// NewVoxelEditor creates a new editor application
-func NewVoxelEditor(chk *chunk.T, cam camera.T, render renderer.T) Voxels {
+var _ editor.T = &edit{}
+
+func init() {
+	editor.Register(&Mesh{}, NewEditor)
+}
+
+// NewEditor creates a new chunk editor
+func NewEditor(ctx *editor.Context, mesh *Mesh) Editor {
+	chk := mesh.Chunk
 	dimensions := vec3.NewI(chk.Sx, chk.Sy, chk.Sz)
 	center := dimensions.Scaled(0.5)
 
-	e := object.New(&voxelEdit{
+	e := object.New(&edit{
+		mesh:   mesh,
 		Chunk:  chk,
-		Camera: cam,
+		Camera: ctx.Camera,
 
 		PlaceTool:   NewPlaceTool(),
 		EraseTool:   NewEraseTool(),
 		SampleTool:  NewSampleTool(),
 		ReplaceTool: NewReplaceTool(),
 
-		render: render,
+		render: ctx.Render,
 		color:  color.Red,
 
 		Bounds: box.New(box.Args{
@@ -111,8 +120,8 @@ func NewVoxelEditor(chk *chunk.T, cam camera.T, render renderer.T) Voxels {
 	e.ReplaceTool.SetActive(false)
 	e.EraseTool.SetActive(false)
 	e.SampleTool.SetActive(false)
-
-	e.SelectTool(e.PlaceTool)
+	e.PlaceTool.SetActive(false)
+	e.SelectTool(nil)
 
 	object.Attach(e, NewGUI(e))
 	object.Attach(e, NewMenu(e))
@@ -120,41 +129,43 @@ func NewVoxelEditor(chk *chunk.T, cam camera.T, render renderer.T) Voxels {
 	return e
 }
 
-func (e *voxelEdit) Name() string {
+func (e *edit) Name() string {
 	return "Editor"
 }
 
-func (e *voxelEdit) GetVoxel(x, y, z int) voxel.T {
+func (e *edit) GetVoxel(x, y, z int) voxel.T {
 	return e.Chunk.At(x, y, z)
 }
 
-func (e *voxelEdit) SetVoxel(x, y, z int, v voxel.T) {
+func (e *edit) SetVoxel(x, y, z int, v voxel.T) {
 	e.Chunk.Set(x, y, z, v)
 }
 
-func (e *voxelEdit) SelectColor(c color.T) {
+func (e *edit) SelectColor(c color.T) {
 	e.color = c
 }
 
-func (e *voxelEdit) SelectedColor() color.T {
+func (e *edit) SelectedColor() color.T {
 	return e.color
 }
 
-func (e *voxelEdit) DeselectTool() {
+func (e *edit) DeselectTool() {
 	if e.Tool != nil {
 		e.Tool.SetActive(false)
 		e.Tool = nil
 	}
 }
 
-func (e *voxelEdit) SelectTool(tool Tool) {
+func (e *edit) SelectTool(tool Tool) {
 	e.DeselectTool()
 	e.Tool = tool
-	e.Tool.SetActive(true)
+	if tool != nil {
+		e.Tool.SetActive(true)
+	}
 }
 
 // sample world position at current mouse coords
-func (e *voxelEdit) cursorPositionNormal(cursor vec2.T) (bool, vec3.T, vec3.T) {
+func (e *edit) cursorPositionNormal(cursor vec2.T) (bool, vec3.T, vec3.T) {
 	viewNormal, normalExists := e.render.GBuffer().SampleNormal(cursor)
 	if !normalExists {
 		return false, vec3.Zero, vec3.Zero
@@ -172,13 +183,13 @@ func (e *voxelEdit) cursorPositionNormal(cursor vec2.T) (bool, vec3.T, vec3.T) {
 	return true, position, normal
 }
 
-func (e *voxelEdit) InBounds(p vec3.T) bool {
+func (e *edit) InBounds(p vec3.T) bool {
 	p = p.Floor()
 	outside := p.X < 0 || p.Y < 0 || p.Z < 0 || int(p.X) >= e.Chunk.Sx || int(p.Y) >= e.Chunk.Sy || int(p.Z) >= e.Chunk.Sz
 	return !outside
 }
 
-func (e *voxelEdit) KeyEvent(ev keys.Event) {
+func (e *edit) KeyEvent(ev keys.Event) {
 	// clear chunk hotkey
 	if keys.PressedMods(ev, keys.N, keys.Ctrl) {
 		e.Chunk.Clear()
@@ -245,7 +256,10 @@ func (e *voxelEdit) KeyEvent(ev keys.Event) {
 	}
 }
 
-func (e *voxelEdit) MouseEvent(ev mouse.Event) {
+func (e *edit) MouseEvent(ev mouse.Event) {
+	if e.Tool == nil {
+		return
+	}
 	switch ev.Action() {
 	case mouse.Move:
 		if exists, pos, normal := e.cursorPositionNormal(ev.Position()); exists {
@@ -256,17 +270,17 @@ func (e *voxelEdit) MouseEvent(ev mouse.Event) {
 		}
 
 	case mouse.Press:
-		if ev.Button() == mouse.Button2 {
+		if ev.Button() == mouse.Button1 {
 			e.Tool.Use(e, e.cursorPos, e.cursorNormal)
 		}
 	}
 }
 
-func (e *voxelEdit) Recalculate() {
+func (e *edit) Recalculate() {
 	e.Chunk.Light.Calculate()
-	if mesh, ok := object.FindInSiblings[*chunk.Mesh](e); ok {
-		mesh.Compute()
-	} else {
-		log.Println("no voxel mesh found")
-	}
+	e.mesh.Compute()
+}
+
+func (e *edit) CanDeselect() bool {
+	return e.Tool == nil
 }

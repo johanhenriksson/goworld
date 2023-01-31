@@ -4,7 +4,9 @@ import (
 	"github.com/johanhenriksson/goworld/core/collider"
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/core/object"
+	"github.com/johanhenriksson/goworld/core/transform"
 	"github.com/johanhenriksson/goworld/geometry/cone"
+	"github.com/johanhenriksson/goworld/geometry/gizmo"
 	"github.com/johanhenriksson/goworld/geometry/lines"
 	"github.com/johanhenriksson/goworld/geometry/plane"
 	"github.com/johanhenriksson/goworld/math/mat4"
@@ -19,6 +21,8 @@ type T struct {
 	object.T
 	Args
 
+	target transform.T
+
 	Lines *lines.T
 	X     *cone.T
 	Y     *cone.T
@@ -30,9 +34,11 @@ type T struct {
 	axis       vec3.T
 	screenAxis vec2.T
 	start      vec2.T
-	viewport   vec2.T
+	viewport   render.Screen
 	camera     mat4.T
 }
+
+var _ gizmo.Gizmo = &T{}
 
 type Args struct {
 }
@@ -149,7 +155,18 @@ func (g *T) Name() string {
 	return "MoverGizmo"
 }
 
-func (g *T) Select(e mouse.Event, collider collider.T) {
+func (g *T) Target() transform.T {
+	return g.target
+}
+
+func (g *T) SetTarget(t transform.T) {
+	if t != nil {
+		g.Transform().SetPosition(t.WorldPosition())
+	}
+	g.target = t
+}
+
+func (g *T) DragStart(e mouse.Event, collider collider.T) {
 	axisObj := collider.Parent()
 	switch axisObj {
 	case g.X:
@@ -161,31 +178,34 @@ func (g *T) Select(e mouse.Event, collider collider.T) {
 	default:
 		return
 	}
-	cursor := e.Position().Div(g.viewport).Sub(vec2.New(0.5, 0.5)).Scaled(2)
+	cursor := g.viewport.NormalizeCursor(e.Position())
 	g.start = cursor
 
 	localDir := g.Transform().ProjectDir(g.axis)
 	g.screenAxis = g.camera.TransformDir(localDir).XY().Normalized()
 }
 
-func (g *T) Deselect(e mouse.Event) {
+func (g *T) DragEnd(e mouse.Event) {
 }
 
-func (g *T) SelectedMouseEvent(e mouse.Event) {
+func (g *T) DragMove(e mouse.Event) {
 	if e.Action() == mouse.Move {
-		cursor := e.Position().Div(g.viewport).Sub(vec2.New(0.5, 0.5)).Scaled(2)
+		cursor := g.viewport.NormalizeCursor(e.Position())
 
 		delta := g.start.Sub(cursor)
 		mag := -5 * vec2.Dot(delta, g.screenAxis) / g.screenAxis.Length()
 		g.start = cursor
 		pos := g.Transform().Position().Add(g.axis.Scaled(mag))
 		g.Transform().SetPosition(pos)
-		e.Consume()
+
+		if g.target != nil {
+			g.target.SetWorldPosition(pos)
+		}
 	}
 }
 
 func (g *T) PreDraw(args render.Args, scene object.T) error {
 	g.camera = args.VP
-	g.viewport = vec2.New(float32(args.Viewport.Width), float32(args.Viewport.Height))
+	g.viewport = args.Viewport
 	return nil
 }

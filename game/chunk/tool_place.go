@@ -1,4 +1,4 @@
-package editor
+package chunk
 
 import (
 	"log"
@@ -24,7 +24,7 @@ func NewPlaceTool() *PlaceTool {
 	})
 }
 
-func (pt *PlaceTool) Use(editor Voxels, position, normal vec3.T) {
+func (pt *PlaceTool) Use(editor Editor, position, normal vec3.T) {
 	target := position.Add(normal.Scaled(0.5))
 	x, y, z := int(target.X), int(target.Y), int(target.Z)
 
@@ -40,7 +40,7 @@ func (pt *PlaceTool) Use(editor Voxels, position, normal vec3.T) {
 	editor.Recalculate()
 }
 
-func (pt *PlaceTool) Hover(editor Voxels, position, normal vec3.T) {
+func (pt *PlaceTool) Hover(editor Editor, position, normal vec3.T) {
 	p := position.Add(normal.Scaled(0.5))
 	if editor.InBounds(p) {
 		pt.Transform().SetPosition(p.Floor())

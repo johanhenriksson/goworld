@@ -1,4 +1,4 @@
-package editor
+package chunk
 
 import (
 	"github.com/johanhenriksson/goworld/core/input/mouse"
@@ -12,7 +12,7 @@ import (
 	"github.com/johanhenriksson/goworld/render/color"
 )
 
-func ToolButton(tool Tool, editor *voxelEdit) node.T {
+func ToolButton(tool Tool, editor *edit) node.T {
 	bg := color.DarkGrey
 	if tool == editor.Tool {
 		bg = color.RGB(0.7, 0.7, 0.7)
@@ -37,7 +37,7 @@ func ToolButton(tool Tool, editor *voxelEdit) node.T {
 	})
 }
 
-func NewGUI(editor *voxelEdit) gui.Fragment {
+func NewGUI(editor *edit) gui.Fragment {
 	return gui.NewFragment(gui.FragmentArgs{
 		Slot:     "sidebar:content",
 		Position: gui.FragmentLast,
@@ -61,7 +61,7 @@ func NewGUI(editor *voxelEdit) gui.Fragment {
 	})
 }
 
-func NewMenu(editor *voxelEdit) gui.Fragment {
+func NewMenu(editor *edit) gui.Fragment {
 	return gui.NewFragment(gui.FragmentArgs{
 		Slot:     "main-menu",
 		Position: gui.FragmentLast,

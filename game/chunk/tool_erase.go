@@ -1,4 +1,4 @@
-package editor
+package chunk
 
 import (
 	"github.com/johanhenriksson/goworld/core/object"
@@ -22,7 +22,7 @@ func NewEraseTool() *EraseTool {
 	})
 }
 
-func (pt *EraseTool) Use(editor Voxels, position, normal vec3.T) {
+func (pt *EraseTool) Use(editor Editor, position, normal vec3.T) {
 	target := position.Sub(normal.Scaled(0.5))
 	editor.SetVoxel(int(target.X), int(target.Y), int(target.Z), voxel.Empty)
 
@@ -30,7 +30,7 @@ func (pt *EraseTool) Use(editor Voxels, position, normal vec3.T) {
 	editor.Recalculate()
 }
 
-func (pt *EraseTool) Hover(editor Voxels, position, normal vec3.T) {
+func (pt *EraseTool) Hover(editor Editor, position, normal vec3.T) {
 	// parent actually refers to the editor right now
 	// tools should be attached to their own object
 	// they could potentially share positioning logic

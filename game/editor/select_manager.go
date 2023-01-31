@@ -4,20 +4,11 @@ import (
 	"github.com/johanhenriksson/goworld/core/collider"
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/core/object"
-	"github.com/johanhenriksson/goworld/math"
 	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/math/physics"
-	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
 )
-
-type Selectable interface {
-	object.T
-	Select(mouse.Event, collider.T)
-	Deselect(mouse.Event)
-	SelectedMouseEvent(mouse.Event)
-}
 
 type SelectManager interface {
 	object.T
@@ -30,8 +21,7 @@ type selectmgr struct {
 	selected Selectable
 
 	camera   mat4.T
-	viewport vec2.T
-	eye      vec3.T
+	viewport render.Screen
 }
 
 func NewSelectManager() SelectManager {
@@ -44,47 +34,48 @@ func (m *selectmgr) MouseEvent(e mouse.Event) {
 	}
 
 	vpi := m.camera.Invert()
-	cursor := e.Position().Div(m.viewport).Sub(vec2.New(0.5, 0.5)).Scaled(2)
+	cursor := m.viewport.NormalizeCursor(e.Position())
 
-	if m.selected != nil {
-		if e.Action() == mouse.Release {
-			m.selected.Deselect(e)
-			m.selected = nil
-		} else {
-			m.selected.SelectedMouseEvent(e)
-		}
-	} else if e.Action() == mouse.Press {
+	if e.Button() == mouse.Button1 && e.Action() == mouse.Release {
+		// calculate a ray going into the screen
 		near := vpi.TransformPoint(vec3.New(cursor.X, cursor.Y, 1))
 		far := vpi.TransformPoint(vec3.New(cursor.X, cursor.Y, 0))
 		dir := far.Sub(near).Normalized()
 
-		// return closest hit
 		// find Collider children of Selectable objects
 		selectables := object.Query[Selectable]().CollectObjects(m.scene)
 		colliders := object.Query[collider.T]().Collect(selectables...)
-		var closest collider.T
-		closestDist := float32(math.InfPos)
-		for _, collider := range colliders {
-			hit, point := collider.Intersect(&physics.Ray{
-				Origin: near,
-				Dir:    dir,
-			})
-			if hit {
-				dist := vec3.Distance(point, m.eye)
-				if dist < closestDist {
-					closest = collider
-					closestDist = dist
-				}
-			}
-		}
-		if closest != nil {
+
+		// return closest hit
+		closest, hit := collider.ClosestIntersection(colliders, &physics.Ray{
+			Origin: near,
+			Dir:    dir,
+		})
+
+		if hit {
 			if selectable, ok := object.FindInParents[Selectable](closest); ok {
-				m.selected = selectable
-				selectable.Select(e, closest)
+				m.Select(e, selectable, closest)
 			}
 		} else if m.selected != nil {
 			// we hit nothing, deselect
-			m.selected.Deselect(e)
+			m.Deselect(e)
+		}
+	}
+}
+
+func (m *selectmgr) Select(e mouse.Event, object Selectable, collider collider.T) {
+	m.Deselect(e)
+	if m.selected == nil {
+		m.selected = object
+		object.Select(e, collider)
+	}
+}
+
+func (m *selectmgr) Deselect(e mouse.Event) {
+	if m.selected != nil {
+		ok := m.selected.Deselect(e)
+		if ok {
+			m.selected = nil
 		}
 	}
 }
@@ -92,7 +83,6 @@ func (m *selectmgr) MouseEvent(e mouse.Event) {
 func (m *selectmgr) PreDraw(args render.Args, scene object.T) error {
 	m.scene = scene
 	m.camera = args.VP
-	m.viewport = vec2.New(float32(args.Viewport.Width), float32(args.Viewport.Height))
-	m.eye = args.Position
+	m.viewport = args.Viewport
 	return nil
 }

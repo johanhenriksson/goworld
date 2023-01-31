@@ -10,7 +10,7 @@ type MeshData vertex.MutableMesh[voxel.Vertex, uint16]
 
 type Mesh struct {
 	mesh.T
-	chunk        *T
+	Chunk        *T
 	meshdata     MeshData
 	meshComputed chan []voxel.Vertex
 }
@@ -18,12 +18,14 @@ type Mesh struct {
 func NewMesh(chunk *T) *Mesh {
 	chk := &Mesh{
 		T:            mesh.New(mesh.Deferred),
-		chunk:        chunk,
+		Chunk:        chunk,
 		meshdata:     vertex.NewTriangles("chunk", []voxel.Vertex{}, []uint16{}),
 		meshComputed: make(chan []voxel.Vertex),
 	}
 	// chk.Compute()
 	chk.meshdata.Update(ComputeVertexData(chunk), []uint16{})
+
+	// circular dependencies?
 	chk.SetMesh(chk.meshdata)
 	return chk
 }
@@ -41,7 +43,7 @@ func (cm *Mesh) Update(dt float32) {
 // Queues recomputation of the mesh
 func (cm *Mesh) Compute() {
 	go func() {
-		data := ComputeVertexData(cm.chunk)
+		data := ComputeVertexData(cm.Chunk)
 		cm.meshComputed <- data
 	}()
 }

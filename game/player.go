@@ -188,12 +188,12 @@ func (p *Player) Update(dt float32) {
 }
 
 func (p *Player) MouseEvent(e mouse.Event) {
-	if e.Action() == mouse.Press && e.Button() == mouse.Button1 {
+	if e.Action() == mouse.Press && e.Button() == mouse.Button2 {
 		p.mouselook = true
 		mouse.Lock()
 		e.Consume()
 	}
-	if e.Action() == mouse.Release && e.Button() == mouse.Button1 {
+	if e.Action() == mouse.Release && e.Button() == mouse.Button2 {
 		p.mouselook = false
 		mouse.Show()
 		e.Consume()

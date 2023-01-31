@@ -1,7 +1,6 @@
-package game
+package chunk
 
 import (
-	"github.com/johanhenriksson/goworld/game/chunk"
 	"github.com/johanhenriksson/goworld/game/voxel"
 	"github.com/johanhenriksson/goworld/math"
 )
@@ -26,8 +25,8 @@ func ExampleWorldgen(seed, size int) *WorldGenerator {
 	}
 }
 
-func (wg *WorldGenerator) Chunk(cx, cz int) *chunk.T {
-	chonk := chunk.New(wg.Size, wg.Seed, cx, cz)
+func (wg *WorldGenerator) Chunk(cx, cz int) *T {
+	chonk := New(wg.Size, wg.Seed, cx, cz)
 	for z := 0; z < chonk.Sz; z++ {
 		for y := 0; y < chonk.Sy; y++ {
 			for x := 0; x < chonk.Sx; x++ {
