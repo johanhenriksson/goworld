@@ -34,8 +34,6 @@ type T struct {
 	camera     mat4.T
 }
 
-var _ collider.Selectable = &T{}
-
 type Args struct {
 }
 

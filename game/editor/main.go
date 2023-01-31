@@ -14,24 +14,23 @@ import (
 
 func Scene(render renderer.T, scene object.T) {
 	// collision support
-	object.Attach(scene, collider.NewManager())
+	object.Attach(scene, NewSelectManager())
 
 	world := game.NewWorld(31481284, 8)
 	chonk := world.AddChunk(0, 0)
 
 	// first person controls
 	player := game.NewPlayer(vec3.New(0, 20, -11), nil)
-	player.Flying = true
 	player.Eye.Transform().SetRotation(vec3.New(-30, 0, 0))
 	object.Attach(scene, player)
 
 	voxedit := NewVoxelEditor(chonk, player.Camera, render)
 	voxedit.SetActive(true)
 
+	// chunk mesh & editor
 	object.Builder(object.Empty("Chunk")).
 		Attach(chunk.NewMesh(chonk)).
 		Attach(voxedit).
-		Attach(collider.NewManager()).
 		Attach(collider.NewBox(collider.Box{
 			Center: vec3.New(4, 4, 4),
 			Size:   vec3.New(8, 8, 8),
@@ -39,6 +38,7 @@ func Scene(render renderer.T, scene object.T) {
 		Parent(scene).
 		Create()
 
+	// directional light
 	object.Attach(scene, light.NewDirectional(light.DirectionalArgs{
 		Intensity: 1.6,
 		Color:     color.RGB(0.9*0.973, 0.9*0.945, 0.9*0.776),
@@ -46,7 +46,9 @@ func Scene(render renderer.T, scene object.T) {
 		Shadows:   true,
 	}))
 
-	mv := mover.New(mover.Args{})
-	mv.Transform().SetPosition(vec3.New(1, 10, 1))
-	object.Attach(scene, mv)
+	// mover gizmo
+	object.Builder(mover.New(mover.Args{})).
+		Position(vec3.New(1, 10, 1)).
+		Parent(scene).
+		Create()
 }

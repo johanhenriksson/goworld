@@ -1,6 +1,8 @@
 package editor
 
 import (
+	"log"
+
 	"github.com/johanhenriksson/goworld/core/camera"
 	"github.com/johanhenriksson/goworld/core/input/keys"
 	"github.com/johanhenriksson/goworld/core/input/mouse"
@@ -48,7 +50,6 @@ type voxelEdit struct {
 	xp, yp, zp int
 
 	Bounds *box.T
-	mesh   *chunk.Mesh
 	render renderer.T
 
 	cursorPos    vec3.T
@@ -181,8 +182,7 @@ func (e *voxelEdit) KeyEvent(ev keys.Event) {
 	// clear chunk hotkey
 	if keys.PressedMods(ev, keys.N, keys.Ctrl) {
 		e.Chunk.Clear()
-		e.Chunk.Light.Calculate()
-		e.mesh.Compute()
+		e.Recalculate()
 	}
 
 	// deselect tool
@@ -264,7 +264,9 @@ func (e *voxelEdit) MouseEvent(ev mouse.Event) {
 
 func (e *voxelEdit) Recalculate() {
 	e.Chunk.Light.Calculate()
-	if e.mesh != nil {
-		e.mesh.Compute()
+	if mesh, ok := object.FindInSiblings[*chunk.Mesh](e); ok {
+		mesh.Compute()
+	} else {
+		log.Println("no voxel mesh found")
 	}
 }

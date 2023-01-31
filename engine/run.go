@@ -162,6 +162,6 @@ func collectGarbage() {
 	runtime.GC()
 	elapsed := time.Since(start)
 	if elapsed.Milliseconds() > 2 {
-		log.Printf("slow GC cycle: ran gc cycle in %.2fms", elapsed.Seconds()*1000)
+		log.Printf("slow GC cycle: %.2fms", elapsed.Seconds()*1000)
 	}
 }

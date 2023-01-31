@@ -2,6 +2,8 @@ package object
 
 import (
 	"sort"
+
+	"github.com/johanhenriksson/goworld/util"
 )
 
 type query[K T] struct {
@@ -82,11 +84,13 @@ func (q *query[K]) first(root T) (K, bool) {
 }
 
 // Collect returns all matching components
-func (q *query[K]) Collect(root T) []K {
+func (q *query[K]) Collect(roots ...T) []K {
 	q.clear()
 
 	// collect all matches
-	q.collect(root)
+	for _, root := range roots {
+		q.collect(root)
+	}
 
 	// sort if required
 	if q.sorter != nil {
@@ -96,6 +100,10 @@ func (q *query[K]) Collect(root T) []K {
 	}
 
 	return q.results
+}
+
+func (q *query[K]) CollectObjects(roots ...T) []T {
+	return util.Map(Query[K]().Collect(roots...), func(s K) T { return s })
 }
 
 func (q *query[K]) collect(object T) {

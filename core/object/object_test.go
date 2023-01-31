@@ -60,6 +60,4 @@ var _ = Describe("Object", func() {
 		Expect(a.Children()).To(HaveLen(1))
 		Expect(b.Parent()).To(Equal(a))
 	})
-
-	It("supports object interfaces")
 })

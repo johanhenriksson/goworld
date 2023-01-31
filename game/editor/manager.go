@@ -1,6 +1,7 @@
-package collider
+package editor
 
 import (
+	"github.com/johanhenriksson/goworld/core/collider"
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/math"
@@ -13,17 +14,17 @@ import (
 
 type Selectable interface {
 	object.T
-	Select(mouse.Event, T)
+	Select(mouse.Event, collider.T)
 	Deselect(mouse.Event)
 	SelectedMouseEvent(mouse.Event)
 }
 
-type Manager interface {
+type SelectManager interface {
 	object.T
 	mouse.Handler
 }
 
-type manager struct {
+type selectmgr struct {
 	object.T
 	scene    object.T
 	selected Selectable
@@ -33,11 +34,11 @@ type manager struct {
 	eye      vec3.T
 }
 
-func NewManager() Manager {
-	return object.New(&manager{})
+func NewSelectManager() SelectManager {
+	return object.New(&selectmgr{})
 }
 
-func (m *manager) MouseEvent(e mouse.Event) {
+func (m *selectmgr) MouseEvent(e mouse.Event) {
 	if m.scene == nil {
 		return
 	}
@@ -58,8 +59,10 @@ func (m *manager) MouseEvent(e mouse.Event) {
 		dir := far.Sub(near).Normalized()
 
 		// return closest hit
-		colliders := object.Query[T]().Collect(m.scene)
-		var closest T
+		// find Collider children of Selectable objects
+		selectables := object.Query[Selectable]().CollectObjects(m.scene)
+		colliders := object.Query[collider.T]().Collect(selectables...)
+		var closest collider.T
 		closestDist := float32(math.InfPos)
 		for _, collider := range colliders {
 			hit, point := collider.Intersect(&physics.Ray{
@@ -75,7 +78,7 @@ func (m *manager) MouseEvent(e mouse.Event) {
 			}
 		}
 		if closest != nil {
-			if selectable, ok := object.GetInParents[Selectable](closest); ok {
+			if selectable, ok := object.FindInParents[Selectable](closest); ok {
 				m.selected = selectable
 				selectable.Select(e, closest)
 			}
@@ -86,7 +89,7 @@ func (m *manager) MouseEvent(e mouse.Event) {
 	}
 }
 
-func (m *manager) PreDraw(args render.Args, scene object.T) error {
+func (m *selectmgr) PreDraw(args render.Args, scene object.T) error {
 	m.scene = scene
 	m.camera = args.VP
 	m.viewport = vec2.New(float32(args.Viewport.Width), float32(args.Viewport.Height))

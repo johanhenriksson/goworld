@@ -1,8 +1,6 @@
 package object
 
 import (
-	"fmt"
-	"log"
 	"reflect"
 
 	"github.com/johanhenriksson/goworld/core/input"
@@ -11,29 +9,29 @@ import (
 	"github.com/johanhenriksson/goworld/core/transform"
 )
 
-type Updatable interface {
-	// Update the object. Called on every frame.
-	Update(float32)
+type T interface {
+	input.Handler
+
+	// Name is used to identify the object within the scene.
+	Name() string
+
+	// Parent returns the parent of this object, or nil
+	Parent() T
+
+	// Children returns a slice containing the objects children.
+	Children() []T
+
+	// Transform returns the object transform
+	Transform() transform.T
 
 	// Active indicates whether the object is currently enabled or not.
 	Active() bool
 
 	// SetActive enables or disables the object
 	SetActive(bool)
-}
 
-type Transformed interface {
-	Transform() transform.T
-}
-
-type T interface {
-	Updatable
-	Transformed
-	input.Handler
-
-	Name() string
-	Parent() T
-	Children() []T
+	// Update the object. Called on every frame.
+	Update(float32)
 
 	setName(string)
 	setParent(T)
@@ -49,6 +47,7 @@ type base struct {
 	children  []T
 }
 
+// Empty creates a new, empty object.
 func Empty(name string) T {
 	return &base{
 		name:      name,
@@ -90,7 +89,6 @@ func New[K T](obj K) K {
 		if child, ok := v.Field(i).Interface().(T); ok {
 			// initialize recursively?
 			if child.Parent() == nil {
-				log.Println(obj.Name(), "add child", child.Name())
 				Attach(obj, child)
 			}
 		}
@@ -154,7 +152,7 @@ func (b *base) detach(child T) {
 }
 
 func (b *base) setName(n string) { b.name = n }
-func (b *base) Name() string     { return fmt.Sprintf("Object:%s", b.name) }
+func (b *base) Name() string     { return b.name }
 func (b *base) String() string   { return b.Name() }
 
 func (o *base) KeyEvent(e keys.Event) {
