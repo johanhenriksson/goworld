@@ -3,6 +3,7 @@ package chunk
 import (
 	"github.com/johanhenriksson/goworld/core/mesh"
 	"github.com/johanhenriksson/goworld/game/voxel"
+	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/vertex"
 )
 
@@ -15,9 +16,9 @@ type Mesh struct {
 	meshComputed chan []voxel.Vertex
 }
 
-func NewMesh(chunk *T) *Mesh {
+func NewMesh(chunk *T, mat *material.Def) *Mesh {
 	chk := &Mesh{
-		T:            mesh.New(mesh.Deferred),
+		T:            mesh.New(mesh.Deferred, mat),
 		Chunk:        chunk,
 		meshdata:     vertex.NewTriangles("chunk", []voxel.Vertex{}, []uint16{}),
 		meshComputed: make(chan []voxel.Vertex),

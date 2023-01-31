@@ -18,6 +18,8 @@ github.com/johanhenriksson/vulkan v0.0.0-20220209212039-bb0a9288948f h1:VUVR/yys
 github.com/johanhenriksson/vulkan v0.0.0-20220209212039-bb0a9288948f/go.mod h1:pRP6NCwJ6UJh5baWGjxsu9QhZuWb9FYEeguWaB3tNlQ=
 github.com/kjk/flex v0.0.0-20171203210503-ed34d6b6a425 h1:Iibr/k2MalRurqlsZszaaQNCqrztmz/sMHHXDwz5mN0=
 github.com/kjk/flex v0.0.0-20171203210503-ed34d6b6a425/go.mod h1:Tj+9AXmPMed68pFV4Ssetmk4Q8rNfBIKfoBCY5WUPCE=
+github.com/mitchellh/hashstructure/v2 v2.0.2 h1:vGKWl0YJqUNxE8d+h8f6NJLcCJrgbhC4NcD46KavDd4=
+github.com/mitchellh/hashstructure/v2 v2.0.2/go.mod h1:MG3aRVU/N29oo/V/IhBX8GR/zz4kQkprJgF2EVszyDE=
 github.com/ojrac/opensimplex-go v1.0.1 h1:XslvpLP6XqQSATUtsOnGBYtFPw7FQ6h6y0ihjVeOLHo=
 github.com/ojrac/opensimplex-go v1.0.1/go.mod h1:MoSgj04tZpH8U0RefZabnHV2AbLgv/2mo3hLJtWqSEs=
 github.com/onsi/ginkgo/v2 v2.4.0 h1:+Ig9nvqgS5OBSACXNk15PLdp0U9XPYROt9CFzVdFGIs=

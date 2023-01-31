@@ -86,7 +86,7 @@ func loadPrimitive(doc *gltf.Document, name string, primitive *gltf.Primitive) m
 	}
 
 	// create mesh component
-	mesh := mesh.NewPrimitiveMesh(kind, mesh.Deferred)
+	mesh := mesh.NewPrimitiveMesh(kind, mesh.Deferred, nil)
 	mesh.SetMesh(gmesh)
 	return mesh
 }

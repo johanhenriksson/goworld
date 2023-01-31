@@ -46,11 +46,11 @@ func main() {
 			chonk2 := world.AddChunk(1, 0)
 
 			object.Builder(object.Empty("Chunk")).
-				Attach(chunk.NewMesh(chonk)).
+				Attach(chunk.NewMesh(chonk, nil)).
 				Parent(scene).
 				Create()
 			object.Builder(object.Empty("Chunk2")).
-				Attach(chunk.NewMesh(chonk2)).
+				Attach(chunk.NewMesh(chonk2, nil)).
 				Position(vec3.New(8, 0, 0)).
 				Parent(scene).
 				Create()

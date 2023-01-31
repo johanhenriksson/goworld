@@ -14,6 +14,8 @@ import (
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/color"
+	"github.com/johanhenriksson/goworld/render/material"
+	"github.com/johanhenriksson/goworld/render/vertex"
 )
 
 // Mover Gizmo is the visual representation of the 3D positioning tool
@@ -53,9 +55,18 @@ func New(args Args) *T {
 
 	s := side / 2
 
+	mat := &material.Def{
+		Shader:       "vk/forward",
+		Subpass:      "forward",
+		VertexFormat: vertex.C{},
+		DepthTest:    false,
+		DepthWrite:   false,
+	}
+
 	g := object.New(&T{
 		// X Arrow Cone
 		X: object.Builder(cone.New(cone.Args{
+			Mat:      mat,
 			Radius:   radius,
 			Height:   height,
 			Segments: segments,
@@ -71,6 +82,7 @@ func New(args Args) *T {
 
 		// Y Arrow Cone
 		Y: object.Builder(cone.New(cone.Args{
+			Mat:      mat,
 			Radius:   radius,
 			Height:   height,
 			Segments: segments,
@@ -85,6 +97,7 @@ func New(args Args) *T {
 
 		// Z Arrow Cone
 		Z: object.Builder(cone.New(cone.Args{
+			Mat:      mat,
 			Radius:   radius,
 			Height:   height,
 			Segments: segments,
@@ -100,6 +113,7 @@ func New(args Args) *T {
 
 		// XY Plane
 		XY: object.Builder(plane.New(plane.Args{
+			Mat:   mat,
 			Size:  side,
 			Color: color.Blue.WithAlpha(planeAlpha),
 		})).
@@ -109,6 +123,7 @@ func New(args Args) *T {
 
 		// XZ Plane
 		XZ: object.Builder(plane.New(plane.Args{
+			Mat:   mat,
 			Size:  side,
 			Color: color.Green.WithAlpha(planeAlpha),
 		})).
@@ -118,6 +133,7 @@ func New(args Args) *T {
 
 		// YZ Plane
 		YZ: object.Builder(plane.New(plane.Args{
+			Mat:   mat,
 			Size:  side,
 			Color: color.Red.WithAlpha(planeAlpha),
 		})).
@@ -127,6 +143,13 @@ func New(args Args) *T {
 
 		// Lines
 		Lines: lines.New(lines.Args{
+			Mat: &material.Def{
+				Shader:       "vk/lines",
+				Subpass:      "output",
+				VertexFormat: vertex.C{},
+				Primitive:    vertex.Lines,
+				DepthTest:    false,
+			},
 			Lines: []lines.Line{
 				// axis lines
 				lines.L(vec3.Zero, vec3.UnitX, color.Red),

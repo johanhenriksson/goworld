@@ -5,6 +5,7 @@ import (
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render/color"
+	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/vertex"
 )
 
@@ -17,11 +18,12 @@ type T struct {
 type Args struct {
 	Size  float32
 	Color color.T
+	Mat   *material.Def
 }
 
 func New(args Args) *T {
 	plane := object.New(&T{
-		T:    mesh.New(mesh.Forward),
+		T:    mesh.New(mesh.Forward, args.Mat),
 		Args: args,
 	})
 	plane.generate()

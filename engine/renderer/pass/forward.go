@@ -3,7 +3,6 @@ package pass
 import (
 	"github.com/johanhenriksson/goworld/core/mesh"
 	"github.com/johanhenriksson/goworld/core/object"
-	"github.com/johanhenriksson/goworld/engine/renderer/uniform"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/descriptor"
@@ -19,11 +18,12 @@ import (
 )
 
 type ForwardPass struct {
-	gbuffer GeometryBuffer
-	target  vulkan.Target
-	pass    renderpass.T
-	fbuf    framebuffer.T
-	fwdmat  material.Standard
+	gbuffer   GeometryBuffer
+	target    vulkan.Target
+	pass      renderpass.T
+	pool      descriptor.Pool
+	fbuf      framebuffer.T
+	materials *MaterialSorter
 }
 
 func NewForwardPass(
@@ -97,69 +97,36 @@ func NewForwardPass(
 		panic(err)
 	}
 
-	fwdmat := material.FromDef(
-		target.Device(),
-		pool,
-		pass,
-		&material.Def{
-			Shader:       "vk/forward",
-			Subpass:      "forward",
-			VertexFormat: vertex.C{},
-		})
-
 	return &ForwardPass{
 		gbuffer: gbuffer,
 		target:  target,
 		pass:    pass,
+		pool:    pool,
+		fbuf:    fbuf,
 
-		fbuf:   fbuf,
-		fwdmat: fwdmat,
+		materials: NewMaterialSorter(target, pool, pass, &material.Def{
+			Shader:       "vk/forward",
+			Subpass:      "forward",
+			VertexFormat: vertex.C{},
+			DepthTest:    true,
+			DepthWrite:   true,
+		}),
 	}
 }
 
 func (p *ForwardPass) Record(cmds command.Recorder, args render.Args, scene object.T) {
-	camera := uniform.Camera{
-		Proj:        args.Projection,
-		View:        args.View,
-		ViewProj:    args.VP,
-		ProjInv:     args.Projection.Invert(),
-		ViewInv:     args.View.Invert(),
-		ViewProjInv: args.VP.Invert(),
-		Eye:         args.Position,
-	}
-
-	p.fwdmat.Descriptors().Camera.Set(camera)
-
-	cmds.Record(func(cmd command.Buffer) {
-		cmd.CmdBeginRenderPass(p.pass, p.fbuf)
-		p.fwdmat.Bind(cmd)
-	})
-
 	forwardMeshes := object.Query[mesh.T]().
 		Where(isDrawForward).
 		Collect(scene)
 
-	for index, mesh := range forwardMeshes {
-		p.DrawForward(cmds, index, mesh)
-	}
+	cmds.Record(func(cmd command.Buffer) {
+		cmd.CmdBeginRenderPass(p.pass, p.fbuf)
+	})
+
+	p.materials.Draw(cmds, args, forwardMeshes)
 
 	cmds.Record(func(cmd command.Buffer) {
 		cmd.CmdEndRenderPass()
-	})
-}
-
-func (p *ForwardPass) DrawForward(cmds command.Recorder, index int, mesh mesh.T) {
-	vkmesh := p.target.Meshes().Fetch(mesh.Mesh())
-	if vkmesh == nil {
-		return
-	}
-
-	p.fwdmat.Descriptors().Objects.Set(index, uniform.Object{
-		Model: mesh.Transform().World(),
-	})
-
-	cmds.Record(func(cmd command.Buffer) {
-		vkmesh.Draw(cmd, index)
 	})
 }
 
@@ -170,7 +137,7 @@ func (p *ForwardPass) Name() string {
 func (p *ForwardPass) Destroy() {
 	p.fbuf.Destroy()
 	p.pass.Destroy()
-	p.fwdmat.Material().Destroy()
+	p.materials.Destroy()
 }
 
 func isDrawForward(m mesh.T) bool {

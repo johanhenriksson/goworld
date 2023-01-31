@@ -11,6 +11,7 @@
     },
     "Bindings": {
         "Camera": 0,
-        "Objects": 1
+        "Objects": 1,
+        "Textures": 2
     }
 }

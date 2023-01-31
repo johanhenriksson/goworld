@@ -3,6 +3,7 @@ package lines
 import (
 	"github.com/johanhenriksson/goworld/core/mesh"
 	"github.com/johanhenriksson/goworld/core/object"
+	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/vertex"
 )
 
@@ -12,12 +13,13 @@ type T struct {
 }
 
 type Args struct {
+	Mat   *material.Def
 	Lines []Line
 }
 
 func New(args Args) *T {
 	b := object.New(&T{
-		T:    mesh.NewLines(),
+		T:    mesh.NewLines(args.Mat),
 		Args: args,
 	})
 	b.compute()

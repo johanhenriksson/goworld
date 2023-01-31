@@ -16,7 +16,7 @@ type Cube struct {
 // NewCube creates a new textured cube mesh with a given size
 func NewCube(size float32) *Cube {
 	cube := &Cube{
-		T:    mesh.New(mesh.Deferred),
+		T:    mesh.New(mesh.Deferred, nil),
 		Size: size,
 	}
 	cube.generate()

@@ -8,6 +8,7 @@ import (
 	"github.com/johanhenriksson/goworld/render/renderpass"
 	"github.com/johanhenriksson/goworld/render/shader"
 	"github.com/johanhenriksson/goworld/render/vertex"
+	"github.com/mitchellh/hashstructure/v2"
 
 	vk "github.com/vulkan-go/vulkan"
 )
@@ -29,6 +30,13 @@ type Def struct {
 	Shader       string
 	Subpass      renderpass.Name
 	VertexFormat any
+	DepthTest    bool
+	DepthWrite   bool
+	Primitive    vertex.Primitive
+}
+
+func (d *Def) Hash() uint64 {
+	return Hash(d)
 }
 
 func FromDef(dev device.T, pool descriptor.Pool, rpass renderpass.T, def *Def) Standard {
@@ -55,8 +63,20 @@ func FromDef(dev device.T, pool descriptor.Pool, rpass renderpass.T, def *Def) S
 			Pass:       rpass,
 			Subpass:    def.Subpass,
 			Pointers:   pointers,
-			DepthTest:  true,
-			DepthWrite: true,
+			DepthTest:  def.DepthTest,
+			DepthWrite: def.DepthWrite,
+			Primitive:  def.Primitive,
 		},
 		desc).Instantiate(pool)
+}
+
+func Hash(def *Def) uint64 {
+	if def == nil {
+		return 0
+	}
+	hash, err := hashstructure.Hash(*def, hashstructure.FormatV2, nil)
+	if err != nil {
+		panic(err)
+	}
+	return hash
 }

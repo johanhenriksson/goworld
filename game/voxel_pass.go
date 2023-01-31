@@ -51,6 +51,8 @@ func (p *voxelpass) Instantiate(pool descriptor.Pool, rpass renderpass.T) {
 			Shader:       p.shader,
 			Subpass:      p.Name(),
 			VertexFormat: voxel.Vertex{},
+			DepthTest:    true,
+			DepthWrite:   true,
 		})
 }
 
