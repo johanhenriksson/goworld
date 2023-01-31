@@ -7,26 +7,11 @@ import (
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/engine/renderer"
-	"github.com/johanhenriksson/goworld/engine/renderer/pass"
-	"github.com/johanhenriksson/goworld/game"
 	"github.com/johanhenriksson/goworld/game/chunk"
 	"github.com/johanhenriksson/goworld/game/editor"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render/color"
-	"github.com/johanhenriksson/goworld/render/vulkan"
 )
-
-func NewVoxelRenderer(target vulkan.Target) renderer.T {
-	return renderer.NewGraph(
-		target,
-		[]pass.DeferredSubpass{
-			game.NewVoxelSubpass(target),
-		},
-		[]pass.DeferredSubpass{
-			game.NewVoxelShadowpass(target),
-		},
-	)
-}
 
 func main() {
 	defer func() {
@@ -34,10 +19,9 @@ func main() {
 	}()
 
 	engine.Run(engine.Args{
-		Width:    1600,
-		Height:   1200,
-		Title:    "goworld: vulkan",
-		Renderer: NewVoxelRenderer,
+		Width:  1600,
+		Height: 1200,
+		Title:  "goworld: vulkan",
 	},
 		func(r renderer.T, scene object.T) {
 			// make some chonks
@@ -46,11 +30,11 @@ func main() {
 			chonk2 := world.AddChunk(1, 0)
 
 			object.Builder(object.Empty("Chunk")).
-				Attach(chunk.NewMesh(chonk, nil)).
+				Attach(chunk.NewMesh(chonk)).
 				Parent(scene).
 				Create()
 			object.Builder(object.Empty("Chunk2")).
-				Attach(chunk.NewMesh(chonk2, nil)).
+				Attach(chunk.NewMesh(chonk2)).
 				Position(vec3.New(8, 0, 0)).
 				Parent(scene).
 				Create()

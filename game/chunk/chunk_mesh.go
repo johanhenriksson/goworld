@@ -16,9 +16,15 @@ type Mesh struct {
 	meshComputed chan []voxel.Vertex
 }
 
-func NewMesh(chunk *T, mat *material.Def) *Mesh {
+func NewMesh(chunk *T) *Mesh {
 	chk := &Mesh{
-		T:            mesh.New(mesh.Deferred, mat),
+		T: mesh.New(mesh.Deferred, &material.Def{
+			Shader:       "vk/voxels",
+			Subpass:      "geometry",
+			VertexFormat: voxel.Vertex{},
+			DepthTest:    true,
+			DepthWrite:   true,
+		}),
 		Chunk:        chunk,
 		meshdata:     vertex.NewTriangles("chunk", []voxel.Vertex{}, []uint16{}),
 		meshComputed: make(chan []voxel.Vertex),

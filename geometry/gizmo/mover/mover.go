@@ -56,7 +56,7 @@ func New(args Args) *T {
 	s := side / 2
 
 	mat := &material.Def{
-		Shader:       "vk/forward",
+		Shader:       "vk/color_f",
 		Subpass:      "forward",
 		VertexFormat: vertex.C{},
 		DepthTest:    false,

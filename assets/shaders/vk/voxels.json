@@ -4,12 +4,16 @@
             "Index": 0,
             "Type": "float"
         },
-        "normal": {
+        "normal_id": {
             "Index": 1,
-            "Type": "float"
+            "Type": "uint8"
         },
         "color_0": {
             "Index": 2,
+            "Type": "float"
+        },
+        "occlusion": {
+            "Index": 3,
             "Type": "float"
         }
     },

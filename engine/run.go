@@ -43,7 +43,7 @@ func Run(args Args, scenefuncs ...SceneFunc) {
 	defer backend.Destroy()
 
 	if args.Renderer == nil {
-		panic("no renderer given")
+		args.Renderer = renderer.NewGraph
 	}
 
 	// create a window
