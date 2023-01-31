@@ -6,19 +6,19 @@ import (
 	"github.com/johanhenriksson/goworld/core/object"
 )
 
-type T[K object.Component] struct {
+type T[K object.T] struct {
 	results []K
 	filters []func(b K) bool
 	sorter  func(a, b K) bool
 }
 
 // Any returns a query for generic components
-func Any() *T[object.Component] {
-	return New[object.Component]()
+func Any() *T[object.T] {
+	return New[object.T]()
 }
 
 // New returns a new query for the given component type
-func New[K object.Component]() *T[K] {
+func New[K object.T]() *T[K] {
 	return &T[K]{
 		filters: make([]func(K) bool, 0, 8),
 		results: make([]K, 0, 128),
@@ -67,17 +67,15 @@ func (q *T[K]) First(root object.T) K {
 
 func (q *T[K]) first(root object.T) (K, bool) {
 	var empty K
-	for _, component := range root.Components() {
-		if k, ok := component.(K); ok && k.Active() {
-			if q.match(k) {
-				return k, true
-			}
+	if !root.Active() {
+		return empty, false
+	}
+	if k, ok := root.(K); ok {
+		if q.match(k) {
+			return k, true
 		}
 	}
 	for _, child := range root.Children() {
-		if !child.Active() {
-			continue
-		}
 		if match, found := q.first(child); found {
 			return match, true
 		}
@@ -103,17 +101,15 @@ func (q *T[K]) Collect(root object.T) []K {
 }
 
 func (q *T[K]) collect(object object.T) {
-	for _, component := range object.Components() {
-		if k, ok := component.(K); ok && k.Active() {
-			if q.match(k) {
-				q.append(k)
-			}
+	if !object.Active() {
+		return
+	}
+	if k, ok := object.(K); ok {
+		if q.match(k) {
+			q.append(k)
 		}
 	}
 	for _, child := range object.Children() {
-		if !child.Active() {
-			continue
-		}
 		q.collect(child)
 	}
 }

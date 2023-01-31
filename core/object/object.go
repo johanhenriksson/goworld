@@ -1,119 +1,154 @@
 package object
 
 import (
+	"fmt"
+	"reflect"
+
+	"github.com/johanhenriksson/goworld/core/input"
 	"github.com/johanhenriksson/goworld/core/input/keys"
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/core/transform"
 )
 
-// object is the basic building block of the scene graph
-type object struct {
-	transform  transform.T
-	name       string
-	enabled    bool
-	parent     T
-	components []Component
-	children   []T
+type Updatable interface {
+	// Update the object. Called on every frame.
+	Update(float32)
+
+	// Active indicates whether the object is currently enabled or not.
+	Active() bool
+
+	// SetActive enables or disables the object
+	SetActive(bool)
 }
 
-// New instantiates a new game object
-func New(name string, components ...Component) T {
-	obj := &object{
-		transform: transform.Identity(),
-		enabled:   true,
+type Transformed interface {
+	Transform() transform.T
+}
+
+type T interface {
+	Updatable
+	Transformed
+	input.Handler
+
+	Name() string
+	Parent() T
+	Children() []T
+
+	setName(string)
+	setParent(T)
+	attach(...T)
+	detach(T)
+}
+
+type base struct {
+	transform transform.T
+	name      string
+	enabled   bool
+	parent    T
+	children  []T
+}
+
+func Empty(name string) T {
+	return &base{
 		name:      name,
-		parent:    nil,
+		enabled:   true,
+		transform: transform.Identity(),
 	}
-	obj.Attach(components...)
+}
+
+func New[K T](obj K) K {
+	t := reflect.TypeOf(obj).Elem()
+	v := reflect.ValueOf(obj).Elem()
+
+	// initialize object base
+	init := false
+	for i := 0; i < t.NumField(); i++ {
+		field := t.Field(i)
+		if field.Name == "Object" {
+			if v.Field(i).IsZero() {
+				base := Empty(t.Name())
+				v.Field(i).Set(reflect.ValueOf(base))
+			}
+			init = true
+			break
+		}
+	}
+	if !init {
+		panic("struct does not appear to be an Object")
+	}
+
+	// add Object fields as children
+	for i := 0; i < t.NumField(); i++ {
+		field := t.Field(i)
+		if field.Name == "Object" {
+			continue
+		}
+		if child, ok := v.Field(i).Interface().(T); ok {
+			// initialize recursively?
+			Attach(obj, child)
+		}
+	}
 	return obj
 }
 
-func (o *object) Name() string { return o.name }
+func (b *base) Update(dt float32) {}
 
-// Parent returns a pointer to the parent object (or nil)
-func (o *object) Parent() T { return o.parent }
+func (b *base) Transform() transform.T {
+	var pt transform.T = nil
+	if b.parent != nil {
+		pt = b.parent.Transform()
+	}
+	b.transform.Recalculate(pt)
 
-// SetParent sets the parent object pointer
-func (o *object) SetParent(p T) {
-	o.parent = p
-	o.transform.Recalculate(p.Transform())
+	return b.transform
 }
 
-// SetActive sets the objects active state
-func (o *object) SetActive(active bool) {
-	o.enabled = active
+func (b *base) Active() bool     { return b.enabled }
+func (b *base) SetActive(a bool) { b.enabled = a }
+
+func (b *base) Parent() T { return b.parent }
+func (b *base) setParent(p T) {
+	if b.parent == p {
+		return
+	}
+	b.parent = p
 }
 
-// Active indicates whether the object is currently enabled
-func (o *object) Active() bool { return o.enabled }
+func (b *base) Children() []T { return b.children }
 
-func (o *object) Components() []Component { return o.components }
-
-// Attach a component to this object
-func (o *object) Attach(components ...Component) {
-	for _, component := range components {
-		// attach it
-		o.components = append(o.components, component)
-		component.AttachTo(o)
+func (b *base) attach(children ...T) {
+	for _, child := range children {
+		b.attachIfNotChild(child)
 	}
 }
 
-// Update this object and its child components
-func (o *object) Update(dt float32) {
-	// update components
-	for _, component := range o.components {
-		if !component.Active() {
-			continue
+func (b *base) attachIfNotChild(child T) {
+	for _, existing := range b.children {
+		if existing == child {
+			return
 		}
-		component.Update(dt)
 	}
+	b.children = append(b.children, child)
+}
+
+func (b *base) detach(child T) {
+	for i, existing := range b.children {
+		if existing == child {
+			b.children = append(b.children[:i], b.children[i+1:]...)
+			return
+		}
+	}
+}
+
+func (b *base) setName(n string) { b.name = n }
+func (b *base) Name() string     { return fmt.Sprintf("Object:%s", b.name) }
+func (b *base) String() string   { return b.Name() }
+
+func (o *base) KeyEvent(e keys.Event) {
 	for _, child := range o.children {
 		if !child.Active() {
 			continue
 		}
-		child.Update(dt)
-	}
-}
-
-func (o *object) Transform() transform.T {
-	// this might need to be optimized
-	// we are currently recalculating the entire transformation hierarchy every time the transform is accessed
-	// pros - always up to date
-	// cons - its dumb
-
-	var pt transform.T = nil
-	if o.Parent() != nil {
-		pt = o.parent.Transform()
-	}
-	o.transform.Recalculate(pt)
-
-	return o.transform
-}
-
-func (o *object) Adopt(children ...T) {
-	for _, child := range children {
-		// attach it
-		o.children = append(o.children, child)
-		child.SetParent(o)
-	}
-}
-
-func (o *object) Children() []T {
-	return o.children
-}
-
-func (o *object) KeyEvent(e keys.Event) {
-	for _, component := range o.components {
-		// propagate the event to components if they implement keys.Handler
-		if handler, ok := component.(keys.Handler); ok {
-			handler.KeyEvent(e)
-			if e.Handled() {
-				return
-			}
-		}
-	}
-
-	for _, child := range o.children {
 		child.KeyEvent(e)
 		if e.Handled() {
 			return
@@ -121,21 +156,35 @@ func (o *object) KeyEvent(e keys.Event) {
 	}
 }
 
-func (o *object) MouseEvent(e mouse.Event) {
-	for _, component := range o.components {
-		// propagate the event to components if they implement mouse.Handler
-		if handler, ok := component.(mouse.Handler); ok {
-			handler.MouseEvent(e)
-			if e.Handled() {
-				return
-			}
-		}
-	}
-
+func (o *base) MouseEvent(e mouse.Event) {
 	for _, child := range o.children {
+		if !child.Active() {
+			continue
+		}
 		child.MouseEvent(e)
 		if e.Handled() {
 			return
 		}
 	}
+}
+
+func Attach(parent, child T) {
+	Detach(child)
+	child.setParent(parent)
+	parent.attach(child)
+}
+
+func Detach(child T) {
+	if child.Parent() == nil {
+		return
+	}
+	child.Parent().detach(child)
+	child.setParent(nil)
+}
+
+func Root(obj T) T {
+	for obj.Parent() != nil {
+		obj = obj.Parent()
+	}
+	return obj
 }

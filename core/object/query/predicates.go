@@ -4,7 +4,7 @@ import (
 	"github.com/johanhenriksson/goworld/core/object"
 )
 
-func Is[K any](c object.Component) bool {
+func Is[K any](c object.T) bool {
 	_, ok := c.(K)
 	return ok
 }
