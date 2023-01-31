@@ -40,7 +40,7 @@ type shadowpass struct {
 	materials *MaterialSorter
 }
 
-func NewShadowPass(target vulkan.Target, pool descriptor.Pool) ShadowPass {
+func NewShadowPass(target vulkan.Target) ShadowPass {
 	log.Println("create shadow pass")
 	size := 1024
 
@@ -90,7 +90,7 @@ func NewShadowPass(target vulkan.Target, pool descriptor.Pool) ShadowPass {
 		panic(err)
 	}
 
-	mats := NewMaterialSorter(target, pool, pass, &material.Def{
+	mats := NewMaterialSorter(target, pass, &material.Def{
 		Shader:       "vk/shadow",
 		Subpass:      GeometrySubpass,
 		VertexFormat: voxel.Vertex{},

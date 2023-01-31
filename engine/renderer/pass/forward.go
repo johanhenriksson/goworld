@@ -5,7 +5,6 @@ import (
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/command"
-	"github.com/johanhenriksson/goworld/render/descriptor"
 	"github.com/johanhenriksson/goworld/render/framebuffer"
 	"github.com/johanhenriksson/goworld/render/image"
 	"github.com/johanhenriksson/goworld/render/material"
@@ -17,18 +16,18 @@ import (
 	vk "github.com/vulkan-go/vulkan"
 )
 
+const ForwardSubpass = renderpass.Name("forward")
+
 type ForwardPass struct {
 	gbuffer   GeometryBuffer
 	target    vulkan.Target
 	pass      renderpass.T
-	pool      descriptor.Pool
 	fbuf      framebuffer.T
 	materials *MaterialSorter
 }
 
 func NewForwardPass(
 	target vulkan.Target,
-	pool descriptor.Pool,
 	gbuffer GeometryBuffer,
 ) *ForwardPass {
 	pass := renderpass.New(target.Device(), renderpass.Args{
@@ -84,7 +83,7 @@ func NewForwardPass(
 		},
 		Subpasses: []renderpass.Subpass{
 			{
-				Name:  "forward",
+				Name:  ForwardSubpass,
 				Depth: true,
 
 				ColorAttachments: []attachment.Name{OutputAttachment, NormalsAttachment, PositionAttachment},
@@ -101,12 +100,11 @@ func NewForwardPass(
 		gbuffer: gbuffer,
 		target:  target,
 		pass:    pass,
-		pool:    pool,
 		fbuf:    fbuf,
 
-		materials: NewMaterialSorter(target, pool, pass, &material.Def{
+		materials: NewMaterialSorter(target, pass, &material.Def{
 			Shader:       "vk/color_f",
-			Subpass:      "forward",
+			Subpass:      ForwardSubpass,
 			VertexFormat: vertex.C{},
 			DepthTest:    true,
 			DepthWrite:   true,

@@ -17,6 +17,8 @@ import (
 	vk "github.com/vulkan-go/vulkan"
 )
 
+const OutputSubpass = renderpass.Name("output")
+
 type OutputPass struct {
 	target   vulkan.Target
 	material material.T[*OutputDescriptors]
@@ -34,7 +36,7 @@ type OutputDescriptors struct {
 	Output *descriptor.Sampler
 }
 
-func NewOutputPass(target vulkan.Target, pool descriptor.Pool, geometry GeometryBuffer) *OutputPass {
+func NewOutputPass(target vulkan.Target, geometry GeometryBuffer) *OutputPass {
 	p := &OutputPass{
 		target:   target,
 		geometry: geometry,
@@ -45,7 +47,7 @@ func NewOutputPass(target vulkan.Target, pool descriptor.Pool, geometry Geometry
 	p.pass = renderpass.New(target.Device(), renderpass.Args{
 		ColorAttachments: []attachment.Color{
 			{
-				Name:        "color",
+				Name:        OutputAttachment,
 				Allocator:   attachment.FromImageArray(target.Surfaces()),
 				Format:      target.SurfaceFormat(),
 				LoadOp:      vk.AttachmentLoadOpClear,
@@ -55,8 +57,8 @@ func NewOutputPass(target vulkan.Target, pool descriptor.Pool, geometry Geometry
 		},
 		Subpasses: []renderpass.Subpass{
 			{
-				Name:             "output",
-				ColorAttachments: []attachment.Name{"color"},
+				Name:             OutputSubpass,
+				ColorAttachments: []attachment.Name{OutputAttachment},
 			},
 		},
 	})
@@ -83,7 +85,7 @@ func NewOutputPass(target vulkan.Target, pool descriptor.Pool, geometry Geometry
 		panic(err)
 	}
 
-	p.desc = p.material.InstantiateMany(pool, frames)
+	p.desc = p.material.InstantiateMany(target.Pool(), frames)
 	p.tex = make([]texture.T, frames)
 	for i := range p.tex {
 		p.tex[i], err = texture.FromView(target.Device(), p.geometry.Output(), texture.Args{

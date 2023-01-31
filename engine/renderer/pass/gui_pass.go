@@ -42,11 +42,11 @@ type GuiPass struct {
 
 var _ Pass = &GuiPass{}
 
-func NewGuiPass(target vulkan.Target, pool descriptor.Pool) *GuiPass {
+func NewGuiPass(target vulkan.Target) *GuiPass {
 	pass := renderpass.New(target.Device(), renderpass.Args{
 		ColorAttachments: []attachment.Color{
 			{
-				Name:          "color",
+				Name:          OutputAttachment,
 				Allocator:     attachment.FromImageArray(target.Surfaces()),
 				Format:        target.SurfaceFormat(),
 				LoadOp:        vk.AttachmentLoadOpLoad,
@@ -67,10 +67,10 @@ func NewGuiPass(target vulkan.Target, pool descriptor.Pool) *GuiPass {
 		},
 		Subpasses: []renderpass.Subpass{
 			{
-				Name:  "output",
+				Name:  OutputSubpass,
 				Depth: true,
 
-				ColorAttachments: []attachment.Name{"color"},
+				ColorAttachments: []attachment.Name{OutputAttachment},
 			},
 		},
 	})
@@ -92,7 +92,7 @@ func NewGuiPass(target vulkan.Target, pool descriptor.Pool) *GuiPass {
 			Stages: vk.ShaderStageFragmentBit,
 			Count:  2000,
 		},
-	}).Instantiate(pool)
+	}).Instantiate(target.Pool())
 
 	fbufs, err := framebuffer.NewArray(target.Frames(), target.Device(), target.Width(), target.Height(), pass)
 	if err != nil {

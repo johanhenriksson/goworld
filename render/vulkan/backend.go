@@ -5,6 +5,7 @@ import (
 
 	"github.com/johanhenriksson/goworld/render/cache"
 	"github.com/johanhenriksson/goworld/render/command"
+	"github.com/johanhenriksson/goworld/render/descriptor"
 	"github.com/johanhenriksson/goworld/render/device"
 	"github.com/johanhenriksson/goworld/render/vulkan/instance"
 
@@ -20,6 +21,7 @@ type T interface {
 	Worker(int) command.Worker
 	Transferer() command.Worker
 
+	Pool() descriptor.Pool
 	Meshes() cache.MeshCache
 	Textures() cache.TextureCache
 }
@@ -34,6 +36,7 @@ type backend struct {
 	transfer command.Worker
 	workers  []command.Worker
 
+	pool     descriptor.Pool
 	meshes   cache.MeshCache
 	textures cache.TextureCache
 }
@@ -58,6 +61,8 @@ func New(appName string, deviceIndex int) T {
 	meshes := cache.NewMeshCache(device, transfer)
 	textures := cache.NewTextureCache(device, transfer)
 
+	pool := descriptor.NewPool(device, DefaultDescriptorPools)
+
 	return &backend{
 		appName: appName,
 		frames:  frames,
@@ -69,6 +74,7 @@ func New(appName string, deviceIndex int) T {
 		workers:  workers,
 		meshes:   meshes,
 		textures: textures,
+		pool:     pool,
 	}
 }
 
@@ -76,6 +82,7 @@ func (b *backend) Instance() instance.T { return b.instance }
 func (b *backend) Device() device.T     { return b.device }
 func (b *backend) Frames() int          { return b.frames }
 
+func (b *backend) Pool() descriptor.Pool        { return b.pool }
 func (b *backend) Meshes() cache.MeshCache      { return b.meshes }
 func (b *backend) Textures() cache.TextureCache { return b.textures }
 
@@ -99,6 +106,7 @@ func (b *backend) Window(args WindowArgs) (Window, error) {
 
 func (b *backend) Destroy() {
 	// clean up caches
+	b.pool.Destroy()
 	b.meshes.Destroy()
 	b.textures.Destroy()
 

@@ -7,7 +7,6 @@ import (
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/command"
-	"github.com/johanhenriksson/goworld/render/descriptor"
 	"github.com/johanhenriksson/goworld/render/framebuffer"
 	"github.com/johanhenriksson/goworld/render/image"
 	"github.com/johanhenriksson/goworld/render/material"
@@ -26,7 +25,7 @@ type LinePass struct {
 	materials *MaterialSorter
 }
 
-func NewLinePass(target vulkan.Target, pool descriptor.Pool, geometry GeometryBuffer) *LinePass {
+func NewLinePass(target vulkan.Target, geometry GeometryBuffer) *LinePass {
 	log.Println("create line pass")
 
 	depth := make([]image.T, target.Frames())
@@ -37,7 +36,7 @@ func NewLinePass(target vulkan.Target, pool descriptor.Pool, geometry GeometryBu
 	pass := renderpass.New(target.Device(), renderpass.Args{
 		ColorAttachments: []attachment.Color{
 			{
-				Name:          "color",
+				Name:          OutputAttachment,
 				Allocator:     attachment.FromImageArray(target.Surfaces()),
 				Format:        target.SurfaceFormat(),
 				LoadOp:        vk.AttachmentLoadOpLoad,
@@ -55,10 +54,10 @@ func NewLinePass(target vulkan.Target, pool descriptor.Pool, geometry GeometryBu
 		},
 		Subpasses: []renderpass.Subpass{
 			{
-				Name:  "output",
+				Name:  OutputSubpass,
 				Depth: true,
 
-				ColorAttachments: []attachment.Name{"color"},
+				ColorAttachments: []attachment.Name{OutputAttachment},
 			},
 		},
 	})
@@ -72,10 +71,10 @@ func NewLinePass(target vulkan.Target, pool descriptor.Pool, geometry GeometryBu
 		target: target,
 		pass:   pass,
 		fbufs:  fbufs,
-		materials: NewMaterialSorter(target, pool, pass,
+		materials: NewMaterialSorter(target, pass,
 			&material.Def{
 				Shader:       "vk/lines",
-				Subpass:      "output",
+				Subpass:      OutputSubpass,
 				VertexFormat: vertex.C{},
 				Primitive:    vertex.Lines,
 				DepthTest:    true,

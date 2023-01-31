@@ -3,6 +3,7 @@ package vulkan
 import (
 	"github.com/johanhenriksson/goworld/render/cache"
 	"github.com/johanhenriksson/goworld/render/command"
+	"github.com/johanhenriksson/goworld/render/descriptor"
 	"github.com/johanhenriksson/goworld/render/device"
 	"github.com/johanhenriksson/goworld/render/image"
 	"github.com/johanhenriksson/goworld/render/swapchain"
@@ -25,6 +26,7 @@ type Target interface {
 	Worker(int) command.Worker
 	Transferer() command.Worker
 
+	Pool() descriptor.Pool
 	Meshes() cache.MeshCache
 	Textures() cache.TextureCache
 }

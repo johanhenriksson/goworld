@@ -76,8 +76,8 @@ func (f *font) Measure(text string, args Args) vec2.T {
 	}
 
 	lineHeight := int(math.Ceil(f.size * args.LineHeight))
-	height := lineHeight*lines + (lineHeight / 2)
-	return vec2.NewI(width+2, height+2)
+	height := lineHeight*lines + (lineHeight/2)*(lines-1)
+	return vec2.NewI(width, height)
 }
 
 func (f *font) Render(text string, args Args) *image.RGBA {

@@ -64,7 +64,6 @@ func (m *cache[K, V]) Fetch(key K) V {
 	// version has changed, update the mesh
 	if line.version != key.Version() {
 		// we might want to queue this operation and run it at a more appropriate time
-		log.Println("update existing", m.backend.Name(), key.Id(), "to version", key.Version())
 		line.value = m.backend.Update(line.value, key)
 		line.version = key.Version()
 	}

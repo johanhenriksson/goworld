@@ -12,38 +12,54 @@ type Pool interface {
 	device.Resource[vk.DescriptorPool]
 
 	Allocate(layouts SetLayout) Set
+	Recreate()
 }
 
 type pool struct {
-	ptr    vk.DescriptorPool
-	device device.T
+	ptr     vk.DescriptorPool
+	device  device.T
+	sizes   []vk.DescriptorPoolSize
+	maxSets int
 }
 
 func NewPool(device device.T, sizes []vk.DescriptorPoolSize) Pool {
-	info := vk.DescriptorPoolCreateInfo{
-		SType:         vk.StructureTypeDescriptorPoolCreateInfo,
-		Flags:         vk.DescriptorPoolCreateFlags(vk.DescriptorPoolCreateUpdateAfterBindBit),
-		PPoolSizes:    sizes,
-		PoolSizeCount: uint32(len(sizes)),
-		MaxSets:       100,
+	p := &pool{
+		device:  device,
+		ptr:     vk.NullDescriptorPool,
+		sizes:   sizes,
+		maxSets: 100,
 	}
-
-	var ptr vk.DescriptorPool
-	vk.CreateDescriptorPool(device.Ptr(), &info, nil, &ptr)
-
-	return &pool{
-		device: device,
-		ptr:    ptr,
-	}
+	p.Recreate()
+	return p
 }
 
 func (p *pool) Ptr() vk.DescriptorPool {
 	return p.ptr
 }
 
+func (p *pool) Recreate() {
+	p.Destroy()
+
+	info := vk.DescriptorPoolCreateInfo{
+		SType:         vk.StructureTypeDescriptorPoolCreateInfo,
+		Flags:         vk.DescriptorPoolCreateFlags(vk.DescriptorPoolCreateUpdateAfterBindBit),
+		PPoolSizes:    p.sizes,
+		PoolSizeCount: uint32(len(p.sizes)),
+		MaxSets:       uint32(p.maxSets),
+	}
+	var ptr vk.DescriptorPool
+	if ok := vk.CreateDescriptorPool(p.device.Ptr(), &info, nil, &ptr); ok != vk.Success {
+		panic("failed to create descriptor pool")
+	}
+	p.ptr = ptr
+}
+
 func (p *pool) Destroy() {
+	if p.ptr == vk.NullDescriptorPool {
+		return
+	}
 	vk.DestroyDescriptorPool(p.device.Ptr(), p.ptr, nil)
-	p.ptr = nil
+	p.ptr = vk.NullDescriptorPool
 }
 
 func (p *pool) Allocate(layout SetLayout) Set {

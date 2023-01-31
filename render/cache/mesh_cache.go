@@ -5,7 +5,6 @@ import (
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/device"
 	"github.com/johanhenriksson/goworld/render/vertex"
-	"github.com/johanhenriksson/goworld/util"
 
 	vk "github.com/vulkan-go/vulkan"
 )
@@ -50,7 +49,6 @@ func (m *meshes) Instantiate(mesh vertex.Mesh) VkMesh {
 func (m *meshes) upload(cached *vkMesh, mesh vertex.Mesh) {
 	// todo: rewrite in a thread safe manner
 	// introduce a queue and a goroutine that periodically runs transfers
-	util.Timer("Mesh:Upload")
 
 	vtxSize := mesh.VertexSize() * mesh.Vertices()
 	vtxStage := buffer.NewShared(m.device, vtxSize)
@@ -88,7 +86,6 @@ func (m *meshes) upload(cached *vkMesh, mesh vertex.Mesh) {
 	})
 	m.worker.Wait()
 
-	util.Elapsed("Mesh:Upload")
 	cached.elements = mesh.Indices()
 	cached.idxType = vk.IndexTypeUint16
 }

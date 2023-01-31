@@ -8,7 +8,6 @@ import (
 	"github.com/johanhenriksson/goworld/engine/renderer/graph"
 	"github.com/johanhenriksson/goworld/engine/renderer/pass"
 	"github.com/johanhenriksson/goworld/render"
-	"github.com/johanhenriksson/goworld/render/descriptor"
 	"github.com/johanhenriksson/goworld/render/upload"
 	"github.com/johanhenriksson/goworld/render/vulkan"
 
@@ -25,7 +24,6 @@ type T interface {
 
 type rgraph struct {
 	target  vulkan.Target
-	pool    descriptor.Pool
 	gbuffer pass.GeometryBuffer
 	graph   graph.T
 }
@@ -64,50 +62,33 @@ func (r *rgraph) Draw(args render.Args, scene object.T) {
 
 func (r *rgraph) Recreate() {
 	r.Destroy()
-
-	r.pool = descriptor.NewPool(r.target.Device(), []vk.DescriptorPoolSize{
-		{
-			Type:            vk.DescriptorTypeUniformBuffer,
-			DescriptorCount: 1000,
-		},
-		{
-			Type:            vk.DescriptorTypeStorageBuffer,
-			DescriptorCount: 1000,
-		},
-		{
-			Type:            vk.DescriptorTypeCombinedImageSampler,
-			DescriptorCount: 10000,
-		},
-		{
-			Type:            vk.DescriptorTypeInputAttachment,
-			DescriptorCount: 100,
-		},
-	})
+	// realloc descriptor pool
+	r.target.Pool().Recreate()
 
 	g := graph.New(r.target.Device())
 
-	shadows := pass.NewShadowPass(r.target, r.pool)
+	shadows := pass.NewShadowPass(r.target)
 	shadowNode := g.Node(shadows)
 
-	deferred := pass.NewGeometryPass(r.target, r.pool, shadows)
+	deferred := pass.NewGeometryPass(r.target, shadows)
 	deferredNode := g.Node(deferred)
 	deferredNode.After(shadowNode, vk.PipelineStageTopOfPipeBit)
 
 	r.gbuffer = deferred.GBuffer()
 
-	forward := g.Node(pass.NewForwardPass(r.target, r.pool, r.gbuffer))
+	forward := g.Node(pass.NewForwardPass(r.target, r.gbuffer))
 	forward.After(deferredNode, vk.PipelineStageTopOfPipeBit)
 
 	gbufferCopy := g.Node(pass.NewGBufferCopyPass(r.gbuffer))
 	gbufferCopy.After(forward, vk.PipelineStageTopOfPipeBit)
 
-	output := g.Node(pass.NewOutputPass(r.target, r.pool, r.gbuffer))
+	output := g.Node(pass.NewOutputPass(r.target, r.gbuffer))
 	output.After(forward, vk.PipelineStageTopOfPipeBit)
 
-	lines := g.Node(pass.NewLinePass(r.target, r.pool, r.gbuffer))
+	lines := g.Node(pass.NewLinePass(r.target, r.gbuffer))
 	lines.After(output, vk.PipelineStageTopOfPipeBit)
 
-	gui := g.Node(pass.NewGuiPass(r.target, r.pool))
+	gui := g.Node(pass.NewGuiPass(r.target))
 	gui.After(lines, vk.PipelineStageTopOfPipeBit)
 
 	r.graph = g
@@ -119,11 +100,6 @@ func (r *rgraph) GBuffer() pass.GeometryBuffer {
 
 func (r *rgraph) Destroy() {
 	r.target.Device().WaitIdle()
-
-	if r.pool != nil {
-		r.pool.Destroy()
-		r.pool = nil
-	}
 
 	if r.graph != nil {
 		r.graph.Destroy()

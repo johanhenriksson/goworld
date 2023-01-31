@@ -7,7 +7,6 @@ import (
 	"github.com/johanhenriksson/goworld/engine/renderer/uniform"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/command"
-	"github.com/johanhenriksson/goworld/render/descriptor"
 	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/renderpass"
 	"github.com/johanhenriksson/goworld/render/vulkan"
@@ -21,14 +20,12 @@ type MaterialSorter struct {
 	cache      map[uint64]material.Standard
 	defaultMat *material.Def
 	target     vulkan.Target
-	pool       descriptor.Pool
 	pass       renderpass.T
 }
 
-func NewMaterialSorter(target vulkan.Target, pool descriptor.Pool, pass renderpass.T, defaultMat *material.Def) *MaterialSorter {
+func NewMaterialSorter(target vulkan.Target, pass renderpass.T, defaultMat *material.Def) *MaterialSorter {
 	ms := &MaterialSorter{
 		target:     target,
-		pool:       pool,
 		pass:       pass,
 		defaultMat: defaultMat,
 		cache:      map[uint64]material.Standard{},
@@ -51,7 +48,7 @@ func (m *MaterialSorter) Load(def *material.Def) {
 		def = m.defaultMat
 	}
 	log.Println("instantiate new forward material id", id, def)
-	mat := material.FromDef(m.target.Device(), m.pool, m.pass, def)
+	mat := material.FromDef(m.target.Device(), m.target.Pool(), m.pass, def)
 	m.cache[id] = mat
 }
 

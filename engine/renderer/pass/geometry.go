@@ -69,7 +69,6 @@ type DeferredSubpass interface {
 
 func NewGeometryPass(
 	target vulkan.Target,
-	pool descriptor.Pool,
 	shadows ShadowPass,
 ) Deferred {
 	diffuseFmt := vk.FormatR8g8b8a8Unorm
@@ -184,7 +183,7 @@ func NewGeometryPass(
 
 	quad := vertex.ScreenQuad()
 
-	lightsh := NewLightShader(target.Device(), pool, pass)
+	lightsh := NewLightShader(target.Device(), target.Pool(), pass)
 	lightDesc := lightsh.Descriptors()
 
 	lightDesc.Diffuse.Set(gbuffer.Diffuse())
@@ -214,7 +213,7 @@ func NewGeometryPass(
 		texture: shadowtex,
 
 		materials: NewMaterialSorter(
-			target, pool, pass,
+			target, pass,
 			&material.Def{
 				Shader:       "vk/color_d",
 				Subpass:      GeometrySubpass,
