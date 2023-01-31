@@ -9,8 +9,15 @@ import (
 )
 
 func Scene(render renderer.T, scene object.T) {
+	// move the existing scene into a child object
+	workspace := object.Empty("Workspace")
+	for _, existing := range scene.Children() {
+		object.Attach(workspace, existing)
+	}
+
 	// collision support
 	editor := object.Empty("Editor")
+	object.Attach(editor, MakeGUI(workspace))
 	object.Attach(editor, NewGizmoManager())
 	object.Attach(editor, NewSelectManager())
 
@@ -18,12 +25,6 @@ func Scene(render renderer.T, scene object.T) {
 	player := game.NewPlayer(vec3.New(0, 20, -11), nil)
 	player.Eye.Transform().SetRotation(vec3.New(-30, 0, 0))
 	object.Attach(editor, player)
-
-	// move the existing scene into a child object
-	game := object.Empty("Game")
-	for _, existing := range scene.Children() {
-		object.Attach(game, existing)
-	}
 
 	// mover gizmo
 	mv := object.Builder(mover.New(mover.Args{})).
@@ -37,9 +38,9 @@ func Scene(render renderer.T, scene object.T) {
 		Camera: player.Camera,
 		Render: render,
 	}
-	object.Attach(editor, ConstructEditors(context, game, mv))
+	object.Attach(editor, ConstructEditors(context, workspace, mv))
 
 	// attach editor & game to scene
 	object.Attach(scene, editor)
-	object.Attach(scene, game)
+	object.Attach(scene, workspace)
 }

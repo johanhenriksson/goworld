@@ -6,7 +6,6 @@ import (
 
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/core/object"
-	"github.com/johanhenriksson/goworld/engine/renderer"
 	"github.com/johanhenriksson/goworld/gui"
 	"github.com/johanhenriksson/goworld/gui/node"
 	"github.com/johanhenriksson/goworld/gui/style"
@@ -17,8 +16,8 @@ import (
 	"github.com/johanhenriksson/goworld/render/texture"
 )
 
-func makeGui(r renderer.T, scene object.T) {
-	object.Attach(scene, gui.New(func() node.T {
+func MakeGUI(gameRoot object.T) gui.Manager {
+	return gui.New(func() node.T {
 		return rect.New("gui", rect.Props{
 			Children: []node.T{
 				makeMenu(),
@@ -27,12 +26,12 @@ func makeGui(r renderer.T, scene object.T) {
 						Grow: style.Grow(1),
 					},
 					Children: []node.T{
-						makeSidebar(scene, r),
+						makeSidebar(gameRoot),
 					},
 				}),
 			},
 		})
-	}))
+	})
 }
 
 func makeMenu() node.T {
@@ -75,7 +74,7 @@ func makeMenu() node.T {
 	})
 }
 
-func makeSidebar(scene object.T, r renderer.T) node.T {
+func makeSidebar(scene object.T) node.T {
 	return rect.New("sidebar", rect.Props{
 		OnMouseDown: gui.ConsumeMouse,
 		Style: rect.Style{

@@ -36,8 +36,8 @@ var DefaultStyle = Style{
 }
 
 var menuPadding = style.Rect{
-	Top:    4,
-	Bottom: 2,
+	Top:    6,
+	Bottom: 0,
 	Left:   5,
 	Right:  5,
 }

@@ -64,7 +64,7 @@ func NewRenderer() Renderer {
 		invalidFont:    true,
 		invalidTexture: true,
 		invalidMesh:    true,
-		scale:          2,
+		scale:          1,
 		uvs:            quad.DefaultUVs,
 		mesh:           quad.New(quad.Props{}),
 	}
