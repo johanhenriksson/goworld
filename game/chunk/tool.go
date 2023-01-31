@@ -1,4 +1,4 @@
-package editor
+package chunk
 
 import (
 	"github.com/johanhenriksson/goworld/core/object"
@@ -8,6 +8,6 @@ import (
 type Tool interface {
 	object.T
 
-	Use(T, vec3.T, vec3.T)
-	Hover(T, vec3.T, vec3.T)
+	Use(Editor, vec3.T, vec3.T)
+	Hover(Editor, vec3.T, vec3.T)
 }

@@ -9,7 +9,7 @@ import (
 )
 
 type T interface {
-	object.Component
+	object.T
 
 	Unproject(vec3.T) vec3.T
 	View() mat4.T
@@ -22,7 +22,7 @@ type T interface {
 
 // camera represents a 3D camera and its transform.
 type camera struct {
-	object.Component
+	object.T
 
 	aspect float32
 	fov    float32
@@ -39,15 +39,13 @@ type camera struct {
 
 // New creates a new camera component.
 func New(fov, near, far float32, clear color.T) T {
-	return &camera{
-		Component: object.NewComponent(),
-
+	return object.New(&camera{
 		aspect: 1,
 		fov:    fov,
 		near:   near,
 		far:    far,
 		clear:  clear,
-	}
+	})
 }
 
 func (cam *camera) Name() string { return "Camera" }

@@ -5,6 +5,7 @@ import (
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render/color"
+	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/vertex"
 )
 
@@ -17,32 +18,15 @@ type T struct {
 type Args struct {
 	Size  float32
 	Color color.T
-}
-
-// NewObject creates a new 3D plane of a given size and color.
-func NewObject(args Args) *T {
-	parent := object.New("Plane")
-	return Attach(parent, args)
-}
-
-func Builder(out **T, args Args) *object.Builder {
-	b := object.Build("Plane")
-	*out = New(args)
-	return b.Attach(*out)
+	Mat   *material.Def
 }
 
 func New(args Args) *T {
-	plane := &T{
-		T:    mesh.New(mesh.Forward),
+	plane := object.New(&T{
+		T:    mesh.New(mesh.Forward, args.Mat),
 		Args: args,
-	}
+	})
 	plane.generate()
-	return plane
-}
-
-func Attach(parent object.T, args Args) *T {
-	plane := New(args)
-	parent.Attach(plane)
 	return plane
 }
 

@@ -3,6 +3,7 @@ package chunk
 import (
 	"github.com/johanhenriksson/goworld/core/mesh"
 	"github.com/johanhenriksson/goworld/game/voxel"
+	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/vertex"
 )
 
@@ -10,20 +11,28 @@ type MeshData vertex.MutableMesh[voxel.Vertex, uint16]
 
 type Mesh struct {
 	mesh.T
-	chunk        *T
+	Chunk        *T
 	meshdata     MeshData
 	meshComputed chan []voxel.Vertex
 }
 
 func NewMesh(chunk *T) *Mesh {
 	chk := &Mesh{
-		T:            mesh.New(mesh.Deferred),
-		chunk:        chunk,
+		T: mesh.New(mesh.Deferred, &material.Def{
+			Shader:       "vk/voxels",
+			Subpass:      "geometry",
+			VertexFormat: voxel.Vertex{},
+			DepthTest:    true,
+			DepthWrite:   true,
+		}),
+		Chunk:        chunk,
 		meshdata:     vertex.NewTriangles("chunk", []voxel.Vertex{}, []uint16{}),
 		meshComputed: make(chan []voxel.Vertex),
 	}
 	// chk.Compute()
 	chk.meshdata.Update(ComputeVertexData(chunk), []uint16{})
+
+	// circular dependencies?
 	chk.SetMesh(chk.meshdata)
 	return chk
 }
@@ -41,7 +50,7 @@ func (cm *Mesh) Update(dt float32) {
 // Queues recomputation of the mesh
 func (cm *Mesh) Compute() {
 	go func() {
-		data := ComputeVertexData(cm.chunk)
+		data := ComputeVertexData(cm.Chunk)
 		cm.meshComputed <- data
 	}()
 }

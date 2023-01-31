@@ -4,14 +4,16 @@ import (
 	"log"
 
 	"github.com/johanhenriksson/goworld/core/light"
+	"github.com/johanhenriksson/goworld/core/mesh"
 	"github.com/johanhenriksson/goworld/core/object"
-	"github.com/johanhenriksson/goworld/core/object/query"
 	"github.com/johanhenriksson/goworld/engine/renderer/uniform"
+	"github.com/johanhenriksson/goworld/game/voxel"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/descriptor"
 	"github.com/johanhenriksson/goworld/render/framebuffer"
 	"github.com/johanhenriksson/goworld/render/image"
+	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/renderpass"
 	"github.com/johanhenriksson/goworld/render/renderpass/attachment"
 	"github.com/johanhenriksson/goworld/render/vulkan"
@@ -32,44 +34,42 @@ type ShadowDescriptors struct {
 }
 
 type shadowpass struct {
-	target vulkan.Target
-	pass   renderpass.T
-	passes []DeferredSubpass
-	fbuf   framebuffer.T
+	target    vulkan.Target
+	pass      renderpass.T
+	fbuf      framebuffer.T
+	materials *MaterialSorter
 }
 
-func NewShadowPass(target vulkan.Target, pool descriptor.Pool, passes []DeferredSubpass) ShadowPass {
+func NewShadowPass(target vulkan.Target, pool descriptor.Pool) ShadowPass {
 	log.Println("create shadow pass")
 	size := 1024
 
-	subpasses := make([]renderpass.Subpass, 0, len(passes))
-	dependencies := make([]renderpass.SubpassDependency, 0, 2*len(passes))
-	for _, gpass := range passes {
-		subpasses = append(subpasses, renderpass.Subpass{
-			Name:  gpass.Name(),
-			Depth: true,
-		})
-		dependencies = append(dependencies, renderpass.SubpassDependency{
-			Src: renderpass.ExternalSubpass,
-			Dst: gpass.Name(),
+	subpasses := make([]renderpass.Subpass, 0, 4)
+	dependencies := make([]renderpass.SubpassDependency, 0, 4)
+	subpasses = append(subpasses, renderpass.Subpass{
+		Name:  GeometrySubpass,
+		Depth: true,
+	})
+	dependencies = append(dependencies, renderpass.SubpassDependency{
+		Src: renderpass.ExternalSubpass,
+		Dst: GeometrySubpass,
 
-			SrcStageMask:  vk.PipelineStageBottomOfPipeBit,
-			DstStageMask:  vk.PipelineStageColorAttachmentOutputBit,
-			SrcAccessMask: vk.AccessMemoryReadBit,
-			DstAccessMask: vk.AccessColorAttachmentReadBit | vk.AccessColorAttachmentWriteBit,
-			Flags:         vk.DependencyByRegionBit,
-		})
-		dependencies = append(dependencies, renderpass.SubpassDependency{
-			Src: gpass.Name(),
-			Dst: renderpass.ExternalSubpass,
+		SrcStageMask:  vk.PipelineStageBottomOfPipeBit,
+		DstStageMask:  vk.PipelineStageColorAttachmentOutputBit,
+		SrcAccessMask: vk.AccessMemoryReadBit,
+		DstAccessMask: vk.AccessColorAttachmentReadBit | vk.AccessColorAttachmentWriteBit,
+		Flags:         vk.DependencyByRegionBit,
+	})
+	dependencies = append(dependencies, renderpass.SubpassDependency{
+		Src: GeometrySubpass,
+		Dst: renderpass.ExternalSubpass,
 
-			SrcStageMask:  vk.PipelineStageColorAttachmentOutputBit,
-			DstStageMask:  vk.PipelineStageFragmentShaderBit,
-			SrcAccessMask: vk.AccessColorAttachmentWriteBit,
-			DstAccessMask: vk.AccessShaderReadBit,
-			Flags:         vk.DependencyByRegionBit,
-		})
-	}
+		SrcStageMask:  vk.PipelineStageColorAttachmentOutputBit,
+		DstStageMask:  vk.PipelineStageFragmentShaderBit,
+		SrcAccessMask: vk.AccessColorAttachmentWriteBit,
+		DstAccessMask: vk.AccessShaderReadBit,
+		Flags:         vk.DependencyByRegionBit,
+	})
 
 	pass := renderpass.New(target.Device(), renderpass.Args{
 		DepthAttachment: &attachment.Depth{
@@ -90,16 +90,24 @@ func NewShadowPass(target vulkan.Target, pool descriptor.Pool, passes []Deferred
 		panic(err)
 	}
 
-	// instantiate geometry subpasses
-	for _, gpass := range passes {
-		gpass.Instantiate(pool, pass)
+	mats := NewMaterialSorter(target, pool, pass, &material.Def{
+		Shader:       "vk/shadow",
+		Subpass:      GeometrySubpass,
+		VertexFormat: voxel.Vertex{},
+		DepthTest:    true,
+		DepthWrite:   true,
+	})
+	mats.TransformFn = func(d *material.Def) *material.Def {
+		shadowMat := *d
+		shadowMat.Shader = "vk/shadow"
+		return &shadowMat
 	}
 
 	return &shadowpass{
-		target: target,
-		fbuf:   fbuf,
-		pass:   pass,
-		passes: passes,
+		target:    target,
+		fbuf:      fbuf,
+		pass:      pass,
+		materials: mats,
 	}
 }
 
@@ -108,7 +116,10 @@ func (p *shadowpass) Name() string {
 }
 
 func (p *shadowpass) Record(cmds command.Recorder, args render.Args, scene object.T) {
-	light := query.New[light.T]().Where(func(lit light.T) bool { return lit.Type() == light.Directional }).First(scene)
+	light := object.Query[light.T]().Where(func(lit light.T) bool { return lit.Type() == light.Directional }).First(scene)
+	if light == nil {
+		return
+	}
 	lightDesc := light.LightDescriptor()
 
 	camera := uniform.Camera{
@@ -125,15 +136,8 @@ func (p *shadowpass) Record(cmds command.Recorder, args render.Args, scene objec
 		cmd.CmdBeginRenderPass(p.pass, p.fbuf)
 	})
 
-	for i, pass := range p.passes {
-		pass.Record(cmds, camera, scene)
-
-		if i < len(p.passes)-1 {
-			cmds.Record(func(cmd command.Buffer) {
-				cmd.CmdNextSubpass()
-			})
-		}
-	}
+	objects := object.Query[mesh.T]().Where(isDrawDeferred).Collect(scene)
+	p.materials.DrawCamera(cmds, camera, objects)
 
 	cmds.Record(func(cmd command.Buffer) {
 		cmd.CmdEndRenderPass()
@@ -145,10 +149,7 @@ func (p *shadowpass) Shadowmap() image.View {
 }
 
 func (p *shadowpass) Destroy() {
-	for _, gpass := range p.passes {
-		gpass.Destroy()
-	}
-
+	p.materials.Destroy()
 	p.fbuf.Destroy()
 	p.pass.Destroy()
 }

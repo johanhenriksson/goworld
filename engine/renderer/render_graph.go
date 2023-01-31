@@ -24,19 +24,15 @@ type T interface {
 }
 
 type rgraph struct {
-	target         vulkan.Target
-	pool           descriptor.Pool
-	gbuffer        pass.GeometryBuffer
-	geometryPasses []pass.DeferredSubpass
-	shadowPasses   []pass.DeferredSubpass
-	graph          graph.T
+	target  vulkan.Target
+	pool    descriptor.Pool
+	gbuffer pass.GeometryBuffer
+	graph   graph.T
 }
 
-func NewGraph(target vulkan.Target, geometryPasses, shadowPasses []pass.DeferredSubpass) T {
+func NewGraph(target vulkan.Target) T {
 	r := &rgraph{
-		target:         target,
-		geometryPasses: geometryPasses,
-		shadowPasses:   shadowPasses,
+		target: target,
 	}
 	r.Recreate()
 	return r
@@ -90,10 +86,10 @@ func (r *rgraph) Recreate() {
 
 	g := graph.New(r.target.Device())
 
-	shadows := pass.NewShadowPass(r.target, r.pool, r.shadowPasses)
+	shadows := pass.NewShadowPass(r.target, r.pool)
 	shadowNode := g.Node(shadows)
 
-	deferred := pass.NewGeometryPass(r.target, r.pool, shadows, r.geometryPasses)
+	deferred := pass.NewGeometryPass(r.target, r.pool, shadows)
 	deferredNode := g.Node(deferred)
 	deferredNode.After(shadowNode, vk.PipelineStageTopOfPipeBit)
 

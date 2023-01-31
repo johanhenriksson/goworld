@@ -12,21 +12,20 @@ type Box struct {
 }
 
 type box struct {
-	object.Component
+	object.T
 	args  Box
 	shape physics.Box
 }
 
 func NewBox(args Box) T {
 	half := args.Size.Scaled(0.5)
-	return &box{
-		Component: object.NewComponent(),
-		args:      args,
+	return object.New(&box{
+		args: args,
 		shape: physics.Box{
 			Min: args.Center.Sub(half),
 			Max: args.Center.Add(half),
 		},
-	}
+	})
 }
 
 func (s *box) Intersect(ray *physics.Ray) (bool, vec3.T) {

@@ -6,13 +6,13 @@ import (
 	"github.com/johanhenriksson/goworld/core/light"
 	"github.com/johanhenriksson/goworld/core/mesh"
 	"github.com/johanhenriksson/goworld/core/object"
-	"github.com/johanhenriksson/goworld/core/object/query"
 	"github.com/johanhenriksson/goworld/engine/renderer/uniform"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/descriptor"
 	"github.com/johanhenriksson/goworld/render/framebuffer"
+	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/renderpass"
 	"github.com/johanhenriksson/goworld/render/renderpass/attachment"
 	"github.com/johanhenriksson/goworld/render/texture"
@@ -24,6 +24,7 @@ import (
 
 const (
 	LightingSubpass renderpass.Name = "lighting"
+	GeometrySubpass renderpass.Name = "geometry"
 )
 
 const (
@@ -54,8 +55,9 @@ type GeometryPass struct {
 	fbuf    framebuffer.T
 	texture texture.T
 
-	gpasses []DeferredSubpass
 	shadows ShadowPass
+
+	materials *MaterialSorter
 }
 
 type DeferredSubpass interface {
@@ -69,58 +71,7 @@ func NewGeometryPass(
 	target vulkan.Target,
 	pool descriptor.Pool,
 	shadows ShadowPass,
-	passes []DeferredSubpass,
 ) Deferred {
-	subpasses := make([]renderpass.Subpass, 0, len(passes)+1)
-	dependencies := make([]renderpass.SubpassDependency, 0, 2*len(passes)+1)
-
-	for _, gpass := range passes {
-		subpasses = append(subpasses, renderpass.Subpass{
-			Name:  gpass.Name(),
-			Depth: true,
-
-			ColorAttachments: []attachment.Name{DiffuseAttachment, NormalsAttachment, PositionAttachment},
-		})
-		dependencies = append(dependencies, renderpass.SubpassDependency{
-			Src: renderpass.ExternalSubpass,
-			Dst: gpass.Name(),
-
-			SrcStageMask:  vk.PipelineStageBottomOfPipeBit,
-			DstStageMask:  vk.PipelineStageColorAttachmentOutputBit,
-			SrcAccessMask: vk.AccessMemoryReadBit,
-			DstAccessMask: vk.AccessColorAttachmentReadBit | vk.AccessColorAttachmentWriteBit,
-			Flags:         vk.DependencyByRegionBit,
-		})
-		dependencies = append(dependencies, renderpass.SubpassDependency{
-			Src: gpass.Name(),
-			Dst: LightingSubpass,
-
-			SrcStageMask:  vk.PipelineStageColorAttachmentOutputBit,
-			DstStageMask:  vk.PipelineStageFragmentShaderBit,
-			SrcAccessMask: vk.AccessColorAttachmentWriteBit,
-			DstAccessMask: vk.AccessShaderReadBit,
-			Flags:         vk.DependencyByRegionBit,
-		})
-	}
-
-	// add lighting pass
-	subpasses = append(subpasses, renderpass.Subpass{
-		Name: LightingSubpass,
-
-		ColorAttachments: []attachment.Name{OutputAttachment},
-		InputAttachments: []attachment.Name{DiffuseAttachment, NormalsAttachment, PositionAttachment, attachment.DepthName},
-	})
-	dependencies = append(dependencies, renderpass.SubpassDependency{
-		Src: LightingSubpass,
-		Dst: renderpass.ExternalSubpass,
-
-		SrcStageMask:  vk.PipelineStageColorAttachmentOutputBit,
-		DstStageMask:  vk.PipelineStageBottomOfPipeBit,
-		SrcAccessMask: vk.AccessColorAttachmentReadBit | vk.AccessColorAttachmentWriteBit,
-		DstAccessMask: vk.AccessMemoryReadBit,
-		Flags:         vk.DependencyByRegionBit,
-	})
-
 	diffuseFmt := vk.FormatR8g8b8a8Unorm
 	normalFmt := vk.FormatR8g8b8a8Unorm
 	positionFmt := vk.FormatR16g16b16a16Sfloat
@@ -169,18 +120,57 @@ func NewGeometryPass(
 			Usage:         vk.ImageUsageInputAttachmentBit,
 			ClearDepth:    1,
 		},
-		Subpasses:    subpasses,
-		Dependencies: dependencies,
+		Subpasses: []renderpass.Subpass{
+			{
+				Name:  GeometrySubpass,
+				Depth: true,
+
+				ColorAttachments: []attachment.Name{DiffuseAttachment, NormalsAttachment, PositionAttachment},
+			},
+			{
+				Name: LightingSubpass,
+
+				ColorAttachments: []attachment.Name{OutputAttachment},
+				InputAttachments: []attachment.Name{DiffuseAttachment, NormalsAttachment, PositionAttachment, attachment.DepthName},
+			},
+		},
+		Dependencies: []renderpass.SubpassDependency{
+			{
+				Src: renderpass.ExternalSubpass,
+				Dst: GeometrySubpass,
+
+				SrcStageMask:  vk.PipelineStageBottomOfPipeBit,
+				DstStageMask:  vk.PipelineStageColorAttachmentOutputBit,
+				SrcAccessMask: vk.AccessMemoryReadBit,
+				DstAccessMask: vk.AccessColorAttachmentReadBit | vk.AccessColorAttachmentWriteBit,
+				Flags:         vk.DependencyByRegionBit,
+			},
+			{
+				Src: GeometrySubpass,
+				Dst: LightingSubpass,
+
+				SrcStageMask:  vk.PipelineStageColorAttachmentOutputBit,
+				DstStageMask:  vk.PipelineStageFragmentShaderBit,
+				SrcAccessMask: vk.AccessColorAttachmentWriteBit,
+				DstAccessMask: vk.AccessShaderReadBit,
+				Flags:         vk.DependencyByRegionBit,
+			},
+			{
+				Src: LightingSubpass,
+				Dst: renderpass.ExternalSubpass,
+
+				SrcStageMask:  vk.PipelineStageColorAttachmentOutputBit,
+				DstStageMask:  vk.PipelineStageBottomOfPipeBit,
+				SrcAccessMask: vk.AccessColorAttachmentReadBit | vk.AccessColorAttachmentWriteBit,
+				DstAccessMask: vk.AccessMemoryReadBit,
+				Flags:         vk.DependencyByRegionBit,
+			},
+		},
 	})
 
 	fbuf, err := framebuffer.New(target.Device(), target.Width(), target.Height(), pass)
 	if err != nil {
 		panic(err)
-	}
-
-	// instantiate geometry subpasses
-	for _, subpass := range passes {
-		subpass.Instantiate(pool, pass)
 	}
 
 	gbuffer := NewGbuffer(
@@ -220,9 +210,18 @@ func NewGeometryPass(
 		pass:    pass,
 
 		shadows: shadows,
-		gpasses: passes,
 		fbuf:    fbuf,
 		texture: shadowtex,
+
+		materials: NewMaterialSorter(
+			target, pool, pass,
+			&material.Def{
+				Shader:       "vk/color_d",
+				Subpass:      GeometrySubpass,
+				VertexFormat: vertex.C{},
+				DepthTest:    true,
+				DepthWrite:   true,
+			}),
 	}
 }
 
@@ -238,26 +237,22 @@ func (p *GeometryPass) Record(cmds command.Recorder, args render.Args, scene obj
 	}
 
 	//
-	// geometry subpasses
+	// geometry subpass
 	//
 
 	cmds.Record(func(cmd command.Buffer) {
 		cmd.CmdBeginRenderPass(p.pass, p.fbuf)
 	})
 
-	for _, gpass := range p.gpasses {
-		gpass.Record(cmds, camera, scene)
-
-		cmds.Record(func(cmd command.Buffer) {
-			cmd.CmdNextSubpass()
-		})
-	}
+	objects := object.Query[mesh.T]().Where(isDrawDeferred).Collect(scene)
+	p.materials.Draw(cmds, args, objects)
 
 	//
 	// lighting subpass
 	//
 
 	cmds.Record(func(cmd command.Buffer) {
+		cmd.CmdNextSubpass()
 		p.light.Bind(cmd)
 	})
 
@@ -270,7 +265,7 @@ func (p *GeometryPass) Record(cmds command.Recorder, args render.Args, scene obj
 	ambient := light.NewAmbient(color.White, 0.33)
 	p.DrawLight(cmds, args, ambient)
 
-	lights := query.New[light.T]().Collect(scene)
+	lights := object.Query[light.T]().Collect(scene)
 	for _, lit := range lights {
 		if err := p.DrawLight(cmds, args, lit); err != nil {
 			fmt.Printf("light draw error in object %s: %s\n", lit.Name(), err)
@@ -319,10 +314,7 @@ func (d *GeometryPass) GBuffer() GeometryBuffer {
 
 func (p *GeometryPass) Destroy() {
 	// destroy subpasses
-	for _, gpass := range p.gpasses {
-		gpass.Destroy()
-	}
-
+	p.materials.Destroy()
 	p.texture.Destroy()
 
 	p.fbuf.Destroy()

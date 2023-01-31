@@ -6,6 +6,7 @@ import (
 	"github.com/johanhenriksson/goworld/math"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render/color"
+	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/vertex"
 )
 
@@ -16,41 +17,20 @@ type T struct {
 }
 
 type Args struct {
+	Mat      *material.Def
 	Radius   float32
 	Height   float32
 	Segments int
 	Color    color.T
 }
 
-// NewObject creates a new Cone attached to a Game Object
-func NewObject(args Args) *T {
-	parent := object.New("Cone")
-	return Attach(parent, args)
-}
-
-func Builder(out **T, args Args) *object.Builder {
-	var tmp *T = nil
-	if out == nil {
-		out = &tmp
-	}
-	b := object.Build("Cone")
-	*out = New(args)
-	return b.Attach(*out)
-}
-
 func New(args Args) *T {
-	cone := &T{
-		T:    mesh.New(mesh.Forward),
+	cone := object.New(&T{
+		T:    mesh.New(mesh.Forward, args.Mat),
 		Args: args,
-	}
+	})
 	cone.generate()
 	return cone
-}
-
-func Attach(parent object.T, args Args) *T {
-	plane := New(args)
-	parent.Attach(plane)
-	return plane
 }
 
 func (c *T) generate() {

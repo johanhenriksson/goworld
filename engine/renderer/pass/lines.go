@@ -5,9 +5,6 @@ import (
 
 	"github.com/johanhenriksson/goworld/core/mesh"
 	"github.com/johanhenriksson/goworld/core/object"
-	"github.com/johanhenriksson/goworld/core/object/query"
-	"github.com/johanhenriksson/goworld/engine/renderer/uniform"
-	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/descriptor"
@@ -16,7 +13,6 @@ import (
 	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/renderpass"
 	"github.com/johanhenriksson/goworld/render/renderpass/attachment"
-	"github.com/johanhenriksson/goworld/render/shader"
 	"github.com/johanhenriksson/goworld/render/vertex"
 	"github.com/johanhenriksson/goworld/render/vulkan"
 
@@ -24,31 +20,21 @@ import (
 )
 
 type LinePass struct {
-	target   vulkan.Target
-	material material.Instance[*LineDescriptors]
-	pass     renderpass.T
-	fbufs    framebuffer.Array
-}
-
-type LineDescriptors struct {
-	descriptor.Set
-	Camera  *descriptor.Uniform[uniform.Camera]
-	Objects *descriptor.Storage[mat4.T]
+	target    vulkan.Target
+	pass      renderpass.T
+	fbufs     framebuffer.Array
+	materials *MaterialSorter
 }
 
 func NewLinePass(target vulkan.Target, pool descriptor.Pool, geometry GeometryBuffer) *LinePass {
 	log.Println("create line pass")
-
-	p := &LinePass{
-		target: target,
-	}
 
 	depth := make([]image.T, target.Frames())
 	for i := range depth {
 		depth[i] = geometry.Depth().Image()
 	}
 
-	p.pass = renderpass.New(target.Device(), renderpass.Args{
+	pass := renderpass.New(target.Device(), renderpass.Args{
 		ColorAttachments: []attachment.Color{
 			{
 				Name:          "color",
@@ -77,77 +63,39 @@ func NewLinePass(target vulkan.Target, pool descriptor.Pool, geometry GeometryBu
 		},
 	})
 
-	var err error
-	p.fbufs, err = framebuffer.NewArray(target.Frames(), target.Device(), target.Width(), target.Height(), p.pass)
+	fbufs, err := framebuffer.NewArray(target.Frames(), target.Device(), target.Width(), target.Height(), pass)
 	if err != nil {
 		panic(err)
 	}
 
-	p.material = material.New(
-		target.Device(),
-		material.Args{
-			Shader:    shader.New(target.Device(), "vk/lines"),
-			Pass:      p.pass,
-			Pointers:  vertex.ParsePointers(vertex.C{}),
-			Primitive: vertex.Lines,
-			DepthTest: true,
-		},
-		&LineDescriptors{
-			Camera: &descriptor.Uniform[uniform.Camera]{
-				Stages: vk.ShaderStageVertexBit,
-			},
-			Objects: &descriptor.Storage[mat4.T]{
-				Size:   100,
-				Stages: vk.ShaderStageVertexBit,
-			},
-		}).Instantiate(pool)
-
-	return p
+	return &LinePass{
+		target: target,
+		pass:   pass,
+		fbufs:  fbufs,
+		materials: NewMaterialSorter(target, pool, pass,
+			&material.Def{
+				Shader:       "vk/lines",
+				Subpass:      "output",
+				VertexFormat: vertex.C{},
+				Primitive:    vertex.Lines,
+				DepthTest:    true,
+			}),
+	}
 }
 
 func (p *LinePass) Record(cmds command.Recorder, args render.Args, scene object.T) {
 	ctx := args.Context
 
-	camera := uniform.Camera{
-		Proj:        args.Projection,
-		View:        args.View,
-		ViewProj:    args.VP,
-		ProjInv:     args.Projection.Invert(),
-		ViewInv:     args.View.Invert(),
-		ViewProjInv: args.VP.Invert(),
-		Eye:         args.Position,
-	}
-	p.material.Descriptors().Camera.Set(camera)
-
 	cmds.Record(func(cmd command.Buffer) {
 		cmd.CmdBeginRenderPass(p.pass, p.fbufs[ctx.Index])
-		p.material.Bind(cmd)
 	})
 
-	objects := query.New[mesh.T]().Where(isDrawLines).Collect(scene)
-	for i, mesh := range objects {
-		p.DrawLines(cmds, i, args, mesh)
-	}
+	lines := object.Query[mesh.T]().Where(isDrawLines).Collect(scene)
+	p.materials.Draw(cmds, args, lines)
 
 	cmds.Record(func(cmd command.Buffer) {
 		cmd.CmdEndRenderPass()
 	})
-}
-
-func (p *LinePass) DrawLines(cmds command.Recorder, index int, args render.Args, mesh mesh.T) error {
-	vkmesh := p.target.Meshes().Fetch(mesh.Mesh())
-	if vkmesh == nil {
-		log.Println("line mesh", mesh.Mesh().Id(), "is nil")
-		return nil
-	}
-
-	p.material.Descriptors().Objects.Set(index, mesh.Transform().World())
-
-	cmds.Record(func(cmd command.Buffer) {
-		vkmesh.Draw(cmd, index)
-	})
-
-	return nil
 }
 
 func (p *LinePass) Name() string {
@@ -157,7 +105,7 @@ func (p *LinePass) Name() string {
 func (p *LinePass) Destroy() {
 	p.fbufs.Destroy()
 	p.pass.Destroy()
-	p.material.Material().Destroy()
+	p.materials.Destroy()
 }
 
 func isDrawLines(m mesh.T) bool {

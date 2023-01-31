@@ -6,7 +6,7 @@ import (
 )
 
 type ambient struct {
-	object.Component
+	object.T
 	Color     color.T
 	Intensity float32
 }
@@ -24,9 +24,8 @@ func (lit *ambient) Type() Type {
 }
 
 func NewAmbient(clr color.T, intensity float32) T {
-	return &ambient{
-		Component: object.NewComponent(),
+	return object.New(&ambient{
 		Color:     clr,
 		Intensity: intensity,
-	}
+	})
 }

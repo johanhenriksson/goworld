@@ -5,6 +5,7 @@ import (
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render/color"
+	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/vertex"
 )
 
@@ -17,34 +18,18 @@ type T struct {
 // If they change, we should recomupte the mesh
 
 type Args struct {
+	Mat   *material.Def
 	Size  vec3.T
 	Color color.T
 }
 
 func New(args Args) *T {
-	b := &T{
-		T:    mesh.NewLines(),
+	b := object.New(&T{
+		T:    mesh.NewLines(args.Mat),
 		Args: args,
-	}
+	})
 	b.compute()
 	return b
-}
-
-func Attach(parent object.T, args Args) *T {
-	box := New(args)
-	parent.Attach(box)
-	return box
-}
-
-func NewObject(args Args) *T {
-	parent := object.New("Box")
-	return Attach(parent, args)
-}
-
-func Builder(out **T, args Args) *object.Builder {
-	b := object.Build("Box")
-	*out = New(args)
-	return b.Attach(*out)
 }
 
 func (b *T) compute() {

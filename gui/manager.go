@@ -4,7 +4,6 @@ import (
 	"github.com/johanhenriksson/goworld/core/input/keys"
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/core/object"
-	"github.com/johanhenriksson/goworld/core/object/query"
 	"github.com/johanhenriksson/goworld/gui/node"
 	"github.com/johanhenriksson/goworld/gui/widget"
 	"github.com/johanhenriksson/goworld/math/mat4"
@@ -14,13 +13,13 @@ import (
 )
 
 type Manager interface {
-	object.Component
+	object.T
 
 	DrawUI(widget.DrawArgs, object.T)
 }
 
 type manager struct {
-	object.Component
+	object.T
 
 	scale  float32
 	render node.RenderFunc
@@ -29,11 +28,10 @@ type manager struct {
 }
 
 func New(render node.RenderFunc) Manager {
-	return &manager{
-		Component: object.NewComponent(),
-		scale:     1,
-		render:    render,
-	}
+	return object.New(&manager{
+		scale:  1,
+		render: render,
+	})
 }
 
 func (m *manager) Name() string { return "UIManager" }
@@ -43,7 +41,7 @@ func (m *manager) DrawUI(args widget.DrawArgs, scene object.T) {
 	root := m.render()
 
 	// populate with fragments
-	fragments := query.New[Fragment]().Collect(scene)
+	fragments := object.Query[Fragment]().Collect(scene)
 	for {
 		changed := false
 		for idx, fragment := range fragments {

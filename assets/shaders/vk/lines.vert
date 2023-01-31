@@ -21,6 +21,9 @@ layout (binding = 1) readonly buffer ObjectBuffer {
 	ObjectData objects[];
 } ssbo;
 
+// including the texture array allows us to use standard materials for the line shader
+layout (binding = 2) uniform sampler2D[] Textures;
+
 layout (location = 0) in vec3 position;
 layout (location = 1) in vec4 color_0;
 

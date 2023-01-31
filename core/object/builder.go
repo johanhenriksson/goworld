@@ -3,22 +3,22 @@ package object
 import "github.com/johanhenriksson/goworld/math/vec3"
 
 // Builder API for game objects
-type Builder struct {
-	name     string
+type builder[K T] struct {
+	object K
+
 	position vec3.T
 	rotation vec3.T
 	scale    vec3.T
 	active   bool
 
-	parent     T
-	components []Component
-	children   []T
+	parent   T
+	children []T
 }
 
-// Build instantiates a new object builder.
-func Build(name string) *Builder {
-	return &Builder{
-		name:     name,
+// Builder instantiates a new object builder.
+func Builder[K T](object K) *builder[K] {
+	return &builder[K]{
+		object:   object,
 		position: vec3.Zero,
 		rotation: vec3.Zero,
 		scale:    vec3.One,
@@ -26,63 +26,52 @@ func Build(name string) *Builder {
 	}
 }
 
-// Attach a component to the object.
-func (b *Builder) Attach(comp Component) *Builder {
-	b.components = append(b.components, comp)
-	return b
-}
-
-func (b *Builder) Adopt(child T) *Builder {
+func (b *builder[K]) Attach(child T) *builder[K] {
 	b.children = append(b.children, child)
 	return b
 }
 
-func (b *Builder) Parent(parent T) *Builder {
+func (b *builder[K]) Parent(parent T) *builder[K] {
 	b.parent = parent
 	return b
 }
 
 // Position sets the intial position of the object.
-func (b *Builder) Position(p vec3.T) *Builder {
+func (b *builder[K]) Position(p vec3.T) *builder[K] {
 	b.position = p
 	return b
 }
 
 // Rotation sets the intial rotation of the object.
-func (b *Builder) Rotation(r vec3.T) *Builder {
+func (b *builder[K]) Rotation(r vec3.T) *builder[K] {
 	b.rotation = r
 	return b
 }
 
 // Scale sets the intial scale of the object.
-func (b *Builder) Scale(s vec3.T) *Builder {
+func (b *builder[K]) Scale(s vec3.T) *builder[K] {
 	b.scale = s
 	return b
 }
 
 // Active sets the objects active flag.
-func (b *Builder) Active(active bool) *Builder {
+func (b *builder[K]) Active(active bool) *builder[K] {
 	b.active = active
 	return b
 }
 
-func (b *Builder) Name(name string) *Builder {
-	b.name = name
-	return b
-}
-
 // Create instantiates a new object with the current builder settings.
-func (b *Builder) Create() T {
-	obj := New(b.name, b.components...)
+func (b *builder[K]) Create() K {
+	obj := b.object
 	obj.Transform().SetPosition(b.position)
 	obj.Transform().SetRotation(b.rotation)
 	obj.Transform().SetScale(b.scale)
 	obj.SetActive(b.active)
 	if b.parent != nil {
-		b.parent.Adopt(obj)
+		Attach(b.parent, obj)
 	}
 	for _, child := range b.children {
-		obj.Adopt(child)
+		Attach(obj, child)
 	}
 	return obj
 }

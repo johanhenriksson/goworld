@@ -29,6 +29,7 @@ type T interface {
 	Unproject(point vec3.T) vec3.T
 
 	WorldPosition() vec3.T
+	SetWorldPosition(vec3.T)
 }
 
 // Transform represents a 3D transformation
@@ -109,6 +110,11 @@ func (t *transform) ProjectDir(dir vec3.T) vec3.T {
 
 func (t *transform) WorldPosition() vec3.T {
 	return t.Project(vec3.Zero)
+}
+
+func (t *transform) SetWorldPosition(wp vec3.T) {
+	offset := wp.Sub(t.WorldPosition())
+	t.SetPosition(t.position.Add(offset))
 }
 
 func (t *transform) World() mat4.T        { return t.world }

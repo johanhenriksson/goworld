@@ -17,7 +17,7 @@ type ColorCube struct {
 // NewColorCube creates a vertex colored cube mesh with a given size
 func NewColorCube(color color.T, size float32) *ColorCube {
 	cube := &ColorCube{
-		T:     mesh.New(mesh.Forward),
+		T:     mesh.New(mesh.Forward, nil),
 		Size:  size,
 		Color: color,
 	}

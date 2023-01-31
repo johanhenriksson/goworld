@@ -1,15 +1,14 @@
-package game
+package chunk
 
 import (
 	"fmt"
 
-	"github.com/johanhenriksson/goworld/game/chunk"
 	"github.com/johanhenriksson/goworld/game/voxel"
 	"github.com/johanhenriksson/goworld/math/vec3"
 )
 
-type ChunkProvider interface {
-	Chunk(x, z int) *chunk.T
+type Provider interface {
+	Chunk(x, z int) *T
 	Voxel(x, y, z int) voxel.T
 }
 
@@ -23,8 +22,8 @@ type World struct {
 	ChunkSize    int
 	KeepDistance int
 	DrawDistance int
-	Cache        map[ChunkPos]*chunk.T
-	Provider     ChunkProvider
+	Cache        map[ChunkPos]*T
+	Provider     Provider
 }
 
 func NewWorld(seed, size int) *World {
@@ -33,13 +32,13 @@ func NewWorld(seed, size int) *World {
 		KeepDistance: 5,
 		DrawDistance: 3,
 		ChunkSize:    size,
-		Cache:        make(map[ChunkPos]*chunk.T),
+		Cache:        make(map[ChunkPos]*T),
 		Provider:     ExampleWorldgen(seed, size),
 	}
 }
 
-func (w *World) AddChunk(cx, cz int) *chunk.T {
-	chunk, err := chunk.Load("chunks", cx, cz)
+func (w *World) AddChunk(cx, cz int) *T {
+	chunk, err := Load("chunks", cx, cz)
 	if err != nil {
 		chunk = w.Provider.Chunk(cx, cz)
 		fmt.Printf("Generated chunk %d,%d\n", cx, cz)

@@ -6,32 +6,25 @@ import (
 	"github.com/johanhenriksson/goworld/math/vec3"
 )
 
-type T interface {
-	object.Component
-
-	Intersect(ray *physics.Ray) (bool, vec3.T)
-}
-
 type Sphere struct {
 	Center vec3.T
 	Radius float32
 }
 
 type sphere struct {
-	object.Component
+	object.T
 	args  Sphere
 	shape physics.Sphere
 }
 
 func NewSphere(args Sphere) T {
-	return &sphere{
-		Component: object.NewComponent(),
-		args:      args,
+	return object.New(&sphere{
+		args: args,
 		shape: physics.Sphere{
 			Center: args.Center,
 			Radius: args.Radius,
 		},
-	}
+	})
 }
 
 func (s *sphere) Intersect(ray *physics.Ray) (bool, vec3.T) {
