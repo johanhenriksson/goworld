@@ -80,7 +80,7 @@ func NewEditor(chk *chunk.T, cam camera.T, render renderer.T) T {
 
 	box.Builder(&e.bounds, box.Args{
 		Size:  dimensions,
-		Color: color.DarkGrey,
+		Color: color.White,
 	}).
 		Parent(e.object).
 		Create()
@@ -229,6 +229,10 @@ func (e *editor) KeyEvent(ev keys.Event) {
 	// eyedropper tool
 	if keys.Pressed(ev, keys.T) {
 		e.SelectTool(e.SampleTool)
+	}
+
+	if keys.Pressed(ev, keys.P) {
+		e.render.Screenshot()
 	}
 
 	// toggle construction planes

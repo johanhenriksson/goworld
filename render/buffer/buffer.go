@@ -95,7 +95,7 @@ func NewStorage(device device.T, size int) T {
 func NewShared(device device.T, size int) T {
 	return New(device, Args{
 		Size:   size,
-		Usage:  vk.BufferUsageTransferSrcBit,
+		Usage:  vk.BufferUsageTransferSrcBit | vk.BufferUsageTransferDstBit,
 		Memory: vk.MemoryPropertyHostVisibleBit | vk.MemoryPropertyHostCoherentBit,
 	})
 }

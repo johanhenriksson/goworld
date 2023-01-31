@@ -45,6 +45,17 @@ type device struct {
 func New(physDevice vk.PhysicalDevice) (T, error) {
 	log.Println("creating device with extensions", deviceExtensions)
 
+	var familyCount uint32
+	vk.GetPhysicalDeviceQueueFamilyProperties(physDevice, &familyCount, nil)
+	families := make([]vk.QueueFamilyProperties, uint32(familyCount))
+	vk.GetPhysicalDeviceQueueFamilyProperties(physDevice, &familyCount, families)
+
+	log.Println("Queue families:", familyCount)
+	for index, family := range families {
+		family.Deref()
+		log.Printf("  [%d,%d]: %d\n", index, family.QueueCount, family.QueueFlags)
+	}
+
 	// VK_EXT_descriptor_indexing settings
 	indexingFeatures := vk.PhysicalDeviceDescriptorIndexingFeatures{
 		SType: vk.StructureTypePhysicalDeviceDescriptorIndexingFeatures,

@@ -51,7 +51,7 @@ func (wg *WorldGenerator) Voxel(x, y, z int) voxel.T {
 
 	gh := int(9 * wg.Grass.Sample(x, y, z))
 	rh := int(44 * wg.Rock.Sample(x, y, z))
-	grassHeight := 8
+	grassHeight := 4
 
 	var vtype voxel.T
 	if y < grassHeight {

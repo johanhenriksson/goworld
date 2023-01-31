@@ -17,7 +17,6 @@ import (
 	"github.com/johanhenriksson/goworld/render/renderpass"
 	"github.com/johanhenriksson/goworld/render/renderpass/attachment"
 	"github.com/johanhenriksson/goworld/render/shader"
-	"github.com/johanhenriksson/goworld/render/sync"
 	"github.com/johanhenriksson/goworld/render/vertex"
 	"github.com/johanhenriksson/goworld/render/vulkan"
 
@@ -25,12 +24,10 @@ import (
 )
 
 type LinePass struct {
-	target    vulkan.Target
-	material  material.Instance[*LineDescriptors]
-	pass      renderpass.T
-	completed sync.Semaphore
-	fbufs     framebuffer.Array
-	prev      Pass
+	target   vulkan.Target
+	material material.Instance[*LineDescriptors]
+	pass     renderpass.T
+	fbufs    framebuffer.Array
 }
 
 type LineDescriptors struct {
@@ -39,13 +36,11 @@ type LineDescriptors struct {
 	Objects *descriptor.Storage[mat4.T]
 }
 
-func NewLinePass(target vulkan.Target, pool descriptor.Pool, geometry GeometryBuffer, prev Pass) *LinePass {
+func NewLinePass(target vulkan.Target, pool descriptor.Pool, geometry GeometryBuffer) *LinePass {
 	log.Println("create line pass")
 
 	p := &LinePass{
-		target:    target,
-		prev:      prev,
-		completed: sync.NewSemaphore(target.Device()),
+		target: target,
 	}
 
 	depth := make([]image.T, target.Frames())
@@ -110,9 +105,8 @@ func NewLinePass(target vulkan.Target, pool descriptor.Pool, geometry GeometryBu
 	return p
 }
 
-func (p *LinePass) Draw(args render.Args, scene object.T) {
+func (p *LinePass) Record(cmds command.Recorder, args render.Args, scene object.T) {
 	ctx := args.Context
-	cmds := command.NewRecorder()
 
 	camera := uniform.Camera{
 		Proj:        args.Projection,
@@ -138,19 +132,6 @@ func (p *LinePass) Draw(args render.Args, scene object.T) {
 	cmds.Record(func(cmd command.Buffer) {
 		cmd.CmdEndRenderPass()
 	})
-
-	worker := p.target.Worker(ctx.Index)
-	worker.Queue(cmds.Apply)
-	worker.Submit(command.SubmitInfo{
-		Marker: "LinePass",
-		Signal: []sync.Semaphore{p.completed},
-		Wait: []command.Wait{
-			{
-				Semaphore: p.prev.Completed(),
-				Mask:      vk.PipelineStageColorAttachmentOutputBit,
-			},
-		},
-	})
 }
 
 func (p *LinePass) DrawLines(cmds command.Recorder, index int, args render.Args, mesh mesh.T) error {
@@ -160,9 +141,9 @@ func (p *LinePass) DrawLines(cmds command.Recorder, index int, args render.Args,
 		return nil
 	}
 
-	cmds.Record(func(cmd command.Buffer) {
-		p.material.Descriptors().Objects.Set(index, mesh.Transform().World())
+	p.material.Descriptors().Objects.Set(index, mesh.Transform().World())
 
+	cmds.Record(func(cmd command.Buffer) {
 		vkmesh.Draw(cmd, index)
 	})
 
@@ -173,12 +154,7 @@ func (p *LinePass) Name() string {
 	return "Lines"
 }
 
-func (p *LinePass) Completed() sync.Semaphore {
-	return p.completed
-}
-
 func (p *LinePass) Destroy() {
-	p.completed.Destroy()
 	p.fbufs.Destroy()
 	p.pass.Destroy()
 	p.material.Material().Destroy()

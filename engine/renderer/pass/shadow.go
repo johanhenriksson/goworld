@@ -14,7 +14,6 @@ import (
 	"github.com/johanhenriksson/goworld/render/image"
 	"github.com/johanhenriksson/goworld/render/renderpass"
 	"github.com/johanhenriksson/goworld/render/renderpass/attachment"
-	"github.com/johanhenriksson/goworld/render/sync"
 	"github.com/johanhenriksson/goworld/render/vulkan"
 
 	vk "github.com/vulkan-go/vulkan"
@@ -33,11 +32,10 @@ type ShadowDescriptors struct {
 }
 
 type shadowpass struct {
-	target    vulkan.Target
-	pass      renderpass.T
-	passes    []DeferredSubpass
-	completed sync.Semaphore
-	fbuf      framebuffer.T
+	target vulkan.Target
+	pass   renderpass.T
+	passes []DeferredSubpass
+	fbuf   framebuffer.T
 }
 
 func NewShadowPass(target vulkan.Target, pool descriptor.Pool, passes []DeferredSubpass) ShadowPass {
@@ -98,11 +96,10 @@ func NewShadowPass(target vulkan.Target, pool descriptor.Pool, passes []Deferred
 	}
 
 	return &shadowpass{
-		target:    target,
-		fbuf:      fbuf,
-		pass:      pass,
-		passes:    passes,
-		completed: sync.NewSemaphore(target.Device()),
+		target: target,
+		fbuf:   fbuf,
+		pass:   pass,
+		passes: passes,
 	}
 }
 
@@ -110,14 +107,7 @@ func (p *shadowpass) Name() string {
 	return "Shadow"
 }
 
-func (p *shadowpass) Completed() sync.Semaphore {
-	return p.completed
-}
-
-func (p *shadowpass) Draw(args render.Args, scene object.T) {
-	ctx := args.Context
-	cmds := command.NewRecorder()
-
+func (p *shadowpass) Record(cmds command.Recorder, args render.Args, scene object.T) {
 	light := query.New[light.T]().Where(func(lit light.T) bool { return lit.Type() == light.Directional }).First(scene)
 	lightDesc := light.LightDescriptor()
 
@@ -148,19 +138,6 @@ func (p *shadowpass) Draw(args render.Args, scene object.T) {
 	cmds.Record(func(cmd command.Buffer) {
 		cmd.CmdEndRenderPass()
 	})
-
-	worker := p.target.Worker(ctx.Index)
-	worker.Queue(cmds.Apply)
-	worker.Submit(command.SubmitInfo{
-		Marker: "ShadowPass",
-		Signal: []sync.Semaphore{p.completed},
-		Wait: []command.Wait{
-			{
-				Semaphore: ctx.ImageAvailable,
-				Mask:      vk.PipelineStageColorAttachmentOutputBit,
-			},
-		},
-	})
 }
 
 func (p *shadowpass) Shadowmap() image.View {
@@ -174,5 +151,4 @@ func (p *shadowpass) Destroy() {
 
 	p.fbuf.Destroy()
 	p.pass.Destroy()
-	p.completed.Destroy()
 }

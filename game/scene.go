@@ -19,7 +19,7 @@ func CreateScene(scene object.T, render renderer.T) {
 	}))
 
 	// create chunk
-	world := NewWorld(31481234, 8)
+	world := NewWorld(31481284, 8)
 	chonk := world.AddChunk(0, 0)
 
 	chonk2 := world.AddChunk(1, 0)
@@ -45,7 +45,7 @@ func CreateScene(scene object.T, render renderer.T) {
 
 	object.Build("Chunk2").
 		Attach(chunk.NewMesh(chonk2)).
-		Position(vec3.New(16, 0, 0)).
+		Position(vec3.New(8, 0, 0)).
 		// Attach(collider.NewBox(collider.Box{
 		// 	Center: vec3.New(8, 8, 8),
 		// 	Size:   vec3.New(16, 16, 16),

@@ -13,7 +13,6 @@ import (
 	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/renderpass"
 	"github.com/johanhenriksson/goworld/render/renderpass/attachment"
-	"github.com/johanhenriksson/goworld/render/sync"
 	"github.com/johanhenriksson/goworld/render/vertex"
 	"github.com/johanhenriksson/goworld/render/vulkan"
 
@@ -21,21 +20,17 @@ import (
 )
 
 type ForwardPass struct {
-	gbuffer   GeometryBuffer
-	target    vulkan.Target
-	pass      renderpass.T
-	fbuf      framebuffer.T
-	fwdmat    material.Standard
-	prev      Pass
-	copy      sync.Semaphore
-	completed sync.Semaphore
+	gbuffer GeometryBuffer
+	target  vulkan.Target
+	pass    renderpass.T
+	fbuf    framebuffer.T
+	fwdmat  material.Standard
 }
 
 func NewForwardPass(
 	target vulkan.Target,
 	pool descriptor.Pool,
 	gbuffer GeometryBuffer,
-	prev Pass,
 ) *ForwardPass {
 	pass := renderpass.New(target.Device(), renderpass.Args{
 		ColorAttachments: []attachment.Color{
@@ -46,6 +41,7 @@ func NewForwardPass(
 				StoreOp:     vk.AttachmentStoreOpStore,
 				FinalLayout: vk.ImageLayoutShaderReadOnlyOptimal,
 				Usage:       vk.ImageUsageSampledBit,
+				Blend:       attachment.BlendMix,
 
 				Allocator: attachment.FromImageArray([]image.T{
 					gbuffer.Output().Image(),
@@ -113,26 +109,16 @@ func NewForwardPass(
 		})
 
 	return &ForwardPass{
-		gbuffer:   gbuffer,
-		target:    target,
-		pass:      pass,
-		completed: sync.NewSemaphore(target.Device()),
-		copy:      sync.NewSemaphore(target.Device()),
+		gbuffer: gbuffer,
+		target:  target,
+		pass:    pass,
 
 		fbuf:   fbuf,
 		fwdmat: fwdmat,
-		prev:   prev,
 	}
 }
 
-func (p *ForwardPass) Completed() sync.Semaphore {
-	return p.completed
-}
-
-func (p *ForwardPass) Draw(args render.Args, scene object.T) {
-	ctx := args.Context
-	cmds := command.NewRecorder()
-
+func (p *ForwardPass) Record(cmds command.Recorder, args render.Args, scene object.T) {
 	camera := uniform.Camera{
 		Proj:        args.Projection,
 		View:        args.View,
@@ -147,46 +133,35 @@ func (p *ForwardPass) Draw(args render.Args, scene object.T) {
 
 	cmds.Record(func(cmd command.Buffer) {
 		cmd.CmdBeginRenderPass(p.pass, p.fbuf)
-
 		p.fwdmat.Bind(cmd)
+	})
 
-		forwardMeshes := query.New[mesh.T]().
-			Where(isDrawForward).
-			Collect(scene)
-		for index, mesh := range forwardMeshes {
-			vkmesh := p.target.Meshes().Fetch(mesh.Mesh())
-			if vkmesh == nil {
-				continue
-			}
+	forwardMeshes := query.New[mesh.T]().
+		Where(isDrawForward).
+		Collect(scene)
 
-			p.fwdmat.Descriptors().Objects.Set(index, uniform.Object{
-				Model: mesh.Transform().World(),
-			})
+	for index, mesh := range forwardMeshes {
+		p.DrawForward(cmds, index, mesh)
+	}
 
-			cmds.Record(func(cmd command.Buffer) {
-				vkmesh.Draw(cmd, index)
-			})
-		}
-
+	cmds.Record(func(cmd command.Buffer) {
 		cmd.CmdEndRenderPass()
 	})
+}
 
-	worker := p.target.Worker(ctx.Index)
-	worker.Queue(cmds.Apply)
-	worker.Submit(command.SubmitInfo{
-		Marker: "ForwardPass",
-		Signal: []sync.Semaphore{p.copy, p.completed},
-		Wait: []command.Wait{
-			{
-				Semaphore: p.prev.Completed(),
-				Mask:      vk.PipelineStageFragmentShaderBit,
-			},
-		},
+func (p *ForwardPass) DrawForward(cmds command.Recorder, index int, mesh mesh.T) {
+	vkmesh := p.target.Meshes().Fetch(mesh.Mesh())
+	if vkmesh == nil {
+		return
+	}
+
+	p.fwdmat.Descriptors().Objects.Set(index, uniform.Object{
+		Model: mesh.Transform().World(),
 	})
 
-	// issue Geometry Buffer copy, so that gbuffers may be read back.
-	// if more data gbuffer is to be dawn later, we need to move this to a later stage
-	p.gbuffer.CopyBuffers(p.copy)
+	cmds.Record(func(cmd command.Buffer) {
+		vkmesh.Draw(cmd, index)
+	})
 }
 
 func (p *ForwardPass) Name() string {
@@ -197,8 +172,6 @@ func (p *ForwardPass) Destroy() {
 	p.fbuf.Destroy()
 	p.pass.Destroy()
 	p.fwdmat.Material().Destroy()
-	p.completed.Destroy()
-	p.copy.Destroy()
 }
 
 func isDrawForward(m mesh.T) bool {

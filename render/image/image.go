@@ -121,11 +121,12 @@ func New(device device.T, args Args) (T, error) {
 	}, nil
 }
 
-func Wrap(dev device.T, ptr vk.Image) T {
+func Wrap(dev device.T, ptr vk.Image, args Args) T {
 	return &image{
 		ptr:    ptr,
 		device: dev,
 		memory: device.NilMemory,
+		Args:   args,
 	}
 }
 

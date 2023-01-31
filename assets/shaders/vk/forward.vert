@@ -30,7 +30,7 @@ layout (binding = 1) readonly buffer ObjectBuffer {
 layout (binding = 2) uniform sampler2D[] Textures;
 
 // Varyings
-layout (location = 0) out vec3 color0;
+layout (location = 0) out vec4 color0;
 layout (location = 1) out vec3 normal0;
 layout (location = 2) out vec3 position0;
 
@@ -44,7 +44,7 @@ void main()
 	mat4 mv = camera.View * ssbo.objects[gl_InstanceIndex].model;
 
 	// gbuffer diffuse
-	color0 = color_0.rgb;
+	color0 = color_0.rgba;
 
 	// gbuffer position
 	position0 = (mv * vec4(position.xyz, 1.0)).xyz;

@@ -10,7 +10,6 @@ import (
 	"github.com/johanhenriksson/goworld/render/renderpass"
 	"github.com/johanhenriksson/goworld/render/renderpass/attachment"
 	"github.com/johanhenriksson/goworld/render/shader"
-	"github.com/johanhenriksson/goworld/render/sync"
 	"github.com/johanhenriksson/goworld/render/texture"
 	"github.com/johanhenriksson/goworld/render/vertex"
 	"github.com/johanhenriksson/goworld/render/vulkan"
@@ -22,14 +21,12 @@ type OutputPass struct {
 	target   vulkan.Target
 	material material.T[*OutputDescriptors]
 	geometry GeometryBuffer
-	prev     Pass
 
-	quad      vertex.Mesh
-	desc      []material.Instance[*OutputDescriptors]
-	tex       []texture.T
-	fbufs     framebuffer.Array
-	pass      renderpass.T
-	completed sync.Semaphore
+	quad  vertex.Mesh
+	desc  []material.Instance[*OutputDescriptors]
+	tex   []texture.T
+	fbufs framebuffer.Array
+	pass  renderpass.T
 }
 
 type OutputDescriptors struct {
@@ -37,12 +34,10 @@ type OutputDescriptors struct {
 	Output *descriptor.Sampler
 }
 
-func NewOutputPass(target vulkan.Target, pool descriptor.Pool, geometry GeometryBuffer, prev Pass) *OutputPass {
+func NewOutputPass(target vulkan.Target, pool descriptor.Pool, geometry GeometryBuffer) *OutputPass {
 	p := &OutputPass{
-		target:    target,
-		geometry:  geometry,
-		prev:      prev,
-		completed: sync.NewSemaphore(target.Device()),
+		target:   target,
+		geometry: geometry,
 	}
 
 	p.quad = vertex.ScreenQuad()
@@ -105,11 +100,9 @@ func NewOutputPass(target vulkan.Target, pool descriptor.Pool, geometry Geometry
 	return p
 }
 
-func (p *OutputPass) Draw(args render.Args, scene object.T) {
+func (p *OutputPass) Record(cmds command.Recorder, args render.Args, scene object.T) {
 	ctx := args.Context
-
-	worker := p.target.Worker(ctx.Index)
-	worker.Queue(func(cmd command.Buffer) {
+	cmds.Record(func(cmd command.Buffer) {
 		cmd.CmdBeginRenderPass(p.pass, p.fbufs[ctx.Index%len(p.fbufs)])
 
 		quad := p.target.Meshes().Fetch(p.quad)
@@ -120,25 +113,10 @@ func (p *OutputPass) Draw(args render.Args, scene object.T) {
 
 		cmd.CmdEndRenderPass()
 	})
-
-	worker.Submit(command.SubmitInfo{
-		Marker: "OutputPass",
-		Signal: []sync.Semaphore{p.completed},
-		Wait: []command.Wait{
-			{
-				Semaphore: p.prev.Completed(),
-				Mask:      vk.PipelineStageColorAttachmentOutputBit,
-			},
-		},
-	})
 }
 
 func (p *OutputPass) Name() string {
 	return "Output"
-}
-
-func (p *OutputPass) Completed() sync.Semaphore {
-	return p.completed
 }
 
 func (p *OutputPass) Destroy() {
@@ -148,5 +126,4 @@ func (p *OutputPass) Destroy() {
 	p.fbufs.Destroy()
 	p.pass.Destroy()
 	p.material.Destroy()
-	p.completed.Destroy()
 }
