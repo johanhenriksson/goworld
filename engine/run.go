@@ -8,13 +8,9 @@ import (
 	"time"
 
 	"github.com/johanhenriksson/goworld/core/camera"
-	"github.com/johanhenriksson/goworld/core/collider"
 	"github.com/johanhenriksson/goworld/core/object"
-	"github.com/johanhenriksson/goworld/core/object/query"
 	"github.com/johanhenriksson/goworld/engine/renderer"
-	"github.com/johanhenriksson/goworld/geometry/gizmo/mover"
 	"github.com/johanhenriksson/goworld/math/mat4"
-	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/vulkan"
 )
@@ -23,7 +19,7 @@ type SceneFunc func(renderer.T, object.T)
 type RendererFunc func(vulkan.Target) renderer.T
 
 type PreDrawable interface {
-	object.Component
+	object.T
 	PreDraw(render.Args, object.T) error
 }
 
@@ -67,24 +63,10 @@ func Run(args Args, scenefuncs ...SceneFunc) {
 	}()
 
 	// create scene
-	scene := object.New("Scene")
-
-	// create editor
-	editor := object.New("Editor")
-	editor.Attach(collider.NewManager())
-	mv := mover.New(mover.Args{})
-	mv.Transform().SetPosition(vec3.New(1, 10, 1))
-	editor.Adopt(mv)
-	scene.Adopt(editor)
-
-	// create game scene root
-	game := object.New("Game")
-	scene.Adopt(game)
-
+	scene := object.Empty("Scene")
 	wnd.SetInputHandler(scene)
-
 	for _, scenefunc := range scenefuncs {
-		scenefunc(renderer, game)
+		scenefunc(renderer, scene)
 	}
 
 	// run the render loop
@@ -111,7 +93,7 @@ func Run(args Args, scenefuncs ...SceneFunc) {
 		}
 
 		// find the first active camera
-		camera := query.New[camera.T]().First(scene)
+		camera := object.Query[camera.T]().First(scene)
 		if camera == nil {
 			fmt.Println("no active camera in the scene")
 			continue
@@ -129,9 +111,9 @@ func Run(args Args, scenefuncs ...SceneFunc) {
 		args.Context = context
 
 		// pre-draw
-		objects := query.New[PreDrawable]().Collect(scene)
-		for _, component := range objects {
-			component.PreDraw(args.Apply(component.Object().Transform().World()), scene)
+		objects := object.Query[PreDrawable]().Collect(scene)
+		for _, object := range objects {
+			object.PreDraw(args.Apply(object.Transform().World()), scene)
 		}
 
 		// draw
@@ -151,13 +133,13 @@ func Run(args Args, scenefuncs ...SceneFunc) {
 		// or a horrible one since we are waiting for vulkan stuff to complete
 		collectGarbage()
 
-		timing := counter.Sample()
-		log.Printf(
-			"frame: %2.fms, avg: %.2fms, peak: %.2f, fps: %.1f\n",
-			1000*timing.Current,
-			1000*timing.Average,
-			1000*timing.Max,
-			1.0/timing.Average)
+		counter.Sample()
+		// log.Printf(
+		// 	"frame: %2.fms, avg: %.2fms, peak: %.2f, fps: %.1f\n",
+		// 	1000*timing.Current,
+		// 	1000*timing.Average,
+		// 	1000*timing.Max,
+		// 	1.0/timing.Average)
 	}
 }
 

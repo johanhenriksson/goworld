@@ -1,45 +1,43 @@
-package query
+package object
 
 import (
 	"sort"
-
-	"github.com/johanhenriksson/goworld/core/object"
 )
 
-type T[K object.T] struct {
+type query[K T] struct {
 	results []K
 	filters []func(b K) bool
 	sorter  func(a, b K) bool
 }
 
 // Any returns a query for generic components
-func Any() *T[object.T] {
-	return New[object.T]()
+func Any() *query[T] {
+	return Query[T]()
 }
 
-// New returns a new query for the given component type
-func New[K object.T]() *T[K] {
-	return &T[K]{
+// Query returns a new query for the given component type
+func Query[K T]() *query[K] {
+	return &query[K]{
 		filters: make([]func(K) bool, 0, 8),
 		results: make([]K, 0, 128),
 	}
 }
 
 // Where applies a filter predicate to the results
-func (q *T[K]) Where(predicate func(K) bool) *T[K] {
+func (q *query[K]) Where(predicate func(K) bool) *query[K] {
 	q.filters = append(q.filters, predicate)
 	return q
 }
 
 // Sort the result using a compare function.
 // The compare function should return true if a is "less than" b
-func (q *T[K]) Sort(sorter func(a, b K) bool) *T[K] {
+func (q *query[K]) Sort(sorter func(a, b K) bool) *query[K] {
 	q.sorter = sorter
 	return q
 }
 
 // Match returns true if the passed component matches the query
-func (q *T[K]) match(component K) bool {
+func (q *query[K]) match(component K) bool {
 	for _, filter := range q.filters {
 		if !filter(component) {
 			return false
@@ -49,23 +47,23 @@ func (q *T[K]) match(component K) bool {
 }
 
 // Append a component to the query results.
-func (q *T[K]) append(result K) {
+func (q *query[K]) append(result K) {
 	q.results = append(q.results, result)
 }
 
 // Clear the query results, without freeing the memory.
-func (q *T[K]) clear() {
+func (q *query[K]) clear() {
 	// clear slice, but keep the memory
 	q.results = q.results[:0]
 }
 
 // First returns the first match
-func (q *T[K]) First(root object.T) K {
+func (q *query[K]) First(root T) K {
 	result, _ := q.first(root)
 	return result
 }
 
-func (q *T[K]) first(root object.T) (K, bool) {
+func (q *query[K]) first(root T) (K, bool) {
 	var empty K
 	if !root.Active() {
 		return empty, false
@@ -84,7 +82,7 @@ func (q *T[K]) first(root object.T) (K, bool) {
 }
 
 // Collect returns all matching components
-func (q *T[K]) Collect(root object.T) []K {
+func (q *query[K]) Collect(root T) []K {
 	q.clear()
 
 	// collect all matches
@@ -100,7 +98,7 @@ func (q *T[K]) Collect(root object.T) []K {
 	return q.results
 }
 
-func (q *T[K]) collect(object object.T) {
+func (q *query[K]) collect(object T) {
 	if !object.Active() {
 		return
 	}
@@ -112,12 +110,4 @@ func (q *T[K]) collect(object object.T) {
 	for _, child := range object.Children() {
 		q.collect(child)
 	}
-}
-
-// Returns the root of the object heirarchy
-func Root(obj object.T) object.T {
-	for obj.Parent() != nil {
-		obj = obj.Parent()
-	}
-	return obj
 }

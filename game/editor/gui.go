@@ -12,7 +12,7 @@ import (
 	"github.com/johanhenriksson/goworld/render/color"
 )
 
-func ToolButton(tool Tool, editor *editor) node.T {
+func ToolButton(tool Tool, editor *voxelEdit) node.T {
 	bg := color.DarkGrey
 	if tool == editor.Tool {
 		bg = color.RGB(0.7, 0.7, 0.7)
@@ -37,7 +37,7 @@ func ToolButton(tool Tool, editor *editor) node.T {
 	})
 }
 
-func NewGUI(editor *editor) gui.Fragment {
+func NewGUI(editor *voxelEdit) gui.Fragment {
 	return gui.NewFragment(gui.FragmentArgs{
 		Slot:     "sidebar:content",
 		Position: gui.FragmentLast,
@@ -61,7 +61,7 @@ func NewGUI(editor *editor) gui.Fragment {
 	})
 }
 
-func NewMenu(editor *editor) gui.Fragment {
+func NewMenu(editor *voxelEdit) gui.Fragment {
 	return gui.NewFragment(gui.FragmentArgs{
 		Slot:     "main-menu",
 		Position: gui.FragmentLast,

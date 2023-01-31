@@ -2,7 +2,6 @@ package pass
 
 import (
 	"github.com/johanhenriksson/goworld/core/object"
-	"github.com/johanhenriksson/goworld/core/object/query"
 	"github.com/johanhenriksson/goworld/gui/widget"
 	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/math/vec2"
@@ -29,7 +28,7 @@ type UIDescriptors struct {
 }
 
 type GuiDrawable interface {
-	object.Component
+	object.T
 	DrawUI(args widget.DrawArgs, scene object.T)
 }
 
@@ -146,7 +145,7 @@ func (p *GuiPass) Record(cmds command.Recorder, args render.Args, scene object.T
 	}
 
 	// query scene for gui managers
-	guis := query.New[GuiDrawable]().Collect(scene)
+	guis := object.Query[GuiDrawable]().Collect(scene)
 	for _, gui := range guis {
 		// todo: collect and depth sort
 		gui.DrawUI(uiArgs, scene)

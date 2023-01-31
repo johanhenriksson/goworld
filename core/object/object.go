@@ -2,6 +2,7 @@ package object
 
 import (
 	"fmt"
+	"log"
 	"reflect"
 
 	"github.com/johanhenriksson/goworld/core/input"
@@ -64,7 +65,7 @@ func New[K T](obj K) K {
 	init := false
 	for i := 0; i < t.NumField(); i++ {
 		field := t.Field(i)
-		if field.Name == "Object" {
+		if field.Name == "T" {
 			if v.Field(i).IsZero() {
 				base := Empty(t.Name())
 				v.Field(i).Set(reflect.ValueOf(base))
@@ -80,18 +81,30 @@ func New[K T](obj K) K {
 	// add Object fields as children
 	for i := 0; i < t.NumField(); i++ {
 		field := t.Field(i)
-		if field.Name == "Object" {
+		if field.Name == "T" {
+			continue
+		}
+		if !field.IsExported() {
 			continue
 		}
 		if child, ok := v.Field(i).Interface().(T); ok {
 			// initialize recursively?
-			Attach(obj, child)
+			if child.Parent() == nil {
+				log.Println(obj.Name(), "add child", child.Name())
+				Attach(obj, child)
+			}
 		}
 	}
 	return obj
 }
 
-func (b *base) Update(dt float32) {}
+func (b *base) Update(dt float32) {
+	for _, child := range b.children {
+		if child.Active() {
+			child.Update(dt)
+		}
+	}
+}
 
 func (b *base) Transform() transform.T {
 	var pt transform.T = nil
@@ -166,25 +179,4 @@ func (o *base) MouseEvent(e mouse.Event) {
 			return
 		}
 	}
-}
-
-func Attach(parent, child T) {
-	Detach(child)
-	child.setParent(parent)
-	parent.attach(child)
-}
-
-func Detach(child T) {
-	if child.Parent() == nil {
-		return
-	}
-	child.Parent().detach(child)
-	child.setParent(nil)
-}
-
-func Root(obj T) T {
-	for obj.Parent() != nil {
-		obj = obj.Parent()
-	}
-	return obj
 }

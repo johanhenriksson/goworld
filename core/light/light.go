@@ -8,7 +8,7 @@ import (
 )
 
 type T interface {
-	object.Component
+	object.T
 
 	Type() Type
 	LightDescriptor() Descriptor

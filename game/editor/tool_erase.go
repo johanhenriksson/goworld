@@ -10,25 +10,19 @@ import (
 
 type EraseTool struct {
 	object.T
-	box *box.T
+	Box *box.T
 }
 
 func NewEraseTool() *EraseTool {
-	et := &EraseTool{
-		T: object.New("Erase"),
-	}
-
-	box.Builder(&et.box, box.Args{
-		Size:  vec3.One,
-		Color: color.Red,
-	}).
-		Parent(et).
-		Create()
-
-	return et
+	return object.New(&EraseTool{
+		Box: box.New(box.Args{
+			Size:  vec3.One,
+			Color: color.Red,
+		}),
+	})
 }
 
-func (pt *EraseTool) Use(editor T, position, normal vec3.T) {
+func (pt *EraseTool) Use(editor Voxels, position, normal vec3.T) {
 	target := position.Sub(normal.Scaled(0.5))
 	editor.SetVoxel(int(target.X), int(target.Y), int(target.Z), voxel.Empty)
 
@@ -36,7 +30,7 @@ func (pt *EraseTool) Use(editor T, position, normal vec3.T) {
 	editor.Recalculate()
 }
 
-func (pt *EraseTool) Hover(editor T, position, normal vec3.T) {
+func (pt *EraseTool) Hover(editor Voxels, position, normal vec3.T) {
 	// parent actually refers to the editor right now
 	// tools should be attached to their own object
 	// they could potentially share positioning logic

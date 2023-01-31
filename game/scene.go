@@ -5,13 +5,12 @@ import (
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/engine/renderer"
 	"github.com/johanhenriksson/goworld/game/chunk"
-	"github.com/johanhenriksson/goworld/game/editor"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render/color"
 )
 
-func CreateScene(scene object.T, render renderer.T) {
-	scene.Attach(light.NewDirectional(light.DirectionalArgs{
+func CreateScene(render renderer.T, scene object.T) {
+	object.Attach(scene, light.NewDirectional(light.DirectionalArgs{
 		Intensity: 1.6,
 		Color:     color.RGB(0.9*0.973, 0.9*0.945, 0.9*0.776),
 		Direction: vec3.New(0.95, -1.9, 1.05),
@@ -22,8 +21,6 @@ func CreateScene(scene object.T, render renderer.T) {
 	world := NewWorld(31481284, 8)
 	chonk := world.AddChunk(0, 0)
 
-	chonk2 := world.AddChunk(1, 0)
-
 	// first person controls
 	player := NewPlayer(vec3.New(0, 20, -11), func(player *Player, target vec3.T) (bool, vec3.T) {
 		height := world.HeightAt(target)
@@ -32,19 +29,11 @@ func CreateScene(scene object.T, render renderer.T) {
 		}
 		return false, vec3.Zero
 	})
-	player.Flying = true
-
 	player.Eye.Transform().SetRotation(vec3.New(-30, 0, 0))
+	object.Attach(scene, player)
 
-	object.Build("Chunk").
+	object.Builder(object.Empty("Chunk")).
 		Attach(chunk.NewMesh(chonk)).
-		Attach(editor.NewEditor(chonk, player.Camera, render)).
-		// Attach(collider.NewBox(collider.Box{Center: vec3.New(8, 8, 8), Size: vec3.New(16, 16, 16)})).
-		Parent(scene).
-		Create()
-
-	object.Build("Chunk2").
-		Attach(chunk.NewMesh(chonk2)).
 		Position(vec3.New(8, 0, 0)).
 		// Attach(collider.NewBox(collider.Box{
 		// 	Center: vec3.New(8, 8, 8),
@@ -53,5 +42,15 @@ func CreateScene(scene object.T, render renderer.T) {
 		Parent(scene).
 		Create()
 
-	scene.Adopt(player)
+	object.Builder(object.Empty("light1")).
+		Position(vec3.New(10, 9, 13)).
+		Attach(light.NewPoint(light.PointArgs{
+			Attenuation: light.DefaultAttenuation,
+			Color:       color.Red,
+			Range:       15,
+			Intensity:   15,
+		})).
+		Parent(scene).
+		Create()
+
 }

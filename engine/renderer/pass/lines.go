@@ -5,7 +5,6 @@ import (
 
 	"github.com/johanhenriksson/goworld/core/mesh"
 	"github.com/johanhenriksson/goworld/core/object"
-	"github.com/johanhenriksson/goworld/core/object/query"
 	"github.com/johanhenriksson/goworld/engine/renderer/uniform"
 	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/render"
@@ -124,7 +123,7 @@ func (p *LinePass) Record(cmds command.Recorder, args render.Args, scene object.
 		p.material.Bind(cmd)
 	})
 
-	objects := query.New[mesh.T]().Where(isDrawLines).Collect(scene)
+	objects := object.Query[mesh.T]().Where(isDrawLines).Collect(scene)
 	for i, mesh := range objects {
 		p.DrawLines(cmds, i, args, mesh)
 	}

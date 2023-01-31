@@ -6,7 +6,7 @@ import (
 )
 
 type T interface {
-	object.Component
+	object.T
 
 	Mesh() vertex.Mesh
 	SetMesh(vertex.Mesh)
@@ -16,7 +16,7 @@ type T interface {
 
 // mesh base
 type mesh struct {
-	object.Component
+	object.T
 
 	data vertex.Mesh
 	mode DrawMode
@@ -34,10 +34,9 @@ func NewLines() T {
 
 // NewPrimitiveMesh creates a new mesh composed of a given GL primitive
 func NewPrimitiveMesh(primitive vertex.Primitive, mode DrawMode) *mesh {
-	m := &mesh{
-		Component: object.NewComponent(),
-		mode:      mode,
-	}
+	m := object.New(&mesh{
+		mode: mode,
+	})
 	return m
 }
 

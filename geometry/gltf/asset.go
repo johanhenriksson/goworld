@@ -24,11 +24,11 @@ func Load(path string) object.T {
 }
 
 func loadScene(doc *gltf.Document, scene *gltf.Scene) object.T {
-	root := object.New(scene.Name)
+	root := object.Empty(scene.Name)
 
 	for _, nodeId := range scene.Nodes {
 		node := loadNode(doc, doc.Nodes[nodeId])
-		root.Adopt(node)
+		object.Attach(root, node)
 	}
 
 	// rotate to get Y+ up
@@ -38,14 +38,14 @@ func loadScene(doc *gltf.Document, scene *gltf.Scene) object.T {
 }
 
 func loadNode(doc *gltf.Document, node *gltf.Node) object.T {
-	obj := object.New(node.Name)
+	obj := object.Empty(node.Name)
 
 	// mesh components
 	if node.Mesh != nil {
 		msh := doc.Meshes[*node.Mesh]
 		for _, primitive := range msh.Primitives {
 			renderer := loadPrimitive(doc, msh.Name, primitive)
-			obj.Attach(renderer)
+			object.Attach(obj, renderer)
 		}
 	}
 
@@ -56,7 +56,7 @@ func loadNode(doc *gltf.Document, node *gltf.Node) object.T {
 
 	// child objects
 	for _, child := range node.Children {
-		obj.Adopt(loadNode(doc, doc.Nodes[child]))
+		object.Attach(obj, loadNode(doc, doc.Nodes[child]))
 	}
 
 	return obj

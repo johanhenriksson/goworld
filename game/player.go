@@ -37,9 +37,17 @@ type Player struct {
 
 func NewPlayer(position vec3.T, collide CollisionCheck) *Player {
 	cam := camera.New(50.0, 0.1, 60, color.Hex("#eddaab"))
-	p := &Player{
-		T:           object.New("Player"),
-		Eye:         object.New("Eye"),
+	p := object.New(&Player{
+		Eye: object.Builder(object.Empty("Eye")).
+			Position(vec3.New(0, 1.75, 0)).
+			Attach(cam).
+			Attach(light.NewPoint(light.PointArgs{
+				Attenuation: light.DefaultAttenuation,
+				Range:       20,
+				Intensity:   2.5,
+				Color:       color.White,
+			})).
+			Create(),
 		Camera:      cam,
 		collide:     collide,
 		Gravity:     float32(53),
@@ -49,19 +57,10 @@ func NewPlayer(position vec3.T, collide CollisionCheck) *Player {
 		Friction:    vec3.New(0.91, 1, 0.91),
 		AirFriction: vec3.New(0.955, 1, 0.955),
 		CamHeight:   vec3.New(0, 1.75, 0),
-		Flying:      false,
+		Flying:      collide == nil,
 		keys:        keys.NewState(),
-	}
+	})
 	p.Transform().SetPosition(position)
-	p.Eye.Transform().SetPosition(p.CamHeight)
-	p.Adopt(p.Eye)
-	p.Eye.Attach(cam)
-	p.Eye.Attach(light.NewPoint(light.PointArgs{
-		Attenuation: light.DefaultAttenuation,
-		Range:       20,
-		Intensity:   2.5,
-		Color:       color.White,
-	}))
 	return p
 }
 
@@ -69,7 +68,7 @@ func (p *Player) KeyEvent(e keys.Event) {
 	p.keys.KeyEvent(e)
 
 	// toggle flying
-	if keys.Pressed(e, keys.V) {
+	if keys.Pressed(e, keys.V) && p.collide != nil {
 		p.Flying = !p.Flying
 	}
 }
@@ -151,31 +150,32 @@ func (p *Player) Update(dt float32) {
 	step.Y = 0
 
 	// ground collision
-	if collides, point := p.collide(p, position); collides {
-		position.Y = point.Y
-		p.velocity.Y = 0
-		p.Grounded = true
-	} else {
-		p.Grounded = false
-	}
+	p.Grounded = false
+	if p.collide != nil {
+		if collides, point := p.collide(p, position); collides {
+			position.Y = point.Y
+			p.velocity.Y = 0
+			p.Grounded = true
+		}
 
-	// jumping
-	if p.Grounded && p.keys.Down(keys.Space) {
-		p.velocity.Y += p.JumpForce * p.Gravity
-	}
+		// jumping
+		if p.Grounded && p.keys.Down(keys.Space) {
+			p.velocity.Y += p.JumpForce * p.Gravity
+		}
 
-	// x collision
-	xstep := position.Add(vec3.New(step.X, 0, 0))
-	// if p.world.HeightAt(xstep) > p.position.Y {
-	if collides, _ := p.collide(p, xstep); collides {
-		step.X = 0
-	}
+		// x collision
+		xstep := position.Add(vec3.New(step.X, 0, 0))
+		// if p.world.HeightAt(xstep) > p.position.Y {
+		if collides, _ := p.collide(p, xstep); collides {
+			step.X = 0
+		}
 
-	// z collision
-	zstep := position.Add(vec3.New(0, 0, step.Z))
-	// if p.world.HeightAt(zstep) > p.position.Y {
-	if collides, _ := p.collide(p, zstep); collides {
-		step.Z = 0
+		// z collision
+		zstep := position.Add(vec3.New(0, 0, step.Z))
+		// if p.world.HeightAt(zstep) > p.position.Y {
+		if collides, _ := p.collide(p, zstep); collides {
+			step.Z = 0
+		}
 	}
 
 	// add horizontal movement

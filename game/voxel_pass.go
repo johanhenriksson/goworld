@@ -5,7 +5,6 @@ import (
 
 	"github.com/johanhenriksson/goworld/core/mesh"
 	"github.com/johanhenriksson/goworld/core/object"
-	"github.com/johanhenriksson/goworld/core/object/query"
 	"github.com/johanhenriksson/goworld/engine/renderer/pass"
 	"github.com/johanhenriksson/goworld/engine/renderer/uniform"
 	"github.com/johanhenriksson/goworld/game/voxel"
@@ -66,7 +65,7 @@ func (p *voxelpass) Record(cmds command.Recorder, camera uniform.Camera, scene o
 		p.mat.Bind(cmd)
 	})
 
-	objects := query.New[mesh.T]().Where(isVoxelMesh).Collect(scene)
+	objects := object.Query[mesh.T]().Where(isVoxelMesh).Collect(scene)
 	for index, mesh := range objects {
 		if err := p.DrawDeferred(cmds, index, mesh, p.mat); err != nil {
 			fmt.Printf("deferred draw error in object %s: %s\n", mesh.Name(), err)

@@ -12,25 +12,19 @@ import (
 
 type PlaceTool struct {
 	object.T
-	box *box.T
+	Box *box.T
 }
 
 func NewPlaceTool() *PlaceTool {
-	pt := &PlaceTool{
-		T: object.New("Place"),
-	}
-
-	box.Builder(&pt.box, box.Args{
-		Size:  vec3.One,
-		Color: color.Blue,
-	}).
-		Parent(pt).
-		Create()
-
-	return pt
+	return object.New(&PlaceTool{
+		Box: box.New(box.Args{
+			Size:  vec3.One,
+			Color: color.Blue,
+		}),
+	})
 }
 
-func (pt *PlaceTool) Use(editor T, position, normal vec3.T) {
+func (pt *PlaceTool) Use(editor Voxels, position, normal vec3.T) {
 	target := position.Add(normal.Scaled(0.5))
 	x, y, z := int(target.X), int(target.Y), int(target.Z)
 
@@ -46,7 +40,7 @@ func (pt *PlaceTool) Use(editor T, position, normal vec3.T) {
 	editor.Recalculate()
 }
 
-func (pt *PlaceTool) Hover(editor T, position, normal vec3.T) {
+func (pt *PlaceTool) Hover(editor Voxels, position, normal vec3.T) {
 	p := position.Add(normal.Scaled(0.5))
 	if editor.InBounds(p) {
 		pt.Transform().SetPosition(p.Floor())

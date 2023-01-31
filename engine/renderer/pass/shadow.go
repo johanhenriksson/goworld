@@ -5,7 +5,6 @@ import (
 
 	"github.com/johanhenriksson/goworld/core/light"
 	"github.com/johanhenriksson/goworld/core/object"
-	"github.com/johanhenriksson/goworld/core/object/query"
 	"github.com/johanhenriksson/goworld/engine/renderer/uniform"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/command"
@@ -108,7 +107,10 @@ func (p *shadowpass) Name() string {
 }
 
 func (p *shadowpass) Record(cmds command.Recorder, args render.Args, scene object.T) {
-	light := query.New[light.T]().Where(func(lit light.T) bool { return lit.Type() == light.Directional }).First(scene)
+	light := object.Query[light.T]().Where(func(lit light.T) bool { return lit.Type() == light.Directional }).First(scene)
+	if light == nil {
+		return
+	}
 	lightDesc := light.LightDescriptor()
 
 	camera := uniform.Camera{

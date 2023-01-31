@@ -19,30 +19,12 @@ type Args struct {
 	Color color.T
 }
 
-// NewObject creates a new 3D plane of a given size and color.
-func NewObject(args Args) *T {
-	parent := object.New("Plane")
-	return Attach(parent, args)
-}
-
-func Builder(out **T, args Args) *object.Builder {
-	b := object.Build("Plane")
-	*out = New(args)
-	return b.Attach(*out)
-}
-
 func New(args Args) *T {
-	plane := &T{
+	plane := object.New(&T{
 		T:    mesh.New(mesh.Forward),
 		Args: args,
-	}
+	})
 	plane.generate()
-	return plane
-}
-
-func Attach(parent object.T, args Args) *T {
-	plane := New(args)
-	parent.Attach(plane)
 	return plane
 }
 

@@ -3,7 +3,6 @@ package pass
 import (
 	"github.com/johanhenriksson/goworld/core/mesh"
 	"github.com/johanhenriksson/goworld/core/object"
-	"github.com/johanhenriksson/goworld/core/object/query"
 	"github.com/johanhenriksson/goworld/engine/renderer/uniform"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/command"
@@ -136,7 +135,7 @@ func (p *ForwardPass) Record(cmds command.Recorder, args render.Args, scene obje
 		p.fwdmat.Bind(cmd)
 	})
 
-	forwardMeshes := query.New[mesh.T]().
+	forwardMeshes := object.Query[mesh.T]().
 		Where(isDrawForward).
 		Collect(scene)
 

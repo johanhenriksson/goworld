@@ -16,16 +16,15 @@ type DirectionalArgs struct {
 }
 
 type dirlight struct {
-	object.Component
+	object.T
 
 	DirectionalArgs
 }
 
 func NewDirectional(args DirectionalArgs) T {
-	return &dirlight{
-		Component:       object.NewComponent(),
+	return object.New(&dirlight{
 		DirectionalArgs: args,
-	}
+	})
 }
 
 func (lit *dirlight) Name() string { return "DirectionalLight" }

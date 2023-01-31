@@ -6,7 +6,6 @@ import (
 	"github.com/johanhenriksson/goworld/core/light"
 	"github.com/johanhenriksson/goworld/core/mesh"
 	"github.com/johanhenriksson/goworld/core/object"
-	"github.com/johanhenriksson/goworld/core/object/query"
 	"github.com/johanhenriksson/goworld/engine/renderer/uniform"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/color"
@@ -270,7 +269,7 @@ func (p *GeometryPass) Record(cmds command.Recorder, args render.Args, scene obj
 	ambient := light.NewAmbient(color.White, 0.33)
 	p.DrawLight(cmds, args, ambient)
 
-	lights := query.New[light.T]().Collect(scene)
+	lights := object.Query[light.T]().Collect(scene)
 	for _, lit := range lights {
 		if err := p.DrawLight(cmds, args, lit); err != nil {
 			fmt.Printf("light draw error in object %s: %s\n", lit.Name(), err)
