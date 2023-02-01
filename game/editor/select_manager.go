@@ -13,6 +13,8 @@ import (
 type SelectManager interface {
 	object.T
 	mouse.Handler
+
+	Select(object.T)
 }
 
 type selectmgr struct {
@@ -26,6 +28,20 @@ type selectmgr struct {
 
 func NewSelectManager() SelectManager {
 	return object.New(&selectmgr{})
+}
+
+func (m *selectmgr) Select(obj object.T) {
+	// find selectable for this object
+	// gross
+	root := object.Root(obj)
+	editor := object.Query[*ObjectEditor]().Where(func(e *ObjectEditor) bool {
+		return e.Target() == obj
+	}).First(root)
+	if editor != nil {
+		m.setSelect(mouse.NopEvent(), editor, editor.Bounds)
+	} else {
+		m.deselect(mouse.NopEvent())
+	}
 }
 
 func (m *selectmgr) MouseEvent(e mouse.Event) {
@@ -54,24 +70,24 @@ func (m *selectmgr) MouseEvent(e mouse.Event) {
 
 		if hit {
 			if selectable, ok := object.FindInParents[Selectable](closest); ok {
-				m.Select(e, selectable, closest)
+				m.setSelect(e, selectable, closest)
 			}
 		} else if m.selected != nil {
 			// we hit nothing, deselect
-			m.Deselect(e)
+			m.deselect(e)
 		}
 	}
 }
 
-func (m *selectmgr) Select(e mouse.Event, object Selectable, collider collider.T) {
-	m.Deselect(e)
+func (m *selectmgr) setSelect(e mouse.Event, object Selectable, collider collider.T) {
+	m.deselect(e)
 	if m.selected == nil {
 		m.selected = object
 		object.Select(e, collider)
 	}
 }
 
-func (m *selectmgr) Deselect(e mouse.Event) {
+func (m *selectmgr) deselect(e mouse.Event) {
 	if m.selected != nil {
 		ok := m.selected.Deselect(e)
 		if ok {

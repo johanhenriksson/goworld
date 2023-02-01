@@ -37,6 +37,7 @@ func Scene(render renderer.T, scene object.T) {
 	context := &Context{
 		Camera: player.Camera,
 		Render: render,
+		Root:   scene,
 	}
 	object.Attach(editor, ConstructEditors(context, workspace, mv))
 

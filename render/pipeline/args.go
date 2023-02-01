@@ -6,7 +6,8 @@ import (
 	"github.com/johanhenriksson/goworld/render/renderpass"
 	"github.com/johanhenriksson/goworld/render/shader"
 	"github.com/johanhenriksson/goworld/render/vertex"
-	vk "github.com/vulkan-go/vulkan"
+
+	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
 type Args struct {
@@ -17,19 +18,19 @@ type Args struct {
 	Pointers vertex.Pointers
 
 	Primitive       vertex.Primitive
-	PolygonFillMode vk.PolygonMode
-	CullMode        vk.CullModeFlagBits
+	PolygonFillMode core1_0.PolygonMode
+	CullMode        core1_0.CullModeFlags
 
 	DepthTest  bool
 	DepthWrite bool
-	DepthFunc  vk.CompareOp
+	DepthFunc  core1_0.CompareOp
 
 	StencilTest bool
 }
 
 func (args *Args) defaults() {
 	if args.DepthFunc == 0 {
-		args.DepthFunc = vk.CompareOpLessOrEqual
+		args.DepthFunc = core1_0.CompareOpLessOrEqual
 	}
 	if args.Primitive == 0 {
 		args.Primitive = vertex.Triangles
@@ -37,7 +38,7 @@ func (args *Args) defaults() {
 }
 
 type PushConstant struct {
-	Stages vk.ShaderStageFlagBits
+	Stages core1_0.ShaderStageFlags
 	Type   any
 }
 

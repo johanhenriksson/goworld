@@ -6,7 +6,7 @@ import (
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/device"
 
-	vk "github.com/vulkan-go/vulkan"
+	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
 type T interface {
@@ -43,12 +43,12 @@ func (g *graph) Node(pass NodePass) Node {
 func (g *graph) Connect() {
 	for _, node := range g.nodes {
 		if len(node.Requires()) == 0 {
-			node.After(g.pre, vk.PipelineStageTopOfPipeBit)
+			node.After(g.pre, core1_0.PipelineStageTopOfPipe)
 		}
 	}
 	for _, node := range g.nodes {
 		if len(node.Dependants()) == 0 {
-			g.post.After(node, vk.PipelineStageTopOfPipeBit)
+			g.post.After(node, core1_0.PipelineStageTopOfPipe)
 		}
 	}
 }

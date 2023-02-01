@@ -6,7 +6,7 @@ import (
 
 	. "github.com/johanhenriksson/goworld/render/descriptor"
 
-	vk "github.com/vulkan-go/vulkan"
+	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
 type TestSet struct {
@@ -17,7 +17,7 @@ type TestSet struct {
 func TestParseDescriptors(t *testing.T) {
 	set := TestSet{
 		Diffuse: &Sampler{
-			Stages: vk.ShaderStageAll,
+			Stages: core1_0.StageAll,
 		},
 	}
 	desc, err := ParseDescriptorStruct(&set)

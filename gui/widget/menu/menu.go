@@ -36,8 +36,8 @@ var DefaultStyle = Style{
 }
 
 var menuPadding = style.Rect{
-	Top:    6,
-	Bottom: 0,
+	Top:    3,
+	Bottom: 3,
 	Left:   5,
 	Right:  5,
 }
@@ -139,7 +139,6 @@ func Item(key string, props ItemProps) node.T {
 									// open submenu
 									setOpen(!open)
 								} else {
-									e.Consume()
 									if props.OnClick != nil {
 										props.OnClick(e)
 									}

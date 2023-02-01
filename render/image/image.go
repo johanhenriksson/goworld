@@ -4,62 +4,55 @@ import (
 	"github.com/johanhenriksson/goworld/render/device"
 	"github.com/johanhenriksson/goworld/render/vkerror"
 
-	vk "github.com/vulkan-go/vulkan"
+	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
-// Represents vk.NullImage
-var Nil T = &image{
-	ptr:    vk.NullImage,
-	device: device.Nil,
-	memory: device.NilMemory,
-}
-
 type T interface {
-	device.Resource[vk.Image]
+	device.Resource[core1_0.Image]
 
 	Memory() device.Memory
-	View(format vk.Format, mask vk.ImageAspectFlags) (View, error)
+	View(format core1_0.Format, mask core1_0.ImageAspectFlags) (View, error)
 	Width() int
 	Height() int
-	Format() vk.Format
+	Format() core1_0.Format
 }
 
 type image struct {
 	Args
-	ptr    vk.Image
+	ptr    core1_0.Image
 	device device.T
 	memory device.Memory
 }
 
 type Args struct {
-	Type    vk.ImageType
+	Type    core1_0.ImageType
 	Width   int
 	Height  int
 	Depth   int
 	Layers  int
 	Levels  int
-	Format  vk.Format
-	Usage   vk.ImageUsageFlagBits
-	Tiling  vk.ImageTiling
-	Sharing vk.SharingMode
-	Layout  vk.ImageLayout
-	Memory  vk.MemoryPropertyFlagBits
+	Format  core1_0.Format
+	Usage   core1_0.ImageUsageFlags
+	Tiling  core1_0.ImageTiling
+	Sharing core1_0.SharingMode
+	Layout  core1_0.ImageLayout
+	Memory  core1_0.MemoryPropertyFlags
 }
 
-func New2D(device device.T, width, height int, format vk.Format, usage vk.ImageUsageFlags) (T, error) {
+func New2D(device device.T, width, height int, format core1_0.Format, usage core1_0.ImageUsageFlags) (T, error) {
 	return New(device, Args{
-		Type:    vk.ImageType2d,
+		Type:    core1_0.ImageType2D,
 		Width:   width,
 		Height:  height,
 		Depth:   1,
 		Layers:  1,
 		Levels:  1,
 		Format:  format,
-		Usage:   vk.ImageUsageFlagBits(usage),
-		Tiling:  vk.ImageTilingOptimal,
-		Sharing: vk.SharingModeExclusive,
-		Layout:  vk.ImageLayoutUndefined,
-		Memory:  vk.MemoryPropertyDeviceLocalBit,
+		Usage:   usage,
+		Tiling:  core1_0.ImageTilingOptimal,
+		Sharing: core1_0.SharingModeExclusive,
+		Layout:  core1_0.ImageLayoutUndefined,
+		Memory:  core1_0.MemoryPropertyDeviceLocal,
 	})
 }
 
@@ -74,42 +67,49 @@ func New(device device.T, args Args) (T, error) {
 		args.Layers = 1
 	}
 
-	queueIdx := device.GetQueueFamilyIndex(vk.QueueFlags(vk.QueueGraphicsBit))
-	info := vk.ImageCreateInfo{
-		SType:     vk.StructureTypeImageCreateInfo,
+	queueIdx := device.GetQueueFamilyIndex(core1_0.QueueGraphics)
+	info := core1_0.ImageCreateInfo{
 		ImageType: args.Type,
 		Format:    args.Format,
-		Extent: vk.Extent3D{
-			Width:  uint32(args.Width),
-			Height: uint32(args.Height),
-			Depth:  uint32(args.Depth),
+		Extent: core1_0.Extent3D{
+			Width:  args.Width,
+			Height: args.Height,
+			Depth:  args.Depth,
 		},
-		MipLevels:             uint32(args.Levels),
-		ArrayLayers:           uint32(args.Layers),
-		Samples:               vk.SampleCountFlagBits(vk.SampleCount1Bit),
-		Tiling:                args.Tiling,
-		Usage:                 vk.ImageUsageFlags(args.Usage),
-		SharingMode:           args.Sharing,
-		QueueFamilyIndexCount: 1,
-		PQueueFamilyIndices:   []uint32{uint32(queueIdx)},
-		InitialLayout:         args.Layout,
+		MipLevels:          args.Levels,
+		ArrayLayers:        args.Layers,
+		Samples:            core1_0.Samples1,
+		Tiling:             args.Tiling,
+		Usage:              core1_0.ImageUsageFlags(args.Usage),
+		SharingMode:        args.Sharing,
+		QueueFamilyIndices: []uint32{uint32(queueIdx)},
+		InitialLayout:      args.Layout,
 	}
 
-	var ptr vk.Image
-	result := vk.CreateImage(device.Ptr(), &info, nil, &ptr)
-	if result != vk.Success {
+	ptr, result, err := device.Ptr().CreateImage(nil, info)
+	if err != nil {
+		return nil, err
+	}
+	if result != core1_0.VKSuccess {
 		return nil, vkerror.FromResult(result)
 	}
 
-	var memreq vk.MemoryRequirements
-	vk.GetImageMemoryRequirements(device.Ptr(), ptr, &memreq)
-	memreq.Deref()
+	memreq := ptr.MemoryRequirements()
 
-	mem := device.Allocate(memreq, vk.MemoryPropertyFlags(args.Memory))
-	result = vk.BindImageMemory(device.Ptr(), ptr, mem.Ptr(), vk.DeviceSize(0))
-	if result != vk.Success {
-		// clean up
-		vk.DestroyImage(device.Ptr(), ptr, nil)
+	mem := device.Allocate(core1_0.MemoryRequirements{
+		Size:           int(memreq.Size),
+		Alignment:      int(memreq.Alignment),
+		MemoryTypeBits: memreq.MemoryTypeBits,
+	}, core1_0.MemoryPropertyFlags(args.Memory))
+	result, err = ptr.BindImageMemory(mem.Ptr(), 0)
+	if err != nil {
+		ptr.Destroy(nil)
+		mem.Destroy()
+		return nil, err
+	}
+	if result != core1_0.VKSuccess {
+		ptr.Destroy(nil)
+		mem.Destroy()
 		return nil, vkerror.FromResult(result)
 	}
 
@@ -121,16 +121,16 @@ func New(device device.T, args Args) (T, error) {
 	}, nil
 }
 
-func Wrap(dev device.T, ptr vk.Image, args Args) T {
+func Wrap(dev device.T, ptr core1_0.Image, args Args) T {
 	return &image{
 		ptr:    ptr,
 		device: dev,
-		memory: device.NilMemory,
+		memory: nil,
 		Args:   args,
 	}
 }
 
-func (i *image) Ptr() vk.Image {
+func (i *image) Ptr() core1_0.Image {
 	return i.ptr
 }
 
@@ -138,29 +138,28 @@ func (i *image) Memory() device.Memory {
 	return i.memory
 }
 
-func (i *image) Width() int        { return i.Args.Width }
-func (i *image) Height() int       { return i.Args.Height }
-func (i *image) Format() vk.Format { return i.Args.Format }
+func (i *image) Width() int             { return i.Args.Width }
+func (i *image) Height() int            { return i.Args.Height }
+func (i *image) Format() core1_0.Format { return i.Args.Format }
 
 func (i *image) Destroy() {
-	if i.memory != device.NilMemory {
+	if i.memory != nil {
 		i.memory.Destroy()
-		if i.ptr != vk.NullImage {
-			vk.DestroyImage(i.device.Ptr(), i.ptr, nil)
+		if i.ptr != nil {
+			i.ptr.Destroy(nil)
 		}
 	}
-	i.ptr = vk.NullImage
-	i.memory = device.NilMemory
-	i.device = device.Nil
+	i.ptr = nil
+	i.memory = nil
+	i.device = nil
 }
 
-func (i *image) View(format vk.Format, mask vk.ImageAspectFlags) (View, error) {
-	info := vk.ImageViewCreateInfo{
-		SType:    vk.StructureTypeImageViewCreateInfo,
+func (i *image) View(format core1_0.Format, mask core1_0.ImageAspectFlags) (View, error) {
+	info := core1_0.ImageViewCreateInfo{
 		Image:    i.ptr,
-		ViewType: vk.ImageViewType2d,
+		ViewType: core1_0.ImageViewType2D,
 		Format:   format,
-		SubresourceRange: vk.ImageSubresourceRange{
+		SubresourceRange: core1_0.ImageSubresourceRange{
 			AspectMask:     mask,
 			BaseMipLevel:   0,
 			LevelCount:     1,
@@ -169,9 +168,11 @@ func (i *image) View(format vk.Format, mask vk.ImageAspectFlags) (View, error) {
 		},
 	}
 
-	var ptr vk.ImageView
-	result := vk.CreateImageView(i.device.Ptr(), &info, nil, &ptr)
-	if result != vk.Success {
+	ptr, result, err := i.device.Ptr().CreateImageView(nil, info)
+	if err != nil {
+		return nil, err
+	}
+	if result != core1_0.VKSuccess {
 		return nil, vkerror.FromResult(result)
 	}
 

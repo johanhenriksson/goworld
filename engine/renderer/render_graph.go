@@ -11,7 +11,7 @@ import (
 	"github.com/johanhenriksson/goworld/render/upload"
 	"github.com/johanhenriksson/goworld/render/vulkan"
 
-	vk "github.com/vulkan-go/vulkan"
+	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
 type T interface {
@@ -72,24 +72,24 @@ func (r *rgraph) Recreate() {
 
 	deferred := pass.NewGeometryPass(r.target, shadows)
 	deferredNode := g.Node(deferred)
-	deferredNode.After(shadowNode, vk.PipelineStageTopOfPipeBit)
+	deferredNode.After(shadowNode, core1_0.PipelineStageTopOfPipe)
 
 	r.gbuffer = deferred.GBuffer()
 
 	forward := g.Node(pass.NewForwardPass(r.target, r.gbuffer))
-	forward.After(deferredNode, vk.PipelineStageTopOfPipeBit)
+	forward.After(deferredNode, core1_0.PipelineStageTopOfPipe)
 
 	gbufferCopy := g.Node(pass.NewGBufferCopyPass(r.gbuffer))
-	gbufferCopy.After(forward, vk.PipelineStageTopOfPipeBit)
+	gbufferCopy.After(forward, core1_0.PipelineStageTopOfPipe)
 
 	output := g.Node(pass.NewOutputPass(r.target, r.gbuffer))
-	output.After(forward, vk.PipelineStageTopOfPipeBit)
+	output.After(forward, core1_0.PipelineStageTopOfPipe)
 
 	lines := g.Node(pass.NewLinePass(r.target, r.gbuffer))
-	lines.After(output, vk.PipelineStageTopOfPipeBit)
+	lines.After(output, core1_0.PipelineStageTopOfPipe)
 
 	gui := g.Node(pass.NewGuiPass(r.target))
-	gui.After(lines, vk.PipelineStageTopOfPipeBit)
+	gui.After(lines, core1_0.PipelineStageTopOfPipe)
 
 	r.graph = g
 }

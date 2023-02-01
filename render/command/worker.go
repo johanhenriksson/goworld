@@ -8,7 +8,7 @@ import (
 	"github.com/johanhenriksson/goworld/render/sync"
 	"github.com/johanhenriksson/goworld/util"
 
-	vk "github.com/vulkan-go/vulkan"
+	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
 type CommandFn func(Buffer)
@@ -26,7 +26,7 @@ type Workers []Worker
 
 type worker struct {
 	device    device.T
-	queue     vk.Queue
+	queue     core1_0.Queue
 	pool      Pool
 	work      chan func()
 	stop      chan bool
@@ -34,8 +34,8 @@ type worker struct {
 	callbacks map[sync.Fence]func()
 }
 
-func NewWorker(device device.T, queueFlags vk.QueueFlags, queueIndex int) Worker {
-	pool := NewPool(device, vk.CommandPoolCreateFlags(vk.CommandPoolCreateTransientBit), queueIndex)
+func NewWorker(device device.T, queueFlags core1_0.QueueFlags, queueIndex int) Worker {
+	pool := NewPool(device, core1_0.CommandPoolCreateTransient, queueIndex)
 	queue := device.GetQueue(queueIndex, queueFlags)
 
 	w := &worker{
@@ -98,7 +98,7 @@ func (w *worker) Queue(batch CommandFn) {
 
 func (w *worker) enqueue(batch CommandFn) {
 	// allocate a new buffer
-	buf := w.pool.Allocate(vk.CommandBufferLevelPrimary)
+	buf := w.pool.Allocate(core1_0.CommandBufferLevelPrimary)
 
 	// record commands
 	buf.Begin()
@@ -118,7 +118,7 @@ type SubmitInfo struct {
 
 type Wait struct {
 	Semaphore sync.Semaphore
-	Mask      vk.PipelineStageFlagBits
+	Mask      core1_0.PipelineStageFlags
 }
 
 // Submit the current batch of command buffers
@@ -130,7 +130,7 @@ func (w *worker) Submit(submit SubmitInfo) {
 }
 
 func (w *worker) submit(submit SubmitInfo) {
-	buffers := util.Map(w.batch, func(buf Buffer) vk.CommandBuffer { return buf.Ptr() })
+	buffers := util.Map(w.batch, func(buf Buffer) core1_0.CommandBuffer { return buf.Ptr() })
 
 	// create a cleanup callback
 	// todo: reuse fences
@@ -139,7 +139,7 @@ func (w *worker) submit(submit SubmitInfo) {
 	w.callbacks[fence] = func() {
 		// free buffers
 		if len(buffers) > 0 {
-			vk.FreeCommandBuffers(w.device.Ptr(), w.pool.Ptr(), uint32(len(buffers)), buffers)
+			w.device.Ptr().FreeCommandBuffers(buffers)
 		}
 
 		// free fence
@@ -152,39 +152,23 @@ func (w *worker) submit(submit SubmitInfo) {
 	}
 
 	// submit buffers to the given queue
-	info := []vk.SubmitInfo{
+	w.queue.Submit(fence.Ptr(), []core1_0.SubmitInfo{
 		{
-			SType:                vk.StructureTypeSubmitInfo,
-			CommandBufferCount:   uint32(len(buffers)),
-			WaitSemaphoreCount:   uint32(len(submit.Wait)),
-			SignalSemaphoreCount: uint32(len(submit.Signal)),
-			PCommandBuffers:      buffers,
-			PSignalSemaphores:    util.Map(submit.Signal, func(sem sync.Semaphore) vk.Semaphore { return sem.Ptr() }),
-			PWaitSemaphores:      util.Map(submit.Wait, func(w Wait) vk.Semaphore { return w.Semaphore.Ptr() }),
-			PWaitDstStageMask:    util.Map(submit.Wait, func(w Wait) vk.PipelineStageFlags { return vk.PipelineStageFlags(w.Mask) }),
+			CommandBuffers:   buffers,
+			SignalSemaphores: util.Map(submit.Signal, func(sem sync.Semaphore) core1_0.Semaphore { return sem.Ptr() }),
+			WaitSemaphores:   util.Map(submit.Wait, func(w Wait) core1_0.Semaphore { return w.Semaphore.Ptr() }),
+			WaitDstStageMask: util.Map(submit.Wait, func(w Wait) core1_0.PipelineStageFlags { return w.Mask }),
 		},
-	}
-	vk.QueueSubmit(w.queue, 1, info, fence.Ptr())
+	})
+	runtime.GC()
 
 	// clear batch slice but keep memory
 	w.batch = w.batch[:0]
 }
 
 func (w *worker) Present(swap swapchain.T, ctx swapchain.Context) {
-	var waits []vk.Semaphore
-	if ctx.RenderComplete != nil {
-		waits = []vk.Semaphore{ctx.RenderComplete.Ptr()}
-	}
 	w.work <- func() {
-		presentInfo := vk.PresentInfo{
-			SType:              vk.StructureTypePresentInfo,
-			WaitSemaphoreCount: uint32(len(waits)),
-			PWaitSemaphores:    waits,
-			SwapchainCount:     1,
-			PSwapchains:        []vk.Swapchain{swap.Ptr()},
-			PImageIndices:      []uint32{uint32(ctx.Index)},
-		}
-		vk.QueuePresent(w.queue, &presentInfo)
+		swap.Present(w.queue)
 	}
 }
 

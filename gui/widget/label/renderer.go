@@ -14,7 +14,7 @@ import (
 	"github.com/johanhenriksson/goworld/util"
 
 	"github.com/kjk/flex"
-	vk "github.com/vulkan-go/vulkan"
+	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
 var DefaultFont = "fonts/SourceCodeProRegular.ttf"
@@ -64,7 +64,7 @@ func NewRenderer() Renderer {
 		invalidFont:    true,
 		invalidTexture: true,
 		invalidMesh:    true,
-		scale:          1,
+		scale:          2,
 		uvs:            quad.DefaultUVs,
 		mesh:           quad.New(quad.Props{}),
 	}
@@ -164,7 +164,7 @@ func (r *renderer) Draw(args widget.DrawArgs, label T) {
 	}
 
 	args.Commands.Record(func(cmd command.Buffer) {
-		cmd.CmdPushConstant(vk.ShaderStageAll, 0, &widget.Constants{
+		cmd.CmdPushConstant(core1_0.StageAll, 0, &widget.Constants{
 			Viewport: args.ViewProj,
 			Model:    args.Transform,
 			Texture:  tex,
@@ -186,7 +186,7 @@ func (r *renderer) Measure(node *flex.Node, width float32, widthMode flex.Measur
 	// size = size.Scaled(1 / r.scale)
 
 	return flex.Size{
-		Width:  size.X,
-		Height: size.Y,
+		Width:  size.X / r.scale,
+		Height: size.Y / r.scale,
 	}
 }

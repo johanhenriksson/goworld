@@ -8,9 +8,9 @@ import (
 	"github.com/johanhenriksson/goworld/render/renderpass"
 	"github.com/johanhenriksson/goworld/render/shader"
 	"github.com/johanhenriksson/goworld/render/vertex"
-	"github.com/mitchellh/hashstructure/v2"
 
-	vk "github.com/vulkan-go/vulkan"
+	"github.com/mitchellh/hashstructure/v2"
+	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
 type Ref interface {
@@ -42,14 +42,14 @@ func (d *Def) Hash() uint64 {
 func FromDef(dev device.T, pool descriptor.Pool, rpass renderpass.T, def *Def) Standard {
 	desc := &Descriptors{
 		Camera: &descriptor.Uniform[uniform.Camera]{
-			Stages: vk.ShaderStageAll,
+			Stages: core1_0.StageAll,
 		},
 		Objects: &descriptor.Storage[uniform.Object]{
-			Stages: vk.ShaderStageAll,
+			Stages: core1_0.StageAll,
 			Size:   100,
 		},
 		Textures: &descriptor.SamplerArray{
-			Stages: vk.ShaderStageFragmentBit,
+			Stages: core1_0.StageFragment,
 			Count:  100,
 		},
 	}

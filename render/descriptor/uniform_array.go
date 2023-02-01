@@ -8,12 +8,13 @@ import (
 	"github.com/johanhenriksson/goworld/render/device"
 	"github.com/johanhenriksson/goworld/util"
 
-	vk "github.com/vulkan-go/vulkan"
+	"github.com/vkngwrapper/core/v2/core1_0"
+	"github.com/vkngwrapper/extensions/v2/ext_descriptor_indexing"
 )
 
 type UniformArray[K any] struct {
 	Size   int
-	Stages vk.ShaderStageFlagBits
+	Stages core1_0.ShaderStageFlags
 
 	binding int
 	buffer  buffer.Array[K]
@@ -26,8 +27,8 @@ func (d *UniformArray[K]) Initialize(device device.T) {
 	}
 	d.buffer = buffer.NewArray[K](device, buffer.Args{
 		Size:   d.Size,
-		Usage:  vk.BufferUsageUniformBufferBit,
-		Memory: vk.MemoryPropertyDeviceLocalBit | vk.MemoryPropertyHostVisibleBit,
+		Usage:  core1_0.BufferUsageUniformBuffer,
+		Memory: core1_0.MemoryPropertyDeviceLocal | core1_0.MemoryPropertyHostVisible,
 	})
 	d.write()
 }
@@ -55,30 +56,28 @@ func (d *UniformArray[K]) Set(index int, data K) {
 }
 
 func (d *UniformArray[K]) write() {
-	d.set.Write(vk.WriteDescriptorSet{
-		SType:           vk.StructureTypeWriteDescriptorSet,
-		DstBinding:      uint32(d.binding),
+	d.set.Write(core1_0.WriteDescriptorSet{
+		DstBinding:      d.binding,
 		DstArrayElement: 0,
-		DescriptorCount: uint32(d.Size),
-		DescriptorType:  vk.DescriptorTypeUniformBuffer,
-		PBufferInfo: util.Map(util.Range(0, d.Size, 1), func(i int) vk.DescriptorBufferInfo {
-			return vk.DescriptorBufferInfo{
+		DescriptorType:  core1_0.DescriptorTypeUniformBuffer,
+		BufferInfo: util.Map(util.Range(0, d.Size, 1), func(i int) core1_0.DescriptorBufferInfo {
+			return core1_0.DescriptorBufferInfo{
 				Buffer: d.buffer.Ptr(),
-				Offset: vk.DeviceSize(i * d.buffer.Element()),
-				Range:  vk.DeviceSize(d.buffer.Element()),
+				Offset: i * d.buffer.Element(),
+				Range:  d.buffer.Element(),
 			}
 		}),
 	})
 }
 
-func (d *UniformArray[K]) LayoutBinding(binding int) vk.DescriptorSetLayoutBinding {
+func (d *UniformArray[K]) LayoutBinding(binding int) core1_0.DescriptorSetLayoutBinding {
 	d.binding = binding
-	return vk.DescriptorSetLayoutBinding{
-		Binding:         uint32(binding),
-		DescriptorType:  vk.DescriptorTypeUniformBuffer,
-		DescriptorCount: uint32(d.Size),
-		StageFlags:      vk.ShaderStageFlags(d.Stages),
+	return core1_0.DescriptorSetLayoutBinding{
+		Binding:         binding,
+		DescriptorType:  core1_0.DescriptorTypeUniformBuffer,
+		DescriptorCount: d.Size,
+		StageFlags:      core1_0.ShaderStageFlags(d.Stages),
 	}
 }
 
-func (d *UniformArray[K]) BindingFlags() vk.DescriptorBindingFlags { return 0 }
+func (d *UniformArray[K]) BindingFlags() ext_descriptor_indexing.DescriptorBindingFlags { return 0 }

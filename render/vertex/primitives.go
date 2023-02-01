@@ -1,9 +1,11 @@
 package vertex
 
-type Primitive uint32
+import "github.com/vkngwrapper/core/v2/core1_0"
+
+type Primitive core1_0.PrimitiveTopology
 
 const (
-	Triangles = 1
-	Lines     = 2
-	Points    = 3
+	Triangles Primitive = Primitive(core1_0.PrimitiveTopologyTriangleList)
+	Lines               = Primitive(core1_0.PrimitiveTopologyLineList)
+	Points              = Primitive(core1_0.PrimitiveTopologyPointList)
 )

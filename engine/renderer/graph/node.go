@@ -7,7 +7,7 @@ import (
 	"github.com/johanhenriksson/goworld/render/device"
 	"github.com/johanhenriksson/goworld/render/sync"
 
-	vk "github.com/vulkan-go/vulkan"
+	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
 type NodePass interface {
@@ -17,8 +17,8 @@ type NodePass interface {
 }
 
 type Node interface {
-	After(nd Node, mask vk.PipelineStageFlagBits)
-	Before(nd Node, mask vk.PipelineStageFlagBits, signal sync.Semaphore)
+	After(nd Node, mask core1_0.PipelineStageFlags)
+	Before(nd Node, mask core1_0.PipelineStageFlags, signal sync.Semaphore)
 	Requires() []Node
 	Dependants() []Node
 
@@ -41,7 +41,7 @@ type node struct {
 }
 
 type edge struct {
-	mask   vk.PipelineStageFlagBits
+	mask   core1_0.PipelineStageFlags
 	signal sync.Semaphore
 }
 
@@ -62,7 +62,7 @@ func newNode(dev device.T, name string, pass NodePass) *node {
 func (n *node) Requires() []Node   { return n.requires }
 func (n *node) Dependants() []Node { return n.dependants }
 
-func (n *node) After(nd Node, mask vk.PipelineStageFlagBits) {
+func (n *node) After(nd Node, mask core1_0.PipelineStageFlags) {
 	if _, exists := n.after[nd]; exists {
 		return
 	}
@@ -76,12 +76,12 @@ func (n *node) After(nd Node, mask vk.PipelineStageFlagBits) {
 	n.refresh()
 }
 
-func (n *node) Before(nd Node, mask vk.PipelineStageFlagBits, signal sync.Semaphore) {
+func (n *node) Before(nd Node, mask core1_0.PipelineStageFlags, signal sync.Semaphore) {
 	if _, exists := n.before[nd]; exists {
 		return
 	}
 	n.before[nd] = signal
-	nd.After(n, vk.PipelineStageTopOfPipeBit)
+	nd.After(n, core1_0.PipelineStageTopOfPipe)
 
 	n.refresh()
 }

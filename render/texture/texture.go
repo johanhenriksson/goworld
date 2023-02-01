@@ -5,17 +5,11 @@ import (
 	"github.com/johanhenriksson/goworld/render/image"
 	"github.com/johanhenriksson/goworld/render/vkerror"
 
-	vk "github.com/vulkan-go/vulkan"
+	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
-var Nil T = &vktexture{
-	ptr:   vk.NullSampler,
-	image: image.Nil,
-	view:  image.NilView,
-}
-
 type T interface {
-	device.Resource[vk.Sampler]
+	device.Resource[core1_0.Sampler]
 	Image() image.T
 	View() image.View
 }
@@ -23,16 +17,16 @@ type T interface {
 type Args struct {
 	Width  int
 	Height int
-	Format vk.Format
-	Filter vk.Filter
-	Wrap   vk.SamplerAddressMode
-	Aspect vk.ImageAspectFlags
-	Usage  vk.ImageUsageFlags
+	Format core1_0.Format
+	Filter core1_0.Filter
+	Wrap   core1_0.SamplerAddressMode
+	Aspect core1_0.ImageAspectFlags
+	Usage  core1_0.ImageUsageFlags
 }
 
 type vktexture struct {
 	Args
-	ptr    vk.Sampler
+	ptr    core1_0.Sampler
 	device device.T
 	image  image.T
 	view   image.View
@@ -40,7 +34,7 @@ type vktexture struct {
 
 func New(device device.T, args Args) (T, error) {
 	if args.Usage == 0 {
-		args.Usage = vk.ImageUsageFlags(vk.ImageUsageSampledBit | vk.ImageUsageTransferDstBit)
+		args.Usage = core1_0.ImageUsageFlags(core1_0.ImageUsageSampled | core1_0.ImageUsageTransferDst)
 	}
 
 	img, err := image.New2D(device, args.Width, args.Height, args.Format, args.Usage)
@@ -59,7 +53,7 @@ func New(device device.T, args Args) (T, error) {
 
 func FromImage(device device.T, img image.T, args Args) (T, error) {
 	if args.Aspect == 0 {
-		args.Aspect = vk.ImageAspectFlags(vk.ImageAspectColorBit)
+		args.Aspect = core1_0.ImageAspectFlags(core1_0.ImageAspectColor)
 	}
 
 	view, err := img.View(args.Format, args.Aspect)
@@ -78,21 +72,21 @@ func FromImage(device device.T, img image.T, args Args) (T, error) {
 }
 
 func FromView(device device.T, view image.View, args Args) (T, error) {
-	info := vk.SamplerCreateInfo{
-		SType: vk.StructureTypeSamplerCreateInfo,
-
+	info := core1_0.SamplerCreateInfo{
 		MinFilter:    args.Filter,
 		MagFilter:    args.Filter,
 		AddressModeU: args.Wrap,
 		AddressModeV: args.Wrap,
 		AddressModeW: args.Wrap,
 
-		MipmapMode: vk.SamplerMipmapModeLinear,
+		MipmapMode: core1_0.SamplerMipmapModeLinear,
 	}
 
-	var ptr vk.Sampler
-	result := vk.CreateSampler(device.Ptr(), &info, nil, &ptr)
-	if result != vk.Success {
+	ptr, result, err := device.Ptr().CreateSampler(nil, info)
+	if err != nil {
+		return nil, err
+	}
+	if result != core1_0.VKSuccess {
 		return nil, vkerror.FromResult(result)
 	}
 
@@ -105,7 +99,7 @@ func FromView(device device.T, view image.View, args Args) (T, error) {
 	}, nil
 }
 
-func (t *vktexture) Ptr() vk.Sampler {
+func (t *vktexture) Ptr() core1_0.Sampler {
 	return t.ptr
 }
 
@@ -113,14 +107,14 @@ func (t *vktexture) Image() image.T   { return t.image }
 func (t *vktexture) View() image.View { return t.view }
 
 func (t *vktexture) Destroy() {
-	vk.DestroySampler(t.device.Ptr(), t.ptr, nil)
-	t.ptr = vk.NullSampler
+	t.ptr.Destroy(nil)
+	t.ptr = nil
 
 	t.view.Destroy()
-	t.view = image.NilView
+	t.view = nil
 
 	t.image.Destroy()
-	t.image = image.Nil
+	t.image = nil
 
-	t.device = device.Nil
+	t.device = nil
 }

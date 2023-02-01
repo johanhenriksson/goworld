@@ -78,29 +78,51 @@ func makeSidebar(scene object.T) node.T {
 	return rect.New("sidebar", rect.Props{
 		OnMouseDown: gui.ConsumeMouse,
 		Style: rect.Style{
-			Layout: style.Column{},
-			Width:  style.Pct(15),
-			Height: style.Pct(100),
-			Color:  color.RGBA(0.1, 0.1, 0.11, 0.85),
+			Layout:  style.Column{},
+			Width:   style.Pct(15),
+			Height:  style.Pct(100),
+			Color:   color.RGBA(0.1, 0.1, 0.11, 0.85),
+			Padding: style.RectAll(15),
 		},
 		Children: []node.T{
-			image.New("logo", image.Props{
-				Image: texture.PathRef("textures/shit_logo.png"),
-				Style: image.Style{
-					Width:  style.Pct(100),
-					Height: style.Auto{},
+			rect.New("logo-container", rect.Props{
+				Style: rect.Style{
+					Padding: style.Rect{Bottom: 15},
+				},
+				Children: []node.T{
+					image.New("logo", image.Props{
+						Image: texture.PathRef("textures/shit_logo.png"),
+						Style: image.Style{
+							Width:  style.Pct(100),
+							Height: style.Auto{},
+						},
+					}),
+				},
+			}),
+
+			rect.New("graph-container", rect.Props{
+				Style: rect.Style{
+					Padding: style.RectY(15),
+				},
+				Children: []node.T{
+					ObjectListEntry("scene-graph", ObjectListEntryProps{
+						Object: scene,
+						OnSelect: func(obj object.T) {
+							fmt.Println("selected", obj.Name())
+							// find select manager
+							root := object.Root(scene)
+							mgr := object.Query[SelectManager]().First(root)
+							if mgr == nil {
+								panic("could not find select manager")
+							}
+							mgr.Select(obj)
+						},
+					}),
 				},
 			}),
 
 			// content placeholder
 			rect.New("sidebar:content", rect.Props{}),
-
-			ObjectListEntry("scene-graph", ObjectListEntryProps{
-				Object: scene,
-				OnSelect: func(obj object.T) {
-					fmt.Println("selected", obj.Name())
-				},
-			}),
 		},
 	})
 }

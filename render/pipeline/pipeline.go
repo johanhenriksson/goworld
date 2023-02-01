@@ -11,17 +11,17 @@ import (
 	"github.com/johanhenriksson/goworld/render/vertex"
 	"github.com/johanhenriksson/goworld/util"
 
-	vk "github.com/vulkan-go/vulkan"
+	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
 type T interface {
-	device.Resource[vk.Pipeline]
+	device.Resource[core1_0.Pipeline]
 
 	Layout() Layout
 }
 
 type pipeline struct {
-	ptr    vk.Pipeline
+	ptr    core1_0.Pipeline
 	device device.T
 	layout Layout
 }
@@ -33,11 +33,10 @@ func New(device device.T, args Args) T {
 	// todo: pipeline cache
 	// could probably be controlled a global setting?
 
-	modules := util.Map(args.Shader.Modules(), func(shader shader.Module) vk.PipelineShaderStageCreateInfo {
-		return vk.PipelineShaderStageCreateInfo{
-			SType:  vk.StructureTypePipelineShaderStageCreateInfo,
+	modules := util.Map(args.Shader.Modules(), func(shader shader.Module) core1_0.PipelineShaderStageCreateInfo {
+		return core1_0.PipelineShaderStageCreateInfo{
 			Module: shader.Ptr(),
-			PName:  util.CString(shader.Entrypoint()),
+			Name:   shader.Entrypoint(),
 			Stage:  shader.Stage(),
 		}
 	})
@@ -48,67 +47,57 @@ func New(device device.T, args Args) T {
 	subpass := args.Pass.Subpass(args.Subpass)
 	log.Println("  subpass:", subpass.Name, subpass.Index())
 
-	blendStates := util.Map(subpass.ColorAttachments, func(name attachment.Name) vk.PipelineColorBlendAttachmentState {
+	blendStates := util.Map(subpass.ColorAttachments, func(name attachment.Name) core1_0.PipelineColorBlendAttachmentState {
 		attach := args.Pass.Attachment(name)
 		// todo: move into attachment object
 		// or into the material/pipeline object?
 		blend := attach.Blend()
-		return vk.PipelineColorBlendAttachmentState{
+		return core1_0.PipelineColorBlendAttachmentState{
 			// additive blending
-			BlendEnable:         vkBool(blend.Enabled),
+			BlendEnabled:        blend.Enabled,
 			ColorBlendOp:        blend.Color.Operation,
 			SrcColorBlendFactor: blend.Color.SrcFactor,
 			DstColorBlendFactor: blend.Color.DstFactor,
 			AlphaBlendOp:        blend.Alpha.Operation,
 			SrcAlphaBlendFactor: blend.Alpha.SrcFactor,
 			DstAlphaBlendFactor: blend.Alpha.DstFactor,
-			ColorWriteMask: vk.ColorComponentFlags(
-				vk.ColorComponentRBit | vk.ColorComponentGBit |
-					vk.ColorComponentBBit | vk.ColorComponentABit),
+			ColorWriteMask: core1_0.ColorComponentRed | core1_0.ColorComponentGreen |
+				core1_0.ColorComponentBlue | core1_0.ColorComponentAlpha,
 		}
 	})
 
-	info := vk.GraphicsPipelineCreateInfo{
-		SType: vk.StructureTypeGraphicsPipelineCreateInfo,
-
+	info := core1_0.GraphicsPipelineCreateInfo{
 		// layout
 		Layout:  args.Layout.Ptr(),
-		Subpass: uint32(subpass.Index()),
+		Subpass: subpass.Index(),
 
 		// render pass
 		RenderPass: args.Pass.Ptr(),
 
 		// Stages
-		StageCount: uint32(len(modules)),
-		PStages:    modules,
+		Stages: modules,
 
 		// Vertex input state
-		PVertexInputState: &vk.PipelineVertexInputStateCreateInfo{
-			SType:                         vk.StructureTypePipelineVertexInputStateCreateInfo,
-			VertexBindingDescriptionCount: 1,
-			PVertexBindingDescriptions: []vk.VertexInputBindingDescription{
+		VertexInputState: &core1_0.PipelineVertexInputStateCreateInfo{
+			VertexBindingDescriptions: []core1_0.VertexInputBindingDescription{
 				{
 					Binding:   0,
-					Stride:    uint32(args.Pointers.Stride()),
-					InputRate: vk.VertexInputRateVertex,
+					Stride:    args.Pointers.Stride(),
+					InputRate: core1_0.VertexInputRateVertex,
 				},
 			},
-			VertexAttributeDescriptionCount: uint32(len(attrs)),
-			PVertexAttributeDescriptions:    attrs,
+			VertexAttributeDescriptions: attrs,
 		},
 
 		// Input assembly
-		PInputAssemblyState: &vk.PipelineInputAssemblyStateCreateInfo{
-			SType:    vk.StructureTypePipelineInputAssemblyStateCreateInfo,
-			Topology: vkPrimitiveTopology(args.Primitive),
+		InputAssemblyState: &core1_0.PipelineInputAssemblyStateCreateInfo{
+			Topology: core1_0.PrimitiveTopology(args.Primitive),
 		},
 
 		// viewport state
 		// does not seem to matter so much since we set it dynamically every frame
-		PViewportState: &vk.PipelineViewportStateCreateInfo{
-			SType:         vk.StructureTypePipelineViewportStateCreateInfo,
-			ViewportCount: 1,
-			PViewports: []vk.Viewport{
+		ViewportState: &core1_0.PipelineViewportStateCreateInfo{
+			Viewports: []core1_0.Viewport{
 				{
 					Width:    1000,
 					Height:   1000,
@@ -116,12 +105,11 @@ func New(device device.T, args Args) T {
 					MaxDepth: 1,
 				},
 			},
-			ScissorCount: 1,
-			PScissors: []vk.Rect2D{
+			Scissors: []core1_0.Rect2D{
 				// scissor
 				{
-					Offset: vk.Offset2D{},
-					Extent: vk.Extent2D{
+					Offset: core1_0.Offset2D{},
+					Extent: core1_0.Extent2D{
 						Width:  1000,
 						Height: 1000,
 					},
@@ -130,66 +118,61 @@ func New(device device.T, args Args) T {
 		},
 
 		// rasterization state
-		PRasterizationState: &vk.PipelineRasterizationStateCreateInfo{
-			SType:                   vk.StructureTypePipelineRasterizationStateCreateInfo,
-			DepthClampEnable:        vk.False,
-			RasterizerDiscardEnable: vk.False,
+		RasterizationState: &core1_0.PipelineRasterizationStateCreateInfo{
+			DepthClampEnable:        false,
+			RasterizerDiscardEnable: false,
 			PolygonMode:             args.PolygonFillMode,
-			CullMode:                vk.CullModeFlags(args.CullMode),
-			FrontFace:               vk.FrontFaceCounterClockwise,
+			CullMode:                args.CullMode,
+			FrontFace:               core1_0.FrontFaceCounterClockwise,
 			LineWidth:               1,
 		},
 
 		// multisample
-		PMultisampleState: &vk.PipelineMultisampleStateCreateInfo{
-			SType:                vk.StructureTypePipelineMultisampleStateCreateInfo,
-			RasterizationSamples: vk.SampleCount1Bit,
+		MultisampleState: &core1_0.PipelineMultisampleStateCreateInfo{
+			RasterizationSamples: core1_0.Samples1,
 		},
 
 		// depth & stencil
-		PDepthStencilState: &vk.PipelineDepthStencilStateCreateInfo{
+		DepthStencilState: &core1_0.PipelineDepthStencilStateCreateInfo{
 			// enable depth testing with less or
-			SType:                 vk.StructureTypePipelineDepthStencilStateCreateInfo,
-			DepthTestEnable:       vkBool(args.DepthTest),
-			DepthWriteEnable:      vkBool(args.DepthWrite),
+			DepthTestEnable:       args.DepthTest,
+			DepthWriteEnable:      args.DepthWrite,
 			DepthCompareOp:        args.DepthFunc,
-			DepthBoundsTestEnable: vk.False,
-			Back: vk.StencilOpState{
-				FailOp:    vk.StencilOpKeep,
-				PassOp:    vk.StencilOpKeep,
-				CompareOp: vk.CompareOpAlways,
+			DepthBoundsTestEnable: false,
+			Back: core1_0.StencilOpState{
+				FailOp:    core1_0.StencilKeep,
+				PassOp:    core1_0.StencilKeep,
+				CompareOp: core1_0.CompareOpAlways,
 			},
-			StencilTestEnable: vkBool(args.StencilTest),
-			Front: vk.StencilOpState{
-				FailOp:    vk.StencilOpKeep,
-				PassOp:    vk.StencilOpKeep,
-				CompareOp: vk.CompareOpAlways,
+			StencilTestEnable: args.StencilTest,
+			Front: core1_0.StencilOpState{
+				FailOp:    core1_0.StencilKeep,
+				PassOp:    core1_0.StencilKeep,
+				CompareOp: core1_0.CompareOpAlways,
 			},
 		},
 
 		// color blending
-		PColorBlendState: &vk.PipelineColorBlendStateCreateInfo{
-			SType:           vk.StructureTypePipelineColorBlendStateCreateInfo,
-			LogicOpEnable:   vk.False,
-			LogicOp:         vk.LogicOpClear,
-			AttachmentCount: uint32(len(blendStates)),
-			PAttachments:    blendStates,
+		ColorBlendState: &core1_0.PipelineColorBlendStateCreateInfo{
+			LogicOpEnabled: false,
+			LogicOp:        core1_0.LogicOpClear,
+			Attachments:    blendStates,
 		},
 
 		// dynamic state: viewport & scissor
-		PDynamicState: &vk.PipelineDynamicStateCreateInfo{
-			SType:             vk.StructureTypePipelineDynamicStateCreateInfo,
-			DynamicStateCount: 2,
-			PDynamicStates: []vk.DynamicState{
-				vk.DynamicStateViewport,
-				vk.DynamicStateScissor,
+		DynamicState: &core1_0.PipelineDynamicStateCreateInfo{
+			DynamicStates: []core1_0.DynamicState{
+				core1_0.DynamicStateViewport,
+				core1_0.DynamicStateScissor,
 			},
 		},
 	}
 
-	ptrs := make([]vk.Pipeline, 1)
-	result := vk.CreateGraphicsPipelines(device.Ptr(), nil, 1, []vk.GraphicsPipelineCreateInfo{info}, nil, ptrs)
-	if result != vk.Success {
+	ptrs, result, err := device.Ptr().CreateGraphicsPipelines(nil, nil, []core1_0.GraphicsPipelineCreateInfo{info})
+	if err != nil {
+		panic(err)
+	}
+	if result != core1_0.VKSuccess {
 		panic("failed to create pipeline")
 	}
 
@@ -200,7 +183,7 @@ func New(device device.T, args Args) T {
 	}
 }
 
-func (p *pipeline) Ptr() vk.Pipeline {
+func (p *pipeline) Ptr() core1_0.Pipeline {
 	return p.ptr
 }
 
@@ -209,21 +192,21 @@ func (p *pipeline) Layout() Layout {
 }
 
 func (p *pipeline) Destroy() {
-	vk.DestroyPipeline(p.device.Ptr(), p.ptr, nil)
+	p.ptr.Destroy(nil)
 	p.ptr = nil
 }
 
-func pointersToVertexAttributes(ptrs vertex.Pointers, binding int) []vk.VertexInputAttributeDescription {
-	attrs := make([]vk.VertexInputAttributeDescription, 0, len(ptrs))
+func pointersToVertexAttributes(ptrs vertex.Pointers, binding int) []core1_0.VertexInputAttributeDescription {
+	attrs := make([]core1_0.VertexInputAttributeDescription, 0, len(ptrs))
 	for _, ptr := range ptrs {
 		if ptr.Binding < 0 {
 			continue
 		}
-		attrs = append(attrs, vk.VertexInputAttributeDescription{
-			Binding:  uint32(binding),
+		attrs = append(attrs, core1_0.VertexInputAttributeDescription{
+			Binding:  binding,
 			Location: uint32(ptr.Binding),
 			Format:   convertFormat(ptr),
-			Offset:   uint32(ptr.Offset),
+			Offset:   ptr.Offset,
 		})
 	}
 	return attrs
@@ -236,84 +219,65 @@ type ptrType struct {
 	Normalize bool
 }
 
-var formatMap = map[ptrType]vk.Format{
-	{types.Float, types.Float, 1, false}:   vk.FormatR32Sfloat,
-	{types.Float, types.Float, 2, false}:   vk.FormatR32g32Sfloat,
-	{types.Float, types.Float, 3, false}:   vk.FormatR32g32b32Sfloat,
-	{types.Float, types.Float, 4, false}:   vk.FormatR32g32b32a32Sfloat,
-	{types.Int8, types.Int8, 1, false}:     vk.FormatR8Sint,
-	{types.Int8, types.Int8, 2, false}:     vk.FormatR8g8Sint,
-	{types.Int8, types.Int8, 3, false}:     vk.FormatR8g8b8Sint,
-	{types.Int8, types.Int8, 4, false}:     vk.FormatR8g8b8a8Sint,
-	{types.Int8, types.Float, 4, true}:     vk.FormatR8Snorm,
-	{types.Int8, types.Float, 2, true}:     vk.FormatR8g8Snorm,
-	{types.Int8, types.Float, 3, true}:     vk.FormatR8g8b8Snorm,
-	{types.Int8, types.Float, 4, true}:     vk.FormatR8g8b8a8Snorm,
-	{types.UInt8, types.UInt8, 1, false}:   vk.FormatR8Uint,
-	{types.UInt8, types.UInt8, 2, false}:   vk.FormatR8g8Uint,
-	{types.UInt8, types.UInt8, 3, false}:   vk.FormatR8g8b8Uint,
-	{types.UInt8, types.UInt8, 4, false}:   vk.FormatR8g8b8a8Uint,
-	{types.UInt8, types.Float, 1, false}:   vk.FormatR8Uscaled,
-	{types.UInt8, types.Float, 2, false}:   vk.FormatR8g8Uscaled,
-	{types.UInt8, types.Float, 3, false}:   vk.FormatR8g8b8Uscaled,
-	{types.UInt8, types.Float, 4, false}:   vk.FormatR8g8b8a8Uscaled,
-	{types.UInt8, types.Float, 1, true}:    vk.FormatR8Unorm,
-	{types.UInt8, types.Float, 2, true}:    vk.FormatR8g8Unorm,
-	{types.UInt8, types.Float, 3, true}:    vk.FormatR8g8b8Unorm,
-	{types.UInt8, types.Float, 4, true}:    vk.FormatR8g8b8a8Unorm,
-	{types.Int16, types.Int16, 1, false}:   vk.FormatR16Sint,
-	{types.Int16, types.Int16, 2, false}:   vk.FormatR16g16Sint,
-	{types.Int16, types.Int16, 3, false}:   vk.FormatR16g16b16Sint,
-	{types.Int16, types.Int16, 4, false}:   vk.FormatR16g16b16a16Sint,
-	{types.Int16, types.Float, 4, true}:    vk.FormatR16Snorm,
-	{types.Int16, types.Float, 2, true}:    vk.FormatR16g16Snorm,
-	{types.Int16, types.Float, 3, true}:    vk.FormatR16g16b16Snorm,
-	{types.Int16, types.Float, 4, true}:    vk.FormatR16g16b16a16Snorm,
-	{types.UInt16, types.UInt16, 1, false}: vk.FormatR16Uint,
-	{types.UInt16, types.UInt16, 2, false}: vk.FormatR16g16Uint,
-	{types.UInt16, types.UInt16, 3, false}: vk.FormatR16g16b16Uint,
-	{types.UInt16, types.UInt16, 4, false}: vk.FormatR16g16b16a16Uint,
-	{types.UInt16, types.Float, 1, true}:   vk.FormatR16Unorm,
-	{types.UInt16, types.Float, 2, true}:   vk.FormatR16g16Unorm,
-	{types.UInt16, types.Float, 3, true}:   vk.FormatR16g16b16Unorm,
-	{types.UInt16, types.Float, 4, true}:   vk.FormatR16g16b16a16Unorm,
-	{types.UInt16, types.Float, 1, false}:  vk.FormatR16Uscaled,
-	{types.UInt16, types.Float, 2, false}:  vk.FormatR16g16Uscaled,
-	{types.UInt16, types.Float, 3, false}:  vk.FormatR16g16b16Uscaled,
-	{types.UInt16, types.Float, 4, false}:  vk.FormatR16g16b16a16Uscaled,
-	{types.Int32, types.Int32, 1, false}:   vk.FormatR32Sint,
-	{types.Int32, types.Int32, 2, false}:   vk.FormatR32g32Sint,
-	{types.Int32, types.Int32, 3, false}:   vk.FormatR32g32b32Sint,
-	{types.Int32, types.Int32, 4, false}:   vk.FormatR32g32b32a32Sint,
-	{types.UInt32, types.UInt32, 1, false}: vk.FormatR32Uint,
-	{types.UInt32, types.UInt32, 2, false}: vk.FormatR32g32Uint,
-	{types.UInt32, types.UInt32, 3, false}: vk.FormatR32g32b32Uint,
-	{types.UInt32, types.UInt32, 4, false}: vk.FormatR32g32b32a32Uint,
+var formatMap = map[ptrType]core1_0.Format{
+	{types.Float, types.Float, 1, false}:   core1_0.FormatR32SignedFloat,
+	{types.Float, types.Float, 2, false}:   core1_0.FormatR32G32SignedFloat,
+	{types.Float, types.Float, 3, false}:   core1_0.FormatR32G32B32SignedFloat,
+	{types.Float, types.Float, 4, false}:   core1_0.FormatR32G32B32A32SignedFloat,
+	{types.Int8, types.Int8, 1, false}:     core1_0.FormatR8SignedInt,
+	{types.Int8, types.Int8, 2, false}:     core1_0.FormatR8G8SignedInt,
+	{types.Int8, types.Int8, 3, false}:     core1_0.FormatR8G8B8SignedInt,
+	{types.Int8, types.Int8, 4, false}:     core1_0.FormatR8G8B8A8SignedInt,
+	{types.Int8, types.Float, 4, true}:     core1_0.FormatR8SignedNormalized,
+	{types.Int8, types.Float, 2, true}:     core1_0.FormatR8G8SignedNormalized,
+	{types.Int8, types.Float, 3, true}:     core1_0.FormatR8G8B8SignedNormalized,
+	{types.Int8, types.Float, 4, true}:     core1_0.FormatR8G8B8A8SignedNormalized,
+	{types.UInt8, types.UInt8, 1, false}:   core1_0.FormatR8UnsignedInt,
+	{types.UInt8, types.UInt8, 2, false}:   core1_0.FormatR8G8UnsignedInt,
+	{types.UInt8, types.UInt8, 3, false}:   core1_0.FormatR8G8B8UnsignedInt,
+	{types.UInt8, types.UInt8, 4, false}:   core1_0.FormatR8G8B8A8UnsignedInt,
+	{types.UInt8, types.Float, 1, false}:   core1_0.FormatR8UnsignedScaled,
+	{types.UInt8, types.Float, 2, false}:   core1_0.FormatR8G8UnsignedScaled,
+	{types.UInt8, types.Float, 3, false}:   core1_0.FormatR8G8B8UnsignedScaled,
+	{types.UInt8, types.Float, 4, false}:   core1_0.FormatR8G8B8A8UnsignedScaled,
+	{types.UInt8, types.Float, 1, true}:    core1_0.FormatR8UnsignedNormalized,
+	{types.UInt8, types.Float, 2, true}:    core1_0.FormatR8G8UnsignedNormalized,
+	{types.UInt8, types.Float, 3, true}:    core1_0.FormatR8G8B8UnsignedNormalized,
+	{types.UInt8, types.Float, 4, true}:    core1_0.FormatR8G8B8A8UnsignedNormalized,
+	{types.Int16, types.Int16, 1, false}:   core1_0.FormatR16SignedInt,
+	{types.Int16, types.Int16, 2, false}:   core1_0.FormatR16G16SignedInt,
+	{types.Int16, types.Int16, 3, false}:   core1_0.FormatR16G16B16SignedInt,
+	{types.Int16, types.Int16, 4, false}:   core1_0.FormatR16G16B16A16SignedInt,
+	{types.Int16, types.Float, 4, true}:    core1_0.FormatR16SignedNormalized,
+	{types.Int16, types.Float, 2, true}:    core1_0.FormatR16G16SignedNormalized,
+	{types.Int16, types.Float, 3, true}:    core1_0.FormatR16G16B16SignedNormalized,
+	{types.Int16, types.Float, 4, true}:    core1_0.FormatR16G16B16A16SignedNormalized,
+	{types.UInt16, types.UInt16, 1, false}: core1_0.FormatR16UnsignedInt,
+	{types.UInt16, types.UInt16, 2, false}: core1_0.FormatR16G16UnsignedInt,
+	{types.UInt16, types.UInt16, 3, false}: core1_0.FormatR16G16B16UnsignedInt,
+	{types.UInt16, types.UInt16, 4, false}: core1_0.FormatR16G16B16A16UnsignedInt,
+	{types.UInt16, types.Float, 1, true}:   core1_0.FormatR16UnsignedNormalized,
+	{types.UInt16, types.Float, 2, true}:   core1_0.FormatR16G16UnsignedNormalized,
+	{types.UInt16, types.Float, 3, true}:   core1_0.FormatR16G16B16UnsignedNormalized,
+	{types.UInt16, types.Float, 4, true}:   core1_0.FormatR16G16B16A16UnsignedNormalized,
+	{types.UInt16, types.Float, 1, false}:  core1_0.FormatR16UnsignedScaled,
+	{types.UInt16, types.Float, 2, false}:  core1_0.FormatR16G16UnsignedScaled,
+	{types.UInt16, types.Float, 3, false}:  core1_0.FormatR16G16B16UnsignedScaled,
+	{types.UInt16, types.Float, 4, false}:  core1_0.FormatR16G16B16A16UnsignedScaled,
+	{types.Int32, types.Int32, 1, false}:   core1_0.FormatR32SignedInt,
+	{types.Int32, types.Int32, 2, false}:   core1_0.FormatR32G32SignedInt,
+	{types.Int32, types.Int32, 3, false}:   core1_0.FormatR32G32B32SignedInt,
+	{types.Int32, types.Int32, 4, false}:   core1_0.FormatR32G32B32A32SignedInt,
+	{types.UInt32, types.UInt32, 1, false}: core1_0.FormatR32UnsignedInt,
+	{types.UInt32, types.UInt32, 2, false}: core1_0.FormatR32G32UnsignedInt,
+	{types.UInt32, types.UInt32, 3, false}: core1_0.FormatR32G32B32UnsignedInt,
+	{types.UInt32, types.UInt32, 4, false}: core1_0.FormatR32G32B32A32UnsignedInt,
 }
 
-func convertFormat(ptr vertex.Pointer) vk.Format {
+func convertFormat(ptr vertex.Pointer) core1_0.Format {
 	kind := ptrType{ptr.Source, ptr.Destination, ptr.Elements, ptr.Normalize}
 	if fmt, exists := formatMap[kind]; exists {
 		return fmt
 	}
 	panic(fmt.Sprintf("illegal format in pointer %s from %s -> %s x%d (normalize: %t)", ptr.Name, ptr.Source, ptr.Destination, ptr.Elements, ptr.Normalize))
-}
-
-func vkBool(v bool) vk.Bool32 {
-	if v {
-		return vk.True
-	}
-	return vk.False
-}
-
-func vkPrimitiveTopology(primitive vertex.Primitive) vk.PrimitiveTopology {
-	switch primitive {
-	case vertex.Triangles:
-		return vk.PrimitiveTopologyTriangleList
-	case vertex.Lines:
-		return vk.PrimitiveTopologyLineList
-	case vertex.Points:
-		return vk.PrimitiveTopologyPointList
-	}
-	panic("unknown primitive")
 }

@@ -2,7 +2,8 @@ package renderpass
 
 import (
 	"github.com/johanhenriksson/goworld/render/renderpass/attachment"
-	vk "github.com/vulkan-go/vulkan"
+
+	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
 type Name string
@@ -26,9 +27,9 @@ type SubpassDependency struct {
 	Src Name
 	Dst Name
 
-	Flags         vk.DependencyFlagBits
-	SrcStageMask  vk.PipelineStageFlagBits
-	SrcAccessMask vk.AccessFlagBits
-	DstStageMask  vk.PipelineStageFlagBits
-	DstAccessMask vk.AccessFlagBits
+	Flags         core1_0.DependencyFlags
+	SrcStageMask  core1_0.PipelineStageFlags
+	SrcAccessMask core1_0.AccessFlags
+	DstStageMask  core1_0.PipelineStageFlags
+	DstAccessMask core1_0.AccessFlags
 }

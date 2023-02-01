@@ -3,36 +3,39 @@ package shader
 import (
 	"github.com/johanhenriksson/goworld/render/device"
 
-	vk "github.com/vulkan-go/vulkan"
+	"github.com/vkngwrapper/core/v2/core1_0"
+	"github.com/vkngwrapper/core/v2/driver"
 )
 
 type Module interface {
-	device.Resource[vk.ShaderModule]
+	device.Resource[core1_0.ShaderModule]
 
 	Entrypoint() string
-	Stage() vk.ShaderStageFlagBits
+	Stage() core1_0.ShaderStageFlags
 }
 
 type shader_module struct {
 	device device.T
-	ptr    vk.ShaderModule
-	stage  vk.ShaderStageFlagBits
+	ptr    core1_0.ShaderModule
+	stage  core1_0.ShaderStageFlags
 }
 
-func NewModule(device device.T, path string, stage vk.ShaderStageFlagBits) Module {
+func NewModule(device device.T, path string, stage core1_0.ShaderStageFlags) Module {
 	bytecode, err := LoadOrCompile(path)
 	if err != nil {
 		panic(err)
 	}
 
-	info := vk.ShaderModuleCreateInfo{
-		SType:    vk.StructureTypeShaderModuleCreateInfo,
-		CodeSize: uint(len(bytecode)),
-		PCode:    sliceUint32(bytecode),
+	ptr, result, err := device.Ptr().CreateShaderModule(nil, core1_0.ShaderModuleCreateInfo{
+		Code: sliceUint32(bytecode),
+	})
+	if err != nil {
+		panic(err)
 	}
-
-	var ptr vk.ShaderModule
-	vk.CreateShaderModule(device.Ptr(), &info, nil, &ptr)
+	if result != core1_0.VKSuccess {
+		panic("failed to create shader")
+	}
+	device.SetDebugObjectName(driver.VulkanHandle(ptr.Handle()), core1_0.ObjectTypeShaderModule, path)
 
 	return &shader_module{
 		device: device,
@@ -41,11 +44,13 @@ func NewModule(device device.T, path string, stage vk.ShaderStageFlagBits) Modul
 	}
 }
 
-func (s *shader_module) Ptr() vk.ShaderModule {
+func (b *shader_module) VkType() core1_0.ObjectType { return core1_0.ObjectTypeShaderModule }
+
+func (s *shader_module) Ptr() core1_0.ShaderModule {
 	return s.ptr
 }
 
-func (s *shader_module) Stage() vk.ShaderStageFlagBits {
+func (s *shader_module) Stage() core1_0.ShaderStageFlags {
 	return s.stage
 }
 
@@ -54,6 +59,6 @@ func (s *shader_module) Entrypoint() string {
 }
 
 func (s *shader_module) Destroy() {
-	vk.DestroyShaderModule(s.device.Ptr(), s.ptr, nil)
+	s.ptr.Destroy(nil)
 	s.ptr = nil
 }

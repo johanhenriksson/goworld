@@ -9,7 +9,7 @@ import (
 	"github.com/johanhenriksson/goworld/render/image"
 	"github.com/johanhenriksson/goworld/render/vulkan"
 
-	vk "github.com/vulkan-go/vulkan"
+	"github.com/vkngwrapper/core/v2/core1_0"
 	"github.com/x448/float16"
 )
 
@@ -51,26 +51,26 @@ func NewGbuffer(
 	diffuse, normal, position, output, depth image.View,
 ) GeometryBuffer {
 	positionBuf, err := image.New(target.Device(), image.Args{
-		Type:   vk.ImageType2d,
+		Type:   core1_0.ImageType2D,
 		Width:  position.Image().Width(),
 		Height: position.Image().Height(),
 		Format: position.Format(),
-		Tiling: vk.ImageTilingLinear,
-		Usage:  vk.ImageUsageTransferDstBit,
-		Memory: vk.MemoryPropertyHostVisibleBit | vk.MemoryPropertyHostCoherentBit,
+		Tiling: core1_0.ImageTilingLinear,
+		Usage:  core1_0.ImageUsageTransferDst,
+		Memory: core1_0.MemoryPropertyHostVisible | core1_0.MemoryPropertyHostCoherent,
 	})
 	if err != nil {
 		panic(err)
 	}
 
 	normalBuf, err := image.New(target.Device(), image.Args{
-		Type:   vk.ImageType2d,
+		Type:   core1_0.ImageType2D,
 		Width:  normal.Image().Width(),
 		Height: normal.Image().Height(),
 		Format: normal.Format(),
-		Tiling: vk.ImageTilingLinear,
-		Usage:  vk.ImageUsageTransferDstBit,
-		Memory: vk.MemoryPropertyHostVisibleBit | vk.MemoryPropertyHostCoherentBit,
+		Tiling: core1_0.ImageTilingLinear,
+		Usage:  core1_0.ImageUsageTransferDst,
+		Memory: core1_0.MemoryPropertyHostVisible | core1_0.MemoryPropertyHostCoherent,
 	})
 	if err != nil {
 		panic(err)
@@ -79,8 +79,8 @@ func NewGbuffer(
 	// move images to ImageLayoutGeneral to avoid errors on first copy
 	worker := target.Transferer()
 	worker.Queue(func(b command.Buffer) {
-		b.CmdImageBarrier(vk.PipelineStageTopOfPipeBit, vk.PipelineStageTransferBit, positionBuf, vk.ImageLayoutUndefined, vk.ImageLayoutGeneral, vk.ImageAspectColorBit)
-		b.CmdImageBarrier(vk.PipelineStageTopOfPipeBit, vk.PipelineStageTransferBit, normalBuf, vk.ImageLayoutUndefined, vk.ImageLayoutGeneral, vk.ImageAspectColorBit)
+		b.CmdImageBarrier(core1_0.PipelineStageTopOfPipe, core1_0.PipelineStageTransfer, positionBuf, core1_0.ImageLayoutUndefined, core1_0.ImageLayoutGeneral, core1_0.ImageAspectColor)
+		b.CmdImageBarrier(core1_0.PipelineStageTopOfPipe, core1_0.PipelineStageTransfer, normalBuf, core1_0.ImageLayoutUndefined, core1_0.ImageLayoutGeneral, core1_0.ImageAspectColor)
 	})
 	worker.Submit(command.SubmitInfo{
 		Marker: "GBufferInit",
@@ -163,23 +163,23 @@ func (p *gbuffer) Destroy() {
 func (p *gbuffer) RecordBufferCopy(cmds command.Recorder) {
 	cmds.Record(func(b command.Buffer) {
 		b.CmdImageBarrier(
-			vk.PipelineStageTopOfPipeBit,
-			vk.PipelineStageTransferBit,
+			core1_0.PipelineStageTopOfPipe,
+			core1_0.PipelineStageTransfer,
 			p.position.Image(),
-			vk.ImageLayoutShaderReadOnlyOptimal,
-			vk.ImageLayoutGeneral,
-			vk.ImageAspectColorBit)
+			core1_0.ImageLayoutShaderReadOnlyOptimal,
+			core1_0.ImageLayoutGeneral,
+			core1_0.ImageAspectColor)
 
-		b.CmdCopyImage(p.position.Image(), vk.ImageLayoutGeneral, p.positionBuf, vk.ImageLayoutGeneral, vk.ImageAspectColorBit)
+		b.CmdCopyImage(p.position.Image(), core1_0.ImageLayoutGeneral, p.positionBuf, core1_0.ImageLayoutGeneral, core1_0.ImageAspectColor)
 
 		b.CmdImageBarrier(
-			vk.PipelineStageTopOfPipeBit,
-			vk.PipelineStageTransferBit,
+			core1_0.PipelineStageTopOfPipe,
+			core1_0.PipelineStageTransfer,
 			p.normal.Image(),
-			vk.ImageLayoutShaderReadOnlyOptimal,
-			vk.ImageLayoutGeneral,
-			vk.ImageAspectColorBit)
+			core1_0.ImageLayoutShaderReadOnlyOptimal,
+			core1_0.ImageLayoutGeneral,
+			core1_0.ImageAspectColor)
 
-		b.CmdCopyImage(p.normal.Image(), vk.ImageLayoutGeneral, p.normalBuf, vk.ImageLayoutGeneral, vk.ImageAspectColorBit)
+		b.CmdCopyImage(p.normal.Image(), core1_0.ImageLayoutGeneral, p.normalBuf, core1_0.ImageLayoutGeneral, core1_0.ImageAspectColor)
 	})
 }

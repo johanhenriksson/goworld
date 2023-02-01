@@ -8,18 +8,18 @@ import (
 	"github.com/johanhenriksson/goworld/render/vkerror"
 	"github.com/johanhenriksson/goworld/util"
 
-	vk "github.com/vulkan-go/vulkan"
+	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
 type T interface {
-	device.Resource[vk.Framebuffer]
+	device.Resource[core1_0.Framebuffer]
 
 	Attachment(attachment.Name) image.View
 	Size() (int, int)
 }
 
 type framebuf struct {
-	ptr         vk.Framebuffer
+	ptr         core1_0.Framebuffer
 	device      device.T
 	attachments map[attachment.Name]image.View
 	views       []image.View
@@ -46,7 +46,7 @@ func New(device device.T, width, height int, pass renderpass.T) (T, error) {
 		}
 	}
 
-	allocate := func(attach attachment.T, usage vk.ImageUsageFlagBits, aspect vk.ImageAspectFlagBits) error {
+	allocate := func(attach attachment.T, usage core1_0.ImageUsageFlags, aspect core1_0.ImageAspectFlags) error {
 		img, err := attach.Allocator().Alloc(
 			device,
 			width, height,
@@ -58,7 +58,7 @@ func New(device device.T, width, height int, pass renderpass.T) (T, error) {
 		}
 		images = append(images, img)
 
-		view, err := img.View(attach.Format(), vk.ImageAspectFlags(aspect))
+		view, err := img.View(attach.Format(), core1_0.ImageAspectFlags(aspect))
 		if err != nil {
 			return err
 		}
@@ -69,31 +69,32 @@ func New(device device.T, width, height int, pass renderpass.T) (T, error) {
 	}
 
 	for _, attach := range attachments {
-		if err := allocate(attach, vk.ImageUsageColorAttachmentBit, vk.ImageAspectColorBit); err != nil {
+		if err := allocate(attach, core1_0.ImageUsageColorAttachment, core1_0.ImageAspectColor); err != nil {
 			cleanup()
 			return nil, err
 		}
 	}
 	if depth != nil {
-		if err := allocate(depth, vk.ImageUsageDepthStencilAttachmentBit, vk.ImageAspectDepthBit); err != nil {
+		if err := allocate(depth, core1_0.ImageUsageDepthStencilAttachment, core1_0.ImageAspectDepth); err != nil {
 			cleanup()
 			return nil, err
 		}
 	}
 
-	info := vk.FramebufferCreateInfo{
-		SType:           vk.StructureTypeFramebufferCreateInfo,
-		RenderPass:      pass.Ptr(),
-		AttachmentCount: uint32(len(attachs)),
-		PAttachments:    util.Map(views, func(v image.View) vk.ImageView { return v.Ptr() }),
-		Width:           uint32(width),
-		Height:          uint32(height),
-		Layers:          1,
+	info := core1_0.FramebufferCreateInfo{
+		RenderPass:  pass.Ptr(),
+		Attachments: util.Map(views, func(v image.View) core1_0.ImageView { return v.Ptr() }),
+		Width:       width,
+		Height:      height,
+		Layers:      1,
 	}
 
-	var ptr vk.Framebuffer
-	result := vk.CreateFramebuffer(device.Ptr(), &info, nil, &ptr)
-	if result != vk.Success {
+	var ptr core1_0.Framebuffer
+	ptr, result, err := device.Ptr().CreateFramebuffer(nil, info)
+	if err != nil {
+		panic(err)
+	}
+	if result != core1_0.VKSuccess {
 		cleanup()
 		return nil, vkerror.FromResult(result)
 	}
@@ -109,7 +110,7 @@ func New(device device.T, width, height int, pass renderpass.T) (T, error) {
 	}, nil
 }
 
-func (b *framebuf) Ptr() vk.Framebuffer {
+func (b *framebuf) Ptr() core1_0.Framebuffer {
 	return b.ptr
 }
 
@@ -122,7 +123,7 @@ func (b *framebuf) Attachment(name attachment.Name) image.View {
 }
 
 func (b *framebuf) Destroy() {
-	if b.ptr == vk.NullFramebuffer {
+	if b.ptr == nil {
 		panic("framebuffer already destroyed")
 	}
 	for _, view := range b.views {
@@ -135,7 +136,7 @@ func (b *framebuf) Destroy() {
 	b.images = nil
 	b.attachments = nil
 
-	vk.DestroyFramebuffer(b.device.Ptr(), b.ptr, nil)
-	b.ptr = vk.NullFramebuffer
-	b.device = device.Nil
+	b.ptr.Destroy(nil)
+	b.ptr = nil
+	b.device = nil
 }

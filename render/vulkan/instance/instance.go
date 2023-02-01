@@ -1,13 +1,10 @@
 package instance
 
 import (
-	"fmt"
-	"log"
-
-	"github.com/johanhenriksson/goworld/render/device"
-	"github.com/johanhenriksson/goworld/util"
-
-	vk "github.com/vulkan-go/vulkan"
+	"github.com/go-gl/glfw/v3.3/glfw"
+	"github.com/vkngwrapper/core/v2"
+	"github.com/vkngwrapper/core/v2/common"
+	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
 var layers = []string{
@@ -16,73 +13,47 @@ var layers = []string{
 }
 
 type T interface {
-	device.Resource[vk.Instance]
-	EnumeratePhysicalDevices() []vk.PhysicalDevice
-	GetDevice(int) device.T
+	EnumeratePhysicalDevices() []core1_0.PhysicalDevice
+	Destroy()
+	Ptr() core1_0.Instance
 }
 
 type instance struct {
-	ptr vk.Instance
+	ptr core1_0.Instance
 }
 
 func New(appName string) T {
-	appInfo := vk.ApplicationInfo{
-		SType:              vk.StructureTypeApplicationInfo,
-		PApplicationName:   util.CString(appName),
-		ApplicationVersion: vk.MakeVersion(0, 1, 0),
-		PEngineName:        util.CString("goworld"),
-		EngineVersion:      vk.MakeVersion(0, 2, 0),
-		ApiVersion:         vk.MakeVersion(1, 1, 0),
-	}
-
-	log.Println("Creating instance with extensions:", extensions)
-
-	createInfo := vk.InstanceCreateInfo{
-		SType:                   vk.StructureTypeInstanceCreateInfo,
-		PApplicationInfo:        &appInfo,
-		PpEnabledExtensionNames: util.CStrings(extensions),
-		EnabledExtensionCount:   uint32(len(extensions)),
-		PpEnabledLayerNames:     util.CStrings(layers),
-		EnabledLayerCount:       uint32(len(layers)),
-	}
-
-	var ptr vk.Instance
-	r := vk.CreateInstance(&createInfo, nil, &ptr)
-	if r != vk.Success {
-		panic(fmt.Sprintf("create instance returned %d", r))
-	}
-
-	if err := vk.InitInstance(ptr); err != nil {
+	loader, err := core.CreateLoaderFromProcAddr(glfw.GetVulkanGetInstanceProcAddress())
+	if err != nil {
 		panic(err)
 	}
-
+	handle, _, err := loader.CreateInstance(nil, core1_0.InstanceCreateInfo{
+		APIVersion:            common.APIVersion(common.CreateVersion(1, 1, 0)),
+		ApplicationName:       appName,
+		ApplicationVersion:    common.CreateVersion(0, 1, 0),
+		EngineName:            "goworld",
+		EngineVersion:         common.CreateVersion(0, 2, 1),
+		EnabledLayerNames:     layers,
+		EnabledExtensionNames: extensions,
+	})
 	return &instance{
-		ptr: ptr,
+		ptr: handle,
 	}
 }
 
-func (i *instance) Ptr() vk.Instance {
+func (i *instance) Ptr() core1_0.Instance {
 	return i.ptr
 }
 
 func (i *instance) Destroy() {
-	vk.DestroyInstance(i.ptr, nil)
+	i.ptr.Destroy(nil)
 	i.ptr = nil
 }
 
-func (i *instance) GetDevice(index int) device.T {
-	physDevices := i.EnumeratePhysicalDevices()
-	device, err := device.New(physDevices[index])
+func (i *instance) EnumeratePhysicalDevices() []core1_0.PhysicalDevice {
+	r, _, err := i.ptr.EnumeratePhysicalDevices()
 	if err != nil {
 		panic(err)
 	}
-	return device
-}
-
-func (i *instance) EnumeratePhysicalDevices() []vk.PhysicalDevice {
-	count := uint32(0)
-	vk.EnumeratePhysicalDevices(i.ptr, &count, nil)
-	devices := make([]vk.PhysicalDevice, count)
-	vk.EnumeratePhysicalDevices(i.ptr, &count, devices)
-	return devices
+	return r
 }

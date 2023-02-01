@@ -3,6 +3,7 @@ package vulkan
 import (
 	"fmt"
 	"log"
+	"unsafe"
 
 	"github.com/johanhenriksson/goworld/core/input"
 	"github.com/johanhenriksson/goworld/core/input/keys"
@@ -11,7 +12,10 @@ import (
 	"github.com/johanhenriksson/goworld/render/swapchain"
 
 	"github.com/go-gl/glfw/v3.3/glfw"
-	vk "github.com/vulkan-go/vulkan"
+	"github.com/vkngwrapper/core/v2/core1_0"
+	"github.com/vkngwrapper/core/v2/driver"
+	"github.com/vkngwrapper/extensions/v2/khr_surface"
+	khr_surface_driver "github.com/vkngwrapper/extensions/v2/khr_surface/driver"
 )
 
 type ResizeHandler func(width, height int)
@@ -53,7 +57,7 @@ type window struct {
 	frames        int
 	scale         float32
 	swap          swapchain.T
-	surface       vk.Surface
+	surface       khr_surface.Surface
 }
 
 func NewWindow(backend T, args WindowArgs) (Window, error) {
@@ -77,16 +81,25 @@ func NewWindow(backend T, args WindowArgs) (Window, error) {
 		width, height, scale*100)
 
 	// create window surface
-	surfPtr, err := wnd.CreateWindowSurface(backend.Instance().Ptr(), nil)
+	surfPtr, err := wnd.CreateWindowSurface((*driver.VkInstance)(unsafe.Pointer(backend.Instance().Ptr().Handle())), nil)
 	if err != nil {
 		panic(err)
 	}
 
-	surface := vk.SurfaceFromPointer(surfPtr)
-	surfaceFormat := backend.Device().GetSurfaceFormats(surface)[0]
+	surfaceHandle := (*khr_surface_driver.VkSurfaceKHR)(unsafe.Pointer(surfPtr))
+	surfaceExt := khr_surface.CreateExtensionFromInstance(backend.Instance().Ptr())
+	surface, err := surfaceExt.CreateSurfaceFromHandle(*surfaceHandle)
+	if err != nil {
+		panic(err)
+	}
+
+	surfaceFormat, _, err := surface.PhysicalDeviceSurfaceFormats(backend.Device().Physical())
+	if err != nil {
+		panic(err)
+	}
 
 	// allocate swapchain
-	swap := swapchain.New(backend.Device(), args.Frames, width, height, surface, surfaceFormat)
+	swap := swapchain.New(backend.Device(), args.Frames, width, height, surface, surfaceFormat[0])
 
 	window := &window{
 		T:       backend,
@@ -126,9 +139,9 @@ func (w *window) Scale() float32    { return w.scale }
 func (w *window) ShouldClose() bool { return w.wnd.ShouldClose() }
 func (w *window) Title() string     { return w.title }
 
-func (w *window) Surfaces() []image.T      { return w.swap.Images() }
-func (w *window) SurfaceFormat() vk.Format { return w.swap.SurfaceFormat() }
-func (w *window) Swapchain() swapchain.T   { return w.swap }
+func (w *window) Surfaces() []image.T           { return w.swap.Images() }
+func (w *window) SurfaceFormat() core1_0.Format { return w.swap.SurfaceFormat() }
+func (w *window) Swapchain() swapchain.T        { return w.swap }
 
 func (w *window) SetInputHandler(handler input.Handler) {
 	// keyboard events
@@ -153,5 +166,5 @@ func (w *window) Aquire() (swapchain.Context, error) {
 
 func (w *window) Destroy() {
 	w.swap.Destroy()
-	vk.DestroySurface(w.T.Instance().Ptr(), w.surface, nil)
+	w.surface.Destroy(nil)
 }

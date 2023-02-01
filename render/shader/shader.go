@@ -5,8 +5,7 @@ import (
 
 	"github.com/johanhenriksson/goworld/render/device"
 	"github.com/johanhenriksson/goworld/render/types"
-
-	vk "github.com/vulkan-go/vulkan"
+	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
 type Input struct {
@@ -29,6 +28,7 @@ func (d Bindings) Descriptor(name string) (int, bool) {
 }
 
 type T interface {
+	Name() string
 	Modules() []Module
 	Destroy()
 	Input(name string) (int, types.Type, bool)
@@ -36,6 +36,7 @@ type T interface {
 }
 
 type shader struct {
+	name     string
 	modules  []Module
 	inputs   Inputs
 	bindings Bindings
@@ -54,15 +55,20 @@ func New(device device.T, path string) T {
 	}
 
 	modules := []Module{
-		NewModule(device, fmt.Sprintf("assets/shaders/%s.vert", path), vk.ShaderStageVertexBit),
-		NewModule(device, fmt.Sprintf("assets/shaders/%s.frag", path), vk.ShaderStageFragmentBit),
+		NewModule(device, fmt.Sprintf("assets/shaders/%s.vert", path), core1_0.StageVertex),
+		NewModule(device, fmt.Sprintf("assets/shaders/%s.frag", path), core1_0.StageFragment),
 	}
 
 	return &shader{
+		name:     path,
 		modules:  modules,
 		inputs:   inputs,
 		bindings: details.Bindings,
 	}
+}
+
+func (s *shader) Name() string {
+	return s.name
 }
 
 func (s *shader) Modules() []Module {

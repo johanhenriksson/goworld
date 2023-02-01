@@ -9,6 +9,38 @@ type Rect struct {
 	Bottom float32
 }
 
+func RectAll(v float32) Rect {
+	return Rect{
+		Left:   v,
+		Right:  v,
+		Top:    v,
+		Bottom: v,
+	}
+}
+
+func RectXY(x, y float32) Rect {
+	return Rect{
+		Left:   x,
+		Right:  x,
+		Top:    y,
+		Bottom: y,
+	}
+}
+
+func RectX(v float32) Rect {
+	return Rect{
+		Left:  v,
+		Right: v,
+	}
+}
+
+func RectY(v float32) Rect {
+	return Rect{
+		Top:    v,
+		Bottom: v,
+	}
+}
+
 func (p Rect) ApplyPadding(fw FlexWidget) {
 	fw.Flex().StyleSetPadding(flex.EdgeLeft, p.Left)
 	fw.Flex().StyleSetPadding(flex.EdgeRight, p.Right)

@@ -1,7 +1,7 @@
 package attachment
 
 import (
-	vk "github.com/vulkan-go/vulkan"
+	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
 type Name string
@@ -9,17 +9,17 @@ type Name string
 type T interface {
 	Name() Name
 	Allocator() Allocator
-	Clear() vk.ClearValue
-	Format() vk.Format
-	Usage() vk.ImageUsageFlagBits
-	Description() vk.AttachmentDescription
+	Clear() core1_0.ClearValue
+	Format() core1_0.Format
+	Usage() core1_0.ImageUsageFlags
+	Description() core1_0.AttachmentDescription
 	Blend() Blend
 }
 
 type BlendOp struct {
-	Operation vk.BlendOp
-	SrcFactor vk.BlendFactor
-	DstFactor vk.BlendFactor
+	Operation core1_0.BlendOp
+	SrcFactor core1_0.BlendFactor
+	DstFactor core1_0.BlendFactor
 }
 
 type Blend struct {
@@ -31,20 +31,20 @@ type Blend struct {
 type attachment struct {
 	name   Name
 	alloc  Allocator
-	clear  vk.ClearValue
-	desc   vk.AttachmentDescription
+	clear  core1_0.ClearValue
+	desc   core1_0.AttachmentDescription
 	blend  Blend
-	format vk.Format
-	usage  vk.ImageUsageFlagBits
+	format core1_0.Format
+	usage  core1_0.ImageUsageFlags
 }
 
-func (a *attachment) Description() vk.AttachmentDescription {
+func (a *attachment) Description() core1_0.AttachmentDescription {
 	return a.desc
 }
 
-func (a *attachment) Name() Name                   { return a.name }
-func (a *attachment) Allocator() Allocator         { return a.alloc }
-func (a *attachment) Clear() vk.ClearValue         { return a.clear }
-func (a *attachment) Blend() Blend                 { return a.blend }
-func (a *attachment) Format() vk.Format            { return a.format }
-func (a *attachment) Usage() vk.ImageUsageFlagBits { return a.usage }
+func (a *attachment) Name() Name                     { return a.name }
+func (a *attachment) Allocator() Allocator           { return a.alloc }
+func (a *attachment) Clear() core1_0.ClearValue      { return a.clear }
+func (a *attachment) Blend() Blend                   { return a.blend }
+func (a *attachment) Format() core1_0.Format         { return a.format }
+func (a *attachment) Usage() core1_0.ImageUsageFlags { return a.usage }

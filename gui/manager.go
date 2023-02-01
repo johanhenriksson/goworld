@@ -25,6 +25,8 @@ type manager struct {
 	render node.RenderFunc
 	tree   node.T
 	gui    widget.T
+
+	supressNextRelease bool
 }
 
 func New(render node.RenderFunc) Manager {
@@ -130,13 +132,22 @@ func (m *manager) MouseEvent(e mouse.Event) {
 		handler.MouseEvent(ev)
 		if ev.Handled() {
 			e.Consume()
-			return
+			if ev.Action() == mouse.Press {
+				m.supressNextRelease = true
+			}
 		}
 	}
 
 	// event has not been handled
 	// unset keyboard focus
-	if e.Action() == mouse.Press || e.Action() == mouse.Release {
+	if !ev.Handled() && (e.Action() == mouse.Press || e.Action() == mouse.Release) {
 		keys.Focus(nil)
+	}
+
+	// if the UI captured a press event, we should make sure not to pass
+	// the matching release event
+	if ev.Action() == mouse.Release && m.supressNextRelease {
+		m.supressNextRelease = false
+		e.Consume()
 	}
 }

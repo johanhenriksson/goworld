@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"runtime"
-	"runtime/debug"
 	"time"
 
 	"github.com/johanhenriksson/goworld/core/camera"
@@ -34,7 +33,7 @@ func Run(args Args, scenefuncs ...SceneFunc) {
 	log.Println("goworld")
 
 	// disable automatic garbage collection
-	debug.SetGCPercent(-1)
+	// debug.SetGCPercent(-1)
 
 	go RunProfilingServer(6060)
 	interrupt := NewInterrupter()
@@ -120,7 +119,7 @@ func Run(args Args, scenefuncs ...SceneFunc) {
 		renderer.Draw(args, scene)
 
 		// wait for submissions
-		// wnd.Transferer().Wait()
+		wnd.Transferer().Wait()
 
 		// present image
 		wnd.Worker(context.Index).
@@ -131,7 +130,7 @@ func Run(args Args, scenefuncs ...SceneFunc) {
 		// gc pass
 		// this might be a decent place to run GC?
 		// or a horrible one since we are waiting for vulkan stuff to complete
-		collectGarbage()
+		// collectGarbage()
 
 		counter.Sample()
 		// log.Printf(

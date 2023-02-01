@@ -3,63 +3,60 @@ package command
 import (
 	"github.com/johanhenriksson/goworld/render/device"
 	"github.com/johanhenriksson/goworld/util"
-
-	vk "github.com/vulkan-go/vulkan"
+	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
 type Pool interface {
-	device.Resource[vk.CommandPool]
+	device.Resource[core1_0.CommandPool]
 
-	Allocate(level vk.CommandBufferLevel) Buffer
-	AllocateBuffers(level vk.CommandBufferLevel, count int) []Buffer
+	Allocate(level core1_0.CommandBufferLevel) Buffer
+	AllocateBuffers(level core1_0.CommandBufferLevel, count int) []Buffer
 }
 
 type pool struct {
-	ptr    vk.CommandPool
+	ptr    core1_0.CommandPool
 	device device.T
 }
 
-func NewPool(device device.T, flags vk.CommandPoolCreateFlags, queueFamilyIdx int) Pool {
-	info := vk.CommandPoolCreateInfo{
-		SType:            vk.StructureTypeCommandPoolCreateInfo,
+func NewPool(device device.T, flags core1_0.CommandPoolCreateFlags, queueFamilyIdx int) Pool {
+	ptr, _, err := device.Ptr().CreateCommandPool(nil, core1_0.CommandPoolCreateInfo{
 		Flags:            flags,
-		QueueFamilyIndex: uint32(queueFamilyIdx),
+		QueueFamilyIndex: queueFamilyIdx,
+	})
+	if err != nil {
+		panic(err)
 	}
-
-	var ptr vk.CommandPool
-	vk.CreateCommandPool(device.Ptr(), &info, nil, &ptr)
-
 	return &pool{
 		ptr:    ptr,
 		device: device,
 	}
 }
 
-func (p *pool) Ptr() vk.CommandPool {
+func (p *pool) Ptr() core1_0.CommandPool {
 	return p.ptr
 }
 
 func (p *pool) Destroy() {
-	vk.DestroyCommandPool(p.device.Ptr(), p.ptr, nil)
+	p.ptr.Destroy(nil)
+	p.ptr = nil
 }
 
-func (p *pool) Allocate(level vk.CommandBufferLevel) Buffer {
+func (p *pool) Allocate(level core1_0.CommandBufferLevel) Buffer {
 	buffers := p.AllocateBuffers(level, 1)
 	return buffers[0]
 }
 
-func (p *pool) AllocateBuffers(level vk.CommandBufferLevel, count int) []Buffer {
-	info := vk.CommandBufferAllocateInfo{
-		SType:              vk.StructureTypeCommandBufferAllocateInfo,
+func (p *pool) AllocateBuffers(level core1_0.CommandBufferLevel, count int) []Buffer {
+	ptrs, _, err := p.device.Ptr().AllocateCommandBuffers(core1_0.CommandBufferAllocateInfo{
 		CommandPool:        p.ptr,
 		Level:              level,
-		CommandBufferCount: uint32(count),
+		CommandBufferCount: count,
+	})
+	if err != nil {
+		panic(err)
 	}
 
-	ptrs := make([]vk.CommandBuffer, count)
-	vk.AllocateCommandBuffers(p.device.Ptr(), &info, ptrs)
-
-	return util.Map(ptrs, func(ptr vk.CommandBuffer) Buffer {
+	return util.Map(ptrs, func(ptr core1_0.CommandBuffer) Buffer {
 		return newBuffer(p.device, p.ptr, ptr)
 	})
 }

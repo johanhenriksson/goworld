@@ -1,61 +1,47 @@
 package editor
 
 import (
-	"log"
-	"reflect"
-
 	"github.com/johanhenriksson/goworld/core/collider"
+	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/core/object"
-	"github.com/johanhenriksson/goworld/geometry/gizmo/mover"
-	"github.com/johanhenriksson/goworld/math/vec3"
+	"github.com/johanhenriksson/goworld/gui"
 )
 
-type Constructor func(*Context, object.T) T
+type ObjectEditor struct {
+	object.T
 
-var editors = map[reflect.Type]Constructor{}
+	Bounds collider.T
+	GUI    gui.Fragment
+	Custom T
 
-// Register an Editor constructor for a given object type
-func Register[K object.T, E T](obj object.T, constructor func(*Context, K) E) {
-	t := reflect.TypeOf(obj).Elem()
-	editors[t] = func(ctx *Context, obj object.T) T {
-		k := obj.(K)
-		return constructor(ctx, k)
-	}
+	target object.T
 }
 
-func ConstructEditors(ctx *Context, obj object.T, mv *mover.T) object.T {
-	editNode := object.Ghost(obj)
+func NewObjectEditor(target object.T, bounds collider.Box, editor T) *ObjectEditor {
+	editor.SetActive(false)
+	return object.New(&ObjectEditor{
+		target: target,
+		Custom: editor,
 
-	t := reflect.TypeOf(obj).Elem()
-	if construct, exists := editors[t]; exists {
-		log.Println("creating editor for", obj.Name())
-		objEditor := construct(ctx, obj)
-		objEditor.SetActive(false)
-		object.Attach(editNode, objEditor)
-		object.Attach(editNode, NewSelectable(
-			collider.NewBox(collider.Box{
-				Center: vec3.New(4, 4, 4),
-				Size:   vec3.New(8, 8, 8),
-			}),
-			func() {
-				objEditor.SetActive(true)
-				mv.SetTarget(obj.Transform())
-				mv.SetActive(true)
-			},
-			func() bool {
-				if objEditor.CanDeselect() {
-					objEditor.SetActive(false)
-					mv.SetTarget(nil)
-					mv.SetActive(false)
-					return true
-				}
-				return false
-			}))
-	}
+		Bounds: collider.NewBox(bounds),
+		// GUI:    objectEditorGui(),
+	})
+}
 
-	for _, child := range obj.Children() {
-		childNode := ConstructEditors(ctx, child, mv)
-		object.Attach(editNode, childNode)
+var _ Selectable = &ObjectEditor{}
+
+func (e *ObjectEditor) Select(ev mouse.Event, collider collider.T) {
+	e.Custom.SetActive(true)
+}
+
+func (e *ObjectEditor) Deselect(ev mouse.Event) bool {
+	if e.Custom.CanDeselect() {
+		e.Custom.SetActive(false)
+		return true
 	}
-	return editNode
+	return false
+}
+
+func (e *ObjectEditor) Target() object.T {
+	return e.target
 }

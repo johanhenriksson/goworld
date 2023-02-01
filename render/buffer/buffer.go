@@ -3,17 +3,11 @@ package buffer
 import (
 	"github.com/johanhenriksson/goworld/render/device"
 
-	vk "github.com/vulkan-go/vulkan"
+	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
-var Nil T = &buffer{
-	ptr:    vk.NullBuffer,
-	device: device.Nil,
-	memory: device.NilMemory,
-}
-
 type T interface {
-	device.Resource[vk.Buffer]
+	device.Resource[core1_0.Buffer]
 
 	// Size returns the total allocation size of the buffer in bytes
 	Size() int
@@ -30,43 +24,34 @@ type T interface {
 
 type Args struct {
 	Size   int
-	Usage  vk.BufferUsageFlagBits
-	Memory vk.MemoryPropertyFlagBits
+	Usage  core1_0.BufferUsageFlags
+	Memory core1_0.MemoryPropertyFlags
 }
 
 type buffer struct {
-	ptr    vk.Buffer
+	ptr    core1_0.Buffer
 	device device.T
 	memory device.Memory
 	size   int
 }
 
 func New(device device.T, args Args) T {
-	queueIdx := device.GetQueueFamilyIndex(vk.QueueFlags(vk.QueueGraphicsBit))
-	info := vk.BufferCreateInfo{
-		SType:       vk.StructureTypeBufferCreateInfo,
-		Flags:       vk.BufferCreateFlags(0),
-		Size:        vk.DeviceSize(args.Size),
-		Usage:       vk.BufferUsageFlags(args.Usage),
-		SharingMode: vk.SharingModeExclusive,
-
-		QueueFamilyIndexCount: 1,
-		PQueueFamilyIndices:   []uint32{uint32(queueIdx)},
+	queueIdx := device.GetQueueFamilyIndex(core1_0.QueueGraphics)
+	ptr, _, err := device.Ptr().CreateBuffer(nil, core1_0.BufferCreateInfo{
+		Flags:              0,
+		Size:               args.Size,
+		Usage:              args.Usage,
+		SharingMode:        core1_0.SharingModeExclusive,
+		QueueFamilyIndices: []int{queueIdx},
+	})
+	if err != nil {
+		panic(err)
 	}
 
-	var ptr vk.Buffer
-	r := vk.CreateBuffer(device.Ptr(), &info, nil, &ptr)
-	if r != vk.Success {
-		panic("failed to create buffer")
-	}
+	memreq := ptr.MemoryRequirements()
 
-	var memreq vk.MemoryRequirements
-	vk.GetBufferMemoryRequirements(device.Ptr(), ptr, &memreq)
-	memreq.Deref()
-
-	mem := device.Allocate(memreq, vk.MemoryPropertyFlags(args.Memory))
-
-	vk.BindBufferMemory(device.Ptr(), ptr, mem.Ptr(), 0)
+	mem := device.Allocate(*memreq, args.Memory)
+	ptr.BindBufferMemory(mem.Ptr(), 0)
 
 	return &buffer{
 		ptr:    ptr,
@@ -79,36 +64,36 @@ func New(device device.T, args Args) T {
 func NewUniform(device device.T, size int) T {
 	return New(device, Args{
 		Size:   size,
-		Usage:  vk.BufferUsageTransferDstBit | vk.BufferUsageUniformBufferBit,
-		Memory: vk.MemoryPropertyHostVisibleBit,
+		Usage:  core1_0.BufferUsageTransferDst | core1_0.BufferUsageUniformBuffer,
+		Memory: core1_0.MemoryPropertyHostVisible,
 	})
 }
 
 func NewStorage(device device.T, size int) T {
 	return New(device, Args{
 		Size:   size,
-		Usage:  vk.BufferUsageTransferDstBit | vk.BufferUsageStorageBufferBit,
-		Memory: vk.MemoryPropertyDeviceLocalBit | vk.MemoryPropertyHostVisibleBit,
+		Usage:  core1_0.BufferUsageTransferDst | core1_0.BufferUsageStorageBuffer,
+		Memory: core1_0.MemoryPropertyDeviceLocal | core1_0.MemoryPropertyHostVisible,
 	})
 }
 
 func NewShared(device device.T, size int) T {
 	return New(device, Args{
 		Size:   size,
-		Usage:  vk.BufferUsageTransferSrcBit | vk.BufferUsageTransferDstBit,
-		Memory: vk.MemoryPropertyHostVisibleBit | vk.MemoryPropertyHostCoherentBit,
+		Usage:  core1_0.BufferUsageTransferSrc | core1_0.BufferUsageTransferDst,
+		Memory: core1_0.MemoryPropertyHostVisible | core1_0.MemoryPropertyHostCoherent,
 	})
 }
 
-func NewRemote(device device.T, size int, flags vk.BufferUsageFlagBits) T {
+func NewRemote(device device.T, size int, flags core1_0.BufferUsageFlags) T {
 	return New(device, Args{
 		Size:   size,
-		Usage:  vk.BufferUsageTransferDstBit | flags,
-		Memory: vk.MemoryPropertyDeviceLocalBit,
+		Usage:  core1_0.BufferUsageTransferDst | flags,
+		Memory: core1_0.MemoryPropertyDeviceLocal,
 	})
 }
 
-func (b *buffer) Ptr() vk.Buffer {
+func (b *buffer) Ptr() core1_0.Buffer {
 	return b.ptr
 }
 
@@ -121,9 +106,11 @@ func (b *buffer) Memory() device.Memory {
 }
 
 func (b *buffer) Destroy() {
-	vk.DestroyBuffer(b.device.Ptr(), b.ptr, nil)
+	b.ptr.Destroy(nil)
 	b.memory.Destroy()
-	*b = *Nil.(*buffer)
+	b.ptr = nil
+	b.memory = nil
+	b.device = nil
 }
 
 func (b *buffer) Write(offset int, data any) int {

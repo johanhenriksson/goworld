@@ -7,7 +7,8 @@ import (
 	"github.com/johanhenriksson/goworld/render/device"
 	"github.com/johanhenriksson/goworld/render/image"
 	"github.com/johanhenriksson/goworld/render/swapchain"
-	vk "github.com/vulkan-go/vulkan"
+
+	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
 type Target interface {
@@ -20,7 +21,7 @@ type Target interface {
 	Frames() int
 
 	Surfaces() []image.T
-	SurfaceFormat() vk.Format
+	SurfaceFormat() core1_0.Format
 	Aquire() (swapchain.Context, error)
 
 	Worker(int) command.Worker

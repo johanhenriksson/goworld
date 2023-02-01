@@ -6,7 +6,7 @@ import (
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/device"
 
-	vk "github.com/vulkan-go/vulkan"
+	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
 type preNode struct {
@@ -25,7 +25,7 @@ func (n *preNode) Draw(worker command.Worker, args render.Args, scene object.T) 
 		waits = []command.Wait{
 			{
 				Semaphore: args.Context.ImageAvailable,
-				Mask:      vk.PipelineStageColorAttachmentOutputBit,
+				Mask:      core1_0.PipelineStageColorAttachmentOutput,
 			},
 		}
 	}

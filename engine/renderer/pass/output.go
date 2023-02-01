@@ -14,7 +14,8 @@ import (
 	"github.com/johanhenriksson/goworld/render/vertex"
 	"github.com/johanhenriksson/goworld/render/vulkan"
 
-	vk "github.com/vulkan-go/vulkan"
+	"github.com/vkngwrapper/core/v2/core1_0"
+	"github.com/vkngwrapper/extensions/v2/khr_swapchain"
 )
 
 const OutputSubpass = renderpass.Name("output")
@@ -50,9 +51,9 @@ func NewOutputPass(target vulkan.Target, geometry GeometryBuffer) *OutputPass {
 				Name:        OutputAttachment,
 				Allocator:   attachment.FromImageArray(target.Surfaces()),
 				Format:      target.SurfaceFormat(),
-				LoadOp:      vk.AttachmentLoadOpClear,
-				FinalLayout: vk.ImageLayoutPresentSrc,
-				Usage:       vk.ImageUsageInputAttachmentBit,
+				LoadOp:      core1_0.AttachmentLoadOpClear,
+				FinalLayout: khr_swapchain.ImageLayoutPresentSrc,
+				Usage:       core1_0.ImageUsageInputAttachment,
 			},
 		},
 		Subpasses: []renderpass.Subpass{
@@ -74,7 +75,7 @@ func NewOutputPass(target vulkan.Target, geometry GeometryBuffer) *OutputPass {
 		},
 		&OutputDescriptors{
 			Output: &descriptor.Sampler{
-				Stages: vk.ShaderStageFragmentBit,
+				Stages: core1_0.StageFragment,
 			},
 		})
 
@@ -89,8 +90,8 @@ func NewOutputPass(target vulkan.Target, geometry GeometryBuffer) *OutputPass {
 	p.tex = make([]texture.T, frames)
 	for i := range p.tex {
 		p.tex[i], err = texture.FromView(target.Device(), p.geometry.Output(), texture.Args{
-			Filter: vk.FilterNearest,
-			Wrap:   vk.SamplerAddressModeClampToEdge,
+			Filter: core1_0.FilterNearest,
+			Wrap:   core1_0.SamplerAddressModeClampToEdge,
 		})
 		if err != nil {
 			// todo: clean up

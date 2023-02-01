@@ -52,6 +52,9 @@ func render(props Props) node.T {
 	})
 
 	return rect.New("palette", rect.Props{
+		Style: rect.Style{
+			Padding: RectY(15),
+		},
 		Children: []node.T{
 			rect.New("selected", rect.Props{
 				Style: rect.Style{
@@ -71,13 +74,18 @@ func render(props Props) node.T {
 						Style: rect.Style{
 							Color:  selected,
 							Height: Px(20),
-							Basis:  Pct(16),
-							Margin: Px(2),
+							Basis:  Pct(18),
+							Margin: Rect{
+								Bottom: 4,
+							},
 						},
 					}),
 				},
 			}),
 			rect.New("grid", rect.Props{
+				Style: rect.Style{
+					Margin: Px(-2),
+				},
 				Children: rows,
 			}),
 		},

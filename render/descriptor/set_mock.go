@@ -1,15 +1,17 @@
 package descriptor
 
-import vk "github.com/vulkan-go/vulkan"
+import (
+	"github.com/vkngwrapper/core/v2/core1_0"
+)
 
 type SetMock struct {
 }
 
 var _ Set = &SetMock{}
 
-func (s *SetMock) Ptr() vk.DescriptorSet {
-	return vk.NullDescriptorSet
+func (s *SetMock) Ptr() core1_0.DescriptorSet {
+	return nil
 }
 
-func (s *SetMock) Write(write vk.WriteDescriptorSet) {
+func (s *SetMock) Write(write core1_0.WriteDescriptorSet) {
 }

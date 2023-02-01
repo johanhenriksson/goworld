@@ -16,9 +16,9 @@ import (
 	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/renderpass"
 	"github.com/johanhenriksson/goworld/render/renderpass/attachment"
-	"github.com/johanhenriksson/goworld/render/vulkan"
 
-	vk "github.com/vulkan-go/vulkan"
+	"github.com/johanhenriksson/goworld/render/vulkan"
+	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
 type ShadowPass interface {
@@ -54,30 +54,30 @@ func NewShadowPass(target vulkan.Target) ShadowPass {
 		Src: renderpass.ExternalSubpass,
 		Dst: GeometrySubpass,
 
-		SrcStageMask:  vk.PipelineStageBottomOfPipeBit,
-		DstStageMask:  vk.PipelineStageColorAttachmentOutputBit,
-		SrcAccessMask: vk.AccessMemoryReadBit,
-		DstAccessMask: vk.AccessColorAttachmentReadBit | vk.AccessColorAttachmentWriteBit,
-		Flags:         vk.DependencyByRegionBit,
+		SrcStageMask:  core1_0.PipelineStageBottomOfPipe,
+		DstStageMask:  core1_0.PipelineStageColorAttachmentOutput,
+		SrcAccessMask: core1_0.AccessMemoryRead,
+		DstAccessMask: core1_0.AccessColorAttachmentRead | core1_0.AccessColorAttachmentWrite,
+		Flags:         core1_0.DependencyByRegion,
 	})
 	dependencies = append(dependencies, renderpass.SubpassDependency{
 		Src: GeometrySubpass,
 		Dst: renderpass.ExternalSubpass,
 
-		SrcStageMask:  vk.PipelineStageColorAttachmentOutputBit,
-		DstStageMask:  vk.PipelineStageFragmentShaderBit,
-		SrcAccessMask: vk.AccessColorAttachmentWriteBit,
-		DstAccessMask: vk.AccessShaderReadBit,
-		Flags:         vk.DependencyByRegionBit,
+		SrcStageMask:  core1_0.PipelineStageColorAttachmentOutput,
+		DstStageMask:  core1_0.PipelineStageFragmentShader,
+		SrcAccessMask: core1_0.AccessColorAttachmentWrite,
+		DstAccessMask: core1_0.AccessShaderRead,
+		Flags:         core1_0.DependencyByRegion,
 	})
 
 	pass := renderpass.New(target.Device(), renderpass.Args{
 		DepthAttachment: &attachment.Depth{
-			LoadOp:        vk.AttachmentLoadOpClear,
-			StencilLoadOp: vk.AttachmentLoadOpClear,
-			StoreOp:       vk.AttachmentStoreOpStore,
-			FinalLayout:   vk.ImageLayoutShaderReadOnlyOptimal,
-			Usage:         vk.ImageUsageSampledBit,
+			LoadOp:        core1_0.AttachmentLoadOpClear,
+			StencilLoadOp: core1_0.AttachmentLoadOpClear,
+			StoreOp:       core1_0.AttachmentStoreOpStore,
+			FinalLayout:   core1_0.ImageLayoutShaderReadOnlyOptimal,
+			Usage:         core1_0.ImageUsageSampled,
 			ClearDepth:    1,
 		},
 		Subpasses:    subpasses,
