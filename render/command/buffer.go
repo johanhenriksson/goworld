@@ -10,12 +10,13 @@ import (
 	"github.com/johanhenriksson/goworld/render/image"
 	"github.com/johanhenriksson/goworld/render/pipeline"
 	"github.com/johanhenriksson/goworld/render/renderpass"
+	"github.com/vkngwrapper/core/v2/core1_0"
 
 	vk "github.com/vulkan-go/vulkan"
 )
 
 type Buffer interface {
-	device.Resource[vk.CommandBuffer]
+	device.Resource[core1_0.CommandBuffer]
 
 	Reset()
 	Begin()
@@ -42,8 +43,8 @@ type Buffer interface {
 }
 
 type buf struct {
-	ptr    vk.CommandBuffer
-	pool   vk.CommandPool
+	ptr    core1_0.CommandBuffer
+	pool   core1_0.CommandPool
 	device device.T
 
 	// cached bindings
@@ -53,12 +54,12 @@ type buf struct {
 }
 
 type bufferBinding struct {
-	buffer    vk.Buffer
+	buffer    core1_0.Buffer
 	offset    int
-	indexType vk.IndexType
+	indexType core1_0.IndexType
 }
 
-func newBuffer(device device.T, pool vk.CommandPool, ptr vk.CommandBuffer) Buffer {
+func newBuffer(device device.T, pool core1_0.CommandPool, ptr core1_0.CommandBuffer) Buffer {
 	return &buf{
 		ptr:    ptr,
 		pool:   pool,
@@ -66,44 +67,41 @@ func newBuffer(device device.T, pool vk.CommandPool, ptr vk.CommandBuffer) Buffe
 	}
 }
 
-func (b *buf) Ptr() vk.CommandBuffer {
+func (b *buf) Ptr() core1_0.CommandBuffer {
 	return b.ptr
 }
 
 func (b *buf) Destroy() {
-	vk.FreeCommandBuffers(b.device.Ptr(), b.pool, 1, []vk.CommandBuffer{b.ptr})
+	b.ptr.Free()
 	b.ptr = nil
 }
 
 func (b *buf) Reset() {
-	vk.ResetCommandBuffer(b.ptr, vk.CommandBufferResetFlags(vk.CommandBufferResetReleaseResourcesBit))
+	b.ptr.Reset(core1_0.CommandBufferResetReleaseResources)
 }
 
 func (b *buf) Begin() {
-	info := vk.CommandBufferBeginInfo{
-		SType: vk.StructureTypeCommandBufferBeginInfo,
-	}
-	vk.BeginCommandBuffer(b.ptr, &info)
+	b.ptr.Begin(core1_0.CommandBufferBeginInfo{})
 }
 
 func (b *buf) End() {
-	vk.EndCommandBuffer(b.ptr)
+	b.ptr.End()
 }
 
-func (b *buf) CmdCopyBuffer(src, dst buffer.T, regions ...vk.BufferCopy) {
+func (b *buf) CmdCopyBuffer(src, dst buffer.T, regions ...core1_0.BufferCopy) {
 	if len(regions) == 0 {
-		regions = []vk.BufferCopy{
+		regions = []core1_0.BufferCopy{
 			{
 				SrcOffset: 0,
 				DstOffset: 0,
-				Size:      vk.DeviceSize(src.Size()),
+				Size:      src.Size(),
 			},
 		}
 	}
 	if src.Ptr() == nil || dst.Ptr() == nil {
 		panic("copy to/from null buffer")
 	}
-	vk.CmdCopyBuffer(b.ptr, src.Ptr(), dst.Ptr(), uint32(len(regions)), regions)
+	b.ptr.CmdCopyBuffer(src.Ptr(), dst.Ptr(), regions)
 }
 
 func (b *buf) CmdBindGraphicsPipeline(pipe pipeline.T) {

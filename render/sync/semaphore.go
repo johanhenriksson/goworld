@@ -3,38 +3,36 @@ package sync
 import (
 	"github.com/johanhenriksson/goworld/render/device"
 
-	vk "github.com/vulkan-go/vulkan"
+	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
 type Semaphore interface {
-	device.Resource[vk.Semaphore]
+	device.Resource[core1_0.Semaphore]
 }
 
 type semaphore struct {
 	device device.T
-	ptr    vk.Semaphore
+	ptr    core1_0.Semaphore
 }
 
 func NewSemaphore(dev device.T) Semaphore {
-	info := vk.SemaphoreCreateInfo{
-		SType: vk.StructureTypeSemaphoreCreateInfo,
+	ptr, _, err := dev.Ptr().CreateSemaphore(nil, core1_0.SemaphoreCreateInfo{})
+	if err != nil {
+		panic(err)
 	}
-
-	var sem vk.Semaphore
-	vk.CreateSemaphore(dev.Ptr(), &info, nil, &sem)
 
 	return &semaphore{
 		device: dev,
-		ptr:    sem,
+		ptr:    ptr,
 	}
 }
 
-func (s semaphore) Ptr() vk.Semaphore {
+func (s semaphore) Ptr() core1_0.Semaphore {
 	return s.ptr
 }
 
 func (s *semaphore) Destroy() {
-	vk.DestroySemaphore(s.device.Ptr(), s.ptr, nil)
+	s.ptr.Destroy(nil)
 	s.ptr = nil
 }
 

@@ -6,16 +6,11 @@ import (
 	"unsafe"
 
 	"github.com/johanhenriksson/goworld/util"
-	vk "github.com/vulkan-go/vulkan"
+	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
-var NilMemory Memory = &memory{
-	device: Nil,
-	ptr:    vk.NullDeviceMemory,
-}
-
 type Memory interface {
-	Resource[vk.DeviceMemory]
+	Resource[core1_0.DeviceMemory]
 	Read(offset int, data any) int
 	Write(offset int, data any) int
 	Flush()
@@ -25,59 +20,54 @@ type Memory interface {
 
 type memtype struct {
 	TypeBits uint32
-	Flags    vk.MemoryPropertyFlags
+	Flags    core1_0.MemoryPropertyFlags
 }
 
 type memory struct {
-	ptr    vk.DeviceMemory
+	ptr    core1_0.DeviceMemory
 	device T
 	size   int
-	flags  vk.MemoryPropertyFlags
+	flags  core1_0.MemoryPropertyFlags
 }
 
-func alloc(device T, req vk.MemoryRequirements, flags vk.MemoryPropertyFlags) Memory {
+func alloc(device T, req core1_0.MemoryRequirements, flags core1_0.MemoryPropertyFlags) Memory {
 	typeIdx := device.GetMemoryTypeIndex(req.MemoryTypeBits, flags)
 
 	align := int(device.GetLimits().NonCoherentAtomSize)
 	size := util.Align(int(req.Size), align)
 
-	alloc := vk.MemoryAllocateInfo{
-		SType:           vk.StructureTypeMemoryAllocateInfo,
-		AllocationSize:  vk.DeviceSize(size),
-		MemoryTypeIndex: uint32(typeIdx),
-	}
-	var ptr vk.DeviceMemory
-	r := vk.AllocateMemory(device.Ptr(), &alloc, nil, &ptr)
-	if r != vk.Success {
-		panic(fmt.Sprintf("failed to allocate %d bytes of memory", req.Size))
+	ptr, _, err := device.Ptr().AllocateMemory(nil, core1_0.MemoryAllocateInfo{
+		AllocationSize:  size,
+		MemoryTypeIndex: typeIdx,
+	})
+	if err != nil {
+		panic(fmt.Sprintf("failed to allocate %d bytes of memory: %w", req.Size, err))
 	}
 
-	m := &memory{
+	return &memory{
 		device: device,
 		ptr:    ptr,
 		flags:  flags,
 		size:   size,
 	}
-
-	return m
 }
 
 func (m *memory) IsHostVisible() bool {
-	bit := vk.MemoryPropertyFlags(vk.MemoryPropertyHostVisibleBit)
+	bit := core1_0.MemoryPropertyHostVisible
 	return m.flags&bit == bit
 }
 
-func (m *memory) Ptr() vk.DeviceMemory {
+func (m *memory) Ptr() core1_0.DeviceMemory {
 	return m.ptr
 }
 
 func (m *memory) Destroy() {
-	vk.FreeMemory(m.device.Ptr(), m.ptr, nil)
-	m.ptr = vk.NullDeviceMemory
+	m.ptr.Free(nil)
+	m.ptr = nil
 }
 
 func (m *memory) Write(offset int, data any) int {
-	if m.ptr == vk.NullDeviceMemory {
+	if m.ptr == nil {
 		panic("write to freed memory block")
 	}
 	if !m.IsHostVisible() {
@@ -111,13 +101,10 @@ func (m *memory) Write(offset int, data any) int {
 
 	// map shared memory
 	var dst unsafe.Pointer
-	vk.MapMemory(
-		m.device.Ptr(),
-		m.ptr,
-		vk.DeviceSize(0),
-		vk.DeviceSize(vk.WholeSize),
-		vk.MemoryMapFlags(0),
-		&dst)
+	dst, _, err := m.ptr.Map(0, size, -1)
+	if err != nil {
+		panic(err)
+	}
 
 	// create pointer at offset
 	offsetDst := unsafe.Pointer(uintptr(dst) + uintptr(offset))
@@ -130,13 +117,13 @@ func (m *memory) Write(offset int, data any) int {
 	m.Flush()
 
 	// unmap shared memory
-	vk.UnmapMemory(m.device.Ptr(), m.Ptr())
+	m.ptr.Unmap()
 
 	return size
 }
 
 func (m *memory) Read(offset int, target any) int {
-	if m.ptr == vk.NullDeviceMemory {
+	if m.ptr == nil {
 		panic("read from freed memory block")
 	}
 	if !m.IsHostVisible() {
@@ -170,41 +157,24 @@ func (m *memory) Read(offset int, target any) int {
 
 	// map shared memory
 	var src unsafe.Pointer
-	vk.MapMemory(
-		m.device.Ptr(),
-		m.ptr,
-		vk.DeviceSize(offset),
-		vk.DeviceSize(size),
-		vk.MemoryMapFlags(0),
-		&src)
+	src, _, err := m.ptr.Map(offset, size, 0)
+	if err != nil {
+		panic(err)
+	}
 
 	// copy to host
 	memcpy(dst, src, size)
 
 	// unmap shared memory
-	vk.UnmapMemory(m.device.Ptr(), m.Ptr())
+	m.ptr.Unmap()
 
 	return size
 }
 
 func (m *memory) Flush() {
-	vk.FlushMappedMemoryRanges(m.device.Ptr(), 1, []vk.MappedMemoryRange{
-		{
-			SType:  vk.StructureTypeMappedMemoryRange,
-			Memory: m.ptr,
-			Offset: 0,
-			Size:   vk.DeviceSize(vk.WholeSize),
-		},
-	})
+	m.ptr.FlushAll()
 }
 
 func (m *memory) Invalidate() {
-	vk.InvalidateMappedMemoryRanges(m.device.Ptr(), 1, []vk.MappedMemoryRange{
-		{
-			SType:  vk.StructureTypeMappedMemoryRange,
-			Memory: m.ptr,
-			Offset: 0,
-			Size:   vk.DeviceSize(vk.WholeSize),
-		},
-	})
+	m.ptr.InvalidateAll()
 }

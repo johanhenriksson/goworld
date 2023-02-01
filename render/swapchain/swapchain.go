@@ -7,6 +7,7 @@ import (
 	"github.com/johanhenriksson/goworld/render/device"
 	"github.com/johanhenriksson/goworld/render/image"
 	"github.com/johanhenriksson/goworld/util"
+	"github.com/vkngwrapper/extensions/v2/khr_surface"
 
 	vk "github.com/vulkan-go/vulkan"
 )
@@ -24,8 +25,8 @@ type T interface {
 type swapchain struct {
 	ptr        vk.Swapchain
 	device     device.T
-	surface    vk.Surface
-	surfaceFmt vk.SurfaceFormat
+	surface    khr_surface.Surface
+	surfaceFmt khr_surface.SurfaceFormat
 	images     []image.T
 	current    int
 	frames     int
@@ -36,7 +37,7 @@ type swapchain struct {
 	contexts []Context
 }
 
-func New(device device.T, frames, width, height int, surface vk.Surface, surfaceFormat vk.SurfaceFormat) T {
+func New(device device.T, frames, width, height int, surface khr_surface.Surface, surfaceFormat khr_surface.SurfaceFormat) T {
 	s := &swapchain{
 		device:     device,
 		surface:    surface,
@@ -57,7 +58,7 @@ func (s *swapchain) Ptr() vk.Swapchain {
 }
 
 func (s *swapchain) Images() []image.T        { return s.images }
-func (s *swapchain) SurfaceFormat() vk.Format { return s.surfaceFmt.Format }
+func (s *swapchain) SurfaceFormat() vk.Format { return vk.Format(s.surfaceFmt.Format) }
 
 func (s *swapchain) Resize(width, height int) {
 	s.width = width
@@ -75,10 +76,10 @@ func (s *swapchain) recreate() {
 
 	swapInfo := vk.SwapchainCreateInfo{
 		SType:           vk.StructureTypeSwapchainCreateInfo,
-		Surface:         s.surface,
+		Surface:         util.CastPtr[vk.Surface](uintptr(s.surface.Ptr())),
 		MinImageCount:   uint32(s.frames),
-		ImageFormat:     s.surfaceFmt.Format,
-		ImageColorSpace: s.surfaceFmt.ColorSpace,
+		ImageFormat:     vk.Format(s.surfaceFmt.Format),
+		ImageColorSpace: vk.ColorSpace(s.surfaceFmt.ColorSpace),
 		ImageExtent: vk.Extent2D{
 			Width:  uint32(s.width),
 			Height: uint32(s.height),
@@ -112,7 +113,7 @@ func (s *swapchain) recreate() {
 			Width:  s.width,
 			Height: s.height,
 			Depth:  1,
-			Format: s.surfaceFmt.Format,
+			Format: vk.Format(s.surfaceFmt.Format),
 		})
 	})
 

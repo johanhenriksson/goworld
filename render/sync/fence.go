@@ -1,13 +1,15 @@
 package sync
 
 import (
+	"time"
+
 	"github.com/johanhenriksson/goworld/render/device"
 
-	vk "github.com/vulkan-go/vulkan"
+	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
 type Fence interface {
-	device.Resource[vk.Fence]
+	device.Resource[core1_0.Fence]
 
 	Reset()
 	Wait()
@@ -16,46 +18,49 @@ type Fence interface {
 
 type fence struct {
 	device device.T
-	ptr    vk.Fence
+	ptr    core1_0.Fence
 }
 
 func NewFence(device device.T, signaled bool) Fence {
-	var flags vk.FenceCreateFlags
+	var flags core1_0.FenceCreateFlags
 	if signaled {
-		flags = vk.FenceCreateFlags(vk.FenceCreateSignaledBit)
+		flags = core1_0.FenceCreateSignaled
 	}
 
-	info := vk.FenceCreateInfo{
-		SType: vk.StructureTypeFenceCreateInfo,
+	ptr, _, err := device.Ptr().CreateFence(nil, core1_0.FenceCreateInfo{
 		Flags: flags,
+	})
+	if err != nil {
+		panic(err)
 	}
-
-	var fnc vk.Fence
-	vk.CreateFence(device.Ptr(), &info, nil, &fnc)
 
 	return &fence{
 		device: device,
-		ptr:    fnc,
+		ptr:    ptr,
 	}
 }
 
-func (f *fence) Ptr() vk.Fence {
+func (f *fence) Ptr() core1_0.Fence {
 	return f.ptr
 }
 
 func (f *fence) Reset() {
-	vk.ResetFences(f.device.Ptr(), 1, []vk.Fence{f.ptr})
+	f.device.Ptr().ResetFences([]core1_0.Fence{f.ptr})
 }
 
 func (f *fence) Destroy() {
-	vk.DestroyFence(f.device.Ptr(), f.ptr, nil)
+	f.ptr.Destroy(nil)
 	f.ptr = nil
 }
 
 func (f *fence) Wait() {
-	vk.WaitForFences(f.device.Ptr(), 1, []vk.Fence{f.ptr}, vk.Bool32(0), vk.MaxUint64)
+	f.device.Ptr().WaitForFences(true, time.Hour, []core1_0.Fence{f.ptr})
 }
 
 func (f *fence) Done() bool {
-	return vk.GetFenceStatus(f.device.Ptr(), f.ptr) == vk.Success
+	r, err := f.ptr.Status()
+	if err != nil {
+		panic(err)
+	}
+	return r == core1_0.VKSuccess
 }

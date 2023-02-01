@@ -6,6 +6,7 @@ import (
 	"github.com/johanhenriksson/goworld/render/device"
 	"github.com/johanhenriksson/goworld/render/vertex"
 
+	"github.com/vkngwrapper/core/v2/core1_0"
 	vk "github.com/vulkan-go/vulkan"
 )
 
@@ -38,8 +39,8 @@ func (m *meshes) Instantiate(mesh vertex.Mesh) VkMesh {
 	idxSize := mesh.IndexSize() * mesh.Indices()
 
 	cached := &vkMesh{
-		vertices: buffer.NewRemote(m.device, vtxSize, vk.BufferUsageVertexBufferBit),
-		indices:  buffer.NewRemote(m.device, idxSize, vk.BufferUsageIndexBufferBit),
+		vertices: buffer.NewRemote(m.device, vtxSize, core1_0.BufferUsageVertexBuffer),
+		indices:  buffer.NewRemote(m.device, idxSize, core1_0.BufferUsageIndexBuffer),
 	}
 	m.upload(cached, mesh)
 
@@ -62,11 +63,11 @@ func (m *meshes) upload(cached *vkMesh, mesh vertex.Mesh) {
 	// reallocate buffers if required
 	if cached.vertices.Size() < vtxSize || cached.vertices.Size() > 2*vtxSize {
 		cached.vertices.Destroy()
-		cached.vertices = buffer.NewRemote(m.device, vtxSize, vk.BufferUsageVertexBufferBit)
+		cached.vertices = buffer.NewRemote(m.device, vtxSize, core1_0.BufferUsageVertexBuffer)
 	}
 	if cached.indices.Size() < idxSize || cached.indices.Size() > 2*idxSize {
 		cached.indices.Destroy()
-		cached.indices = buffer.NewRemote(m.device, idxSize, vk.BufferUsageIndexBufferBit)
+		cached.indices = buffer.NewRemote(m.device, idxSize, core1_0.BufferUsageIndexBuffer)
 	}
 
 	m.worker.Queue(func(cmd command.Buffer) {

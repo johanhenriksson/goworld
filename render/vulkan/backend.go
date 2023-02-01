@@ -9,7 +9,7 @@ import (
 	"github.com/johanhenriksson/goworld/render/device"
 	"github.com/johanhenriksson/goworld/render/vulkan/instance"
 
-	vk "github.com/vulkan-go/vulkan"
+	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
 type T interface {
@@ -48,13 +48,13 @@ func New(appName string, deviceIndex int) T {
 	device := instance.GetDevice(deviceIndex)
 
 	// transfer worker
-	transfer := command.NewWorker(device, vk.QueueFlags(vk.QueueTransferBit), 0)
+	transfer := command.NewWorker(device, core1_0.QueueTransfer, 0)
 
 	// per frame graphics workers
 	workerCount := 1 // frames
 	workers := make([]command.Worker, workerCount)
 	for i := range workers {
-		workers[i] = command.NewWorker(device, vk.QueueFlags(vk.QueueGraphicsBit), i+1)
+		workers[i] = command.NewWorker(device, core1_0.QueueGraphics, i+1)
 	}
 
 	// init caches

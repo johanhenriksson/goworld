@@ -8,12 +8,6 @@ import (
 	vk "github.com/vulkan-go/vulkan"
 )
 
-var Nil T = &vktexture{
-	ptr:   vk.NullSampler,
-	image: image.Nil,
-	view:  image.NilView,
-}
-
 type T interface {
 	device.Resource[vk.Sampler]
 	Image() image.T
@@ -117,10 +111,10 @@ func (t *vktexture) Destroy() {
 	t.ptr = vk.NullSampler
 
 	t.view.Destroy()
-	t.view = image.NilView
+	t.view = nil
 
 	t.image.Destroy()
-	t.image = image.Nil
+	t.image = nil
 
-	t.device = device.Nil
+	t.device = nil
 }

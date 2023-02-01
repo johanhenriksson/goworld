@@ -4,21 +4,22 @@ import (
 	"errors"
 	"fmt"
 
-	vk "github.com/vulkan-go/vulkan"
+	"github.com/vkngwrapper/core/v2/common"
+	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
 var ErrOutOfHostMemory = errors.New("out of host memory")
 var ErrOutOfDeviceMemory = errors.New("out of device memory")
 
-func FromResult(result vk.Result) error {
+func FromResult(result common.VkResult) error {
 	switch result {
-	case vk.Success:
+	case core1_0.VKSuccess:
 		return nil
 
-	case vk.ErrorOutOfHostMemory:
+	case core1_0.VKErrorOutOfHostMemory:
 		return ErrOutOfHostMemory
 
-	case vk.ErrorOutOfDeviceMemory:
+	case core1_0.VKErrorOutOfDeviceMemory:
 		return ErrOutOfDeviceMemory
 
 	default:

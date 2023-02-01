@@ -44,10 +44,10 @@ func NewDepth(device device.T, desc Depth) T {
 		name:   DepthName,
 		alloc:  desc.Allocator,
 		clear:  clear,
-		format: depthFormat,
+		format: vk.Format(depthFormat),
 		usage:  desc.Usage,
 		desc: vk.AttachmentDescription{
-			Format:         depthFormat,
+			Format:         vk.Format(depthFormat),
 			Samples:        desc.Samples,
 			LoadOp:         desc.LoadOp,
 			StoreOp:        desc.StoreOp,
