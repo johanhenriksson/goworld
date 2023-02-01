@@ -3,7 +3,12 @@ package device
 import (
 	"log"
 
+	"github.com/johanhenriksson/goworld/render/vulkan/instance"
+
+	"github.com/vkngwrapper/core/v2/common"
 	"github.com/vkngwrapper/core/v2/core1_0"
+	"github.com/vkngwrapper/core/v2/driver"
+	"github.com/vkngwrapper/extensions/v2/ext_debug_utils"
 	"github.com/vkngwrapper/extensions/v2/ext_descriptor_indexing"
 )
 
@@ -23,18 +28,21 @@ type T interface {
 	GetMemoryTypeIndex(uint32, core1_0.MemoryPropertyFlags) int
 	GetLimits() *core1_0.PhysicalDeviceLimits
 	WaitIdle()
+
+	SetDebugObjectName(ptr driver.VulkanHandle, objType core1_0.ObjectType, name string)
 }
 
 type device struct {
 	physical core1_0.PhysicalDevice
 	ptr      core1_0.Device
 	limits   *core1_0.PhysicalDeviceLimits
+	debug    ext_debug_utils.Extension
 
 	memtypes map[memtype]int
 	queues   map[core1_0.QueueFlags]int
 }
 
-func New(physDevice core1_0.PhysicalDevice) (T, error) {
+func New(instance instance.T, physDevice core1_0.PhysicalDevice) (T, error) {
 	log.Println("creating device with extensions", deviceExtensions)
 
 	families := physDevice.QueueFamilyProperties()
@@ -55,7 +63,7 @@ func New(physDevice core1_0.PhysicalDevice) (T, error) {
 		DescriptorBindingStorageTexelBufferUpdateAfterBind: true,
 	}
 	dev, _, err := physDevice.CreateDevice(nil, core1_0.DeviceCreateInfo{
-		NextOptions:           indexingFeatures.NextOptions,
+		NextOptions:           common.NextOptions{Next: indexingFeatures},
 		EnabledExtensionNames: deviceExtensions,
 		QueueCreateInfos: []core1_0.DeviceQueueCreateInfo{
 			{
@@ -87,9 +95,12 @@ func New(physDevice core1_0.PhysicalDevice) (T, error) {
 	log.Println("minimum uniform buffer alignment:", properties.Limits.MinUniformBufferOffsetAlignment)
 	log.Println("minimum storage buffer alignment:", properties.Limits.MinStorageBufferOffsetAlignment)
 
+	debug := ext_debug_utils.CreateExtensionFromInstance(instance.Ptr())
+
 	return &device{
-		physical: physDevice,
 		ptr:      dev,
+		debug:    debug,
+		physical: physDevice,
 		limits:   properties.Limits,
 		memtypes: make(map[memtype]int),
 		queues:   make(map[core1_0.QueueFlags]int),
@@ -178,4 +189,12 @@ func (d *device) Destroy() {
 
 func (d *device) WaitIdle() {
 	d.ptr.WaitIdle()
+}
+
+func (d *device) SetDebugObjectName(handle driver.VulkanHandle, objType core1_0.ObjectType, name string) {
+	d.debug.SetDebugUtilsObjectName(d.ptr, ext_debug_utils.DebugUtilsObjectNameInfo{
+		ObjectName:   name,
+		ObjectHandle: handle,
+		ObjectType:   objType,
+	})
 }

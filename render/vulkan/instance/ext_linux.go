@@ -1,11 +1,15 @@
 package instance
 
 import (
-	vk "github.com/vulkan-go/vulkan"
+	"github.com/vkngwrapper/extensions/v2/ext_debug_utils"
+	"github.com/vkngwrapper/extensions/v2/khr_get_physical_device_properties2"
+	"github.com/vkngwrapper/extensions/v2/khr_surface"
 )
 
 var extensions = []string{
-	vk.KhrSurfaceExtensionName,
-	// vk.ExtDebugReportExtensionName,
+	khr_surface.ExtensionName,
+	khr_get_physical_device_properties2.ExtensionName,
+	ext_debug_utils.ExtensionName,
+
 	"VK_KHR_xcb_surface",
 }

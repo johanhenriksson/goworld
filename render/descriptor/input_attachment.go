@@ -7,7 +7,7 @@ import (
 	"github.com/johanhenriksson/goworld/render/image"
 
 	"github.com/vkngwrapper/core/v2/core1_0"
-	"github.com/vkngwrapper/core/v2/core1_2"
+	"github.com/vkngwrapper/extensions/v2/ext_descriptor_indexing"
 )
 
 type InputAttachment struct {
@@ -53,7 +53,7 @@ func (d *InputAttachment) LayoutBinding(binding int) core1_0.DescriptorSetLayout
 	}
 }
 
-func (d *InputAttachment) BindingFlags() core1_2.DescriptorBindingFlags { return 0 }
+func (d *InputAttachment) BindingFlags() ext_descriptor_indexing.DescriptorBindingFlags { return 0 }
 
 func (d *InputAttachment) write() {
 	d.set.Write(core1_0.WriteDescriptorSet{

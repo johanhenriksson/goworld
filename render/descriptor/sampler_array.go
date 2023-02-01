@@ -7,7 +7,7 @@ import (
 	"github.com/johanhenriksson/goworld/render/texture"
 
 	"github.com/vkngwrapper/core/v2/core1_0"
-	"github.com/vkngwrapper/core/v2/core1_2"
+	"github.com/vkngwrapper/extensions/v2/ext_descriptor_indexing"
 )
 
 type SamplerArray struct {
@@ -52,12 +52,11 @@ func (d *SamplerArray) LayoutBinding(binding int) core1_0.DescriptorSetLayoutBin
 	}
 }
 
-func (d *SamplerArray) BindingFlags() core1_2.DescriptorBindingFlags {
-	return core1_2.DescriptorBindingFlags(
-		core1_2.DescriptorBindingVariableDescriptorCount |
-			core1_2.DescriptorBindingPartiallyBound |
-			core1_2.DescriptorBindingUpdateAfterBind |
-			core1_2.DescriptorBindingUpdateUnusedWhilePending)
+func (d *SamplerArray) BindingFlags() ext_descriptor_indexing.DescriptorBindingFlags {
+	return ext_descriptor_indexing.DescriptorBindingVariableDescriptorCount |
+		ext_descriptor_indexing.DescriptorBindingPartiallyBound |
+		ext_descriptor_indexing.DescriptorBindingUpdateAfterBind |
+		ext_descriptor_indexing.DescriptorBindingUpdateUnusedWhilePending
 }
 
 func (d *SamplerArray) MaxCount() int {

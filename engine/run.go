@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"runtime"
-	"runtime/debug"
 	"time"
 
 	"github.com/johanhenriksson/goworld/core/camera"
@@ -34,7 +33,7 @@ func Run(args Args, scenefuncs ...SceneFunc) {
 	log.Println("goworld")
 
 	// disable automatic garbage collection
-	debug.SetGCPercent(-1)
+	// debug.SetGCPercent(-1)
 
 	go RunProfilingServer(6060)
 	interrupt := NewInterrupter()

@@ -4,6 +4,7 @@ import (
 	"github.com/johanhenriksson/goworld/render/device"
 
 	"github.com/vkngwrapper/core/v2/core1_0"
+	"github.com/vkngwrapper/core/v2/driver"
 )
 
 type Module interface {
@@ -25,12 +26,16 @@ func NewModule(device device.T, path string, stage core1_0.ShaderStageFlags) Mod
 		panic(err)
 	}
 
-	ptr, _, err := device.Ptr().CreateShaderModule(nil, core1_0.ShaderModuleCreateInfo{
+	ptr, result, err := device.Ptr().CreateShaderModule(nil, core1_0.ShaderModuleCreateInfo{
 		Code: sliceUint32(bytecode),
 	})
 	if err != nil {
 		panic(err)
 	}
+	if result != core1_0.VKSuccess {
+		panic("failed to create shader")
+	}
+	device.SetDebugObjectName(driver.VulkanHandle(ptr.Handle()), core1_0.ObjectTypeShaderModule, path)
 
 	return &shader_module{
 		device: device,
@@ -38,6 +43,8 @@ func NewModule(device device.T, path string, stage core1_0.ShaderStageFlags) Mod
 		stage:  stage,
 	}
 }
+
+func (b *shader_module) VkType() core1_0.ObjectType { return core1_0.ObjectTypeShaderModule }
 
 func (s *shader_module) Ptr() core1_0.ShaderModule {
 	return s.ptr

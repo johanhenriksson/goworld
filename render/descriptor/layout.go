@@ -6,19 +6,23 @@ import (
 	"github.com/johanhenriksson/goworld/render/device"
 	"github.com/johanhenriksson/goworld/render/shader"
 
+	"github.com/vkngwrapper/core/v2/common"
 	"github.com/vkngwrapper/core/v2/core1_0"
-	"github.com/vkngwrapper/core/v2/core1_2"
+	"github.com/vkngwrapper/core/v2/driver"
+	"github.com/vkngwrapper/extensions/v2/ext_descriptor_indexing"
 )
 
 type Map map[string]Descriptor
 
 type SetLayout interface {
 	device.Resource[core1_0.DescriptorSetLayout]
+	Name() string
 	VariableCount() int
 }
 
 type SetLayoutTyped[S Set] interface {
 	SetLayout
+	Name() string
 	Instantiate(pool Pool) S
 }
 
@@ -41,7 +45,7 @@ func New[S Set](device device.T, set S, shader shader.T) SetLayoutTyped[S] {
 	maxCount := 0
 	createFlags := core1_0.DescriptorSetLayoutCreateFlags(0)
 	bindings := make([]core1_0.DescriptorSetLayoutBinding, 0, len(descriptors))
-	bindFlags := make([]core1_2.DescriptorBindingFlags, 0, len(descriptors))
+	bindFlags := make([]ext_descriptor_indexing.DescriptorBindingFlags, 0, len(descriptors))
 	for name, descriptor := range descriptors {
 		index, exists := shader.Descriptor(name)
 		if !exists {
@@ -51,8 +55,8 @@ func New[S Set](device device.T, set S, shader shader.T) SetLayoutTyped[S] {
 		flags := descriptor.BindingFlags()
 		bindFlags = append(bindFlags, flags)
 
-		if flags&core1_2.DescriptorBindingUpdateAfterBind > 0 {
-			createFlags |= core1_2.DescriptorSetLayoutCreateUpdateAfterBindPool
+		if flags&ext_descriptor_indexing.DescriptorBindingUpdateAfterBind == ext_descriptor_indexing.DescriptorBindingUpdateAfterBind {
+			createFlags |= ext_descriptor_indexing.DescriptorSetLayoutCreateUpdateAfterBindPool
 		}
 
 		log.Printf("  %s -> %s\n", name, descriptor)
@@ -62,20 +66,22 @@ func New[S Set](device device.T, set S, shader shader.T) SetLayoutTyped[S] {
 		}
 	}
 
-	bindFlagsInfo := core1_2.DescriptorSetLayoutBindingFlagsCreateInfo{
+	bindFlagsInfo := ext_descriptor_indexing.DescriptorSetLayoutBindingFlagsCreateInfo{
 		BindingFlags: bindFlags,
 	}
 
 	info := core1_0.DescriptorSetLayoutCreateInfo{
-		Flags:       core1_0.DescriptorSetLayoutCreateFlags(createFlags),
+		Flags:       createFlags,
 		Bindings:    bindings,
-		NextOptions: bindFlagsInfo.NextOptions,
+		NextOptions: common.NextOptions{Next: bindFlagsInfo},
 	}
 
 	ptr, _, err := device.Ptr().CreateDescriptorSetLayout(nil, info)
 	if err != nil {
 		panic(err)
 	}
+
+	device.SetDebugObjectName(driver.VulkanHandle(ptr.Handle()), core1_0.ObjectTypeDescriptorSetLayout, shader.Name())
 
 	return &layout[S]{
 		device:   device,
@@ -84,6 +90,10 @@ func New[S Set](device device.T, set S, shader shader.T) SetLayoutTyped[S] {
 		set:      set,
 		maxCount: maxCount,
 	}
+}
+
+func (d *layout[S]) Name() string {
+	return d.shader.Name()
 }
 
 func (d *layout[S]) Ptr() core1_0.DescriptorSetLayout {

@@ -2,7 +2,6 @@ package instance
 
 import (
 	"github.com/go-gl/glfw/v3.3/glfw"
-	"github.com/johanhenriksson/goworld/render/device"
 	"github.com/vkngwrapper/core/v2"
 	"github.com/vkngwrapper/core/v2/common"
 	"github.com/vkngwrapper/core/v2/core1_0"
@@ -14,9 +13,9 @@ var layers = []string{
 }
 
 type T interface {
-	device.Resource[core1_0.Instance]
 	EnumeratePhysicalDevices() []core1_0.PhysicalDevice
-	GetDevice(int) device.T
+	Destroy()
+	Ptr() core1_0.Instance
 }
 
 type instance struct {
@@ -49,15 +48,6 @@ func (i *instance) Ptr() core1_0.Instance {
 func (i *instance) Destroy() {
 	i.ptr.Destroy(nil)
 	i.ptr = nil
-}
-
-func (i *instance) GetDevice(index int) device.T {
-	physDevices := i.EnumeratePhysicalDevices()
-	device, err := device.New(physDevices[index])
-	if err != nil {
-		panic(err)
-	}
-	return device
 }
 
 func (i *instance) EnumeratePhysicalDevices() []core1_0.PhysicalDevice {

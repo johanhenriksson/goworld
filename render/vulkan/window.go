@@ -166,5 +166,5 @@ func (w *window) Aquire() (swapchain.Context, error) {
 
 func (w *window) Destroy() {
 	w.swap.Destroy()
-	// vk.DestroySurface(w.T.Instance().Ptr(), w.surface, nil)
+	w.surface.Destroy(nil)
 }

@@ -28,6 +28,7 @@ func (d Bindings) Descriptor(name string) (int, bool) {
 }
 
 type T interface {
+	Name() string
 	Modules() []Module
 	Destroy()
 	Input(name string) (int, types.Type, bool)
@@ -35,6 +36,7 @@ type T interface {
 }
 
 type shader struct {
+	name     string
 	modules  []Module
 	inputs   Inputs
 	bindings Bindings
@@ -58,10 +60,15 @@ func New(device device.T, path string) T {
 	}
 
 	return &shader{
+		name:     path,
 		modules:  modules,
 		inputs:   inputs,
 		bindings: details.Bindings,
 	}
+}
+
+func (s *shader) Name() string {
+	return s.name
 }
 
 func (s *shader) Modules() []Module {

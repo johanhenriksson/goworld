@@ -8,7 +8,7 @@ import (
 	"github.com/johanhenriksson/goworld/render/device"
 
 	"github.com/vkngwrapper/core/v2/core1_0"
-	"github.com/vkngwrapper/core/v2/core1_2"
+	"github.com/vkngwrapper/extensions/v2/ext_descriptor_indexing"
 )
 
 type Uniform[K any] struct {
@@ -77,4 +77,4 @@ func (d *Uniform[K]) LayoutBinding(binding int) core1_0.DescriptorSetLayoutBindi
 	}
 }
 
-func (d *Uniform[K]) BindingFlags() core1_2.DescriptorBindingFlags { return 0 }
+func (d *Uniform[K]) BindingFlags() ext_descriptor_indexing.DescriptorBindingFlags { return 0 }

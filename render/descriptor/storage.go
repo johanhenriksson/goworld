@@ -8,7 +8,7 @@ import (
 	"github.com/johanhenriksson/goworld/render/device"
 
 	"github.com/vkngwrapper/core/v2/core1_0"
-	"github.com/vkngwrapper/core/v2/core1_2"
+	"github.com/vkngwrapper/extensions/v2/ext_descriptor_indexing"
 )
 
 type Storage[K any] struct {
@@ -72,7 +72,7 @@ func (d *Storage[K]) LayoutBinding(binding int) core1_0.DescriptorSetLayoutBindi
 	}
 }
 
-func (d *Storage[K]) BindingFlags() core1_2.DescriptorBindingFlags { return 0 }
+func (d *Storage[K]) BindingFlags() ext_descriptor_indexing.DescriptorBindingFlags { return 0 }
 
 func (d *Storage[K]) write() {
 	d.set.Write(core1_0.WriteDescriptorSet{

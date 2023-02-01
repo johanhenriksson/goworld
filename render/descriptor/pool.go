@@ -3,8 +3,10 @@ package descriptor
 import (
 	"github.com/johanhenriksson/goworld/render/device"
 
+	"github.com/vkngwrapper/core/v2/common"
 	"github.com/vkngwrapper/core/v2/core1_0"
-	"github.com/vkngwrapper/core/v2/core1_2"
+	"github.com/vkngwrapper/core/v2/driver"
+	"github.com/vkngwrapper/extensions/v2/ext_descriptor_indexing"
 )
 
 type Pool interface {
@@ -40,7 +42,7 @@ func (p *pool) Recreate() {
 	p.Destroy()
 
 	info := core1_0.DescriptorPoolCreateInfo{
-		Flags:     core1_2.DescriptorPoolCreateUpdateAfterBind,
+		Flags:     ext_descriptor_indexing.DescriptorPoolCreateUpdateAfterBind,
 		PoolSizes: p.sizes,
 		MaxSets:   p.maxSets,
 	}
@@ -69,10 +71,10 @@ func (p *pool) Allocate(layout SetLayout) Set {
 	}
 
 	if layout.VariableCount() > 0 {
-		variableInfo := core1_2.DescriptorSetVariableDescriptorCountAllocateInfo{
+		variableInfo := ext_descriptor_indexing.DescriptorSetVariableDescriptorCountAllocateInfo{
 			DescriptorCounts: []int{layout.VariableCount()},
 		}
-		info.NextOptions = variableInfo.NextOptions
+		info.NextOptions = common.NextOptions{Next: variableInfo}
 	}
 
 	ptr, r, err := p.device.Ptr().AllocateDescriptorSets(info)
@@ -85,6 +87,11 @@ func (p *pool) Allocate(layout SetLayout) Set {
 		}
 		panic("failed to allocate descriptor set")
 	}
+
+	p.device.SetDebugObjectName(
+		driver.VulkanHandle(ptr[0].Handle()),
+		core1_0.ObjectTypeDescriptorSet,
+		layout.Name())
 
 	return &set{
 		device: p.device,

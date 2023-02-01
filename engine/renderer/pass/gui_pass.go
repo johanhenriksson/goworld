@@ -82,7 +82,7 @@ func NewGuiPass(target vulkan.Target) *GuiPass {
 		Pointers: vertex.ParsePointers(vertex.UI{}),
 		Constants: []pipeline.PushConstant{
 			{
-				Stages: core1_0.StageFragment,
+				Stages: core1_0.StageAll,
 				Type:   widget.Constants{},
 			},
 		},

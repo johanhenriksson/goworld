@@ -45,7 +45,10 @@ func New(appName string, deviceIndex int) T {
 	// create instance * device
 	frames := 2
 	instance := instance.New(appName)
-	device := instance.GetDevice(deviceIndex)
+	device, err := device.New(instance, instance.EnumeratePhysicalDevices()[0])
+	if err != nil {
+		panic(err)
+	}
 
 	// transfer worker
 	transfer := command.NewWorker(device, core1_0.QueueTransfer, 0)
