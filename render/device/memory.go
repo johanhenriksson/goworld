@@ -110,7 +110,7 @@ func (m *memory) Write(offset int, data any) int {
 	offsetDst := unsafe.Pointer(uintptr(dst) + uintptr(offset))
 
 	// copy from host
-	Memcpy(offsetDst, src, size-offset)
+	Memcpy(offsetDst, src, m.size-offset)
 
 	// flush region
 	// todo: optimize to the smallest possible region

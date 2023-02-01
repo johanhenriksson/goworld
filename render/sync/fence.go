@@ -6,6 +6,7 @@ import (
 	"github.com/johanhenriksson/goworld/render/device"
 
 	"github.com/vkngwrapper/core/v2/core1_0"
+	"github.com/vkngwrapper/core/v2/driver"
 )
 
 type Fence interface {
@@ -21,7 +22,7 @@ type fence struct {
 	ptr    core1_0.Fence
 }
 
-func NewFence(device device.T, signaled bool) Fence {
+func NewFence(device device.T, name string, signaled bool) Fence {
 	var flags core1_0.FenceCreateFlags
 	if signaled {
 		flags = core1_0.FenceCreateSignaled
@@ -33,6 +34,7 @@ func NewFence(device device.T, signaled bool) Fence {
 	if err != nil {
 		panic(err)
 	}
+	device.SetDebugObjectName(driver.VulkanHandle(ptr.Handle()), core1_0.ObjectTypeFence, name)
 
 	return &fence{
 		device: device,

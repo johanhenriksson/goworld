@@ -1,8 +1,6 @@
 package pass
 
 import (
-	"log"
-
 	"github.com/johanhenriksson/goworld/core/mesh"
 	"github.com/johanhenriksson/goworld/engine/renderer/uniform"
 	"github.com/johanhenriksson/goworld/render"
@@ -47,7 +45,6 @@ func (m *MaterialSorter) Load(def *material.Def) {
 	if def == nil {
 		def = m.defaultMat
 	}
-	log.Println("instantiate new forward material id", id, def)
 	mat := material.FromDef(m.target.Device(), m.target.Pool(), m.pass, def)
 	m.cache[id] = mat
 }

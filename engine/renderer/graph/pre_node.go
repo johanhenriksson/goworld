@@ -29,10 +29,9 @@ func (n *preNode) Draw(worker command.Worker, args render.Args, scene object.T) 
 			},
 		}
 	}
-	args.Context.InFlight.Lock()
 	worker.Submit(command.SubmitInfo{
 		Marker: n.Name(),
 		Wait:   waits,
-		Signal: n.signals,
+		Signal: n.signals(args.Context.Index),
 	})
 }

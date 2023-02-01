@@ -99,7 +99,7 @@ func (r *rgraph) GBuffer() pass.GeometryBuffer {
 }
 
 func (r *rgraph) Destroy() {
-	r.target.Device().WaitIdle()
+	r.target.Flush()
 
 	if r.graph != nil {
 		r.graph.Destroy()

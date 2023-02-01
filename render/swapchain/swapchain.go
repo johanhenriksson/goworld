@@ -17,8 +17,8 @@ import (
 type T interface {
 	device.Resource[khr_swapchain.Swapchain]
 
-	Aquire() (Context, error)
-	Present(core1_0.Queue)
+	Aquire() (*Context, error)
+	Present(core1_0.Queue, *Context)
 	Resize(int, int)
 
 	Images() []image.T
@@ -38,7 +38,7 @@ type swapchain struct {
 	height     int
 	resized    bool
 
-	contexts []Context
+	contexts []*Context
 }
 
 func New(device device.T, frames, width, height int, surface khr_surface.Surface, surfaceFormat khr_surface.SurfaceFormat) T {
@@ -48,7 +48,7 @@ func New(device device.T, frames, width, height int, surface khr_surface.Surface
 		surface:    surface,
 		surfaceFmt: surfaceFormat,
 		frames:     frames,
-		contexts:   make([]Context, frames),
+		contexts:   make([]*Context, frames),
 		width:      width,
 		height:     height,
 	}
@@ -104,9 +104,12 @@ func (s *swapchain) recreate() {
 	}
 	s.ptr = chain
 
-	swapimages, _, err := chain.SwapchainImages()
+	swapimages, result, err := chain.SwapchainImages()
 	if err != nil {
 		panic(err)
+	}
+	if result != core1_0.VKSuccess {
+		panic("failed to get swapchain images")
 	}
 	if len(swapimages) != s.frames {
 		panic("failed to get the requested number of swapchain images")
@@ -120,9 +123,11 @@ func (s *swapchain) recreate() {
 		})
 	})
 
-	for i := range s.contexts {
-		// destroy existing
-		s.contexts[i].Destroy()
+	for i, ctx := range s.contexts {
+		if ctx != nil {
+			// destroy existing
+			ctx.Destroy()
+		}
 		s.contexts[i] = newContext(s.device, i)
 	}
 
@@ -130,31 +135,34 @@ func (s *swapchain) recreate() {
 	s.current = -1
 }
 
-func (s *swapchain) Aquire() (Context, error) {
+func (s *swapchain) Aquire() (*Context, error) {
 	if s.resized {
 		log.Println("aquire triggered swapchain recreation")
 		s.recreate()
 		s.resized = false
-		return Context{}, fmt.Errorf("swapchain out of date")
+		return nil, fmt.Errorf("swapchain out of date")
 	}
 
-	nextFrame := s.contexts[(s.current+1)%s.frames]
+	s.current = (s.current + 1) % s.frames
+	nextFrame := s.contexts[s.current]
+
+	// wait for frame to become available
+	nextFrame.InFlight.Lock()
+
 	idx, r, err := s.ptr.AcquireNextImage(time.Second, nextFrame.ImageAvailable.Ptr(), nil)
 	if err != nil {
 		panic(err)
 	}
 	if r == khr_swapchain.VKErrorOutOfDate {
 		s.recreate()
-		return Context{}, fmt.Errorf("swapchain out of date")
+		return nil, fmt.Errorf("swapchain out of date")
 	}
+	nextFrame.Image = idx
 
-	s.current = int(idx)
-	return s.contexts[s.current], nil
+	return nextFrame, nil
 }
 
-func (s *swapchain) Present(queue core1_0.Queue) {
-	ctx := s.contexts[s.current]
-
+func (s *swapchain) Present(queue core1_0.Queue, ctx *Context) {
 	var waits []core1_0.Semaphore
 	if ctx.RenderComplete != nil {
 		waits = []core1_0.Semaphore{ctx.RenderComplete.Ptr()}
@@ -163,7 +171,7 @@ func (s *swapchain) Present(queue core1_0.Queue) {
 	s.ext.QueuePresent(queue, khr_swapchain.PresentInfo{
 		WaitSemaphores: waits,
 		Swapchains:     []khr_swapchain.Swapchain{s.Ptr()},
-		ImageIndices:   []int{ctx.Index},
+		ImageIndices:   []int{ctx.Image},
 	})
 }
 

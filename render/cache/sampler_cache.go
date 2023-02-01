@@ -32,24 +32,14 @@ func (s *samplers) Name() string {
 	return "Sampler"
 }
 
-func (s *samplers) Instantiate(ref texture.Ref) int {
-	tex := s.textures.Instantiate(ref)
-	id := s.next
-	s.next++
-	s.mapping[id] = tex
-	s.desc.Set(id, tex)
-	return id
-}
-
-func (s *samplers) Update(id int, ref texture.Ref) int {
-	tex := s.textures.Instantiate(ref)
-	s.desc.Set(id, tex)
-
-	// deallocate old texture
-	s.textures.Delete(s.mapping[id])
-
-	s.mapping[id] = tex
-	return id
+func (s *samplers) Instantiate(ref texture.Ref, callback func(int)) {
+	s.textures.Instantiate(ref, func(tex texture.T) {
+		id := s.next
+		s.next++
+		s.mapping[id] = tex
+		s.desc.Set(id, tex)
+		callback(id)
+	})
 }
 
 func (s *samplers) Delete(id int) {

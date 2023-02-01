@@ -1,52 +1,80 @@
 package cache
 
 import (
+	"github.com/johanhenriksson/goworld/render/buffer"
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/device"
 	"github.com/johanhenriksson/goworld/render/texture"
-	"github.com/johanhenriksson/goworld/render/upload"
+
+	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
 type TextureCache T[texture.Ref, texture.T]
 
-// mesh cache backend
+func NewTextureCache(device device.T, worker command.Worker) TextureCache {
+	return New[texture.Ref, texture.T](&textures{
+		device: device,
+		worker: worker,
+	})
+}
+
 type textures struct {
 	device device.T
 	worker command.Worker
 }
 
-func NewTextureCache(dev device.T, transferer command.Worker) TextureCache {
-	return New[texture.Ref, texture.T](&textures{
-		device: dev,
-		worker: transferer,
-	})
-}
-
-func (t *textures) Name() string {
-	return "Texture"
-}
-
-func (t *textures) Instantiate(ref texture.Ref) texture.T {
+func (t *textures) Instantiate(ref texture.Ref, callback func(texture.T)) {
 	img := ref.Load()
 
-	tex, err := upload.NewTextureSync(t.device, t.worker, img)
+	// allocate texture
+	tex, err := texture.New(t.device, texture.Args{
+		Width:  img.Rect.Size().X,
+		Height: img.Rect.Size().Y,
+		Format: core1_0.FormatR8G8B8A8UnsignedNormalized,
+		Filter: core1_0.FilterLinear,
+		Wrap:   core1_0.SamplerAddressModeRepeat,
+	})
 	if err != nil {
 		panic(err)
 	}
 
-	return tex
+	// allocate staging buffer
+	stage := buffer.NewShared(t.device, len(img.Pix))
+
+	// write to staging buffer
+	stage.Write(0, img.Pix)
+
+	// transfer data to texture buffer
+	t.worker.Queue(func(cmd command.Buffer) {
+		cmd.CmdImageBarrier(
+			core1_0.PipelineStageTopOfPipe,
+			core1_0.PipelineStageTransfer,
+			tex.Image(),
+			core1_0.ImageLayoutUndefined,
+			core1_0.ImageLayoutTransferDstOptimal,
+			core1_0.ImageAspectColor)
+		cmd.CmdCopyBufferToImage(stage, tex.Image(), core1_0.ImageLayoutTransferDstOptimal)
+		cmd.CmdImageBarrier(
+			core1_0.PipelineStageTransfer,
+			core1_0.PipelineStageFragmentShader,
+			tex.Image(),
+			core1_0.ImageLayoutTransferDstOptimal,
+			core1_0.ImageLayoutShaderReadOnlyOptimal,
+			core1_0.ImageAspectColor)
+	})
+	t.worker.Submit(command.SubmitInfo{
+		Marker: "TextureUpload",
+		Then: func() {
+			stage.Destroy()
+			callback(tex)
+		},
+	})
 }
 
-func (m *textures) Update(tex texture.T, ref texture.Ref) texture.T {
-	// we cant reuse texture objects yet
-	tex2 := m.Instantiate(ref)
+func (t *textures) Delete(tex texture.T) {
 	tex.Destroy()
-	return tex2
 }
 
-func (m *textures) Delete(tex texture.T) {
-	tex.Destroy()
-}
+func (t *textures) Destroy() {
 
-func (m *textures) Destroy() {
 }

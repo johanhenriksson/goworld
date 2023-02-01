@@ -160,7 +160,7 @@ func (w *window) SetTitle(title string) {
 	w.title = title
 }
 
-func (w *window) Aquire() (swapchain.Context, error) {
+func (w *window) Aquire() (*swapchain.Context, error) {
 	return w.swap.Aquire()
 }
 

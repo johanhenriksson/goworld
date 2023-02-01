@@ -1,6 +1,7 @@
 package swapchain
 
 import (
+	"fmt"
 	gosync "sync"
 
 	"github.com/johanhenriksson/goworld/render/device"
@@ -9,16 +10,17 @@ import (
 
 type Context struct {
 	Index          int
+	Image          int
 	ImageAvailable sync.Semaphore
 	RenderComplete sync.Semaphore
 	InFlight       *gosync.Mutex
 }
 
-func newContext(dev device.T, index int) Context {
-	return Context{
+func newContext(dev device.T, index int) *Context {
+	return &Context{
 		Index:          index,
-		ImageAvailable: sync.NewSemaphore(dev),
-		RenderComplete: sync.NewSemaphore(dev),
+		ImageAvailable: sync.NewSemaphore(dev, fmt.Sprintf("ImageAvailable:%d", index)),
+		RenderComplete: sync.NewSemaphore(dev, fmt.Sprintf("RenderComplete:%d", index)),
 		InFlight:       &gosync.Mutex{},
 	}
 }

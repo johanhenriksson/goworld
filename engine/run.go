@@ -32,9 +32,6 @@ type Args struct {
 func Run(args Args, scenefuncs ...SceneFunc) {
 	log.Println("goworld")
 
-	// disable automatic garbage collection
-	// debug.SetGCPercent(-1)
-
 	go RunProfilingServer(6060)
 	interrupt := NewInterrupter()
 
@@ -74,7 +71,6 @@ func Run(args Args, scenefuncs ...SceneFunc) {
 	counter := NewFrameCounter(60)
 
 	currentTime := time.Now()
-	// framesSinceGC := 0
 	for interrupt.Running() && !wnd.ShouldClose() {
 		newTime := time.Now()
 		frameTime := newTime.Sub(currentTime)
@@ -118,21 +114,19 @@ func Run(args Args, scenefuncs ...SceneFunc) {
 		// draw
 		renderer.Draw(args, scene)
 
-		// wait for submissions
-		wnd.Transferer().Wait()
-
 		// present image
 		wnd.Worker(context.Index).
 			Present(wnd.Swapchain(), context)
 
-		wnd.Worker(context.Index).Wait()
+		// cache ticks
+		wnd.Meshes().Tick(context.Index)
+		wnd.Textures().Tick(context.Index)
 
 		// gc pass
-		// this might be a decent place to run GC?
-		// or a horrible one since we are waiting for vulkan stuff to complete
 		// collectGarbage()
 
 		counter.Sample()
+		// timing := counter.Sample()
 		// log.Printf(
 		// 	"frame: %2.fms, avg: %.2fms, peak: %.2f, fps: %.1f\n",
 		// 	1000*timing.Current,
@@ -160,7 +154,7 @@ func collectGarbage() {
 	start := time.Now()
 	runtime.GC()
 	elapsed := time.Since(start)
-	if elapsed.Milliseconds() > 2 {
+	if elapsed.Milliseconds() > 1 {
 		log.Printf("slow GC cycle: %.2fms", elapsed.Seconds()*1000)
 	}
 }

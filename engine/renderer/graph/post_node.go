@@ -26,7 +26,7 @@ func (n *postNode) Draw(worker command.Worker, args render.Args, scene object.T)
 
 	worker.Submit(command.SubmitInfo{
 		Marker: n.Name(),
-		Wait:   n.waits,
+		Wait:   n.waits(args.Context.Index),
 		Signal: signal,
 		Then: func() {
 			args.Context.InFlight.Unlock()
