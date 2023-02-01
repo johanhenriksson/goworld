@@ -15,7 +15,8 @@ import (
 	"github.com/johanhenriksson/goworld/render/vertex"
 	"github.com/johanhenriksson/goworld/render/vulkan"
 
-	vk "github.com/vulkan-go/vulkan"
+	"github.com/vkngwrapper/core/v2/core1_0"
+	"github.com/vkngwrapper/extensions/v2/khr_swapchain"
 )
 
 type LinePass struct {
@@ -39,18 +40,18 @@ func NewLinePass(target vulkan.Target, geometry GeometryBuffer) *LinePass {
 				Name:          OutputAttachment,
 				Allocator:     attachment.FromImageArray(target.Surfaces()),
 				Format:        target.SurfaceFormat(),
-				LoadOp:        vk.AttachmentLoadOpLoad,
-				StoreOp:       vk.AttachmentStoreOpStore,
-				InitialLayout: vk.ImageLayoutPresentSrc,
-				FinalLayout:   vk.ImageLayoutPresentSrc,
+				LoadOp:        core1_0.AttachmentLoadOpLoad,
+				StoreOp:       core1_0.AttachmentStoreOpStore,
+				InitialLayout: khr_swapchain.ImageLayoutPresentSrc,
+				FinalLayout:   khr_swapchain.ImageLayoutPresentSrc,
 			},
 		},
 		DepthAttachment: &attachment.Depth{
 			Allocator:     attachment.FromImageArray(depth),
-			LoadOp:        vk.AttachmentLoadOpLoad,
-			InitialLayout: vk.ImageLayoutShaderReadOnlyOptimal,
-			FinalLayout:   vk.ImageLayoutDepthStencilAttachmentOptimal,
-			Usage:         vk.ImageUsageInputAttachmentBit,
+			LoadOp:        core1_0.AttachmentLoadOpLoad,
+			InitialLayout: core1_0.ImageLayoutShaderReadOnlyOptimal,
+			FinalLayout:   core1_0.ImageLayoutDepthStencilAttachmentOptimal,
+			Usage:         core1_0.ImageUsageInputAttachment,
 		},
 		Subpasses: []renderpass.Subpass{
 			{

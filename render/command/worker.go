@@ -7,9 +7,8 @@ import (
 	"github.com/johanhenriksson/goworld/render/swapchain"
 	"github.com/johanhenriksson/goworld/render/sync"
 	"github.com/johanhenriksson/goworld/util"
-	"github.com/vkngwrapper/core/v2/core1_0"
 
-	vk "github.com/vulkan-go/vulkan"
+	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
 type CommandFn func(Buffer)
@@ -79,7 +78,7 @@ func (w *worker) run() {
 
 	// dealloc
 	w.device.WaitIdle()
-	w.pool.Destroy(nil)
+	w.pool.Destroy()
 
 	// close command channels
 	close(w.stop)
@@ -102,6 +101,7 @@ func (w *worker) enqueue(batch CommandFn) {
 	buf := w.pool.Allocate(core1_0.CommandBufferLevelPrimary)
 
 	// record commands
+	buf.Begin()
 	defer buf.End()
 	batch(buf)
 
@@ -167,20 +167,8 @@ func (w *worker) submit(submit SubmitInfo) {
 }
 
 func (w *worker) Present(swap swapchain.T, ctx swapchain.Context) {
-	var waits []vk.Semaphore
-	if ctx.RenderComplete != nil {
-		waits = []core1_0.Semaphore{ctx.RenderComplete.Ptr()}
-	}
 	w.work <- func() {
-		presentInfo := vk.PresentInfo{
-			SType:              vk.StructureTypePresentInfo,
-			WaitSemaphoreCount: uint32(len(waits)),
-			PWaitSemaphores:    waits,
-			SwapchainCount:     1,
-			PSwapchains:        []vk.Swapchain{swap.Ptr()},
-			PImageIndices:      []uint32{uint32(ctx.Index)},
-		}
-		vk.QueuePresent(w.queue, &presentInfo)
+		swap.Present(w.queue)
 	}
 }
 

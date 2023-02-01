@@ -5,16 +5,18 @@ import (
 
 	"github.com/johanhenriksson/goworld/render/device"
 	"github.com/johanhenriksson/goworld/render/texture"
-	vk "github.com/vulkan-go/vulkan"
+
+	"github.com/vkngwrapper/core/v2/core1_0"
+	"github.com/vkngwrapper/core/v2/core1_2"
 )
 
 type SamplerArray struct {
 	Count  int
-	Stages vk.ShaderStageFlagBits
+	Stages core1_0.ShaderStageFlags
 
 	binding int
-	sampler []vk.Sampler
-	view    []vk.ImageView
+	sampler []core1_0.Sampler
+	view    []core1_0.ImageView
 	set     Set
 }
 
@@ -25,8 +27,8 @@ func (d *SamplerArray) Initialize(device device.T) {
 		panic("sampler array has count 0")
 	}
 
-	d.sampler = make([]vk.Sampler, d.Count)
-	d.view = make([]vk.ImageView, d.Count)
+	d.sampler = make([]core1_0.Sampler, d.Count)
+	d.view = make([]core1_0.ImageView, d.Count)
 }
 
 func (d *SamplerArray) String() string {
@@ -40,22 +42,22 @@ func (d *SamplerArray) Bind(set Set, binding int) {
 	d.binding = binding
 }
 
-func (d *SamplerArray) LayoutBinding(binding int) vk.DescriptorSetLayoutBinding {
+func (d *SamplerArray) LayoutBinding(binding int) core1_0.DescriptorSetLayoutBinding {
 	d.binding = binding
-	return vk.DescriptorSetLayoutBinding{
-		Binding:         uint32(binding),
-		DescriptorType:  vk.DescriptorTypeCombinedImageSampler,
-		DescriptorCount: uint32(d.Count),
-		StageFlags:      vk.ShaderStageFlags(d.Stages),
+	return core1_0.DescriptorSetLayoutBinding{
+		Binding:         binding,
+		DescriptorType:  core1_0.DescriptorTypeCombinedImageSampler,
+		DescriptorCount: d.Count,
+		StageFlags:      core1_0.ShaderStageFlags(d.Stages),
 	}
 }
 
-func (d *SamplerArray) BindingFlags() vk.DescriptorBindingFlags {
-	return vk.DescriptorBindingFlags(
-		vk.DescriptorBindingVariableDescriptorCountBit |
-			vk.DescriptorBindingPartiallyBoundBit |
-			vk.DescriptorBindingUpdateAfterBindBit |
-			vk.DescriptorBindingUpdateUnusedWhilePendingBit)
+func (d *SamplerArray) BindingFlags() core1_2.DescriptorBindingFlags {
+	return core1_2.DescriptorBindingFlags(
+		core1_2.DescriptorBindingVariableDescriptorCount |
+			core1_2.DescriptorBindingPartiallyBound |
+			core1_2.DescriptorBindingUpdateAfterBind |
+			core1_2.DescriptorBindingUpdateUnusedWhilePending)
 }
 
 func (d *SamplerArray) MaxCount() int {
@@ -81,22 +83,20 @@ func (d *SamplerArray) SetRange(textures []texture.T, offset int) {
 }
 
 func (d *SamplerArray) write(index, count int) {
-	images := make([]vk.DescriptorImageInfo, count)
+	images := make([]core1_0.DescriptorImageInfo, count)
 	for i := range images {
-		images[i] = vk.DescriptorImageInfo{
+		images[i] = core1_0.DescriptorImageInfo{
 			Sampler:     d.sampler[index+i],
 			ImageView:   d.view[index+i],
-			ImageLayout: vk.ImageLayoutShaderReadOnlyOptimal,
+			ImageLayout: core1_0.ImageLayoutShaderReadOnlyOptimal,
 		}
 	}
 
-	d.set.Write(vk.WriteDescriptorSet{
-		SType:           vk.StructureTypeWriteDescriptorSet,
+	d.set.Write(core1_0.WriteDescriptorSet{
 		DstSet:          d.set.Ptr(),
-		DstBinding:      uint32(d.binding),
-		DstArrayElement: uint32(index),
-		DescriptorCount: uint32(count),
-		DescriptorType:  vk.DescriptorTypeCombinedImageSampler,
-		PImageInfo:      images,
+		DstBinding:      d.binding,
+		DstArrayElement: index,
+		DescriptorType:  core1_0.DescriptorTypeCombinedImageSampler,
+		ImageInfo:       images,
 	})
 }

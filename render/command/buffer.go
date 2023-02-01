@@ -2,6 +2,7 @@ package command
 
 import (
 	"reflect"
+	"unsafe"
 
 	"github.com/johanhenriksson/goworld/render/buffer"
 	"github.com/johanhenriksson/goworld/render/descriptor"
@@ -10,9 +11,8 @@ import (
 	"github.com/johanhenriksson/goworld/render/image"
 	"github.com/johanhenriksson/goworld/render/pipeline"
 	"github.com/johanhenriksson/goworld/render/renderpass"
-	"github.com/vkngwrapper/core/v2/core1_0"
 
-	vk "github.com/vulkan-go/vulkan"
+	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
 type Buffer interface {
@@ -22,11 +22,11 @@ type Buffer interface {
 	Begin()
 	End()
 
-	CmdCopyBuffer(src, dst buffer.T, regions ...vk.BufferCopy)
+	CmdCopyBuffer(src, dst buffer.T, regions ...core1_0.BufferCopy)
 	CmdBindGraphicsPipeline(pipe pipeline.T)
 	CmdBindGraphicsDescriptor(sets descriptor.Set)
 	CmdBindVertexBuffer(vtx buffer.T, offset int)
-	CmdBindIndexBuffers(idx buffer.T, offset int, kind vk.IndexType)
+	CmdBindIndexBuffers(idx buffer.T, offset int, kind core1_0.IndexType)
 	CmdDraw(vertexCount, instanceCount, firstVertex, firstInstance int)
 	CmdDrawIndexed(indexCount, instanceCount, firstIndex, vertexOffset, firstInstance int)
 	CmdBeginRenderPass(pass renderpass.T, framebuffer framebuffer.T)
@@ -34,12 +34,12 @@ type Buffer interface {
 	CmdEndRenderPass()
 	CmdSetViewport(x, y, w, h int)
 	CmdSetScissor(x, y, w, h int)
-	CmdPushConstant(stages vk.ShaderStageFlagBits, offset int, value any)
-	CmdImageBarrier(srcMask, dstMask vk.PipelineStageFlagBits, image image.T, oldLayout, newLayout vk.ImageLayout, aspects vk.ImageAspectFlagBits)
-	CmdCopyBufferToImage(source buffer.T, dst image.T, layout vk.ImageLayout)
-	CmdCopyImageToBuffer(src image.T, srcLayout vk.ImageLayout, aspect vk.ImageAspectFlagBits, dst buffer.T)
-	CmdConvertImage(src image.T, srcLayout vk.ImageLayout, dst image.T, dstLayout vk.ImageLayout, aspects vk.ImageAspectFlagBits)
-	CmdCopyImage(src image.T, srcLayout vk.ImageLayout, dst image.T, dstLayout vk.ImageLayout, aspects vk.ImageAspectFlagBits)
+	CmdPushConstant(stages core1_0.ShaderStageFlags, offset int, value any)
+	CmdImageBarrier(srcMask, dstMask core1_0.PipelineStageFlags, image image.T, oldLayout, newLayout core1_0.ImageLayout, aspects core1_0.ImageAspectFlags)
+	CmdCopyBufferToImage(source buffer.T, dst image.T, layout core1_0.ImageLayout)
+	CmdCopyImageToBuffer(src image.T, srcLayout core1_0.ImageLayout, aspect core1_0.ImageAspectFlags, dst buffer.T)
+	CmdConvertImage(src image.T, srcLayout core1_0.ImageLayout, dst image.T, dstLayout core1_0.ImageLayout, aspects core1_0.ImageAspectFlags)
+	CmdCopyImage(src image.T, srcLayout core1_0.ImageLayout, dst image.T, dstLayout core1_0.ImageLayout, aspects core1_0.ImageAspectFlags)
 }
 
 type buf struct {
@@ -81,7 +81,9 @@ func (b *buf) Reset() {
 }
 
 func (b *buf) Begin() {
-	b.ptr.Begin(core1_0.CommandBufferBeginInfo{})
+	if _, err := b.ptr.Begin(core1_0.CommandBufferBeginInfo{}); err != nil {
+		panic(err)
+	}
 }
 
 func (b *buf) End() {
@@ -108,7 +110,7 @@ func (b *buf) CmdBindGraphicsPipeline(pipe pipeline.T) {
 	if b.pipeline != nil && b.pipeline.Ptr() == pipe.Ptr() {
 		return
 	}
-	vk.CmdBindPipeline(b.Ptr(), vk.PipelineBindPointGraphics, pipe.Ptr())
+	b.ptr.CmdBindPipeline(core1_0.PipelineBindPointGraphics, pipe.Ptr())
 	b.pipeline = pipe
 }
 
@@ -116,12 +118,7 @@ func (b *buf) CmdBindGraphicsDescriptor(set descriptor.Set) {
 	if b.pipeline == nil {
 		panic("bind graphics pipeline first")
 	}
-	vk.CmdBindDescriptorSets(
-		b.Ptr(),
-		vk.PipelineBindPointGraphics,
-		b.pipeline.Layout().Ptr(), 0, 1,
-		[]vk.DescriptorSet{set.Ptr()},
-		0, nil)
+	b.ptr.CmdBindDescriptorSets(core1_0.PipelineBindPointGraphics, b.pipeline.Layout().Ptr(), 0, []core1_0.DescriptorSet{set.Ptr()}, nil)
 }
 
 func (b *buf) CmdBindVertexBuffer(vtx buffer.T, offset int) {
@@ -129,60 +126,58 @@ func (b *buf) CmdBindVertexBuffer(vtx buffer.T, offset int) {
 	if b.vertex == binding {
 		return
 	}
-	vk.CmdBindVertexBuffers(b.Ptr(), 0, 1, []vk.Buffer{vtx.Ptr()}, []vk.DeviceSize{vk.DeviceSize(offset)})
+	b.ptr.CmdBindVertexBuffers(0, []core1_0.Buffer{vtx.Ptr()}, []int{offset})
 	b.vertex = binding
 }
 
-func (b *buf) CmdBindIndexBuffers(idx buffer.T, offset int, kind vk.IndexType) {
+func (b *buf) CmdBindIndexBuffers(idx buffer.T, offset int, kind core1_0.IndexType) {
 	binding := bufferBinding{buffer: idx.Ptr(), offset: offset, indexType: kind}
 	if b.index == binding {
 		return
 	}
-	vk.CmdBindIndexBuffer(b.Ptr(), idx.Ptr(), vk.DeviceSize(offset), kind)
+	b.ptr.CmdBindIndexBuffer(idx.Ptr(), offset, kind)
 	b.index = binding
 }
 
 func (b *buf) CmdDraw(vertexCount, instanceCount, firstVertex, firstInstance int) {
-	vk.CmdDraw(b.Ptr(), uint32(vertexCount), uint32(instanceCount), uint32(firstVertex), uint32(firstInstance))
+	b.ptr.CmdDraw(vertexCount, instanceCount, uint32(firstVertex), uint32(firstInstance))
 }
 
 func (b *buf) CmdDrawIndexed(indexCount, instanceCount, firstIndex, vertexOffset, firstInstance int) {
-	vk.CmdDrawIndexed(b.Ptr(), uint32(indexCount), uint32(instanceCount), uint32(firstIndex), int32(vertexOffset), uint32(firstInstance))
+	b.ptr.CmdDrawIndexed(indexCount, instanceCount, uint32(firstIndex), vertexOffset, uint32(firstInstance))
 }
 
 func (b *buf) CmdBeginRenderPass(pass renderpass.T, framebuffer framebuffer.T) {
 	clear := pass.Clear()
 	w, h := framebuffer.Size()
 
-	vk.CmdBeginRenderPass(b.Ptr(), &vk.RenderPassBeginInfo{
-		SType:       vk.StructureTypeRenderPassBeginInfo,
+	b.ptr.CmdBeginRenderPass(core1_0.SubpassContentsInline, core1_0.RenderPassBeginInfo{
 		RenderPass:  pass.Ptr(),
 		Framebuffer: framebuffer.Ptr(),
-		RenderArea: vk.Rect2D{
-			Offset: vk.Offset2D{},
-			Extent: vk.Extent2D{
-				Width:  uint32(w),
-				Height: uint32(h),
+		RenderArea: core1_0.Rect2D{
+			Offset: core1_0.Offset2D{},
+			Extent: core1_0.Extent2D{
+				Width:  w,
+				Height: h,
 			},
 		},
-		ClearValueCount: uint32(len(clear)),
-		PClearValues:    clear,
-	}, vk.SubpassContentsInline)
+		ClearValues: clear,
+	})
 
 	b.CmdSetViewport(0, 0, w, h)
 	b.CmdSetScissor(0, 0, w, h)
 }
 
 func (b *buf) CmdEndRenderPass() {
-	vk.CmdEndRenderPass(b.ptr)
+	b.ptr.CmdEndRenderPass()
 }
 
 func (b *buf) CmdNextSubpass() {
-	vk.CmdNextSubpass(b.ptr, vk.SubpassContentsInline)
+	b.ptr.CmdNextSubpass(core1_0.SubpassContentsInline)
 }
 
 func (b *buf) CmdSetViewport(x, y, w, h int) {
-	vk.CmdSetViewport(b.Ptr(), 0, 1, []vk.Viewport{
+	b.ptr.CmdSetViewport([]core1_0.Viewport{
 		{
 			X:        float32(x),
 			Y:        float32(y),
@@ -195,131 +190,130 @@ func (b *buf) CmdSetViewport(x, y, w, h int) {
 }
 
 func (b *buf) CmdSetScissor(x, y, w, h int) {
-	vk.CmdSetScissor(b.Ptr(), 0, 1, []vk.Rect2D{
+	b.ptr.CmdSetScissor([]core1_0.Rect2D{
 		{
-			Offset: vk.Offset2D{
-				X: int32(x),
-				Y: int32(y),
+			Offset: core1_0.Offset2D{
+				X: x,
+				Y: y,
 			},
-			Extent: vk.Extent2D{
-				Width:  uint32(w),
-				Height: uint32(h),
+			Extent: core1_0.Extent2D{
+				Width:  w,
+				Height: h,
 			},
 		},
 	})
 }
 
-func (b *buf) CmdPushConstant(stages vk.ShaderStageFlagBits, offset int, value any) {
+func (b *buf) CmdPushConstant(stages core1_0.ShaderStageFlags, offset int, value any) {
 	if b.pipeline == nil {
 		panic("bind graphics pipeline first")
 	}
-	ptr := reflect.ValueOf(value).UnsafePointer()
+	// this is awkward
+	// ptr := reflect.ValueOf(value).UnsafePointer()
 	size := reflect.ValueOf(value).Elem().Type().Size()
-	vk.CmdPushConstants(
-		b.ptr,
-		b.pipeline.Layout().Ptr(),
-		vk.ShaderStageFlags(stages),
-		uint32(offset), uint32(size),
-		ptr)
+	ptr := reflect.ValueOf(value).UnsafePointer()
+	valueBytes := make([]byte, size)
+
+	device.Memcpy(unsafe.Pointer(&valueBytes[0]), ptr, int(size))
+	b.ptr.CmdPushConstants(b.pipeline.Layout().Ptr(), stages, offset, valueBytes)
 }
 
-func (b *buf) CmdImageBarrier(srcMask, dstMask vk.PipelineStageFlagBits, image image.T, oldLayout, newLayout vk.ImageLayout, aspects vk.ImageAspectFlagBits) {
-	vk.CmdPipelineBarrier(b.ptr, vk.PipelineStageFlags(srcMask), vk.PipelineStageFlags(dstMask), vk.DependencyFlags(0), 0, nil, 0, nil, 1, []vk.ImageMemoryBarrier{
+func (b *buf) CmdImageBarrier(srcMask, dstMask core1_0.PipelineStageFlags, image image.T, oldLayout, newLayout core1_0.ImageLayout, aspects core1_0.ImageAspectFlags) {
+	b.ptr.CmdPipelineBarrier(core1_0.PipelineStageFlags(srcMask), core1_0.PipelineStageFlags(dstMask), core1_0.DependencyFlags(0), nil, nil, []core1_0.ImageMemoryBarrier{
 		{
-			SType:     vk.StructureTypeImageMemoryBarrier,
 			OldLayout: oldLayout,
 			NewLayout: newLayout,
 			Image:     image.Ptr(),
-			SubresourceRange: vk.ImageSubresourceRange{
-				AspectMask: vk.ImageAspectFlags(aspects),
+			SubresourceRange: core1_0.ImageSubresourceRange{
+				AspectMask: core1_0.ImageAspectFlags(aspects),
 				LayerCount: 1,
 				LevelCount: 1,
 			},
-			SrcAccessMask: vk.AccessFlags(vk.AccessMemoryReadBit | vk.AccessMemoryWriteBit),
-			DstAccessMask: vk.AccessFlags(vk.AccessMemoryReadBit | vk.AccessMemoryWriteBit),
+			SrcAccessMask: core1_0.AccessMemoryRead | core1_0.AccessMemoryWrite,
+			DstAccessMask: core1_0.AccessMemoryRead | core1_0.AccessMemoryWrite,
 		},
 	})
 }
 
-func (b *buf) CmdCopyBufferToImage(source buffer.T, dst image.T, layout vk.ImageLayout) {
-	vk.CmdCopyBufferToImage(b.ptr, source.Ptr(), dst.Ptr(), layout, 1, []vk.BufferImageCopy{
+func (b *buf) CmdCopyBufferToImage(source buffer.T, dst image.T, layout core1_0.ImageLayout) {
+	b.ptr.CmdCopyBufferToImage(source.Ptr(), dst.Ptr(), layout, []core1_0.BufferImageCopy{
 		{
-			ImageSubresource: vk.ImageSubresourceLayers{
-				AspectMask: vk.ImageAspectFlags(vk.ImageAspectColorBit),
+			ImageSubresource: core1_0.ImageSubresourceLayers{
+				AspectMask: core1_0.ImageAspectColor,
 				LayerCount: 1,
 			},
-			ImageExtent: vk.Extent3D{
-				Width:  uint32(dst.Width()),
-				Height: uint32(dst.Height()),
+			ImageExtent: core1_0.Extent3D{
+				Width:  dst.Width(),
+				Height: dst.Height(),
 				Depth:  1,
 			},
 		},
 	})
 }
 
-func (b *buf) CmdCopyImageToBuffer(src image.T, srcLayout vk.ImageLayout, aspects vk.ImageAspectFlagBits, dst buffer.T) {
-	vk.CmdCopyImageToBuffer(b.ptr, src.Ptr(), srcLayout, dst.Ptr(), 1, []vk.BufferImageCopy{
+func (b *buf) CmdCopyImageToBuffer(src image.T, srcLayout core1_0.ImageLayout, aspects core1_0.ImageAspectFlags, dst buffer.T) {
+	b.ptr.CmdCopyImageToBuffer(src.Ptr(), srcLayout, dst.Ptr(), []core1_0.BufferImageCopy{
 		{
-			ImageSubresource: vk.ImageSubresourceLayers{
-				AspectMask: vk.ImageAspectFlags(aspects),
+			ImageSubresource: core1_0.ImageSubresourceLayers{
+				AspectMask: core1_0.ImageAspectFlags(aspects),
 				LayerCount: 1,
 			},
-			ImageExtent: vk.Extent3D{
-				Width:  uint32(src.Width()),
-				Height: uint32(src.Height()),
+			ImageExtent: core1_0.Extent3D{
+				Width:  src.Width(),
+				Height: src.Height(),
 				Depth:  1,
 			},
 		},
 	})
 }
 
-func (b *buf) CmdConvertImage(src image.T, srcLayout vk.ImageLayout, dst image.T, dstLayout vk.ImageLayout, aspects vk.ImageAspectFlagBits) {
-	vk.CmdBlitImage(b.ptr, src.Ptr(), srcLayout, dst.Ptr(), dstLayout, 1, []vk.ImageBlit{
+func (b *buf) CmdConvertImage(src image.T, srcLayout core1_0.ImageLayout, dst image.T, dstLayout core1_0.ImageLayout, aspects core1_0.ImageAspectFlags) {
+	b.ptr.CmdBlitImage(src.Ptr(), srcLayout, dst.Ptr(), dstLayout, []core1_0.ImageBlit{
 		{
-			SrcOffsets: [2]vk.Offset3D{
+			SrcOffsets: [2]core1_0.Offset3D{
 				{X: 0, Y: 0, Z: 0},
-				{X: int32(src.Width()), Y: int32(src.Height()), Z: 1},
+				{X: src.Width(), Y: src.Height(), Z: 1},
 			},
-			SrcSubresource: vk.ImageSubresourceLayers{
-				AspectMask:     vk.ImageAspectFlags(aspects),
+			SrcSubresource: core1_0.ImageSubresourceLayers{
+				AspectMask:     core1_0.ImageAspectFlags(aspects),
 				MipLevel:       0,
 				BaseArrayLayer: 0,
 				LayerCount:     1,
 			},
-			DstOffsets: [2]vk.Offset3D{
+			DstOffsets: [2]core1_0.Offset3D{
 				{X: 0, Y: 0, Z: 0},
-				{X: int32(dst.Width()), Y: int32(dst.Height()), Z: 1},
+				{X: dst.Width(), Y: dst.Height(), Z: 1},
 			},
-			DstSubresource: vk.ImageSubresourceLayers{
-				AspectMask:     vk.ImageAspectFlags(aspects),
+			DstSubresource: core1_0.ImageSubresourceLayers{
+				AspectMask:     core1_0.ImageAspectFlags(aspects),
 				MipLevel:       0,
 				BaseArrayLayer: 0,
 				LayerCount:     1,
 			},
 		},
-	}, vk.FilterNearest)
+	}, core1_0.FilterNearest)
 }
 
-func (b *buf) CmdCopyImage(src image.T, srcLayout vk.ImageLayout, dst image.T, dstLayout vk.ImageLayout, aspects vk.ImageAspectFlagBits) {
-	vk.CmdCopyImage(b.ptr, src.Ptr(), srcLayout, dst.Ptr(), dstLayout, 1, []vk.ImageCopy{
+func (b *buf) CmdCopyImage(src image.T, srcLayout core1_0.ImageLayout, dst image.T, dstLayout core1_0.ImageLayout, aspects core1_0.ImageAspectFlags) {
+	b.ptr.CmdCopyImage(src.Ptr(), srcLayout, dst.Ptr(), dstLayout, []core1_0.ImageCopy{
 		{
-			SrcOffset: vk.Offset3D{X: 0, Y: 0, Z: 0},
-			SrcSubresource: vk.ImageSubresourceLayers{
-				AspectMask:     vk.ImageAspectFlags(aspects),
+			SrcOffset: core1_0.Offset3D{X: 0, Y: 0, Z: 0},
+			SrcSubresource: core1_0.ImageSubresourceLayers{
+				AspectMask:     core1_0.ImageAspectFlags(aspects),
 				MipLevel:       0,
 				BaseArrayLayer: 0,
 				LayerCount:     1,
 			},
-			DstOffset: vk.Offset3D{X: 0, Y: 0, Z: 0},
-			DstSubresource: vk.ImageSubresourceLayers{
-				AspectMask:     vk.ImageAspectFlags(aspects),
+			DstOffset: core1_0.Offset3D{X: 0, Y: 0, Z: 0},
+			DstSubresource: core1_0.ImageSubresourceLayers{
+				AspectMask:     core1_0.ImageAspectFlags(aspects),
 				MipLevel:       0,
 				BaseArrayLayer: 0,
 				LayerCount:     1,
 			},
-			Extent: vk.Extent3D{
-				Width:  uint32(dst.Width()),
-				Height: uint32(dst.Height()),
+			Extent: core1_0.Extent3D{
+				Width:  dst.Width(),
+				Height: dst.Height(),
 				Depth:  1,
 			},
 		},

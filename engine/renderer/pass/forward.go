@@ -13,7 +13,7 @@ import (
 	"github.com/johanhenriksson/goworld/render/vertex"
 	"github.com/johanhenriksson/goworld/render/vulkan"
 
-	vk "github.com/vulkan-go/vulkan"
+	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
 const ForwardSubpass = renderpass.Name("forward")
@@ -35,10 +35,10 @@ func NewForwardPass(
 			{
 				Name:        OutputAttachment,
 				Format:      gbuffer.Output().Format(),
-				LoadOp:      vk.AttachmentLoadOpLoad,
-				StoreOp:     vk.AttachmentStoreOpStore,
-				FinalLayout: vk.ImageLayoutShaderReadOnlyOptimal,
-				Usage:       vk.ImageUsageSampledBit,
+				LoadOp:      core1_0.AttachmentLoadOpLoad,
+				StoreOp:     core1_0.AttachmentStoreOpStore,
+				FinalLayout: core1_0.ImageLayoutShaderReadOnlyOptimal,
+				Usage:       core1_0.ImageUsageSampled,
 				Blend:       attachment.BlendMix,
 
 				Allocator: attachment.FromImageArray([]image.T{
@@ -48,10 +48,10 @@ func NewForwardPass(
 			{
 				Name:        NormalsAttachment,
 				Format:      gbuffer.Normal().Format(),
-				LoadOp:      vk.AttachmentLoadOpLoad,
-				StoreOp:     vk.AttachmentStoreOpStore,
-				FinalLayout: vk.ImageLayoutShaderReadOnlyOptimal,
-				Usage:       vk.ImageUsageInputAttachmentBit | vk.ImageUsageTransferSrcBit,
+				LoadOp:      core1_0.AttachmentLoadOpLoad,
+				StoreOp:     core1_0.AttachmentStoreOpStore,
+				FinalLayout: core1_0.ImageLayoutShaderReadOnlyOptimal,
+				Usage:       core1_0.ImageUsageInputAttachment | core1_0.ImageUsageTransferSrc,
 
 				Allocator: attachment.FromImageArray([]image.T{
 					gbuffer.Normal().Image(),
@@ -60,10 +60,10 @@ func NewForwardPass(
 			{
 				Name:        PositionAttachment,
 				Format:      gbuffer.Position().Format(),
-				LoadOp:      vk.AttachmentLoadOpLoad,
-				StoreOp:     vk.AttachmentStoreOpStore,
-				FinalLayout: vk.ImageLayoutShaderReadOnlyOptimal,
-				Usage:       vk.ImageUsageInputAttachmentBit | vk.ImageUsageTransferSrcBit,
+				LoadOp:      core1_0.AttachmentLoadOpLoad,
+				StoreOp:     core1_0.AttachmentStoreOpStore,
+				FinalLayout: core1_0.ImageLayoutShaderReadOnlyOptimal,
+				Usage:       core1_0.ImageUsageInputAttachment | core1_0.ImageUsageTransferSrc,
 
 				Allocator: attachment.FromImageArray([]image.T{
 					gbuffer.Position().Image(),
@@ -71,11 +71,11 @@ func NewForwardPass(
 			},
 		},
 		DepthAttachment: &attachment.Depth{
-			LoadOp:        vk.AttachmentLoadOpLoad,
-			StencilLoadOp: vk.AttachmentLoadOpLoad,
-			StoreOp:       vk.AttachmentStoreOpStore,
-			FinalLayout:   vk.ImageLayoutShaderReadOnlyOptimal,
-			Usage:         vk.ImageUsageInputAttachmentBit,
+			LoadOp:        core1_0.AttachmentLoadOpLoad,
+			StencilLoadOp: core1_0.AttachmentLoadOpLoad,
+			StoreOp:       core1_0.AttachmentStoreOpStore,
+			FinalLayout:   core1_0.ImageLayoutShaderReadOnlyOptimal,
+			Usage:         core1_0.ImageUsageInputAttachment,
 
 			Allocator: attachment.FromImageArray([]image.T{
 				gbuffer.Depth().Image(),

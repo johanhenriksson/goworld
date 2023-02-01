@@ -7,11 +7,12 @@ import (
 	"github.com/johanhenriksson/goworld/render/buffer"
 	"github.com/johanhenriksson/goworld/render/device"
 
-	vk "github.com/vulkan-go/vulkan"
+	"github.com/vkngwrapper/core/v2/core1_0"
+	"github.com/vkngwrapper/core/v2/core1_2"
 )
 
 type Uniform[K any] struct {
-	Stages vk.ShaderStageFlagBits
+	Stages core1_0.ShaderStageFlags
 
 	binding int
 	buffer  buffer.Item[K]
@@ -23,8 +24,8 @@ func (d *Uniform[K]) Initialize(device device.T) {
 		panic("descriptor must be bound first")
 	}
 	d.buffer = buffer.NewItem[K](device, buffer.Args{
-		Usage:  vk.BufferUsageUniformBufferBit,
-		Memory: vk.MemoryPropertyDeviceLocalBit | vk.MemoryPropertyHostVisibleBit,
+		Usage:  core1_0.BufferUsageUniformBuffer,
+		Memory: core1_0.MemoryPropertyDeviceLocal | core1_0.MemoryPropertyHostVisible,
 	})
 	d.write()
 }
@@ -52,30 +53,28 @@ func (d *Uniform[K]) Set(data K) {
 }
 
 func (d *Uniform[K]) write() {
-	d.set.Write(vk.WriteDescriptorSet{
-		SType:           vk.StructureTypeWriteDescriptorSet,
-		DstBinding:      uint32(d.binding),
+	d.set.Write(core1_0.WriteDescriptorSet{
+		DstBinding:      d.binding,
 		DstArrayElement: 0,
-		DescriptorCount: 1,
-		DescriptorType:  vk.DescriptorTypeUniformBuffer,
-		PBufferInfo: []vk.DescriptorBufferInfo{
+		DescriptorType:  core1_0.DescriptorTypeUniformBuffer,
+		BufferInfo: []core1_0.DescriptorBufferInfo{
 			{
 				Buffer: d.buffer.Ptr(),
 				Offset: 0,
-				Range:  vk.DeviceSize(vk.WholeSize),
+				Range:  d.buffer.Size(),
 			},
 		},
 	})
 }
 
-func (d *Uniform[K]) LayoutBinding(binding int) vk.DescriptorSetLayoutBinding {
+func (d *Uniform[K]) LayoutBinding(binding int) core1_0.DescriptorSetLayoutBinding {
 	d.binding = binding
-	return vk.DescriptorSetLayoutBinding{
-		Binding:         uint32(binding),
-		DescriptorType:  vk.DescriptorTypeUniformBuffer,
+	return core1_0.DescriptorSetLayoutBinding{
+		Binding:         binding,
+		DescriptorType:  core1_0.DescriptorTypeUniformBuffer,
 		DescriptorCount: 1,
-		StageFlags:      vk.ShaderStageFlags(d.Stages),
+		StageFlags:      core1_0.ShaderStageFlags(d.Stages),
 	}
 }
 
-func (d *Uniform[K]) BindingFlags() vk.DescriptorBindingFlags { return 0 }
+func (d *Uniform[K]) BindingFlags() core1_2.DescriptorBindingFlags { return 0 }

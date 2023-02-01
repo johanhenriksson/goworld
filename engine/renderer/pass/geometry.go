@@ -19,7 +19,7 @@ import (
 	"github.com/johanhenriksson/goworld/render/vertex"
 	"github.com/johanhenriksson/goworld/render/vulkan"
 
-	vk "github.com/vulkan-go/vulkan"
+	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
 const (
@@ -71,52 +71,56 @@ func NewGeometryPass(
 	target vulkan.Target,
 	shadows ShadowPass,
 ) Deferred {
-	diffuseFmt := vk.FormatR8g8b8a8Unorm
-	normalFmt := vk.FormatR8g8b8a8Unorm
-	positionFmt := vk.FormatR16g16b16a16Sfloat
+	diffuseFmt := core1_0.FormatR8G8B8A8UnsignedNormalized
+	normalFmt := core1_0.FormatR8G8B8A8UnsignedNormalized
+	positionFmt := core1_0.FormatR16G16B16A16SignedFloat
 
 	pass := renderpass.New(target.Device(), renderpass.Args{
 		ColorAttachments: []attachment.Color{
 			{
-				Name:        OutputAttachment,
-				Format:      diffuseFmt,
-				LoadOp:      vk.AttachmentLoadOpClear,
-				StoreOp:     vk.AttachmentStoreOpStore,
-				FinalLayout: vk.ImageLayoutShaderReadOnlyOptimal,
-				Usage:       vk.ImageUsageSampledBit,
-				Blend:       attachment.BlendAdditive,
+				Name:          OutputAttachment,
+				Format:        diffuseFmt,
+				Samples:       0,
+				LoadOp:        core1_0.AttachmentLoadOpClear,
+				StoreOp:       core1_0.AttachmentStoreOpStore,
+				InitialLayout: 0,
+				FinalLayout:   core1_0.ImageLayoutShaderReadOnlyOptimal,
+				Clear:         color.T{},
+				Usage:         core1_0.ImageUsageSampled,
+				Allocator:     nil,
+				Blend:         attachment.BlendAdditive,
 			},
 			{
 				Name:        DiffuseAttachment,
 				Format:      diffuseFmt,
-				LoadOp:      vk.AttachmentLoadOpClear,
-				StoreOp:     vk.AttachmentStoreOpStore,
-				FinalLayout: vk.ImageLayoutShaderReadOnlyOptimal,
-				Usage:       vk.ImageUsageInputAttachmentBit | vk.ImageUsageTransferSrcBit,
+				LoadOp:      core1_0.AttachmentLoadOpClear,
+				StoreOp:     core1_0.AttachmentStoreOpStore,
+				FinalLayout: core1_0.ImageLayoutShaderReadOnlyOptimal,
+				Usage:       core1_0.ImageUsageInputAttachment | core1_0.ImageUsageTransferSrc,
 			},
 			{
 				Name:        NormalsAttachment,
 				Format:      normalFmt,
-				LoadOp:      vk.AttachmentLoadOpClear,
-				StoreOp:     vk.AttachmentStoreOpStore,
-				FinalLayout: vk.ImageLayoutShaderReadOnlyOptimal,
-				Usage:       vk.ImageUsageInputAttachmentBit | vk.ImageUsageTransferSrcBit,
+				LoadOp:      core1_0.AttachmentLoadOpClear,
+				StoreOp:     core1_0.AttachmentStoreOpStore,
+				FinalLayout: core1_0.ImageLayoutShaderReadOnlyOptimal,
+				Usage:       core1_0.ImageUsageInputAttachment | core1_0.ImageUsageTransferSrc,
 			},
 			{
 				Name:        PositionAttachment,
 				Format:      positionFmt,
-				LoadOp:      vk.AttachmentLoadOpClear,
-				StoreOp:     vk.AttachmentStoreOpStore,
-				FinalLayout: vk.ImageLayoutShaderReadOnlyOptimal,
-				Usage:       vk.ImageUsageInputAttachmentBit | vk.ImageUsageTransferSrcBit,
+				LoadOp:      core1_0.AttachmentLoadOpClear,
+				StoreOp:     core1_0.AttachmentStoreOpStore,
+				FinalLayout: core1_0.ImageLayoutShaderReadOnlyOptimal,
+				Usage:       core1_0.ImageUsageInputAttachment | core1_0.ImageUsageTransferSrc,
 			},
 		},
 		DepthAttachment: &attachment.Depth{
-			LoadOp:        vk.AttachmentLoadOpClear,
-			StencilLoadOp: vk.AttachmentLoadOpClear,
-			StoreOp:       vk.AttachmentStoreOpStore,
-			FinalLayout:   vk.ImageLayoutShaderReadOnlyOptimal,
-			Usage:         vk.ImageUsageInputAttachmentBit,
+			LoadOp:        core1_0.AttachmentLoadOpClear,
+			StencilLoadOp: core1_0.AttachmentLoadOpClear,
+			StoreOp:       core1_0.AttachmentStoreOpStore,
+			FinalLayout:   core1_0.ImageLayoutShaderReadOnlyOptimal,
+			Usage:         core1_0.ImageUsageInputAttachment,
 			ClearDepth:    1,
 		},
 		Subpasses: []renderpass.Subpass{
@@ -138,31 +142,31 @@ func NewGeometryPass(
 				Src: renderpass.ExternalSubpass,
 				Dst: GeometrySubpass,
 
-				SrcStageMask:  vk.PipelineStageBottomOfPipeBit,
-				DstStageMask:  vk.PipelineStageColorAttachmentOutputBit,
-				SrcAccessMask: vk.AccessMemoryReadBit,
-				DstAccessMask: vk.AccessColorAttachmentReadBit | vk.AccessColorAttachmentWriteBit,
-				Flags:         vk.DependencyByRegionBit,
+				SrcStageMask:  core1_0.PipelineStageBottomOfPipe,
+				DstStageMask:  core1_0.PipelineStageColorAttachmentOutput,
+				SrcAccessMask: core1_0.AccessMemoryRead,
+				DstAccessMask: core1_0.AccessColorAttachmentRead | core1_0.AccessColorAttachmentWrite,
+				Flags:         core1_0.DependencyByRegion,
 			},
 			{
 				Src: GeometrySubpass,
 				Dst: LightingSubpass,
 
-				SrcStageMask:  vk.PipelineStageColorAttachmentOutputBit,
-				DstStageMask:  vk.PipelineStageFragmentShaderBit,
-				SrcAccessMask: vk.AccessColorAttachmentWriteBit,
-				DstAccessMask: vk.AccessShaderReadBit,
-				Flags:         vk.DependencyByRegionBit,
+				SrcStageMask:  core1_0.PipelineStageColorAttachmentOutput,
+				DstStageMask:  core1_0.PipelineStageFragmentShader,
+				SrcAccessMask: core1_0.AccessColorAttachmentWrite,
+				DstAccessMask: core1_0.AccessShaderRead,
+				Flags:         core1_0.DependencyByRegion,
 			},
 			{
 				Src: LightingSubpass,
 				Dst: renderpass.ExternalSubpass,
 
-				SrcStageMask:  vk.PipelineStageColorAttachmentOutputBit,
-				DstStageMask:  vk.PipelineStageBottomOfPipeBit,
-				SrcAccessMask: vk.AccessColorAttachmentReadBit | vk.AccessColorAttachmentWriteBit,
-				DstAccessMask: vk.AccessMemoryReadBit,
-				Flags:         vk.DependencyByRegionBit,
+				SrcStageMask:  core1_0.PipelineStageColorAttachmentOutput,
+				DstStageMask:  core1_0.PipelineStageBottomOfPipe,
+				SrcAccessMask: core1_0.AccessColorAttachmentRead | core1_0.AccessColorAttachmentWrite,
+				DstAccessMask: core1_0.AccessMemoryRead,
+				Flags:         core1_0.DependencyByRegion,
 			},
 		},
 	})
@@ -192,8 +196,8 @@ func NewGeometryPass(
 	lightDesc.Depth.Set(gbuffer.Depth())
 
 	shadowtex, err := texture.FromView(target.Device(), shadows.Shadowmap(), texture.Args{
-		Filter: vk.FilterNearest,
-		Wrap:   vk.SamplerAddressModeClampToEdge,
+		Filter: core1_0.FilterNearest,
+		Wrap:   core1_0.SamplerAddressModeClampToEdge,
 	})
 	if err != nil {
 		panic(err)
@@ -295,7 +299,7 @@ func (p *GeometryPass) DrawLight(cmds command.Recorder, args render.Args, lit li
 			Intensity:   desc.Intensity,
 			Attenuation: desc.Attenuation,
 		}
-		cmd.CmdPushConstant(vk.ShaderStageFragmentBit, 0, push)
+		cmd.CmdPushConstant(core1_0.StageFragment, 0, push)
 
 		vkmesh.Draw(cmd, 0)
 	})

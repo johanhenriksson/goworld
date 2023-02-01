@@ -4,7 +4,7 @@ package device
 import "C"
 import "unsafe"
 
-func memcpy(dst, src unsafe.Pointer, n int) int {
+func Memcpy(dst, src unsafe.Pointer, n int) int {
 	C.memcpy(dst, src, C.size_t(n))
 	return n
 }

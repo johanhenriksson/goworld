@@ -1,24 +1,22 @@
 package vulkan
 
-import (
-	vk "github.com/vulkan-go/vulkan"
-)
+import "github.com/vkngwrapper/core/v2/core1_0"
 
-var DefaultDescriptorPools = []vk.DescriptorPoolSize{
+var DefaultDescriptorPools = []core1_0.DescriptorPoolSize{
 	{
-		Type:            vk.DescriptorTypeUniformBuffer,
+		Type:            core1_0.DescriptorTypeUniformBuffer,
 		DescriptorCount: 1000,
 	},
 	{
-		Type:            vk.DescriptorTypeStorageBuffer,
+		Type:            core1_0.DescriptorTypeStorageBuffer,
 		DescriptorCount: 1000,
 	},
 	{
-		Type:            vk.DescriptorTypeCombinedImageSampler,
+		Type:            core1_0.DescriptorTypeCombinedImageSampler,
 		DescriptorCount: 10000,
 	},
 	{
-		Type:            vk.DescriptorTypeInputAttachment,
+		Type:            core1_0.DescriptorTypeInputAttachment,
 		DescriptorCount: 100,
 	},
 }

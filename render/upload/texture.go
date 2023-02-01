@@ -12,7 +12,7 @@ import (
 	"github.com/johanhenriksson/goworld/render/image"
 	"github.com/johanhenriksson/goworld/render/texture"
 
-	vk "github.com/vulkan-go/vulkan"
+	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
 func NewTextureSync(dev device.T, worker command.Worker, img *osimage.RGBA) (texture.T, error) {
@@ -20,9 +20,9 @@ func NewTextureSync(dev device.T, worker command.Worker, img *osimage.RGBA) (tex
 	tex, err := texture.New(dev, texture.Args{
 		Width:  img.Rect.Size().X,
 		Height: img.Rect.Size().Y,
-		Format: vk.FormatR8g8b8a8Unorm,
-		Filter: vk.FilterLinear,
-		Wrap:   vk.SamplerAddressModeRepeat,
+		Format: core1_0.FormatR8G8B8A8UnsignedNormalized,
+		Filter: core1_0.FilterLinear,
+		Wrap:   core1_0.SamplerAddressModeRepeat,
 	})
 	if err != nil {
 		return nil, err
@@ -37,20 +37,20 @@ func NewTextureSync(dev device.T, worker command.Worker, img *osimage.RGBA) (tex
 	// transfer data to texture buffer
 	worker.Queue(func(cmd command.Buffer) {
 		cmd.CmdImageBarrier(
-			vk.PipelineStageTopOfPipeBit,
-			vk.PipelineStageTransferBit,
+			core1_0.PipelineStageTopOfPipe,
+			core1_0.PipelineStageTransfer,
 			tex.Image(),
-			vk.ImageLayoutUndefined,
-			vk.ImageLayoutTransferDstOptimal,
-			vk.ImageAspectColorBit)
-		cmd.CmdCopyBufferToImage(stage, tex.Image(), vk.ImageLayoutTransferDstOptimal)
+			core1_0.ImageLayoutUndefined,
+			core1_0.ImageLayoutTransferDstOptimal,
+			core1_0.ImageAspectColor)
+		cmd.CmdCopyBufferToImage(stage, tex.Image(), core1_0.ImageLayoutTransferDstOptimal)
 		cmd.CmdImageBarrier(
-			vk.PipelineStageTransferBit,
-			vk.PipelineStageFragmentShaderBit,
+			core1_0.PipelineStageTransfer,
+			core1_0.PipelineStageFragmentShader,
 			tex.Image(),
-			vk.ImageLayoutTransferDstOptimal,
-			vk.ImageLayoutShaderReadOnlyOptimal,
-			vk.ImageAspectColorBit)
+			core1_0.ImageLayoutTransferDstOptimal,
+			core1_0.ImageLayoutShaderReadOnlyOptimal,
+			core1_0.ImageAspectColor)
 	})
 	worker.Submit(command.SubmitInfo{
 		Marker: "TextureUpload",
@@ -64,27 +64,27 @@ func NewTextureSync(dev device.T, worker command.Worker, img *osimage.RGBA) (tex
 func DownloadImageAsync(dev device.T, worker command.Worker, src image.T) (<-chan *osimage.RGBA, error) {
 	swizzle := false
 	switch src.Format() {
-	case vk.FormatB8g8r8a8Unorm:
+	case core1_0.FormatB8G8R8A8UnsignedNormalized:
 		swizzle = true
-	case vk.FormatR8g8b8a8Unorm:
+	case core1_0.FormatR8G8B8A8UnsignedNormalized:
 		break
 	default:
 		return nil, fmt.Errorf("unsupported source format")
 	}
 
 	dst, err := image.New(dev, image.Args{
-		Type:    vk.ImageType2d,
+		Type:    core1_0.ImageType2D,
 		Width:   src.Width(),
 		Height:  src.Height(),
 		Depth:   1,
 		Layers:  1,
 		Levels:  1,
-		Format:  vk.FormatR8g8b8a8Unorm,
-		Memory:  vk.MemoryPropertyHostVisibleBit | vk.MemoryPropertyHostCoherentBit,
-		Tiling:  vk.ImageTilingLinear,
-		Usage:   vk.ImageUsageTransferDstBit,
-		Sharing: vk.SharingModeExclusive,
-		Layout:  vk.ImageLayoutUndefined,
+		Format:  core1_0.FormatR8G8B8A8UnsignedNormalized,
+		Memory:  core1_0.MemoryPropertyHostVisible | core1_0.MemoryPropertyHostCoherent,
+		Tiling:  core1_0.ImageTilingLinear,
+		Usage:   core1_0.ImageUsageTransferDst,
+		Sharing: core1_0.SharingModeExclusive,
+		Layout:  core1_0.ImageLayoutUndefined,
 	})
 	if err != nil {
 		return nil, err
@@ -93,34 +93,34 @@ func DownloadImageAsync(dev device.T, worker command.Worker, src image.T) (<-cha
 	// transfer data from texture buffer
 	worker.Queue(func(cmd command.Buffer) {
 		cmd.CmdImageBarrier(
-			vk.PipelineStageTopOfPipeBit,
-			vk.PipelineStageTransferBit,
+			core1_0.PipelineStageTopOfPipe,
+			core1_0.PipelineStageTransfer,
 			src,
-			vk.ImageLayoutUndefined,
-			vk.ImageLayoutTransferSrcOptimal,
-			vk.ImageAspectColorBit)
+			core1_0.ImageLayoutUndefined,
+			core1_0.ImageLayoutTransferSrcOptimal,
+			core1_0.ImageAspectColor)
 		cmd.CmdImageBarrier(
-			vk.PipelineStageTopOfPipeBit,
-			vk.PipelineStageTransferBit,
+			core1_0.PipelineStageTopOfPipe,
+			core1_0.PipelineStageTransfer,
 			dst,
-			vk.ImageLayoutUndefined,
-			vk.ImageLayoutTransferDstOptimal,
-			vk.ImageAspectColorBit)
-		cmd.CmdCopyImage(src, vk.ImageLayoutTransferSrcOptimal, dst, vk.ImageLayoutTransferDstOptimal, vk.ImageAspectColorBit)
+			core1_0.ImageLayoutUndefined,
+			core1_0.ImageLayoutTransferDstOptimal,
+			core1_0.ImageAspectColor)
+		cmd.CmdCopyImage(src, core1_0.ImageLayoutTransferSrcOptimal, dst, core1_0.ImageLayoutTransferDstOptimal, core1_0.ImageAspectColor)
 		cmd.CmdImageBarrier(
-			vk.PipelineStageTransferBit,
-			vk.PipelineStageFragmentShaderBit,
+			core1_0.PipelineStageTransfer,
+			core1_0.PipelineStageFragmentShader,
 			src,
-			vk.ImageLayoutTransferSrcOptimal,
-			vk.ImageLayoutColorAttachmentOptimal,
-			vk.ImageAspectColorBit)
+			core1_0.ImageLayoutTransferSrcOptimal,
+			core1_0.ImageLayoutColorAttachmentOptimal,
+			core1_0.ImageAspectColor)
 		cmd.CmdImageBarrier(
-			vk.PipelineStageTopOfPipeBit,
-			vk.PipelineStageTransferBit,
+			core1_0.PipelineStageTopOfPipe,
+			core1_0.PipelineStageTransfer,
 			dst,
-			vk.ImageLayoutTransferDstOptimal,
-			vk.ImageLayoutGeneral,
-			vk.ImageAspectColorBit)
+			core1_0.ImageLayoutTransferDstOptimal,
+			core1_0.ImageLayoutGeneral,
+			core1_0.ImageAspectColor)
 	})
 
 	done := make(chan *osimage.RGBA)

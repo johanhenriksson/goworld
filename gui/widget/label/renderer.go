@@ -14,7 +14,7 @@ import (
 	"github.com/johanhenriksson/goworld/util"
 
 	"github.com/kjk/flex"
-	vk "github.com/vulkan-go/vulkan"
+	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
 var DefaultFont = "fonts/SourceCodeProRegular.ttf"
@@ -164,7 +164,7 @@ func (r *renderer) Draw(args widget.DrawArgs, label T) {
 	}
 
 	args.Commands.Record(func(cmd command.Buffer) {
-		cmd.CmdPushConstant(vk.ShaderStageAll, 0, &widget.Constants{
+		cmd.CmdPushConstant(core1_0.StageAll, 0, &widget.Constants{
 			Viewport: args.ViewProj,
 			Model:    args.Transform,
 			Texture:  tex,

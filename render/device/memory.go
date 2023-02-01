@@ -101,7 +101,7 @@ func (m *memory) Write(offset int, data any) int {
 
 	// map shared memory
 	var dst unsafe.Pointer
-	dst, _, err := m.ptr.Map(0, size, -1)
+	dst, _, err := m.ptr.Map(0, -1, 0)
 	if err != nil {
 		panic(err)
 	}
@@ -110,7 +110,7 @@ func (m *memory) Write(offset int, data any) int {
 	offsetDst := unsafe.Pointer(uintptr(dst) + uintptr(offset))
 
 	// copy from host
-	memcpy(offsetDst, src, size)
+	Memcpy(offsetDst, src, size-offset)
 
 	// flush region
 	// todo: optimize to the smallest possible region
@@ -157,13 +157,13 @@ func (m *memory) Read(offset int, target any) int {
 
 	// map shared memory
 	var src unsafe.Pointer
-	src, _, err := m.ptr.Map(offset, size, 0)
+	src, _, err := m.ptr.Map(offset, -1, 0)
 	if err != nil {
 		panic(err)
 	}
 
 	// copy to host
-	memcpy(dst, src, size)
+	Memcpy(dst, src, size)
 
 	// unmap shared memory
 	m.ptr.Unmap()

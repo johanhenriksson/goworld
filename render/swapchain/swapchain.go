@@ -18,6 +18,7 @@ type T interface {
 	device.Resource[khr_swapchain.Swapchain]
 
 	Aquire() (Context, error)
+	Present(core1_0.Queue)
 	Resize(int, int)
 
 	Images() []image.T
@@ -149,6 +150,21 @@ func (s *swapchain) Aquire() (Context, error) {
 
 	s.current = int(idx)
 	return s.contexts[s.current], nil
+}
+
+func (s *swapchain) Present(queue core1_0.Queue) {
+	ctx := s.contexts[s.current]
+
+	var waits []core1_0.Semaphore
+	if ctx.RenderComplete != nil {
+		waits = []core1_0.Semaphore{ctx.RenderComplete.Ptr()}
+	}
+
+	s.ext.QueuePresent(queue, khr_swapchain.PresentInfo{
+		WaitSemaphores: waits,
+		Swapchains:     []khr_swapchain.Swapchain{s.Ptr()},
+		ImageIndices:   []int{ctx.Index},
+	})
 }
 
 func (s *swapchain) Destroy() {

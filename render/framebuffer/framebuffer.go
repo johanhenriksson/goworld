@@ -9,7 +9,6 @@ import (
 	"github.com/johanhenriksson/goworld/util"
 
 	"github.com/vkngwrapper/core/v2/core1_0"
-	vk "github.com/vulkan-go/vulkan"
 )
 
 type T interface {

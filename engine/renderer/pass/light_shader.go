@@ -14,7 +14,7 @@ import (
 	"github.com/johanhenriksson/goworld/render/shader"
 	"github.com/johanhenriksson/goworld/render/vertex"
 
-	vk "github.com/vulkan-go/vulkan"
+	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
 type LightDescriptors struct {
@@ -50,7 +50,7 @@ func NewLightShader(device device.T, pool descriptor.Pool, pass renderpass.T) Li
 			Pointers: vertex.ParsePointers(vertex.T{}),
 			Constants: []pipeline.PushConstant{
 				{
-					Stages: vk.ShaderStageFragmentBit,
+					Stages: core1_0.StageFragment,
 					Type:   LightConst{},
 				},
 			},
@@ -58,22 +58,22 @@ func NewLightShader(device device.T, pool descriptor.Pool, pass renderpass.T) Li
 		},
 		&LightDescriptors{
 			Diffuse: &descriptor.InputAttachment{
-				Stages: vk.ShaderStageFragmentBit,
+				Stages: core1_0.StageFragment,
 			},
 			Normal: &descriptor.InputAttachment{
-				Stages: vk.ShaderStageFragmentBit,
+				Stages: core1_0.StageFragment,
 			},
 			Position: &descriptor.InputAttachment{
-				Stages: vk.ShaderStageFragmentBit,
+				Stages: core1_0.StageFragment,
 			},
 			Depth: &descriptor.InputAttachment{
-				Stages: vk.ShaderStageFragmentBit,
+				Stages: core1_0.StageFragment,
 			},
 			Camera: &descriptor.Uniform[uniform.Camera]{
-				Stages: vk.ShaderStageFragmentBit,
+				Stages: core1_0.StageFragment,
 			},
 			Shadow: &descriptor.SamplerArray{
-				Stages: vk.ShaderStageFragmentBit,
+				Stages: core1_0.StageFragment,
 				Count:  16,
 			},
 		})

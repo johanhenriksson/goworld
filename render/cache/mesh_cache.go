@@ -7,7 +7,6 @@ import (
 	"github.com/johanhenriksson/goworld/render/vertex"
 
 	"github.com/vkngwrapper/core/v2/core1_0"
-	vk "github.com/vulkan-go/vulkan"
 )
 
 type MeshCache T[vertex.Mesh, VkMesh]
@@ -71,11 +70,11 @@ func (m *meshes) upload(cached *vkMesh, mesh vertex.Mesh) {
 	}
 
 	m.worker.Queue(func(cmd command.Buffer) {
-		cmd.CmdCopyBuffer(vtxStage, cached.vertices, vk.BufferCopy{
-			Size: vk.DeviceSize(vtxSize),
+		cmd.CmdCopyBuffer(vtxStage, cached.vertices, core1_0.BufferCopy{
+			Size: vtxSize,
 		})
-		cmd.CmdCopyBuffer(idxStage, cached.indices, vk.BufferCopy{
-			Size: vk.DeviceSize(idxSize),
+		cmd.CmdCopyBuffer(idxStage, cached.indices, core1_0.BufferCopy{
+			Size: idxSize,
 		})
 	})
 	m.worker.Submit(command.SubmitInfo{
@@ -88,7 +87,7 @@ func (m *meshes) upload(cached *vkMesh, mesh vertex.Mesh) {
 	m.worker.Wait()
 
 	cached.elements = mesh.Indices()
-	cached.idxType = vk.IndexTypeUint16
+	cached.idxType = core1_0.IndexTypeUInt16
 }
 
 func (m *meshes) Update(cached VkMesh, mesh vertex.Mesh) VkMesh {
@@ -106,7 +105,7 @@ func (m *meshes) Destroy() {
 
 type vkMesh struct {
 	elements int
-	idxType  vk.IndexType
+	idxType  core1_0.IndexType
 	vertices buffer.T
 	indices  buffer.T
 }

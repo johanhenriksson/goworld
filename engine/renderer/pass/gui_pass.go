@@ -19,7 +19,8 @@ import (
 	"github.com/johanhenriksson/goworld/render/vertex"
 	"github.com/johanhenriksson/goworld/render/vulkan"
 
-	vk "github.com/vulkan-go/vulkan"
+	"github.com/vkngwrapper/core/v2/core1_0"
+	"github.com/vkngwrapper/extensions/v2/khr_swapchain"
 )
 
 type UIDescriptors struct {
@@ -49,20 +50,20 @@ func NewGuiPass(target vulkan.Target) *GuiPass {
 				Name:          OutputAttachment,
 				Allocator:     attachment.FromImageArray(target.Surfaces()),
 				Format:        target.SurfaceFormat(),
-				LoadOp:        vk.AttachmentLoadOpLoad,
-				StoreOp:       vk.AttachmentStoreOpStore,
-				InitialLayout: vk.ImageLayoutPresentSrc,
-				FinalLayout:   vk.ImageLayoutPresentSrc,
+				LoadOp:        core1_0.AttachmentLoadOpLoad,
+				StoreOp:       core1_0.AttachmentStoreOpStore,
+				InitialLayout: khr_swapchain.ImageLayoutPresentSrc,
+				FinalLayout:   khr_swapchain.ImageLayoutPresentSrc,
 				Blend:         attachment.BlendMix,
 			},
 		},
 		DepthAttachment: &attachment.Depth{
-			LoadOp:         vk.AttachmentLoadOpClear,
-			StoreOp:        vk.AttachmentStoreOpDontCare,
-			StencilLoadOp:  vk.AttachmentLoadOpClear,
-			StencilStoreOp: vk.AttachmentStoreOpDontCare,
-			FinalLayout:    vk.ImageLayoutShaderReadOnlyOptimal,
-			Usage:          vk.ImageUsageInputAttachmentBit,
+			LoadOp:         core1_0.AttachmentLoadOpClear,
+			StoreOp:        core1_0.AttachmentStoreOpDontCare,
+			StencilLoadOp:  core1_0.AttachmentLoadOpClear,
+			StencilStoreOp: core1_0.AttachmentStoreOpDontCare,
+			FinalLayout:    core1_0.ImageLayoutShaderReadOnlyOptimal,
+			Usage:          core1_0.ImageUsageInputAttachment,
 			ClearDepth:     1,
 		},
 		Subpasses: []renderpass.Subpass{
@@ -81,7 +82,7 @@ func NewGuiPass(target vulkan.Target) *GuiPass {
 		Pointers: vertex.ParsePointers(vertex.UI{}),
 		Constants: []pipeline.PushConstant{
 			{
-				Stages: vk.ShaderStageAll,
+				Stages: core1_0.StageFragment,
 				Type:   widget.Constants{},
 			},
 		},
@@ -89,7 +90,7 @@ func NewGuiPass(target vulkan.Target) *GuiPass {
 		DepthWrite: true,
 	}, &UIDescriptors{
 		Textures: &descriptor.SamplerArray{
-			Stages: vk.ShaderStageFragmentBit,
+			Stages: core1_0.StageFragment,
 			Count:  2000,
 		},
 	}).Instantiate(target.Pool())

@@ -13,6 +13,7 @@ import (
 
 	"github.com/go-gl/glfw/v3.3/glfw"
 	"github.com/vkngwrapper/core/v2/core1_0"
+	"github.com/vkngwrapper/core/v2/driver"
 	"github.com/vkngwrapper/extensions/v2/khr_surface"
 	khr_surface_driver "github.com/vkngwrapper/extensions/v2/khr_surface/driver"
 )
@@ -80,7 +81,7 @@ func NewWindow(backend T, args WindowArgs) (Window, error) {
 		width, height, scale*100)
 
 	// create window surface
-	surfPtr, err := wnd.CreateWindowSurface(backend.Instance().Ptr(), nil)
+	surfPtr, err := wnd.CreateWindowSurface((*driver.VkInstance)(unsafe.Pointer(backend.Instance().Ptr().Handle())), nil)
 	if err != nil {
 		panic(err)
 	}
