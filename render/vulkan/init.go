@@ -4,7 +4,6 @@ import (
 	"runtime"
 
 	"github.com/go-gl/glfw/v3.3/glfw"
-	vk "github.com/vulkan-go/vulkan"
 )
 
 func init() {
@@ -13,12 +12,6 @@ func init() {
 
 	// init glfw
 	if err := glfw.Init(); err != nil {
-		panic(err)
-	}
-
-	// initialize vulkan
-	vk.SetGetInstanceProcAddr(glfw.GetVulkanGetInstanceProcAddress())
-	if err := vk.Init(); err != nil {
 		panic(err)
 	}
 }
