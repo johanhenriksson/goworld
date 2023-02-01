@@ -49,12 +49,11 @@ func ObjectListEntry(key string, props ObjectListEntryProps) node.T {
 					},
 				}),
 				label.New("title", label.Props{
-					Text: obj.Name(),
+					Text: " " + obj.Name(),
 					OnClick: func(e mouse.Event) {
 						if props.OnSelect != nil {
 							props.OnSelect(obj)
 						}
-						obj.SetActive(!obj.Active())
 					},
 					Style: label.Style{
 						Color: clr,
@@ -78,9 +77,7 @@ func ObjectListEntry(key string, props ObjectListEntryProps) node.T {
 
 		return rect.New(key, rect.Props{
 			Style: rect.Style{
-				Padding: style.Rect{
-					Left: 5,
-				},
+				Padding: style.RectXY(5, 3),
 			},
 			Children: nodes,
 		})

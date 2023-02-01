@@ -64,7 +64,7 @@ func NewRenderer() Renderer {
 		invalidFont:    true,
 		invalidTexture: true,
 		invalidMesh:    true,
-		scale:          1,
+		scale:          2,
 		uvs:            quad.DefaultUVs,
 		mesh:           quad.New(quad.Props{}),
 	}
@@ -186,7 +186,7 @@ func (r *renderer) Measure(node *flex.Node, width float32, widthMode flex.Measur
 	// size = size.Scaled(1 / r.scale)
 
 	return flex.Size{
-		Width:  size.X,
-		Height: size.Y,
+		Width:  size.X / r.scale,
+		Height: size.Y / r.scale,
 	}
 }

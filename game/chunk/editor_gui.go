@@ -25,14 +25,16 @@ func ToolButton(tool Tool, editor *edit) node.T {
 				Padding: style.Px(4),
 				Margin: style.Rect{
 					Bottom: 4,
-					Left:   4,
-					Right:  4,
 				},
 				Hover: rect.Hover{},
 			},
 		},
 		OnClick: func(ev mouse.Event) {
-			editor.SelectTool(tool)
+			if editor.Tool != tool {
+				editor.SelectTool(tool)
+			} else {
+				editor.SelectTool(nil)
+			}
 		},
 	})
 }
@@ -42,7 +44,7 @@ func NewGUI(editor *edit) gui.Fragment {
 		Slot:     "sidebar:content",
 		Position: gui.FragmentLast,
 		Render: func() node.T {
-			return rect.New("editor", rect.Props{
+			return rect.New("voxel-editor", rect.Props{
 				Children: []node.T{
 					palette.New("palette", palette.Props{
 						Palette: color.DefaultPalette,

@@ -86,3 +86,7 @@ func NewMouseLeaveEvent() Event {
 		action: Leave,
 	}
 }
+
+func NopEvent() Event {
+	return &event{action: -1}
+}

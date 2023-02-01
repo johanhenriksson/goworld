@@ -106,20 +106,21 @@ func (f *font) Render(text string, args Args) *image.RGBA {
 	s := 0
 	line := 1
 	lineHeight := int(math.Ceil(f.size * args.LineHeight))
+	yOffset := int(math.Ceil(f.size * 0.20))
 
 	for i, c := range text {
 		if c == '\n' {
 			if i == s {
 				continue // skip empty rows
 			}
-			f.drawer.Dot = fixed.P(0, line*int(lineHeight))
+			f.drawer.Dot = fixed.P(0, line*int(lineHeight)-yOffset)
 			f.drawer.DrawString(text[s:i])
 			s = i + 1
 			line++
 		}
 	}
 	if s < len(text) {
-		f.drawer.Dot = fixed.P(0, line*int(lineHeight))
+		f.drawer.Dot = fixed.P(0, line*int(lineHeight)-yOffset)
 		f.drawer.DrawString(text[s:])
 	}
 
