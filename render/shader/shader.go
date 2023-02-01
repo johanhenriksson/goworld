@@ -5,8 +5,7 @@ import (
 
 	"github.com/johanhenriksson/goworld/render/device"
 	"github.com/johanhenriksson/goworld/render/types"
-
-	vk "github.com/vulkan-go/vulkan"
+	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
 type Input struct {
@@ -54,8 +53,8 @@ func New(device device.T, path string) T {
 	}
 
 	modules := []Module{
-		NewModule(device, fmt.Sprintf("assets/shaders/%s.vert", path), vk.ShaderStageVertexBit),
-		NewModule(device, fmt.Sprintf("assets/shaders/%s.frag", path), vk.ShaderStageFragmentBit),
+		NewModule(device, fmt.Sprintf("assets/shaders/%s.vert", path), core1_0.StageVertex),
+		NewModule(device, fmt.Sprintf("assets/shaders/%s.frag", path), core1_0.StageFragment),
 	}
 
 	return &shader{

@@ -1,31 +1,30 @@
 package descriptor
 
 import (
-	"unsafe"
-
 	"github.com/johanhenriksson/goworld/render/device"
 
-	vk "github.com/vulkan-go/vulkan"
+	"github.com/vkngwrapper/core/v2/core1_0"
+	"github.com/vkngwrapper/core/v2/core1_2"
 )
 
 type Pool interface {
-	device.Resource[vk.DescriptorPool]
+	device.Resource[core1_0.DescriptorPool]
 
 	Allocate(layouts SetLayout) Set
 	Recreate()
 }
 
 type pool struct {
-	ptr     vk.DescriptorPool
+	ptr     core1_0.DescriptorPool
 	device  device.T
-	sizes   []vk.DescriptorPoolSize
+	sizes   []core1_0.DescriptorPoolSize
 	maxSets int
 }
 
-func NewPool(device device.T, sizes []vk.DescriptorPoolSize) Pool {
+func NewPool(device device.T, sizes []core1_0.DescriptorPoolSize) Pool {
 	p := &pool{
 		device:  device,
-		ptr:     vk.NullDescriptorPool,
+		ptr:     nil,
 		sizes:   sizes,
 		maxSets: 100,
 	}
@@ -33,56 +32,55 @@ func NewPool(device device.T, sizes []vk.DescriptorPoolSize) Pool {
 	return p
 }
 
-func (p *pool) Ptr() vk.DescriptorPool {
+func (p *pool) Ptr() core1_0.DescriptorPool {
 	return p.ptr
 }
 
 func (p *pool) Recreate() {
 	p.Destroy()
 
-	info := vk.DescriptorPoolCreateInfo{
-		SType:         vk.StructureTypeDescriptorPoolCreateInfo,
-		Flags:         vk.DescriptorPoolCreateFlags(vk.DescriptorPoolCreateUpdateAfterBindBit),
-		PPoolSizes:    p.sizes,
-		PoolSizeCount: uint32(len(p.sizes)),
-		MaxSets:       uint32(p.maxSets),
+	info := core1_0.DescriptorPoolCreateInfo{
+		Flags:     core1_2.DescriptorPoolCreateUpdateAfterBind,
+		PoolSizes: p.sizes,
+		MaxSets:   p.maxSets,
 	}
-	var ptr vk.DescriptorPool
-	if ok := vk.CreateDescriptorPool(p.device.Ptr(), &info, nil, &ptr); ok != vk.Success {
-		panic("failed to create descriptor pool")
+	ptr, result, err := p.device.Ptr().CreateDescriptorPool(nil, info)
+	if err != nil {
+		panic(err)
+	}
+	if result != core1_0.VKSuccess {
+		panic("failed to create descriptor pooll")
 	}
 	p.ptr = ptr
 }
 
 func (p *pool) Destroy() {
-	if p.ptr == vk.NullDescriptorPool {
+	if p.ptr == nil {
 		return
 	}
-	vk.DestroyDescriptorPool(p.device.Ptr(), p.ptr, nil)
-	p.ptr = vk.NullDescriptorPool
+	p.ptr.Destroy(nil)
+	p.ptr = nil
 }
 
 func (p *pool) Allocate(layout SetLayout) Set {
-	info := vk.DescriptorSetAllocateInfo{
-		SType:              vk.StructureTypeDescriptorSetAllocateInfo,
-		DescriptorPool:     p.ptr,
-		DescriptorSetCount: 1,
-		PSetLayouts:        []vk.DescriptorSetLayout{layout.Ptr()},
+	info := core1_0.DescriptorSetAllocateInfo{
+		DescriptorPool: p.ptr,
+		SetLayouts:     []core1_0.DescriptorSetLayout{layout.Ptr()},
 	}
 
 	if layout.VariableCount() > 0 {
-		variableInfo := vk.DescriptorSetVariableDescriptorCountAllocateInfo{
-			SType:              vk.StructureTypeDescriptorSetVariableDescriptorCountAllocateInfo,
-			DescriptorSetCount: 1,
-			PDescriptorCounts:  []uint32{uint32(layout.VariableCount())},
+		variableInfo := core1_2.DescriptorSetVariableDescriptorCountAllocateInfo{
+			DescriptorCounts: []int{layout.VariableCount()},
 		}
-		info.PNext = unsafe.Pointer(&variableInfo)
+		info.NextOptions = variableInfo.NextOptions
 	}
 
-	var ptr vk.DescriptorSet
-	r := vk.AllocateDescriptorSets(p.device.Ptr(), &info, &ptr)
-	if r != vk.Success {
-		if r == vk.ErrorOutOfPoolMemory {
+	ptr, r, err := p.device.Ptr().AllocateDescriptorSets(info)
+	if err != nil {
+		panic(err)
+	}
+	if r != core1_0.VKSuccess {
+		if r == core1_0.VKErrorOutOfDeviceMemory {
 			panic("failed to allocate descriptor set: out of pool memory")
 		}
 		panic("failed to allocate descriptor set")
@@ -90,7 +88,7 @@ func (p *pool) Allocate(layout SetLayout) Set {
 
 	return &set{
 		device: p.device,
-		ptr:    ptr,
+		ptr:    ptr[0],
 		layout: layout,
 	}
 }

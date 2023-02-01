@@ -8,32 +8,32 @@ import (
 	"github.com/johanhenriksson/goworld/render/renderpass/attachment"
 	"github.com/johanhenriksson/goworld/util"
 
-	vk "github.com/vulkan-go/vulkan"
+	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
 type T interface {
-	device.Resource[vk.RenderPass]
+	device.Resource[core1_0.RenderPass]
 
 	Depth() attachment.T
 	Attachment(name attachment.Name) attachment.T
 	Attachments() []attachment.T
 	Subpass(name Name) Subpass
-	Clear() []vk.ClearValue
+	Clear() []core1_0.ClearValue
 }
 
 type renderpass struct {
 	device      device.T
-	ptr         vk.RenderPass
+	ptr         core1_0.RenderPass
 	subpasses   []Subpass
 	passIndices map[Name]int
 	attachments []attachment.T
 	depth       attachment.T
 	indices     map[attachment.Name]int
-	clear       []vk.ClearValue
+	clear       []core1_0.ClearValue
 }
 
 func New(device device.T, args Args) T {
-	clear := make([]vk.ClearValue, 0, len(args.ColorAttachments)+1)
+	clear := make([]core1_0.ClearValue, 0, len(args.ColorAttachments)+1)
 	attachments := make([]attachment.T, len(args.ColorAttachments))
 	attachmentIndices := make(map[attachment.Name]int)
 
@@ -55,7 +55,7 @@ func New(device device.T, args Args) T {
 		log.Printf("  %d: %s", index, attachment.DepthName)
 	}
 
-	descriptions := make([]vk.AttachmentDescription, 0, len(args.ColorAttachments)+1)
+	descriptions := make([]core1_0.AttachmentDescription, 0, len(args.ColorAttachments)+1)
 	for _, attachment := range attachments {
 		descriptions = append(descriptions, attachment.Description())
 	}
@@ -63,89 +63,83 @@ func New(device device.T, args Args) T {
 		descriptions = append(descriptions, depth.Description())
 	}
 
-	subpasses := make([]vk.SubpassDescription, 0, len(args.Subpasses))
+	subpasses := make([]core1_0.SubpassDescription, 0, len(args.Subpasses))
 	subpassIndices := make(map[Name]int)
 
 	for idx, subpass := range args.Subpasses {
 		log.Println("subpass", idx)
 
-		var depthRef *vk.AttachmentReference
+		var depthRef *core1_0.AttachmentReference
 		if depth != nil && subpass.Depth {
 			idx := attachmentIndices[attachment.DepthName]
-			depthRef = &vk.AttachmentReference{
-				Attachment: uint32(idx),
-				Layout:     vk.ImageLayoutDepthStencilAttachmentOptimal,
+			depthRef = &core1_0.AttachmentReference{
+				Attachment: idx,
+				Layout:     core1_0.ImageLayoutDepthStencilAttachmentOptimal,
 			}
 			log.Printf("  depth -> %s (%d)\n", attachment.DepthName, idx)
 		}
 
-		subpasses = append(subpasses, vk.SubpassDescription{
-			PipelineBindPoint: vk.PipelineBindPointGraphics,
+		subpasses = append(subpasses, core1_0.SubpassDescription{
+			PipelineBindPoint: core1_0.PipelineBindPointGraphics,
 
-			ColorAttachmentCount: uint32(len(subpass.ColorAttachments)),
-			PColorAttachments: util.MapIdx(
+			ColorAttachments: util.MapIdx(
 				subpass.ColorAttachments,
-				func(name attachment.Name, i int) vk.AttachmentReference {
+				func(name attachment.Name, i int) core1_0.AttachmentReference {
 					idx := attachmentIndices[name]
 					log.Printf("  color %d -> %s (%d)\n", i, name, idx)
-					return vk.AttachmentReference{
-						Attachment: uint32(idx),
-						Layout:     vk.ImageLayoutColorAttachmentOptimal,
+					return core1_0.AttachmentReference{
+						Attachment: idx,
+						Layout:     core1_0.ImageLayoutColorAttachmentOptimal,
 					}
 				}),
 
-			InputAttachmentCount: uint32(len(subpass.InputAttachments)),
-			PInputAttachments: util.MapIdx(
+			InputAttachments: util.MapIdx(
 				subpass.InputAttachments,
-				func(name attachment.Name, i int) vk.AttachmentReference {
+				func(name attachment.Name, i int) core1_0.AttachmentReference {
 					idx := attachmentIndices[name]
 					log.Printf("  input %d -> %s (%d)\n", i, name, idx)
-					return vk.AttachmentReference{
-						Attachment: uint32(idx),
-						Layout:     vk.ImageLayoutShaderReadOnlyOptimal,
+					return core1_0.AttachmentReference{
+						Attachment: idx,
+						Layout:     core1_0.ImageLayoutShaderReadOnlyOptimal,
 					}
 				}),
 
-			PDepthStencilAttachment: depthRef,
+			DepthStencilAttachment: depthRef,
 		})
 
 		subpassIndices[subpass.Name] = idx
 		args.Subpasses[idx].index = idx
 	}
 
-	dependencies := make([]vk.SubpassDependency, len(args.Dependencies))
+	dependencies := make([]core1_0.SubpassDependency, len(args.Dependencies))
 	for idx, dependency := range args.Dependencies {
-		src := vk.SubpassExternal
+		src := core1_0.SubpassExternal
 		if dependency.Src != ExternalSubpass {
-			src = uint32(subpassIndices[dependency.Src])
+			src = subpassIndices[dependency.Src]
 		}
-		dst := vk.SubpassExternal
+		dst := core1_0.SubpassExternal
 		if dependency.Dst != ExternalSubpass {
-			dst = uint32(subpassIndices[dependency.Dst])
+			dst = subpassIndices[dependency.Dst]
 		}
-		dependencies[idx] = vk.SubpassDependency{
+		dependencies[idx] = core1_0.SubpassDependency{
 			SrcSubpass:      src,
 			DstSubpass:      dst,
-			SrcStageMask:    vk.PipelineStageFlags(dependency.SrcStageMask),
-			SrcAccessMask:   vk.AccessFlags(dependency.SrcAccessMask),
-			DstStageMask:    vk.PipelineStageFlags(dependency.DstStageMask),
-			DstAccessMask:   vk.AccessFlags(dependency.DstAccessMask),
-			DependencyFlags: vk.DependencyFlags(dependency.Flags),
+			SrcStageMask:    core1_0.PipelineStageFlags(dependency.SrcStageMask),
+			SrcAccessMask:   core1_0.AccessFlags(dependency.SrcAccessMask),
+			DstStageMask:    core1_0.PipelineStageFlags(dependency.DstStageMask),
+			DstAccessMask:   core1_0.AccessFlags(dependency.DstAccessMask),
+			DependencyFlags: core1_0.DependencyFlags(dependency.Flags),
 		}
 	}
 
-	info := vk.RenderPassCreateInfo{
-		SType:           vk.StructureTypeRenderPassCreateInfo,
-		AttachmentCount: uint32(len(descriptions)),
-		PAttachments:    descriptions,
-		SubpassCount:    uint32(len(subpasses)),
-		PSubpasses:      subpasses,
-		DependencyCount: uint32(len(dependencies)),
-		PDependencies:   dependencies,
+	ptr, _, err := device.Ptr().CreateRenderPass(nil, core1_0.RenderPassCreateInfo{
+		Attachments:         descriptions,
+		Subpasses:           subpasses,
+		SubpassDependencies: dependencies,
+	})
+	if err != nil {
+		panic(err)
 	}
-
-	var ptr vk.RenderPass
-	vk.CreateRenderPass(device.Ptr(), &info, nil, &ptr)
 
 	return &renderpass{
 		device:      device,
@@ -159,8 +153,8 @@ func New(device device.T, args Args) T {
 	}
 }
 
-func (r *renderpass) Ptr() vk.RenderPass  { return r.ptr }
-func (r *renderpass) Depth() attachment.T { return r.depth }
+func (r *renderpass) Ptr() core1_0.RenderPass { return r.ptr }
+func (r *renderpass) Depth() attachment.T     { return r.depth }
 
 func (r *renderpass) Attachment(name attachment.Name) attachment.T {
 	if name == attachment.DepthName {
@@ -170,7 +164,7 @@ func (r *renderpass) Attachment(name attachment.Name) attachment.T {
 	return r.attachments[index]
 }
 
-func (r *renderpass) Clear() []vk.ClearValue {
+func (r *renderpass) Clear() []core1_0.ClearValue {
 	return r.clear
 }
 
@@ -191,7 +185,7 @@ func (r *renderpass) Subpass(name Name) Subpass {
 
 func (r *renderpass) Destroy() {
 	if r.ptr != nil {
-		vk.DestroyRenderPass(r.device.Ptr(), r.ptr, nil)
+		r.ptr.Destroy(nil)
 		r.ptr = nil
 	}
 }

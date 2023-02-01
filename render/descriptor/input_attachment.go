@@ -6,15 +6,16 @@ import (
 	"github.com/johanhenriksson/goworld/render/device"
 	"github.com/johanhenriksson/goworld/render/image"
 
-	vk "github.com/vulkan-go/vulkan"
+	"github.com/vkngwrapper/core/v2/core1_0"
+	"github.com/vkngwrapper/core/v2/core1_2"
 )
 
 type InputAttachment struct {
-	Stages vk.ShaderStageFlagBits
-	Layout vk.ImageLayout
+	Stages core1_0.ShaderStageFlags
+	Layout core1_0.ImageLayout
 
 	binding int
-	view    vk.ImageView
+	view    core1_0.ImageView
 	set     Set
 }
 
@@ -22,7 +23,7 @@ var _ Descriptor = &InputAttachment{}
 
 func (d *InputAttachment) Initialize(device device.T) {
 	if d.Layout == 0 {
-		d.Layout = vk.ImageLayoutShaderReadOnlyOptimal
+		d.Layout = core1_0.ImageLayoutShaderReadOnlyOptimal
 	}
 }
 
@@ -42,27 +43,25 @@ func (d *InputAttachment) Set(view image.View) {
 	d.write()
 }
 
-func (d *InputAttachment) LayoutBinding(binding int) vk.DescriptorSetLayoutBinding {
+func (d *InputAttachment) LayoutBinding(binding int) core1_0.DescriptorSetLayoutBinding {
 	d.binding = binding
-	return vk.DescriptorSetLayoutBinding{
-		Binding:         uint32(binding),
-		DescriptorType:  vk.DescriptorTypeInputAttachment,
+	return core1_0.DescriptorSetLayoutBinding{
+		Binding:         binding,
+		DescriptorType:  core1_0.DescriptorTypeInputAttachment,
 		DescriptorCount: 1,
-		StageFlags:      vk.ShaderStageFlags(d.Stages),
+		StageFlags:      core1_0.ShaderStageFlags(d.Stages),
 	}
 }
 
-func (d *InputAttachment) BindingFlags() vk.DescriptorBindingFlags { return 0 }
+func (d *InputAttachment) BindingFlags() core1_2.DescriptorBindingFlags { return 0 }
 
 func (d *InputAttachment) write() {
-	d.set.Write(vk.WriteDescriptorSet{
-		SType:           vk.StructureTypeWriteDescriptorSet,
+	d.set.Write(core1_0.WriteDescriptorSet{
 		DstSet:          d.set.Ptr(),
-		DstBinding:      uint32(d.binding),
+		DstBinding:      d.binding,
 		DstArrayElement: 0,
-		DescriptorCount: 1,
-		DescriptorType:  vk.DescriptorTypeInputAttachment,
-		PImageInfo: []vk.DescriptorImageInfo{
+		DescriptorType:  core1_0.DescriptorTypeInputAttachment,
+		ImageInfo: []core1_0.DescriptorImageInfo{
 			{
 				ImageView:   d.view,
 				ImageLayout: d.Layout,

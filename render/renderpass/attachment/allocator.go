@@ -6,7 +6,7 @@ import (
 	"github.com/johanhenriksson/goworld/render/device"
 	"github.com/johanhenriksson/goworld/render/image"
 
-	vk "github.com/vulkan-go/vulkan"
+	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
 var ErrAllocArrayExhausted = errors.New("image array allocator exhausted")
@@ -15,8 +15,8 @@ type Allocator interface {
 	Alloc(
 		device device.T,
 		width, height int,
-		format vk.Format,
-		usage vk.ImageUsageFlagBits,
+		format core1_0.Format,
+		usage core1_0.ImageUsageFlags,
 	) (image.T, error)
 }
 
@@ -27,13 +27,13 @@ var _ Allocator = &alloc{}
 func (im *alloc) Alloc(
 	device device.T,
 	width, height int,
-	format vk.Format,
-	usage vk.ImageUsageFlagBits,
+	format core1_0.Format,
+	usage core1_0.ImageUsageFlags,
 ) (image.T, error) {
 	return image.New2D(
 		device,
 		width, height, format,
-		vk.ImageUsageFlags(usage),
+		core1_0.ImageUsageFlags(usage),
 	)
 }
 
@@ -45,8 +45,8 @@ type imageArray struct {
 func (im *imageArray) Alloc(
 	device device.T,
 	width, height int,
-	format vk.Format,
-	usage vk.ImageUsageFlagBits,
+	format core1_0.Format,
+	usage core1_0.ImageUsageFlags,
 ) (image.T, error) {
 	if im.next >= len(im.images) {
 		return nil, ErrAllocArrayExhausted
