@@ -83,6 +83,9 @@ func New(instance instance.T, physDevice core1_0.PhysicalDevice) (T, error) {
 				QueuePriorities:  []float32{1},
 			},
 		},
+		EnabledFeatures: &core1_0.PhysicalDeviceFeatures{
+			IndependentBlend: true,
+		},
 	})
 	if err != nil {
 		return nil, err
