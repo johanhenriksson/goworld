@@ -1,8 +1,7 @@
 package vulkan
 
 import (
-	"sync"
-
+	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/image"
 	"github.com/johanhenriksson/goworld/render/swapchain"
 
@@ -19,9 +18,6 @@ func NewImageTarget(backend T, img image.T) Target {
 	return &imageTarget{
 		T:     backend,
 		image: img,
-		context: &swapchain.Context{
-			InFlight: &sync.Mutex{},
-		},
 	}
 }
 
@@ -36,7 +32,7 @@ func (i *imageTarget) Aquire() (*swapchain.Context, error) {
 	return i.context, nil
 }
 
-func (b *imageTarget) Present() {}
+func (b *imageTarget) Present(command.Worker, *swapchain.Context) {}
 
 func (b *imageTarget) Destroy() {
 	b.image.Destroy()

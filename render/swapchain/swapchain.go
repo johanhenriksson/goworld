@@ -5,6 +5,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/device"
 	"github.com/johanhenriksson/goworld/render/image"
 	"github.com/johanhenriksson/goworld/util"
@@ -18,7 +19,7 @@ type T interface {
 	device.Resource[khr_swapchain.Swapchain]
 
 	Aquire() (*Context, error)
-	Present(core1_0.Queue, *Context)
+	Present(command.Worker, *Context)
 	Resize(int, int)
 
 	Images() []image.T
@@ -26,9 +27,9 @@ type T interface {
 }
 
 type swapchain struct {
-	ext        khr_swapchain.Extension
-	ptr        khr_swapchain.Swapchain
 	device     device.T
+	ptr        khr_swapchain.Swapchain
+	ext        khr_swapchain.Extension
 	surface    khr_surface.Surface
 	surfaceFmt khr_surface.SurfaceFormat
 	images     []image.T
@@ -43,8 +44,8 @@ type swapchain struct {
 
 func New(device device.T, frames, width, height int, surface khr_surface.Surface, surfaceFormat khr_surface.SurfaceFormat) T {
 	s := &swapchain{
-		ext:        khr_swapchain.CreateExtensionFromDevice(device.Ptr()),
 		device:     device,
+		ext:        khr_swapchain.CreateExtensionFromDevice(device.Ptr()),
 		surface:    surface,
 		surfaceFmt: surfaceFormat,
 		frames:     frames,
@@ -52,9 +53,7 @@ func New(device device.T, frames, width, height int, surface khr_surface.Surface
 		width:      width,
 		height:     height,
 	}
-
-	s.recreate()
-
+	s.create()
 	return s
 }
 
@@ -66,6 +65,7 @@ func (s *swapchain) Images() []image.T             { return s.images }
 func (s *swapchain) SurfaceFormat() core1_0.Format { return core1_0.Format(s.surfaceFmt.Format) }
 
 func (s *swapchain) Resize(width, height int) {
+	// resizing actually happens the next time a frame is aquired
 	s.width = width
 	s.height = height
 	s.resized = true
@@ -74,23 +74,27 @@ func (s *swapchain) Resize(width, height int) {
 func (s *swapchain) recreate() {
 	log.Println("recreating swapchain")
 	s.device.WaitIdle()
+	s.Destroy()
+	s.create()
+}
 
-	if s.ptr != nil {
-		s.ptr.Destroy(nil)
-	}
+func (s *swapchain) create() {
+	imageFormat := core1_0.Format(s.surfaceFmt.Format)
+	imageUsage := core1_0.ImageUsageColorAttachment | core1_0.ImageUsageTransferSrc
+	imageSharing := core1_0.SharingModeExclusive
 
 	swapInfo := khr_swapchain.SwapchainCreateInfo{
 		Surface:         s.surface,
 		MinImageCount:   s.frames,
-		ImageFormat:     core1_0.Format(s.surfaceFmt.Format),
+		ImageFormat:     imageFormat,
 		ImageColorSpace: khr_surface.ColorSpace(s.surfaceFmt.ColorSpace),
 		ImageExtent: core1_0.Extent2D{
 			Width:  s.width,
 			Height: s.height,
 		},
 		ImageArrayLayers: 1,
-		ImageUsage:       core1_0.ImageUsageColorAttachment | core1_0.ImageUsageTransferSrc,
-		ImageSharingMode: core1_0.SharingModeExclusive,
+		ImageUsage:       imageUsage,
+		ImageSharingMode: imageSharing,
 		PresentMode:      khr_surface.PresentModeFIFO,
 		PreTransform:     khr_surface.TransformIdentity,
 		CompositeAlpha:   khr_surface.CompositeAlphaOpaque,
@@ -114,20 +118,24 @@ func (s *swapchain) recreate() {
 	if len(swapimages) != s.frames {
 		panic("failed to get the requested number of swapchain images")
 	}
+
+	// create images from swapchain buffers
 	s.images = util.Map(swapimages, func(img core1_0.Image) image.T {
 		return image.Wrap(s.device, img, image.Args{
-			Width:  s.width,
-			Height: s.height,
-			Depth:  1,
-			Format: core1_0.Format(s.surfaceFmt.Format),
+			Type:    core1_0.ImageType2D,
+			Width:   s.width,
+			Height:  s.height,
+			Depth:   1,
+			Levels:  1,
+			Format:  imageFormat,
+			Usage:   imageUsage,
+			Sharing: imageSharing,
 		})
 	})
 
-	for i, ctx := range s.contexts {
-		if ctx != nil {
-			// destroy existing
-			ctx.Destroy()
-		}
+	// create frame contexts
+	s.contexts = make([]*Context, len(s.images))
+	for i := range s.contexts {
 		s.contexts[i] = newContext(s.device, i)
 	}
 
@@ -137,19 +145,19 @@ func (s *swapchain) recreate() {
 
 func (s *swapchain) Aquire() (*Context, error) {
 	if s.resized {
-		log.Println("aquire triggered swapchain recreation")
 		s.recreate()
 		s.resized = false
 		return nil, fmt.Errorf("swapchain out of date")
 	}
 
+	// get next frame context
 	s.current = (s.current + 1) % s.frames
-	nextFrame := s.contexts[s.current]
+	ctx := s.contexts[s.current]
 
-	// wait for frame to become available
-	nextFrame.InFlight.Lock()
+	// wait for frame context to become available
+	ctx.Aquire()
 
-	idx, r, err := s.ptr.AcquireNextImage(time.Second, nextFrame.ImageAvailable.Ptr(), nil)
+	idx, r, err := s.ptr.AcquireNextImage(time.Second, ctx.ImageAvailable.Ptr(), nil)
 	if err != nil {
 		panic(err)
 	}
@@ -157,21 +165,25 @@ func (s *swapchain) Aquire() (*Context, error) {
 		s.recreate()
 		return nil, fmt.Errorf("swapchain out of date")
 	}
-	nextFrame.Image = idx
 
-	return nextFrame, nil
+	// update swapchain output index
+	ctx.image = idx
+
+	return ctx, nil
 }
 
-func (s *swapchain) Present(queue core1_0.Queue, ctx *Context) {
+func (s *swapchain) Present(worker command.Worker, ctx *Context) {
 	var waits []core1_0.Semaphore
 	if ctx.RenderComplete != nil {
 		waits = []core1_0.Semaphore{ctx.RenderComplete.Ptr()}
 	}
 
-	s.ext.QueuePresent(queue, khr_swapchain.PresentInfo{
-		WaitSemaphores: waits,
-		Swapchains:     []khr_swapchain.Swapchain{s.Ptr()},
-		ImageIndices:   []int{ctx.Image},
+	worker.Invoke(func() {
+		s.ext.QueuePresent(worker.Ptr(), khr_swapchain.PresentInfo{
+			WaitSemaphores: waits,
+			Swapchains:     []khr_swapchain.Swapchain{s.Ptr()},
+			ImageIndices:   []int{ctx.image},
+		})
 	})
 }
 

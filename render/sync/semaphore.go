@@ -11,11 +11,13 @@ import (
 
 type Semaphore interface {
 	device.Resource[core1_0.Semaphore]
+	Name() string
 }
 
 type semaphore struct {
 	device device.T
 	ptr    core1_0.Semaphore
+	name   string
 }
 
 func NewSemaphore(dev device.T, name string) Semaphore {
@@ -28,6 +30,7 @@ func NewSemaphore(dev device.T, name string) Semaphore {
 	return &semaphore{
 		device: dev,
 		ptr:    ptr,
+		name:   name,
 	}
 }
 
@@ -35,15 +38,21 @@ func (s semaphore) Ptr() core1_0.Semaphore {
 	return s.ptr
 }
 
+func (s *semaphore) Name() string {
+	return s.name
+}
+
 func (s *semaphore) Destroy() {
-	s.ptr.Destroy(nil)
-	s.ptr = nil
+	if s.ptr != nil {
+		s.ptr.Destroy(nil)
+		s.ptr = nil
+	}
 }
 
 func NewSemaphoreArray(dev device.T, name string, count int) []Semaphore {
 	arr := make([]Semaphore, count)
 	for i := range arr {
-		arr[i] = NewSemaphore(dev, fmt.Sprintf("%s:%d", name, count))
+		arr[i] = NewSemaphore(dev, fmt.Sprintf("%s:%d", name, i))
 	}
 	return arr
 }

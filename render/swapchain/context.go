@@ -10,10 +10,11 @@ import (
 
 type Context struct {
 	Index          int
-	Image          int
 	ImageAvailable sync.Semaphore
 	RenderComplete sync.Semaphore
-	InFlight       *gosync.Mutex
+
+	image    int
+	inFlight *gosync.Mutex
 }
 
 func newContext(dev device.T, index int) *Context {
@@ -21,7 +22,7 @@ func newContext(dev device.T, index int) *Context {
 		Index:          index,
 		ImageAvailable: sync.NewSemaphore(dev, fmt.Sprintf("ImageAvailable:%d", index)),
 		RenderComplete: sync.NewSemaphore(dev, fmt.Sprintf("RenderComplete:%d", index)),
-		InFlight:       &gosync.Mutex{},
+		inFlight:       &gosync.Mutex{},
 	}
 }
 
@@ -34,4 +35,12 @@ func (c *Context) Destroy() {
 		c.RenderComplete.Destroy()
 		c.RenderComplete = nil
 	}
+}
+
+func (c *Context) Aquire() {
+	c.inFlight.Lock()
+}
+
+func (c *Context) Release() {
+	c.inFlight.Unlock()
 }

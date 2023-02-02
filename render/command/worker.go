@@ -5,7 +5,6 @@ import (
 	"runtime"
 
 	"github.com/johanhenriksson/goworld/render/device"
-	"github.com/johanhenriksson/goworld/render/swapchain"
 	"github.com/johanhenriksson/goworld/render/sync"
 	"github.com/johanhenriksson/goworld/util"
 
@@ -17,11 +16,12 @@ type CommandFn func(Buffer)
 
 // Workers manage a command pool thread
 type Worker interface {
+	Ptr() core1_0.Queue
 	Queue(CommandFn)
 	Submit(SubmitInfo)
 	Destroy()
 	Flush()
-	Present(swap swapchain.T, ctx *swapchain.Context)
+	Invoke(func())
 }
 
 type Workers []Worker
@@ -54,6 +54,10 @@ func NewWorker(device device.T, queueFlags core1_0.QueueFlags, queueIndex int) W
 	go w.run()
 
 	return w
+}
+
+func (w *worker) Ptr() core1_0.Queue {
+	return w.queue
 }
 
 func (w *worker) run() {
@@ -90,6 +94,10 @@ func (w *worker) run() {
 
 	// return the thread
 	runtime.UnlockOSThread()
+}
+
+func (w *worker) Invoke(callback func()) {
+	w.work <- callback
 }
 
 func (w *worker) Queue(batch CommandFn) {
@@ -165,12 +173,6 @@ func (w *worker) submit(submit SubmitInfo) {
 
 	// clear batch slice but keep memory
 	w.batch = w.batch[:0]
-}
-
-func (w *worker) Present(swap swapchain.T, ctx *swapchain.Context) {
-	w.work <- func() {
-		swap.Present(w.queue, ctx)
-	}
 }
 
 func (w *worker) Destroy() {

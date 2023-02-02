@@ -1,26 +1,17 @@
 package engine
 
 import (
-	"fmt"
 	"log"
 	"runtime"
 	"time"
 
-	"github.com/johanhenriksson/goworld/core/camera"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/engine/renderer"
-	"github.com/johanhenriksson/goworld/math/mat4"
-	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/vulkan"
 )
 
 type SceneFunc func(renderer.T, object.T)
 type RendererFunc func(vulkan.Target) renderer.T
-
-type PreDrawable interface {
-	object.T
-	PreDraw(render.Args, object.T) error
-}
 
 type Args struct {
 	Title    string
@@ -69,63 +60,23 @@ func Run(args Args, scenefuncs ...SceneFunc) {
 	log.Println("ready")
 
 	counter := NewFrameCounter(60)
-
-	currentTime := time.Now()
 	for interrupt.Running() && !wnd.ShouldClose() {
-		newTime := time.Now()
-		frameTime := newTime.Sub(currentTime)
-		currentTime = newTime
+		counter.Update()
 
 		// update scene
 		wnd.Poll()
-		scene.Update(float32(frameTime.Seconds()))
-
-		// render
-		screen := render.Screen{
-			Width:  wnd.Width(),
-			Height: wnd.Height(),
-			Scale:  wnd.Scale(),
-		}
-
-		// find the first active camera
-		camera := object.Query[camera.T]().First(scene)
-		if camera == nil {
-			fmt.Println("no active camera in the scene")
-			continue
-		}
-
-		// aquire next frame
-		context, err := wnd.Aquire()
-		if err != nil {
-			log.Println("swapchain recreated?? recreating renderer")
-			renderer.Recreate()
-			continue
-		}
-
-		args := createRenderArgs(screen, camera)
-		args.Context = context
-
-		// pre-draw
-		objects := object.Query[PreDrawable]().Collect(scene)
-		for _, object := range objects {
-			object.PreDraw(args.Apply(object.Transform().World()), scene)
-		}
+		scene.Update(counter.Delta())
 
 		// draw
-		renderer.Draw(args, scene)
-
-		// present image
-		wnd.Worker(context.Index).
-			Present(wnd.Swapchain(), context)
+		renderer.Draw(scene)
 
 		// cache ticks
-		wnd.Meshes().Tick(context.Index)
-		wnd.Textures().Tick(context.Index)
+		// wnd.Meshes().Tick(context.Index)
+		// wnd.Textures().Tick(context.Index)
 
 		// gc pass
 		// collectGarbage()
 
-		counter.Sample()
 		// timing := counter.Sample()
 		// log.Printf(
 		// 	"frame: %2.fms, avg: %.2fms, peak: %.2f, fps: %.1f\n",
@@ -136,21 +87,7 @@ func Run(args Args, scenefuncs ...SceneFunc) {
 	}
 }
 
-func createRenderArgs(screen render.Screen, cam camera.T) render.Args {
-	return render.Args{
-		Projection: cam.Projection(),
-		View:       cam.View(),
-		VP:         cam.ViewProj(),
-		MVP:        cam.ViewProj(),
-		Transform:  mat4.Ident(),
-		Position:   cam.Transform().WorldPosition(),
-		Clear:      cam.ClearColor(),
-		Forward:    cam.Transform().Forward(),
-		Viewport:   screen,
-	}
-}
-
-func collectGarbage() {
+func RunGC() {
 	start := time.Now()
 	runtime.GC()
 	elapsed := time.Since(start)

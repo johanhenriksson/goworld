@@ -8,6 +8,7 @@ import (
 	"github.com/johanhenriksson/goworld/core/input"
 	"github.com/johanhenriksson/goworld/core/input/keys"
 	"github.com/johanhenriksson/goworld/core/input/mouse"
+	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/image"
 	"github.com/johanhenriksson/goworld/render/swapchain"
 
@@ -162,6 +163,10 @@ func (w *window) SetTitle(title string) {
 
 func (w *window) Aquire() (*swapchain.Context, error) {
 	return w.swap.Aquire()
+}
+
+func (w *window) Present(worker command.Worker, ctx *swapchain.Context) {
+	w.swap.Present(worker, ctx)
 }
 
 func (w *window) Destroy() {
