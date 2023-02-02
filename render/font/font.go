@@ -4,6 +4,7 @@ import (
 	"image"
 	"io"
 	"io/fs"
+	"sync"
 
 	"github.com/golang/freetype/truetype"
 	"github.com/johanhenriksson/goworld/math"
@@ -30,15 +31,7 @@ type font struct {
 	size   float32
 	fnt    *truetype.Font
 	drawer *fontlib.Drawer
-}
-
-func (f *font) setup() {
-	f.drawer = &fontlib.Drawer{
-		Face: truetype.NewFace(f.fnt, &truetype.Options{
-			Size:    float64(f.size),
-			Hinting: fontlib.HintingFull,
-		}),
-	}
+	mutex  *sync.Mutex
 }
 
 func (f *font) Name() string {
@@ -48,6 +41,9 @@ func (f *font) Name() string {
 func (f *font) Size() float32 { return f.size }
 
 func (f *font) Measure(text string, args Args) vec2.T {
+	f.mutex.Lock()
+	defer f.mutex.Unlock()
+
 	if args.LineHeight == 0 {
 		args.LineHeight = 1
 	}
@@ -81,13 +77,16 @@ func (f *font) Measure(text string, args Args) vec2.T {
 }
 
 func (f *font) Render(text string, args Args) *image.RGBA {
+	size := f.Measure(text, args)
+
+	f.mutex.Lock()
+	defer f.mutex.Unlock()
+
 	if args.LineHeight == 0 {
 		args.LineHeight = 1
 	}
 
 	f.drawer.Src = image.NewUniform(args.Color.RGBA())
-
-	size := f.Measure(text, args)
 
 	// todo: its probably not a great idea to allocate an image on every draw
 	// perhaps textures should always have a backing image ?
@@ -139,10 +138,16 @@ func Load(file fs.File, size int) (T, error) {
 		return nil, err
 	}
 
-	fnt := &font{
+	return &font{
 		size: float32(size),
 		fnt:  f,
-	}
-	fnt.setup()
-	return fnt, nil
+
+		drawer: &fontlib.Drawer{
+			Face: truetype.NewFace(f, &truetype.Options{
+				Size:    float64(size),
+				Hinting: fontlib.HintingFull,
+			}),
+		},
+		mutex: &sync.Mutex{},
+	}, nil
 }

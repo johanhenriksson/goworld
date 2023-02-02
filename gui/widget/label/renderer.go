@@ -129,9 +129,10 @@ func (r *renderer) Draw(args widget.DrawArgs, label T) {
 		}
 		r.bounds = r.font.Measure(r.text, fargs)
 
-		img := r.font.Render(r.text, fargs)
 		r.version++
-		r.tex = texture.ImageRef(r.key, r.version, img)
+		// img := r.font.Render(r.text, fargs)
+		// r.tex = texture.ImageRef(r.key, r.version, img)
+		r.tex = font.Ref(r.key, r.version, r.font, r.text, fargs)
 
 		r.invalidTexture = false
 	}
@@ -158,6 +159,9 @@ func (r *renderer) Draw(args widget.DrawArgs, label T) {
 	// scale := label.Size().Div(r.bounds)
 
 	tex := args.Textures.Fetch(r.tex)
+	if tex == 0 {
+		return
+	}
 	mesh := args.Meshes.Fetch(r.mesh.Mesh())
 	if mesh == nil {
 		return
