@@ -116,8 +116,8 @@ func (p *shadowpass) Name() string {
 }
 
 func (p *shadowpass) Record(cmds command.Recorder, args render.Args, scene object.T) {
-	light := object.Query[light.T]().Where(func(lit light.T) bool { return lit.Type() == light.Directional }).First(scene)
-	if light == nil {
+	light, lightExists := object.Query[light.T]().Where(func(lit light.T) bool { return lit.Type() == light.Directional }).First(scene)
+	if !lightExists {
 		return
 	}
 	lightDesc := light.LightDescriptor()

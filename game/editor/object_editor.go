@@ -31,13 +31,17 @@ func NewObjectEditor(target object.T, bounds collider.Box, editor T) *ObjectEdit
 var _ Selectable = &ObjectEditor{}
 
 func (e *ObjectEditor) Select(ev mouse.Event, collider collider.T) {
-	e.Custom.SetActive(true)
+	if e.Custom != nil {
+		e.Custom.SetActive(true)
+	}
 }
 
 func (e *ObjectEditor) Deselect(ev mouse.Event) bool {
-	if e.Custom.CanDeselect() {
-		e.Custom.SetActive(false)
-		return true
+	if e.Custom != nil {
+		if e.Custom.CanDeselect() {
+			e.Custom.SetActive(false)
+			return true
+		}
 	}
 	return false
 }

@@ -32,8 +32,8 @@ func ConstructEditors(ctx *Context, obj object.T, mv *mover.T) object.T {
 		object.Attach(editNode, NewObjectEditor(
 			obj,
 			collider.Box{
-				Center: vec3.New(4, 4, 4),
-				Size:   vec3.New(8, 8, 8),
+				Center: vec3.New(16, 16, 16),
+				Size:   vec3.New(32, 32, 32),
 			},
 			construct(ctx, obj),
 		))

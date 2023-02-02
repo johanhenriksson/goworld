@@ -60,9 +60,9 @@ func (q *query[K]) clear() {
 }
 
 // First returns the first match
-func (q *query[K]) First(root T) K {
-	result, _ := q.first(root)
-	return result
+func (q *query[K]) First(root T) (K, bool) {
+	result, hit := q.first(root)
+	return result, hit
 }
 
 func (q *query[K]) first(root T) (K, bool) {

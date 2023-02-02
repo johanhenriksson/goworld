@@ -44,8 +44,8 @@ func (n *preNode) Prepare(scene object.T) (*render.Args, error) {
 	}
 
 	// find the first active camera
-	camera := object.Query[camera.T]().First(scene)
-	if camera == nil {
+	camera, cameraExists := object.Query[camera.T]().First(scene)
+	if !cameraExists {
 		return nil, ErrNoCamera
 	}
 

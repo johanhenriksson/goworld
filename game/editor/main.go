@@ -5,6 +5,8 @@ import (
 	"github.com/johanhenriksson/goworld/engine/renderer"
 	"github.com/johanhenriksson/goworld/game"
 	"github.com/johanhenriksson/goworld/geometry/gizmo/mover"
+	"github.com/johanhenriksson/goworld/gui"
+	"github.com/johanhenriksson/goworld/gui/node"
 	"github.com/johanhenriksson/goworld/math/vec3"
 )
 
@@ -15,11 +17,23 @@ func Scene(render renderer.T, scene object.T) {
 		object.Attach(workspace, existing)
 	}
 
-	// collision support
 	editor := object.Empty("Editor")
-	object.Attach(editor, MakeGUI(workspace))
+	selectMgr := NewSelectManager(nil, nil)
+
+	object.Attach(editor, SidebarFragment(
+		gui.FragmentFirst,
+		func() node.T {
+			return ObjectList("scene-graph", ObjectListProps{
+				Scene:         workspace,
+				EditorRoot:    editor,
+				SelectManager: selectMgr,
+			})
+		},
+	))
+
+	object.Attach(editor, MakeGUI())
 	object.Attach(editor, NewGizmoManager())
-	object.Attach(editor, NewSelectManager())
+	object.Attach(editor, NewSelectManager(nil, nil))
 
 	// first person controls
 	player := game.NewPlayer(vec3.New(0, 20, -11), nil)

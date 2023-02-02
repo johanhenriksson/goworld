@@ -15,6 +15,42 @@ import (
 
 type SelectObjectHandler func(object.T)
 
+type ObjectListProps struct {
+	Scene         object.T
+	EditorRoot    object.T
+	SelectManager SelectManager
+}
+
+func ObjectList(key string, props ObjectListProps) node.T {
+	return rect.New(key, rect.Props{
+		Style: rect.Style{
+			Padding: style.RectY(15),
+		},
+		Children: []node.T{
+			ObjectListEntry("scene", ObjectListEntryProps{
+				Object: props.Scene,
+				OnSelect: func(obj object.T) {
+					if !object.Is[*ObjectEditor](obj) {
+						// look up an editor instead
+						var hit bool
+						obj, hit = object.Query[*ObjectEditor]().Where(func(e *ObjectEditor) bool {
+							return e.Target() == obj
+						}).First(props.EditorRoot)
+						if !hit {
+							return
+						}
+					}
+
+					// check if we found something selectable
+					if selectable, ok := obj.(Selectable); ok {
+						props.SelectManager.Select(selectable)
+					}
+				},
+			}),
+		},
+	})
+}
+
 type ObjectListEntryProps struct {
 	Object   object.T
 	OnSelect SelectObjectHandler

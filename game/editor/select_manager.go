@@ -14,8 +14,12 @@ type SelectManager interface {
 	object.T
 	mouse.Handler
 
-	Select(object.T)
+	Select(Selectable)
+	Validate(Selectable) bool
 }
+
+type SelectCallback func(Selectable)
+type SelectFilter func(Selectable) bool
 
 type selectmgr struct {
 	object.T
@@ -24,22 +28,37 @@ type selectmgr struct {
 
 	camera   mat4.T
 	viewport render.Screen
+
+	filter   SelectFilter
+	onSelect SelectCallback
 }
 
-func NewSelectManager() SelectManager {
-	return object.New(&selectmgr{})
+func NewSelectManager(onSelect SelectCallback, filter SelectFilter) SelectManager {
+	f := func(Selectable) bool { return true }
+	if filter != nil {
+		f = filter
+	}
+
+	return object.New(&selectmgr{
+		onSelect: onSelect,
+		filter:   f,
+	})
 }
 
-func (m *selectmgr) Select(obj object.T) {
-	// find selectable for this object
-	// gross
-	root := object.Root(obj)
-	editor := object.Query[*ObjectEditor]().Where(func(e *ObjectEditor) bool {
-		return e.Target() == obj
-	}).First(root)
-	if editor != nil {
-		m.setSelect(mouse.NopEvent(), editor, editor.Bounds)
+func (m *selectmgr) Validate(obj Selectable) bool {
+	return m.filter(obj)
+}
+
+func (m *selectmgr) Select(obj Selectable) {
+	if obj != nil {
+		if m.onSelect != nil {
+			m.onSelect(obj)
+		}
+		m.setSelect(mouse.NopEvent(), obj, nil)
 	} else {
+		if m.onSelect != nil {
+			m.onSelect(nil)
+		}
 		m.deselect(mouse.NopEvent())
 	}
 }
@@ -59,7 +78,7 @@ func (m *selectmgr) MouseEvent(e mouse.Event) {
 		dir := far.Sub(near).Normalized()
 
 		// find Collider children of Selectable objects
-		selectables := object.Query[Selectable]().CollectObjects(m.scene)
+		selectables := object.Query[Selectable]().Where(m.filter).CollectObjects(m.scene)
 		colliders := object.Query[collider.T]().Collect(selectables...)
 
 		// return closest hit

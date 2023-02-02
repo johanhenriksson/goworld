@@ -1,7 +1,6 @@
 package editor
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/johanhenriksson/goworld/core/input/mouse"
@@ -16,7 +15,7 @@ import (
 	"github.com/johanhenriksson/goworld/render/texture"
 )
 
-func MakeGUI(gameRoot object.T) gui.Manager {
+func MakeGUI() gui.Manager {
 	return gui.New(func() node.T {
 		return rect.New("gui", rect.Props{
 			Children: []node.T{
@@ -26,7 +25,7 @@ func MakeGUI(gameRoot object.T) gui.Manager {
 						Grow: style.Grow(1),
 					},
 					Children: []node.T{
-						makeSidebar(gameRoot),
+						makeSidebar(),
 					},
 				}),
 			},
@@ -74,7 +73,7 @@ func makeMenu() node.T {
 	})
 }
 
-func makeSidebar(scene object.T) node.T {
+func makeSidebar() node.T {
 	return rect.New("sidebar", rect.Props{
 		OnMouseDown: gui.ConsumeMouse,
 		Style: rect.Style{
@@ -100,29 +99,16 @@ func makeSidebar(scene object.T) node.T {
 				},
 			}),
 
-			rect.New("graph-container", rect.Props{
-				Style: rect.Style{
-					Padding: style.RectY(15),
-				},
-				Children: []node.T{
-					ObjectListEntry("scene-graph", ObjectListEntryProps{
-						Object: scene,
-						OnSelect: func(obj object.T) {
-							fmt.Println("selected", obj.Name())
-							// find select manager
-							root := object.Root(scene)
-							mgr := object.Query[SelectManager]().First(root)
-							if mgr == nil {
-								panic("could not find select manager")
-							}
-							mgr.Select(obj)
-						},
-					}),
-				},
-			}),
-
 			// content placeholder
 			rect.New("sidebar:content", rect.Props{}),
 		},
+	})
+}
+
+func SidebarFragment(position gui.FragmentPosition, render node.RenderFunc) object.T {
+	return gui.NewFragment(gui.FragmentArgs{
+		Slot:     "sidebar:content",
+		Position: position,
+		Render:   render,
 	})
 }
