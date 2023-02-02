@@ -50,16 +50,9 @@ func (m *selectmgr) Validate(obj Selectable) bool {
 }
 
 func (m *selectmgr) Select(obj Selectable) {
-	if obj != nil {
-		if m.onSelect != nil {
-			m.onSelect(obj)
-		}
-		m.setSelect(mouse.NopEvent(), obj, nil)
-	} else {
-		if m.onSelect != nil {
-			m.onSelect(nil)
-		}
-		m.deselect(mouse.NopEvent())
+	changed := m.setSelect(mouse.NopEvent(), obj, nil)
+	if changed && m.onSelect != nil {
+		m.onSelect(obj)
 	}
 }
 
@@ -93,26 +86,25 @@ func (m *selectmgr) MouseEvent(e mouse.Event) {
 			}
 		} else if m.selected != nil {
 			// we hit nothing, deselect
-			m.deselect(e)
+			m.setSelect(e, nil, nil)
 		}
 	}
 }
 
-func (m *selectmgr) setSelect(e mouse.Event, object Selectable, collider collider.T) {
-	m.deselect(e)
-	if m.selected == nil {
+func (m *selectmgr) setSelect(e mouse.Event, object Selectable, collider collider.T) bool {
+	// deselect
+	if m.selected != nil {
+		if !m.selected.Deselect(e) {
+			return false
+		}
+		m.selected = nil
+	}
+	// select
+	if object != nil {
 		m.selected = object
 		object.Select(e, collider)
 	}
-}
-
-func (m *selectmgr) deselect(e mouse.Event) {
-	if m.selected != nil {
-		ok := m.selected.Deselect(e)
-		if ok {
-			m.selected = nil
-		}
-	}
+	return true
 }
 
 func (m *selectmgr) PreDraw(args render.Args, scene object.T) error {

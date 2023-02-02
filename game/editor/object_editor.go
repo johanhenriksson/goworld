@@ -38,12 +38,13 @@ func (e *ObjectEditor) Select(ev mouse.Event, collider collider.T) {
 
 func (e *ObjectEditor) Deselect(ev mouse.Event) bool {
 	if e.Custom != nil {
-		if e.Custom.CanDeselect() {
-			e.Custom.SetActive(false)
-			return true
+		// editors may reject deselection
+		if !e.Custom.CanDeselect() {
+			return false
 		}
+		e.Custom.SetActive(false)
 	}
-	return false
+	return true
 }
 
 func (e *ObjectEditor) Target() object.T {
