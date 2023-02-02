@@ -27,18 +27,45 @@ type line[V Value] struct {
 	ready   bool
 }
 
+type job[K Key, V Value] struct {
+	key  K
+	done func(V)
+}
+
 type cache[K Key, V Value] struct {
 	backend Backend[K, V]
 	data    map[string]*line[V]
 	remove  map[int][]V
+	work    chan<- job[K, V]
+	stop    chan<- bool
 	frame   int
 }
 
 func New[K Key, V Value](backend Backend[K, V]) T[K, V] {
-	return &cache[K, V]{
+	c := &cache[K, V]{
 		backend: backend,
 		data:    map[string]*line[V]{},
 		remove:  map[int][]V{},
+	}
+	go c.worker()
+	return c
+}
+
+func (c *cache[K, V]) worker() {
+	stop := make(chan bool)
+	c.stop = stop
+	defer close(stop)
+	work := make(chan job[K, V])
+	c.work = work
+	defer close(work)
+
+	for {
+		select {
+		case job := <-work:
+			c.backend.Instantiate(job.key, job.done)
+		case <-stop:
+			return
+		}
 	}
 }
 
@@ -55,15 +82,18 @@ func (c *cache[K, V]) Fetch(key K) V {
 
 	if ln.version != key.Version() {
 		ln.version = key.Version()
-		c.backend.Instantiate(key, func(value V) {
-			if ln.ready {
-				// ready implies that we have a previous value - schedule deletion
-				c.Delete(ln.value)
-			}
+		c.work <- job[K, V]{
+			key: key,
+			done: func(value V) {
+				if ln.ready {
+					// ready implies that we have a previous value - schedule deletion
+					c.Delete(ln.value)
+				}
 
-			ln.value = value
-			ln.ready = true
-		})
+				ln.value = value
+				ln.ready = true
+			},
+		}
 	}
 
 	// reset age
@@ -97,6 +127,7 @@ func (c *cache[K, V]) Tick(frameIndex int) {
 }
 
 func (c *cache[K, V]) Destroy() {
+	c.stop <- true
 	for _, queue := range c.remove {
 		for _, value := range queue {
 			c.backend.Delete(value)

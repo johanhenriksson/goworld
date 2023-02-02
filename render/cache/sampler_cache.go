@@ -10,17 +10,17 @@ import (
 type SamplerCache T[texture.Ref, int]
 
 type samplers struct {
-	textures *textures
+	textures Backend[texture.Ref, texture.T]
 	desc     *descriptor.SamplerArray
 	mapping  map[int]texture.T
 	next     int
 }
 
-func NewSamplerCache(dev device.T, transferer command.Worker, desc *descriptor.SamplerArray) SamplerCache {
+func NewSamplerCache(device device.T, worker command.Worker, desc *descriptor.SamplerArray) SamplerCache {
 	return New[texture.Ref, int](&samplers{
 		textures: &textures{
-			device: dev,
-			worker: transferer,
+			device: device,
+			worker: worker,
 		},
 		desc:    desc,
 		mapping: make(map[int]texture.T, 100),
