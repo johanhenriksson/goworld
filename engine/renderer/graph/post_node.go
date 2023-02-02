@@ -4,17 +4,17 @@ import (
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/command"
-	"github.com/johanhenriksson/goworld/render/device"
 	"github.com/johanhenriksson/goworld/render/sync"
+	"github.com/johanhenriksson/goworld/render/vulkan"
 )
 
 type postNode struct {
 	*node
 }
 
-func newPostNode(dev device.T) Node {
+func newPostNode(target vulkan.Target) Node {
 	return &postNode{
-		node: newNode(dev, "Post", nil),
+		node: newNode(target, "Post", nil),
 	}
 }
 
@@ -24,12 +24,18 @@ func (n *postNode) Draw(worker command.Worker, args render.Args, scene object.T)
 		signal = []sync.Semaphore{args.Context.RenderComplete}
 	}
 
+	barrier := make(chan struct{})
 	worker.Submit(command.SubmitInfo{
 		Marker: n.Name(),
-		Wait:   n.waits,
+		Wait:   n.waits(args.Context.Index),
 		Signal: signal,
 		Then: func() {
-			args.Context.InFlight.Unlock()
+			// what if this happens before the call to Present?
+			<-barrier
+			args.Context.Release()
 		},
 	})
+
+	n.target.Present(worker, args.Context)
+	barrier <- struct{}{}
 }

@@ -113,7 +113,6 @@ func NewGuiPass(target vulkan.Target) *GuiPass {
 }
 
 func (p *GuiPass) Record(cmds command.Recorder, args render.Args, scene object.T) {
-	p.textures.Tick()
 
 	// texture id zero should be white
 	p.textures.Fetch(texture.PathRef("textures/white.png"))

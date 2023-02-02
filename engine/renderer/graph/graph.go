@@ -2,45 +2,59 @@ package graph
 
 import (
 	"github.com/johanhenriksson/goworld/core/object"
-	"github.com/johanhenriksson/goworld/render"
-	"github.com/johanhenriksson/goworld/render/command"
-	"github.com/johanhenriksson/goworld/render/device"
+	"github.com/johanhenriksson/goworld/render/vulkan"
 
 	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
+type NodeFunc func(T)
+
+// The render graph is responsible for synchronization between
+// different render nodes.
 type T interface {
 	Node(pass NodePass) Node
-	Connect()
-	Draw(worker command.Worker, args render.Args, scene object.T)
+	Recreate()
+	Draw(scene object.T)
 	Destroy()
 }
 
 type graph struct {
-	device device.T
-	pre    Node
+	target vulkan.Target
+	pre    PreNode
 	post   Node
 	nodes  []Node
 	todo   map[Node]bool
+	init   NodeFunc
 }
 
-func New(dev device.T) T {
-	return &graph{
-		device: dev,
+func New(target vulkan.Target, init NodeFunc) T {
+	g := &graph{
+		target: target,
 		nodes:  make([]Node, 0, 16),
 		todo:   make(map[Node]bool, 16),
-		pre:    newPreNode(dev),
-		post:   newPostNode(dev),
+		init:   init,
 	}
+	g.Recreate()
+	return g
+}
+
+func (g *graph) Recreate() {
+	g.Destroy()
+	g.target.Pool().Recreate()
+	g.init(g)
+	g.pre = newPreNode(g.target)
+	g.post = newPostNode(g.target)
+	g.connect()
 }
 
 func (g *graph) Node(pass NodePass) Node {
-	nd := newNode(g.device, pass.Name(), pass)
+	nd := newNode(g.target, pass.Name(), pass)
 	g.nodes = append(g.nodes, nd)
 	return nd
 }
 
-func (g *graph) Connect() {
+func (g *graph) connect() {
+	// use bottom of pipe so that subsequent passes start as soon as possible
 	for _, node := range g.nodes {
 		if len(node.Requires()) == 0 {
 			node.After(g.pre, core1_0.PipelineStageTopOfPipe)
@@ -53,7 +67,7 @@ func (g *graph) Connect() {
 	}
 }
 
-func (g *graph) Draw(worker command.Worker, args render.Args, scene object.T) {
+func (g *graph) Draw(scene object.T) {
 	// put all nodes in a todo list
 	// for each node in todo list
 	//   if all Before nodes are not in todo list
@@ -72,13 +86,22 @@ func (g *graph) Draw(worker command.Worker, args render.Args, scene object.T) {
 		return true
 	}
 
-	g.pre.Draw(worker, args, scene)
+	// prepare
+	args, err := g.pre.Prepare(scene)
+	if err != nil {
+		g.Recreate()
+		return
+	}
+
+	// select a suitable worker for this frame
+	worker := g.target.Worker(args.Context.Index)
+
 	for len(g.todo) > 0 {
 		progress := false
 		for node := range g.todo {
 			// check if ready
 			if ready(node) {
-				node.Draw(worker, args, scene)
+				node.Draw(worker, *args, scene)
 				delete(g.todo, node)
 				progress = true
 				break
@@ -89,13 +112,21 @@ func (g *graph) Draw(worker command.Worker, args render.Args, scene object.T) {
 			panic("unable to make progress in render graph")
 		}
 	}
-	g.post.Draw(worker, args, scene)
+	g.post.Draw(worker, *args, scene)
 }
 
 func (g *graph) Destroy() {
+	g.target.Flush()
+	if g.pre != nil {
+		g.pre.Destroy()
+		g.pre = nil
+	}
+	if g.post != nil {
+		g.post.Destroy()
+		g.post = nil
+	}
 	for _, node := range g.nodes {
 		node.Destroy()
 	}
-	g.device = nil
-	g.nodes = nil
+	g.nodes = g.nodes[:0]
 }

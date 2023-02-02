@@ -20,6 +20,7 @@ type T interface {
 
 	Worker(int) command.Worker
 	Transferer() command.Worker
+	Flush()
 
 	Pool() descriptor.Pool
 	Meshes() cache.MeshCache
@@ -42,8 +43,7 @@ type backend struct {
 }
 
 func New(appName string, deviceIndex int) T {
-	// create instance * device
-	frames := 2
+	frames := 3
 	instance := instance.New(appName)
 	device, err := device.New(instance, instance.EnumeratePhysicalDevices()[0])
 	if err != nil {
@@ -51,13 +51,13 @@ func New(appName string, deviceIndex int) T {
 	}
 
 	// transfer worker
-	transfer := command.NewWorker(device, core1_0.QueueTransfer, 0)
+	transfer := command.NewWorker(device, core1_0.QueueTransfer|core1_0.QueueGraphics, 0)
 
 	// per frame graphics workers
 	workerCount := 1 // frames
 	workers := make([]command.Worker, workerCount)
 	for i := range workers {
-		workers[i] = command.NewWorker(device, core1_0.QueueGraphics, i+1)
+		workers[i] = transfer // command.NewWorker(device, core1_0.QueueGraphics, 0)
 	}
 
 	// init caches
@@ -105,6 +105,14 @@ func (b *backend) Window(args WindowArgs) (Window, error) {
 	}
 	b.windows = append(b.windows, w)
 	return w, nil
+}
+
+func (b *backend) Flush() {
+	// wait for all workers
+	for _, w := range b.workers {
+		w.Flush()
+	}
+	b.device.WaitIdle()
 }
 
 func (b *backend) Destroy() {

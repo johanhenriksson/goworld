@@ -1,25 +1,27 @@
 package command
 
 import (
+	"fmt"
 	"runtime"
 
 	"github.com/johanhenriksson/goworld/render/device"
-	"github.com/johanhenriksson/goworld/render/swapchain"
 	"github.com/johanhenriksson/goworld/render/sync"
 	"github.com/johanhenriksson/goworld/util"
 
 	"github.com/vkngwrapper/core/v2/core1_0"
+	"github.com/vkngwrapper/core/v2/driver"
 )
 
 type CommandFn func(Buffer)
 
 // Workers manage a command pool thread
 type Worker interface {
+	Ptr() core1_0.Queue
 	Queue(CommandFn)
 	Submit(SubmitInfo)
 	Destroy()
-	Wait()
-	Present(swap swapchain.T, ctx swapchain.Context)
+	Flush()
+	Invoke(func())
 }
 
 type Workers []Worker
@@ -37,6 +39,7 @@ type worker struct {
 func NewWorker(device device.T, queueFlags core1_0.QueueFlags, queueIndex int) Worker {
 	pool := NewPool(device, core1_0.CommandPoolCreateTransient, queueIndex)
 	queue := device.GetQueue(queueIndex, queueFlags)
+	device.SetDebugObjectName(driver.VulkanHandle(queue.Handle()), core1_0.ObjectTypeQueue, fmt.Sprintf("Worker:%d", queueIndex))
 
 	w := &worker{
 		device:    device,
@@ -51,6 +54,10 @@ func NewWorker(device device.T, queueFlags core1_0.QueueFlags, queueIndex int) W
 	go w.run()
 
 	return w
+}
+
+func (w *worker) Ptr() core1_0.Queue {
+	return w.queue
 }
 
 func (w *worker) run() {
@@ -77,7 +84,6 @@ func (w *worker) run() {
 	}
 
 	// dealloc
-	w.device.WaitIdle()
 	w.pool.Destroy()
 
 	// close command channels
@@ -88,6 +94,10 @@ func (w *worker) run() {
 
 	// return the thread
 	runtime.UnlockOSThread()
+}
+
+func (w *worker) Invoke(callback func()) {
+	w.work <- callback
 }
 
 func (w *worker) Queue(batch CommandFn) {
@@ -134,7 +144,7 @@ func (w *worker) submit(submit SubmitInfo) {
 
 	// create a cleanup callback
 	// todo: reuse fences
-	fence := sync.NewFence(w.device, false)
+	fence := sync.NewFence(w.device, "WorkSubmit", false)
 
 	w.callbacks[fence] = func() {
 		// free buffers
@@ -160,16 +170,9 @@ func (w *worker) submit(submit SubmitInfo) {
 			WaitDstStageMask: util.Map(submit.Wait, func(w Wait) core1_0.PipelineStageFlags { return w.Mask }),
 		},
 	})
-	runtime.GC()
 
 	// clear batch slice but keep memory
 	w.batch = w.batch[:0]
-}
-
-func (w *worker) Present(swap swapchain.T, ctx swapchain.Context) {
-	w.work <- func() {
-		swap.Present(w.queue)
-	}
 }
 
 func (w *worker) Destroy() {
@@ -185,7 +188,7 @@ func (w *worker) Destroy() {
 	}
 }
 
-func (w *worker) Wait() {
+func (w *worker) Flush() {
 	done := make(chan struct{})
 	w.work <- func() {
 		done <- struct{}{}

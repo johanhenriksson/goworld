@@ -56,7 +56,7 @@ func NewTextureSync(dev device.T, worker command.Worker, img *osimage.RGBA) (tex
 		Marker: "TextureUpload",
 		Then:   stage.Destroy,
 	})
-	worker.Wait()
+	worker.Flush()
 
 	return tex, nil
 }

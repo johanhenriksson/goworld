@@ -25,12 +25,7 @@ func (m *matcache) Name() string {
 	return "Material"
 }
 
-func (m *matcache) Instantiate(ref Ref) Standard {
-	return nil
-}
-
-func (m *matcache) Update(cached Standard, ref Ref) Standard {
-	return cached
+func (m *matcache) Instantiate(ref Ref, callback func(Standard)) {
 }
 
 func (m *matcache) Delete(mat Standard) {

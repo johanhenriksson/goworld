@@ -21,7 +21,7 @@ type Args struct {
 	Forward    vec3.T
 	Viewport   Screen
 	Clear      color.T
-	Context    swapchain.Context
+	Context    *swapchain.Context
 }
 
 type Screen struct {

@@ -1,17 +1,9 @@
 package cache
 
-import (
-	"log"
-)
-
-type T[K Key, V any] interface {
-	// Fetches the given mesh & material combination from the cache
-	// If it does not exist, it will be inserted.
+type T[K Key, V Value] interface {
 	Fetch(K) V
-
-	// Tick increments the age of all items in the cache
-	Tick()
-
+	Delete(V)
+	Tick(int)
 	Destroy()
 }
 
@@ -20,92 +12,100 @@ type Key interface {
 	Version() int
 }
 
-type Backend[K Key, V any] interface {
-	Name() string
-	Instantiate(K) V
-	Update(V, K) V
+type Value interface{}
+
+type Backend[K Key, V Value] interface {
+	Instantiate(K, func(V))
 	Delete(V)
 	Destroy()
 }
 
-type cache[K Key, V any] struct {
-	maxAge  int
-	cache   map[string]*cacheLine[V]
-	backend Backend[K, V]
-}
-
-type cacheLine[V any] struct {
+type line[V Value] struct {
+	value   V
 	age     int
 	version int
-	value   V
+	ready   bool
 }
 
-func New[K Key, V any](backend Backend[K, V]) T[K, V] {
+type cache[K Key, V Value] struct {
+	backend Backend[K, V]
+	data    map[string]*line[V]
+	remove  map[int][]V
+	frame   int
+}
+
+func New[K Key, V Value](backend Backend[K, V]) T[K, V] {
 	return &cache[K, V]{
-		maxAge:  1000,
-		cache:   make(map[string]*cacheLine[V]),
 		backend: backend,
+		data:    map[string]*line[V]{},
+		remove:  map[int][]V{},
 	}
 }
 
-func (m *cache[K, V]) Fetch(key K) V {
-	line, hit := m.cache[key.Id()]
+func (c *cache[K, V]) Fetch(key K) V {
+	var empty V
 
-	// not in cache - instantiate a buffered mesh
+	ln, hit := c.data[key.Id()]
 	if !hit {
-		log.Println("instantiate new", m.backend.Name(), key.Id(), "version", key.Version())
-		value := m.backend.Instantiate(key)
-		line = &cacheLine[V]{
-			value: value,
+		ln = &line[V]{
+			ready: false,
 		}
-		m.cache[key.Id()] = line
+		c.data[key.Id()] = ln
 	}
 
-	// version has changed, update the mesh
-	if line.version != key.Version() {
-		// we might want to queue this operation and run it at a more appropriate time
-		line.value = m.backend.Update(line.value, key)
-		line.version = key.Version()
+	if ln.version != key.Version() {
+		ln.version = key.Version()
+		c.backend.Instantiate(key, func(value V) {
+			if ln.ready {
+				// ready implies that we have a previous value - schedule deletion
+				c.Delete(ln.value)
+			}
+
+			ln.value = value
+			ln.ready = true
+		})
 	}
 
 	// reset age
-	line.age = 0
+	ln.age = 0
 
-	return line.value
-}
-
-func (m *cache[K, V]) Tick() {
-	// increment the age of every item in the cache
-	for _, entry := range m.cache {
-		entry.age++
+	// not available yet
+	if !ln.ready {
+		return empty
 	}
-	// evict items
-	// todo: this causes problems, since not every object is requested on each frame
-	// m.evict()
+
+	return ln.value
 }
 
-func (m *cache[K, V]) evict() bool {
-	for id, entry := range m.cache {
-		// skip any meshes that have been recently used
-		if entry.age < m.maxAge {
-			continue
+func (c *cache[K, V]) Delete(value V) {
+	c.remove[c.frame] = append(c.remove[c.frame], value)
+}
+
+// Should be called immediately after aquiring a new frame, passing the index of the aquired frame.
+// Releases any unused resources associated with that frame index.
+func (c *cache[K, V]) Tick(frameIndex int) {
+	c.frame = frameIndex
+
+	// eviction
+	for key, line := range c.data {
+		line.age++
+		if line.age > 100 {
+			c.backend.Delete(line.value)
+			delete(c.data, key)
 		}
-
-		// deallocate gpu memory
-		log.Println("deallocating", id, "from gpu")
-		m.backend.Delete(m.cache[id].value)
-
-		// remove cache line
-		delete(m.cache, id)
-		return true
 	}
-	return false
 }
 
-func (m *cache[K, V]) Destroy() {
-	for _, line := range m.cache {
-		m.backend.Delete(line.value)
+func (c *cache[K, V]) Destroy() {
+	for _, queue := range c.remove {
+		for _, value := range queue {
+			c.backend.Delete(value)
+		}
 	}
-	m.backend.Destroy()
-	m.cache = nil
+	for _, line := range c.data {
+		if line.ready {
+			c.backend.Delete(line.value)
+		}
+	}
+	c.backend.Destroy()
 }

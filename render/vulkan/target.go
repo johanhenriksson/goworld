@@ -22,10 +22,12 @@ type Target interface {
 
 	Surfaces() []image.T
 	SurfaceFormat() core1_0.Format
-	Aquire() (swapchain.Context, error)
+	Aquire() (*swapchain.Context, error)
+	Present(command.Worker, *swapchain.Context)
 
 	Worker(int) command.Worker
 	Transferer() command.Worker
+	Flush()
 
 	Pool() descriptor.Pool
 	Meshes() cache.MeshCache

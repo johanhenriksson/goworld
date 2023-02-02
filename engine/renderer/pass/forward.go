@@ -39,7 +39,7 @@ func NewForwardPass(
 				StoreOp:     core1_0.AttachmentStoreOpStore,
 				FinalLayout: core1_0.ImageLayoutShaderReadOnlyOptimal,
 				Usage:       core1_0.ImageUsageSampled,
-				Blend:       attachment.BlendMix,
+				Blend:       attachment.BlendMultiply,
 
 				Allocator: attachment.FromImageArray([]image.T{
 					gbuffer.Output().Image(),

@@ -7,7 +7,6 @@ import (
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/engine/renderer/graph"
 	"github.com/johanhenriksson/goworld/engine/renderer/pass"
-	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/upload"
 	"github.com/johanhenriksson/goworld/render/vulkan"
 
@@ -15,7 +14,7 @@ import (
 )
 
 type T interface {
-	Draw(args render.Args, scene object.T)
+	Draw(scene object.T)
 	GBuffer() pass.GeometryBuffer
 	Recreate()
 	Screenshot()
@@ -23,16 +22,42 @@ type T interface {
 }
 
 type rgraph struct {
+	graph.T
 	target  vulkan.Target
 	gbuffer pass.GeometryBuffer
-	graph   graph.T
 }
 
 func NewGraph(target vulkan.Target) T {
 	r := &rgraph{
-		target: target,
+		target:  target,
+		gbuffer: nil,
 	}
-	r.Recreate()
+	r.T = graph.New(target, func(g graph.T) {
+		shadows := pass.NewShadowPass(target)
+		shadowNode := g.Node(shadows)
+
+		deferred := pass.NewGeometryPass(target, shadows)
+		deferredNode := g.Node(deferred)
+		deferredNode.After(shadowNode, core1_0.PipelineStageTopOfPipe)
+
+		// store gbuffer reference
+		r.gbuffer = deferred.GBuffer()
+
+		forward := g.Node(pass.NewForwardPass(target, r.gbuffer))
+		forward.After(deferredNode, core1_0.PipelineStageTopOfPipe)
+
+		gbufferCopy := g.Node(pass.NewGBufferCopyPass(r.gbuffer))
+		gbufferCopy.After(forward, core1_0.PipelineStageTopOfPipe)
+
+		output := g.Node(pass.NewOutputPass(r.target, r.gbuffer))
+		output.After(forward, core1_0.PipelineStageTopOfPipe)
+
+		lines := g.Node(pass.NewLinePass(r.target, r.gbuffer))
+		lines.After(output, core1_0.PipelineStageTopOfPipe)
+
+		gui := g.Node(pass.NewGuiPass(r.target))
+		gui.After(lines, core1_0.PipelineStageTopOfPipe)
+	})
 	return r
 }
 
@@ -48,61 +73,13 @@ func (r *rgraph) Screenshot() {
 	}
 }
 
-func (r *rgraph) Draw(args render.Args, scene object.T) {
-	// render passes can be partially parallelized by dividing them into two parts,
-	// recording and submission. queue submits must happen in order, so that semaphores
-	// behave as expected. however, the actual recording of the command buffer can run
-	// concurrently.
-	//
-	// to allow this, MeshCache and TextureCache must also be made thread safe, since
-	// they currently work in a blocking manner.
-	w := r.target.Worker(args.Context.Index)
-	r.graph.Draw(w, args, scene)
-}
-
-func (r *rgraph) Recreate() {
-	r.Destroy()
-	// realloc descriptor pool
-	r.target.Pool().Recreate()
-
-	g := graph.New(r.target.Device())
-
-	shadows := pass.NewShadowPass(r.target)
-	shadowNode := g.Node(shadows)
-
-	deferred := pass.NewGeometryPass(r.target, shadows)
-	deferredNode := g.Node(deferred)
-	deferredNode.After(shadowNode, core1_0.PipelineStageTopOfPipe)
-
-	r.gbuffer = deferred.GBuffer()
-
-	forward := g.Node(pass.NewForwardPass(r.target, r.gbuffer))
-	forward.After(deferredNode, core1_0.PipelineStageTopOfPipe)
-
-	gbufferCopy := g.Node(pass.NewGBufferCopyPass(r.gbuffer))
-	gbufferCopy.After(forward, core1_0.PipelineStageTopOfPipe)
-
-	output := g.Node(pass.NewOutputPass(r.target, r.gbuffer))
-	output.After(forward, core1_0.PipelineStageTopOfPipe)
-
-	lines := g.Node(pass.NewLinePass(r.target, r.gbuffer))
-	lines.After(output, core1_0.PipelineStageTopOfPipe)
-
-	gui := g.Node(pass.NewGuiPass(r.target))
-	gui.After(lines, core1_0.PipelineStageTopOfPipe)
-
-	r.graph = g
-}
-
 func (r *rgraph) GBuffer() pass.GeometryBuffer {
 	return r.gbuffer
 }
 
 func (r *rgraph) Destroy() {
-	r.target.Device().WaitIdle()
-
-	if r.graph != nil {
-		r.graph.Destroy()
+	if r.T != nil {
+		r.T.Destroy()
 	}
 	r.gbuffer = nil
 }
