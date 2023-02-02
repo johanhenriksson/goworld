@@ -46,7 +46,7 @@ func FromDef(dev device.T, pool descriptor.Pool, rpass renderpass.T, def *Def) S
 		},
 		Objects: &descriptor.Storage[uniform.Object]{
 			Stages: core1_0.StageAll,
-			Size:   100,
+			Size:   1000,
 		},
 		Textures: &descriptor.SamplerArray{
 			Stages: core1_0.StageFragment,
