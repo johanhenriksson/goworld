@@ -2,9 +2,6 @@ package command
 
 import (
 	"fmt"
-	"log"
-	"runtime"
-	"time"
 
 	"github.com/johanhenriksson/goworld/render/device"
 	"github.com/johanhenriksson/goworld/render/sync"
@@ -29,13 +26,12 @@ type Worker interface {
 type Workers []Worker
 
 type worker struct {
-	device    device.T
-	name      string
-	queue     core1_0.Queue
-	pool      Pool
-	work      chan func()
-	batch     []Buffer
-	callbacks map[sync.Fence]func()
+	device device.T
+	name   string
+	queue  core1_0.Queue
+	pool   Pool
+	batch  []Buffer
+	work   *ThreadWorker
 }
 
 func NewWorker(device device.T, queueFlags core1_0.QueueFlags, queueIndex int) Worker {
@@ -45,70 +41,29 @@ func NewWorker(device device.T, queueFlags core1_0.QueueFlags, queueIndex int) W
 	name := fmt.Sprintf("Worker:%d", queueIndex)
 	device.SetDebugObjectName(driver.VulkanHandle(queue.Handle()), core1_0.ObjectTypeQueue, name)
 
-	w := &worker{
-		device:    device,
-		name:      name,
-		queue:     queue,
-		pool:      pool,
-		work:      make(chan func(), 100),
-		batch:     make([]Buffer, 0, 10),
-		callbacks: map[sync.Fence]func(){},
+	return &worker{
+		device: device,
+		name:   name,
+		queue:  queue,
+		pool:   pool,
+		batch:  make([]Buffer, 0, 10),
+		work:   NewThreadWorker(name, 100, true),
 	}
-
-	go w.run()
-
-	return w
 }
 
 func (w *worker) Ptr() core1_0.Queue {
 	return w.queue
 }
 
-func (w *worker) run() {
-	// claim the current thread
-	// all command pool operations and buffer recording will execute on this thread
-	runtime.LockOSThread()
-
-	// work loop
-	running := true
-	for running {
-		for fence, callback := range w.callbacks {
-			if fence.Done() {
-				callback()
-				delete(w.callbacks, fence)
-			}
-		}
-		select {
-		case work, more := <-w.work:
-			if !more {
-				running = false
-				break
-			}
-			work()
-		default:
-			time.Sleep(100 * time.Microsecond)
-		}
-	}
-
-	// dealloc
-	w.pool.Destroy()
-
-	// close command channels
-	w.work = nil
-
-	// return the thread
-	runtime.UnlockOSThread()
-	log.Println(w.name, "exited")
-}
-
+// Invoke schedules a callback to be called from the worker thread
 func (w *worker) Invoke(callback func()) {
-	w.work <- callback
+	w.work.Invoke(callback)
 }
 
 func (w *worker) Queue(batch CommandFn) {
-	w.work <- func() {
+	w.work.Invoke(func() {
 		w.enqueue(batch)
-	}
+	})
 }
 
 func (w *worker) enqueue(batch CommandFn) {
@@ -139,9 +94,9 @@ type Wait struct {
 // Submit the current batch of command buffers
 // Blocks until the queue submission is confirmed
 func (w *worker) Submit(submit SubmitInfo) {
-	w.work <- func() {
+	w.work.Invoke(func() {
 		w.submit(submit)
-	}
+	})
 }
 
 func (w *worker) submit(submit SubmitInfo) {
@@ -149,22 +104,7 @@ func (w *worker) submit(submit SubmitInfo) {
 
 	// create a cleanup callback
 	// todo: reuse fences
-	fence := sync.NewFence(w.device, "WorkSubmit", false)
-
-	w.callbacks[fence] = func() {
-		// free buffers
-		if len(buffers) > 0 {
-			w.device.Ptr().FreeCommandBuffers(buffers)
-		}
-
-		// free fence
-		fence.Destroy()
-
-		// run callback if provided
-		if submit.Then != nil {
-			submit.Then()
-		}
-	}
+	fence := sync.NewFence(w.device, submit.Marker, false)
 
 	// submit buffers to the given queue
 	w.queue.Submit(fence.Ptr(), []core1_0.SubmitInfo{
@@ -178,25 +118,31 @@ func (w *worker) submit(submit SubmitInfo) {
 
 	// clear batch slice but keep memory
 	w.batch = w.batch[:0]
+
+	// fire up a cleanup goroutine that will execute when the work fence is signalled
+	go func() {
+		fence.Wait()
+		fence.Destroy()
+
+		w.work.Invoke(func() {
+			// free buffers
+			if len(buffers) > 0 {
+				w.device.Ptr().FreeCommandBuffers(buffers)
+			}
+
+			// run callback if provided (on the worker thead)
+			if submit.Then != nil {
+				submit.Then()
+			}
+		})
+	}()
 }
 
 func (w *worker) Destroy() {
-	// run all pending cleanups
-	for _, callback := range w.callbacks {
-		callback()
-	}
-	w.callbacks = nil
-
-	w.work <- func() {
-		close(w.work)
-	}
+	w.work.Stop()
+	w.pool.Destroy()
 }
 
 func (w *worker) Flush() {
-	done := make(chan struct{})
-	w.work <- func() {
-		done <- struct{}{}
-	}
-	<-done
-	close(done)
+	w.work.Flush()
 }
