@@ -67,3 +67,5 @@ func (m *meshes) Delete(mesh Mesh) {
 }
 
 func (m *meshes) Destroy() {}
+
+func (m *meshes) String() string { return "MeshCache" }

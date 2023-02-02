@@ -61,21 +61,13 @@ func Run(args Args, scenefuncs ...SceneFunc) {
 
 	counter := NewFrameCounter(60)
 	for interrupt.Running() && !wnd.ShouldClose() {
-		counter.Update()
-
 		// update scene
 		wnd.Poll()
+		counter.Update()
 		scene.Update(counter.Delta())
 
 		// draw
 		renderer.Draw(scene)
-
-		// cache ticks
-		// wnd.Meshes().Tick(context.Index)
-		// wnd.Textures().Tick(context.Index)
-
-		// gc pass
-		// collectGarbage()
 
 		// timing := counter.Sample()
 		// log.Printf(

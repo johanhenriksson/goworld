@@ -52,3 +52,5 @@ func (s *samplers) Delete(id int) {
 func (s *samplers) Destroy() {
 	s.textures.Destroy()
 }
+
+func (s *samplers) String() string { return "SamplerCache" }

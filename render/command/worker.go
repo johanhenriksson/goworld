@@ -2,7 +2,9 @@ package command
 
 import (
 	"fmt"
+	"log"
 	"runtime"
+	"time"
 
 	"github.com/johanhenriksson/goworld/render/device"
 	"github.com/johanhenriksson/goworld/render/sync"
@@ -28,10 +30,10 @@ type Workers []Worker
 
 type worker struct {
 	device    device.T
+	name      string
 	queue     core1_0.Queue
 	pool      Pool
 	work      chan func()
-	stop      chan bool
 	batch     []Buffer
 	callbacks map[sync.Fence]func()
 }
@@ -39,14 +41,16 @@ type worker struct {
 func NewWorker(device device.T, queueFlags core1_0.QueueFlags, queueIndex int) Worker {
 	pool := NewPool(device, core1_0.CommandPoolCreateTransient, queueIndex)
 	queue := device.GetQueue(queueIndex, queueFlags)
-	device.SetDebugObjectName(driver.VulkanHandle(queue.Handle()), core1_0.ObjectTypeQueue, fmt.Sprintf("Worker:%d", queueIndex))
+
+	name := fmt.Sprintf("Worker:%d", queueIndex)
+	device.SetDebugObjectName(driver.VulkanHandle(queue.Handle()), core1_0.ObjectTypeQueue, name)
 
 	w := &worker{
 		device:    device,
+		name:      name,
 		queue:     queue,
 		pool:      pool,
 		work:      make(chan func(), 100),
-		stop:      make(chan bool),
 		batch:     make([]Buffer, 0, 10),
 		callbacks: map[sync.Fence]func(){},
 	}
@@ -75,11 +79,14 @@ func (w *worker) run() {
 			}
 		}
 		select {
-		case work := <-w.work:
+		case work, more := <-w.work:
+			if !more {
+				running = false
+				break
+			}
 			work()
-		case <-w.stop:
-			running = false
 		default:
+			time.Sleep(100 * time.Microsecond)
 		}
 	}
 
@@ -87,13 +94,11 @@ func (w *worker) run() {
 	w.pool.Destroy()
 
 	// close command channels
-	close(w.stop)
-	close(w.work)
-	w.stop = nil
 	w.work = nil
 
 	// return the thread
 	runtime.UnlockOSThread()
+	log.Println(w.name, "exited")
 }
 
 func (w *worker) Invoke(callback func()) {
@@ -182,9 +187,8 @@ func (w *worker) Destroy() {
 	}
 	w.callbacks = nil
 
-	if w.stop != nil {
-		w.stop <- true
-		<-w.stop
+	w.work <- func() {
+		close(w.work)
 	}
 }
 

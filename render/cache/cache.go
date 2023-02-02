@@ -1,5 +1,9 @@
 package cache
 
+import (
+	"log"
+)
+
 type T[K Key, V Value] interface {
 	Fetch(K) V
 	Delete(V)
@@ -36,9 +40,9 @@ type cache[K Key, V Value] struct {
 	backend Backend[K, V]
 	data    map[string]*line[V]
 	remove  map[int][]V
-	work    chan<- job[K, V]
-	stop    chan<- bool
+	work    chan job[K, V]
 	frame   int
+	buffer  int
 }
 
 func New[K Key, V Value](backend Backend[K, V]) T[K, V] {
@@ -46,27 +50,22 @@ func New[K Key, V Value](backend Backend[K, V]) T[K, V] {
 		backend: backend,
 		data:    map[string]*line[V]{},
 		remove:  map[int][]V{},
+		buffer:  100,
 	}
 	go c.worker()
 	return c
 }
 
 func (c *cache[K, V]) worker() {
-	stop := make(chan bool)
-	c.stop = stop
-	defer close(stop)
-	work := make(chan job[K, V])
-	c.work = work
-	defer close(work)
-
+	c.work = make(chan job[K, V], c.buffer)
 	for {
-		select {
-		case job := <-work:
-			c.backend.Instantiate(job.key, job.done)
-		case <-stop:
-			return
+		job, more := <-c.work
+		if !more {
+			break
 		}
+		c.backend.Instantiate(job.key, job.done)
 	}
+	log.Println(c.backend, "exited")
 }
 
 func (c *cache[K, V]) Fetch(key K) V {
@@ -127,7 +126,7 @@ func (c *cache[K, V]) Tick(frameIndex int) {
 }
 
 func (c *cache[K, V]) Destroy() {
-	c.stop <- true
+	close(c.work)
 	for _, queue := range c.remove {
 		for _, value := range queue {
 			c.backend.Delete(value)

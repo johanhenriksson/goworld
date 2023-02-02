@@ -64,6 +64,9 @@ func (d *SamplerArray) MaxCount() int {
 }
 
 func (d *SamplerArray) Set(index int, tex texture.T) {
+	if tex == nil {
+		panic("texture is null")
+	}
 	d.sampler[index] = tex.Ptr()
 	d.view[index] = tex.View().Ptr()
 	d.write(index, 1)
@@ -75,6 +78,9 @@ func (d *SamplerArray) SetRange(textures []texture.T, offset int) {
 		panic("out of bounds")
 	}
 	for i, tex := range textures {
+		if tex == nil {
+			panic(fmt.Sprintf("texture[%d] is null", i))
+		}
 		d.sampler[offset+i] = tex.Ptr()
 		d.view[offset+i] = tex.View().Ptr()
 	}

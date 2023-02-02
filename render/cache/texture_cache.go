@@ -78,3 +78,5 @@ func (t *textures) Delete(tex texture.T) {
 func (t *textures) Destroy() {
 
 }
+
+func (t *textures) String() string { return "TextureCache" }

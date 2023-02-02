@@ -38,4 +38,8 @@ func (n *postNode) Draw(worker command.Worker, args render.Args, scene object.T)
 
 	n.target.Present(worker, args.Context)
 	barrier <- struct{}{}
+
+	// cache ticks
+	n.target.Meshes().Tick(args.Context.Index)
+	n.target.Textures().Tick(args.Context.Index)
 }

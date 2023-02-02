@@ -2,7 +2,6 @@ package font
 
 import (
 	"image"
-	"log"
 
 	"github.com/johanhenriksson/goworld/math/vec2"
 )
@@ -32,7 +31,5 @@ func (r *ref) Version() int { return r.version }
 func (r *ref) Size() vec2.T { return r.size }
 
 func (r *ref) Load() *image.RGBA {
-	i := r.font.Render(r.text, r.args)
-	log.Println("rendered", r.text)
-	return i
+	return r.font.Render(r.text, r.args)
 }
