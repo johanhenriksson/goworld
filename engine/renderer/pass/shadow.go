@@ -137,7 +137,7 @@ func (p *shadowpass) Record(cmds command.Recorder, args render.Args, scene objec
 	})
 
 	objects := object.Query[mesh.T]().Where(isDrawDeferred).Collect(scene)
-	p.materials.DrawCamera(cmds, camera, objects)
+	p.materials.DrawCamera(cmds, args, camera, objects)
 
 	cmds.Record(func(cmd command.Buffer) {
 		cmd.CmdEndRenderPass()

@@ -2,6 +2,7 @@ package label
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/johanhenriksson/goworld/assets"
 	"github.com/johanhenriksson/goworld/gui/quad"
@@ -89,6 +90,7 @@ func (r *renderer) SetFontSize(size int) {
 	}
 	r.invalidTexture = r.invalidTexture || size != r.size
 	r.invalidMesh = r.invalidMesh || size != r.size
+	r.invalidFont = r.invalidFont || size != r.size
 	r.size = size
 }
 
@@ -132,7 +134,9 @@ func (r *renderer) Draw(args widget.DrawArgs, label T) {
 		r.version++
 		// img := r.font.Render(r.text, fargs)
 		// r.tex = texture.ImageRef(r.key, r.version, img)
-		r.tex = font.Ref(r.key, r.version, r.font, r.text, fargs)
+		key := fmt.Sprint(r.version, r.fontName, r.size, r.text, fargs)
+		r.tex = font.Ref(key, r.version, r.font, r.text, fargs)
+		log.Println("invalid:", r.text)
 
 		r.invalidTexture = false
 	}

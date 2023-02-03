@@ -61,7 +61,7 @@ func (cam *camera) Unproject(pos vec3.T) vec3.T {
 }
 
 // Update the camera
-func (cam *camera) Update(dt float32) {
+func (cam *camera) Update(scene object.T, dt float32) {
 }
 
 func (cam *camera) PreDraw(args render.Args, scene object.T) error {

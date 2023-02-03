@@ -1,7 +1,10 @@
 package chunk
 
 import (
+	"log"
+
 	"github.com/johanhenriksson/goworld/core/mesh"
+	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/game/voxel"
 	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/vertex"
@@ -27,22 +30,20 @@ func NewMesh(chunk *T) *Mesh {
 		}),
 		Chunk:        chunk,
 		meshdata:     vertex.NewTriangles("chunk", []voxel.Vertex{}, []uint16{}),
-		meshComputed: make(chan []voxel.Vertex),
+		meshComputed: make(chan []voxel.Vertex, 2),
 	}
-	// chk.Compute()
-	chk.meshdata.Update(ComputeVertexData(chunk), []uint16{})
-
-	// circular dependencies?
 	chk.SetMesh(chk.meshdata)
+	chk.Compute()
 	return chk
 }
 
-func (cm *Mesh) Update(dt float32) {
-	cm.T.Update(dt)
+func (cm *Mesh) Update(scene object.T, dt float32) {
+	cm.T.Update(scene, dt)
 	select {
 	case vertices := <-cm.meshComputed:
 		cm.meshdata.Update(vertices, []uint16{})
 		cm.SetMesh(cm.meshdata)
+		log.Println("update chunk", cm.Name())
 	default:
 	}
 }

@@ -8,6 +8,7 @@ import (
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/command"
+	"github.com/johanhenriksson/goworld/render/texture"
 
 	"github.com/vkngwrapper/core/v2/core1_0"
 )
@@ -67,11 +68,17 @@ func (r *renderer) Draw(args widget.DrawArgs, rect T) {
 			return
 		}
 
+		texId := args.Textures.Fetch(texture.PathRef("textures/white.png"))
+		// we must be able to abort rendering when we dont get a texture
+		if texId == 0 {
+			return
+		}
+
 		args.Commands.Record(func(cmd command.Buffer) {
 			cmd.CmdPushConstant(core1_0.StageAll, 0, &widget.Constants{
 				Viewport: args.ViewProj,
 				Model:    args.Transform,
-				Texture:  0,
+				Texture:  texId,
 			})
 			mesh.Draw(cmd, 0)
 		})

@@ -4,6 +4,7 @@ import (
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/gui/hooks"
 	"github.com/johanhenriksson/goworld/gui/node"
+	"github.com/johanhenriksson/goworld/gui/style"
 	. "github.com/johanhenriksson/goworld/gui/style"
 	"github.com/johanhenriksson/goworld/gui/widget/button"
 	"github.com/johanhenriksson/goworld/gui/widget/label"
@@ -17,6 +18,7 @@ type Props struct {
 	Position vec2.T
 	Children []node.T
 	OnClose  func()
+	Floating bool
 }
 
 type Style struct {
@@ -31,14 +33,18 @@ func New(key string, props Props) node.T {
 func render(props Props) node.T {
 	position, setPosition := hooks.UseState(props.Position)
 	dragOffset, setDragOffset := hooks.UseState(vec2.Zero)
+	var cssPos style.PositionProp = style.Relative{}
+	if props.Floating {
+		cssPos = Absolute{
+			Left: Px(position.X),
+			Top:  Px(position.Y),
+		}
+	}
 
 	return rect.New("window", rect.Props{
 		OnMouseDown: func(e mouse.Event) {},
 		Style: rect.Style{
-			Position: Absolute{
-				Left: Px(position.X),
-				Top:  Px(position.Y),
-			},
+			Position: cssPos,
 			MaxWidth: props.Style.MaxWidth,
 			MinWidth: props.Style.MinWidth,
 		},
@@ -46,10 +52,16 @@ func render(props Props) node.T {
 			rect.New("titlebar", rect.Props{
 				Style: TitlebarStyle,
 				OnMouseDown: func(e mouse.Event) {
+					if !props.Floating {
+						return
+					}
 					offset := e.Position().Sub(position)
 					setDragOffset(offset)
 				},
 				OnMouseDrag: func(e mouse.Event) {
+					if !props.Floating {
+						return
+					}
 					setPosition(e.Position().Sub(dragOffset))
 				},
 				Children: []node.T{

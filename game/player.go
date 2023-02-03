@@ -36,7 +36,7 @@ type Player struct {
 }
 
 func NewPlayer(position vec3.T, collide CollisionCheck) *Player {
-	cam := camera.New(50.0, 0.1, 250, color.Hex("#eddaab"))
+	cam := camera.New(50.0, 0.1, 2500, color.Hex("#eddaab"))
 	p := object.New(&Player{
 		Eye: object.Builder(object.Empty("Eye")).
 			Position(vec3.New(0, 1.75, 0)).
@@ -73,7 +73,7 @@ func (p *Player) KeyEvent(e keys.Event) {
 	}
 }
 
-func (p *Player) Update(dt float32) {
+func (p *Player) Update(scene object.T, dt float32) {
 	move := vec3.Zero
 	moving := false
 	if p.keys.Down(keys.W) && p.keys.Up(keys.S) {
@@ -184,7 +184,7 @@ func (p *Player) Update(dt float32) {
 	// update camera position
 	p.Transform().SetPosition(position)
 
-	p.T.Update(dt)
+	p.T.Update(scene, dt)
 }
 
 func (p *Player) MouseEvent(e mouse.Event) {

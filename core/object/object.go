@@ -1,6 +1,7 @@
 package object
 
 import (
+	"math/rand"
 	"reflect"
 
 	"github.com/johanhenriksson/goworld/core/input"
@@ -31,8 +32,12 @@ type T interface {
 	SetActive(bool)
 
 	// Update the object. Called on every frame.
-	Update(float32)
+	Update(T, float32)
 
+	// Destroy the object
+	Destroy()
+
+	id() uint
 	setName(string)
 	setParent(T)
 	attach(...T)
@@ -40,6 +45,7 @@ type T interface {
 }
 
 type base struct {
+	uuid      uint
 	transform transform.T
 	name      string
 	enabled   bool
@@ -50,6 +56,7 @@ type base struct {
 // Empty creates a new, empty object.
 func Empty(name string) T {
 	return &base{
+		uuid:      uint(rand.Int63()),
 		name:      name,
 		enabled:   true,
 		transform: transform.Identity(),
@@ -96,10 +103,14 @@ func New[K T](obj K) K {
 	return obj
 }
 
-func (b *base) Update(dt float32) {
+func (b *base) id() uint {
+	return b.uuid
+}
+
+func (b *base) Update(scene T, dt float32) {
 	for _, child := range b.children {
 		if child.Active() {
-			child.Update(dt)
+			child.Update(scene, dt)
 		}
 	}
 }
@@ -139,7 +150,7 @@ func (b *base) attach(children ...T) {
 
 func (b *base) attachIfNotChild(child T) {
 	for _, existing := range b.children {
-		if existing == child {
+		if existing.id() == child.id() {
 			return
 		}
 	}
@@ -148,7 +159,7 @@ func (b *base) attachIfNotChild(child T) {
 
 func (b *base) detach(child T) {
 	for i, existing := range b.children {
-		if existing == child {
+		if existing.id() == child.id() {
 			b.children = append(b.children[:i], b.children[i+1:]...)
 			return
 		}
@@ -158,6 +169,17 @@ func (b *base) detach(child T) {
 func (b *base) setName(n string) { b.name = n }
 func (b *base) Name() string     { return b.name }
 func (b *base) String() string   { return b.Name() }
+
+func (o *base) Destroy() {
+	// iterate over a copy of the child slice, since it will be mutated
+	// when the child detaches itself during destruction
+	for _, child := range o.Children() {
+		child.Destroy()
+	}
+	if o.parent != nil {
+		o.parent.detach(o)
+	}
+}
 
 func (o *base) KeyEvent(e keys.Event) {
 	for _, child := range o.children {

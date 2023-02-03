@@ -5,7 +5,7 @@ import (
 	"github.com/johanhenriksson/goworld/math"
 )
 
-type WorldGenerator struct {
+type worldgen struct {
 	Seed     int
 	Size     int
 	Rock     *math.Noise
@@ -14,8 +14,8 @@ type WorldGenerator struct {
 	Variance *math.Noise
 }
 
-func ExampleWorldgen(seed, size int) *WorldGenerator {
-	return &WorldGenerator{
+func ExampleWorldgen(seed, size int) *worldgen {
+	return &worldgen{
 		Seed:     seed,
 		Size:     size,
 		Rock:     math.NewNoise(seed+10000, 1.0/40.0),
@@ -25,25 +25,7 @@ func ExampleWorldgen(seed, size int) *WorldGenerator {
 	}
 }
 
-func (wg *WorldGenerator) Chunk(cx, cz int) *T {
-	chonk := New(wg.Size, wg.Seed, cx, cz)
-	for z := 0; z < chonk.Sz; z++ {
-		for y := 0; y < chonk.Sy; y++ {
-			for x := 0; x < chonk.Sx; x++ {
-				vox := wg.Voxel(chonk.Ox+x, chonk.Oy+y, chonk.Oz+z)
-				chonk.Set(x, y, z, vox)
-				if vox != voxel.Empty {
-					chonk.Light.Block(x, y, z, true)
-				}
-			}
-		}
-	}
-	chonk.Light.Calculate()
-	go chonk.Write("chunks")
-	return chonk
-}
-
-func (wg *WorldGenerator) Voxel(x, y, z int) voxel.T {
+func (wg *worldgen) Voxel(x, y, z int) voxel.T {
 	rock2 := voxel.T{R: 137, G: 131, B: 119}
 	rock := voxel.T{R: 173, G: 169, B: 158}
 	grass := voxel.T{R: 72, G: 140, B: 54}

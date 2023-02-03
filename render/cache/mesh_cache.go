@@ -28,6 +28,11 @@ func (m *meshes) Instantiate(mesh vertex.Mesh, callback func(Mesh)) {
 		elements: mesh.Indices(),
 		idxType:  core1_0.IndexTypeUInt16,
 	}
+	if cached.elements == 0 {
+		// special case for empty meshes
+		callback(cached)
+		return
+	}
 
 	vtxSize := mesh.VertexSize() * mesh.Vertices()
 	vtxStage := buffer.NewShared(m.device, vtxSize)
@@ -68,4 +73,5 @@ func (m *meshes) Delete(mesh Mesh) {
 
 func (m *meshes) Destroy() {}
 
+func (m *meshes) Name() string   { return "MeshCache" }
 func (m *meshes) String() string { return "MeshCache" }

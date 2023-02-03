@@ -91,6 +91,9 @@ func (r *renderer) Draw(args widget.DrawArgs, image T) {
 
 	// fetch resources
 	tex := args.Textures.Fetch(r.tex)
+	if tex == 0 {
+		return
+	}
 	mesh := args.Meshes.Fetch(r.quad.Mesh())
 	if mesh == nil {
 		return

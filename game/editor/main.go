@@ -33,7 +33,7 @@ func Scene(render renderer.T, scene object.T) {
 
 	object.Attach(editor, MakeGUI())
 	object.Attach(editor, NewGizmoManager())
-	object.Attach(editor, NewSelectManager(nil, nil))
+	object.Attach(editor, selectMgr)
 
 	// first person controls
 	player := game.NewPlayer(vec3.New(0, 20, -11), nil)

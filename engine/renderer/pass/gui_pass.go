@@ -15,7 +15,6 @@ import (
 	"github.com/johanhenriksson/goworld/render/renderpass"
 	"github.com/johanhenriksson/goworld/render/renderpass/attachment"
 	"github.com/johanhenriksson/goworld/render/shader"
-	"github.com/johanhenriksson/goworld/render/texture"
 	"github.com/johanhenriksson/goworld/render/vertex"
 	"github.com/johanhenriksson/goworld/render/vulkan"
 
@@ -34,11 +33,10 @@ type GuiDrawable interface {
 }
 
 type GuiPass struct {
-	target   vulkan.Target
-	mat      material.Instance[*UIDescriptors]
-	pass     renderpass.T
-	textures cache.SamplerCache
-	fbufs    framebuffer.Array
+	target vulkan.Target
+	mat    []material.Instance[*UIDescriptors]
+	pass   renderpass.T
+	fbufs  framebuffer.Array
 }
 
 var _ Pass = &GuiPass{}
@@ -93,29 +91,23 @@ func NewGuiPass(target vulkan.Target) *GuiPass {
 			Stages: core1_0.StageFragment,
 			Count:  2000,
 		},
-	}).Instantiate(target.Pool())
+	}).InstantiateMany(target.Pool(), target.Frames())
 
 	fbufs, err := framebuffer.NewArray(target.Frames(), target.Device(), target.Width(), target.Height(), pass)
 	if err != nil {
 		panic(err)
 	}
 
-	textures := cache.NewSamplerCache(target.Device(), target.Transferer(), mat.Descriptors().Textures)
-	textures.Fetch(texture.PathRef("textures/white.png")) // warmup texture
-
 	return &GuiPass{
-		target:   target,
-		mat:      mat,
-		pass:     pass,
-		textures: textures,
-		fbufs:    fbufs,
+		target: target,
+		mat:    mat,
+		pass:   pass,
+		fbufs:  fbufs,
 	}
 }
 
 func (p *GuiPass) Record(cmds command.Recorder, args render.Args, scene object.T) {
-
-	// texture id zero should be white
-	p.textures.Fetch(texture.PathRef("textures/white.png"))
+	mat := p.mat[args.Context.Index]
 
 	size := vec2.NewI(args.Viewport.Width, args.Viewport.Height)
 	scale := args.Viewport.Scale
@@ -128,13 +120,15 @@ func (p *GuiPass) Record(cmds command.Recorder, args render.Args, scene object.T
 
 	cmds.Record(func(cmd command.Buffer) {
 		cmd.CmdBeginRenderPass(p.pass, p.fbufs[args.Context.Index])
-		p.mat.Bind(cmd)
+		mat.Bind(cmd)
 	})
+
+	textures := cache.NewSamplerCache(p.target.Textures(), mat.Descriptors().Textures)
 
 	uiArgs := widget.DrawArgs{
 		Commands:  cmds,
 		Meshes:    p.target.Meshes(),
-		Textures:  p.textures,
+		Textures:  textures,
 		ViewProj:  vp,
 		Transform: mat4.Ident(),
 		Viewport: render.Screen{
@@ -161,8 +155,7 @@ func (p *GuiPass) Name() string {
 }
 
 func (p *GuiPass) Destroy() {
-	p.mat.Material().Destroy()
+	p.mat[0].Material().Destroy()
 	p.fbufs.Destroy()
 	p.pass.Destroy()
-	p.textures.Destroy()
 }

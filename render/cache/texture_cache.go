@@ -79,4 +79,5 @@ func (t *textures) Destroy() {
 
 }
 
+func (t *textures) Name() string   { return "TextureCache" }
 func (t *textures) String() string { return "TextureCache" }

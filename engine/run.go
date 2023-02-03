@@ -64,7 +64,7 @@ func Run(args Args, scenefuncs ...SceneFunc) {
 		// update scene
 		wnd.Poll()
 		counter.Update()
-		scene.Update(counter.Delta())
+		scene.Update(scene, counter.Delta())
 
 		// draw
 		renderer.Draw(scene)

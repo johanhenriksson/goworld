@@ -31,6 +31,6 @@ func (s *sphere) Intersect(ray *physics.Ray) (bool, vec3.T) {
 	return s.shape.Intersect(ray)
 }
 
-func (s *sphere) Update(dt float32) {
+func (s *sphere) Update(scene object.T, dt float32) {
 	s.shape.Center = s.Transform().Project(s.args.Center)
 }

@@ -48,7 +48,7 @@ func (d *SamplerArray) LayoutBinding(binding int) core1_0.DescriptorSetLayoutBin
 		Binding:         binding,
 		DescriptorType:  core1_0.DescriptorTypeCombinedImageSampler,
 		DescriptorCount: d.Count,
-		StageFlags:      core1_0.ShaderStageFlags(d.Stages),
+		StageFlags:      d.Stages,
 	}
 }
 
@@ -64,11 +64,23 @@ func (d *SamplerArray) MaxCount() int {
 }
 
 func (d *SamplerArray) Set(index int, tex texture.T) {
+	if index > d.Count {
+		panic("out of bounds")
+	}
 	if tex == nil {
 		panic("texture is null")
 	}
 	d.sampler[index] = tex.Ptr()
 	d.view[index] = tex.View().Ptr()
+	d.write(index, 1)
+}
+
+func (d *SamplerArray) Clear(index int) {
+	if index > d.Count {
+		panic("out of bounds")
+	}
+	d.sampler[index] = nil
+	d.view[index] = nil
 	d.write(index, 1)
 }
 

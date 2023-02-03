@@ -73,7 +73,7 @@ func NewStorage(device device.T, size int) T {
 	return New(device, Args{
 		Size:   size,
 		Usage:  core1_0.BufferUsageTransferDst | core1_0.BufferUsageStorageBuffer,
-		Memory: core1_0.MemoryPropertyDeviceLocal | core1_0.MemoryPropertyHostVisible,
+		Memory: core1_0.MemoryPropertyDeviceLocal | core1_0.MemoryPropertyHostVisible | core1_0.MemoryPropertyHostCoherent,
 	})
 }
 

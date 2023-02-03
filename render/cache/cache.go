@@ -2,6 +2,8 @@ package cache
 
 import (
 	"log"
+
+	"github.com/johanhenriksson/goworld/render/command"
 )
 
 type T[K Key, V Value] interface {
@@ -22,6 +24,7 @@ type Backend[K Key, V Value] interface {
 	Instantiate(K, func(V))
 	Delete(V)
 	Destroy()
+	Name() string
 }
 
 type line[V Value] struct {
@@ -31,18 +34,12 @@ type line[V Value] struct {
 	ready   bool
 }
 
-type job[K Key, V Value] struct {
-	key  K
-	done func(V)
-}
-
 type cache[K Key, V Value] struct {
 	backend Backend[K, V]
 	data    map[string]*line[V]
 	remove  map[int][]V
-	work    chan job[K, V]
 	frame   int
-	buffer  int
+	worker  *command.ThreadWorker
 }
 
 func New[K Key, V Value](backend Backend[K, V]) T[K, V] {
@@ -50,22 +47,9 @@ func New[K Key, V Value](backend Backend[K, V]) T[K, V] {
 		backend: backend,
 		data:    map[string]*line[V]{},
 		remove:  map[int][]V{},
-		buffer:  100,
+		worker:  command.NewThreadWorker(backend.Name(), 100, false),
 	}
-	go c.worker()
 	return c
-}
-
-func (c *cache[K, V]) worker() {
-	c.work = make(chan job[K, V], c.buffer)
-	for {
-		job, more := <-c.work
-		if !more {
-			break
-		}
-		c.backend.Instantiate(job.key, job.done)
-	}
-	log.Println(c.backend, "exited")
 }
 
 func (c *cache[K, V]) Fetch(key K) V {
@@ -81,18 +65,16 @@ func (c *cache[K, V]) Fetch(key K) V {
 
 	if ln.version != key.Version() {
 		ln.version = key.Version()
-		c.work <- job[K, V]{
-			key: key,
-			done: func(value V) {
+		c.worker.Invoke(func() {
+			c.backend.Instantiate(key, func(value V) {
 				if ln.ready {
 					// ready implies that we have a previous value - schedule deletion
 					c.Delete(ln.value)
 				}
-
 				ln.value = value
 				ln.ready = true
-			},
-		}
+			})
+		})
 	}
 
 	// reset age
@@ -113,20 +95,28 @@ func (c *cache[K, V]) Delete(value V) {
 // Should be called immediately after aquiring a new frame, passing the index of the aquired frame.
 // Releases any unused resources associated with that frame index.
 func (c *cache[K, V]) Tick(frameIndex int) {
-	c.frame = frameIndex
-
 	// eviction
 	for key, line := range c.data {
 		line.age++
-		if line.age > 100 {
-			c.backend.Delete(line.value)
+		if line.age > 10 {
+			log.Println(c.backend, "evict", line.value)
+			c.Delete(line.value)
 			delete(c.data, key)
 		}
 	}
+
+	if len(c.remove) > 1 {
+		trashIdx := (c.frame + 1) % len(c.remove)
+		for _, value := range c.remove[trashIdx] {
+			c.backend.Delete(value)
+		}
+		c.remove[trashIdx] = nil
+	}
+
+	c.frame = frameIndex
 }
 
 func (c *cache[K, V]) Destroy() {
-	close(c.work)
 	for _, queue := range c.remove {
 		for _, value := range queue {
 			c.backend.Delete(value)

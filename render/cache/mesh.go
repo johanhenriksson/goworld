@@ -20,6 +20,11 @@ type vkMesh struct {
 }
 
 func (m *vkMesh) Draw(cmd command.Buffer, index int) {
+	if m.elements <= 0 {
+		// nothing to draw
+		return
+	}
+
 	cmd.CmdBindVertexBuffer(m.vertices, 0)
 	cmd.CmdBindIndexBuffers(m.indices, 0, m.idxType)
 

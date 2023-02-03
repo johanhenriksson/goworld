@@ -10,7 +10,6 @@ import (
 
 // Chunk is the smallest individually renderable unit of voxel geometry
 type T struct {
-	Seed       int
 	Cx, Cz     int
 	Ox, Oy, Oz int
 	Sx, Sy, Sz int
@@ -18,11 +17,10 @@ type T struct {
 	Light      *LightVolume
 }
 
-func New(size, seed, cx, cz int) *T {
+func New(size, cx, cz int) *T {
 	return &T{
 		Data:  make(voxel.Array, size*size*size),
 		Light: NewLightVolume(size, size+1, size),
-		Seed:  seed,
 		Cx:    cx,
 		Cz:    cz,
 		Ox:    cx * size,

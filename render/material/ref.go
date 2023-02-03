@@ -39,14 +39,14 @@ func (d *Def) Hash() uint64 {
 	return Hash(d)
 }
 
-func FromDef(dev device.T, pool descriptor.Pool, rpass renderpass.T, def *Def) Standard {
+func FromDef(dev device.T, pool descriptor.Pool, rpass renderpass.T, def *Def) T[*Descriptors] {
 	desc := &Descriptors{
 		Camera: &descriptor.Uniform[uniform.Camera]{
 			Stages: core1_0.StageAll,
 		},
 		Objects: &descriptor.Storage[uniform.Object]{
 			Stages: core1_0.StageAll,
-			Size:   1000,
+			Size:   2000,
 		},
 		Textures: &descriptor.SamplerArray{
 			Stages: core1_0.StageFragment,
@@ -67,7 +67,7 @@ func FromDef(dev device.T, pool descriptor.Pool, rpass renderpass.T, def *Def) S
 			DepthWrite: def.DepthWrite,
 			Primitive:  def.Primitive,
 		},
-		desc).Instantiate(pool)
+		desc)
 }
 
 func Hash(def *Def) uint64 {

@@ -15,7 +15,7 @@ type MaterialTransform func(*material.Def) *material.Def
 type MaterialSorter struct {
 	TransformFn MaterialTransform
 
-	cache      map[uint64]material.Standard
+	cache      map[uint64][]material.Instance[*material.Descriptors]
 	defaultMat *material.Def
 	target     vulkan.Target
 	pass       renderpass.T
@@ -26,7 +26,7 @@ func NewMaterialSorter(target vulkan.Target, pass renderpass.T, defaultMat *mate
 		target:     target,
 		pass:       pass,
 		defaultMat: defaultMat,
-		cache:      map[uint64]material.Standard{},
+		cache:      map[uint64][]material.Instance[*material.Descriptors]{},
 
 		TransformFn: func(d *material.Def) *material.Def { return d },
 	}
@@ -36,7 +36,7 @@ func NewMaterialSorter(target vulkan.Target, pass renderpass.T, defaultMat *mate
 
 func (m *MaterialSorter) Destroy() {
 	for _, mat := range m.cache {
-		mat.Material().Destroy()
+		mat[0].Material().Destroy()
 	}
 }
 
@@ -46,7 +46,7 @@ func (m *MaterialSorter) Load(def *material.Def) {
 		def = m.defaultMat
 	}
 	mat := material.FromDef(m.target.Device(), m.target.Pool(), m.pass, def)
-	m.cache[id] = mat
+	m.cache[id] = mat.InstantiateMany(m.target.Pool(), m.target.Frames())
 }
 
 func (m *MaterialSorter) Draw(cmds command.Recorder, args render.Args, meshes []mesh.T) {
@@ -59,10 +59,10 @@ func (m *MaterialSorter) Draw(cmds command.Recorder, args render.Args, meshes []
 		ViewProjInv: args.VP.Invert(),
 		Eye:         args.Position,
 	}
-	m.DrawCamera(cmds, camera, meshes)
+	m.DrawCamera(cmds, args, camera, meshes)
 }
 
-func (m *MaterialSorter) DrawCamera(cmds command.Recorder, camera uniform.Camera, meshes []mesh.T) {
+func (m *MaterialSorter) DrawCamera(cmds command.Recorder, args render.Args, camera uniform.Camera, meshes []mesh.T) {
 	// sort meshGroups by material
 	meshGroups := map[uint64][]mesh.T{}
 	for _, msh := range meshes {
@@ -76,7 +76,7 @@ func (m *MaterialSorter) DrawCamera(cmds command.Recorder, camera uniform.Camera
 
 	index := 0
 	for mid, meshes := range meshGroups {
-		mat := m.cache[mid]
+		mat := m.cache[mid][args.Context.Index]
 		mat.Descriptors().Camera.Set(camera)
 
 		cmds.Record(func(cmd command.Buffer) {

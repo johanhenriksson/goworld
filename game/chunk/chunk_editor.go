@@ -1,6 +1,8 @@
 package chunk
 
 import (
+	"log"
+
 	"github.com/johanhenriksson/goworld/core/camera"
 	"github.com/johanhenriksson/goworld/core/input/keys"
 	"github.com/johanhenriksson/goworld/core/input/mouse"
@@ -10,6 +12,9 @@ import (
 	"github.com/johanhenriksson/goworld/game/voxel"
 	"github.com/johanhenriksson/goworld/geometry/box"
 	"github.com/johanhenriksson/goworld/geometry/plane"
+	"github.com/johanhenriksson/goworld/gui"
+	"github.com/johanhenriksson/goworld/gui/node"
+	"github.com/johanhenriksson/goworld/gui/widget/window/modal"
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render/color"
@@ -196,6 +201,11 @@ func (e *edit) KeyEvent(ev keys.Event) {
 		e.Recalculate()
 	}
 
+	// save chunk hotkey
+	if keys.PressedMods(ev, keys.S, keys.Ctrl) {
+		e.saveChunkDialog()
+	}
+
 	// deselect tool
 	if keys.Pressed(ev, keys.Escape) {
 		e.DeselectTool()
@@ -283,4 +293,25 @@ func (e *edit) Recalculate() {
 
 func (e *edit) CanDeselect() bool {
 	return e.Tool == nil
+}
+
+func (e *edit) saveChunkDialog() {
+	var saveDialog gui.Fragment
+	saveDialog = gui.NewFragment(gui.FragmentArgs{
+		Slot:     "gui",
+		Position: gui.FragmentFirst,
+		Render: func() node.T {
+			return modal.NewInput("modal test", modal.InputProps{
+				Title:   "Save as...",
+				Message: "Enter filename:",
+				OnClose: func() {
+					object.Detach(saveDialog)
+				},
+				OnAccept: func(input string) {
+					log.Println("input:", input)
+				},
+			})
+		},
+	})
+	object.Attach(e, saveDialog)
 }

@@ -10,9 +10,17 @@ func New(x, y, z float32) T {
 	return T{x, y, z}
 }
 
+func New1(v float32) T {
+	return T{v, v, v}
+}
+
 // NewI returns a Vec3 from integer components
 func NewI(x, y, z int) T {
 	return T{float32(x), float32(y), float32(z)}
+}
+
+func NewI1(v int) T {
+	return T{float32(v), float32(v), float32(v)}
 }
 
 func FromSlice(v []float32) T {

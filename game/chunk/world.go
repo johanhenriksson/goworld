@@ -2,75 +2,113 @@ package chunk
 
 import (
 	"fmt"
+	"log"
 
-	"github.com/johanhenriksson/goworld/game/voxel"
+	"github.com/johanhenriksson/goworld/core/camera"
+	"github.com/johanhenriksson/goworld/core/object"
+	"github.com/johanhenriksson/goworld/math"
 	"github.com/johanhenriksson/goworld/math/vec3"
 )
 
-type Provider interface {
-	Chunk(x, z int) *T
-	Voxel(x, y, z int) voxel.T
-}
-
-type ChunkPos struct {
-	X int
-	Z int
-}
-
 type World struct {
-	Seed         int
-	ChunkSize    int
-	KeepDistance int
-	DrawDistance int
-	Cache        map[ChunkPos]*T
-	Provider     Provider
+	object.T
+	size      int
+	distance  float32
+	generator Generator
+
+	active map[string]object.T
+	ready  chan *T
 }
 
-func NewWorld(seed, size int) *World {
-	return &World{
-		Seed:         seed,
-		KeepDistance: 5,
-		DrawDistance: 3,
-		ChunkSize:    size,
-		Cache:        make(map[ChunkPos]*T),
-		Provider:     ExampleWorldgen(seed, size),
-	}
+// Builds a world of chunks around the active camera as it moves around
+func NewWorld(size int, generator Generator, distance float32) *World {
+	return object.New(&World{
+		size:      size,
+		generator: generator,
+		distance:  distance,
+		active:    make(map[string]object.T, 100),
+		ready:     make(chan *T, 100),
+	})
 }
 
-func (w *World) AddChunk(cx, cz int) *T {
-	chunk, err := Load("chunks", cx, cz)
-	if err != nil {
-		chunk = w.Provider.Chunk(cx, cz)
-		fmt.Printf("Generated chunk %d,%d\n", cx, cz)
+func (c *World) Update(scene object.T, dt float32) {
+	// update chunks
+	c.T.Update(scene, dt)
+
+	// find the active camera
+	root := object.Root(scene)
+	cam, exists := object.FindInChildren[camera.T](root)
+	if !exists {
+		return
 	}
 
-	w.Cache[ChunkPos{cx, cz}] = chunk
-	return chunk
-}
+	pos := cam.Transform().WorldPosition()
+	offset := vec3.NewI1(c.size / 2)
 
-func (w *World) Voxel(x, y, z int) voxel.T {
-	cx, cz := x/w.ChunkSize, z/w.ChunkSize
-	lx, ly, lz := x%w.ChunkSize, y, z%w.ChunkSize
-	if chunk, exists := w.Cache[ChunkPos{cx, cz}]; exists {
-		return chunk.At(lx, ly, lz)
+	// insert any new chunks
+	select {
+	case chk := <-c.ready:
+		key := fmt.Sprintf("Chunk:%d,%d", chk.Cx, chk.Cz)
+		chonk := object.Builder(object.Empty(key)).
+			Attach(NewMesh(chk)).
+			Position(vec3.NewI(chk.Cx*c.size, 0, chk.Cz*c.size)).
+			Parent(c).
+			Create()
+		c.active[key] = chonk
+	default:
 	}
-	return w.Provider.Voxel(x, y, z)
-}
 
-func (w *World) Set(x, y, z int, vox voxel.T) {
-	cx, cz := x/w.ChunkSize, z/w.ChunkSize
-	lx, ly, lz := x%w.ChunkSize, y, z%w.ChunkSize
-	if chunk, exists := w.Cache[ChunkPos{cx, cz}]; exists {
-		chunk.Set(lx, ly, lz, vox)
-		chunk.Light.Block(lx, ly, lz, vox != voxel.Empty)
+	// destroy chunks that are too far away
+	for key, chunk := range c.active {
+		if chunk == nil {
+			// being loaded
+			continue
+		}
+		dist := vec3.Distance(pos, chunk.Transform().Position().Add(offset))
+		if dist > c.distance*1.1 {
+			log.Println("destroy chunk", key)
+			chunk.Destroy()
+			delete(c.active, key)
+		}
 	}
-}
 
-func (w *World) HeightAt(p vec3.T) float32 {
-	x, y, z := int(p.X), int(p.Y), int(p.Z)
-	for w.Voxel(x, y, z) == voxel.Empty && y >= 0 {
-		y--
+	// create chunks close to us
+	chunkPos := pos.Scaled(1 / float32(c.size)).Floor()
+	cx, cz := int(chunkPos.X), int(chunkPos.Z)
+
+	steps := int(c.distance / float32(c.size))
+	minDist := math.InfPos
+	var spawn func()
+	for x := cx - steps; x < cx+steps; x++ {
+		for z := cz - steps; z < cz+steps; z++ {
+			// check if the chunk would have been in range
+			p := vec3.NewI(cx+x*c.size, 0, cz+z*c.size).Add(offset)
+			dist := vec3.Distance(pos, p)
+			if dist > c.distance {
+				continue
+			}
+
+			// check if its already active
+			key := fmt.Sprintf("Chunk:%d,%d", x, z)
+			_, active := c.active[key]
+			if active {
+				continue
+			}
+
+			// spawn it
+			if dist < minDist {
+				minDist = dist
+				ix, iz := x, z
+				spawn = func() {
+					log.Println("spawn chunk", key)
+					c.active[key] = nil
+					chunkData := Generate(c.generator, c.size, ix, iz)
+					c.ready <- chunkData
+				}
+			}
+		}
 	}
-	y++
-	return float32(y)
+	if spawn != nil {
+		go spawn()
+	}
 }

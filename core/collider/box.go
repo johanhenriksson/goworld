@@ -32,7 +32,7 @@ func (s *box) Intersect(ray *physics.Ray) (bool, vec3.T) {
 	return s.shape.Intersect(ray)
 }
 
-func (s *box) Update(dt float32) {
+func (s *box) Update(scene object.T, dt float32) {
 	sz := s.args.Size.Scaled(0.5)
 	center := s.Transform().Project(s.args.Center)
 	s.shape.Min = center.Sub(sz)
