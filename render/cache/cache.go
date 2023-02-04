@@ -7,6 +7,7 @@ import (
 )
 
 type T[K Key, V Value] interface {
+	Submit()
 	Fetch(K) V
 	Delete(V)
 	Tick(int)
@@ -93,31 +94,32 @@ func (c *cache[K, V]) Delete(value V) {
 	c.remove[c.frame] = append(c.remove[c.frame], value)
 }
 
+// Submit pending work
+func (c *cache[K, V]) Submit() {
+	c.backend.Submit()
+}
+
 // Should be called immediately after aquiring a new frame, passing the index of the aquired frame.
 // Releases any unused resources associated with that frame index.
 func (c *cache[K, V]) Tick(frameIndex int) {
-	// submit work
-	c.backend.Submit()
+	c.frame = frameIndex
 
 	// eviction
 	for key, line := range c.data {
 		line.age++
 		if line.age > 100 {
-			log.Printf("%s evict %+v\n", c.backend, line.value)
+			log.Println(c.backend, "evict", line.value)
 			c.Delete(line.value)
 			delete(c.data, key)
 		}
 	}
 
 	if len(c.remove) > 1 {
-		trashIdx := (c.frame + 1) % len(c.remove)
-		for _, value := range c.remove[trashIdx] {
+		for _, value := range c.remove[c.frame] {
 			c.backend.Delete(value)
 		}
-		c.remove[trashIdx] = nil
+		c.remove[c.frame] = nil
 	}
-
-	c.frame = frameIndex
 }
 
 func (c *cache[K, V]) Destroy() {

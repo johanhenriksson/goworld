@@ -2,6 +2,7 @@ package node
 
 import (
 	"fmt"
+	"log"
 	"reflect"
 
 	"github.com/johanhenriksson/goworld/gui/hooks"
@@ -31,14 +32,14 @@ type node[K widget.T, P any] struct {
 	props    P
 	kind     reflect.Type
 	render   func(P) T
-	hydrate  func(string, P) K
+	hydrate  func(widget.T, P) K
 	widget   widget.T
 	children []T
 	hooks    hooks.State
 	injected []T
 }
 
-func Builtin[K widget.T, P any](key string, props P, children []T, hydrate func(string, P) K) T {
+func Builtin[K widget.T, P any](key string, props P, children []T, hydrate func(widget.T, P) K) T {
 	return &node[K, P]{
 		key:      key,
 		props:    props,
@@ -54,8 +55,8 @@ func Component[P any](key string, props P, render func(P) T) T {
 		key:   key,
 		props: props,
 		kind:  reflect.TypeOf(props),
-		hydrate: func(key string, props P) component.T {
-			return component.New(key, props)
+		hydrate: func(w widget.T, props P) component.T {
+			return component.Create(w, props)
 		},
 		render: render,
 	}
@@ -116,6 +117,13 @@ func (n *node[K, P]) Destroy() {
 	if !n.Hydrated() {
 		return
 	}
+	log.Println("destroy node", n.key)
+	for _, child := range n.injected {
+		child.Destroy()
+	}
+	for _, child := range n.children {
+		child.Destroy()
+	}
 	n.widget.Destroy()
 	n.widget = nil
 }
@@ -125,9 +133,9 @@ func (n *node[K, P]) Hooks() *hooks.State {
 }
 
 func (n *node[K, P]) Hydrate(parentKey string) widget.T {
-	key := joinKeys(parentKey, n.key)
+	key := joinKeys(n.key, parentKey)
 	if n.widget == nil {
-		n.widget = n.hydrate(key, n.props)
+		n.widget = n.hydrate(widget.New(key), n.props)
 	}
 
 	// render children

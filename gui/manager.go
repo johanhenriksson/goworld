@@ -8,6 +8,7 @@ import (
 	"github.com/johanhenriksson/goworld/gui/widget"
 	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/math/vec2"
+	"github.com/johanhenriksson/goworld/render"
 
 	"github.com/kjk/flex"
 )
@@ -21,26 +22,37 @@ type Manager interface {
 type manager struct {
 	object.T
 
-	scale  float32
-	render node.RenderFunc
-	tree   node.T
-	gui    widget.T
+	viewport render.Screen
+	render   node.RenderFunc
+	tree     node.T
+	gui      widget.T
+	updated  chan struct{}
 
 	supressNextRelease bool
 }
 
-func New(render node.RenderFunc) Manager {
+func New(renderNodes node.RenderFunc) Manager {
 	return object.New(&manager{
-		scale:  1,
-		render: render,
+		viewport: render.Screen{
+			Scale: 1,
+		},
+		updated: make(chan struct{}),
+		render:  renderNodes,
 	})
 }
 
 func (m *manager) Name() string { return "UIManager" }
 
-func (m *manager) DrawUI(args widget.DrawArgs, scene object.T) {
+func (m *manager) Update(scene object.T, dt float32) {
 	// render root tree
 	root := m.render()
+
+	// must run after everything else updated
+	//
+	go m.update(scene, dt, root)
+}
+
+func (m *manager) update(scene object.T, dt float32, root node.T) {
 
 	// populate with fragments
 	fragments := object.Query[Fragment]().Collect(scene)
@@ -83,12 +95,20 @@ func (m *manager) DrawUI(args widget.DrawArgs, scene object.T) {
 	m.gui = m.tree.Hydrate(key)
 
 	// update flexbox layout
-	viewport := vec2.NewI(args.Viewport.Width, args.Viewport.Height)
-	m.scale = args.Viewport.Scale
+	viewport := vec2.NewI(m.viewport.Width, m.viewport.Height)
 
 	flexRoot := m.gui.Flex()
 	flex.CalculateLayout(flexRoot, viewport.X, viewport.Y, flex.DirectionLTR)
 
+	// signal background update completed
+	m.updated <- struct{}{}
+}
+
+func (m *manager) DrawUI(args widget.DrawArgs, scene object.T) {
+	// wait for background update
+	<-m.updated
+
+	m.viewport = args.Viewport
 	// draw
 	m.gui.Draw(widget.DrawArgs{
 		Commands:  args.Commands,
@@ -125,7 +145,7 @@ func (m *manager) MouseEvent(e mouse.Event) {
 	}
 
 	// apply UI scaling to cursor position
-	offset := e.Position().Sub(e.Position().Scaled(1 / m.scale))
+	offset := e.Position().Sub(e.Position().Scaled(1 / m.viewport.Scale))
 	ev := e.Project(offset)
 
 	// pass on to gui fragments

@@ -43,7 +43,7 @@ func (c *World) Update(scene object.T, dt float32) {
 	}
 
 	pos := cam.Transform().WorldPosition()
-	offset := vec3.NewI1(c.size / 2)
+	pos.Y = 0
 
 	// insert any new chunks
 	select {
@@ -64,7 +64,7 @@ func (c *World) Update(scene object.T, dt float32) {
 			// being loaded
 			continue
 		}
-		dist := vec3.Distance(pos, chunk.Transform().Position().Add(offset))
+		dist := vec3.Distance(pos, chunk.Transform().Position())
 		if dist > c.distance*1.1 {
 			log.Println("destroy chunk", key)
 			chunk.Destroy()
@@ -82,7 +82,7 @@ func (c *World) Update(scene object.T, dt float32) {
 	for x := cx - steps; x < cx+steps; x++ {
 		for z := cz - steps; z < cz+steps; z++ {
 			// check if the chunk would have been in range
-			p := vec3.NewI(cx+x*c.size, 0, cz+z*c.size).Add(offset)
+			p := vec3.NewI(x*c.size, 0, z*c.size)
 			dist := vec3.Distance(pos, p)
 			if dist > c.distance {
 				continue

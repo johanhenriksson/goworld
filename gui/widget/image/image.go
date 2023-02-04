@@ -31,10 +31,10 @@ func New(key string, props Props) node.T {
 	return node.Builtin(key, props, nil, new)
 }
 
-func new(key string, props Props) T {
+func new(w widget.T, props Props) T {
 	img := &image{
-		T:        widget.New(key),
-		Renderer: NewRenderer(key),
+		T:        w,
+		Renderer: NewRenderer(w.Key()),
 	}
 	img.Update(props)
 	return img

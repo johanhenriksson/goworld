@@ -50,10 +50,10 @@ func New(key string, props Props) node.T {
 	return node.Builtin(key, props, nil, new)
 }
 
-func new(key string, props Props) T {
+func new(w widget.T, props Props) T {
 	lbl := &label{
-		T:        widget.New(key),
-		Renderer: NewRenderer(key),
+		T:        w,
+		Renderer: NewRenderer(w.Key()),
 		scale:    1,
 		cursor:   utf8string.NewString(props.Text).RuneCount(),
 		text:     props.Text,

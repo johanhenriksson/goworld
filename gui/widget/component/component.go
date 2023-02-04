@@ -3,110 +3,106 @@ package component
 import (
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/gui/widget"
-	"github.com/johanhenriksson/goworld/math/vec2"
-
-	"github.com/kjk/flex"
+	"github.com/johanhenriksson/goworld/math/mat4"
+	"github.com/johanhenriksson/goworld/math/vec3"
 )
+
+type Props interface{}
 
 type T interface {
 	widget.T
 }
 
-type component struct {
-	key      string
-	wrap     widget.T
+type component[P any] struct {
+	widget.T
+	props    P
 	children []widget.T
-	props    any
-	flex     *flex.Node
 }
 
-func New(key string, props any) T {
-	return &component{
-		key:   key,
+func Create[P Props](w widget.T, props P) T {
+	return &component[P]{
+		T:     w,
 		props: props,
-		flex:  flex.NewNodeWithConfig(widget.FlexConfig),
 	}
 }
 
-func (c *component) Key() string {
-	return c.key
-}
+func (f *component[P]) Draw(args widget.DrawArgs) {
+	for _, child := range f.Children() {
+		// calculate child transform
+		// try to fix the position to an actual pixel
+		// pos := vec3.Extend(child.Position().Scaled(args.Viewport.Scale).Floor().Scaled(1/args.Viewport.Scale), -1)
+		z := child.ZOffset()
+		pos := vec3.Extend(child.Position(), args.Position.Z-float32(1+z))
+		transform := mat4.Translate(pos)
+		childArgs := args
+		childArgs.Transform = transform // .Mul(&args.Transform)
+		childArgs.Position = pos
 
-func (c *component) Update(props any) {
-	c.props = props
-}
-
-func (c *component) Props() any {
-	return c.props
-}
-
-func (c *component) Children() []widget.T {
-	return c.children
-}
-
-func (c *component) SetChildren(children []widget.T) {
-	c.children = children
-	// whats the reasoning here?
-	// why do we pick the first element
-	if len(children) > 0 {
-		c.wrap = children[0]
-	} else {
-		c.wrap = nil
+		// draw child
+		child.Draw(childArgs)
 	}
 }
 
-func (c *component) Draw(args widget.DrawArgs) {
-	if c.wrap != nil {
-		c.wrap.Draw(args)
-	}
-}
-
-func (c *component) Size() vec2.T {
-	if c.wrap != nil {
-		return c.wrap.Size()
-	}
-	return vec2.Zero
-}
-
-func (c *component) Position() vec2.T {
-	if c.wrap != nil {
-		return c.wrap.Position()
-	}
-	return vec2.Zero
-}
-
-func (c *component) ZOffset() int {
-	if c.wrap != nil {
-		return c.wrap.ZOffset()
-	}
+func (f *component[P]) ZOffset() int {
 	return 0
 }
 
-func (c *component) Flex() *flex.Node {
-	if c.wrap != nil {
-		return c.wrap.Flex()
+func (f *component[P]) Children() []widget.T { return f.children }
+func (f *component[P]) SetChildren(c []widget.T) {
+	// reconcile flex children
+	if len(c) > 1 {
+		panic("expected component to have a single child")
 	}
-	return c.flex
+	f.children = c
+	if len(c) == 0 {
+		return
+	}
+	child := c[0]
+
+	if len(f.Flex().Children) == 1 {
+		if f.Flex().Children[0] == child.Flex() {
+			return
+		}
+		// replace
+		f.Flex().RemoveChild(f.Flex().Children[0])
+	}
+	f.Flex().InsertChild(child.Flex(), 0)
 }
 
-func (c *component) Destroy() {
-	if c.wrap != nil {
-		c.wrap.Destroy()
+//
+// Lifecycle
+//
+
+func (f *component[P]) Props() any { return f.props }
+
+func (f *component[P]) Update(p any) {
+	var ok bool
+	f.props, ok = p.(P)
+	if !ok {
+		panic("illegal props")
 	}
 }
 
-func (c *component) Destroyed() bool {
-	if c.wrap != nil {
-		return c.wrap.Destroyed()
+func (f *component[P]) Destroy() {
+	f.T.Destroy()
+
+	for _, child := range f.children {
+		child.Destroy()
 	}
-	return false
 }
 
-func (c *component) MouseEvent(e mouse.Event) {
-	for _, frame := range c.children {
+//
+// Events
+//
+
+func (f *component[P]) MouseEvent(e mouse.Event) {
+	// because children may have absolute positioning, we must pass the event to all of them.
+	// children always have higher z index, so they have priority
+	for _, frame := range f.children {
 		if handler, ok := frame.(mouse.Handler); ok {
 			handler.MouseEvent(e)
 			if e.Handled() {
+				e.Consume()
 				return
 			}
 		}

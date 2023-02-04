@@ -69,13 +69,13 @@ func Run(args Args, scenefuncs ...SceneFunc) {
 		// draw
 		renderer.Draw(scene)
 
-		// timing := counter.Sample()
-		// log.Printf(
-		// 	"frame: %2.fms, avg: %.2fms, peak: %.2f, fps: %.1f\n",
-		// 	1000*timing.Current,
-		// 	1000*timing.Average,
-		// 	1000*timing.Max,
-		// 	1.0/timing.Average)
+		timing := counter.Sample()
+		log.Printf(
+			"frame: %2.fms, avg: %.2fms, peak: %.2f, fps: %.1f\n",
+			1000*timing.Current,
+			1000*timing.Average,
+			1000*timing.Max,
+			1.0/timing.Average)
 	}
 }
 

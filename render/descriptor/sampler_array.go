@@ -86,7 +86,7 @@ func (d *SamplerArray) Clear(index int) {
 
 func (d *SamplerArray) SetRange(textures []texture.T, offset int) {
 	end := offset + len(textures)
-	if end >= d.Count {
+	if end > d.Count {
 		panic("out of bounds")
 	}
 	for i, tex := range textures {

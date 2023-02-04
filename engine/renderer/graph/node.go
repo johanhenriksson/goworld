@@ -172,6 +172,9 @@ func (n *node) signals(index int) []sync.Semaphore {
 }
 
 func (n *node) Draw(worker command.Worker, args render.Args, scene object.T) {
+	if n.pass == nil {
+		return
+	}
 	cmds := command.NewRecorder()
 	n.pass.Record(cmds, args, scene)
 	worker.Queue(cmds.Apply)

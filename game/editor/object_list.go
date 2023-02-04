@@ -101,7 +101,7 @@ func ObjectListEntry(key string, props ObjectListEntryProps) node.T {
 
 		if open {
 			for _, obj := range obj.Children() {
-				key := obj.Name()
+				key := object.Key("object", obj)
 				nodes = append(nodes, ObjectListEntry(key, ObjectListEntryProps{
 					Object:   obj,
 					OnSelect: props.OnSelect,

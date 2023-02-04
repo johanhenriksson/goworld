@@ -55,6 +55,10 @@ func (n *preNode) Prepare(scene object.T) (*render.Args, error) {
 		return nil, ErrRecreate
 	}
 
+	// cache ticks
+	n.target.Meshes().Tick(context.Index)
+	n.target.Textures().Tick(context.Index)
+
 	// create render arguments
 	args := render.Args{
 		Context:    context,

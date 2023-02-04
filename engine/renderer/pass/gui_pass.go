@@ -15,6 +15,7 @@ import (
 	"github.com/johanhenriksson/goworld/render/renderpass"
 	"github.com/johanhenriksson/goworld/render/renderpass/attachment"
 	"github.com/johanhenriksson/goworld/render/shader"
+	"github.com/johanhenriksson/goworld/render/texture"
 	"github.com/johanhenriksson/goworld/render/vertex"
 	"github.com/johanhenriksson/goworld/render/vulkan"
 
@@ -122,6 +123,16 @@ func (p *GuiPass) Record(cmds command.Recorder, args render.Args, scene object.T
 		cmd.CmdBeginRenderPass(p.pass, p.fbufs[args.Context.Index])
 		mat.Bind(cmd)
 	})
+
+	// set everything to white
+	white := p.target.Textures().Fetch(texture.PathRef("textures/white.png"))
+	if white != nil {
+		clear := make([]texture.T, mat.Descriptors().Textures.Count)
+		for i := range clear {
+			clear[i] = white
+		}
+		mat.Descriptors().Textures.SetRange(clear, 0)
+	}
 
 	textures := cache.NewSamplerCache(p.target.Textures(), mat.Descriptors().Textures)
 

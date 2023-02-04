@@ -1,6 +1,8 @@
 package node
 
-import "fmt"
+import (
+	"fmt"
+)
 
 func Expand(new T) {
 	new.Render(new.Hooks())

@@ -1,8 +1,6 @@
 package chunk
 
 import (
-	"fmt"
-
 	"github.com/johanhenriksson/goworld/math"
 )
 
@@ -108,7 +106,6 @@ func (lv *LightVolume) Calculate() {
 			}
 		}
 	}
-	fmt.Println("Light volume calculation finished in", i, "iterations")
 }
 
 func (lv *LightVolume) Clear() {

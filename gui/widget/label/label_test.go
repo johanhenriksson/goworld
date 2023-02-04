@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/johanhenriksson/goworld/core/input/keys"
+	"github.com/johanhenriksson/goworld/gui/widget"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
@@ -24,7 +25,8 @@ var _ = Describe("", func() {
 					props.Text = new
 				},
 			}
-			label = new("label", props)
+			w := widget.New("label")
+			label = new(w, props)
 		})
 
 		It("adds characters", func() {

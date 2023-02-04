@@ -107,9 +107,9 @@ func (b *buf) CmdCopyBuffer(src, dst buffer.T, regions ...core1_0.BufferCopy) {
 }
 
 func (b *buf) CmdBindGraphicsPipeline(pipe pipeline.T) {
-	if b.pipeline != nil && b.pipeline.Ptr() == pipe.Ptr() {
-		return
-	}
+	// if b.pipeline != nil && b.pipeline.Ptr() == pipe.Ptr() {
+	// 	return
+	// }
 	b.ptr.CmdBindPipeline(core1_0.PipelineBindPointGraphics, pipe.Ptr())
 	b.pipeline = pipe
 }
@@ -122,21 +122,21 @@ func (b *buf) CmdBindGraphicsDescriptor(set descriptor.Set) {
 }
 
 func (b *buf) CmdBindVertexBuffer(vtx buffer.T, offset int) {
-	binding := bufferBinding{buffer: vtx.Ptr(), offset: offset}
-	if b.vertex == binding {
-		return
-	}
+	// binding := bufferBinding{buffer: vtx.Ptr(), offset: offset}
+	// if b.vertex == binding {
+	// 	return
+	// }
 	b.ptr.CmdBindVertexBuffers(0, []core1_0.Buffer{vtx.Ptr()}, []int{offset})
-	b.vertex = binding
+	// b.vertex = binding
 }
 
 func (b *buf) CmdBindIndexBuffers(idx buffer.T, offset int, kind core1_0.IndexType) {
-	binding := bufferBinding{buffer: idx.Ptr(), offset: offset, indexType: kind}
-	if b.index == binding {
-		return
-	}
+	// binding := bufferBinding{buffer: idx.Ptr(), offset: offset, indexType: kind}
+	// if b.index == binding {
+	// 	return
+	// }
 	b.ptr.CmdBindIndexBuffer(idx.Ptr(), offset, kind)
-	b.index = binding
+	// b.index = binding
 }
 
 func (b *buf) CmdDraw(vertexCount, instanceCount, firstVertex, firstInstance int) {

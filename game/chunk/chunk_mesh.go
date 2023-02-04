@@ -1,8 +1,6 @@
 package chunk
 
 import (
-	"log"
-
 	"github.com/johanhenriksson/goworld/core/mesh"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/game/voxel"
@@ -45,7 +43,6 @@ func (cm *Mesh) Update(scene object.T, dt float32) {
 	case vertices := <-cm.meshComputed:
 		cm.meshdata.Update(vertices, []uint16{})
 		cm.SetMesh(cm.meshdata)
-		log.Println("update chunk", cm.Name())
 	default:
 	}
 }

@@ -53,9 +53,11 @@ type widget struct {
 }
 
 func New(key string) T {
+	node := flex.NewNodeWithConfig(FlexConfig)
+	node.Context = key
 	return &widget{
 		key:  key,
-		flex: flex.NewNodeWithConfig(FlexConfig),
+		flex: node,
 	}
 }
 

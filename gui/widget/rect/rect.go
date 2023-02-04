@@ -36,10 +36,10 @@ func New(key string, props Props) node.T {
 	return node.Builtin(key, props, props.Children, Create)
 }
 
-func Create(key string, props Props) T {
+func Create(w widget.T, props Props) T {
 	rect := &rect{
-		T:        widget.New(key),
-		Renderer: NewRenderer(key),
+		T:        w,
+		Renderer: NewRenderer(w.Key()),
 	}
 	rect.Update(props)
 	return rect
@@ -59,13 +59,34 @@ func (f *rect) ZOffset() int {
 
 func (f *rect) Children() []widget.T { return f.children }
 func (f *rect) SetChildren(c []widget.T) {
-	// replace flex node children
-	for _, c := range f.children {
-		f.Flex().RemoveChild(c.Flex())
-	}
+	// reconcile flex children
 	for i, child := range c {
-		f.Flex().InsertChild(child.Flex(), i)
+		if i < len(f.Flex().Children) {
+			// we have an existing child at position i
+			if f.Flex().Children[i] == child.Flex() {
+				// its identical, move on
+				continue
+			} else {
+				// its different, replace it
+				if child.Flex().Parent != nil {
+					child.Flex().Parent.RemoveChild(child.Flex())
+				}
+				f.Flex().InsertChild(child.Flex(), i)
+			}
+		} else {
+			// insert new child
+			if child.Flex().Parent != nil {
+				child.Flex().Parent.RemoveChild(child.Flex())
+			}
+			f.Flex().InsertChild(child.Flex(), i)
+		}
 	}
+
+	// if the array of new children is shorter than the old one, remove any remaining children
+	for i := len(c); i < len(f.children); i++ {
+		f.Flex().RemoveChild(f.children[i].Flex())
+	}
+
 	// update child array
 	f.children = c
 }

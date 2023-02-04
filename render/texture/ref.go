@@ -18,15 +18,37 @@ type Ref interface {
 	Size() vec2.T
 }
 
+type pathRef struct {
+	path string
+	img  *image.RGBA
+	size vec2.T
+}
+
 func PathRef(path string) Ref {
-	img, err := assets.GetImage(path)
+	return &pathRef{
+		path: path,
+		size: vec2.Zero,
+	}
+}
+
+func (r *pathRef) Load() *image.RGBA {
+	if r.img != nil {
+		return r.img
+	}
+	var err error
+	r.img, err = assets.GetImage(r.path)
 	if err != nil {
 		panic(err)
 	}
-	return ImageRef(path, 1, img)
+	r.size = vec2.New(float32(r.img.Rect.Size().X), float32(r.img.Rect.Size().Y))
+	return r.img
 }
 
-type image_ref struct {
+func (r *pathRef) Key() string  { return r.path }
+func (r *pathRef) Version() int { return 1 }
+func (r *pathRef) Size() vec2.T { return r.size }
+
+type imageRef struct {
 	name    string
 	version int
 	img     *image.RGBA
@@ -34,7 +56,7 @@ type image_ref struct {
 }
 
 func ImageRef(name string, version int, img *image.RGBA) Ref {
-	return &image_ref{
+	return &imageRef{
 		name:    name,
 		version: version,
 		img:     img,
@@ -42,7 +64,9 @@ func ImageRef(name string, version int, img *image.RGBA) Ref {
 	}
 }
 
-func (r *image_ref) Key() string       { return r.name }
-func (r *image_ref) Version() int      { return r.version }
-func (r *image_ref) Load() *image.RGBA { return r.img }
-func (r *image_ref) Size() vec2.T      { return r.size }
+func (r *imageRef) Key() string       { return r.name }
+func (r *imageRef) Version() int      { return r.version }
+func (r *imageRef) Load() *image.RGBA { return r.img }
+func (r *imageRef) Size() vec2.T      { return r.size }
+
+func (r *imageRef) String() string { return r.name }

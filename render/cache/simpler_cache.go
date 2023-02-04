@@ -35,6 +35,7 @@ func (s *samplers) assignHandle(ref texture.Ref) int {
 	if handle >= s.desc.Count {
 		panic("out of handles")
 	}
+	s.reverse[ref] = handle
 	s.next++
 	return handle
 }
