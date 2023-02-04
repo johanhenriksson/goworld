@@ -26,7 +26,7 @@ func main() {
 		func(r renderer.T, scene object.T) {
 			// make some chonks
 			generator := chunk.ExampleWorldgen(3141389, 32)
-			object.Attach(scene, chunk.NewWorld(32, generator, 40))
+			object.Attach(scene, chunk.NewWorld(32, generator, 300))
 
 			// directional light
 			object.Attach(scene, light.NewDirectional(light.DirectionalArgs{

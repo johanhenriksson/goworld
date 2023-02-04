@@ -28,11 +28,11 @@ func TestReconcile(t *testing.T) {
 	}
 
 	a := Builtin("a", &props{"hello"}, nil, hydrate)
-	a.Hydrate()
+	a.Hydrate("test")
 	b := Builtin("a", &props{"world"}, nil, hydrate)
 
 	r := Reconcile(a, b)
-	r.Hydrate()
+	r.Hydrate("test")
 
 	if a.Hooks() != r.Hooks() {
 		t.Error("expected hook state to be unchanged")

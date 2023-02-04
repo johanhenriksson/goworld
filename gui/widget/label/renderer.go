@@ -1,9 +1,6 @@
 package label
 
 import (
-	"fmt"
-	"log"
-
 	"github.com/johanhenriksson/goworld/assets"
 	"github.com/johanhenriksson/goworld/gui/quad"
 	"github.com/johanhenriksson/goworld/gui/widget"
@@ -12,7 +9,6 @@ import (
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/font"
 	"github.com/johanhenriksson/goworld/render/texture"
-	"github.com/johanhenriksson/goworld/util"
 
 	"github.com/kjk/flex"
 	"github.com/vkngwrapper/core/v2/core1_0"
@@ -55,9 +51,9 @@ type renderer struct {
 	uvs            quad.UV
 }
 
-func NewRenderer() Renderer {
+func NewRenderer(key string) Renderer {
 	return &renderer{
-		key:            fmt.Sprintf("label:%s", util.NewUUID(8)),
+		key:            key,
 		size:           DefaultSize,
 		fontName:       DefaultFont,
 		color:          DefaultColor,
@@ -67,7 +63,7 @@ func NewRenderer() Renderer {
 		invalidMesh:    true,
 		scale:          2,
 		uvs:            quad.DefaultUVs,
-		mesh:           quad.New(quad.Props{}),
+		mesh:           quad.New(key, quad.Props{}),
 	}
 }
 
@@ -129,14 +125,10 @@ func (r *renderer) Draw(args widget.DrawArgs, label T) {
 			LineHeight: r.lineHeight,
 			Color:      color.White,
 		}
-		r.bounds = r.font.Measure(r.text, fargs)
 
 		r.version++
-		// img := r.font.Render(r.text, fargs)
-		// r.tex = texture.ImageRef(r.key, r.version, img)
-		key := fmt.Sprint(r.version, r.fontName, r.size, r.text, fargs)
-		r.tex = font.Ref(key, r.version, r.font, r.text, fargs)
-		log.Println("invalid:", r.text)
+		r.tex = font.Ref(r.key, r.version, r.font, r.text, fargs)
+		r.bounds = r.tex.Size()
 
 		r.invalidTexture = false
 	}
@@ -190,8 +182,6 @@ func (r *renderer) Measure(node *flex.Node, width float32, widthMode flex.Measur
 		LineHeight: r.lineHeight,
 		Color:      color.White,
 	})
-
-	// size = size.Scaled(1 / r.scale)
 
 	return flex.Size{
 		Width:  size.X / r.scale,

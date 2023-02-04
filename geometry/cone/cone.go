@@ -67,6 +67,7 @@ func (c *T) generate() {
 		data[o+2] = vertex.C{P: v2, N: n, C: c.Color.Vec4()}
 	}
 
-	mesh := vertex.NewTriangles("cone", data, []uint16{})
+	key := object.Key("cone", c)
+	mesh := vertex.NewTriangles(key, data, []uint16{})
 	c.SetMesh(mesh)
 }

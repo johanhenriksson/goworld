@@ -53,7 +53,7 @@ func New(key string, props Props) node.T {
 func new(key string, props Props) T {
 	lbl := &label{
 		T:        widget.New(key),
-		Renderer: NewRenderer(),
+		Renderer: NewRenderer(key),
 		scale:    1,
 		cursor:   utf8string.NewString(props.Text).RuneCount(),
 		text:     props.Text,

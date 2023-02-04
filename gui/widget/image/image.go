@@ -34,7 +34,7 @@ func New(key string, props Props) node.T {
 func new(key string, props Props) T {
 	img := &image{
 		T:        widget.New(key),
-		Renderer: NewRenderer(),
+		Renderer: NewRenderer(key),
 	}
 	img.Update(props)
 	return img

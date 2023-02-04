@@ -2,6 +2,7 @@ package geometry
 
 import (
 	"github.com/johanhenriksson/goworld/core/mesh"
+	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render/vertex"
@@ -95,6 +96,7 @@ func (c *Cube) generate() {
 		22, 21, 23,
 	}
 
-	mesh := vertex.NewTriangles("cube", vertices, indices)
+	key := object.Key("cube", c)
+	mesh := vertex.NewTriangles(key, vertices, indices)
 	c.SetMesh(mesh)
 }

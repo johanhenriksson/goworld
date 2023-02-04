@@ -27,10 +27,10 @@ type renderer struct {
 	invalid bool
 }
 
-func NewRenderer() Renderer {
+func NewRenderer(key string) Renderer {
 	return &renderer{
 		uvs:     quad.DefaultUVs,
-		mesh:    quad.New(quad.Props{}),
+		mesh:    quad.New(key, quad.Props{}),
 		invalid: true,
 	}
 }
@@ -45,49 +45,47 @@ func (r *renderer) SetColor(clr color.T) {
 	r.color = clr
 }
 
-func (r *renderer) Draw(args widget.DrawArgs, rect T) {
-	// render.Scissor(frame.Position(), frame.Size())
-	// defer render.ScissorDisable()
-
+func (r *renderer) drawSelf(args widget.DrawArgs, rect T) {
 	// dont draw anything if its transparent anyway
-	if r.color.A > 0 {
-		r.SetSize(rect.Size())
-
-		if r.invalid {
-			r.mesh.Update(quad.Props{
-				UVs:   r.uvs,
-				Size:  r.size,
-				Color: r.color,
-			})
-			r.invalid = false
-		}
-
-		mesh := args.Meshes.Fetch(r.mesh.Mesh())
-		if mesh == nil {
-			// if the mesh is not available, dont draw anything this frame.
-			return
-		}
-
-		texId := args.Textures.Fetch(texture.PathRef("textures/white.png"))
-		// we must be able to abort rendering when we dont get a texture
-		if texId == 0 {
-			return
-		}
-
-		args.Commands.Record(func(cmd command.Buffer) {
-			cmd.CmdPushConstant(core1_0.StageAll, 0, &widget.Constants{
-				Viewport: args.ViewProj,
-				Model:    args.Transform,
-				Texture:  texId,
-			})
-			mesh.Draw(cmd, 0)
-		})
+	if r.color.A <= 0 {
+		return
 	}
 
-	// args.Commands.Record(func(cmd command.Buffer) {
-	// 	pos := args.Transform.TransformPoint(vec3.Zero)
-	// 	cmd.CmdSetScissor(int(pos.X), int(pos.Y), int(r.size.X), int(r.size.Y))
-	// })
+	r.SetSize(rect.Size())
+
+	if r.invalid {
+		r.mesh.Update(quad.Props{
+			UVs:   r.uvs,
+			Size:  r.size,
+			Color: r.color,
+		})
+		r.invalid = false
+	}
+
+	mesh := args.Meshes.Fetch(r.mesh.Mesh())
+	if mesh == nil {
+		// if the mesh is not available, dont draw anything this frame.
+		return
+	}
+
+	texId := args.Textures.Fetch(texture.PathRef("textures/white.png"))
+	// we must be able to abort rendering when we dont get a texture
+	if texId == 0 {
+		return
+	}
+
+	args.Commands.Record(func(cmd command.Buffer) {
+		cmd.CmdPushConstant(core1_0.StageAll, 0, &widget.Constants{
+			Viewport: args.ViewProj,
+			Model:    args.Transform,
+			Texture:  texId,
+		})
+		mesh.Draw(cmd, 0)
+	})
+}
+
+func (r *renderer) Draw(args widget.DrawArgs, rect T) {
+	r.drawSelf(args, rect)
 
 	for _, child := range rect.Children() {
 		// calculate child transform

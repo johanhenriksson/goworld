@@ -37,7 +37,7 @@ type T interface {
 	// Destroy the object
 	Destroy()
 
-	id() uint
+	ID() uint
 	setName(string)
 	setParent(T)
 	attach(...T)
@@ -45,7 +45,7 @@ type T interface {
 }
 
 type base struct {
-	uuid      uint
+	id        uint
 	transform transform.T
 	name      string
 	enabled   bool
@@ -56,7 +56,7 @@ type base struct {
 // Empty creates a new, empty object.
 func Empty(name string) T {
 	return &base{
-		uuid:      uint(rand.Int63()),
+		id:        uint(rand.Int63n(0xFFFFFFFF)),
 		name:      name,
 		enabled:   true,
 		transform: transform.Identity(),
@@ -103,8 +103,8 @@ func New[K T](obj K) K {
 	return obj
 }
 
-func (b *base) id() uint {
-	return b.uuid
+func (b *base) ID() uint {
+	return b.id
 }
 
 func (b *base) Update(scene T, dt float32) {
@@ -150,7 +150,7 @@ func (b *base) attach(children ...T) {
 
 func (b *base) attachIfNotChild(child T) {
 	for _, existing := range b.children {
-		if existing.id() == child.id() {
+		if existing.ID() == child.ID() {
 			return
 		}
 	}
@@ -159,7 +159,7 @@ func (b *base) attachIfNotChild(child T) {
 
 func (b *base) detach(child T) {
 	for i, existing := range b.children {
-		if existing.id() == child.id() {
+		if existing.ID() == child.ID() {
 			b.children = append(b.children[:i], b.children[i+1:]...)
 			return
 		}

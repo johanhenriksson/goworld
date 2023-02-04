@@ -52,9 +52,9 @@ func NewTextureSync(dev device.T, worker command.Worker, img *osimage.RGBA) (tex
 			core1_0.ImageLayoutShaderReadOnlyOptimal,
 			core1_0.ImageAspectColor)
 	})
+	worker.OnComplete(stage.Destroy)
 	worker.Submit(command.SubmitInfo{
 		Marker: "TextureUpload",
-		Then:   stage.Destroy,
 	})
 	worker.Flush()
 
@@ -124,29 +124,27 @@ func DownloadImageAsync(dev device.T, worker command.Worker, src image.T) (<-cha
 	})
 
 	done := make(chan *osimage.RGBA)
-	worker.Submit(command.SubmitInfo{
-		Marker: "TextureDownload",
-		Then: func() {
-			defer dst.Destroy()
-			defer close(done)
+	worker.OnComplete(func() {
+		defer dst.Destroy()
+		defer close(done)
 
-			out := osimage.NewRGBA(osimage.Rect(0, 0, dst.Width(), dst.Height()))
-			dst.Memory().Read(0, out.Pix)
+		out := osimage.NewRGBA(osimage.Rect(0, 0, dst.Width(), dst.Height()))
+		dst.Memory().Read(0, out.Pix)
 
-			// swizzle colors if required BGR -> RGB
-			if swizzle {
-				for i := 0; i < len(out.Pix); i += 4 {
-					b := out.Pix[i]
-					r := out.Pix[i+2]
-					out.Pix[i] = r
-					out.Pix[i+2] = b
-				}
+		// swizzle colors if required BGR -> RGB
+		if swizzle {
+			for i := 0; i < len(out.Pix); i += 4 {
+				b := out.Pix[i]
+				r := out.Pix[i+2]
+				out.Pix[i] = r
+				out.Pix[i+2] = b
 			}
+		}
 
-			done <- out
-		},
+		done <- out
 	})
 
+	worker.Submit(command.SubmitInfo{Marker: "TextureDownload"})
 	return done, nil
 }
 

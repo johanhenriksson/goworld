@@ -52,6 +52,7 @@ func (p *T) generate() {
 		5, 6, 4, 7, 6, 5,
 	}
 
-	mesh := vertex.NewTriangles("plane", vertices, indices)
+	key := object.Key("plane", p)
+	mesh := vertex.NewTriangles(key, vertices, indices)
 	p.SetMesh(mesh)
 }

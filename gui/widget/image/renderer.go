@@ -31,13 +31,13 @@ type renderer struct {
 	uvs     quad.UV
 }
 
-func NewRenderer() Renderer {
+func NewRenderer(key string) Renderer {
 	return &renderer{
 		tint:    color.White,
 		tex:     nil,
 		uvs:     quad.DefaultUVs,
 		invalid: true,
-		quad:    quad.New(quad.Props{}),
+		quad:    quad.New(key, quad.Props{}),
 	}
 }
 

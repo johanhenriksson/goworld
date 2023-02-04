@@ -5,7 +5,7 @@ import (
 )
 
 type gltfMesh struct {
-	id        string
+	key       string
 	elements  int
 	primitive vertex.Primitive
 	pointers  vertex.Pointers
@@ -16,7 +16,7 @@ type gltfMesh struct {
 
 var _ vertex.Mesh = &gltfMesh{}
 
-func (m *gltfMesh) Id() string      { return m.id }
+func (m *gltfMesh) Key() string     { return m.key }
 func (m *gltfMesh) Version() int    { return 1 }
 func (m *gltfMesh) Indices() int    { return m.elements }
 func (m *gltfMesh) IndexSize() int  { return m.indexsize }

@@ -78,8 +78,9 @@ func (m *manager) DrawUI(args widget.DrawArgs, scene object.T) {
 	}
 
 	// reconcile & hydrate tree
+	key := object.Key("gui", m)
 	m.tree = node.Reconcile(m.tree, root)
-	m.gui = m.tree.Hydrate()
+	m.gui = m.tree.Hydrate(key)
 
 	// update flexbox layout
 	viewport := vec2.NewI(args.Viewport.Width, args.Viewport.Height)

@@ -43,7 +43,7 @@ func NewOutputPass(target vulkan.Target, geometry GeometryBuffer) *OutputPass {
 		geometry: geometry,
 	}
 
-	p.quad = vertex.ScreenQuad()
+	p.quad = vertex.ScreenQuad("output-pass-quad")
 
 	p.pass = renderpass.New(target.Device(), renderpass.Args{
 		ColorAttachments: []attachment.Color{

@@ -1,8 +1,6 @@
 package editor
 
 import (
-	"fmt"
-
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/gui/hooks"
@@ -102,8 +100,8 @@ func ObjectListEntry(key string, props ObjectListEntryProps) node.T {
 		nodes = append(nodes, title)
 
 		if open {
-			for idx, obj := range obj.Children() {
-				key := fmt.Sprintf("object%d:%s", idx, obj.Name())
+			for _, obj := range obj.Children() {
+				key := obj.Name()
 				nodes = append(nodes, ObjectListEntry(key, ObjectListEntryProps{
 					Object:   obj,
 					OnSelect: props.OnSelect,

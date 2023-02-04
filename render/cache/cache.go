@@ -14,13 +14,14 @@ type T[K Key, V Value] interface {
 }
 
 type Key interface {
-	Id() string
+	Key() string
 	Version() int
 }
 
 type Value interface{}
 
 type Backend[K Key, V Value] interface {
+	Submit()
 	Instantiate(K, func(V))
 	Delete(V)
 	Destroy()
@@ -55,12 +56,12 @@ func New[K Key, V Value](backend Backend[K, V]) T[K, V] {
 func (c *cache[K, V]) Fetch(key K) V {
 	var empty V
 
-	ln, hit := c.data[key.Id()]
+	ln, hit := c.data[key.Key()]
 	if !hit {
 		ln = &line[V]{
 			ready: false,
 		}
-		c.data[key.Id()] = ln
+		c.data[key.Key()] = ln
 	}
 
 	if ln.version != key.Version() {
@@ -95,11 +96,14 @@ func (c *cache[K, V]) Delete(value V) {
 // Should be called immediately after aquiring a new frame, passing the index of the aquired frame.
 // Releases any unused resources associated with that frame index.
 func (c *cache[K, V]) Tick(frameIndex int) {
+	// submit work
+	c.backend.Submit()
+
 	// eviction
 	for key, line := range c.data {
 		line.age++
-		if line.age > 10 {
-			log.Println(c.backend, "evict", line.value)
+		if line.age > 100 {
+			log.Printf("%s evict %+v\n", c.backend, line.value)
 			c.Delete(line.value)
 			delete(c.data, key)
 		}

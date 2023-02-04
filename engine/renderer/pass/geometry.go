@@ -185,7 +185,7 @@ func NewGeometryPass(
 		fbuf.Attachment(attachment.DepthName),
 	)
 
-	quad := vertex.ScreenQuad()
+	quad := vertex.ScreenQuad("geometry-pass-quad")
 
 	lightsh := NewLightShader(target.Device(), target.Pool(), pass)
 	lightDesc := lightsh.Descriptors()
@@ -263,10 +263,12 @@ func (p *GeometryPass) Record(cmds command.Recorder, args render.Args, scene obj
 	lightDesc.Camera.Set(camera)
 
 	white := p.target.Textures().Fetch(texture.PathRef("textures/white.png"))
-	lightDesc.Shadow.Set(0, white)
+	if white != nil {
+		lightDesc.Shadow.Set(0, white)
 
-	ambient := light.NewAmbient(color.White, 0.33)
-	p.DrawLight(cmds, args, ambient)
+		ambient := light.NewAmbient(color.White, 0.33)
+		p.DrawLight(cmds, args, ambient)
+	}
 
 	lights := object.Query[light.T]().Collect(scene)
 	for _, lit := range lights {

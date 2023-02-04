@@ -25,15 +25,14 @@ func (n *postNode) Draw(worker command.Worker, args render.Args, scene object.T)
 	}
 
 	barrier := make(chan struct{})
+	worker.OnComplete(func() {
+		<-barrier
+		args.Context.Release()
+	})
 	worker.Submit(command.SubmitInfo{
 		Marker: n.Name(),
 		Wait:   n.waits(args.Context.Index),
 		Signal: signal,
-		Then: func() {
-			// what if this happens before the call to Present?
-			<-barrier
-			args.Context.Release()
-		},
 	})
 
 	n.target.Present(worker, args.Context)

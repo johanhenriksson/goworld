@@ -41,7 +41,7 @@ func alloc(device T, req core1_0.MemoryRequirements, flags core1_0.MemoryPropert
 		MemoryTypeIndex: typeIdx,
 	})
 	if err != nil {
-		panic(fmt.Sprintf("failed to allocate %d bytes of memory: %w", req.Size, err))
+		panic(fmt.Sprintf("failed to allocate %d bytes of memory: %s", req.Size, err))
 	}
 
 	return &memory{
@@ -95,7 +95,7 @@ func (m *memory) Write(offset int, data any) int {
 		panic(fmt.Errorf("buffered data must be a slice, struct or a pointer"))
 	}
 
-	if size+offset > m.size {
+	if offset < 0 || offset+size > m.size {
 		panic("out of bounds")
 	}
 
@@ -110,7 +110,7 @@ func (m *memory) Write(offset int, data any) int {
 	offsetDst := unsafe.Pointer(uintptr(dst) + uintptr(offset))
 
 	// copy from host
-	Memcpy(offsetDst, src, m.size-offset)
+	Memcpy(offsetDst, src, size)
 
 	// flush region
 	// todo: optimize to the smallest possible region

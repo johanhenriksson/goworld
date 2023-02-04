@@ -1,6 +1,8 @@
 package chunk
 
 import (
+	"fmt"
+
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/gui"
 	"github.com/johanhenriksson/goworld/gui/node"
@@ -40,11 +42,12 @@ func ToolButton(tool Tool, editor *edit) node.T {
 }
 
 func NewGUI(editor *edit) gui.Fragment {
+	key := fmt.Sprintf("chunk:%s", editor.mesh.meshdata.Key())
 	return gui.NewFragment(gui.FragmentArgs{
 		Slot:     "sidebar:content",
 		Position: gui.FragmentLast,
 		Render: func() node.T {
-			return rect.New("voxel-editor", rect.Props{
+			return rect.New(key, rect.Props{
 				Children: []node.T{
 					palette.New("palette", palette.Props{
 						Palette: color.DefaultPalette,

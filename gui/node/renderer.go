@@ -14,12 +14,13 @@ type Renderer interface {
 }
 
 type renderer struct {
+	key     string
 	root    RenderFunc
 	tree    T
 	display widget.T
 }
 
-func NewRenderer(app RenderFunc) Renderer {
+func NewRenderer(key string, app RenderFunc) Renderer {
 	return &renderer{
 		root: app,
 	}
@@ -27,7 +28,7 @@ func NewRenderer(app RenderFunc) Renderer {
 
 func (r *renderer) Render(viewport vec2.T) widget.T {
 	r.tree = Reconcile(r.tree, r.root())
-	r.display = r.tree.Hydrate()
+	r.display = r.tree.Hydrate(r.key)
 
 	root := r.display.Flex()
 	flex.CalculateLayout(root, viewport.X, viewport.Y, flex.DirectionLTR)

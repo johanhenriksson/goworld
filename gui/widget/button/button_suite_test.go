@@ -16,9 +16,8 @@ func TestButton(t *testing.T) {
 }
 
 var _ = Describe("", func() {
-	renderer := node.NewRenderer(func() node.T {
+	renderer := node.NewRenderer("test", func() node.T {
 		return button.New("button", button.Props{})
-
 	})
 	tree := renderer.Render(vec2.One)
 

@@ -76,7 +76,7 @@ func loadPrimitive(doc *gltf.Document, name string, primitive *gltf.Primitive) m
 
 	// mesh data
 	gmesh := &gltfMesh{
-		id:        name,
+		key:       name,
 		primitive: kind,
 		elements:  indexElements,
 		pointers:  pointers,

@@ -22,7 +22,7 @@ type T interface {
 	Update(any)
 	Render(*hooks.State)
 	Destroy()
-	Hydrate() widget.T
+	Hydrate(parentKey string) widget.T
 	Hydrated() bool
 }
 
@@ -124,18 +124,19 @@ func (n *node[K, P]) Hooks() *hooks.State {
 	return &n.hooks
 }
 
-func (n *node[K, P]) Hydrate() widget.T {
+func (n *node[K, P]) Hydrate(parentKey string) widget.T {
+	key := joinKeys(parentKey, n.key)
 	if n.widget == nil {
-		n.widget = n.hydrate(n.key, n.props)
+		n.widget = n.hydrate(key, n.props)
 	}
 
 	// render children
 	children := make([]widget.T, 0, len(n.children)+len(n.injected))
 	for _, child := range n.injected {
-		children = append(children, child.Hydrate())
+		children = append(children, child.Hydrate(key))
 	}
 	for _, child := range n.children {
-		children = append(children, child.Hydrate())
+		children = append(children, child.Hydrate(key))
 	}
 	n.widget.SetChildren(children)
 
@@ -144,4 +145,13 @@ func (n *node[K, P]) Hydrate() widget.T {
 
 func (n *node[K, P]) String() string {
 	return fmt.Sprintf("Node[%s] %s", n.kind, n.key)
+}
+
+func joinKeys(parent, child string) string {
+	p := len(parent)
+	buffer := make([]byte, p+len(child)+1)
+	copy(buffer, []byte(parent))
+	buffer[p] = '/'
+	copy(buffer[p+1:], child)
+	return string(buffer)
 }

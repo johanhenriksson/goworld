@@ -1,14 +1,11 @@
 package vertex
 
 import (
-	"fmt"
 	"reflect"
 )
 
-var nextID int = 1
-
 type Mesh interface {
-	Id() string
+	Key() string
 	Version() int
 	Indices() int
 	Vertices() int
@@ -26,7 +23,7 @@ type MutableMesh[V any, I Indices] interface {
 }
 
 type mesh[V any, I Indices] struct {
-	id         string
+	key        string
 	version    int
 	indexsize  int
 	vertexsize int
@@ -36,7 +33,7 @@ type mesh[V any, I Indices] struct {
 	indices    []I
 }
 
-func (m *mesh[V, I]) Id() string           { return m.id }
+func (m *mesh[V, I]) Key() string          { return m.key }
 func (m *mesh[V, I]) Version() int         { return m.version }
 func (m *mesh[V, I]) IndexData() any       { return m.indices }
 func (m *mesh[V, I]) VertexData() any      { return m.vertices }
@@ -46,6 +43,7 @@ func (m *mesh[V, I]) Pointers() Pointers   { return m.pointers }
 func (m *mesh[V, I]) Indices() int         { return len(m.indices) }
 func (m *mesh[V, I]) Vertices() int        { return len(m.vertices) }
 func (m *mesh[V, I]) VertexSize() int      { return m.vertexsize }
+func (m *mesh[V, I]) String() string       { return m.key }
 
 func (m *mesh[V, I]) Update(vertices []V, indices []I) {
 	if len(indices) == 0 {
@@ -60,15 +58,12 @@ func (m *mesh[V, I]) Update(vertices []V, indices []I) {
 	m.version++
 }
 
-func NewMesh[V any, I Indices](id string, primitive Primitive, vertices []V, indices []I) MutableMesh[V, I] {
-	id = fmt.Sprintf("%s-%d", id, nextID)
-	nextID++
-
+func NewMesh[V any, I Indices](key string, primitive Primitive, vertices []V, indices []I) MutableMesh[V, I] {
 	var vertex V
 	var index I
 	ptrs := ParsePointers(vertex)
 	mesh := &mesh[V, I]{
-		id:         id,
+		key:        key,
 		pointers:   ptrs,
 		vertexsize: ptrs.Stride(),
 		indexsize:  int(reflect.TypeOf(index).Size()),
@@ -78,10 +73,10 @@ func NewMesh[V any, I Indices](id string, primitive Primitive, vertices []V, ind
 	return mesh
 }
 
-func NewTriangles[V any, I Indices](id string, vertices []V, indices []I) MutableMesh[V, I] {
-	return NewMesh(id, Triangles, vertices, indices)
+func NewTriangles[V any, I Indices](key string, vertices []V, indices []I) MutableMesh[V, I] {
+	return NewMesh(key, Triangles, vertices, indices)
 }
 
-func NewLines[T any, K Indices](id string, vertices []T, indices []K) MutableMesh[T, K] {
-	return NewMesh(id, Lines, vertices, indices)
+func NewLines[T any, K Indices](key string, vertices []T, indices []K) MutableMesh[T, K] {
+	return NewMesh(key, Lines, vertices, indices)
 }

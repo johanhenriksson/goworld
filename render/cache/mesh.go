@@ -13,6 +13,7 @@ type Mesh interface {
 }
 
 type vkMesh struct {
+	key      string
 	elements int
 	idxType  core1_0.IndexType
 	vertices buffer.T

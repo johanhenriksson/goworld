@@ -8,7 +8,7 @@ import (
 )
 
 type Ref interface {
-	Id() string
+	Key() string
 	Version() int
 
 	// Load is called by texture caches and loaders, and should return the image data.
@@ -42,7 +42,7 @@ func ImageRef(name string, version int, img *image.RGBA) Ref {
 	}
 }
 
-func (r *image_ref) Id() string        { return r.name }
+func (r *image_ref) Key() string       { return r.name }
 func (r *image_ref) Version() int      { return r.version }
 func (r *image_ref) Load() *image.RGBA { return r.img }
 func (r *image_ref) Size() vec2.T      { return r.size }

@@ -27,10 +27,10 @@ type quad struct {
 	mesh  vertex.MutableMesh[vertex.UI, uint16]
 }
 
-func New(props Props) T {
+func New(key string, props Props) T {
 	q := &quad{
 		props: props,
-		mesh:  vertex.NewTriangles[vertex.UI, uint16]("gui-quad", nil, nil),
+		mesh:  vertex.NewTriangles[vertex.UI, uint16](key, nil, nil),
 	}
 	q.compute()
 	return q
@@ -39,6 +39,7 @@ func New(props Props) T {
 func (q *quad) Position() vec2.T { return q.props.Position }
 func (q *quad) Size() vec2.T     { return q.props.Size }
 func (q *quad) Color() color.T   { return q.props.Color }
+func (q *quad) String() string   { return q.mesh.Key() }
 
 func (q *quad) Update(props Props) {
 	q.props = props

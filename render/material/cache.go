@@ -31,5 +31,8 @@ func (m *matcache) Instantiate(ref Ref, callback func(Standard)) {
 func (m *matcache) Delete(mat Standard) {
 }
 
+func (m *matcache) Submit() {
+}
+
 func (m *matcache) Destroy() {
 }

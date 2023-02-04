@@ -26,7 +26,7 @@ func Ref(key string, version int, font T, text string, args Args) *ref {
 	}
 }
 
-func (r *ref) Id() string   { return r.key }
+func (r *ref) Key() string  { return r.key }
 func (r *ref) Version() int { return r.version }
 func (r *ref) Size() vec2.T { return r.size }
 

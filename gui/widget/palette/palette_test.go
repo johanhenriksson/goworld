@@ -13,7 +13,7 @@ import (
 )
 
 func TestClickSwatch(t *testing.T) {
-	app := node.NewRenderer(func() node.T {
+	app := node.NewRenderer("test", func() node.T {
 		return palette.New("palette", palette.Props{
 			Palette: color.DefaultPalette,
 		})

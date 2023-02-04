@@ -6,6 +6,7 @@ import (
 	"github.com/johanhenriksson/goworld/render/vkerror"
 
 	"github.com/vkngwrapper/core/v2/core1_0"
+	"github.com/vkngwrapper/core/v2/driver"
 )
 
 type T interface {
@@ -15,6 +16,7 @@ type T interface {
 }
 
 type Args struct {
+	Key    string
 	Width  int
 	Height int
 	Format core1_0.Format
@@ -40,6 +42,11 @@ func New(device device.T, args Args) (T, error) {
 	img, err := image.New2D(device, args.Width, args.Height, args.Format, args.Usage)
 	if err != nil {
 		return nil, err
+	}
+
+	if args.Key != "" {
+		device.SetDebugObjectName(driver.VulkanHandle(img.Ptr().Handle()),
+			core1_0.ObjectTypeImage, args.Key)
 	}
 
 	tex, err := FromImage(device, img, args)
@@ -88,6 +95,11 @@ func FromView(device device.T, view image.View, args Args) (T, error) {
 	}
 	if result != core1_0.VKSuccess {
 		return nil, vkerror.FromResult(result)
+	}
+
+	if args.Key != "" {
+		device.SetDebugObjectName(driver.VulkanHandle(ptr.Handle()),
+			core1_0.ObjectTypeSampler, args.Key)
 	}
 
 	return &vktexture{

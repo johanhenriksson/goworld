@@ -39,7 +39,7 @@ func New(key string, props Props) node.T {
 func Create(key string, props Props) T {
 	rect := &rect{
 		T:        widget.New(key),
-		Renderer: NewRenderer(),
+		Renderer: NewRenderer(key),
 	}
 	rect.Update(props)
 	return rect

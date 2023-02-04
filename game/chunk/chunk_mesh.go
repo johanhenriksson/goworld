@@ -20,16 +20,18 @@ type Mesh struct {
 }
 
 func NewMesh(chunk *T) *Mesh {
+	msh := mesh.New(mesh.Deferred, &material.Def{
+		Shader:       "vk/voxels",
+		Subpass:      "geometry",
+		VertexFormat: voxel.Vertex{},
+		DepthTest:    true,
+		DepthWrite:   true,
+	})
+	key := object.Key("chunk", msh)
 	chk := &Mesh{
-		T: mesh.New(mesh.Deferred, &material.Def{
-			Shader:       "vk/voxels",
-			Subpass:      "geometry",
-			VertexFormat: voxel.Vertex{},
-			DepthTest:    true,
-			DepthWrite:   true,
-		}),
+		T:            msh,
 		Chunk:        chunk,
-		meshdata:     vertex.NewTriangles("chunk", []voxel.Vertex{}, []uint16{}),
+		meshdata:     vertex.NewTriangles(key, []voxel.Vertex{}, []uint16{}),
 		meshComputed: make(chan []voxel.Vertex, 2),
 	}
 	chk.SetMesh(chk.meshdata)

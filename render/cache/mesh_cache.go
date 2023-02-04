@@ -25,6 +25,7 @@ func NewMeshCache(device device.T, worker command.Worker) MeshCache {
 
 func (m *meshes) Instantiate(mesh vertex.Mesh, callback func(Mesh)) {
 	cached := &vkMesh{
+		key:      mesh.Key(),
 		elements: mesh.Indices(),
 		idxType:  core1_0.IndexTypeUInt16,
 	}
@@ -55,16 +56,15 @@ func (m *meshes) Instantiate(mesh vertex.Mesh, callback func(Mesh)) {
 			Size: idxSize,
 		})
 	})
-
-	m.worker.Submit(command.SubmitInfo{
-		Marker: "MeshCache2",
-		Then: func() {
-			vtxStage.Destroy()
-			idxStage.Destroy()
-
-			callback(cached)
-		},
+	m.worker.OnComplete(func() {
+		vtxStage.Destroy()
+		idxStage.Destroy()
+		callback(cached)
 	})
+}
+
+func (m *meshes) Submit() {
+	m.worker.Submit(command.SubmitInfo{Marker: "MeshCache"})
 }
 
 func (m *meshes) Delete(mesh Mesh) {

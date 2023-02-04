@@ -2,6 +2,7 @@ package command
 
 import (
 	"fmt"
+	"runtime/debug"
 
 	"github.com/johanhenriksson/goworld/render/device"
 	"github.com/johanhenriksson/goworld/render/sync"
@@ -21,17 +22,21 @@ type Worker interface {
 	Destroy()
 	Flush()
 	Invoke(func())
+
+	// Schedules a callback to be executed after the next submission completes
+	OnComplete(func())
 }
 
 type Workers []Worker
 
 type worker struct {
-	device device.T
-	name   string
-	queue  core1_0.Queue
-	pool   Pool
-	batch  []Buffer
-	work   *ThreadWorker
+	device    device.T
+	name      string
+	queue     core1_0.Queue
+	pool      Pool
+	batch     []Buffer
+	callbacks []func()
+	work      *ThreadWorker
 }
 
 func NewWorker(device device.T, queueFlags core1_0.QueueFlags, queueIndex int) Worker {
@@ -42,12 +47,13 @@ func NewWorker(device device.T, queueFlags core1_0.QueueFlags, queueIndex int) W
 	device.SetDebugObjectName(driver.VulkanHandle(queue.Handle()), core1_0.ObjectTypeQueue, name)
 
 	return &worker{
-		device: device,
-		name:   name,
-		queue:  queue,
-		pool:   pool,
-		batch:  make([]Buffer, 0, 10),
-		work:   NewThreadWorker(name, 100, true),
+		device:    device,
+		name:      name,
+		queue:     queue,
+		pool:      pool,
+		callbacks: make([]func(), 0, 32),
+		batch:     make([]Buffer, 0, 128),
+		work:      NewThreadWorker(name, 100, true),
 	}
 }
 
@@ -83,7 +89,6 @@ type SubmitInfo struct {
 	Marker string
 	Wait   []Wait
 	Signal []sync.Semaphore
-	Then   func()
 }
 
 type Wait struct {
@@ -100,6 +105,7 @@ func (w *worker) Submit(submit SubmitInfo) {
 }
 
 func (w *worker) submit(submit SubmitInfo) {
+	debug.SetPanicOnFault(true)
 	buffers := util.Map(w.batch, func(buf Buffer) core1_0.CommandBuffer { return buf.Ptr() })
 
 	// create a cleanup callback
@@ -119,6 +125,10 @@ func (w *worker) submit(submit SubmitInfo) {
 	// clear batch slice but keep memory
 	w.batch = w.batch[:0]
 
+	// grab the list of callbacks & realloc callback buffer
+	callbacks := w.callbacks
+	w.callbacks = make([]func(), 0, 32)
+
 	// fire up a cleanup goroutine that will execute when the work fence is signalled
 	go func() {
 		fence.Wait()
@@ -130,12 +140,18 @@ func (w *worker) submit(submit SubmitInfo) {
 				w.device.Ptr().FreeCommandBuffers(buffers)
 			}
 
-			// run callback if provided (on the worker thead)
-			if submit.Then != nil {
-				submit.Then()
+			// run callbacks (on the worker thead)
+			for _, callback := range callbacks {
+				callback()
 			}
 		})
 	}()
+}
+
+func (w *worker) OnComplete(callback func()) {
+	w.work.Invoke(func() {
+		w.callbacks = append(w.callbacks, callback)
+	})
 }
 
 func (w *worker) Destroy() {

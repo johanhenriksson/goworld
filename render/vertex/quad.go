@@ -6,8 +6,8 @@ import (
 )
 
 // Full-screen quad helper
-func ScreenQuad() Mesh {
-	return NewTriangles("screen_quad", []T{
+func ScreenQuad(key string) Mesh {
+	return NewTriangles(key, []T{
 		{P: vec3.New(-1, -1, 0), T: vec2.New(0, 0)},
 		{P: vec3.New(1, 1, 0), T: vec2.New(1, 1)},
 		{P: vec3.New(-1, 1, 0), T: vec2.New(0, 1)},

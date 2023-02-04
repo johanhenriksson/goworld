@@ -28,6 +28,7 @@ func (t *textures) Instantiate(ref texture.Ref, callback func(texture.T)) {
 
 	// allocate texture
 	tex, err := texture.New(t.device, texture.Args{
+		Key:    ref.Key(),
 		Width:  img.Rect.Size().X,
 		Height: img.Rect.Size().Y,
 		Format: core1_0.FormatR8G8B8A8UnsignedNormalized,
@@ -62,13 +63,14 @@ func (t *textures) Instantiate(ref texture.Ref, callback func(texture.T)) {
 			core1_0.ImageLayoutShaderReadOnlyOptimal,
 			core1_0.ImageAspectColor)
 	})
-	t.worker.Submit(command.SubmitInfo{
-		Marker: "TextureUpload",
-		Then: func() {
-			stage.Destroy()
-			callback(tex)
-		},
+	t.worker.OnComplete(func() {
+		stage.Destroy()
+		callback(tex)
 	})
+}
+
+func (t *textures) Submit() {
+	t.worker.Submit(command.SubmitInfo{Marker: "TextureUpload"})
 }
 
 func (t *textures) Delete(tex texture.T) {

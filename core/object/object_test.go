@@ -1,8 +1,10 @@
 package object_test
 
 import (
-	"github.com/johanhenriksson/goworld/core/object"
+	"fmt"
 	"testing"
+
+	"github.com/johanhenriksson/goworld/core/object"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -59,5 +61,11 @@ var _ = Describe("Object", func() {
 		})
 		Expect(a.Children()).To(HaveLen(1))
 		Expect(b.Parent()).To(Equal(a))
+	})
+
+	It("correctly creates a key string", func() {
+		b := object.New(&B{})
+		key := object.Key("hello", b)
+		Expect(key).To(Equal(fmt.Sprintf("hello-%x", b.ID())))
 	})
 })
