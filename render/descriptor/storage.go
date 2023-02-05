@@ -11,7 +11,7 @@ import (
 	"github.com/vkngwrapper/extensions/v2/ext_descriptor_indexing"
 )
 
-type Storage[K any] struct {
+type Storage[K comparable] struct {
 	Stages core1_0.ShaderStageFlags
 	Size   int
 

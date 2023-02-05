@@ -47,15 +47,17 @@ func (m *manager) Update(scene object.T, dt float32) {
 	// render root tree
 	root := m.render()
 
+	// find fragments
+	fragments := object.Query[Fragment]().Collect(scene)
+
 	// must run after everything else updated
 	//
-	go m.update(scene, dt, root)
+	go m.update(scene, dt, root, fragments)
 }
 
-func (m *manager) update(scene object.T, dt float32, root node.T) {
+func (m *manager) update(scene object.T, dt float32, root node.T, fragments []Fragment) {
 
 	// populate with fragments
-	fragments := object.Query[Fragment]().Collect(scene)
 	for {
 		changed := false
 		for idx, fragment := range fragments {

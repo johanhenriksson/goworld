@@ -6,6 +6,7 @@ import (
 	"github.com/johanhenriksson/goworld/game/voxel"
 	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/vertex"
+	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
 type MeshData vertex.MutableMesh[voxel.Vertex, uint16]
@@ -24,6 +25,7 @@ func NewMesh(chunk *T) *Mesh {
 		VertexFormat: voxel.Vertex{},
 		DepthTest:    true,
 		DepthWrite:   true,
+		CullMode:     core1_0.CullModeFront,
 	})
 	key := object.Key("chunk", msh)
 	chk := &Mesh{

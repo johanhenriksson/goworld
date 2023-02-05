@@ -33,6 +33,7 @@ type Def struct {
 	DepthTest    bool
 	DepthWrite   bool
 	Primitive    vertex.Primitive
+	CullMode     core1_0.CullModeFlags
 }
 
 func (d *Def) Hash() uint64 {
@@ -66,6 +67,7 @@ func FromDef(dev device.T, pool descriptor.Pool, rpass renderpass.T, def *Def) T
 			DepthTest:  def.DepthTest,
 			DepthWrite: def.DepthWrite,
 			Primitive:  def.Primitive,
+			CullMode:   def.CullMode,
 		},
 		desc)
 }

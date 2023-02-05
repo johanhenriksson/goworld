@@ -28,6 +28,7 @@ type memory struct {
 	device T
 	size   int
 	flags  core1_0.MemoryPropertyFlags
+	mapPtr unsafe.Pointer
 }
 
 func alloc(device T, req core1_0.MemoryRequirements, flags core1_0.MemoryPropertyFlags) Memory {
@@ -62,8 +63,33 @@ func (m *memory) Ptr() core1_0.DeviceMemory {
 }
 
 func (m *memory) Destroy() {
+	m.unmap()
 	m.ptr.Free(nil)
 	m.ptr = nil
+}
+
+func (m *memory) mmap() {
+	var nullPtr unsafe.Pointer
+	if m.mapPtr != nullPtr {
+		// already mapped
+		return
+	}
+	var dst unsafe.Pointer
+	dst, _, err := m.ptr.Map(0, -1, 0)
+	if err != nil {
+		panic(err)
+	}
+	m.mapPtr = dst
+}
+
+func (m *memory) unmap() {
+	var nullPtr unsafe.Pointer
+	if m.mapPtr == nullPtr {
+		// already unmapped
+		return
+	}
+	m.ptr.Unmap()
+	m.mapPtr = nullPtr
 }
 
 func (m *memory) Write(offset int, data any) int {
@@ -100,14 +126,10 @@ func (m *memory) Write(offset int, data any) int {
 	}
 
 	// map shared memory
-	var dst unsafe.Pointer
-	dst, _, err := m.ptr.Map(0, -1, 0)
-	if err != nil {
-		panic(err)
-	}
+	m.mmap()
 
 	// create pointer at offset
-	offsetDst := unsafe.Pointer(uintptr(dst) + uintptr(offset))
+	offsetDst := unsafe.Pointer(uintptr(m.mapPtr) + uintptr(offset))
 
 	// copy from host
 	Memcpy(offsetDst, src, size)
@@ -117,7 +139,7 @@ func (m *memory) Write(offset int, data any) int {
 	m.Flush()
 
 	// unmap shared memory
-	m.ptr.Unmap()
+	// m.ptr.Unmap()
 
 	return size
 }
@@ -156,17 +178,13 @@ func (m *memory) Read(offset int, target any) int {
 	}
 
 	// map shared memory
-	var src unsafe.Pointer
-	src, _, err := m.ptr.Map(offset, -1, 0)
-	if err != nil {
-		panic(err)
-	}
+	m.mmap()
 
 	// copy to host
-	Memcpy(dst, src, size)
+	Memcpy(dst, m.mapPtr, size)
 
 	// unmap shared memory
-	m.ptr.Unmap()
+	// m.ptr.Unmap()
 
 	return size
 }

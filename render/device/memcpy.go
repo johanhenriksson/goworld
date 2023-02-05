@@ -1,10 +1,8 @@
 package device
 
-//#include <string.h>
-import "C"
 import "unsafe"
 
 func Memcpy(dst, src unsafe.Pointer, n int) int {
-	C.memcpy(dst, src, C.size_t(n))
+	copy(unsafe.Slice((*byte)(dst), n), unsafe.Slice((*byte)(src), n))
 	return n
 }

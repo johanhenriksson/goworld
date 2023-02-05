@@ -106,17 +106,22 @@ func NewOutputPass(target vulkan.Target, geometry GeometryBuffer) *OutputPass {
 func (p *OutputPass) Record(cmds command.Recorder, args render.Args, scene object.T) {
 	ctx := args.Context
 
+	cmds.Record(func(cmd command.Buffer) {
+		cmd.CmdBeginRenderPass(p.pass, p.fbufs[ctx.Index%len(p.fbufs)])
+	})
+
 	quad := p.target.Meshes().Fetch(p.quad)
 	if quad != nil {
 		cmds.Record(func(cmd command.Buffer) {
-			cmd.CmdBeginRenderPass(p.pass, p.fbufs[ctx.Index%len(p.fbufs)])
 
 			p.desc[ctx.Index%len(p.desc)].Bind(cmd)
 			quad.Draw(cmd, 0)
-
-			cmd.CmdEndRenderPass()
 		})
 	}
+
+	cmds.Record(func(cmd command.Buffer) {
+		cmd.CmdEndRenderPass()
+	})
 }
 
 func (p *OutputPass) Name() string {

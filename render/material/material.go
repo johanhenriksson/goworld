@@ -11,6 +11,7 @@ import (
 	"github.com/johanhenriksson/goworld/render/shader"
 	"github.com/johanhenriksson/goworld/render/vertex"
 	"github.com/johanhenriksson/goworld/util"
+	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
 type T[D descriptor.Set] interface {
@@ -38,6 +39,7 @@ type Args struct {
 	Primitive  vertex.Primitive
 	DepthTest  bool
 	DepthWrite bool
+	CullMode   core1_0.CullModeFlags
 }
 
 func New[D descriptor.Set](device device.T, args Args, descriptors D) T[D] {
@@ -75,6 +77,7 @@ func New[D descriptor.Set](device device.T, args Args, descriptors D) T[D] {
 		Primitive:  args.Primitive,
 		DepthTest:  args.DepthTest,
 		DepthWrite: args.DepthWrite,
+		CullMode:   args.CullMode,
 	})
 
 	return &material[D]{
