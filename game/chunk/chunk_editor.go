@@ -292,7 +292,7 @@ func (e *edit) Recalculate() {
 }
 
 func (e *edit) CanDeselect() bool {
-	return e.Tool == nil
+	return e.Tool == nil || e.mesh.Parent() == nil
 }
 
 func (e *edit) saveChunkDialog() {
