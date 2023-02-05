@@ -15,7 +15,6 @@ type Memory interface {
 	Write(offset int, data any) int
 	Flush()
 	Invalidate()
-	IsHostVisible() bool
 }
 
 type memtype struct {
@@ -53,8 +52,13 @@ func alloc(device T, req core1_0.MemoryRequirements, flags core1_0.MemoryPropert
 	}
 }
 
-func (m *memory) IsHostVisible() bool {
+func (m *memory) isHostVisible() bool {
 	bit := core1_0.MemoryPropertyHostVisible
+	return m.flags&bit == bit
+}
+
+func (m *memory) isCoherent() bool {
+	bit := core1_0.MemoryPropertyHostCoherent
 	return m.flags&bit == bit
 }
 
@@ -96,7 +100,7 @@ func (m *memory) Write(offset int, data any) int {
 	if m.ptr == nil {
 		panic("write to freed memory block")
 	}
-	if !m.IsHostVisible() {
+	if !m.isHostVisible() {
 		panic("memory is not visible to host")
 	}
 
@@ -148,7 +152,7 @@ func (m *memory) Read(offset int, target any) int {
 	if m.ptr == nil {
 		panic("read from freed memory block")
 	}
-	if !m.IsHostVisible() {
+	if !m.isHostVisible() {
 		panic("memory is not visible to host")
 	}
 
@@ -181,7 +185,8 @@ func (m *memory) Read(offset int, target any) int {
 	m.mmap()
 
 	// copy to host
-	Memcpy(dst, m.mapPtr, size)
+	offsetPtr := unsafe.Pointer(uintptr(m.mapPtr) + uintptr(offset))
+	Memcpy(dst, offsetPtr, size)
 
 	// unmap shared memory
 	// m.ptr.Unmap()
@@ -190,7 +195,9 @@ func (m *memory) Read(offset int, target any) int {
 }
 
 func (m *memory) Flush() {
-	m.ptr.FlushAll()
+	if !m.isCoherent() {
+		m.ptr.FlushAll()
+	}
 }
 
 func (m *memory) Invalidate() {

@@ -1,6 +1,9 @@
 package object
 
-import "strconv"
+import (
+	"math/rand"
+	"strconv"
+)
 
 func Key(prefix string, object T) string {
 	p := len(prefix)
@@ -9,4 +12,8 @@ func Key(prefix string, object T) string {
 	buffer[p] = '-'
 	dst := strconv.AppendUint(buffer, uint64(object.ID()), 16)
 	return string(dst)
+}
+
+func ID() uint {
+	return uint(rand.Int63n(0xFFFFFFFF))
 }

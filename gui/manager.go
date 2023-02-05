@@ -50,13 +50,6 @@ func (m *manager) Update(scene object.T, dt float32) {
 	// find fragments
 	fragments := object.Query[Fragment]().Collect(scene)
 
-	// must run after everything else updated
-	//
-	go m.update(scene, dt, root, fragments)
-}
-
-func (m *manager) update(scene object.T, dt float32, root node.T, fragments []Fragment) {
-
 	// populate with fragments
 	for {
 		changed := false
@@ -91,9 +84,13 @@ func (m *manager) update(scene object.T, dt float32, root node.T, fragments []Fr
 		}
 	}
 
-	// reconcile & hydrate tree
-	key := object.Key("gui", m)
 	m.tree = node.Reconcile(m.tree, root)
+
+	go m.update(scene, dt, root, fragments)
+}
+
+func (m *manager) update(scene object.T, dt float32, root node.T, fragments []Fragment) {
+	key := object.Key("gui", m)
 	m.gui = m.tree.Hydrate(key)
 
 	// update flexbox layout

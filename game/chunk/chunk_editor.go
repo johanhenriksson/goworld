@@ -171,13 +171,13 @@ func (e *edit) SelectTool(tool Tool) {
 
 // sample world position at current mouse coords
 func (e *edit) cursorPositionNormal(cursor vec2.T) (bool, vec3.T, vec3.T) {
-	viewNormal, normalExists := e.render.GBuffer().SampleNormal(cursor)
-	if !normalExists {
+	viewPosition, positionExists := e.render.GBuffer().SamplePosition(cursor)
+	if !positionExists {
 		return false, vec3.Zero, vec3.Zero
 	}
 
-	viewPosition, positionExists := e.render.GBuffer().SamplePosition(cursor)
-	if !positionExists {
+	viewNormal, normalExists := e.render.GBuffer().SampleNormal(cursor)
+	if !normalExists {
 		return false, vec3.Zero, vec3.Zero
 	}
 

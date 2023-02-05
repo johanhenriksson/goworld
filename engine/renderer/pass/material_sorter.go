@@ -74,6 +74,8 @@ func (m *MaterialSorter) DrawCamera(cmds command.Recorder, args render.Args, cam
 		meshGroups[mid] = append(meshGroups[mid], msh)
 	}
 
+	descriptors := make([]uniform.Object, len(meshes))
+
 	index := 0
 	for mid, meshes := range meshGroups {
 		mat := m.cache[mid][args.Context.Index]
@@ -83,17 +85,18 @@ func (m *MaterialSorter) DrawCamera(cmds command.Recorder, args render.Args, cam
 			mat.Bind(cmd)
 		})
 
+		begin := index
 		for _, msh := range meshes {
 			vkmesh := m.target.Meshes().Fetch(msh.Mesh())
 			if vkmesh == nil {
-				return
+				continue
 			}
 
-			mat.Descriptors().Objects.Set(index, uniform.Object{
+			descriptors[index] = uniform.Object{
 				Model: msh.Transform().World(),
-			})
+			}
 
-			i := index
+			i := index - begin
 			cmds.Record(func(cmd command.Buffer) {
 				vkmesh.Draw(cmd, i)
 			})
@@ -101,6 +104,6 @@ func (m *MaterialSorter) DrawCamera(cmds command.Recorder, args render.Args, cam
 			index++
 		}
 
-		// mat.Descriptors().Objects.Flush()
+		mat.Descriptors().Objects.SetRange(0, descriptors[begin:index-begin])
 	}
 }

@@ -92,6 +92,9 @@ func (m *selectmgr) MouseEvent(e mouse.Event) {
 }
 
 func (m *selectmgr) setSelect(e mouse.Event, object Selectable, collider collider.T) bool {
+	// todo: detect if the object has been deleted
+	// otherwise CanDeselect() will make it impossible to select another object
+
 	// deselect
 	if m.selected != nil {
 		if !m.selected.Deselect(e) {

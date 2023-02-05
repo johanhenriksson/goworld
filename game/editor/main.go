@@ -2,6 +2,7 @@ package editor
 
 import (
 	"github.com/johanhenriksson/goworld/core/object"
+	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/engine/renderer"
 	"github.com/johanhenriksson/goworld/game"
 	"github.com/johanhenriksson/goworld/geometry/gizmo/mover"
@@ -10,15 +11,29 @@ import (
 	"github.com/johanhenriksson/goworld/math/vec3"
 )
 
-func Scene(render renderer.T, scene object.T) {
-	// move the existing scene into a child object
-	workspace := object.Empty("Workspace")
-	for _, existing := range scene.Children() {
-		object.Attach(workspace, existing)
-	}
+type Editor struct {
+	object.T
+	GUI       gui.Manager
+	GizmoMgr  GizmoManager
+	SelectMgr SelectManager
+	Player    *game.Player
 
-	editor := object.Empty("Editor")
-	selectMgr := NewSelectManager(nil, nil)
+	editors   object.T
+	workspace object.T
+	render    renderer.T
+}
+
+func NewEditor(render renderer.T, workspace object.T) *Editor {
+	editor := object.New(&Editor{
+		GUI:       MakeGUI(),
+		GizmoMgr:  NewGizmoManager(),
+		SelectMgr: NewSelectManager(nil, nil),
+
+		Player:    game.NewPlayer(vec3.New(0, 20, -11), nil),
+		editors:   nil,
+		workspace: workspace,
+		render:    render,
+	})
 
 	object.Attach(editor, SidebarFragment(
 		gui.FragmentFirst,
@@ -26,36 +41,47 @@ func Scene(render renderer.T, scene object.T) {
 			return ObjectList("scene-graph", ObjectListProps{
 				Scene:         workspace,
 				EditorRoot:    editor,
-				SelectManager: selectMgr,
+				SelectManager: editor.SelectMgr,
 			})
 		},
 	))
 
-	object.Attach(editor, MakeGUI())
-	object.Attach(editor, NewGizmoManager())
-	object.Attach(editor, selectMgr)
+	editor.Player.Eye.Transform().SetRotation(vec3.New(-30, 0, 0))
 
-	// first person controls
-	player := game.NewPlayer(vec3.New(0, 20, -11), nil)
-	player.Eye.Transform().SetRotation(vec3.New(-30, 0, 0))
-	object.Attach(editor, player)
+	return editor
+}
 
-	// mover gizmo
-	mv := object.Builder(mover.New(mover.Args{})).
-		Position(vec3.New(1, 10, 1)).
-		Parent(editor).
-		Create()
-	mv.SetActive(false)
+func (e *Editor) Update(scene object.T, dt float32) {
+	e.T.Update(scene, dt)
 
-	// construct editors
 	context := &Context{
-		Camera: player.Camera,
-		Render: render,
+		Camera: e.Player.Camera,
+		Render: e.render,
 		Root:   scene,
 	}
-	object.Attach(editor, ConstructEditors(context, workspace, mv))
+	e.editors = ConstructEditors(context, e.editors, e.workspace)
+	if e.editors.Parent() == nil {
+		object.Attach(e, e.editors)
+	}
+}
 
-	// attach editor & game to scene
-	object.Attach(scene, editor)
-	object.Attach(scene, workspace)
+func Scene(f engine.SceneFunc) engine.SceneFunc {
+	return func(render renderer.T, scene object.T) {
+		// create subscene in a child object
+		workspace := object.Empty("Workspace")
+		f(render, workspace)
+
+		editor := NewEditor(render, workspace)
+
+		// mover gizmo
+		mv := object.Builder(mover.New(mover.Args{})).
+			Position(vec3.New(1, 10, 1)).
+			Parent(editor).
+			Create()
+		mv.SetActive(false)
+
+		// attach editor & game to scene
+		object.Attach(scene, editor)
+		object.Attach(scene, workspace)
+	}
 }

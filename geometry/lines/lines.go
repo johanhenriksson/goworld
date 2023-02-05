@@ -39,6 +39,7 @@ func (li *T) compute() {
 		b.C = line.Color.Vec4()
 	}
 
-	mesh := vertex.NewLines("lines", vertices, []uint16{})
+	key := object.Key("lines", li)
+	mesh := vertex.NewLines(key, vertices, []uint16{})
 	li.SetMesh(mesh)
 }

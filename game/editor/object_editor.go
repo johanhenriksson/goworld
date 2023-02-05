@@ -18,14 +18,19 @@ type ObjectEditor struct {
 }
 
 func NewObjectEditor(target object.T, bounds collider.Box, editor T) *ObjectEditor {
-	editor.SetActive(false)
-	return object.New(&ObjectEditor{
+	var boundsCol collider.T
+	if editor != nil {
+		editor.SetActive(false)
+		boundsCol = collider.NewBox(bounds)
+	}
+	edit := object.New(&ObjectEditor{
+		T:      object.Ghost(target),
 		target: target,
 		Custom: editor,
-
-		Bounds: collider.NewBox(bounds),
+		Bounds: boundsCol,
 		// GUI:    objectEditorGui(),
 	})
+	return edit
 }
 
 var _ Selectable = &ObjectEditor{}

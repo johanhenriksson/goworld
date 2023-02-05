@@ -1,7 +1,6 @@
 package object
 
 import (
-	"math/rand"
 	"reflect"
 
 	"github.com/johanhenriksson/goworld/core/input"
@@ -56,7 +55,7 @@ type base struct {
 // Empty creates a new, empty object.
 func Empty(name string) T {
 	return &base{
-		id:        uint(rand.Int63n(0xFFFFFFFF)),
+		id:        ID(),
 		name:      name,
 		enabled:   true,
 		transform: transform.Identity(),

@@ -32,7 +32,6 @@ type GeometryBuffer interface {
 }
 
 type gbuffer struct {
-	worker command.Worker
 	width  int
 	height int
 
@@ -87,7 +86,6 @@ func NewGbuffer(
 	})
 
 	return &gbuffer{
-		worker: worker,
 		width:  target.Width(),
 		height: target.Height(),
 
@@ -120,7 +118,7 @@ func (b *gbuffer) SamplePosition(cursor vec2.T) (vec3.T, bool) {
 		return vec3.Zero, false
 	}
 
-	offset := b.pixelOffset(cursor, b.normalBuf, 8)
+	offset := b.pixelOffset(cursor, b.positionBuf, 8)
 	output := make([]uint16, 4)
 	b.positionBuf.Memory().Read(offset, output)
 

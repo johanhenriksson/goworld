@@ -23,10 +23,11 @@ func main() {
 		Height: 1200,
 		Title:  "goworld: vulkan",
 	},
-		func(r renderer.T, scene object.T) {
+		editor.Scene(func(r renderer.T, scene object.T) {
 			// make some chonks
 			generator := chunk.ExampleWorldgen(3141389, 32)
 			object.Attach(scene, chunk.NewWorld(32, generator, 100))
+			// object.Attach(scene, chunk.NewMesh(chunk.Generate(generator, 32, 0, 0)))
 
 			// directional light
 			object.Attach(scene, light.NewDirectional(light.DirectionalArgs{
@@ -35,7 +36,6 @@ func main() {
 				Direction: vec3.New(0.95, -1.9, 1.05),
 				Shadows:   true,
 			}))
-		},
-		editor.Scene,
+		}),
 	)
 }

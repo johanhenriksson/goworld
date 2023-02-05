@@ -37,7 +37,8 @@ func (b *T) compute() {
 	w, h, d := b.Size.X, b.Size.Y, b.Size.Z
 	c := b.Color.Vec4()
 
-	mesh := vertex.NewLines("box", []vertex.C{
+	key := object.Key("box", b)
+	mesh := vertex.NewLines(key, []vertex.C{
 		// bottom square
 		{P: vec3.New(x, y, z), C: c},     // 0
 		{P: vec3.New(x+w, y, z), C: c},   // 1
