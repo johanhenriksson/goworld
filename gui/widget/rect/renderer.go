@@ -22,6 +22,7 @@ type Renderer interface {
 type renderer struct {
 	mesh    quad.T
 	size    vec2.T
+	tsize   vec2.T
 	color   color.T
 	uvs     quad.UV
 	invalid bool
@@ -68,9 +69,8 @@ func (r *renderer) drawSelf(args widget.DrawArgs, rect T) {
 		return
 	}
 
-	texId := args.Textures.Fetch(texture.PathRef("textures/white.png"))
-	// we must be able to abort rendering when we dont get a texture
-	if texId == 0 {
+	tex := args.Textures.Fetch(texture.PathRef("textures/white.png"))
+	if tex == nil {
 		return
 	}
 
@@ -78,7 +78,7 @@ func (r *renderer) drawSelf(args widget.DrawArgs, rect T) {
 		cmd.CmdPushConstant(core1_0.StageAll, 0, &widget.Constants{
 			Viewport: args.ViewProj,
 			Model:    args.Transform,
-			Texture:  texId,
+			Texture:  tex.ID,
 		})
 		mesh.Draw(cmd, 0)
 	})

@@ -155,7 +155,7 @@ func (r *renderer) Draw(args widget.DrawArgs, label T) {
 	// scale := label.Size().Div(r.bounds)
 
 	tex := args.Textures.Fetch(r.tex)
-	if tex == 0 {
+	if tex == nil {
 		return
 	}
 	mesh := args.Meshes.Fetch(r.mesh.Mesh())
@@ -167,7 +167,7 @@ func (r *renderer) Draw(args widget.DrawArgs, label T) {
 		cmd.CmdPushConstant(core1_0.StageAll, 0, &widget.Constants{
 			Viewport: args.ViewProj,
 			Model:    args.Transform,
-			Texture:  tex,
+			Texture:  tex.ID,
 		})
 		mesh.Draw(cmd, 0)
 	})

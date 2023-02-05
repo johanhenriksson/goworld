@@ -8,44 +8,52 @@ import (
 type samplers struct {
 	textures TextureCache
 	desc     *descriptor.SamplerArray
-	mapping  map[int]texture.T
-	reverse  map[texture.Ref]int
+	mapping  map[*SamplerHandle]texture.T
+	reverse  map[texture.Ref]*SamplerHandle
 	next     int
 }
 
+type SamplerHandle struct {
+	ID      int
+	Texture texture.T
+}
+
 type SamplerCache interface {
-	Fetch(ref texture.Ref) int
+	Fetch(ref texture.Ref) *SamplerHandle
 }
 
 func NewSamplerCache(textures TextureCache, desc *descriptor.SamplerArray) SamplerCache {
 	return &samplers{
 		textures: textures,
 		desc:     desc,
-		mapping:  make(map[int]texture.T, 1000),
-		reverse:  make(map[texture.Ref]int, 1000),
+		mapping:  make(map[*SamplerHandle]texture.T, 1000),
+		reverse:  make(map[texture.Ref]*SamplerHandle, 1000),
 		next:     1,
 	}
 }
 
-func (s *samplers) assignHandle(ref texture.Ref) int {
+func (s *samplers) assignHandle(ref texture.Ref) *SamplerHandle {
 	if handle, exists := s.reverse[ref]; exists {
 		return handle
 	}
-	handle := s.next
-	if handle >= s.desc.Count {
+	id := s.next
+	if id >= s.desc.Count {
 		panic("out of handles")
+	}
+	handle := &SamplerHandle{
+		ID: id,
 	}
 	s.reverse[ref] = handle
 	s.next++
 	return handle
 }
 
-func (s *samplers) Fetch(ref texture.Ref) int {
+func (s *samplers) Fetch(ref texture.Ref) *SamplerHandle {
 	handle := s.assignHandle(ref)
-	tex := s.textures.Fetch(ref)
-	if tex != nil {
-		s.desc.Set(handle, tex)
+	handle.Texture = s.textures.Fetch(ref)
+	if handle.Texture != nil {
+		s.desc.Set(handle.ID, handle.Texture)
 		return handle
 	}
-	return 0
+	return nil
 }

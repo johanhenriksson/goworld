@@ -24,7 +24,8 @@ type Props struct {
 type image struct {
 	widget.T
 	Renderer
-	props Props
+	props   Props
+	texture texture.T
 }
 
 func New(key string, props Props) node.T {
@@ -33,9 +34,10 @@ func New(key string, props Props) node.T {
 
 func new(w widget.T, props Props) T {
 	img := &image{
-		T:        w,
-		Renderer: NewRenderer(w.Key()),
+		T: w,
 	}
+	img.Renderer = NewRenderer(w.Key(), img.onLoad)
+	w.Flex().SetMeasureFunc(img.measure)
 	img.Update(props)
 	return img
 }
@@ -65,16 +67,21 @@ func (i *image) Draw(args widget.DrawArgs) {
 	i.Renderer.Draw(args, i)
 }
 
-func (i *image) Flex() *flex.Node {
-	node := i.T.Flex()
-	node.SetMeasureFunc(i.measure)
-	return node
+func (i *image) onLoad(tex texture.T) {
+	// update active texture reference & trigger layout update
+	i.texture = tex
+	i.Flex().MarkDirty()
 }
 
 func (i *image) measure(node *flex.Node, width float32, widthMode flex.MeasureMode, height float32, heightMode flex.MeasureMode) flex.Size {
+	if i.texture == nil {
+		return flex.Size{}
+	}
+
 	// todo: consider constraints
-	size := i.props.Image.Size()
-	aspect := size.X / size.Y
+	w := float32(i.texture.Image().Width())
+	h := float32(i.texture.Image().Height())
+	aspect := w / h
 	return flex.Size{
 		Width:  width,
 		Height: width / aspect,

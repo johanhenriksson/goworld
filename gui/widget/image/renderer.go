@@ -4,6 +4,7 @@ import (
 	"github.com/johanhenriksson/goworld/gui/quad"
 	"github.com/johanhenriksson/goworld/gui/widget"
 	"github.com/johanhenriksson/goworld/math/vec2"
+	"github.com/johanhenriksson/goworld/render/cache"
 	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/texture"
@@ -24,20 +25,23 @@ type renderer struct {
 	tint   color.T
 	invert bool
 	tex    texture.Ref
+	handle *cache.SamplerHandle
 
 	invalid bool
 	size    vec2.T
 	quad    quad.T
 	uvs     quad.UV
+	onLoad  func(texture.T)
 }
 
-func NewRenderer(key string) Renderer {
+func NewRenderer(key string, onLoad func(texture.T)) Renderer {
 	return &renderer{
 		tint:    color.White,
 		tex:     nil,
 		uvs:     quad.DefaultUVs,
 		invalid: true,
 		quad:    quad.New(key, quad.Props{}),
+		onLoad:  onLoad,
 	}
 }
 
@@ -74,7 +78,6 @@ func (r *renderer) Draw(args widget.DrawArgs, image T) {
 	}
 
 	r.SetSize(image.Size())
-
 	if r.invalid {
 		uvs := r.uvs
 		if r.invert {
@@ -91,9 +94,15 @@ func (r *renderer) Draw(args widget.DrawArgs, image T) {
 
 	// fetch resources
 	tex := args.Textures.Fetch(r.tex)
-	if tex == 0 {
+	if tex == nil {
 		return
 	}
+	if tex != r.handle {
+		// if handle changed, run OnLoad callback
+		r.handle = tex
+		r.onLoad(tex.Texture)
+	}
+
 	mesh := args.Meshes.Fetch(r.quad.Mesh())
 	if mesh == nil {
 		return
@@ -103,7 +112,7 @@ func (r *renderer) Draw(args widget.DrawArgs, image T) {
 		cmd.CmdPushConstant(core1_0.StageAll, 0, &widget.Constants{
 			Viewport: args.ViewProj,
 			Model:    args.Transform,
-			Texture:  tex,
+			Texture:  tex.ID,
 		})
 		mesh.Draw(cmd, 0)
 	})
