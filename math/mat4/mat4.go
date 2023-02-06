@@ -73,27 +73,27 @@ func (m *T) TransformDir(v vec3.T) vec3.T {
 }
 
 // Mul performs a "matrix product" between this matrix and another of the same dimension
-func (m *T) Mul(m2 *T) T {
+func (a *T) Mul(b *T) T {
 	return T{
-		m[0]*m2[0] + m[4]*m2[1] + m[8]*m2[2] + m[12]*m2[3],
-		m[1]*m2[0] + m[5]*m2[1] + m[9]*m2[2] + m[13]*m2[3],
-		m[2]*m2[0] + m[6]*m2[1] + m[10]*m2[2] + m[14]*m2[3],
-		m[3]*m2[0] + m[7]*m2[1] + m[11]*m2[2] + m[15]*m2[3],
+		a[0]*b[0] + a[4]*b[1] + a[8]*b[2] + a[12]*b[3],
+		a[1]*b[0] + a[5]*b[1] + a[9]*b[2] + a[13]*b[3],
+		a[2]*b[0] + a[6]*b[1] + a[10]*b[2] + a[14]*b[3],
+		a[3]*b[0] + a[7]*b[1] + a[11]*b[2] + a[15]*b[3],
 
-		m[0]*m2[4] + m[4]*m2[5] + m[8]*m2[6] + m[12]*m2[7],
-		m[1]*m2[4] + m[5]*m2[5] + m[9]*m2[6] + m[13]*m2[7],
-		m[2]*m2[4] + m[6]*m2[5] + m[10]*m2[6] + m[14]*m2[7],
-		m[3]*m2[4] + m[7]*m2[5] + m[11]*m2[6] + m[15]*m2[7],
+		a[0]*b[4] + a[4]*b[5] + a[8]*b[6] + a[12]*b[7],
+		a[1]*b[4] + a[5]*b[5] + a[9]*b[6] + a[13]*b[7],
+		a[2]*b[4] + a[6]*b[5] + a[10]*b[6] + a[14]*b[7],
+		a[3]*b[4] + a[7]*b[5] + a[11]*b[6] + a[15]*b[7],
 
-		m[0]*m2[8] + m[4]*m2[9] + m[8]*m2[10] + m[12]*m2[11],
-		m[1]*m2[8] + m[5]*m2[9] + m[9]*m2[10] + m[13]*m2[11],
-		m[2]*m2[8] + m[6]*m2[9] + m[10]*m2[10] + m[14]*m2[11],
-		m[3]*m2[8] + m[7]*m2[9] + m[11]*m2[10] + m[15]*m2[11],
+		a[0]*b[8] + a[4]*b[9] + a[8]*b[10] + a[12]*b[11],
+		a[1]*b[8] + a[5]*b[9] + a[9]*b[10] + a[13]*b[11],
+		a[2]*b[8] + a[6]*b[9] + a[10]*b[10] + a[14]*b[11],
+		a[3]*b[8] + a[7]*b[9] + a[11]*b[10] + a[15]*b[11],
 
-		m[0]*m2[12] + m[4]*m2[13] + m[8]*m2[14] + m[12]*m2[15],
-		m[1]*m2[12] + m[5]*m2[13] + m[9]*m2[14] + m[13]*m2[15],
-		m[2]*m2[12] + m[6]*m2[13] + m[10]*m2[14] + m[14]*m2[15],
-		m[3]*m2[12] + m[7]*m2[13] + m[11]*m2[14] + m[15]*m2[15],
+		a[0]*b[12] + a[4]*b[13] + a[8]*b[14] + a[12]*b[15],
+		a[1]*b[12] + a[5]*b[13] + a[9]*b[14] + a[13]*b[15],
+		a[2]*b[12] + a[6]*b[13] + a[10]*b[14] + a[14]*b[15],
+		a[3]*b[12] + a[7]*b[13] + a[11]*b[14] + a[15]*b[15],
 	}
 }
 
@@ -101,9 +101,9 @@ func (m *T) Mul(m2 *T) T {
 // the transpose is an NxM matrix with the rows swapped with the columns. For instance
 // the transpose of the Mat3x2 is a Mat2x3 like so:
 //
-//    [[a b]]    [[a c e]]
-//    [[c d]] =  [[b d f]]
-//    [[e f]]
+//	[[a b]]    [[a c e]]
+//	[[c d]] =  [[b d f]]
+//	[[e f]]
 func (m *T) Transpose() T {
 	return T{
 		m[0], m[4], m[8], m[12],
@@ -300,5 +300,14 @@ func (m *T) Forward() vec3.T {
 		X: m[4*0+2],
 		Y: m[4*1+2],
 		Z: m[4*2+2],
+	}
+}
+
+// Origin extracts origin point of the coordinate system represented by the matrix
+func (m *T) Origin() vec3.T {
+	return vec3.T{
+		X: m[4*3+0],
+		Y: m[4*3+1],
+		Z: m[4*3+2],
 	}
 }

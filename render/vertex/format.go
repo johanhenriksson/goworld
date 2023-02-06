@@ -1,7 +1,6 @@
 package vertex
 
 import (
-	"github.com/johanhenriksson/goworld/math"
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/math/vec4"
@@ -38,7 +37,7 @@ func Min[V Vertex](vertices []V) vec3.T {
 	if len(vertices) == 0 {
 		return vec3.Zero
 	}
-	min := vec3.New(math.InfPos, math.InfPos, math.InfPos)
+	min := vec3.InfPos
 	for _, v := range vertices {
 		min = vec3.Min(min, v.Position())
 	}
@@ -49,7 +48,7 @@ func Max[V Vertex](vertices []V) vec3.T {
 	if len(vertices) == 0 {
 		return vec3.Zero
 	}
-	max := vec3.New(math.InfNeg, math.InfNeg, math.InfNeg)
+	max := vec3.InfNeg
 	for _, v := range vertices {
 		max = vec3.Max(max, v.Position())
 	}

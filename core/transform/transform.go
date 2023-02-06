@@ -25,7 +25,11 @@ type T interface {
 	Local() mat4.T
 
 	ProjectDir(point vec3.T) vec3.T
+
+	// Project local coordinates to world coordinates
 	Project(point vec3.T) vec3.T
+
+	// Unproject world coordinates to local coordinates
 	Unproject(point vec3.T) vec3.T
 
 	WorldPosition() vec3.T
@@ -93,7 +97,6 @@ func (t *transform) Translate(offset vec3.T) {
 	t.position = t.position.Add(offset)
 }
 
-// TransformPoint transforms a world point into this coordinate system
 func (t *transform) Project(point vec3.T) vec3.T {
 	return t.world.TransformPoint(point)
 }
@@ -103,13 +106,12 @@ func (t *transform) Unproject(point vec3.T) vec3.T {
 	return inv.TransformPoint(point)
 }
 
-// TransformDir transforms a world direction vector into this coordinate system
 func (t *transform) ProjectDir(dir vec3.T) vec3.T {
 	return t.world.TransformDir(dir)
 }
 
 func (t *transform) WorldPosition() vec3.T {
-	return t.Project(vec3.Zero)
+	return t.world.Origin()
 }
 
 func (t *transform) SetWorldPosition(wp vec3.T) {

@@ -2,6 +2,7 @@ package light
 
 import (
 	"github.com/johanhenriksson/goworld/core/object"
+	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/color"
 )
 
@@ -11,7 +12,7 @@ type ambient struct {
 	Intensity float32
 }
 
-func (lit *ambient) LightDescriptor() Descriptor {
+func (lit *ambient) LightDescriptor(args render.Args) Descriptor {
 	return Descriptor{
 		Type:      Ambient,
 		Color:     lit.Color,

@@ -26,6 +26,9 @@ var (
 
 	// UnitW returns a unit vector in the W direction
 	UnitW = T{0, 0, 0, 1}
+
+	InfPos = T{math.InfPos, math.InfPos, math.InfPos, math.InfPos}
+	InfNeg = T{math.InfNeg, math.InfNeg, math.InfNeg, math.InfNeg}
 )
 
 // T holds a 4-component vector of 32-bit floats

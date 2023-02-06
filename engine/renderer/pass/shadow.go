@@ -96,10 +96,12 @@ func NewShadowPass(target vulkan.Target) ShadowPass {
 		VertexFormat: voxel.Vertex{},
 		DepthTest:    true,
 		DepthWrite:   true,
+		CullMode:     core1_0.CullModeBack,
 	})
 	mats.TransformFn = func(d *material.Def) *material.Def {
 		shadowMat := *d
 		shadowMat.Shader = "vk/shadow"
+		shadowMat.CullMode = core1_0.CullModeBack
 		return &shadowMat
 	}
 
@@ -120,7 +122,7 @@ func (p *shadowpass) Record(cmds command.Recorder, args render.Args, scene objec
 	if !lightExists {
 		return
 	}
-	lightDesc := light.LightDescriptor()
+	lightDesc := light.LightDescriptor(args)
 
 	camera := uniform.Camera{
 		Proj:        lightDesc.Projection,

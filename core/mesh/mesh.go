@@ -2,6 +2,9 @@ package mesh
 
 import (
 	"github.com/johanhenriksson/goworld/core/object"
+	"github.com/johanhenriksson/goworld/math"
+	"github.com/johanhenriksson/goworld/math/shape"
+	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/vertex"
 )
@@ -15,6 +18,8 @@ type T interface {
 	CastShadows() bool
 	Material() *material.Def
 	MaterialID() uint64
+
+	BoundingSphere() shape.Sphere
 }
 
 // mesh base
@@ -25,6 +30,10 @@ type mesh struct {
 	mode  DrawMode
 	mat   *material.Def
 	matId uint64
+
+	// bounding radius
+	center vec3.T
+	radius float32
 }
 
 // New creates a new mesh component
@@ -57,6 +66,10 @@ func (m mesh) Mesh() vertex.Mesh {
 
 func (m *mesh) SetMesh(data vertex.Mesh) {
 	m.data = data
+	min := data.Min()
+	max := data.Max()
+	m.radius = math.Max(min.Length(), max.Length())
+	m.center = max.Sub(min).Scaled(0.5)
 }
 
 func (m mesh) CastShadows() bool {
@@ -73,4 +86,11 @@ func (m mesh) Material() *material.Def {
 
 func (m mesh) MaterialID() uint64 {
 	return m.matId
+}
+
+func (m mesh) BoundingSphere() shape.Sphere {
+	return shape.Sphere{
+		Center: m.Transform().WorldPosition().Add(m.center),
+		Radius: m.radius,
+	}
 }

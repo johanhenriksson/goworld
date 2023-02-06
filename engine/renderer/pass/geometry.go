@@ -7,6 +7,7 @@ import (
 	"github.com/johanhenriksson/goworld/core/mesh"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/engine/renderer/uniform"
+	"github.com/johanhenriksson/goworld/math/shape"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/command"
@@ -247,7 +248,12 @@ func (p *GeometryPass) Record(cmds command.Recorder, args render.Args, scene obj
 		cmd.CmdBeginRenderPass(p.pass, p.fbuf)
 	})
 
-	objects := object.Query[mesh.T]().Where(isDrawDeferred).Collect(scene)
+	frustum := shape.FrustumFromMatrix(args.VP)
+
+	objects := object.Query[mesh.T]().
+		Where(isDrawDeferred).
+		Where(frustumCulled(&frustum)).
+		Collect(scene)
 	p.materials.Draw(cmds, args, objects)
 
 	//
@@ -288,7 +294,7 @@ func (p *GeometryPass) DrawLight(cmds command.Recorder, args render.Args, lit li
 		return nil
 	}
 
-	desc := lit.LightDescriptor()
+	desc := lit.LightDescriptor(args)
 
 	cmds.Record(func(cmd command.Buffer) {
 		push := &LightConst{
@@ -330,4 +336,11 @@ func (p *GeometryPass) Destroy() {
 
 func isDrawDeferred(m mesh.T) bool {
 	return m.Mode() == mesh.Deferred
+}
+
+func frustumCulled(frustum *shape.Frustum) func(mesh.T) bool {
+	return func(m mesh.T) bool {
+		bounds := m.BoundingSphere()
+		return frustum.IntersectsSphere(&bounds)
+	}
 }

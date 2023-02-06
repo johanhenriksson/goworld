@@ -18,6 +18,9 @@ var (
 
 	// UnitY is the unit vector in the Y direction
 	UnitY = T{0, 1}
+
+	InfPos = T{math.InfPos, math.InfPos}
+	InfNeg = T{math.InfNeg, math.InfNeg}
 )
 
 // T holds a 2-component vector of 32-bit floats

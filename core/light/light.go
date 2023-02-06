@@ -4,6 +4,7 @@ import (
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/math/vec4"
+	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/color"
 )
 
@@ -11,7 +12,7 @@ type T interface {
 	object.T
 
 	Type() Type
-	LightDescriptor() Descriptor
+	LightDescriptor(args render.Args) Descriptor
 }
 
 // Descriptor holds rendering information for lights

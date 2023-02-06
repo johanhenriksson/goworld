@@ -150,7 +150,7 @@ void main() {
         contrib = max(dot(surfaceToLight, normal), 0.0);
 
         // angle-dependent bias
-        // shadow_bias = max(shadow_bias * (1.0 - dot(normal, surfaceToLight)), 0.0005);  
+        // shadow_bias = max(shadow_bias * (1.0 - dot(normal, surfaceToLight)), 0.005);  
 
         // experimental shadows
         if (light.Shadowmap > 0) {

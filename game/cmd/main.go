@@ -21,7 +21,7 @@ func main() {
 	engine.Run(engine.Args{
 		Width:  1600,
 		Height: 1200,
-		Title:  "goworld: vulkan",
+		Title:  "goworld",
 	},
 		editor.Scene(func(r renderer.T, scene object.T) {
 			// make some chonks

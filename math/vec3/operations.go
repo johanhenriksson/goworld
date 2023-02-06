@@ -1,6 +1,7 @@
 package vec3
 
 import (
+	"github.com/johanhenriksson/goworld/math"
 	"github.com/johanhenriksson/goworld/math/random"
 	"github.com/johanhenriksson/goworld/math/vec2"
 )
@@ -60,5 +61,21 @@ func Random(min, max T) T {
 		random.Range(min.X, max.X),
 		random.Range(min.Y, max.Y),
 		random.Range(min.Z, max.Z),
+	}
+}
+
+func Min(a, b T) T {
+	return T{
+		X: math.Min(a.X, b.X),
+		Y: math.Min(a.Y, b.Y),
+		Z: math.Min(a.Z, b.Z),
+	}
+}
+
+func Max(a, b T) T {
+	return T{
+		X: math.Max(a.X, b.X),
+		Y: math.Max(a.Y, b.Y),
+		Z: math.Max(a.Z, b.Z),
 	}
 }

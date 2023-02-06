@@ -69,6 +69,10 @@ func (m *mesh[V, I]) Update(vertices []V, indices []I) {
 		}
 	}
 
+	// update mesh bounds
+	m.min = Min(vertices)
+	m.max = Max(vertices)
+
 	m.vertices = vertices
 	m.indices = indices
 	m.version++

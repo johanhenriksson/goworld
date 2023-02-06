@@ -13,12 +13,17 @@ import (
 // Includes the various transformation matrices and position of the camera.
 type Args struct {
 	VP         mat4.T
+	VPInv      mat4.T
 	MVP        mat4.T
 	Projection mat4.T
 	View       mat4.T
+	ViewInv    mat4.T
 	Transform  mat4.T
 	Position   vec3.T
 	Forward    vec3.T
+	Fov        float32
+	Near       float32
+	Far        float32
 	Viewport   Screen
 	Clear      color.T
 	Context    *swapchain.Context

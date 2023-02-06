@@ -18,6 +18,9 @@ type T interface {
 	ViewProj() mat4.T
 	ViewProjInv() mat4.T
 	ClearColor() color.T
+	Near() float32
+	Far() float32
+	Fov() float32
 }
 
 // camera represents a 3D camera and its transform.
@@ -35,6 +38,8 @@ type camera struct {
 	viewi mat4.T
 	vp    mat4.T
 	vpi   mat4.T
+	eye   vec3.T
+	fwd   vec3.T
 }
 
 // New creates a new camera component.
@@ -71,9 +76,9 @@ func (cam *camera) PreDraw(args render.Args, scene object.T) error {
 
 	// Calculate new view matrix based on position & forward vector
 	// why is this different from the parent objects world matrix?
-	position := cam.Transform().WorldPosition()
-	lookAt := position.Add(cam.Transform().Forward())
-	cam.view = mat4.LookAtLH(position, lookAt)
+	cam.eye = cam.Transform().WorldPosition()
+	cam.fwd = cam.eye.Add(cam.Transform().Forward())
+	cam.view = mat4.LookAtLH(cam.eye, cam.fwd)
 	cam.viewi = cam.view.Invert()
 
 	cam.vp = cam.proj.Mul(&cam.view)
@@ -87,6 +92,9 @@ func (cam *camera) ViewInv() mat4.T     { return cam.viewi }
 func (cam *camera) Projection() mat4.T  { return cam.proj }
 func (cam *camera) ViewProj() mat4.T    { return cam.vp }
 func (cam *camera) ViewProjInv() mat4.T { return cam.vpi }
+func (cam *camera) Near() float32       { return cam.near }
+func (cam *camera) Far() float32        { return cam.far }
+func (cam *camera) Fov() float32        { return cam.fov }
 
 func (cam *camera) ClearColor() color.T { return cam.clear }
 
@@ -97,4 +105,13 @@ func (cam *camera) Visible(point vec3.T) bool {
 		return false
 	}
 	return true
+}
+
+func (cam *camera) SphereVisible(center vec3.T, radius float32) bool {
+	// project center onto camera forward vector
+	toSphere := center.Sub(cam.eye)
+	x := cam.eye.Add(cam.fwd.Scaled(vec3.Dot(toSphere, cam.fwd)))
+	// find closest point on sphere
+	closest := center.Add(x.Sub(center).Normalized().Scaled(radius))
+	return cam.Visible(closest)
 }
