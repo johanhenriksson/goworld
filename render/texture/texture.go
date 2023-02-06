@@ -1,6 +1,7 @@
 package texture
 
 import (
+	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render/device"
 	"github.com/johanhenriksson/goworld/render/image"
 	"github.com/johanhenriksson/goworld/render/vkerror"
@@ -13,6 +14,7 @@ type T interface {
 	device.Resource[core1_0.Sampler]
 	Image() image.T
 	View() image.View
+	Size() vec3.T
 }
 
 type Args struct {
@@ -117,6 +119,7 @@ func (t *vktexture) Ptr() core1_0.Sampler {
 
 func (t *vktexture) Image() image.T   { return t.image }
 func (t *vktexture) View() image.View { return t.view }
+func (t *vktexture) Size() vec3.T     { return t.image.Size() }
 
 func (t *vktexture) Destroy() {
 	t.ptr.Destroy(nil)

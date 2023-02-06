@@ -128,9 +128,16 @@ func (r *renderer) Draw(args widget.DrawArgs, label T) {
 
 		r.version++
 		r.tex = font.Ref(r.key, r.version, r.font, r.text, fargs)
-		r.bounds = r.tex.Size()
 
 		r.invalidTexture = false
+	}
+
+	tex := args.Textures.Fetch(r.tex)
+	if tex == nil {
+		return
+	}
+	if tex.Texture.Size().XY() != r.bounds {
+		r.bounds = tex.Texture.Size().XY()
 	}
 
 	if r.invalidMesh {
@@ -154,10 +161,6 @@ func (r *renderer) Draw(args widget.DrawArgs, label T) {
 	// we can center the label on the mesh by modifying the uvs
 	// scale := label.Size().Div(r.bounds)
 
-	tex := args.Textures.Fetch(r.tex)
-	if tex == nil {
-		return
-	}
 	mesh := args.Meshes.Fetch(r.mesh.Mesh())
 	if mesh == nil {
 		return

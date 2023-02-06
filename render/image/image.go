@@ -1,6 +1,7 @@
 package image
 
 import (
+	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render/device"
 	"github.com/johanhenriksson/goworld/render/vkerror"
 
@@ -15,6 +16,7 @@ type T interface {
 	Width() int
 	Height() int
 	Format() core1_0.Format
+	Size() vec3.T
 }
 
 type image struct {
@@ -141,6 +143,14 @@ func (i *image) Memory() device.Memory {
 func (i *image) Width() int             { return i.Args.Width }
 func (i *image) Height() int            { return i.Args.Height }
 func (i *image) Format() core1_0.Format { return i.Args.Format }
+
+func (i *image) Size() vec3.T {
+	return vec3.T{
+		X: float32(i.Args.Width),
+		Y: float32(i.Args.Height),
+		Z: float32(i.Layers),
+	}
+}
 
 func (i *image) Destroy() {
 	if i.memory != nil {
