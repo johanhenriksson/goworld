@@ -8,7 +8,6 @@ import (
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/command"
-	"github.com/johanhenriksson/goworld/render/texture"
 
 	"github.com/vkngwrapper/core/v2/core1_0"
 )
@@ -69,7 +68,7 @@ func (r *renderer) drawSelf(args widget.DrawArgs, rect T) {
 		return
 	}
 
-	tex := args.Textures.Fetch(texture.PathRef("textures/white.png"))
+	tex := args.Textures.Fetch(color.White)
 	if tex == nil {
 		return
 	}

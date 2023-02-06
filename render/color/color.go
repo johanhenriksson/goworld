@@ -2,7 +2,9 @@ package color
 
 import (
 	"fmt"
+	"image"
 	"image/color"
+	"strconv"
 
 	"github.com/johanhenriksson/goworld/math/byte4"
 	"github.com/johanhenriksson/goworld/math/vec3"
@@ -79,6 +81,16 @@ func (c T) String() string {
 	return fmt.Sprintf("(R:%.2f G:%.2f B:%.2f A:%.2f)", c.R, c.G, c.B, c.A)
 }
 
+func (c T) Hex() string {
+	bytes := make([]byte, 7)
+	rgba := c.Byte4()
+	bytes[0] = '#'
+	strconv.AppendUint(bytes[1:], uint64(rgba.X), 16)
+	strconv.AppendUint(bytes[3:], uint64(rgba.X), 16)
+	strconv.AppendUint(bytes[5:], uint64(rgba.X), 16)
+	return string(bytes)
+}
+
 // WithAlpha returns a new color with a modified alpha value
 func (c T) WithAlpha(a float32) T {
 	c.A = a
@@ -116,4 +128,21 @@ func Hex(s string) T {
 		panic("invalid color value")
 	}
 	return c
+}
+
+//
+// implement texture reference interface, so that colors may be easily loaded as textures
+//
+
+func (c T) Key() string  { return c.Hex() }
+func (c T) Version() int { return 1 }
+
+func (c T) Load() *image.RGBA {
+	img := image.NewRGBA(image.Rect(0, 0, 1, 1))
+	rgba := c.Byte4()
+	img.Pix[0] = rgba.X
+	img.Pix[1] = rgba.Y
+	img.Pix[2] = rgba.Z
+	img.Pix[3] = rgba.W
+	return img
 }

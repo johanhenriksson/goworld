@@ -7,6 +7,7 @@ import (
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/cache"
+	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/descriptor"
 	"github.com/johanhenriksson/goworld/render/framebuffer"
@@ -125,7 +126,7 @@ func (p *GuiPass) Record(cmds command.Recorder, args render.Args, scene object.T
 	})
 
 	// set everything to white
-	white := p.target.Textures().Fetch(texture.PathRef("textures/white.png"))
+	white := p.target.Textures().Fetch(color.White)
 	if white != nil {
 		clear := make([]texture.T, mat.Descriptors().Textures.Count)
 		for i := range clear {

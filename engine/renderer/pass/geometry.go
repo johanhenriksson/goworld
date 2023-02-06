@@ -204,7 +204,7 @@ func NewGeometryPass(
 		panic(err)
 	}
 	lightDesc.Shadow.Set(1, shadowtex)
-	target.Textures().Fetch(texture.PathRef("textures/white.png")) // warmup texture
+	target.Textures().Fetch(color.White)
 
 	return &GeometryPass{
 		gbuffer: gbuffer,
@@ -268,7 +268,7 @@ func (p *GeometryPass) Record(cmds command.Recorder, args render.Args, scene obj
 	lightDesc := p.light.Descriptors()
 	lightDesc.Camera.Set(camera)
 
-	white := p.target.Textures().Fetch(texture.PathRef("textures/white.png"))
+	white := p.target.Textures().Fetch(color.White)
 	if white != nil {
 		lightDesc.Shadow.Set(0, white)
 
