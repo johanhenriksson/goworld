@@ -97,7 +97,7 @@ func NewShadowPass(target vulkan.Target) ShadowPass {
 		VertexFormat: voxel.Vertex{},
 		DepthTest:    true,
 		DepthWrite:   true,
-		CullMode:     core1_0.CullModeFront,
+		// CullMode:     core1_0.CullModeBack,
 	})
 	mats.TransformFn = func(d *material.Def) *material.Def {
 		shadowMat := *d

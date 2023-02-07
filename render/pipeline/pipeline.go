@@ -24,6 +24,7 @@ type pipeline struct {
 	ptr    core1_0.Pipeline
 	device device.T
 	layout Layout
+	args   Args
 }
 
 func New(device device.T, args Args) T {
@@ -184,6 +185,7 @@ func New(device device.T, args Args) T {
 		ptr:    ptrs[0],
 		device: device,
 		layout: args.Layout,
+		args:   args,
 	}
 }
 

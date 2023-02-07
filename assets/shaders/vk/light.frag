@@ -45,7 +45,7 @@ layout (input_attachment_index = 3, binding = 3) uniform subpassInput tex_depth;
 
 layout (location = 0) out vec4 color;
 
-float shadow_bias = 0.0005;
+float shadow_bias = 0.002;
 bool soft_shadows = true;
 float shadow_strength = 0.75;
 
@@ -82,7 +82,7 @@ float sampleShadowmap(sampler2D shadowmap, vec3 position, float bias) {
         for(int x = -1; x <= 1; ++x) {
             for(int y = -1; y <= 1; ++y) {
                 float pcf_depth = texture(shadowmap, light_pos.st + vec2(x, y) * texelSize).r; 
-                shadow += pcf_depth > (z + bias) ? 1.0 : 0.0;        
+                shadow += pcf_depth > (z - bias) ? 1.0 : 0.0;        
             }    
         }
         shadow /= 9.0;
@@ -90,7 +90,7 @@ float sampleShadowmap(sampler2D shadowmap, vec3 position, float bias) {
     else {
         /* sample shadow map depth */
         float depth = texture(shadowmap, light_pos.st).r;
-        if (depth > (z + bias)) {
+        if (depth > (z - bias)) {
             shadow = 1.0; 
         }
     }
@@ -146,11 +146,12 @@ void main() {
     else if (light.Type == DIRECTIONAL_LIGHT) {
         // directional lights store the direction in the position uniform
         // i.e. the light coming from the position, shining towards the origin
-        vec3 surfaceToLight = normalize(-light.Position.xyz);
+        vec3 lightDir = normalize(light.Position.xyz);
+        vec3 surfaceToLight = -light.Position.xyz;
         contrib = max(dot(surfaceToLight, normal), 0.0);
 
         // angle-dependent bias
-        float surface_bias = max(shadow_bias * (1.0 - dot(normal, surfaceToLight)), shadow_bias/10);  
+        float surface_bias = max(shadow_bias * (1-dot(normal, surfaceToLight)), shadow_bias*0.1);  
 
         // experimental shadows
         if (light.Shadowmap > 0) {

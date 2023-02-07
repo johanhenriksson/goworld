@@ -45,6 +45,10 @@ func (m *MaterialSorter) Load(def *material.Def) {
 	if def == nil {
 		def = m.defaultMat
 	}
+
+	// apply material transform
+	def = m.TransformFn(def)
+
 	mat := material.FromDef(m.target.Device(), m.target.Pool(), m.pass, def)
 	m.cache[id] = mat.InstantiateMany(m.target.Pool(), m.target.Frames())
 }
