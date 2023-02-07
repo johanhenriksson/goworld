@@ -15,6 +15,7 @@ import (
 
 type T interface {
 	Draw(scene object.T)
+	Geometry() pass.Deferred
 	GBuffer() pass.GeometryBuffer
 	Recreate()
 	Screenshot()
@@ -23,8 +24,9 @@ type T interface {
 
 type rgraph struct {
 	graph.T
-	target  vulkan.Target
-	gbuffer pass.GeometryBuffer
+	target   vulkan.Target
+	gbuffer  pass.GeometryBuffer
+	geometry pass.Deferred
 }
 
 func NewGraph(target vulkan.Target) T {
@@ -42,6 +44,7 @@ func NewGraph(target vulkan.Target) T {
 
 		// store gbuffer reference
 		r.gbuffer = deferred.GBuffer()
+		r.geometry = deferred
 
 		forward := g.Node(pass.NewForwardPass(target, r.gbuffer))
 		forward.After(deferredNode, core1_0.PipelineStageTopOfPipe)
@@ -75,6 +78,10 @@ func (r *rgraph) Screenshot() {
 
 func (r *rgraph) GBuffer() pass.GeometryBuffer {
 	return r.gbuffer
+}
+
+func (r *rgraph) Geometry() pass.Deferred {
+	return r.geometry
 }
 
 func (r *rgraph) Destroy() {

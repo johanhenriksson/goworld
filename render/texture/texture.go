@@ -1,6 +1,8 @@
 package texture
 
 import (
+	osimage "image"
+
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render/device"
 	"github.com/johanhenriksson/goworld/render/image"
@@ -15,6 +17,10 @@ type T interface {
 	Image() image.T
 	View() image.View
 	Size() vec3.T
+
+	Key() string
+	Version() int
+	Load() *osimage.RGBA
 }
 
 type Args struct {
@@ -37,6 +43,9 @@ type vktexture struct {
 }
 
 func New(device device.T, args Args) (T, error) {
+	if args.Key == "" {
+		panic("texture must have a key")
+	}
 	if args.Usage == 0 {
 		args.Usage = core1_0.ImageUsageFlags(core1_0.ImageUsageSampled | core1_0.ImageUsageTransferDst)
 	}
@@ -81,6 +90,9 @@ func FromImage(device device.T, img image.T, args Args) (T, error) {
 }
 
 func FromView(device device.T, view image.View, args Args) (T, error) {
+	if args.Key == "" {
+		panic("texture must have a key")
+	}
 	info := core1_0.SamplerCreateInfo{
 		MinFilter:    args.Filter,
 		MagFilter:    args.Filter,
@@ -133,3 +145,12 @@ func (t *vktexture) Destroy() {
 
 	t.device = nil
 }
+
+//
+// implement Ref interface to allow textures to be used as texture references
+// this simplifies things like passing buffer textures to UI components
+//
+
+func (r *vktexture) Key() string         { return r.Args.Key }
+func (r *vktexture) Version() int        { return 1 }
+func (r *vktexture) Load() *osimage.RGBA { return nil }

@@ -38,6 +38,7 @@ const (
 type Deferred interface {
 	Pass
 	GBuffer() GeometryBuffer
+	ShadowTexture() texture.T
 }
 
 type GeometryDescriptors struct {
@@ -48,24 +49,17 @@ type GeometryDescriptors struct {
 }
 
 type GeometryPass struct {
-	gbuffer GeometryBuffer
-	quad    vertex.Mesh
-	target  vulkan.Target
-	pass    renderpass.T
-	light   LightShader
-	fbuf    framebuffer.T
-	texture texture.T
+	gbuffer   GeometryBuffer
+	quad      vertex.Mesh
+	target    vulkan.Target
+	pass      renderpass.T
+	light     LightShader
+	fbuf      framebuffer.T
+	shadowtex texture.T
 
 	shadows ShadowPass
 
 	materials *MaterialSorter
-}
-
-type DeferredSubpass interface {
-	Name() renderpass.Name
-	Record(command.Recorder, uniform.Camera, object.T)
-	Instantiate(descriptor.Pool, renderpass.T)
-	Destroy()
 }
 
 func NewGeometryPass(
@@ -197,6 +191,7 @@ func NewGeometryPass(
 	lightDesc.Depth.Set(gbuffer.Depth())
 
 	shadowtex, err := texture.FromView(target.Device(), shadows.Shadowmap(), texture.Args{
+		Key:    "shadowmap-1",
 		Filter: core1_0.FilterNearest,
 		Wrap:   core1_0.SamplerAddressModeClampToEdge,
 	})
@@ -213,9 +208,9 @@ func NewGeometryPass(
 		light:   lightsh,
 		pass:    pass,
 
-		shadows: shadows,
-		fbuf:    fbuf,
-		texture: shadowtex,
+		shadows:   shadows,
+		fbuf:      fbuf,
+		shadowtex: shadowtex,
 
 		materials: NewMaterialSorter(
 			target, pass,
@@ -323,10 +318,14 @@ func (d *GeometryPass) GBuffer() GeometryBuffer {
 	return d.gbuffer
 }
 
+func (d *GeometryPass) ShadowTexture() texture.T {
+	return d.shadowtex
+}
+
 func (p *GeometryPass) Destroy() {
 	// destroy subpasses
 	p.materials.Destroy()
-	p.texture.Destroy()
+	p.shadowtex.Destroy()
 
 	p.fbuf.Destroy()
 	p.pass.Destroy()

@@ -29,12 +29,15 @@ func OrthographicLH(left, right, bottom, top, near, far float32) T {
 		2 / rml, 0, 0, 0,
 		0, 2 / tmb, 0, 0,
 		0, 0, 2 / fmn, 0,
-		-(right + left) / rml, -(top + bottom) / tmb, -(far + near) / fmn, 1,
+		-(right + left) / rml,
+		-(top + bottom) / tmb,
+		-(far + near) / fmn,
+		1,
 	}
 }
 
 // OrthographicVK generates a left-handed orthographic projection matrix.
-// Outputs depth values in the range [1, 0]
+// Outputs depth values in the range [1, 0] (reverse Z)
 func OrthographicVK(left, right, bottom, top, near, far float32) T {
 	rml, tmb, fmn := (right - left), (top - bottom), (near - far)
 
@@ -45,6 +48,19 @@ func OrthographicVK(left, right, bottom, top, near, far float32) T {
 		-(right + left) / rml,
 		-(top + bottom) / tmb,
 		near / fmn,
+		1,
+	}
+}
+
+func OrthographicLH_ZO(left, right, bottom, top, near, far float32) T {
+	rml, tmb, fmn := (right - left), (top - bottom), (far - near)
+	return T{
+		2 / rml, 0, 0, 0,
+		0, 2 / tmb, 0, 0,
+		0, 0, 1 / fmn, 0,
+		(right + left) / rml,
+		-(top + bottom) / tmb,
+		-near / fmn,
 		1,
 	}
 }
@@ -78,7 +94,7 @@ func PerspectiveLH(fovy, aspect, near, far float32) T {
 }
 
 // PerspectiveVK generates a left-handed perspective projection matrix with reversed depth.
-// Outputs depth in the range [1, 0]
+// Outputs depth in the range [0, 1]
 func PerspectiveVK(fovy, aspect, near, far float32) T {
 	fovy = math.DegToRad(fovy)
 	tanHalfFov := math.Tan(fovy) / 2

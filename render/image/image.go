@@ -148,7 +148,7 @@ func (i *image) Size() vec3.T {
 	return vec3.T{
 		X: float32(i.Args.Width),
 		Y: float32(i.Args.Height),
-		Z: float32(i.Layers),
+		Z: float32(i.Args.Depth),
 	}
 }
 

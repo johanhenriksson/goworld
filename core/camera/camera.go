@@ -77,8 +77,8 @@ func (cam *camera) PreDraw(args render.Args, scene object.T) error {
 	// Calculate new view matrix based on position & forward vector
 	// why is this different from the parent objects world matrix?
 	cam.eye = cam.Transform().WorldPosition()
-	cam.fwd = cam.eye.Add(cam.Transform().Forward())
-	cam.view = mat4.LookAtLH(cam.eye, cam.fwd)
+	cam.fwd = cam.Transform().Forward()
+	cam.view = mat4.LookAtLH(cam.eye, cam.eye.Add(cam.fwd))
 	cam.viewi = cam.view.Invert()
 
 	cam.vp = cam.proj.Mul(&cam.view)

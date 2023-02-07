@@ -21,7 +21,6 @@ type Renderer interface {
 type renderer struct {
 	mesh    quad.T
 	size    vec2.T
-	tsize   vec2.T
 	color   color.T
 	uvs     quad.UV
 	invalid bool

@@ -1,6 +1,8 @@
 package pass
 
 import (
+	"fmt"
+
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/command"
@@ -90,6 +92,7 @@ func NewOutputPass(target vulkan.Target, geometry GeometryBuffer) *OutputPass {
 	p.tex = make([]texture.T, frames)
 	for i := range p.tex {
 		p.tex[i], err = texture.FromView(target.Device(), p.geometry.Output(), texture.Args{
+			Key:    fmt.Sprintf("gbuffer-output-%d", i),
 			Filter: core1_0.FilterNearest,
 			Wrap:   core1_0.SamplerAddressModeClampToEdge,
 		})

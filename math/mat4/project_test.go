@@ -5,7 +5,15 @@ import (
 
 	. "github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/math/vec3"
+
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 )
+
+func TestMat4(t *testing.T) {
+	RegisterFailHandler(Fail)
+	RunSpecs(t, "math/mat4")
+}
 
 type TransformTest struct {
 	Input  vec3.T
@@ -77,3 +85,13 @@ func TestPerspective(t *testing.T) {
 		{vec3.New(0, 0, 100), vec3.New(0, 0, 1)},
 	})
 }
+
+var _ = Describe("LookAt (LH)", func() {
+	It("correctly projects", func() {
+		proj := LookAtLH(vec3.Zero, vec3.UnitZ)
+		Expect(proj.Forward().ApproxEqual(vec3.UnitZ)).To(BeTrue())
+
+		proj = LookAt(vec3.Zero, vec3.UnitZ)
+		Expect(proj.Forward().ApproxEqual(vec3.UnitZ)).To(BeTrue())
+	})
+})

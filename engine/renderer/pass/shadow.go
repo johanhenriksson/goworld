@@ -42,7 +42,7 @@ type shadowpass struct {
 
 func NewShadowPass(target vulkan.Target) ShadowPass {
 	log.Println("create shadow pass")
-	size := 1024
+	size := 4096
 
 	subpasses := make([]renderpass.Subpass, 0, 4)
 	dependencies := make([]renderpass.SubpassDependency, 0, 4)
@@ -73,6 +73,7 @@ func NewShadowPass(target vulkan.Target) ShadowPass {
 
 	pass := renderpass.New(target.Device(), renderpass.Args{
 		DepthAttachment: &attachment.Depth{
+			Format:        core1_0.FormatD32SignedFloat,
 			LoadOp:        core1_0.AttachmentLoadOpClear,
 			StencilLoadOp: core1_0.AttachmentLoadOpClear,
 			StoreOp:       core1_0.AttachmentStoreOpStore,
@@ -96,12 +97,12 @@ func NewShadowPass(target vulkan.Target) ShadowPass {
 		VertexFormat: voxel.Vertex{},
 		DepthTest:    true,
 		DepthWrite:   true,
-		CullMode:     core1_0.CullModeBack,
+		CullMode:     core1_0.CullModeFront,
 	})
 	mats.TransformFn = func(d *material.Def) *material.Def {
 		shadowMat := *d
 		shadowMat.Shader = "vk/shadow"
-		shadowMat.CullMode = core1_0.CullModeBack
+		shadowMat.CullMode = core1_0.CullModeFront
 		return &shadowMat
 	}
 

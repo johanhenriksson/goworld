@@ -20,17 +20,7 @@ func New(key string, props Props) node.T {
 				Title:    props.Title,
 				OnClose:  props.OnClose,
 				Floating: false,
-
-				Children: []node.T{
-					rect.New("inner", rect.Props{
-						Style: rect.Style{
-							Padding:    style.RectXY(10, 10),
-							Layout:     style.Column{},
-							AlignItems: style.AlignStart,
-						},
-						Children: props.Children,
-					}),
-				},
+				Children: props.Children,
 			}),
 		},
 		Style: rect.Style{

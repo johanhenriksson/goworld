@@ -25,7 +25,7 @@ type Editor struct {
 
 func NewEditor(render renderer.T, workspace object.T) *Editor {
 	editor := object.New(&Editor{
-		GUI:       MakeGUI(),
+		GUI:       MakeGUI(render),
 		GizmoMgr:  NewGizmoManager(),
 		SelectMgr: NewSelectManager(nil, nil),
 

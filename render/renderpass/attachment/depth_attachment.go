@@ -17,6 +17,7 @@ type Depth struct {
 	InitialLayout  core1_0.ImageLayout
 	FinalLayout    core1_0.ImageLayout
 	Usage          core1_0.ImageUsageFlags
+	Format         core1_0.Format
 	ClearDepth     float32
 	ClearStencil   uint32
 
@@ -36,7 +37,9 @@ func (desc *Depth) defaults() {
 func NewDepth(device device.T, desc Depth) T {
 	desc.defaults()
 
-	depthFormat := device.GetDepthFormat()
+	if desc.Format == core1_0.Format(0) {
+		desc.Format = device.GetDepthFormat()
+	}
 
 	clear := core1_0.ClearValueDepthStencil{
 		Depth:   desc.ClearDepth,
@@ -47,10 +50,10 @@ func NewDepth(device device.T, desc Depth) T {
 		name:   DepthName,
 		alloc:  desc.Allocator,
 		clear:  clear,
-		format: depthFormat,
+		format: desc.Format,
 		usage:  desc.Usage,
 		desc: core1_0.AttachmentDescription{
-			Format:         core1_0.Format(depthFormat),
+			Format:         desc.Format,
 			Samples:        desc.Samples,
 			LoadOp:         desc.LoadOp,
 			StoreOp:        desc.StoreOp,

@@ -5,20 +5,24 @@ import (
 
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/core/object"
+	"github.com/johanhenriksson/goworld/engine/renderer"
 	"github.com/johanhenriksson/goworld/gui"
 	"github.com/johanhenriksson/goworld/gui/node"
 	"github.com/johanhenriksson/goworld/gui/style"
 	"github.com/johanhenriksson/goworld/gui/widget/image"
 	"github.com/johanhenriksson/goworld/gui/widget/menu"
 	"github.com/johanhenriksson/goworld/gui/widget/rect"
+	"github.com/johanhenriksson/goworld/gui/widget/window"
+	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/texture"
 )
 
-func MakeGUI() gui.Manager {
+func MakeGUI(render renderer.T) gui.Manager {
 	return gui.New(func() node.T {
 		return rect.New("gui", rect.Props{
 			Children: []node.T{
+				makeBufferWindow(render),
 				makeMenu(),
 				rect.New("gui-main", rect.Props{
 					Style: rect.Style{
@@ -30,6 +34,24 @@ func MakeGUI() gui.Manager {
 				}),
 			},
 		})
+	})
+}
+
+func makeBufferWindow(render renderer.T) node.T {
+	return window.New("buffer-outputs", window.Props{
+		Title:    "Shadowmap",
+		Floating: true,
+		Position: vec2.New(1300, 200),
+		Children: []node.T{
+			image.New("shadow", image.Props{
+				Image:  render.Geometry().ShadowTexture(),
+				Invert: true,
+				Style: image.Style{
+					Width:  style.Px(200),
+					Height: style.Auto{},
+				},
+			}),
+		},
 	})
 }
 
