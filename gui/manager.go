@@ -86,10 +86,11 @@ func (m *manager) Update(scene object.T, dt float32) {
 
 	m.tree = node.Reconcile(m.tree, root)
 
-	go m.update(scene, dt, root, fragments)
-}
+	// 	go m.update(scene, dt, root, fragments)
+	// }
 
-func (m *manager) update(scene object.T, dt float32, root node.T, fragments []Fragment) {
+	// func (m *manager) update(scene object.T, dt float32, root node.T, fragments []Fragment) {
+
 	key := object.Key("gui", m)
 	m.gui = m.tree.Hydrate(key)
 
@@ -100,12 +101,12 @@ func (m *manager) update(scene object.T, dt float32, root node.T, fragments []Fr
 	flex.CalculateLayout(flexRoot, viewport.X, viewport.Y, flex.DirectionLTR)
 
 	// signal background update completed
-	m.updated <- struct{}{}
+	// m.updated <- struct{}{}
 }
 
 func (m *manager) DrawUI(args widget.DrawArgs, scene object.T) {
 	// wait for background update
-	<-m.updated
+	// <-m.updated
 
 	m.viewport = args.Viewport
 	// draw

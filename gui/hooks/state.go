@@ -11,6 +11,14 @@ func (s *State) Next() int {
 	return id
 }
 
+// Write hook state. For debug/testing purposes only.
+func (s *State) Write(index int, data any) {
+	if len(s.data) < index+1 {
+		s.data = append(s.data, make([]any, index-len(s.data)+1)...)
+	}
+	s.data[index] = data
+}
+
 func Enable(new *State) {
 	active = new
 	active.next = 0

@@ -58,6 +58,9 @@ func (f *rect) ZOffset() int {
 }
 
 func (f *rect) Children() []widget.T { return f.children }
+
+// Updates the widget with a new set of children.
+// The widget takes ownership of the passed child array.
 func (f *rect) SetChildren(c []widget.T) {
 	// reconcile flex children
 	for i, child := range c {

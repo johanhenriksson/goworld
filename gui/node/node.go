@@ -2,29 +2,28 @@ package node
 
 import (
 	"fmt"
-	"log"
 	"reflect"
 
 	"github.com/johanhenriksson/goworld/gui/hooks"
 	"github.com/johanhenriksson/goworld/gui/widget"
-	"github.com/johanhenriksson/goworld/gui/widget/component"
 )
 
 type T interface {
 	Key() string
 	Type() reflect.Type
-	Props() any
-	Children() []T
-	SetChildren([]T)
-	Hooks() *hooks.State
-
-	Inject(T)
 
 	Update(any)
-	Render(*hooks.State)
+	Props() any
+	Hooks() *hooks.State
+
+	Children() []T
+	SetChildren([]T)
+	Prepend(T)
+	Append(T)
+
+	Expand(*hooks.State)
+	Hydrate(string) widget.T
 	Destroy()
-	Hydrate(parentKey string) widget.T
-	Hydrated() bool
 }
 
 type node[K widget.T, P any] struct {
@@ -36,7 +35,6 @@ type node[K widget.T, P any] struct {
 	widget   widget.T
 	children []T
 	hooks    hooks.State
-	injected []T
 }
 
 func Builtin[K widget.T, P any](key string, props P, children []T, hydrate func(widget.T, P) K) T {
@@ -46,18 +44,14 @@ func Builtin[K widget.T, P any](key string, props P, children []T, hydrate func(
 		kind:     reflect.TypeOf(props),
 		hydrate:  hydrate,
 		children: children,
-		render:   nil,
 	}
 }
 
 func Component[P any](key string, props P, render func(P) T) T {
-	return &node[component.T, P]{
-		key:   key,
-		props: props,
-		kind:  reflect.TypeOf(props),
-		hydrate: func(w widget.T, props P) component.T {
-			return component.Create(w, props)
-		},
+	return &node[widget.T, P]{
+		key:    key,
+		props:  props,
+		kind:   reflect.TypeOf(props),
 		render: render,
 	}
 }
@@ -82,15 +76,51 @@ func (n *node[K, P]) SetChildren(children []T) {
 	n.children = children
 }
 
-func (n *node[K, P]) Inject(node T) {
-	n.injected = append(n.injected, node)
+func (n *node[K, P]) Append(child T) {
+	n.SetChildren(append(n.children, child))
 }
 
-func (n *node[K, P]) Hydrated() bool {
+func (n *node[K, P]) Prepend(child T) {
+	n.SetChildren(append([]T{child}, n.children...))
+}
+
+func (n *node[K, P]) hydrated() bool {
 	return n.widget != nil
 }
 
-func (n *node[K, P]) Render(hook *hooks.State) {
+func (n *node[K, P]) Update(props any) {
+	n.props = props.(P)
+
+	if n.render == nil {
+		// the node is a built-in element, simply update its props
+		if n.hydrated() {
+			n.widget.Update(props)
+		}
+	} else {
+		// this node is a potentially stateful component - what do we do?
+		// the update might have caused changes to the entire subtree
+	}
+}
+
+func (n *node[K, P]) Destroy() {
+	for _, child := range n.children {
+		child.Destroy()
+	}
+	if !n.hydrated() {
+		return
+	}
+	n.widget.Destroy()
+	n.widget = nil
+}
+
+func (n *node[K, P]) Hooks() *hooks.State {
+	return &n.hooks
+}
+
+// Expand component & child nodes using its hook state.
+// If the node is a component, its render function will be called
+// to create any dynamic child nodes. This does not cause hydration.
+func (n *node[K, P]) Expand(hook *hooks.State) {
 	if n.render == nil {
 		return
 	}
@@ -101,52 +131,40 @@ func (n *node[K, P]) Render(hook *hooks.State) {
 	hooks.Enable(hook)
 	defer hooks.Disable()
 
-	n.children = append(n.injected, n.render(n.props))
+	n.children = []T{n.render(n.props)}
 }
 
-func (n *node[K, P]) Update(props any) {
-	n.props = props.(P)
-
-	if n.Hydrated() {
-		// we are a basic element, update my props
-		n.widget.Update(props)
-	}
-}
-
-func (n *node[K, P]) Destroy() {
-	if !n.Hydrated() {
-		return
-	}
-	log.Println("destroy node", n.key)
-	for _, child := range n.injected {
-		child.Destroy()
-	}
-	for _, child := range n.children {
-		child.Destroy()
-	}
-	n.widget.Destroy()
-	n.widget = nil
-}
-
-func (n *node[K, P]) Hooks() *hooks.State {
-	return &n.hooks
-}
-
+// Hydrates the widgets represented by the node and all of its children.
 func (n *node[K, P]) Hydrate(parentKey string) widget.T {
-	key := joinKeys(n.key, parentKey)
-	if n.widget == nil {
-		n.widget = n.hydrate(widget.New(key), n.props)
-	}
+	// check if we are a component or a built-in element
+	if n.render != nil {
+		// components should never be hydrated directly.
+		// we expect to have the root element of the component as a single child at
+		// this point, which can be hydrated and returned as this nodes widget,
+		// effectively collapsing their nodes in the widget tree.
+		if len(n.children) != 1 {
+			panic("expected component to have a single child. did you forget to reconcile?")
+		}
+		component := n.children[0]
+		n.widget = component.Hydrate(parentKey)
+	} else {
+		// this node is a built-in element, hydrate it if it does not exist
+		key := joinKeys(n.key, parentKey)
+		if n.widget == nil {
+			n.widget = n.hydrate(widget.New(key), n.props)
+		}
 
-	// render children
-	children := make([]widget.T, 0, len(n.children)+len(n.injected))
-	for _, child := range n.injected {
-		children = append(children, child.Hydrate(key))
+		// rehydrate children if required
+		// the logic for optimizing this process currently exists within
+		// Rect, since its the only element thay may have child elements.
+		// perhaps it would make sense to extract it, and perhaps place it here?
+		children := make([]widget.T, 0, len(n.children))
+		for _, child := range n.children {
+			hydrated := child.Hydrate(key)
+			children = append(children, hydrated)
+		}
+		n.widget.SetChildren(children)
 	}
-	for _, child := range n.children {
-		children = append(children, child.Hydrate(key))
-	}
-	n.widget.SetChildren(children)
 
 	return n.widget
 }
@@ -155,6 +173,7 @@ func (n *node[K, P]) String() string {
 	return fmt.Sprintf("Node[%s] %s", n.kind, n.key)
 }
 
+// efficient method to concatenate key strings
 func joinKeys(parent, child string) string {
 	p := len(parent)
 	buffer := make([]byte, p+len(child)+1)

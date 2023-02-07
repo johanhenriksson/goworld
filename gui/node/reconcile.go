@@ -4,13 +4,6 @@ import (
 	"fmt"
 )
 
-func Expand(new T) {
-	new.Render(new.Hooks())
-	for _, child := range new.Children() {
-		Expand(child)
-	}
-}
-
 func Reconcile(target, new T) T {
 	// no source tree - just go with the new one
 	if target == nil {
@@ -29,7 +22,7 @@ func Reconcile(target, new T) T {
 
 	// expand new node to look at its children
 	// use the existing hook state
-	new.Render(target.Hooks())
+	new.Expand(target.Hooks())
 
 	// create a key mapping for the existing child nodes
 	// this allows us to reuse nodes and keep track of deletions
@@ -55,6 +48,8 @@ func Reconcile(target, new T) T {
 			children[idx] = Reconcile(existing, child)
 		} else {
 			// this key did not exist previously, so it must be a new element
+			// we still need to call reconcile, so that children will be expanded
+			children[idx] = Reconcile(nil, child)
 		}
 	}
 

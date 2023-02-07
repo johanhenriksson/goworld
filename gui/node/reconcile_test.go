@@ -1,7 +1,7 @@
 package node_test
 
 import (
-	. "github.com/johanhenriksson/goworld/gui/node"
+	"github.com/johanhenriksson/goworld/gui/node"
 	"github.com/johanhenriksson/goworld/gui/widget"
 
 	"testing"
@@ -27,11 +27,11 @@ func TestReconcile(t *testing.T) {
 		return element
 	}
 
-	a := Builtin("a", &props{"hello"}, nil, hydrate)
+	a := node.Builtin("a", &props{"hello"}, nil, hydrate)
 	a.Hydrate("test")
-	b := Builtin("a", &props{"world"}, nil, hydrate)
+	b := node.Builtin("a", &props{"world"}, nil, hydrate)
 
-	r := Reconcile(a, b)
+	r := node.Reconcile(a, b)
 	r.Hydrate("test")
 
 	if a.Hooks() != r.Hooks() {
@@ -55,14 +55,14 @@ func TestReconcile(t *testing.T) {
 func TestReconcileChildren(t *testing.T) {
 	hydrate := func(w widget.T, p *props) widget.T { return nil }
 
-	a := Builtin("a", &props{}, []T{
-		Builtin("b", &props{"child"}, nil, hydrate),
+	a := node.Builtin("a", &props{}, []node.T{
+		node.Builtin("b", &props{"child"}, nil, hydrate),
 	}, hydrate)
-	b := Builtin("a", &props{}, []T{
-		Builtin("b", &props{"updated"}, nil, hydrate),
+	b := node.Builtin("a", &props{}, []node.T{
+		node.Builtin("b", &props{"updated"}, nil, hydrate),
 	}, hydrate)
 
-	r := Reconcile(a, b)
+	r := node.Reconcile(a, b)
 	child := r.Children()[0]
 	cp := child.Props().(*props)
 	if cp.Text != "updated" {

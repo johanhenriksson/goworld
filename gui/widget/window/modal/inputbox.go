@@ -35,17 +35,7 @@ func renderInput(props InputProps) node.T {
 			textbox.New("input", textbox.Props{
 				Text:     text,
 				OnChange: setText,
-				Style: textbox.Style{
-					Text: label.Style{
-						Color: color.Black,
-					},
-					Bg: rect.Style{
-						Color:   color.White,
-						Width:   style.Px(200),
-						Padding: style.RectXY(4, 2),
-						Margin:  style.RectY(5),
-					},
-				},
+				Style:    textbox.DefaultStyle,
 			}),
 			button.New("ok", button.Props{
 				Text: "OK",
