@@ -25,7 +25,7 @@ func NewMesh(chunk *T) *Mesh {
 		VertexFormat: voxel.Vertex{},
 		DepthTest:    true,
 		DepthWrite:   true,
-		CullMode:     core1_0.CullModeFront,
+		CullMode:     core1_0.CullModeBack,
 	})
 	key := object.Key("chunk", msh)
 	chk := &Mesh{

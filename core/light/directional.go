@@ -52,29 +52,24 @@ func (lit *dirlight) LightDescriptor(args render.Args) Descriptor {
 	}
 	center = center.Scaled(float32(1) / 8)
 
+	radius := float32(0)
+	for _, corner := range frustumCorners {
+		distance := vec3.Distance(corner, center)
+		radius = math.Max(radius, distance)
+	}
+	radius = math.Snap(radius, 16)
+
 	// create light view matrix looking at the center of the
 	// camera frustum
 	ldir := lit.Transform().Forward()
-	position := center.Add(ldir.Scaled(-1))
+	position := center.Sub(ldir.Scaled(radius))
 	lview := mat4.LookAt(position, center, vec3.UnitY)
 
-	// project the camera frustum into light view space, and
-	// find the minimum bounding box
-	min, max := vec3.InfPos, vec3.InfNeg
-	for _, corner := range frustumCorners {
-		cornerLight := lview.TransformPoint(corner)
-		min = vec3.Min(min, cornerLight)
-		max = vec3.Max(max, cornerLight)
-	}
-
-	extents := math.Max(max.X-min.X, max.Y-min.Y) * 0.5
-	snap := 2 * extents / float32(4096)
-	extents = math.Snap(extents, snap)
-
-	// create an orthographic projection from the minimum bounding box
 	lproj := mat4.Orthographic(
-		-extents, extents,
-		-extents, extents, min.Z, max.Z)
+		-radius, radius,
+		-radius, radius,
+		0, 2*radius)
+
 	lvp := lproj.Mul(&lview)
 
 	desc := Descriptor{

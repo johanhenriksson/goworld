@@ -123,8 +123,12 @@ func New(device device.T, args Args) T {
 			RasterizerDiscardEnable: false,
 			PolygonMode:             args.PolygonFillMode,
 			CullMode:                args.CullMode,
-			FrontFace:               core1_0.FrontFaceCounterClockwise,
 			LineWidth:               1,
+
+			// clockwise in vulkans right-handed coordinates is equivalent to the
+			// traditional opengl counter-clockwise winding, which is in line with
+			// the left-handed world space coordinate system.
+			FrontFace: core1_0.FrontFaceClockwise,
 		},
 
 		// multisample
