@@ -72,13 +72,13 @@ func (cam *camera) Update(scene object.T, dt float32) {
 func (cam *camera) PreDraw(args render.Args, scene object.T) error {
 	// update view & view-projection matrices
 	aspect := float32(args.Viewport.Width) / float32(args.Viewport.Height)
-	cam.proj = mat4.PerspectiveVK(cam.fov, aspect, cam.near, cam.far)
+	cam.proj = mat4.Perspective(cam.fov, aspect, cam.near, cam.far)
 
 	// Calculate new view matrix based on position & forward vector
 	// why is this different from the parent objects world matrix?
 	cam.eye = cam.Transform().WorldPosition()
 	cam.fwd = cam.Transform().Forward()
-	cam.view = mat4.LookAtLH(cam.eye, cam.eye.Add(cam.fwd))
+	cam.view = mat4.LookAt(cam.eye, cam.eye.Add(cam.fwd), vec3.UnitY)
 	cam.viewi = cam.view.Invert()
 
 	cam.vp = cam.proj.Mul(&cam.view)
@@ -97,21 +97,3 @@ func (cam *camera) Far() float32        { return cam.far }
 func (cam *camera) Fov() float32        { return cam.fov }
 
 func (cam *camera) ClearColor() color.T { return cam.clear }
-
-// Visible returns true if the given point is within the cameras view frustum
-func (cam *camera) Visible(point vec3.T) bool {
-	clip := cam.vp.TransformPoint(point)
-	if clip.Z < -1 || clip.Z > 1 || clip.X > 1 || clip.X < -1 || clip.Y > 1 || clip.Y < -1 {
-		return false
-	}
-	return true
-}
-
-func (cam *camera) SphereVisible(center vec3.T, radius float32) bool {
-	// project center onto camera forward vector
-	toSphere := center.Sub(cam.eye)
-	x := cam.eye.Add(cam.fwd.Scaled(vec3.Dot(toSphere, cam.fwd)))
-	// find closest point on sphere
-	closest := center.Add(x.Sub(center).Normalized().Scaled(radius))
-	return cam.Visible(closest)
-}

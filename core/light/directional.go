@@ -56,7 +56,7 @@ func (lit *dirlight) LightDescriptor(args render.Args) Descriptor {
 	// camera frustum
 	ldir := lit.Transform().Forward()
 	position := center.Add(ldir.Scaled(-1))
-	lview := mat4.LookAtLH(position, center)
+	lview := mat4.LookAt(position, center, vec3.UnitY)
 
 	// project the camera frustum into light view space, and
 	// find the minimum bounding box
@@ -72,7 +72,7 @@ func (lit *dirlight) LightDescriptor(args render.Args) Descriptor {
 	extents = math.Snap(extents, snap)
 
 	// create an orthographic projection from the minimum bounding box
-	lproj := mat4.OrthographicLH_ZO(
+	lproj := mat4.Orthographic(
 		-extents, extents,
 		-extents, extents, min.Z, max.Z)
 	lvp := lproj.Mul(&lview)

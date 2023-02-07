@@ -116,7 +116,7 @@ func (p *GuiPass) Record(cmds command.Recorder, args render.Args, scene object.T
 	size = size.Scaled(1 / scale)
 
 	// setup viewport
-	proj := mat4.OrthographicVK(0, size.X, 0, size.Y, 1000, -1000)
+	proj := mat4.OrthographicRZ(0, size.X, 0, size.Y, 1000, -1000)
 	view := mat4.Ident()
 	vp := proj.Mul(&view)
 

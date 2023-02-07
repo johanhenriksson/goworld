@@ -30,8 +30,8 @@ func AssertTransforms(t *testing.T, transform T, cases []TransformTest) {
 	}
 }
 
-func TestOrthographicVK(t *testing.T) {
-	proj := OrthographicVK(0, 10, 0, 10, -1, 1)
+func TestOrthographicRZ(t *testing.T) {
+	proj := OrthographicRZ(0, 10, 0, 10, -1, 1)
 	AssertTransforms(t, proj, []TransformTest{
 		{vec3.New(5, 5, 0), vec3.New(0, 0, 0.5)},
 		{vec3.New(5, 5, 1), vec3.New(0, 0, 0)},
@@ -40,58 +40,17 @@ func TestOrthographicVK(t *testing.T) {
 	})
 }
 
-func TestOrthographicLH(t *testing.T) {
-	proj := OrthographicLH(0, 10, 0, 10, -1, 1)
-	AssertTransforms(t, proj, []TransformTest{
-		{vec3.New(5, 5, 0), vec3.New(0, 0, 0)},
-		{vec3.New(5, 5, 1), vec3.New(0, 0, 1)},
-		{vec3.New(5, 5, -1), vec3.New(0, 0, -1)},
-		{vec3.New(0, 0, -1), vec3.New(-1, -1, -1)},
-		{vec3.New(10, 10, -1), vec3.New(1, 1, -1)},
-	})
-}
-
-func TestOrthographic(t *testing.T) {
-	proj := Orthographic(0, 10, 0, 10, -1, 1)
-	AssertTransforms(t, proj, []TransformTest{
-		{vec3.New(5, 5, 0), vec3.New(0, 0, 0)},
-		{vec3.New(5, 5, 1), vec3.New(0, 0, -1)},
-		{vec3.New(5, 5, -1), vec3.New(0, 0, 1)},
-		{vec3.New(0, 0, -1), vec3.New(-1, -1, 1)},
-		{vec3.New(10, 10, -1), vec3.New(1, 1, 1)},
-	})
-}
-
 func TestPerspectiveVK(t *testing.T) {
-	proj := PerspectiveVK(45, 1, 1, 100)
+	proj := Perspective(45, 1, 1, 100)
 	AssertTransforms(t, proj, []TransformTest{
 		{vec3.New(0, 0, 1), vec3.New(0, 0, 0)},
 		{vec3.New(0, 0, 100), vec3.New(0, 0, 1)},
 	})
 }
 
-func TestPerspectiveLH(t *testing.T) {
-	proj := PerspectiveLH(45, 1, 1, 100)
-	AssertTransforms(t, proj, []TransformTest{
-		{vec3.New(0, 0, 1), vec3.New(0, 0, 1)},
-		{vec3.New(0, 0, 100), vec3.New(0, 0, -1)},
-	})
-}
-
-func TestPerspective(t *testing.T) {
-	proj := Perspective(45, 1, 1, 100)
-	AssertTransforms(t, proj, []TransformTest{
-		{vec3.New(0, 0, 1.00), vec3.New(0, 0, -1)},
-		{vec3.New(0, 0, 100), vec3.New(0, 0, 1)},
-	})
-}
-
 var _ = Describe("LookAt (LH)", func() {
 	It("correctly projects", func() {
-		proj := LookAtLH(vec3.Zero, vec3.UnitZ)
-		Expect(proj.Forward().ApproxEqual(vec3.UnitZ)).To(BeTrue())
-
-		proj = LookAt(vec3.Zero, vec3.UnitZ)
+		proj := LookAt(vec3.Zero, vec3.UnitZ, vec3.UnitY)
 		Expect(proj.Forward().ApproxEqual(vec3.UnitZ)).To(BeTrue())
 	})
 })
