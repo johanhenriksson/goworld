@@ -36,7 +36,7 @@ type Player struct {
 }
 
 func NewPlayer(position vec3.T, collide CollisionCheck) *Player {
-	cam := camera.New(50.0, 0.1, 150, color.Hex("#eddaab"))
+	cam := camera.New(50.0, 0.1, 200, color.Hex("#eddaab"))
 	p := object.New(&Player{
 		Eye: object.Builder(object.Empty("Eye")).
 			Position(vec3.New(0, 1.75, 0)).
@@ -54,8 +54,8 @@ func NewPlayer(position vec3.T, collide CollisionCheck) *Player {
 		Speed:       float32(60),
 		Airspeed:    float32(33),
 		JumpForce:   0.25,
-		Friction:    vec3.New(0.91, 1, 0.91),
-		AirFriction: vec3.New(0.955, 1, 0.955),
+		Friction:    vec3.New(3, 0, 3),
+		AirFriction: vec3.New(2, 2, 2),
 		CamHeight:   vec3.New(0, 1.75, 0),
 		Flying:      collide == nil,
 		keys:        keys.NewState(),
@@ -128,17 +128,22 @@ func (p *Player) Update(scene object.T, dt float32) {
 
 	// friction
 	if p.Grounded {
-		p.velocity = p.velocity.Mul(p.Friction)
+		friction := p.velocity.Mul(p.Friction)
+		p.velocity = p.velocity.Sub(friction.Scaled(dt))
+		if p.velocity.Length() < 0.01 {
+			p.velocity = vec3.Zero
+		}
 	} else {
-		p.velocity = p.velocity.Mul(p.AirFriction)
+		friction := p.velocity.Mul(p.AirFriction)
+		if !p.Flying {
+			friction.Y = 0
+		}
+		p.velocity = p.velocity.Sub(friction.Scaled(dt))
 	}
 
 	// gravity
 	if !p.Flying {
 		p.velocity.Y -= p.Gravity * dt
-	} else {
-		// apply Y friction while flying
-		p.velocity.Y *= p.Friction.X
 	}
 
 	step := p.velocity.Scaled(dt)
