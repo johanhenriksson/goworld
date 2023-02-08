@@ -71,9 +71,9 @@ func NewMenu(editor *edit) gui.Fragment {
 		Slot:     "main-menu",
 		Position: gui.FragmentLast,
 		Render: func() node.T {
-			return menu.Item("editor-menu", menu.ItemProps{
-				Key:      "menu-editor",
-				Title:    "Editor",
+			return menu.Item("chunk-menu", menu.ItemProps{
+				Key:      "menu-chunk",
+				Title:    "Chunk",
 				Style:    menu.DefaultStyle,
 				OpenDown: true,
 				Items: []menu.ItemProps{
@@ -102,6 +102,16 @@ func NewMenu(editor *edit) gui.Fragment {
 								OnClick: func(e mouse.Event) { editor.SelectTool(editor.SampleTool) },
 							},
 						},
+					},
+					{
+						Key:     "action-save",
+						Title:   "Save",
+						OnClick: func(e mouse.Event) { editor.saveChunkDialog() },
+					},
+					{
+						Key:     "action-clear",
+						Title:   "Clear",
+						OnClick: func(e mouse.Event) { editor.clearChunk() },
 					},
 				},
 			})

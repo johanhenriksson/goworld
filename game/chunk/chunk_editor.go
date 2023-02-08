@@ -194,11 +194,15 @@ func (e *edit) InBounds(p vec3.T) bool {
 	return !outside
 }
 
+func (e *edit) clearChunk() {
+	e.Chunk.Clear()
+	e.Recalculate()
+}
+
 func (e *edit) KeyEvent(ev keys.Event) {
 	// clear chunk hotkey
 	if keys.PressedMods(ev, keys.N, keys.Ctrl) {
-		e.Chunk.Clear()
-		e.Recalculate()
+		e.clearChunk()
 	}
 
 	// save chunk hotkey

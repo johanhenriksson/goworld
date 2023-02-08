@@ -26,7 +26,7 @@ func main() {
 		editor.Scene(func(r renderer.T, scene object.T) {
 			// make some chonks
 			generator := chunk.ExampleWorldgen(3141389, 32)
-			object.Attach(scene, chunk.NewWorld(32, generator, 100))
+			object.Attach(scene, chunk.NewWorld(32, generator, 220))
 			// chonk := chunk.Generate(generator, 32, 0, 0)
 			// object.Attach(scene, chunk.NewMesh(chonk))
 			// object.Attach(scene, object.Builder(chunk.NewMesh(chonk)).Position(vec3.New(32, 0, 0)).Create())
@@ -40,6 +40,7 @@ func main() {
 					Shadows:   true,
 				})).
 					Rotation(vec3.New(-30, 0, -30)).
+					Position(vec3.New(1, 2, 3)).
 					Create())
 		}),
 	)

@@ -28,8 +28,9 @@ func NewObjectEditor(target object.T, bounds collider.Box, editor T) *ObjectEdit
 		target: target,
 		Custom: editor,
 		Bounds: boundsCol,
-		// GUI:    objectEditorGui(),
+		GUI:    objectEditorGui(target),
 	})
+	edit.GUI.SetActive(false)
 	return edit
 }
 
@@ -39,6 +40,7 @@ func (e *ObjectEditor) Select(ev mouse.Event, collider collider.T) {
 	if e.Custom != nil {
 		e.Custom.SetActive(true)
 	}
+	e.GUI.SetActive(true)
 }
 
 func (e *ObjectEditor) Deselect(ev mouse.Event) bool {
@@ -49,6 +51,7 @@ func (e *ObjectEditor) Deselect(ev mouse.Event) bool {
 		}
 		e.Custom.SetActive(false)
 	}
+	e.GUI.SetActive(false)
 	return true
 }
 
