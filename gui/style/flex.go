@@ -29,7 +29,7 @@ type Shrink float32
 
 func (s Shrink) ApplyFlexShrink(fw FlexWidget) {
 	fw.Flex().StyleSetDisplay(flex.DisplayFlex)
-	fw.Flex().StyleSetFlexGrow(float32(s))
+	fw.Flex().StyleSetFlexShrink(float32(s))
 }
 
 type Align flex.Align

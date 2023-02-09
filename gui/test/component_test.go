@@ -1,19 +1,13 @@
 package test
 
 import (
-	"testing"
-
 	"github.com/johanhenriksson/goworld/gui/hooks"
 	"github.com/johanhenriksson/goworld/gui/node"
 	"github.com/johanhenriksson/goworld/gui/widget/rect"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
-
-func TestGUI(t *testing.T) {
-	RegisterFailHandler(Fail)
-	RunSpecs(t, "gui")
-}
 
 type ComponentProps struct{}
 
