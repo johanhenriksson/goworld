@@ -109,10 +109,11 @@ var TitlebarStyle = rect.Style{
 }
 
 var FrameStyle = rect.Style{
-	Color:      RGBA(0.1, 0.1, 0.1, 0.8),
-	Padding:    RectXY(10, 10),
-	Layout:     Column{},
-	AlignItems: AlignStart,
+	Color:        RGBA(0.1, 0.1, 0.1, 0.8),
+	Padding:      RectXY(10, 10),
+	Layout:       Column{},
+	AlignItems:   AlignStart,
+	AlignContent: AlignStretch,
 }
 
 var CloseButtonStyle = button.Style{

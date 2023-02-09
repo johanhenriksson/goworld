@@ -1,10 +1,13 @@
 package modal
 
 import (
+	"fmt"
+
 	"github.com/johanhenriksson/goworld/gui/node"
 	"github.com/johanhenriksson/goworld/gui/style"
 	"github.com/johanhenriksson/goworld/gui/widget/rect"
 	"github.com/johanhenriksson/goworld/gui/widget/window"
+	"github.com/johanhenriksson/goworld/util"
 )
 
 type Props struct {
@@ -20,7 +23,7 @@ func New(key string, props Props) node.T {
 				Title:    props.Title,
 				OnClose:  props.OnClose,
 				Floating: false,
-				Children: props.Children,
+				Children: util.MapIdx(props.Children, modalRow),
 			}),
 		},
 		Style: rect.Style{
@@ -33,5 +36,17 @@ func New(key string, props Props) node.T {
 			AlignContent:   style.AlignCenter,
 			AlignItems:     style.AlignCenter,
 		},
+	})
+}
+
+func modalRow(child node.T, index int) node.T {
+	return rect.New(fmt.Sprintf("row-%d", index), rect.Props{
+		Style: rect.Style{
+			Layout:  style.Row{},
+			Width:   style.Pct(100),
+			Basis:   style.Pct(100),
+			Padding: style.RectY(2),
+		},
+		Children: []node.T{child},
 	})
 }
