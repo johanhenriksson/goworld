@@ -167,12 +167,20 @@ func (r *renderer) Draw(args widget.DrawArgs, label T) {
 	}
 
 	args.Commands.Record(func(cmd command.Buffer) {
+		// set scissor bounds
+		scissor := cmd.CmdSetScissor(
+			int(args.Position.X*r.scale), int(args.Position.Y*r.scale),
+			int(label.Size().X*r.scale), int(label.Size().Y*r.scale))
+
 		cmd.CmdPushConstant(core1_0.StageAll, 0, &widget.Constants{
 			Viewport: args.ViewProj,
 			Model:    args.Transform,
 			Texture:  tex.ID,
 		})
 		mesh.Draw(cmd, 0)
+
+		// reset scissor
+		cmd.CmdSetScissor(scissor.Offset.X, scissor.Offset.Y, scissor.Extent.Width, scissor.Extent.Height)
 	})
 }
 

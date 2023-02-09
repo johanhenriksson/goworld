@@ -130,8 +130,21 @@ func (l *label) Draw(args widget.DrawArgs) {
 
 func (l *label) Flex() *flex.Node {
 	node := l.T.Flex()
-	node.SetMeasureFunc(l.Renderer.Measure)
+	node.SetMeasureFunc(l.measure)
 	return node
+}
+
+func (l *label) measure(node *flex.Node, width float32, widthMode flex.MeasureMode, height float32, heightMode flex.MeasureMode) flex.Size {
+	r := l.Renderer.Measure(node, width, widthMode, height, heightMode)
+
+	if widthMode == flex.MeasureModeExactly {
+		r.Width = width
+	}
+	if widthMode == flex.MeasureModeAtMost {
+		r.Width = math.Min(r.Width, width)
+	}
+
+	return r
 }
 
 //
@@ -180,12 +193,21 @@ func (l *label) KeyEvent(e keys.Event) {
 
 	if l.props.OnKeyUp != nil && e.Action() == keys.Release {
 		l.props.OnKeyUp(e)
+		if e.Handled() {
+			return
+		}
 	}
 	if l.props.OnKeyDown != nil && e.Action() == keys.Press {
 		l.props.OnKeyDown(e)
+		if e.Handled() {
+			return
+		}
 	}
 	if l.props.OnKeyChar != nil && e.Action() == keys.Char {
 		l.props.OnKeyChar(e)
+		if e.Handled() {
+			return
+		}
 	}
 
 	//
