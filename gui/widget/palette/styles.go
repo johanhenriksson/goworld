@@ -7,8 +7,7 @@ import (
 
 var SwatchStyle = rect.Style{
 	Grow:   Grow(0),
-	Shrink: Shrink(1),
-	Basis:  Pct(16),
+	Shrink: Shrink(0),
+	Basis:  Pct(20),
 	Height: Px(20),
-	Margin: Px(2),
 }

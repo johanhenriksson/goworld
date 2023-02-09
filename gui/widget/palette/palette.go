@@ -6,6 +6,7 @@ import (
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/gui/hooks"
 	"github.com/johanhenriksson/goworld/gui/node"
+	"github.com/johanhenriksson/goworld/gui/style"
 	. "github.com/johanhenriksson/goworld/gui/style"
 	"github.com/johanhenriksson/goworld/gui/widget/label"
 	"github.com/johanhenriksson/goworld/gui/widget/rect"
@@ -44,8 +45,9 @@ func render(props Props) node.T {
 	rows := util.MapIdx(util.Chunks(colors, perRow), func(colors []node.T, i int) node.T {
 		return rect.New(fmt.Sprintf("row%d", i), rect.Props{
 			Style: rect.Style{
-				Width:  Pct(100),
-				Layout: Row{},
+				Width:          Pct(100),
+				Layout:         Row{},
+				JustifyContent: style.JustifySpaceBetween,
 			},
 			Children: colors,
 		})
@@ -59,7 +61,7 @@ func render(props Props) node.T {
 			rect.New("selected", rect.Props{
 				Style: rect.Style{
 					Layout:     Row{},
-					MaxWidth:   Pct(100),
+					Width:      Pct(100),
 					AlignItems: AlignCenter,
 				},
 				Children: []node.T{
@@ -74,7 +76,7 @@ func render(props Props) node.T {
 						Style: rect.Style{
 							Color:  selected,
 							Height: Px(20),
-							Basis:  Pct(18),
+							Basis:  Pct(20),
 							Margin: Rect{
 								Bottom: 4,
 							},
@@ -83,9 +85,7 @@ func render(props Props) node.T {
 				},
 			}),
 			rect.New("grid", rect.Props{
-				Style: rect.Style{
-					Margin: Px(-2),
-				},
+				Style:    rect.Style{},
 				Children: rows,
 			}),
 		},
