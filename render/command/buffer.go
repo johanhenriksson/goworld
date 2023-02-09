@@ -32,8 +32,8 @@ type Buffer interface {
 	CmdBeginRenderPass(pass renderpass.T, framebuffer framebuffer.T)
 	CmdNextSubpass()
 	CmdEndRenderPass()
-	CmdSetViewport(x, y, w, h int)
-	CmdSetScissor(x, y, w, h int)
+	CmdSetViewport(x, y, w, h int) core1_0.Viewport
+	CmdSetScissor(x, y, w, h int) core1_0.Rect2D
 	CmdPushConstant(stages core1_0.ShaderStageFlags, offset int, value any)
 	CmdImageBarrier(srcMask, dstMask core1_0.PipelineStageFlags, image image.T, oldLayout, newLayout core1_0.ImageLayout, aspects core1_0.ImageAspectFlags)
 	CmdCopyBufferToImage(source buffer.T, dst image.T, layout core1_0.ImageLayout)
@@ -51,6 +51,8 @@ type buf struct {
 	pipeline pipeline.T
 	vertex   bufferBinding
 	index    bufferBinding
+	scissor  core1_0.Rect2D
+	viewport core1_0.Viewport
 }
 
 type bufferBinding struct {
@@ -176,32 +178,38 @@ func (b *buf) CmdNextSubpass() {
 	b.ptr.CmdNextSubpass(core1_0.SubpassContentsInline)
 }
 
-func (b *buf) CmdSetViewport(x, y, w, h int) {
+func (b *buf) CmdSetViewport(x, y, w, h int) core1_0.Viewport {
+	prev := b.viewport
+	b.viewport = core1_0.Viewport{
+		X:        float32(x),
+		Y:        float32(y),
+		Width:    float32(w),
+		Height:   float32(h),
+		MinDepth: 0,
+		MaxDepth: 1,
+	}
 	b.ptr.CmdSetViewport([]core1_0.Viewport{
-		{
-			X:        float32(x),
-			Y:        float32(y),
-			Width:    float32(w),
-			Height:   float32(h),
-			MinDepth: 0,
-			MaxDepth: 1,
-		},
+		b.viewport,
 	})
+	return prev
 }
 
-func (b *buf) CmdSetScissor(x, y, w, h int) {
-	b.ptr.CmdSetScissor([]core1_0.Rect2D{
-		{
-			Offset: core1_0.Offset2D{
-				X: x,
-				Y: y,
-			},
-			Extent: core1_0.Extent2D{
-				Width:  w,
-				Height: h,
-			},
+func (b *buf) CmdSetScissor(x, y, w, h int) core1_0.Rect2D {
+	prev := b.scissor
+	b.scissor = core1_0.Rect2D{
+		Offset: core1_0.Offset2D{
+			X: x,
+			Y: y,
 		},
+		Extent: core1_0.Extent2D{
+			Width:  w,
+			Height: h,
+		},
+	}
+	b.ptr.CmdSetScissor([]core1_0.Rect2D{
+		b.scissor,
 	})
+	return prev
 }
 
 func (b *buf) CmdPushConstant(stages core1_0.ShaderStageFlags, offset int, value any) {
