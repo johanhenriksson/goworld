@@ -12,7 +12,20 @@ import (
 	"github.com/johanhenriksson/goworld/gui/widget/rect"
 	"github.com/johanhenriksson/goworld/gui/widget/textbox"
 	"github.com/johanhenriksson/goworld/math/vec3"
+	"github.com/johanhenriksson/goworld/render/color"
 )
+
+func SidebarItem(key string, children []node.T) node.T {
+	return rect.New(key, rect.Props{
+		Style: rect.Style{
+			Layout:     style.Row{},
+			AlignItems: style.AlignStart,
+			Width:      style.Pct(100),
+			Padding:    style.RectY(2),
+		},
+		Children: children,
+	})
+}
 
 func objectEditorGui(target object.T) gui.Fragment {
 	return gui.NewFragment(gui.FragmentArgs{
@@ -30,8 +43,13 @@ func objectEditorGui(target object.T) gui.Fragment {
 					label.New("name", label.Props{
 						Text: target.Name(),
 					}),
-					Vec3Editor("position", Vec3EditorProps{
-						Value: target.Transform().WorldPosition(),
+					SidebarItem("position", []node.T{
+						Vec3Editor("position", Vec3EditorProps{
+							Value: target.Transform().WorldPosition(),
+						}),
+					}),
+					SidebarItem("test", []node.T{
+						FloatEditor("test", FloatEditorProps{Label: "F", Value: 13.37}),
 					}),
 				},
 			})
@@ -60,6 +78,9 @@ func FloatEditor(key string, props FloatEditorProps) node.T {
 			Style: rect.Style{
 				Layout:     style.Row{},
 				AlignItems: style.AlignCenter,
+				Basis:      style.Pct(100),
+				Grow:       style.Grow(0),
+				Shrink:     style.Shrink(1),
 			},
 			Children: []node.T{
 				label.New("label", label.Props{
@@ -70,9 +91,20 @@ func FloatEditor(key string, props FloatEditorProps) node.T {
 					},
 				}),
 				textbox.New("value", textbox.Props{
-					Style:    textbox.DefaultStyle,
 					Text:     value,
 					OnChange: onChange,
+					Style: textbox.Style{
+						Text: label.Style{
+							Color: color.Black,
+						},
+						Bg: rect.Style{
+							Color:   color.White,
+							Padding: style.RectXY(4, 2),
+							Basis:   style.Pct(100),
+							Shrink:  style.Shrink(1),
+							Grow:    style.Grow(1),
+						},
+					},
 				}),
 			},
 		})
@@ -91,7 +123,9 @@ func Vec3Editor(key string, props Vec3EditorProps) node.T {
 				Layout:         style.Row{},
 				AlignItems:     style.AlignCenter,
 				JustifyContent: style.JustifySpaceBetween,
-				Width:          style.Pct(100),
+				Grow:           style.Grow(1),
+				Shrink:         style.Shrink(1),
+				Basis:          style.Pct(100),
 			},
 			Children: []node.T{
 				FloatEditor("x", FloatEditorProps{

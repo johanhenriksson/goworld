@@ -9,12 +9,13 @@ import (
 
 var DefaultStyle = Style{
 	Text: label.Style{
-		Width: Pct(100),
 		Color: color.Black,
 	},
 	Bg: rect.Style{
 		Color:   color.White,
 		Padding: RectXY(4, 2),
-		Margin:  RectY(5),
+		Basis:   Pct(100),
+		Shrink:  Shrink(1),
+		Grow:    Grow(1),
 	},
 }

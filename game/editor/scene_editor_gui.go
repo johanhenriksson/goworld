@@ -100,6 +100,7 @@ func makeSidebar() node.T {
 		OnMouseDown: gui.ConsumeMouse,
 		Style: rect.Style{
 			Layout:  style.Column{},
+			Grow:    style.Grow(0),
 			Width:   style.Px(200),
 			Height:  style.Pct(100),
 			Color:   color.RGBA(0.1, 0.1, 0.11, 0.85),
