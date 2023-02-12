@@ -21,6 +21,10 @@ type shader_module struct {
 }
 
 func NewModule(device device.T, path string, stage core1_0.ShaderStageFlags) Module {
+	if device == nil {
+		panic("device is nil")
+	}
+
 	bytecode, err := LoadOrCompile(path)
 	if err != nil {
 		panic(err)

@@ -9,6 +9,7 @@ import (
 type T[K Key, V Value] interface {
 	Submit()
 	Fetch(K) V
+	FetchSync(K) V
 	Delete(V)
 	Tick(int)
 	Destroy()
@@ -52,6 +53,12 @@ func New[K Key, V Value](backend Backend[K, V]) T[K, V] {
 		worker:  command.NewThreadWorker(backend.Name(), 100, false),
 	}
 	return c
+}
+
+func (c *cache[K, V]) FetchSync(key K) V {
+	c.Fetch(key)
+	c.worker.Flush()
+	return c.Fetch(key)
 }
 
 func (c *cache[K, V]) Fetch(key K) V {

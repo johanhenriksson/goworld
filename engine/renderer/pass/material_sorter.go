@@ -5,9 +5,13 @@ import (
 	"github.com/johanhenriksson/goworld/engine/renderer/uniform"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/command"
+	"github.com/johanhenriksson/goworld/render/descriptor"
 	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/renderpass"
+	"github.com/johanhenriksson/goworld/render/shader"
+	"github.com/johanhenriksson/goworld/render/vertex"
 	"github.com/johanhenriksson/goworld/render/vulkan"
+	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
 type MaterialTransform func(*material.Def) *material.Def
@@ -40,7 +44,7 @@ func (m *MaterialSorter) Destroy() {
 	}
 }
 
-func (m *MaterialSorter) Load(def *material.Def) {
+func (m *MaterialSorter) Load(def *material.Def) bool {
 	id := material.Hash(def)
 	if def == nil {
 		def = m.defaultMat
@@ -49,8 +53,49 @@ func (m *MaterialSorter) Load(def *material.Def) {
 	// apply material transform
 	def = m.TransformFn(def)
 
-	mat := material.FromDef(m.target.Device(), m.target.Pool(), m.pass, def)
+	desc := &material.Descriptors{
+		Camera: &descriptor.Uniform[uniform.Camera]{
+			Stages: core1_0.StageAll,
+		},
+		Objects: &descriptor.Storage[uniform.Object]{
+			Stages: core1_0.StageAll,
+			Size:   2000,
+		},
+		Textures: &descriptor.SamplerArray{
+			Stages: core1_0.StageFragment,
+			Count:  100,
+		},
+	}
+
+	// read vertex pointers from vertex format
+	pointers := vertex.ParsePointers(def.VertexFormat)
+
+	// fetch shader from cache
+	shader := m.target.Shaders().Fetch(shader.NewRef(def.Shader))
+	if shader == nil {
+		// pending
+		return false
+	}
+
+	// create material
+	mat := material.New(
+		m.target.Device(),
+		material.Args{
+			Shader:     shader,
+			Pass:       m.pass,
+			Subpass:    def.Subpass,
+			Pointers:   pointers,
+			DepthTest:  def.DepthTest,
+			DepthWrite: def.DepthWrite,
+			Primitive:  def.Primitive,
+			CullMode:   def.CullMode,
+		},
+		desc)
+
 	m.cache[id] = mat.InstantiateMany(m.target.Pool(), m.target.Frames())
+
+	// indicate that the material is ready to be used
+	return true
 }
 
 func (m *MaterialSorter) Draw(cmds command.Recorder, args render.Args, meshes []mesh.T) {
@@ -73,7 +118,9 @@ func (m *MaterialSorter) DrawCamera(cmds command.Recorder, args render.Args, cam
 		mid := msh.MaterialID()
 		if _, exists := m.cache[mid]; !exists {
 			// initialize material
-			m.Load(msh.Material())
+			if !m.Load(msh.Material()) {
+				continue
+			}
 		}
 		meshGroups[mid] = append(meshGroups[mid], msh)
 	}

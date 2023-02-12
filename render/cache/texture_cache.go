@@ -24,13 +24,6 @@ type textures struct {
 }
 
 func (t *textures) Instantiate(ref texture.Ref, callback func(texture.T)) {
-	// special case that allows instantiated textures to be used as references
-	// ideally the Ref interface would be changed to accomodate this
-	if tex, isTexture := ref.(texture.T); isTexture {
-		callback(tex)
-		return
-	}
-
 	// load image data
 	img := ref.Load()
 

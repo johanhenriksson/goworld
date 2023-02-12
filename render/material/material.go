@@ -43,8 +43,12 @@ type Args struct {
 }
 
 func New[D descriptor.Set](device device.T, args Args, descriptors D) T[D] {
-	// instantiate shader modules
-	// ... this could be cached ...
+	if device == nil {
+		panic("device is nil")
+	}
+	if args.Shader == nil {
+		panic("shader is nil")
+	}
 
 	for i, ptr := range args.Pointers {
 		if index, kind, exists := args.Shader.Input(ptr.Name); exists {
@@ -99,7 +103,6 @@ func (m *material[D]) Destroy() {
 	m.dlayout.Destroy()
 	m.pipe.Destroy()
 	m.layout.Destroy()
-	m.shader.Destroy()
 }
 
 func (m *material[D]) Instantiate(pool descriptor.Pool) Instance[D] {

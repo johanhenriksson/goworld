@@ -7,12 +7,12 @@ import (
 	"github.com/johanhenriksson/goworld/math/vec4"
 	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/descriptor"
-	"github.com/johanhenriksson/goworld/render/device"
 	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/pipeline"
 	"github.com/johanhenriksson/goworld/render/renderpass"
 	"github.com/johanhenriksson/goworld/render/shader"
 	"github.com/johanhenriksson/goworld/render/vertex"
+	"github.com/johanhenriksson/goworld/render/vulkan"
 
 	"github.com/vkngwrapper/core/v2/core1_0"
 )
@@ -40,11 +40,11 @@ type LightConst struct {
 
 type LightShader material.Instance[*LightDescriptors]
 
-func NewLightShader(device device.T, pool descriptor.Pool, pass renderpass.T) LightShader {
+func NewLightShader(target vulkan.Target, pool descriptor.Pool, pass renderpass.T) LightShader {
 	mat := material.New(
-		device,
+		target.Device(),
 		material.Args{
-			Shader:   shader.New(device, "vk/light"),
+			Shader:   target.Shaders().FetchSync(shader.NewRef("vk/light")),
 			Pass:     pass,
 			Subpass:  LightingSubpass,
 			Pointers: vertex.ParsePointers(vertex.T{}),

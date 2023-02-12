@@ -182,7 +182,7 @@ func NewGeometryPass(
 
 	quad := vertex.ScreenQuad("geometry-pass-quad")
 
-	lightsh := NewLightShader(target.Device(), target.Pool(), pass)
+	lightsh := NewLightShader(target, target.Pool(), pass)
 	lightDesc := lightsh.Descriptors()
 
 	lightDesc.Diffuse.Set(gbuffer.Diffuse())

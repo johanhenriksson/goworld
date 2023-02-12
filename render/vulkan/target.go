@@ -32,4 +32,5 @@ type Target interface {
 	Pool() descriptor.Pool
 	Meshes() cache.MeshCache
 	Textures() cache.TextureCache
+	Shaders() cache.ShaderCache
 }

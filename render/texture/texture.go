@@ -1,8 +1,6 @@
 package texture
 
 import (
-	osimage "image"
-
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render/device"
 	"github.com/johanhenriksson/goworld/render/image"
@@ -17,10 +15,6 @@ type T interface {
 	Image() image.T
 	View() image.View
 	Size() vec3.T
-
-	Key() string
-	Version() int
-	Load() *osimage.RGBA
 }
 
 type Args struct {
@@ -145,12 +139,3 @@ func (t *vktexture) Destroy() {
 
 	t.device = nil
 }
-
-//
-// implement Ref interface to allow textures to be used as texture references
-// this simplifies things like passing buffer textures to UI components
-//
-
-func (r *vktexture) Key() string         { return r.Args.Key }
-func (r *vktexture) Version() int        { return 1 }
-func (r *vktexture) Load() *osimage.RGBA { return nil }

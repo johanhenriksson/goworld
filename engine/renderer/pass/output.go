@@ -69,7 +69,7 @@ func NewOutputPass(target vulkan.Target, geometry GeometryBuffer) *OutputPass {
 	p.material = material.New(
 		target.Device(),
 		material.Args{
-			Shader:     shader.New(target.Device(), "vk/output"),
+			Shader:     target.Shaders().FetchSync(shader.NewRef("vk/output")),
 			Pass:       p.pass,
 			Pointers:   vertex.ParsePointers(vertex.T{}),
 			DepthTest:  false,

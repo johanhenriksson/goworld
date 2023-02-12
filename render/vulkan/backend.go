@@ -25,6 +25,7 @@ type T interface {
 	Pool() descriptor.Pool
 	Meshes() cache.MeshCache
 	Textures() cache.TextureCache
+	Shaders() cache.ShaderCache
 }
 
 type backend struct {
@@ -40,6 +41,7 @@ type backend struct {
 	pool     descriptor.Pool
 	meshes   cache.MeshCache
 	textures cache.TextureCache
+	shaders  cache.ShaderCache
 }
 
 func New(appName string, deviceIndex int) T {
@@ -63,6 +65,7 @@ func New(appName string, deviceIndex int) T {
 	// init caches
 	meshes := cache.NewMeshCache(device, transfer)
 	textures := cache.NewTextureCache(device, transfer)
+	shaders := cache.NewShaderCache(device)
 
 	pool := descriptor.NewPool(device, DefaultDescriptorPools)
 
@@ -77,6 +80,7 @@ func New(appName string, deviceIndex int) T {
 		workers:  workers,
 		meshes:   meshes,
 		textures: textures,
+		shaders:  shaders,
 		pool:     pool,
 	}
 }
@@ -88,6 +92,7 @@ func (b *backend) Frames() int          { return b.frames }
 func (b *backend) Pool() descriptor.Pool        { return b.pool }
 func (b *backend) Meshes() cache.MeshCache      { return b.meshes }
 func (b *backend) Textures() cache.TextureCache { return b.textures }
+func (b *backend) Shaders() cache.ShaderCache   { return b.shaders }
 
 func (b *backend) Transferer() command.Worker {
 	return b.transfer
@@ -120,6 +125,7 @@ func (b *backend) Destroy() {
 	b.pool.Destroy()
 	b.meshes.Destroy()
 	b.textures.Destroy()
+	b.shaders.Destroy()
 
 	// destroy workers
 	b.transfer.Destroy()
