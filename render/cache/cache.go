@@ -136,6 +136,7 @@ func (c *cache[K, V]) Tick(frameIndex int) {
 }
 
 func (c *cache[K, V]) Destroy() {
+	c.worker.Flush()
 	for _, queue := range c.remove {
 		for _, value := range queue {
 			c.backend.Delete(value)
