@@ -126,8 +126,8 @@ func (p *GuiPass) Record(cmds command.Recorder, args render.Args, scene object.T
 	})
 
 	// set everything to white
-	white := p.target.Textures().Fetch(color.White)
-	if white != nil {
+	white, textureReady := p.target.Textures().Fetch(color.White)
+	if textureReady {
 		clear := make([]texture.T, mat.Descriptors().Textures.Count)
 		for i := range clear {
 			clear[i] = white

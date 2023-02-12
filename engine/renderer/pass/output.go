@@ -113,8 +113,8 @@ func (p *OutputPass) Record(cmds command.Recorder, args render.Args, scene objec
 		cmd.CmdBeginRenderPass(p.pass, p.fbufs[ctx.Index%len(p.fbufs)])
 	})
 
-	quad := p.target.Meshes().Fetch(p.quad)
-	if quad != nil {
+	quad, meshReady := p.target.Meshes().Fetch(p.quad)
+	if meshReady {
 		cmds.Record(func(cmd command.Buffer) {
 
 			p.desc[ctx.Index%len(p.desc)].Bind(cmd)

@@ -103,8 +103,8 @@ func (r *renderer) Draw(args widget.DrawArgs, image T) {
 		r.onLoad(tex.Texture)
 	}
 
-	mesh := args.Meshes.Fetch(r.quad.Mesh())
-	if mesh == nil {
+	mesh, meshReady := args.Meshes.Fetch(r.quad.Mesh())
+	if !meshReady {
 		return
 	}
 

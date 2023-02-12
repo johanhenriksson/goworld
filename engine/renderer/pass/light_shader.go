@@ -40,7 +40,7 @@ type LightConst struct {
 
 type LightShader material.Instance[*LightDescriptors]
 
-func NewLightShader(target vulkan.Target, pool descriptor.Pool, pass renderpass.T) LightShader {
+func NewLightShader(target vulkan.Target, pass renderpass.T) LightShader {
 	mat := material.New(
 		target.Device(),
 		material.Args{
@@ -77,5 +77,5 @@ func NewLightShader(target vulkan.Target, pool descriptor.Pool, pass renderpass.
 				Count:  16,
 			},
 		})
-	return mat.Instantiate(pool)
+	return mat.Instantiate(target.Pool())
 }

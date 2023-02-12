@@ -50,8 +50,9 @@ func (s *samplers) assignHandle(ref texture.Ref) *SamplerHandle {
 
 func (s *samplers) Fetch(ref texture.Ref) *SamplerHandle {
 	handle := s.assignHandle(ref)
-	handle.Texture = s.textures.Fetch(ref)
-	if handle.Texture != nil {
+	var exists bool
+	handle.Texture, exists = s.textures.Fetch(ref)
+	if exists {
 		s.desc.Set(handle.ID, handle.Texture)
 		return handle
 	}

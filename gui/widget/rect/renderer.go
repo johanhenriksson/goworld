@@ -61,8 +61,8 @@ func (r *renderer) drawSelf(args widget.DrawArgs, rect T) {
 		r.invalid = false
 	}
 
-	mesh := args.Meshes.Fetch(r.mesh.Mesh())
-	if mesh == nil {
+	mesh, meshReady := args.Meshes.Fetch(r.mesh.Mesh())
+	if !meshReady {
 		// if the mesh is not available, dont draw anything this frame.
 		return
 	}

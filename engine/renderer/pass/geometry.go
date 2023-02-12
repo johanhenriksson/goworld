@@ -182,7 +182,7 @@ func NewGeometryPass(
 
 	quad := vertex.ScreenQuad("geometry-pass-quad")
 
-	lightsh := NewLightShader(target, target.Pool(), pass)
+	lightsh := NewLightShader(target, pass)
 	lightDesc := lightsh.Descriptors()
 
 	lightDesc.Diffuse.Set(gbuffer.Diffuse())
@@ -263,8 +263,9 @@ func (p *GeometryPass) Record(cmds command.Recorder, args render.Args, scene obj
 	lightDesc := p.light.Descriptors()
 	lightDesc.Camera.Set(camera)
 
-	white := p.target.Textures().Fetch(color.White)
-	if white != nil {
+	// ambient lights use a plain white texture as their shadow map
+	white, shadowTexReady := p.target.Textures().Fetch(color.White)
+	if shadowTexReady {
 		lightDesc.Shadow.Set(0, white)
 
 		ambient := light.NewAmbient(color.White, 0.33)
@@ -284,8 +285,8 @@ func (p *GeometryPass) Record(cmds command.Recorder, args render.Args, scene obj
 }
 
 func (p *GeometryPass) DrawLight(cmds command.Recorder, args render.Args, lit light.T) error {
-	vkmesh := p.target.Meshes().Fetch(p.quad)
-	if vkmesh == nil {
+	vkmesh, meshReady := p.target.Meshes().Fetch(p.quad)
+	if !meshReady {
 		return nil
 	}
 

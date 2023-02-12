@@ -8,7 +8,7 @@ import (
 
 type T[K Key, V Value] interface {
 	Submit()
-	Fetch(K) V
+	Fetch(K) (V, bool)
 	FetchSync(K) V
 	Delete(V)
 	Tick(int)
@@ -56,12 +56,18 @@ func New[K Key, V Value](backend Backend[K, V]) T[K, V] {
 }
 
 func (c *cache[K, V]) FetchSync(key K) V {
-	c.Fetch(key)
-	c.worker.Flush()
-	return c.Fetch(key)
+	v, exists := c.Fetch(key)
+	if !exists {
+		c.worker.Flush()
+		v, exists = c.Fetch(key)
+		if !exists {
+			panic("resource should exist")
+		}
+	}
+	return v
 }
 
-func (c *cache[K, V]) Fetch(key K) V {
+func (c *cache[K, V]) Fetch(key K) (V, bool) {
 	var empty V
 
 	ln, hit := c.data[key.Key()]
@@ -91,10 +97,10 @@ func (c *cache[K, V]) Fetch(key K) V {
 
 	// not available yet
 	if !ln.ready {
-		return empty
+		return empty, false
 	}
 
-	return ln.value
+	return ln.value, true
 }
 
 func (c *cache[K, V]) Delete(value V) {
