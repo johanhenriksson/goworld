@@ -14,23 +14,29 @@ var (
 	// One is the unit vector
 	One = T{1, 1, 1}
 
-	// UnitX is the unit vector in the X direction
+	// UnitX is the unit vector in the X direction (right)
 	UnitX = T{1, 0, 0}
+	Right = T{1, 0, 0}
 
-	// UnitXN is the unit vector in the negative X direction
+	// UnitXN is the unit vector in the negative X direction (left)
 	UnitXN = T{-1, 0, 0}
+	Left   = T{-1, 0, 0}
 
-	// UnitY is the unit vector in the Y direction
+	// UnitY is the unit vector in the Y direction (up)
 	UnitY = T{0, 1, 0}
+	Up    = T{0, 1, 0}
 
-	// UnitYN is the unit vector in the negative Y direction
+	// UnitYN is the unit vector in the negative Y direction (down)
 	UnitYN = T{0, -1, 0}
+	Down   = T{0, -1, 0}
 
-	// UnitZ is the unit vector in the Z direction
-	UnitZ = T{0, 0, 1}
+	// UnitZ is the unit vector in the Z direction (forward)
+	UnitZ   = T{0, 0, 1}
+	Forward = T{0, 0, 1}
 
-	// UnitZN is the unit vector in the negative Z direction
-	UnitZN = T{0, 0, -1}
+	// UnitZN is the unit vector in the negative Z direction (backward)
+	UnitZN   = T{0, 0, -1}
+	Backward = T{0, 0, 1}
 
 	InfPos = T{math.InfPos, math.InfPos, math.InfPos}
 	InfNeg = T{math.InfNeg, math.InfNeg, math.InfNeg}

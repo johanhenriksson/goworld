@@ -147,7 +147,7 @@ void main() {
         // directional lights store the direction in the position uniform
         // i.e. the light coming from the position, shining towards the origin
         vec3 lightDir = normalize(light.Position.xyz);
-        vec3 surfaceToLight = -light.Position.xyz;
+        vec3 surfaceToLight = -lightDir;
         contrib = max(dot(surfaceToLight, normal), 0.0);
 
         // angle-dependent bias

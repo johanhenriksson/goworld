@@ -9,6 +9,7 @@ import (
 	"github.com/johanhenriksson/goworld/engine/renderer"
 	"github.com/johanhenriksson/goworld/game/chunk"
 	"github.com/johanhenriksson/goworld/game/editor"
+	"github.com/johanhenriksson/goworld/geometry/cyllinder"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render/color"
 )
@@ -30,6 +31,16 @@ func main() {
 			// chonk := chunk.Generate(generator, 32, 0, 0)
 			// object.Attach(scene, chunk.NewMesh(chonk))
 			// object.Attach(scene, object.Builder(chunk.NewMesh(chonk)).Position(vec3.New(32, 0, 0)).Create())
+
+			object.Attach(scene,
+				object.Builder(cyllinder.New(cyllinder.Args{
+					Radius:   5,
+					Height:   10,
+					Segments: 6,
+					Color:    color.Red,
+				})).
+					Position(vec3.New(0, 60, 0)).
+					Create())
 
 			// directional light
 			object.Attach(

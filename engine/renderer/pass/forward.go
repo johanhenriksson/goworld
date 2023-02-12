@@ -108,6 +108,7 @@ func NewForwardPass(
 			VertexFormat: vertex.C{},
 			DepthTest:    true,
 			DepthWrite:   true,
+			CullMode:     core1_0.CullModeBack,
 		}),
 	}
 }

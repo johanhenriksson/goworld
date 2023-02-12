@@ -7,6 +7,7 @@
 layout (location = 0) in vec4 color0;
 layout (location = 1) in vec3 normal0;
 layout (location = 2) in vec3 position0;
+layout (location = 3) in vec3 wnormal;
 
 // Return Output
 layout (location = 0) out vec4 diffuse;
@@ -15,7 +16,13 @@ layout (location = 2) out vec4 position;
 
 void main() 
 {
-    diffuse = color0;
+    vec3 lightPos = vec3(0.25,-0.43,0.86);
+
+    vec3 lightDir = normalize(lightPos);
+    vec3 surfaceToLight = -lightDir;
+    float contrib = max(dot(surfaceToLight, wnormal), 0.2);
+
+    diffuse = vec4(color0.rgb * contrib, color0.a);
 
     vec4 pack_normal = vec4((normal0 + 1.0) / 2.0, 1);
     normal = pack_normal;

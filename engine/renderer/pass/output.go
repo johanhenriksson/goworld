@@ -53,7 +53,7 @@ func NewOutputPass(target vulkan.Target, geometry GeometryBuffer) *OutputPass {
 				Name:        OutputAttachment,
 				Allocator:   attachment.FromImageArray(target.Surfaces()),
 				Format:      target.SurfaceFormat(),
-				LoadOp:      core1_0.AttachmentLoadOpClear,
+				LoadOp:      core1_0.AttachmentLoadOpDontCare,
 				FinalLayout: khr_swapchain.ImageLayoutPresentSrc,
 				Usage:       core1_0.ImageUsageInputAttachment,
 			},
