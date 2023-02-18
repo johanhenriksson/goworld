@@ -112,24 +112,24 @@ func (m *MaterialSorter) Draw(cmds command.Recorder, args render.Args, meshes []
 }
 
 func (m *MaterialSorter) DrawCamera(cmds command.Recorder, args render.Args, camera uniform.Camera, meshes []mesh.T) {
-	// sort meshGroups by material
+	// sort meshes by material
 	meshGroups := map[uint64][]mesh.T{}
 	for _, msh := range meshes {
-		mid := msh.MaterialID()
-		if _, exists := m.cache[mid]; !exists {
+		matId := msh.MaterialID()
+		if _, exists := m.cache[matId]; !exists {
 			// initialize material
 			if !m.Load(msh.Material()) {
 				continue
 			}
 		}
-		meshGroups[mid] = append(meshGroups[mid], msh)
+		meshGroups[matId] = append(meshGroups[matId], msh)
 	}
 
 	descriptors := make([]uniform.Object, len(meshes))
 
 	index := 0
-	for mid, meshes := range meshGroups {
-		mat := m.cache[mid][args.Context.Index]
+	for matId, matMeshes := range meshGroups {
+		mat := m.cache[matId][args.Context.Index]
 		mat.Descriptors().Camera.Set(camera)
 
 		cmds.Record(func(cmd command.Buffer) {
@@ -137,7 +137,7 @@ func (m *MaterialSorter) DrawCamera(cmds command.Recorder, args render.Args, cam
 		})
 
 		begin := index
-		for _, msh := range meshes {
+		for _, msh := range matMeshes {
 			vkmesh, meshReady := m.target.Meshes().Fetch(msh.Mesh())
 			if !meshReady {
 				continue
@@ -155,6 +155,6 @@ func (m *MaterialSorter) DrawCamera(cmds command.Recorder, args render.Args, cam
 			index++
 		}
 
-		mat.Descriptors().Objects.SetRange(0, descriptors[begin:index-begin])
+		mat.Descriptors().Objects.SetRange(0, descriptors[begin:index])
 	}
 }
