@@ -13,17 +13,12 @@ import (
 	"github.com/x448/float16"
 )
 
-type BufferOutput interface {
-}
-
 type GeometryBuffer interface {
-	BufferOutput
+	RenderTarget
 
-	Diffuse() image.View
-	Normal() image.View
-	Position() image.View
-	Depth() image.View
-	Output() image.View
+	Diffuse() image.T
+	Normal() image.T
+	Position() image.T
 	Destroy()
 
 	SamplePosition(cursor vec2.T) (vec3.T, bool)
@@ -32,51 +27,70 @@ type GeometryBuffer interface {
 }
 
 type gbuffer struct {
-	width  int
-	height int
+	RenderTarget
 
-	diffuse  image.View
-	normal   image.View
-	position image.View
-	output   image.View
-	depth    image.View
+	diffuse  image.T
+	normal   image.T
+	position image.T
 
 	normalBuf   image.T
 	positionBuf image.T
 }
 
 func NewGbuffer(
-	target vulkan.Target,
-	diffuse, normal, position, output, depth image.View,
-) GeometryBuffer {
-	positionBuf, err := image.New(target.Device(), image.Args{
-		Type:   core1_0.ImageType2D,
-		Width:  position.Image().Width(),
-		Height: position.Image().Height(),
-		Format: position.Format(),
-		Tiling: core1_0.ImageTilingLinear,
-		Usage:  core1_0.ImageUsageTransferDst,
-		Memory: core1_0.MemoryPropertyHostVisible | core1_0.MemoryPropertyHostCoherent,
-	})
+	app vulkan.App,
+	rt RenderTarget,
+) (GeometryBuffer, error) {
+	diffuseFmt := core1_0.FormatR8G8B8A8UnsignedNormalized
+	normalFmt := core1_0.FormatR8G8B8A8UnsignedNormalized
+	positionFmt := core1_0.FormatR16G16B16A16SignedFloat
+	usage := core1_0.ImageUsageSampled | core1_0.ImageUsageColorAttachment | core1_0.ImageUsageInputAttachment
+
+	diffuse, err := image.New2D(app.Device(), "diffuse", rt.Width(), rt.Height(), diffuseFmt, usage)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
-	normalBuf, err := image.New(target.Device(), image.Args{
+	normal, err := image.New2D(app.Device(), "normal", rt.Width(), rt.Height(), normalFmt, usage|core1_0.ImageUsageTransferSrc)
+	if err != nil {
+		return nil, err
+	}
+
+	position, err := image.New2D(app.Device(), "position", rt.Width(), rt.Height(), positionFmt, usage|core1_0.ImageUsageTransferSrc)
+	if err != nil {
+		return nil, err
+	}
+
+	positionBuf, err := image.New(app.Device(), image.Args{
 		Type:   core1_0.ImageType2D,
-		Width:  normal.Image().Width(),
-		Height: normal.Image().Height(),
-		Format: normal.Format(),
+		Key:    "positionBuffer",
+		Width:  rt.Width(),
+		Height: rt.Height(),
+		Format: positionFmt,
 		Tiling: core1_0.ImageTilingLinear,
 		Usage:  core1_0.ImageUsageTransferDst,
 		Memory: core1_0.MemoryPropertyHostVisible | core1_0.MemoryPropertyHostCoherent,
 	})
 	if err != nil {
-		panic(err)
+		return nil, err
+	}
+
+	normalBuf, err := image.New(app.Device(), image.Args{
+		Type:   core1_0.ImageType2D,
+		Key:    "normalBuffer",
+		Width:  rt.Width(),
+		Height: rt.Height(),
+		Format: normalFmt,
+		Tiling: core1_0.ImageTilingLinear,
+		Usage:  core1_0.ImageUsageTransferDst,
+		Memory: core1_0.MemoryPropertyHostVisible | core1_0.MemoryPropertyHostCoherent,
+	})
+	if err != nil {
+		return nil, err
 	}
 
 	// move images to ImageLayoutGeneral to avoid errors on first copy
-	worker := target.Transferer()
+	worker := app.Transferer()
 	worker.Queue(func(b command.Buffer) {
 		b.CmdImageBarrier(core1_0.PipelineStageTopOfPipe, core1_0.PipelineStageTransfer, positionBuf, core1_0.ImageLayoutUndefined, core1_0.ImageLayoutGeneral, core1_0.ImageAspectColor)
 		b.CmdImageBarrier(core1_0.PipelineStageTopOfPipe, core1_0.PipelineStageTransfer, normalBuf, core1_0.ImageLayoutUndefined, core1_0.ImageLayoutGeneral, core1_0.ImageAspectColor)
@@ -86,35 +100,30 @@ func NewGbuffer(
 	})
 
 	return &gbuffer{
-		width:  target.Width(),
-		height: target.Height(),
+		RenderTarget: rt,
 
 		diffuse:  diffuse,
 		normal:   normal,
 		position: position,
-		depth:    depth,
-		output:   output,
 
 		positionBuf: positionBuf,
 		normalBuf:   normalBuf,
-	}
+	}, nil
 }
 
-func (b *gbuffer) Diffuse() image.View  { return b.diffuse }
-func (b *gbuffer) Normal() image.View   { return b.normal }
-func (b *gbuffer) Position() image.View { return b.position }
-func (b *gbuffer) Depth() image.View    { return b.depth }
-func (b *gbuffer) Output() image.View   { return b.output }
+func (b *gbuffer) Diffuse() image.T  { return b.diffuse }
+func (b *gbuffer) Normal() image.T   { return b.normal }
+func (b *gbuffer) Position() image.T { return b.position }
 
 func (b *gbuffer) pixelOffset(pos vec2.T, img image.T, size int) int {
-	x := int(pos.X * float32(img.Width()) / float32(b.width))
-	y := int(pos.Y * float32(img.Height()) / float32(b.height))
+	x := int(pos.X * float32(img.Width()) / float32(b.Width()))
+	y := int(pos.Y * float32(img.Height()) / float32(b.Height()))
 
 	return size * (y*img.Width() + x)
 }
 
 func (b *gbuffer) SamplePosition(cursor vec2.T) (vec3.T, bool) {
-	if cursor.X < 0 || cursor.Y < 0 || cursor.X > float32(b.width) || cursor.Y > float32(b.height) {
+	if cursor.X < 0 || cursor.Y < 0 || cursor.X > float32(b.Width()) || cursor.Y > float32(b.Height()) {
 		return vec3.Zero, false
 	}
 
@@ -134,7 +143,7 @@ func (b *gbuffer) SamplePosition(cursor vec2.T) (vec3.T, bool) {
 }
 
 func (b *gbuffer) SampleNormal(cursor vec2.T) (vec3.T, bool) {
-	if cursor.X < 0 || cursor.Y < 0 || cursor.X > float32(b.width) || cursor.Y > float32(b.height) {
+	if cursor.X < 0 || cursor.Y < 0 || cursor.X > float32(b.Width()) || cursor.Y > float32(b.Height()) {
 		return vec3.Zero, false
 	}
 
@@ -154,8 +163,22 @@ func (b *gbuffer) SampleNormal(cursor vec2.T) (vec3.T, bool) {
 }
 
 func (p *gbuffer) Destroy() {
+	p.RenderTarget.Destroy()
+
+	p.diffuse.Destroy()
+	p.diffuse = nil
+
+	p.normal.Destroy()
+	p.normal = nil
+
+	p.position.Destroy()
+	p.position = nil
+
 	p.positionBuf.Destroy()
+	p.positionBuf = nil
+
 	p.normalBuf.Destroy()
+	p.normalBuf = nil
 }
 
 func (p *gbuffer) RecordBufferCopy(cmds command.Recorder) {
@@ -163,21 +186,21 @@ func (p *gbuffer) RecordBufferCopy(cmds command.Recorder) {
 		b.CmdImageBarrier(
 			core1_0.PipelineStageTopOfPipe,
 			core1_0.PipelineStageTransfer,
-			p.position.Image(),
+			p.position,
 			core1_0.ImageLayoutShaderReadOnlyOptimal,
 			core1_0.ImageLayoutGeneral,
 			core1_0.ImageAspectColor)
 
-		b.CmdCopyImage(p.position.Image(), core1_0.ImageLayoutGeneral, p.positionBuf, core1_0.ImageLayoutGeneral, core1_0.ImageAspectColor)
+		b.CmdCopyImage(p.position, core1_0.ImageLayoutGeneral, p.positionBuf, core1_0.ImageLayoutGeneral, core1_0.ImageAspectColor)
 
 		b.CmdImageBarrier(
 			core1_0.PipelineStageTopOfPipe,
 			core1_0.PipelineStageTransfer,
-			p.normal.Image(),
+			p.normal,
 			core1_0.ImageLayoutShaderReadOnlyOptimal,
 			core1_0.ImageLayoutGeneral,
 			core1_0.ImageAspectColor)
 
-		b.CmdCopyImage(p.normal.Image(), core1_0.ImageLayoutGeneral, p.normalBuf, core1_0.ImageLayoutGeneral, core1_0.ImageAspectColor)
+		b.CmdCopyImage(p.normal, core1_0.ImageLayoutGeneral, p.normalBuf, core1_0.ImageLayoutGeneral, core1_0.ImageAspectColor)
 	})
 }

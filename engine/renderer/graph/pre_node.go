@@ -30,17 +30,17 @@ type preNode struct {
 	*node
 }
 
-func newPreNode(target vulkan.Target) PreNode {
+func newPreNode(app vulkan.App) PreNode {
 	return &preNode{
-		node: newNode(target, "Pre", nil),
+		node: newNode(app, "Pre", nil),
 	}
 }
 
 func (n *preNode) Prepare(scene object.T) (*render.Args, error) {
 	screen := render.Screen{
-		Width:  n.target.Width(),
-		Height: n.target.Height(),
-		Scale:  n.target.Scale(),
+		Width:  n.app.Width(),
+		Height: n.app.Height(),
+		Scale:  n.app.Scale(),
 	}
 
 	// find the first active camera
@@ -50,14 +50,14 @@ func (n *preNode) Prepare(scene object.T) (*render.Args, error) {
 	}
 
 	// aquire next frame
-	context, err := n.target.Aquire()
+	context, err := n.app.Aquire()
 	if err != nil {
 		return nil, ErrRecreate
 	}
 
 	// cache ticks
-	n.target.Meshes().Tick(context.Index)
-	n.target.Textures().Tick(context.Index)
+	n.app.Meshes().Tick(context.Index)
+	n.app.Textures().Tick(context.Index)
 
 	// create render arguments
 	args := render.Args{
@@ -95,7 +95,7 @@ func (n *preNode) Prepare(scene object.T) (*render.Args, error) {
 		}
 	}
 
-	worker := n.target.Worker(context.Index)
+	worker := n.app.Worker(context.Index)
 	worker.Submit(command.SubmitInfo{
 		Marker: n.Name(),
 		Wait:   waits,

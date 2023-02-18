@@ -6,7 +6,6 @@ import (
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/framebuffer"
-	"github.com/johanhenriksson/goworld/render/image"
 	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/renderpass"
 	"github.com/johanhenriksson/goworld/render/renderpass/attachment"
@@ -20,17 +19,17 @@ const ForwardSubpass = renderpass.Name("forward")
 
 type ForwardPass struct {
 	gbuffer   GeometryBuffer
-	target    vulkan.Target
+	app       vulkan.App
 	pass      renderpass.T
 	fbuf      framebuffer.T
 	materials *MaterialSorter
 }
 
 func NewForwardPass(
-	target vulkan.Target,
+	app vulkan.App,
 	gbuffer GeometryBuffer,
 ) *ForwardPass {
-	pass := renderpass.New(target.Device(), renderpass.Args{
+	pass := renderpass.New(app.Device(), renderpass.Args{
 		ColorAttachments: []attachment.Color{
 			{
 				Name:        OutputAttachment,
@@ -41,9 +40,7 @@ func NewForwardPass(
 				Usage:       core1_0.ImageUsageSampled,
 				Blend:       attachment.BlendMultiply,
 
-				Allocator: attachment.FromImageArray([]image.T{
-					gbuffer.Output().Image(),
-				}),
+				Allocator: attachment.FromImage(gbuffer.Output()),
 			},
 			{
 				Name:        NormalsAttachment,
@@ -53,9 +50,7 @@ func NewForwardPass(
 				FinalLayout: core1_0.ImageLayoutShaderReadOnlyOptimal,
 				Usage:       core1_0.ImageUsageInputAttachment | core1_0.ImageUsageTransferSrc,
 
-				Allocator: attachment.FromImageArray([]image.T{
-					gbuffer.Normal().Image(),
-				}),
+				Allocator: attachment.FromImage(gbuffer.Normal()),
 			},
 			{
 				Name:        PositionAttachment,
@@ -65,9 +60,7 @@ func NewForwardPass(
 				FinalLayout: core1_0.ImageLayoutShaderReadOnlyOptimal,
 				Usage:       core1_0.ImageUsageInputAttachment | core1_0.ImageUsageTransferSrc,
 
-				Allocator: attachment.FromImageArray([]image.T{
-					gbuffer.Position().Image(),
-				}),
+				Allocator: attachment.FromImage(gbuffer.Position()),
 			},
 		},
 		DepthAttachment: &attachment.Depth{
@@ -77,9 +70,7 @@ func NewForwardPass(
 			FinalLayout:   core1_0.ImageLayoutShaderReadOnlyOptimal,
 			Usage:         core1_0.ImageUsageInputAttachment,
 
-			Allocator: attachment.FromImageArray([]image.T{
-				gbuffer.Depth().Image(),
-			}),
+			Allocator: attachment.FromImage(gbuffer.Depth()),
 		},
 		Subpasses: []renderpass.Subpass{
 			{
@@ -91,18 +82,18 @@ func NewForwardPass(
 		},
 	})
 
-	fbuf, err := framebuffer.New(target.Device(), target.Width(), target.Height(), pass)
+	fbuf, err := framebuffer.New(app.Device(), app.Width(), app.Height(), pass)
 	if err != nil {
 		panic(err)
 	}
 
 	return &ForwardPass{
 		gbuffer: gbuffer,
-		target:  target,
+		app:     app,
 		pass:    pass,
 		fbuf:    fbuf,
 
-		materials: NewMaterialSorter(target, pass, &material.Def{
+		materials: NewMaterialSorter(app, pass, &material.Def{
 			Shader:       "vk/color_f",
 			Subpass:      ForwardSubpass,
 			VertexFormat: vertex.C{},

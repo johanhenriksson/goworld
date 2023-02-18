@@ -51,7 +51,7 @@ type GeometryDescriptors struct {
 type GeometryPass struct {
 	gbuffer   GeometryBuffer
 	quad      vertex.Mesh
-	target    vulkan.Target
+	app       vulkan.App
 	pass      renderpass.T
 	light     LightShader
 	fbuf      framebuffer.T
@@ -63,18 +63,19 @@ type GeometryPass struct {
 }
 
 func NewGeometryPass(
-	target vulkan.Target,
+	app vulkan.App,
+	gbuffer GeometryBuffer,
 	shadows ShadowPass,
 ) Deferred {
 	diffuseFmt := core1_0.FormatR8G8B8A8UnsignedNormalized
 	normalFmt := core1_0.FormatR8G8B8A8UnsignedNormalized
 	positionFmt := core1_0.FormatR16G16B16A16SignedFloat
 
-	pass := renderpass.New(target.Device(), renderpass.Args{
+	pass := renderpass.New(app.Device(), renderpass.Args{
 		ColorAttachments: []attachment.Color{
 			{
 				Name:          OutputAttachment,
-				Format:        diffuseFmt,
+				Format:        gbuffer.Output().Format(),
 				Samples:       0,
 				LoadOp:        core1_0.AttachmentLoadOpClear,
 				StoreOp:       core1_0.AttachmentStoreOpStore,
@@ -82,7 +83,7 @@ func NewGeometryPass(
 				FinalLayout:   core1_0.ImageLayoutShaderReadOnlyOptimal,
 				Clear:         color.T{},
 				Usage:         core1_0.ImageUsageSampled,
-				Allocator:     nil,
+				Allocator:     attachment.FromImage(gbuffer.Output()),
 				Blend:         attachment.BlendAdditive,
 			},
 			{
@@ -92,6 +93,7 @@ func NewGeometryPass(
 				StoreOp:     core1_0.AttachmentStoreOpStore,
 				FinalLayout: core1_0.ImageLayoutShaderReadOnlyOptimal,
 				Usage:       core1_0.ImageUsageInputAttachment | core1_0.ImageUsageTransferSrc,
+				Allocator:   attachment.FromImage(gbuffer.Diffuse()),
 			},
 			{
 				Name:        NormalsAttachment,
@@ -100,6 +102,7 @@ func NewGeometryPass(
 				StoreOp:     core1_0.AttachmentStoreOpStore,
 				FinalLayout: core1_0.ImageLayoutShaderReadOnlyOptimal,
 				Usage:       core1_0.ImageUsageInputAttachment | core1_0.ImageUsageTransferSrc,
+				Allocator:   attachment.FromImage(gbuffer.Normal()),
 			},
 			{
 				Name:        PositionAttachment,
@@ -108,6 +111,7 @@ func NewGeometryPass(
 				StoreOp:     core1_0.AttachmentStoreOpStore,
 				FinalLayout: core1_0.ImageLayoutShaderReadOnlyOptimal,
 				Usage:       core1_0.ImageUsageInputAttachment | core1_0.ImageUsageTransferSrc,
+				Allocator:   attachment.FromImage(gbuffer.Position()),
 			},
 		},
 		DepthAttachment: &attachment.Depth{
@@ -116,6 +120,7 @@ func NewGeometryPass(
 			StoreOp:       core1_0.AttachmentStoreOpStore,
 			FinalLayout:   core1_0.ImageLayoutShaderReadOnlyOptimal,
 			Usage:         core1_0.ImageUsageInputAttachment,
+			Allocator:     attachment.FromImage(gbuffer.Depth()),
 			ClearDepth:    1,
 		},
 		Subpasses: []renderpass.Subpass{
@@ -166,31 +171,16 @@ func NewGeometryPass(
 		},
 	})
 
-	fbuf, err := framebuffer.New(target.Device(), target.Width(), target.Height(), pass)
+	fbuf, err := framebuffer.New(app.Device(), app.Width(), app.Height(), pass)
 	if err != nil {
 		panic(err)
 	}
 
-	gbuffer := NewGbuffer(
-		target,
-		fbuf.Attachment(DiffuseAttachment),
-		fbuf.Attachment(NormalsAttachment),
-		fbuf.Attachment(PositionAttachment),
-		fbuf.Attachment(OutputAttachment),
-		fbuf.Attachment(attachment.DepthName),
-	)
-
 	quad := vertex.ScreenQuad("geometry-pass-quad")
 
-	lightsh := NewLightShader(target, pass)
-	lightDesc := lightsh.Descriptors()
+	lightsh := NewLightShader(app, pass, gbuffer)
 
-	lightDesc.Diffuse.Set(gbuffer.Diffuse())
-	lightDesc.Normal.Set(gbuffer.Normal())
-	lightDesc.Position.Set(gbuffer.Position())
-	lightDesc.Depth.Set(gbuffer.Depth())
-
-	shadowtex, err := texture.FromView(target.Device(), shadows.Shadowmap(), texture.Args{
+	shadowtex, err := texture.FromView(app.Device(), shadows.Shadowmap(), texture.Args{
 		Key:    "shadowmap-1",
 		Filter: core1_0.FilterNearest,
 		Wrap:   core1_0.SamplerAddressModeClampToEdge,
@@ -198,12 +188,12 @@ func NewGeometryPass(
 	if err != nil {
 		panic(err)
 	}
-	lightDesc.Shadow.Set(1, shadowtex)
-	target.Textures().Fetch(color.White)
+	lightsh.Descriptors().Shadow.Set(1, shadowtex)
+	app.Textures().Fetch(color.White)
 
 	return &GeometryPass{
 		gbuffer: gbuffer,
-		target:  target,
+		app:     app,
 		quad:    quad,
 		light:   lightsh,
 		pass:    pass,
@@ -213,7 +203,7 @@ func NewGeometryPass(
 		shadowtex: shadowtex,
 
 		materials: NewMaterialSorter(
-			target, pass,
+			app, pass,
 			&material.Def{
 				Shader:       "vk/color_d",
 				Subpass:      GeometrySubpass,
@@ -264,7 +254,7 @@ func (p *GeometryPass) Record(cmds command.Recorder, args render.Args, scene obj
 	lightDesc.Camera.Set(camera)
 
 	// ambient lights use a plain white texture as their shadow map
-	white, shadowTexReady := p.target.Textures().Fetch(color.White)
+	white, shadowTexReady := p.app.Textures().Fetch(color.White)
 	if shadowTexReady {
 		lightDesc.Shadow.Set(0, white)
 
@@ -285,7 +275,7 @@ func (p *GeometryPass) Record(cmds command.Recorder, args render.Args, scene obj
 }
 
 func (p *GeometryPass) DrawLight(cmds command.Recorder, args render.Args, lit light.T) error {
-	vkmesh, meshReady := p.target.Meshes().Fetch(p.quad)
+	vkmesh, meshReady := p.app.Meshes().Fetch(p.quad)
 	if !meshReady {
 		return nil
 	}
@@ -331,7 +321,7 @@ func (p *GeometryPass) Destroy() {
 	p.fbuf.Destroy()
 	p.pass.Destroy()
 	p.gbuffer.Destroy()
-	p.light.Material().Destroy()
+	p.light.Destroy()
 }
 
 func isDrawDeferred(m mesh.T) bool {

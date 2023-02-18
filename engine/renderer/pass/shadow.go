@@ -35,13 +35,13 @@ type ShadowDescriptors struct {
 }
 
 type shadowpass struct {
-	target    vulkan.Target
+	app       vulkan.App
 	pass      renderpass.T
 	fbuf      framebuffer.T
 	materials *MaterialSorter
 }
 
-func NewShadowPass(target vulkan.Target) ShadowPass {
+func NewShadowPass(app vulkan.App) ShadowPass {
 	log.Println("create shadow pass")
 	size := 4096
 
@@ -72,7 +72,7 @@ func NewShadowPass(target vulkan.Target) ShadowPass {
 		Flags:         core1_0.DependencyByRegion,
 	})
 
-	pass := renderpass.New(target.Device(), renderpass.Args{
+	pass := renderpass.New(app.Device(), renderpass.Args{
 		DepthAttachment: &attachment.Depth{
 			Format:        core1_0.FormatD32SignedFloat,
 			LoadOp:        core1_0.AttachmentLoadOpClear,
@@ -87,12 +87,12 @@ func NewShadowPass(target vulkan.Target) ShadowPass {
 	})
 
 	// todo: each light is going to need its own framebuffer
-	fbuf, err := framebuffer.New(target.Device(), size, size, pass)
+	fbuf, err := framebuffer.New(app.Device(), size, size, pass)
 	if err != nil {
 		panic(err)
 	}
 
-	mats := NewMaterialSorter(target, pass, &material.Def{
+	mats := NewMaterialSorter(app, pass, &material.Def{
 		Shader:       "vk/shadow",
 		Subpass:      GeometrySubpass,
 		VertexFormat: voxel.Vertex{},
@@ -108,7 +108,7 @@ func NewShadowPass(target vulkan.Target) ShadowPass {
 	}
 
 	return &shadowpass{
-		target:    target,
+		app:       app,
 		fbuf:      fbuf,
 		pass:      pass,
 		materials: mats,

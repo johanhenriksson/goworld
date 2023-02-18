@@ -11,7 +11,7 @@ import (
 )
 
 type SceneFunc func(renderer.T, object.T)
-type RendererFunc func(vulkan.Target) renderer.T
+type RendererFunc func(vulkan.App) renderer.T
 
 type Args struct {
 	Title    string

@@ -6,11 +6,13 @@ import (
 	"github.com/johanhenriksson/goworld/render/vkerror"
 
 	"github.com/vkngwrapper/core/v2/core1_0"
+	"github.com/vkngwrapper/core/v2/driver"
 )
 
 type T interface {
 	device.Resource[core1_0.Image]
 
+	Key() string
 	Memory() device.Memory
 	View(format core1_0.Format, mask core1_0.ImageAspectFlags) (View, error)
 	Width() int
@@ -28,6 +30,7 @@ type image struct {
 
 type Args struct {
 	Type    core1_0.ImageType
+	Key     string
 	Width   int
 	Height  int
 	Depth   int
@@ -41,9 +44,10 @@ type Args struct {
 	Memory  core1_0.MemoryPropertyFlags
 }
 
-func New2D(device device.T, width, height int, format core1_0.Format, usage core1_0.ImageUsageFlags) (T, error) {
+func New2D(device device.T, key string, width, height int, format core1_0.Format, usage core1_0.ImageUsageFlags) (T, error) {
 	return New(device, Args{
 		Type:    core1_0.ImageType2D,
+		Key:     key,
 		Width:   width,
 		Height:  height,
 		Depth:   1,
@@ -96,6 +100,11 @@ func New(device device.T, args Args) (T, error) {
 		return nil, vkerror.FromResult(result)
 	}
 
+	// set image debug name
+	if args.Key != "" {
+		device.SetDebugObjectName(driver.VulkanHandle(ptr.Handle()), core1_0.ObjectTypeImage, args.Key)
+	}
+
 	memreq := ptr.MemoryRequirements()
 
 	mem := device.Allocate(core1_0.MemoryRequirements{
@@ -140,6 +149,7 @@ func (i *image) Memory() device.Memory {
 	return i.memory
 }
 
+func (i *image) Key() string            { return i.Args.Key }
 func (i *image) Width() int             { return i.Args.Width }
 func (i *image) Height() int            { return i.Args.Height }
 func (i *image) Format() core1_0.Format { return i.Args.Format }
@@ -184,6 +194,10 @@ func (i *image) View(format core1_0.Format, mask core1_0.ImageAspectFlags) (View
 	}
 	if result != core1_0.VKSuccess {
 		return nil, vkerror.FromResult(result)
+	}
+
+	if i.Args.Key != "" {
+		i.device.SetDebugObjectName(driver.VulkanHandle(ptr.Handle()), core1_0.ObjectTypeImageView, i.Args.Key)
 	}
 
 	return &imgview{

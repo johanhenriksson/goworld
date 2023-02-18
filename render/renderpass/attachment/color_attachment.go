@@ -29,7 +29,7 @@ func (desc *Color) defaults() {
 		desc.Samples = core1_0.Samples1
 	}
 	if desc.Allocator == nil {
-		desc.Allocator = &alloc{}
+		panic("no allocator given")
 	}
 }
 

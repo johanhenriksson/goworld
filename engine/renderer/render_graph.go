@@ -24,41 +24,47 @@ type T interface {
 
 type rgraph struct {
 	graph.T
-	target   vulkan.Target
+	app      vulkan.App
 	gbuffer  pass.GeometryBuffer
 	geometry pass.Deferred
 }
 
-func NewGraph(target vulkan.Target) T {
-	r := &rgraph{
-		target:  target,
-		gbuffer: nil,
+func NewGraph(app vulkan.App) T {
+	renderTarget, err := pass.NewRenderTarget(app.Device(), app.Width(), app.Height(), core1_0.FormatR8G8B8A8UnsignedNormalized, app.Device().GetDepthFormat())
+	if err != nil {
+		panic(err)
 	}
-	r.T = graph.New(target, func(g graph.T) {
-		shadows := pass.NewShadowPass(target)
+
+	gbuffer, err := pass.NewGbuffer(app, renderTarget)
+	if err != nil {
+		panic(err)
+	}
+
+	r := &rgraph{
+		app:     app,
+		gbuffer: gbuffer,
+	}
+	r.T = graph.New(app, func(g graph.T) {
+		shadows := pass.NewShadowPass(app)
 		shadowNode := g.Node(shadows)
 
-		deferred := pass.NewGeometryPass(target, shadows)
+		deferred := pass.NewGeometryPass(app, gbuffer, shadows)
 		deferredNode := g.Node(deferred)
 		deferredNode.After(shadowNode, core1_0.PipelineStageTopOfPipe)
 
-		// store gbuffer reference
-		r.gbuffer = deferred.GBuffer()
-		r.geometry = deferred
-
-		forward := g.Node(pass.NewForwardPass(target, r.gbuffer))
+		forward := g.Node(pass.NewForwardPass(app, gbuffer))
 		forward.After(deferredNode, core1_0.PipelineStageTopOfPipe)
 
-		gbufferCopy := g.Node(pass.NewGBufferCopyPass(r.gbuffer))
+		gbufferCopy := g.Node(pass.NewGBufferCopyPass(gbuffer))
 		gbufferCopy.After(forward, core1_0.PipelineStageTopOfPipe)
 
-		lines := g.Node(pass.NewLinePass(r.target, r.gbuffer))
+		lines := g.Node(pass.NewLinePass(r.app, gbuffer))
 		lines.After(forward, core1_0.PipelineStageTopOfPipe)
 
-		gui := g.Node(pass.NewGuiPass(r.target, r.gbuffer))
+		gui := g.Node(pass.NewGuiPass(r.app, gbuffer))
 		gui.After(lines, core1_0.PipelineStageTopOfPipe)
 
-		output := g.Node(pass.NewOutputPass(r.target, r.gbuffer))
+		output := g.Node(pass.NewOutputPass(r.app, gbuffer))
 		output.After(gui, core1_0.PipelineStageTopOfPipe)
 
 		// editor forward
@@ -69,7 +75,7 @@ func NewGraph(target vulkan.Target) T {
 
 func (r *rgraph) Screenshot() {
 	idx := 0
-	ss, err := upload.DownloadImage(r.target.Device(), r.target.Worker(idx), r.target.Surfaces()[idx])
+	ss, err := upload.DownloadImage(r.app.Device(), r.app.Worker(idx), r.app.Surfaces()[idx])
 	if err != nil {
 		panic(err)
 	}

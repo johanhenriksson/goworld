@@ -2,6 +2,7 @@ package pass
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/render"
@@ -23,9 +24,9 @@ import (
 const OutputSubpass = renderpass.Name("output")
 
 type OutputPass struct {
-	target   vulkan.Target
+	app      vulkan.App
 	material material.T[*OutputDescriptors]
-	geometry GeometryBuffer
+	source   RenderTarget
 
 	quad  vertex.Mesh
 	desc  []material.Instance[*OutputDescriptors]
@@ -39,20 +40,21 @@ type OutputDescriptors struct {
 	Output *descriptor.Sampler
 }
 
-func NewOutputPass(target vulkan.Target, geometry GeometryBuffer) *OutputPass {
+func NewOutputPass(app vulkan.App, source RenderTarget) *OutputPass {
+	log.Println("create output pass")
 	p := &OutputPass{
-		target:   target,
-		geometry: geometry,
+		app:    app,
+		source: source,
 	}
 
 	p.quad = vertex.ScreenQuad("output-pass-quad")
 
-	p.pass = renderpass.New(target.Device(), renderpass.Args{
+	p.pass = renderpass.New(app.Device(), renderpass.Args{
 		ColorAttachments: []attachment.Color{
 			{
 				Name:        OutputAttachment,
-				Allocator:   attachment.FromImageArray(target.Surfaces()),
-				Format:      target.SurfaceFormat(),
+				Allocator:   attachment.FromImageArray(app.Surfaces()),
+				Format:      app.SurfaceFormat(),
 				LoadOp:      core1_0.AttachmentLoadOpClear, // clearing avoids displaying garbage on the very first frame
 				FinalLayout: khr_swapchain.ImageLayoutPresentSrc,
 				Usage:       core1_0.ImageUsageInputAttachment,
@@ -67,9 +69,9 @@ func NewOutputPass(target vulkan.Target, geometry GeometryBuffer) *OutputPass {
 	})
 
 	p.material = material.New(
-		target.Device(),
+		app.Device(),
 		material.Args{
-			Shader:     target.Shaders().FetchSync(shader.NewRef("vk/output")),
+			Shader:     app.Shaders().FetchSync(shader.NewRef("vk/output")),
 			Pass:       p.pass,
 			Pointers:   vertex.ParsePointers(vertex.T{}),
 			DepthTest:  false,
@@ -81,17 +83,17 @@ func NewOutputPass(target vulkan.Target, geometry GeometryBuffer) *OutputPass {
 			},
 		})
 
-	frames := target.Frames()
+	frames := app.Frames()
 	var err error
-	p.fbufs, err = framebuffer.NewArray(frames, target.Device(), target.Width(), target.Height(), p.pass)
+	p.fbufs, err = framebuffer.NewArray(frames, app.Device(), app.Width(), app.Height(), p.pass)
 	if err != nil {
 		panic(err)
 	}
 
-	p.desc = p.material.InstantiateMany(target.Pool(), frames)
+	p.desc = p.material.InstantiateMany(app.Pool(), frames)
 	p.tex = make([]texture.T, frames)
 	for i := range p.tex {
-		p.tex[i], err = texture.FromView(target.Device(), p.geometry.Output(), texture.Args{
+		p.tex[i], err = texture.FromImage(app.Device(), p.source.Output(), texture.Args{
 			Key:    fmt.Sprintf("gbuffer-output-%d", i),
 			Filter: core1_0.FilterNearest,
 			Wrap:   core1_0.SamplerAddressModeClampToEdge,
@@ -113,7 +115,7 @@ func (p *OutputPass) Record(cmds command.Recorder, args render.Args, scene objec
 		cmd.CmdBeginRenderPass(p.pass, p.fbufs[ctx.Index%len(p.fbufs)])
 	})
 
-	quad, meshReady := p.target.Meshes().Fetch(p.quad)
+	quad, meshReady := p.app.Meshes().Fetch(p.quad)
 	if meshReady {
 		cmds.Record(func(cmd command.Buffer) {
 

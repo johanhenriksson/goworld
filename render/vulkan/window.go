@@ -22,7 +22,7 @@ import (
 type ResizeHandler func(width, height int)
 
 type Window interface {
-	Target
+	App
 
 	Title() string
 	SetTitle(string)

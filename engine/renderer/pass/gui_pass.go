@@ -11,7 +11,6 @@ import (
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/descriptor"
 	"github.com/johanhenriksson/goworld/render/framebuffer"
-	"github.com/johanhenriksson/goworld/render/image"
 	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/pipeline"
 	"github.com/johanhenriksson/goworld/render/renderpass"
@@ -35,26 +34,21 @@ type GuiDrawable interface {
 }
 
 type GuiPass struct {
-	target vulkan.Target
-	mat    []material.Instance[*UIDescriptors]
-	pass   renderpass.T
-	fbufs  framebuffer.Array
+	app  vulkan.App
+	mat  []material.Instance[*UIDescriptors]
+	pass renderpass.T
+	fbuf framebuffer.T
 }
 
 var _ Pass = &GuiPass{}
 
-func NewGuiPass(target vulkan.Target, geometry GeometryBuffer) *GuiPass {
-	output := make([]image.T, target.Frames())
-	for i := range output {
-		output[i] = geometry.Output().Image()
-	}
-
-	pass := renderpass.New(target.Device(), renderpass.Args{
+func NewGuiPass(app vulkan.App, gbuffer GeometryBuffer) *GuiPass {
+	pass := renderpass.New(app.Device(), renderpass.Args{
 		ColorAttachments: []attachment.Color{
 			{
 				Name:          OutputAttachment,
-				Allocator:     attachment.FromImageArray(output),
-				Format:        geometry.Output().Format(),
+				Allocator:     attachment.FromImage(gbuffer.Output()),
+				Format:        gbuffer.Output().Format(),
 				LoadOp:        core1_0.AttachmentLoadOpLoad,
 				StoreOp:       core1_0.AttachmentStoreOpStore,
 				InitialLayout: core1_0.ImageLayoutShaderReadOnlyOptimal,
@@ -81,9 +75,9 @@ func NewGuiPass(target vulkan.Target, geometry GeometryBuffer) *GuiPass {
 		},
 	})
 
-	mat := material.New(target.Device(), material.Args{
+	mat := material.New(app.Device(), material.Args{
 		Pass:     pass,
-		Shader:   target.Shaders().FetchSync(shader.NewRef("vk/ui_texture")),
+		Shader:   app.Shaders().FetchSync(shader.NewRef("vk/ui_texture")),
 		Pointers: vertex.ParsePointers(vertex.UI{}),
 		Constants: []pipeline.PushConstant{
 			{
@@ -98,18 +92,18 @@ func NewGuiPass(target vulkan.Target, geometry GeometryBuffer) *GuiPass {
 			Stages: core1_0.StageFragment,
 			Count:  2000,
 		},
-	}).InstantiateMany(target.Pool(), target.Frames())
+	}).InstantiateMany(app.Pool(), app.Frames())
 
-	fbufs, err := framebuffer.NewArray(target.Frames(), target.Device(), target.Width(), target.Height(), pass)
+	fbufs, err := framebuffer.New(app.Device(), app.Width(), app.Height(), pass)
 	if err != nil {
 		panic(err)
 	}
 
 	return &GuiPass{
-		target: target,
-		mat:    mat,
-		pass:   pass,
-		fbufs:  fbufs,
+		app:  app,
+		mat:  mat,
+		pass: pass,
+		fbuf: fbufs,
 	}
 }
 
@@ -126,12 +120,12 @@ func (p *GuiPass) Record(cmds command.Recorder, args render.Args, scene object.T
 	vp := proj.Mul(&view)
 
 	cmds.Record(func(cmd command.Buffer) {
-		cmd.CmdBeginRenderPass(p.pass, p.fbufs[args.Context.Index])
+		cmd.CmdBeginRenderPass(p.pass, p.fbuf)
 		mat.Bind(cmd)
 	})
 
 	// set everything to white
-	white, textureReady := p.target.Textures().Fetch(color.White)
+	white, textureReady := p.app.Textures().Fetch(color.White)
 	if textureReady {
 		clear := make([]texture.T, mat.Descriptors().Textures.Count)
 		for i := range clear {
@@ -140,11 +134,11 @@ func (p *GuiPass) Record(cmds command.Recorder, args render.Args, scene object.T
 		mat.Descriptors().Textures.SetRange(clear, 0)
 	}
 
-	textures := cache.NewSamplerCache(p.target.Textures(), mat.Descriptors().Textures)
+	textures := cache.NewSamplerCache(p.app.Textures(), mat.Descriptors().Textures)
 
 	uiArgs := widget.DrawArgs{
 		Commands:  cmds,
-		Meshes:    p.target.Meshes(),
+		Meshes:    p.app.Meshes(),
 		Textures:  textures,
 		ViewProj:  vp,
 		Transform: mat4.Ident(),
@@ -173,6 +167,6 @@ func (p *GuiPass) Name() string {
 
 func (p *GuiPass) Destroy() {
 	p.mat[0].Material().Destroy()
-	p.fbufs.Destroy()
+	p.fbuf.Destroy()
 	p.pass.Destroy()
 }

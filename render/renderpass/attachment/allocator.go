@@ -32,6 +32,7 @@ func (im *alloc) Alloc(
 ) (image.T, error) {
 	return image.New2D(
 		device,
+		"",
 		width, height, format,
 		core1_0.ImageUsageFlags(usage),
 	)
@@ -61,4 +62,22 @@ func FromImageArray(images []image.T) Allocator {
 		images: images,
 		next:   0,
 	}
+}
+
+// FromImage returns an allocator that always returns a reference to the provided image.
+func FromImage(img image.T) Allocator {
+	return &imageRef{image: img}
+}
+
+type imageRef struct {
+	image image.T
+}
+
+func (im *imageRef) Alloc(
+	device device.T,
+	width, height int,
+	format core1_0.Format,
+	usage core1_0.ImageUsageFlags,
+) (image.T, error) {
+	return im.image, nil
 }
