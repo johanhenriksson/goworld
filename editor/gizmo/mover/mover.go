@@ -7,6 +7,7 @@ import (
 	"github.com/johanhenriksson/goworld/core/transform"
 	"github.com/johanhenriksson/goworld/editor/gizmo"
 	"github.com/johanhenriksson/goworld/geometry/cone"
+	"github.com/johanhenriksson/goworld/geometry/cyllinder"
 	"github.com/johanhenriksson/goworld/geometry/lines"
 	"github.com/johanhenriksson/goworld/geometry/plane"
 	"github.com/johanhenriksson/goworld/math/mat4"
@@ -27,8 +28,11 @@ type T struct {
 
 	Lines *lines.T
 	X     *cone.T
+	Xb    *cyllinder.T
 	Y     *cone.T
+	Yb    *cyllinder.T
 	Z     *cone.T
+	Zb    *cyllinder.T
 	XY    *plane.T
 	XZ    *plane.T
 	YZ    *plane.T
@@ -48,9 +52,10 @@ type Args struct {
 // New creates a new gizmo at the given position
 func New(args Args) *T {
 	radius := float32(0.1)
-	height := float32(0.25)
+	bodyRadius := radius / 4
+	height := float32(0.35)
 	side := float32(0.2)
-	segments := 6
+	segments := 32
 	planeAlpha := float32(0.3)
 
 	s := side / 2
@@ -59,8 +64,8 @@ func New(args Args) *T {
 		Shader:       "vk/color_f",
 		Subpass:      "forward",
 		VertexFormat: vertex.C{},
-		DepthTest:    false,
-		DepthWrite:   false,
+		DepthTest:    true,
+		DepthWrite:   true,
 	}
 
 	g := object.New(&T{
@@ -80,6 +85,18 @@ func New(args Args) *T {
 			})).
 			Create(),
 
+		// X Arrow Body
+		Xb: object.Builder(cyllinder.New(cyllinder.Args{
+			Mat:      mat,
+			Radius:   bodyRadius,
+			Height:   1,
+			Segments: segments,
+			Color:    color.Red,
+		})).
+			Position(vec3.New(0.5, 0, 0)).
+			Rotation(vec3.New(0, 0, 270)).
+			Create(),
+
 		// Y Arrow Cone
 		Y: object.Builder(cone.New(cone.Args{
 			Mat:      mat,
@@ -93,6 +110,17 @@ func New(args Args) *T {
 				Size:   vec3.New(0.2, 1, 0.2),
 				Center: vec3.New(0, 0, 0),
 			})).
+			Create(),
+
+		// Y Arrow body
+		Yb: object.Builder(cyllinder.New(cyllinder.Args{
+			Mat:      mat,
+			Radius:   bodyRadius,
+			Height:   1,
+			Segments: segments,
+			Color:    color.Green,
+		})).
+			Position(vec3.New(0, 0.5, 0)).
 			Create(),
 
 		// Z Arrow Cone
@@ -109,6 +137,18 @@ func New(args Args) *T {
 				Size:   vec3.New(0.2, 1, 0.2),
 				Center: vec3.New(0, 0, 0),
 			})).
+			Create(),
+
+		// Z Arrow Body
+		Zb: object.Builder(cyllinder.New(cyllinder.Args{
+			Mat:      mat,
+			Radius:   bodyRadius,
+			Height:   1,
+			Segments: segments,
+			Color:    color.Blue,
+		})).
+			Position(vec3.New(0, 0, 0.5)).
+			Rotation(vec3.New(90, 180, 0)).
 			Create(),
 
 		// XY Plane
@@ -151,11 +191,6 @@ func New(args Args) *T {
 				DepthTest:    false,
 			},
 			Lines: []lines.Line{
-				// axis lines
-				lines.L(vec3.Zero, vec3.UnitX, color.Red),
-				lines.L(vec3.Zero, vec3.UnitY, color.Green),
-				lines.L(vec3.Zero, vec3.UnitZ, color.Blue),
-
 				// xz lines
 				lines.L(vec3.New(side, 0, 0), vec3.New(side, 0, side), color.Green),
 				lines.L(vec3.New(side, 0, side), vec3.New(0, 0, side), color.Green),

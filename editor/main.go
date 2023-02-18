@@ -75,10 +75,11 @@ func Scene(f engine.SceneFunc) engine.SceneFunc {
 
 		// mover gizmo
 		mv := object.Builder(mover.New(mover.Args{})).
-			Position(vec3.New(1, 10, 1)).
+			Position(vec3.New(1, 40, 1)).
 			Parent(editor).
 			Create()
-		mv.SetActive(false)
+		// mv.SetActive(false)
+		object.Attach(editor, mv)
 
 		// attach editor & game to scene
 		object.Attach(scene, editor)

@@ -70,17 +70,19 @@ func (c *T) generate() {
 		data[o+5] = vertex.C{P: bottomLeft, N: vec3.Down, C: color}
 
 		// calculate segment normal
-		n := vec3.Cross(bottomLeft, topRight)
+		nv1 := topRight.Sub(bottomLeft)
+		nv2 := bottomRight.Sub(bottomLeft)
+		n := vec3.Cross(nv1, nv2)
 
 		// side face 1
-		data[o+6] = vertex.C{P: topRight, N: n, C: color}
+		data[o+6] = vertex.C{P: topLeft, N: n, C: color}
 		data[o+7] = vertex.C{P: bottomLeft, N: n, C: color}
-		data[o+8] = vertex.C{P: topLeft, N: n, C: color}
+		data[o+8] = vertex.C{P: topRight, N: n, C: color}
 
 		// side face 2
-		data[o+9] = vertex.C{P: bottomRight, N: n, C: color}
+		data[o+9] = vertex.C{P: topRight, N: n, C: color}
 		data[o+10] = vertex.C{P: bottomLeft, N: n, C: color}
-		data[o+11] = vertex.C{P: topRight, N: n, C: color}
+		data[o+11] = vertex.C{P: bottomRight, N: n, C: color}
 	}
 
 	key := object.Key("cyllinder", c)
