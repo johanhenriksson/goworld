@@ -5,7 +5,6 @@ import (
 
 	"github.com/johanhenriksson/goworld/render/device"
 	"github.com/johanhenriksson/goworld/render/types"
-	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
 type Input struct {
@@ -15,6 +14,7 @@ type Input struct {
 
 type Inputs map[string]Input
 
+// Input returns the index and type of a shader input by name, and a bool indicating wheter its valid.
 func (i Inputs) Input(name string) (int, types.Type, bool) {
 	input, exists := i[name]
 	return input.Index, input.Type, exists
@@ -22,6 +22,7 @@ func (i Inputs) Input(name string) (int, types.Type, bool) {
 
 type Bindings map[string]int
 
+// Descriptor returns the index of a descriptor by name, and a bool indicating wheter its valid.
 func (d Bindings) Descriptor(name string) (int, bool) {
 	index, exists := d[name]
 	return index, exists
@@ -55,8 +56,8 @@ func New(device device.T, path string) T {
 	}
 
 	modules := []Module{
-		NewModule(device, fmt.Sprintf("assets/shaders/%s.vert", path), core1_0.StageVertex),
-		NewModule(device, fmt.Sprintf("assets/shaders/%s.frag", path), core1_0.StageFragment),
+		NewModule(device, fmt.Sprintf("assets/shaders/%s.vert", path), StageVertex),
+		NewModule(device, fmt.Sprintf("assets/shaders/%s.frag", path), StageFragment),
 	}
 
 	return &shader{
@@ -67,6 +68,7 @@ func New(device device.T, path string) T {
 	}
 }
 
+// Name returns the file name of the shader
 func (s *shader) Name() string {
 	return s.name
 }
@@ -75,6 +77,7 @@ func (s *shader) Modules() []Module {
 	return s.modules
 }
 
+// Destroy the shader and its modules.
 func (s *shader) Destroy() {
 	for _, module := range s.modules {
 		module.Destroy()

@@ -20,6 +20,7 @@ func (i *instance[D]) Material() T[D] { return i.material }
 func (i *instance[D]) Descriptors() D { return i.set }
 
 func (s *instance[D]) Bind(cmd command.Buffer) {
+	// might want to move this to the command buffer instead to avoid the import
 	s.material.Bind(cmd)
 	cmd.CmdBindGraphicsDescriptor(s.set)
 }

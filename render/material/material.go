@@ -11,9 +11,9 @@ import (
 	"github.com/johanhenriksson/goworld/render/shader"
 	"github.com/johanhenriksson/goworld/render/vertex"
 	"github.com/johanhenriksson/goworld/util"
-	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
+// Materials combine pipelines and descriptors into a common unit.
 type T[D descriptor.Set] interface {
 	Destroy()
 	Bind(cmd command.Buffer)

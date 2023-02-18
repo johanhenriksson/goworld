@@ -38,7 +38,7 @@ func New(device device.T, args Args) T {
 		return core1_0.PipelineShaderStageCreateInfo{
 			Module: shader.Ptr(),
 			Name:   shader.Entrypoint(),
-			Stage:  shader.Stage(),
+			Stage:  core1_0.ShaderStageFlags(shader.Stage()),
 		}
 	})
 

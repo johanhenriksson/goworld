@@ -11,16 +11,16 @@ type Module interface {
 	device.Resource[core1_0.ShaderModule]
 
 	Entrypoint() string
-	Stage() core1_0.ShaderStageFlags
+	Stage() ShaderStage
 }
 
 type shader_module struct {
 	device device.T
 	ptr    core1_0.ShaderModule
-	stage  core1_0.ShaderStageFlags
+	stage  ShaderStage
 }
 
-func NewModule(device device.T, path string, stage core1_0.ShaderStageFlags) Module {
+func NewModule(device device.T, path string, stage ShaderStage) Module {
 	if device == nil {
 		panic("device is nil")
 	}
@@ -54,7 +54,7 @@ func (s *shader_module) Ptr() core1_0.ShaderModule {
 	return s.ptr
 }
 
-func (s *shader_module) Stage() core1_0.ShaderStageFlags {
+func (s *shader_module) Stage() ShaderStage {
 	return s.stage
 }
 
