@@ -1,6 +1,7 @@
 package object
 
 import (
+	"log"
 	"reflect"
 
 	"github.com/johanhenriksson/goworld/core/input"
@@ -93,6 +94,10 @@ func New[K T](obj K) K {
 			continue
 		}
 		if child, ok := v.Field(i).Interface().(T); ok {
+			if reflect.ValueOf(child) == reflect.Zero(field.Type) {
+				log.Println(t.Name(), " child ", field.Name, " is nil")
+				continue
+			}
 			// initialize recursively?
 			if child.Parent() == nil {
 				Attach(obj, child)
