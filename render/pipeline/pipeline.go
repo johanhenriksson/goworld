@@ -123,7 +123,7 @@ func New(device device.T, args Args) T {
 			DepthClampEnable:        false,
 			RasterizerDiscardEnable: false,
 			PolygonMode:             args.PolygonFillMode,
-			CullMode:                args.CullMode,
+			CullMode:                core1_0.CullModeFlags(args.CullMode),
 			LineWidth:               1,
 
 			// clockwise in vulkans right-handed coordinates is equivalent to the

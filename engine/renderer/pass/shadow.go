@@ -16,6 +16,7 @@ import (
 	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/renderpass"
 	"github.com/johanhenriksson/goworld/render/renderpass/attachment"
+	"github.com/johanhenriksson/goworld/render/vertex"
 
 	"github.com/johanhenriksson/goworld/render/vulkan"
 	"github.com/vkngwrapper/core/v2/core1_0"
@@ -102,7 +103,7 @@ func NewShadowPass(target vulkan.Target) ShadowPass {
 	mats.TransformFn = func(d *material.Def) *material.Def {
 		shadowMat := *d
 		shadowMat.Shader = "vk/shadow"
-		shadowMat.CullMode = core1_0.CullModeFront
+		shadowMat.CullMode = vertex.CullFront
 		return &shadowMat
 	}
 

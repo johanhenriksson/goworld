@@ -39,7 +39,7 @@ type Args struct {
 	Primitive  vertex.Primitive
 	DepthTest  bool
 	DepthWrite bool
-	CullMode   core1_0.CullModeFlags
+	CullMode   vertex.CullMode
 }
 
 func New[D descriptor.Set](device device.T, args Args, descriptors D) T[D] {

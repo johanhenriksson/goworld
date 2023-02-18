@@ -19,7 +19,7 @@ type Args struct {
 
 	Primitive       vertex.Primitive
 	PolygonFillMode core1_0.PolygonMode
-	CullMode        core1_0.CullModeFlags
+	CullMode        vertex.CullMode
 
 	DepthTest  bool
 	DepthWrite bool

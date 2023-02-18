@@ -33,7 +33,7 @@ type Def struct {
 	DepthTest    bool
 	DepthWrite   bool
 	Primitive    vertex.Primitive
-	CullMode     core1_0.CullModeFlags
+	CullMode     vertex.CullMode
 }
 
 func (d *Def) Hash() uint64 {
