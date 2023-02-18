@@ -11,6 +11,7 @@ import (
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/descriptor"
 	"github.com/johanhenriksson/goworld/render/framebuffer"
+	"github.com/johanhenriksson/goworld/render/image"
 	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/pipeline"
 	"github.com/johanhenriksson/goworld/render/renderpass"
@@ -21,7 +22,6 @@ import (
 	"github.com/johanhenriksson/goworld/render/vulkan"
 
 	"github.com/vkngwrapper/core/v2/core1_0"
-	"github.com/vkngwrapper/extensions/v2/khr_swapchain"
 )
 
 type UIDescriptors struct {
@@ -43,18 +43,23 @@ type GuiPass struct {
 
 var _ Pass = &GuiPass{}
 
-func NewGuiPass(target vulkan.Target) *GuiPass {
+func NewGuiPass(target vulkan.Target, geometry GeometryBuffer) *GuiPass {
+	output := make([]image.T, target.Frames())
+	for i := range output {
+		output[i] = geometry.Output().Image()
+	}
+
 	pass := renderpass.New(target.Device(), renderpass.Args{
 		ColorAttachments: []attachment.Color{
 			{
 				Name:          OutputAttachment,
-				Allocator:     attachment.FromImageArray(target.Surfaces()),
-				Format:        target.SurfaceFormat(),
+				Allocator:     attachment.FromImageArray(output),
+				Format:        geometry.Output().Format(),
 				LoadOp:        core1_0.AttachmentLoadOpLoad,
 				StoreOp:       core1_0.AttachmentStoreOpStore,
-				InitialLayout: khr_swapchain.ImageLayoutPresentSrc,
-				FinalLayout:   khr_swapchain.ImageLayoutPresentSrc,
-				Blend:         attachment.BlendMix,
+				InitialLayout: core1_0.ImageLayoutShaderReadOnlyOptimal,
+				FinalLayout:   core1_0.ImageLayoutShaderReadOnlyOptimal,
+				Blend:         attachment.BlendMultiply,
 			},
 		},
 		DepthAttachment: &attachment.Depth{

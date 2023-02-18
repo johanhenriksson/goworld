@@ -52,14 +52,17 @@ func NewGraph(target vulkan.Target) T {
 		gbufferCopy := g.Node(pass.NewGBufferCopyPass(r.gbuffer))
 		gbufferCopy.After(forward, core1_0.PipelineStageTopOfPipe)
 
-		output := g.Node(pass.NewOutputPass(r.target, r.gbuffer))
-		output.After(forward, core1_0.PipelineStageTopOfPipe)
-
 		lines := g.Node(pass.NewLinePass(r.target, r.gbuffer))
-		lines.After(output, core1_0.PipelineStageTopOfPipe)
+		lines.After(forward, core1_0.PipelineStageTopOfPipe)
 
-		gui := g.Node(pass.NewGuiPass(r.target))
+		gui := g.Node(pass.NewGuiPass(r.target, r.gbuffer))
 		gui.After(lines, core1_0.PipelineStageTopOfPipe)
+
+		output := g.Node(pass.NewOutputPass(r.target, r.gbuffer))
+		output.After(gui, core1_0.PipelineStageTopOfPipe)
+
+		// editor forward
+		// editor lines
 	})
 	return r
 }

@@ -16,7 +16,6 @@ import (
 	"github.com/johanhenriksson/goworld/render/vulkan"
 
 	"github.com/vkngwrapper/core/v2/core1_0"
-	"github.com/vkngwrapper/extensions/v2/khr_swapchain"
 )
 
 type LinePass struct {
@@ -33,17 +32,21 @@ func NewLinePass(target vulkan.Target, geometry GeometryBuffer) *LinePass {
 	for i := range depth {
 		depth[i] = geometry.Depth().Image()
 	}
+	output := make([]image.T, target.Frames())
+	for i := range depth {
+		output[i] = geometry.Output().Image()
+	}
 
 	pass := renderpass.New(target.Device(), renderpass.Args{
 		ColorAttachments: []attachment.Color{
 			{
 				Name:          OutputAttachment,
-				Allocator:     attachment.FromImageArray(target.Surfaces()),
-				Format:        target.SurfaceFormat(),
+				Allocator:     attachment.FromImageArray(output),
+				Format:        geometry.Output().Format(),
 				LoadOp:        core1_0.AttachmentLoadOpLoad,
 				StoreOp:       core1_0.AttachmentStoreOpStore,
-				InitialLayout: khr_swapchain.ImageLayoutPresentSrc,
-				FinalLayout:   khr_swapchain.ImageLayoutPresentSrc,
+				InitialLayout: core1_0.ImageLayoutShaderReadOnlyOptimal,
+				FinalLayout:   core1_0.ImageLayoutShaderReadOnlyOptimal,
 			},
 		},
 		DepthAttachment: &attachment.Depth{
