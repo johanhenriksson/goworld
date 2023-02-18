@@ -74,12 +74,11 @@ func NewShadowPass(app vulkan.App) ShadowPass {
 
 	pass := renderpass.New(app.Device(), renderpass.Args{
 		DepthAttachment: &attachment.Depth{
-			Format:        core1_0.FormatD32SignedFloat,
+			Image:         attachment.NewImage("shadowmap", core1_0.FormatD32SignedFloat, core1_0.ImageUsageDepthStencilAttachment|core1_0.ImageUsageInputAttachment|core1_0.ImageUsageSampled),
 			LoadOp:        core1_0.AttachmentLoadOpClear,
 			StencilLoadOp: core1_0.AttachmentLoadOpClear,
 			StoreOp:       core1_0.AttachmentStoreOpStore,
 			FinalLayout:   core1_0.ImageLayoutShaderReadOnlyOptimal,
-			Usage:         core1_0.ImageUsageSampled,
 			ClearDepth:    1,
 		},
 		Subpasses:    subpasses,

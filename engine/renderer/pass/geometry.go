@@ -67,51 +67,39 @@ func NewGeometryPass(
 	gbuffer GeometryBuffer,
 	shadows ShadowPass,
 ) Deferred {
-	diffuseFmt := core1_0.FormatR8G8B8A8UnsignedNormalized
-	normalFmt := core1_0.FormatR8G8B8A8UnsignedNormalized
-	positionFmt := core1_0.FormatR16G16B16A16SignedFloat
-
 	pass := renderpass.New(app.Device(), renderpass.Args{
 		ColorAttachments: []attachment.Color{
 			{
 				Name:          OutputAttachment,
-				Format:        gbuffer.Output().Format(),
+				Image:         attachment.FromImageArray(gbuffer.Output()),
 				Samples:       0,
 				LoadOp:        core1_0.AttachmentLoadOpClear,
 				StoreOp:       core1_0.AttachmentStoreOpStore,
 				InitialLayout: 0,
 				FinalLayout:   core1_0.ImageLayoutShaderReadOnlyOptimal,
 				Clear:         color.T{},
-				Usage:         core1_0.ImageUsageSampled,
-				Allocator:     attachment.FromImage(gbuffer.Output()),
 				Blend:         attachment.BlendAdditive,
 			},
 			{
 				Name:        DiffuseAttachment,
-				Format:      diffuseFmt,
 				LoadOp:      core1_0.AttachmentLoadOpClear,
 				StoreOp:     core1_0.AttachmentStoreOpStore,
 				FinalLayout: core1_0.ImageLayoutShaderReadOnlyOptimal,
-				Usage:       core1_0.ImageUsageInputAttachment | core1_0.ImageUsageTransferSrc,
-				Allocator:   attachment.FromImage(gbuffer.Diffuse()),
+				Image:       attachment.FromImage(gbuffer.Diffuse()),
 			},
 			{
 				Name:        NormalsAttachment,
-				Format:      normalFmt,
 				LoadOp:      core1_0.AttachmentLoadOpClear,
 				StoreOp:     core1_0.AttachmentStoreOpStore,
 				FinalLayout: core1_0.ImageLayoutShaderReadOnlyOptimal,
-				Usage:       core1_0.ImageUsageInputAttachment | core1_0.ImageUsageTransferSrc,
-				Allocator:   attachment.FromImage(gbuffer.Normal()),
+				Image:       attachment.FromImage(gbuffer.Normal()),
 			},
 			{
 				Name:        PositionAttachment,
-				Format:      positionFmt,
 				LoadOp:      core1_0.AttachmentLoadOpClear,
 				StoreOp:     core1_0.AttachmentStoreOpStore,
 				FinalLayout: core1_0.ImageLayoutShaderReadOnlyOptimal,
-				Usage:       core1_0.ImageUsageInputAttachment | core1_0.ImageUsageTransferSrc,
-				Allocator:   attachment.FromImage(gbuffer.Position()),
+				Image:       attachment.FromImage(gbuffer.Position()),
 			},
 		},
 		DepthAttachment: &attachment.Depth{
@@ -119,8 +107,7 @@ func NewGeometryPass(
 			StencilLoadOp: core1_0.AttachmentLoadOpClear,
 			StoreOp:       core1_0.AttachmentStoreOpStore,
 			FinalLayout:   core1_0.ImageLayoutShaderReadOnlyOptimal,
-			Usage:         core1_0.ImageUsageInputAttachment,
-			Allocator:     attachment.FromImage(gbuffer.Depth()),
+			Image:         attachment.FromImageArray(gbuffer.Depth()),
 			ClearDepth:    1,
 		},
 		Subpasses: []renderpass.Subpass{

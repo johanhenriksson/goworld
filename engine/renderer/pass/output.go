@@ -53,11 +53,9 @@ func NewOutputPass(app vulkan.App, source RenderTarget) *OutputPass {
 		ColorAttachments: []attachment.Color{
 			{
 				Name:        OutputAttachment,
-				Allocator:   attachment.FromImageArray(app.Surfaces()),
-				Format:      app.SurfaceFormat(),
+				Image:       attachment.FromImageArray(app.Surfaces()),
 				LoadOp:      core1_0.AttachmentLoadOpClear, // clearing avoids displaying garbage on the very first frame
 				FinalLayout: khr_swapchain.ImageLayoutPresentSrc,
-				Usage:       core1_0.ImageUsageInputAttachment,
 			},
 		},
 		Subpasses: []renderpass.Subpass{
@@ -93,7 +91,11 @@ func NewOutputPass(app vulkan.App, source RenderTarget) *OutputPass {
 	p.desc = p.material.InstantiateMany(app.Pool(), frames)
 	p.tex = make([]texture.T, frames)
 	for i := range p.tex {
-		p.tex[i], err = texture.FromImage(app.Device(), p.source.Output(), texture.Args{
+		outIdx := i
+		if len(p.source.Output()) == 1 {
+			outIdx = 0
+		}
+		p.tex[i], err = texture.FromImage(app.Device(), p.source.Output()[outIdx], texture.Args{
 			Key:    fmt.Sprintf("gbuffer-output-%d", i),
 			Filter: core1_0.FilterNearest,
 			Wrap:   core1_0.SamplerAddressModeClampToEdge,

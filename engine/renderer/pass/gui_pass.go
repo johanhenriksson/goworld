@@ -47,8 +47,7 @@ func NewGuiPass(app vulkan.App, gbuffer GeometryBuffer) *GuiPass {
 		ColorAttachments: []attachment.Color{
 			{
 				Name:          OutputAttachment,
-				Allocator:     attachment.FromImage(gbuffer.Output()),
-				Format:        gbuffer.Output().Format(),
+				Image:         attachment.FromImageArray(gbuffer.Output()),
 				LoadOp:        core1_0.AttachmentLoadOpLoad,
 				StoreOp:       core1_0.AttachmentStoreOpStore,
 				InitialLayout: core1_0.ImageLayoutShaderReadOnlyOptimal,
@@ -57,12 +56,12 @@ func NewGuiPass(app vulkan.App, gbuffer GeometryBuffer) *GuiPass {
 			},
 		},
 		DepthAttachment: &attachment.Depth{
+			Image:          attachment.NewImage("gui-depth", app.Device().GetDepthFormat(), core1_0.ImageUsageDepthStencilAttachment|core1_0.ImageUsageInputAttachment),
 			LoadOp:         core1_0.AttachmentLoadOpClear,
 			StoreOp:        core1_0.AttachmentStoreOpDontCare,
 			StencilLoadOp:  core1_0.AttachmentLoadOpClear,
 			StencilStoreOp: core1_0.AttachmentStoreOpDontCare,
 			FinalLayout:    core1_0.ImageLayoutShaderReadOnlyOptimal,
-			Usage:          core1_0.ImageUsageInputAttachment,
 			ClearDepth:     1,
 		},
 		Subpasses: []renderpass.Subpass{

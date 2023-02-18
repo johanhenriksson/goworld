@@ -33,34 +33,28 @@ func NewForwardPass(
 		ColorAttachments: []attachment.Color{
 			{
 				Name:        OutputAttachment,
-				Format:      gbuffer.Output().Format(),
 				LoadOp:      core1_0.AttachmentLoadOpLoad,
 				StoreOp:     core1_0.AttachmentStoreOpStore,
 				FinalLayout: core1_0.ImageLayoutShaderReadOnlyOptimal,
-				Usage:       core1_0.ImageUsageSampled,
 				Blend:       attachment.BlendMultiply,
 
-				Allocator: attachment.FromImage(gbuffer.Output()),
+				Image: attachment.FromImageArray(gbuffer.Output()),
 			},
 			{
 				Name:        NormalsAttachment,
-				Format:      gbuffer.Normal().Format(),
 				LoadOp:      core1_0.AttachmentLoadOpLoad,
 				StoreOp:     core1_0.AttachmentStoreOpStore,
 				FinalLayout: core1_0.ImageLayoutShaderReadOnlyOptimal,
-				Usage:       core1_0.ImageUsageInputAttachment | core1_0.ImageUsageTransferSrc,
 
-				Allocator: attachment.FromImage(gbuffer.Normal()),
+				Image: attachment.FromImage(gbuffer.Normal()),
 			},
 			{
 				Name:        PositionAttachment,
-				Format:      gbuffer.Position().Format(),
 				LoadOp:      core1_0.AttachmentLoadOpLoad,
 				StoreOp:     core1_0.AttachmentStoreOpStore,
 				FinalLayout: core1_0.ImageLayoutShaderReadOnlyOptimal,
-				Usage:       core1_0.ImageUsageInputAttachment | core1_0.ImageUsageTransferSrc,
 
-				Allocator: attachment.FromImage(gbuffer.Position()),
+				Image: attachment.FromImage(gbuffer.Position()),
 			},
 		},
 		DepthAttachment: &attachment.Depth{
@@ -68,9 +62,8 @@ func NewForwardPass(
 			StencilLoadOp: core1_0.AttachmentLoadOpLoad,
 			StoreOp:       core1_0.AttachmentStoreOpStore,
 			FinalLayout:   core1_0.ImageLayoutShaderReadOnlyOptimal,
-			Usage:         core1_0.ImageUsageInputAttachment,
 
-			Allocator: attachment.FromImage(gbuffer.Depth()),
+			Image: attachment.FromImageArray(gbuffer.Depth()),
 		},
 		Subpasses: []renderpass.Subpass{
 			{

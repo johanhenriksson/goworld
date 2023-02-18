@@ -31,8 +31,7 @@ func NewLinePass(app vulkan.App, gbuffer GeometryBuffer) *LinePass {
 		ColorAttachments: []attachment.Color{
 			{
 				Name:          OutputAttachment,
-				Allocator:     attachment.FromImage(gbuffer.Output()),
-				Format:        gbuffer.Output().Format(),
+				Image:         attachment.FromImageArray(gbuffer.Output()),
 				LoadOp:        core1_0.AttachmentLoadOpLoad,
 				StoreOp:       core1_0.AttachmentStoreOpStore,
 				InitialLayout: core1_0.ImageLayoutShaderReadOnlyOptimal,
@@ -40,11 +39,10 @@ func NewLinePass(app vulkan.App, gbuffer GeometryBuffer) *LinePass {
 			},
 		},
 		DepthAttachment: &attachment.Depth{
-			Allocator:     attachment.FromImage(gbuffer.Depth()),
+			Image:         attachment.FromImageArray(gbuffer.Depth()),
 			LoadOp:        core1_0.AttachmentLoadOpLoad,
 			InitialLayout: core1_0.ImageLayoutShaderReadOnlyOptimal,
 			FinalLayout:   core1_0.ImageLayoutDepthStencilAttachmentOptimal,
-			Usage:         core1_0.ImageUsageInputAttachment,
 		},
 		Subpasses: []renderpass.Subpass{
 			{

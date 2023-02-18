@@ -46,19 +46,17 @@ func New(device device.T, width, height int, pass renderpass.T) (T, error) {
 		}
 	}
 
-	allocate := func(attach attachment.T, usage core1_0.ImageUsageFlags, aspect core1_0.ImageAspectFlags) error {
-		img, err := attach.Allocator().Alloc(
+	allocate := func(attach attachment.T, aspect core1_0.ImageAspectFlags) error {
+		img, err := attach.Image().Next(
 			device,
 			width, height,
-			attach.Format(),
-			usage|attach.Usage(),
 		)
 		if err != nil {
 			return err
 		}
 		images = append(images, img)
 
-		view, err := img.View(attach.Format(), core1_0.ImageAspectFlags(aspect))
+		view, err := img.View(img.Format(), core1_0.ImageAspectFlags(aspect))
 		if err != nil {
 			return err
 		}
@@ -69,13 +67,13 @@ func New(device device.T, width, height int, pass renderpass.T) (T, error) {
 	}
 
 	for _, attach := range attachments {
-		if err := allocate(attach, core1_0.ImageUsageColorAttachment, core1_0.ImageAspectColor); err != nil {
+		if err := allocate(attach, core1_0.ImageAspectColor); err != nil {
 			cleanup()
 			return nil, err
 		}
 	}
 	if depth != nil {
-		if err := allocate(depth, core1_0.ImageUsageDepthStencilAttachment, core1_0.ImageAspectDepth); err != nil {
+		if err := allocate(depth, core1_0.ImageAspectDepth); err != nil {
 			cleanup()
 			return nil, err
 		}
