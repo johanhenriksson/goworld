@@ -5,7 +5,6 @@ import (
 
 	"github.com/johanhenriksson/goworld/core/camera"
 	"github.com/johanhenriksson/goworld/core/input/keys"
-	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/editor"
 	"github.com/johanhenriksson/goworld/engine/renderer"
@@ -29,6 +28,8 @@ type Editor interface {
 	SelectColor(color.T)
 	Recalculate()
 	InBounds(p vec3.T) bool
+
+	CursorPositionNormal(cursor vec2.T) (bool, vec3.T, vec3.T)
 }
 
 // Editor base struct
@@ -40,7 +41,6 @@ type edit struct {
 
 	Chunk  *T
 	Camera camera.T
-	Tool   Tool
 
 	color color.T
 
@@ -57,9 +57,6 @@ type edit struct {
 
 	Bounds *box.T
 	render renderer.T
-
-	cursorPos    vec3.T
-	cursorNormal vec3.T
 }
 
 var _ editor.T = &edit{}
@@ -79,10 +76,21 @@ func NewEditor(ctx *editor.Context, mesh *Mesh) Editor {
 		Chunk:  chk,
 		Camera: ctx.Camera,
 
-		PlaceTool:   NewPlaceTool(),
-		EraseTool:   NewEraseTool(),
-		SampleTool:  NewSampleTool(),
-		ReplaceTool: NewReplaceTool(),
+		PlaceTool: object.Builder(NewPlaceTool()).
+			Active(false).
+			Create(),
+
+		EraseTool: object.Builder(NewEraseTool()).
+			Active(false).
+			Create(),
+
+		SampleTool: object.Builder(NewSampleTool()).
+			Active(false).
+			Create(),
+
+		ReplaceTool: object.Builder(NewReplaceTool()).
+			Active(false).
+			Create(),
 
 		render: ctx.Render,
 		color:  color.Red,
@@ -122,12 +130,6 @@ func NewEditor(ctx *editor.Context, mesh *Mesh) Editor {
 			Create(),
 	})
 
-	e.ReplaceTool.SetActive(false)
-	e.EraseTool.SetActive(false)
-	e.SampleTool.SetActive(false)
-	e.PlaceTool.SetActive(false)
-	e.SelectTool(nil)
-
 	object.Attach(e, NewGUI(e))
 	object.Attach(e, NewMenu(e))
 
@@ -154,23 +156,8 @@ func (e *edit) SelectedColor() color.T {
 	return e.color
 }
 
-func (e *edit) DeselectTool() {
-	if e.Tool != nil {
-		e.Tool.SetActive(false)
-		e.Tool = nil
-	}
-}
-
-func (e *edit) SelectTool(tool Tool) {
-	e.DeselectTool()
-	e.Tool = tool
-	if tool != nil {
-		e.Tool.SetActive(true)
-	}
-}
-
 // sample world position at current mouse coords
-func (e *edit) cursorPositionNormal(cursor vec2.T) (bool, vec3.T, vec3.T) {
+func (e *edit) CursorPositionNormal(cursor vec2.T) (bool, vec3.T, vec3.T) {
 	viewPosition, positionExists := e.render.GBuffer().SamplePosition(cursor)
 	if !positionExists {
 		return false, vec3.Zero, vec3.Zero
@@ -184,6 +171,9 @@ func (e *edit) cursorPositionNormal(cursor vec2.T) (bool, vec3.T, vec3.T) {
 	viewInv := e.Camera.ViewInv()
 	normal := viewInv.TransformDir(viewNormal)
 	position := viewInv.TransformPoint(viewPosition)
+
+	// transform world coords into object space
+	position = e.Transform().Unproject(position)
 
 	return true, position, normal
 }
@@ -200,41 +190,6 @@ func (e *edit) clearChunk() {
 }
 
 func (e *edit) KeyEvent(ev keys.Event) {
-	// clear chunk hotkey
-	if keys.PressedMods(ev, keys.N, keys.Ctrl) {
-		e.clearChunk()
-	}
-
-	// save chunk hotkey
-	if keys.PressedMods(ev, keys.S, keys.Ctrl) {
-		e.saveChunkDialog()
-	}
-
-	// deselect tool
-	if keys.Pressed(ev, keys.Escape) {
-		e.DeselectTool()
-	}
-
-	// place tool
-	if keys.Pressed(ev, keys.F) {
-		e.SelectTool(e.PlaceTool)
-	}
-
-	// erase tool
-	if keys.Pressed(ev, keys.C) {
-		e.SelectTool(e.EraseTool)
-	}
-
-	// replace tool
-	if keys.Pressed(ev, keys.R) {
-		e.SelectTool(e.ReplaceTool)
-	}
-
-	// eyedropper tool
-	if keys.Pressed(ev, keys.T) {
-		e.SelectTool(e.SampleTool)
-	}
-
 	// toggle construction planes
 	if keys.PressedMods(ev, keys.X, keys.Ctrl) {
 		e.XPlane.SetActive(!e.XPlane.Active())
@@ -270,33 +225,50 @@ func (e *edit) KeyEvent(ev keys.Event) {
 	}
 }
 
-func (e *edit) MouseEvent(ev mouse.Event) {
-	if e.Tool == nil {
-		return
-	}
-	switch ev.Action() {
-	case mouse.Move:
-		if exists, pos, normal := e.cursorPositionNormal(ev.Position()); exists {
-			pos = e.Transform().Unproject(pos)
-			e.cursorPos = pos
-			e.cursorNormal = normal
-			e.Tool.Hover(e, pos, normal)
-		}
-
-	case mouse.Press:
-		if ev.Button() == mouse.Button1 {
-			e.Tool.Use(e, e.cursorPos, e.cursorNormal)
-		}
-	}
-}
-
 func (e *edit) Recalculate() {
 	e.Chunk.Light.Calculate()
 	e.mesh.Compute()
 }
 
-func (e *edit) CanDeselect() bool {
-	return e.Tool == nil || e.mesh.Parent() == nil
+func (e *edit) Actions() []editor.Action {
+	return []editor.Action{
+		{
+			Name:     "Place",
+			Key:      keys.F,
+			Callback: func(mgr editor.ToolManager) { mgr.SelectTool(e.PlaceTool) },
+		},
+		{
+			Name:     "Erase",
+			Key:      keys.C,
+			Callback: func(mgr editor.ToolManager) { mgr.SelectTool(e.EraseTool) },
+		},
+		{
+			Name:     "Replace",
+			Key:      keys.R,
+			Callback: func(mgr editor.ToolManager) { mgr.SelectTool(e.ReplaceTool) },
+		},
+		{
+			Name: "Sample",
+			Key:  keys.T,
+			Callback: func(mgr editor.ToolManager) {
+				previousTool := mgr.Tool()
+				e.SampleTool.Reselect = func() { mgr.SelectTool(previousTool) }
+				mgr.SelectTool(e.SampleTool)
+			},
+		},
+		{
+			Name:     "Clear",
+			Key:      keys.N,
+			Modifier: keys.Ctrl,
+			Callback: func(mgr editor.ToolManager) { e.clearChunk() },
+		},
+		{
+			Name:     "Save",
+			Key:      keys.S,
+			Modifier: keys.Ctrl,
+			Callback: func(mgr editor.ToolManager) { e.saveChunkDialog() },
+		},
+	}
 }
 
 func (e *edit) saveChunkDialog() {

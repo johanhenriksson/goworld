@@ -2,6 +2,7 @@ package editor
 
 import (
 	"github.com/johanhenriksson/goworld/core/collider"
+	"github.com/johanhenriksson/goworld/core/input/keys"
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/gui"
@@ -45,10 +46,6 @@ func (e *ObjectEditor) Select(ev mouse.Event, collider collider.T) {
 
 func (e *ObjectEditor) Deselect(ev mouse.Event) bool {
 	if e.Custom != nil {
-		// editors may reject deselection
-		if !e.Custom.CanDeselect() {
-			return false
-		}
 		e.Custom.SetActive(false)
 	}
 	e.GUI.SetActive(false)
@@ -57,4 +54,20 @@ func (e *ObjectEditor) Deselect(ev mouse.Event) bool {
 
 func (e *ObjectEditor) Target() object.T {
 	return e.target
+}
+
+func (e *ObjectEditor) Actions() []Action {
+	actions := []Action{
+		{
+			Name: "Move",
+			Key:  keys.G,
+			Callback: func(mgr ToolManager) {
+				mgr.MoveTool(e.target)
+			},
+		},
+	}
+	if e.Custom != nil {
+		actions = append(actions, e.Custom.Actions()...)
+	}
+	return actions
 }

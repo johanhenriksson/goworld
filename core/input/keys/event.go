@@ -9,7 +9,7 @@ type Event interface {
 	Modifier(Modifier) bool
 
 	Handled() bool
-	StopPropagation()
+	Consume()
 }
 
 type event struct {
@@ -29,7 +29,7 @@ func (e event) Modifier(mod Modifier) bool {
 	return e.mods&mod == mod
 }
 
-func (e *event) StopPropagation() {
+func (e *event) Consume() {
 	e.handled = true
 }
 

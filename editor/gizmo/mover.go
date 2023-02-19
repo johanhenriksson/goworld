@@ -1,16 +1,16 @@
-package mover
+package gizmo
 
 import (
 	"github.com/johanhenriksson/goworld/core/collider"
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/core/transform"
-	"github.com/johanhenriksson/goworld/editor/gizmo"
 	"github.com/johanhenriksson/goworld/geometry/cone"
 	"github.com/johanhenriksson/goworld/geometry/cyllinder"
 	"github.com/johanhenriksson/goworld/geometry/lines"
 	"github.com/johanhenriksson/goworld/geometry/plane"
 	"github.com/johanhenriksson/goworld/math/mat4"
+	"github.com/johanhenriksson/goworld/math/physics"
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
@@ -20,9 +20,8 @@ import (
 )
 
 // Mover Gizmo is the visual representation of the 3D positioning tool
-type T struct {
+type Mover struct {
 	object.T
-	Args
 
 	target transform.T
 
@@ -42,15 +41,11 @@ type T struct {
 	start      vec2.T
 	viewport   render.Screen
 	camera     mat4.T
+	dragging   bool
 }
 
-var _ gizmo.Gizmo = &T{}
-
-type Args struct {
-}
-
-// New creates a new gizmo at the given position
-func New(args Args) *T {
+// NewMover creates a new mover gizmo
+func NewMover() *Mover {
 	radius := float32(0.1)
 	bodyRadius := radius / 4
 	height := float32(0.35)
@@ -68,7 +63,7 @@ func New(args Args) *T {
 		DepthWrite:   true,
 	}
 
-	g := object.New(&T{
+	g := object.New(&Mover{
 		// X Arrow Cone
 		X: object.Builder(cone.New(cone.Args{
 			Mat:      mat,
@@ -209,22 +204,26 @@ func New(args Args) *T {
 	return g
 }
 
-func (g *T) Name() string {
+func (g *Mover) Name() string {
 	return "MoverGizmo"
 }
 
-func (g *T) Target() transform.T {
+func (g *Mover) Target() transform.T {
 	return g.target
 }
 
-func (g *T) SetTarget(t transform.T) {
+func (g *Mover) SetTarget(t transform.T) {
 	if t != nil {
 		g.Transform().SetPosition(t.WorldPosition())
 	}
 	g.target = t
 }
 
-func (g *T) DragStart(e mouse.Event, collider collider.T) {
+func (g *Mover) CanDeselect() bool {
+	return true
+}
+
+func (g *Mover) DragStart(e mouse.Event, collider collider.T) {
 	axisObj := collider.Parent()
 	switch axisObj {
 	case g.X:
@@ -243,10 +242,10 @@ func (g *T) DragStart(e mouse.Event, collider collider.T) {
 	g.screenAxis = g.camera.TransformDir(localDir).XY().Normalized()
 }
 
-func (g *T) DragEnd(e mouse.Event) {
+func (g *Mover) DragEnd(e mouse.Event) {
 }
 
-func (g *T) DragMove(e mouse.Event) {
+func (g *Mover) DragMove(e mouse.Event) {
 	if e.Action() == mouse.Move {
 		cursor := g.viewport.NormalizeCursor(e.Position())
 
@@ -262,8 +261,47 @@ func (g *T) DragMove(e mouse.Event) {
 	}
 }
 
-func (g *T) PreDraw(args render.Args, scene object.T) error {
+func (g *Mover) PreDraw(args render.Args, scene object.T) error {
 	g.camera = args.VP
 	g.viewport = args.Viewport
 	return nil
+}
+
+func (m *Mover) MouseEvent(e mouse.Event) {
+	vpi := m.camera.Invert()
+	cursor := m.viewport.NormalizeCursor(e.Position())
+
+	if m.dragging {
+		if e.Action() == mouse.Release {
+			m.DragEnd(e)
+			m.dragging = false
+			e.Consume()
+		} else {
+			m.DragMove(e)
+			e.Consume()
+		}
+	} else if e.Action() == mouse.Press {
+		near := vpi.TransformPoint(vec3.New(cursor.X, cursor.Y, 1))
+		far := vpi.TransformPoint(vec3.New(cursor.X, cursor.Y, 0))
+		dir := far.Sub(near).Normalized()
+
+		// return closest hit
+		// find Collider children of Selectable objects
+		colliders := object.Query[collider.T]().Collect(m)
+
+		closest, hit := collider.ClosestIntersection(colliders, &physics.Ray{
+			Origin: near,
+			Dir:    dir,
+		})
+
+		if hit {
+			m.dragging = true
+			m.DragStart(e, closest)
+			e.Consume()
+		} else if m.dragging {
+			// we hit nothing, deselect
+			m.DragEnd(e)
+			e.Consume()
+		}
+	}
 }

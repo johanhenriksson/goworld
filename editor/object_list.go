@@ -14,9 +14,9 @@ import (
 type SelectObjectHandler func(object.T)
 
 type ObjectListProps struct {
-	Scene         object.T
-	EditorRoot    object.T
-	SelectManager SelectManager
+	Scene       object.T
+	EditorRoot  object.T
+	ToolManager ToolManager
 }
 
 func ObjectList(key string, props ObjectListProps) node.T {
@@ -41,7 +41,7 @@ func ObjectList(key string, props ObjectListProps) node.T {
 
 					// check if we found something selectable
 					if selectable, ok := obj.(Selectable); ok {
-						props.SelectManager.Select(selectable)
+						props.ToolManager.Select(selectable)
 					}
 				},
 			}),
