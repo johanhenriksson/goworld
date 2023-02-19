@@ -177,7 +177,7 @@ func NewDeferredPass(
 		materials: NewMaterialSorter(
 			app, pass,
 			&material.Def{
-				Shader:       "vk/color_d",
+				Shader:       "color_d",
 				Subpass:      GeometrySubpass,
 				VertexFormat: vertex.C{},
 				DepthTest:    true,

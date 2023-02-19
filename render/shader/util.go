@@ -24,11 +24,11 @@ func sliceUint32(data []byte) []uint32 {
 	return (*[m / 4]uint32)(unsafe.Pointer((*sliceHeader)(unsafe.Pointer(&data)).Data))[:len(data)/4]
 }
 
-func LoadOrCompile(path string) ([]byte, error) {
+func LoadOrCompile(path string, stage ShaderStage) ([]byte, error) {
 	spvPath := fmt.Sprintf("%s.spv", path)
 	fp, err := os.Open(spvPath)
 	if errors.Is(err, os.ErrNotExist) {
-		return Compile(path)
+		return Compile(path, stage)
 	}
 	if err != nil {
 		return nil, err
@@ -38,11 +38,20 @@ func LoadOrCompile(path string) ([]byte, error) {
 	return ioutil.ReadAll(fp)
 }
 
-func Compile(path string) ([]byte, error) {
+func Compile(path string, stage ShaderStage) ([]byte, error) {
+	stageflag := ""
+	switch stage {
+	case StageFragment:
+		stageflag = "-fshader-stage=fragment"
+	case StageVertex:
+		stageflag = "-fshader-stage=vertex"
+	case StageCompute:
+		stageflag = "-fshader-stage=compute"
+	}
 	// check for glslc
 	bytecode := &bytes.Buffer{}
 	errors := &bytes.Buffer{}
-	cmd := exec.Command("glslc", path, "-o", "-", "-O")
+	cmd := exec.Command("glslc", stageflag, "-o", "-", "-O", path)
 	cmd.Stdout = bytecode
 	cmd.Stderr = errors
 

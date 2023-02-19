@@ -57,7 +57,7 @@ func NewLightShader(app vulkan.App, pass renderpass.T, gbuffer GeometryBuffer) L
 	mat := material.New(
 		app.Device(),
 		material.Args{
-			Shader:   app.Shaders().FetchSync(shader.NewRef("vk/light")),
+			Shader:   app.Shaders().FetchSync(shader.NewRef("light")),
 			Pass:     pass,
 			Subpass:  LightingSubpass,
 			Pointers: vertex.ParsePointers(vertex.T{}),

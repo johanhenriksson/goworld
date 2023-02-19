@@ -56,7 +56,7 @@ func NewMover() *Mover {
 	s := side / 2
 
 	mat := &material.Def{
-		Shader:       "vk/color_f",
+		Shader:       "color_f",
 		Subpass:      "forward",
 		VertexFormat: vertex.C{},
 		DepthTest:    true,
@@ -179,7 +179,7 @@ func NewMover() *Mover {
 		// Lines
 		Lines: lines.New(lines.Args{
 			Mat: &material.Def{
-				Shader:       "vk/lines",
+				Shader:       "lines",
 				Subpass:      "output",
 				VertexFormat: vertex.C{},
 				Primitive:    vertex.Lines,

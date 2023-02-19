@@ -25,7 +25,7 @@ func NewModule(device device.T, path string, stage ShaderStage) Module {
 		panic("device is nil")
 	}
 
-	bytecode, err := LoadOrCompile(path)
+	bytecode, err := LoadOrCompile(path, stage)
 	if err != nil {
 		panic(err)
 	}

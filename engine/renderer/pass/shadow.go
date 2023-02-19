@@ -118,7 +118,7 @@ func (p *shadowpass) createShadowmap(light light.T) Shadowmap {
 	// each light needs its own shadow materials - or rather, their own descriptors
 	// cheating a bit by creating entire materials for each light, fix it later.
 	mats := NewMaterialSorter(p.app, p.pass, &material.Def{
-		Shader:       "vk/shadow",
+		Shader:       "shadow",
 		Subpass:      GeometrySubpass,
 		VertexFormat: voxel.Vertex{},
 		DepthTest:    true,
@@ -126,7 +126,7 @@ func (p *shadowpass) createShadowmap(light light.T) Shadowmap {
 	})
 	mats.TransformFn = func(d *material.Def) *material.Def {
 		shadowMat := *d
-		shadowMat.Shader = "vk/shadow"
+		shadowMat.Shader = "shadow"
 		shadowMat.CullMode = vertex.CullFront
 		return &shadowMat
 	}

@@ -87,7 +87,7 @@ func NewForwardPass(
 		fbuf:    fbuf,
 
 		materials: NewMaterialSorter(app, pass, &material.Def{
-			Shader:       "vk/color_f",
+			Shader:       "color_f",
 			Subpass:      ForwardSubpass,
 			VertexFormat: vertex.C{},
 			DepthTest:    true,

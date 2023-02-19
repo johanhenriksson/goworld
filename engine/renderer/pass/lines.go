@@ -65,7 +65,7 @@ func NewLinePass(app vulkan.App, gbuffer GeometryBuffer) *LinePass {
 		fbuf: fbufs,
 		materials: NewMaterialSorter(app, pass,
 			&material.Def{
-				Shader:       "vk/lines",
+				Shader:       "lines",
 				Subpass:      OutputSubpass,
 				VertexFormat: vertex.C{},
 				Primitive:    vertex.Lines,

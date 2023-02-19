@@ -19,7 +19,7 @@ type Mesh struct {
 
 func NewMesh(chunk *T) *Mesh {
 	msh := mesh.New(mesh.Deferred, &material.Def{
-		Shader:       "vk/voxels",
+		Shader:       "voxels",
 		Subpass:      "geometry",
 		VertexFormat: voxel.Vertex{},
 		DepthTest:    true,

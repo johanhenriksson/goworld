@@ -56,8 +56,8 @@ func New(device device.T, path string) T {
 	}
 
 	modules := []Module{
-		NewModule(device, fmt.Sprintf("assets/shaders/%s.vert", path), StageVertex),
-		NewModule(device, fmt.Sprintf("assets/shaders/%s.frag", path), StageFragment),
+		NewModule(device, fmt.Sprintf("assets/shaders/%s.vs.glsl", path), StageVertex),
+		NewModule(device, fmt.Sprintf("assets/shaders/%s.fs.glsl", path), StageFragment),
 	}
 
 	return &shader{

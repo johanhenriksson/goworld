@@ -76,7 +76,7 @@ func NewGuiPass(app vulkan.App, gbuffer GeometryBuffer) *GuiPass {
 
 	mat := material.New(app.Device(), material.Args{
 		Pass:     pass,
-		Shader:   app.Shaders().FetchSync(shader.NewRef("vk/ui_texture")),
+		Shader:   app.Shaders().FetchSync(shader.NewRef("ui_texture")),
 		Pointers: vertex.ParsePointers(vertex.UI{}),
 		Constants: []pipeline.PushConstant{
 			{
