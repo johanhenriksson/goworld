@@ -16,7 +16,6 @@ import (
 	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/renderpass"
 	"github.com/johanhenriksson/goworld/render/renderpass/attachment"
-	"github.com/johanhenriksson/goworld/render/texture"
 	"github.com/johanhenriksson/goworld/render/vertex"
 	"github.com/johanhenriksson/goworld/render/vulkan"
 
@@ -37,8 +36,6 @@ const (
 
 type Deferred interface {
 	Pass
-	GBuffer() GeometryBuffer
-	ShadowTexture() texture.T
 }
 
 type GeometryDescriptors struct {
@@ -48,24 +45,22 @@ type GeometryDescriptors struct {
 	Textures *descriptor.SamplerArray
 }
 
-type GeometryPass struct {
-	gbuffer   GeometryBuffer
-	quad      vertex.Mesh
-	app       vulkan.App
-	pass      renderpass.T
-	light     LightShader
-	fbuf      framebuffer.T
-	shadowtex texture.T
-
-	shadows ShadowPass
+type deferred struct {
+	gbuffer GeometryBuffer
+	quad    vertex.Mesh
+	app     vulkan.App
+	pass    renderpass.T
+	light   LightShader
+	fbuf    framebuffer.T
+	shadows Shadow
 
 	materials *MaterialSorter
 }
 
-func NewGeometryPass(
+func NewDeferredPass(
 	app vulkan.App,
 	gbuffer GeometryBuffer,
-	shadows ShadowPass,
+	shadows Shadow,
 ) Deferred {
 	pass := renderpass.New(app.Device(), renderpass.Args{
 		ColorAttachments: []attachment.Color{
@@ -167,27 +162,17 @@ func NewGeometryPass(
 
 	lightsh := NewLightShader(app, pass, gbuffer)
 
-	shadowtex, err := texture.FromView(app.Device(), shadows.Shadowmap(), texture.Args{
-		Key:    "shadowmap-1",
-		Filter: core1_0.FilterNearest,
-		Wrap:   core1_0.SamplerAddressModeClampToEdge,
-	})
-	if err != nil {
-		panic(err)
-	}
-	lightsh.Descriptors().Shadow.Set(1, shadowtex)
 	app.Textures().Fetch(color.White)
 
-	return &GeometryPass{
+	return &deferred{
 		gbuffer: gbuffer,
 		app:     app,
 		quad:    quad,
 		light:   lightsh,
 		pass:    pass,
 
-		shadows:   shadows,
-		fbuf:      fbuf,
-		shadowtex: shadowtex,
+		shadows: shadows,
+		fbuf:    fbuf,
 
 		materials: NewMaterialSorter(
 			app, pass,
@@ -201,7 +186,7 @@ func NewGeometryPass(
 	}
 }
 
-func (p *GeometryPass) Record(cmds command.Recorder, args render.Args, scene object.T) {
+func (p *deferred) Record(cmds command.Recorder, args render.Args, scene object.T) {
 	camera := uniform.Camera{
 		Proj:        args.Projection,
 		View:        args.View,
@@ -246,12 +231,12 @@ func (p *GeometryPass) Record(cmds command.Recorder, args render.Args, scene obj
 		lightDesc.Shadow.Set(0, white)
 
 		ambient := light.NewAmbient(color.White, 0.33)
-		p.DrawLight(cmds, args, ambient)
+		p.DrawLight(cmds, args, ambient, 0)
 	}
 
 	lights := object.Query[light.T]().Collect(scene)
-	for _, lit := range lights {
-		if err := p.DrawLight(cmds, args, lit); err != nil {
+	for index, lit := range lights {
+		if err := p.DrawLight(cmds, args, lit, index+1); err != nil {
 			fmt.Printf("light draw error in object %s: %s\n", lit.Name(), err)
 		}
 	}
@@ -261,7 +246,7 @@ func (p *GeometryPass) Record(cmds command.Recorder, args render.Args, scene obj
 	})
 }
 
-func (p *GeometryPass) DrawLight(cmds command.Recorder, args render.Args, lit light.T) error {
+func (p *deferred) DrawLight(cmds command.Recorder, args render.Args, lit light.T, shadowIndex int) error {
 	vkmesh, meshReady := p.app.Meshes().Fetch(p.quad)
 	if !meshReady {
 		return nil
@@ -269,13 +254,23 @@ func (p *GeometryPass) DrawLight(cmds command.Recorder, args render.Args, lit li
 
 	desc := lit.LightDescriptor(args)
 
+	shadowtex := p.shadows.Shadowmap(lit)
+	if shadowtex != nil {
+		p.light.Descriptors().Shadow.Set(shadowIndex, shadowtex)
+	} else {
+		// no shadowmap available - disable the light until its available
+		if lit.Shadows() {
+			return nil
+		}
+	}
+
 	cmds.Record(func(cmd command.Buffer) {
 		push := &LightConst{
 			ViewProj:    desc.ViewProj,
 			Color:       desc.Color,
 			Position:    desc.Position,
 			Type:        desc.Type,
-			Shadowmap:   uint32(1),
+			Shadowmap:   uint32(shadowIndex),
 			Range:       desc.Range,
 			Intensity:   desc.Intensity,
 			Attenuation: desc.Attenuation,
@@ -288,22 +283,13 @@ func (p *GeometryPass) DrawLight(cmds command.Recorder, args render.Args, lit li
 	return nil
 }
 
-func (p *GeometryPass) Name() string {
-	return "Geometry"
+func (p *deferred) Name() string {
+	return "Deferred"
 }
 
-func (d *GeometryPass) GBuffer() GeometryBuffer {
-	return d.gbuffer
-}
-
-func (d *GeometryPass) ShadowTexture() texture.T {
-	return d.shadowtex
-}
-
-func (p *GeometryPass) Destroy() {
+func (p *deferred) Destroy() {
 	// destroy subpasses
 	p.materials.Destroy()
-	p.shadowtex.Destroy()
 
 	p.fbuf.Destroy()
 	p.pass.Destroy()

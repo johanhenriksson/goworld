@@ -2,6 +2,7 @@ package attachment
 
 import (
 	"errors"
+	"log"
 
 	"github.com/johanhenriksson/goworld/render/device"
 	"github.com/johanhenriksson/goworld/render/image"
@@ -32,6 +33,7 @@ func (im *alloc) Next(
 	device device.T,
 	width, height int,
 ) (image.T, error) {
+	log.Println("attachment alloc", im.key)
 	return image.New2D(
 		device,
 		im.key,

@@ -20,6 +20,7 @@ func (lit *ambient) LightDescriptor(args render.Args) Descriptor {
 	}
 }
 
+func (lit *ambient) Shadows() bool { return false }
 func (lit *ambient) Type() Type {
 	return Ambient
 }

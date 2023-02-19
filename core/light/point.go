@@ -26,8 +26,9 @@ func NewPoint(args PointArgs) T {
 	})
 }
 
-func (lit *pointlight) Name() string { return "PointLight" }
-func (lit *pointlight) Type() Type   { return Point }
+func (lit *pointlight) Name() string  { return "PointLight" }
+func (lit *pointlight) Type() Type    { return Point }
+func (lit *pointlight) Shadows() bool { return false }
 
 func (lit *pointlight) LightDescriptor(args render.Args) Descriptor {
 	return Descriptor{

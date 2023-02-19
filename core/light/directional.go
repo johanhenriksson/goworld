@@ -19,18 +19,18 @@ type DirectionalArgs struct {
 
 type dirlight struct {
 	object.T
-
-	DirectionalArgs
+	args DirectionalArgs
 }
 
 func NewDirectional(args DirectionalArgs) T {
 	return object.New(&dirlight{
-		DirectionalArgs: args,
+		args: args,
 	})
 }
 
-func (lit *dirlight) Name() string { return "DirectionalLight" }
-func (lit *dirlight) Type() Type   { return Directional }
+func (lit *dirlight) Name() string  { return "DirectionalLight" }
+func (lit *dirlight) Type() Type    { return Directional }
+func (lit *dirlight) Shadows() bool { return lit.args.Shadows }
 
 func (lit *dirlight) LightDescriptor(args render.Args) Descriptor {
 	frustumCorners := []vec3.T{
@@ -72,17 +72,13 @@ func (lit *dirlight) LightDescriptor(args render.Args) Descriptor {
 
 	lvp := lproj.Mul(&lview)
 
-	desc := Descriptor{
+	return Descriptor{
 		Type:       Directional,
 		Position:   vec4.Extend(ldir, 0),
-		Color:      lit.Color,
-		Intensity:  lit.Intensity,
+		Color:      lit.args.Color,
+		Intensity:  lit.args.Intensity,
 		Projection: lproj,
 		View:       lview,
 		ViewProj:   lvp,
 	}
-	if lit.Shadows {
-		desc.Shadows = 1
-	}
-	return desc
 }

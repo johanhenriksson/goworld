@@ -64,6 +64,9 @@ func New(device device.T, args Args) (T, error) {
 }
 
 func FromImage(device device.T, img image.T, args Args) (T, error) {
+	if args.Key == "" {
+		args.Key = img.Key()
+	}
 	if args.Aspect == 0 {
 		args.Aspect = core1_0.ImageAspectFlags(core1_0.ImageAspectColor)
 	}

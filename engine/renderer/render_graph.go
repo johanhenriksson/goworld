@@ -15,7 +15,6 @@ import (
 
 type T interface {
 	Draw(scene object.T)
-	Geometry() pass.Deferred
 	GBuffer() pass.GeometryBuffer
 	Recreate()
 	Screenshot()
@@ -24,31 +23,32 @@ type T interface {
 
 type rgraph struct {
 	graph.T
-	app      vulkan.App
-	gbuffer  pass.GeometryBuffer
-	geometry pass.Deferred
+	app     vulkan.App
+	gbuffer pass.GeometryBuffer
 }
 
 func NewGraph(app vulkan.App) T {
-	renderTarget, err := pass.NewRenderTarget(app.Device(), app.Width(), app.Height(), core1_0.FormatR8G8B8A8UnsignedNormalized, app.Device().GetDepthFormat())
-	if err != nil {
-		panic(err)
-	}
-
-	gbuffer, err := pass.NewGbuffer(app, renderTarget)
-	if err != nil {
-		panic(err)
-	}
-
 	r := &rgraph{
-		app:     app,
-		gbuffer: gbuffer,
+		app: app,
 	}
 	r.T = graph.New(app, func(g graph.T) {
+		// this is an awkward place to instantiate render target / gbuffer
+		// todo: maybe move it into the graph?
+		target, err := pass.NewRenderTarget(app.Device(), app.Width(), app.Height(), core1_0.FormatR8G8B8A8UnsignedNormalized, app.Device().GetDepthFormat())
+		if err != nil {
+			panic(err)
+		}
+
+		gbuffer, err := pass.NewGbuffer(app, target)
+		if err != nil {
+			panic(err)
+		}
+		r.gbuffer = gbuffer
+
 		shadows := pass.NewShadowPass(app)
 		shadowNode := g.Node(shadows)
 
-		deferred := pass.NewGeometryPass(app, gbuffer, shadows)
+		deferred := pass.NewDeferredPass(app, gbuffer, shadows)
 		deferredNode := g.Node(deferred)
 		deferredNode.After(shadowNode, core1_0.PipelineStageTopOfPipe)
 
@@ -87,10 +87,6 @@ func (r *rgraph) Screenshot() {
 
 func (r *rgraph) GBuffer() pass.GeometryBuffer {
 	return r.gbuffer
-}
-
-func (r *rgraph) Geometry() pass.Deferred {
-	return r.geometry
 }
 
 func (r *rgraph) Destroy() {
