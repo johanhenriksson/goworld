@@ -1,12 +1,11 @@
 package editor
 
 import (
-	"log"
-
 	"github.com/johanhenriksson/goworld/core/collider"
 	"github.com/johanhenriksson/goworld/core/input/keys"
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/core/object"
+	"github.com/johanhenriksson/goworld/editor/gizmo/mover"
 	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/math/physics"
 	"github.com/johanhenriksson/goworld/math/vec3"
@@ -27,10 +26,10 @@ type Tool interface {
 }
 
 type Action struct {
+	Name     string
 	Key      keys.Code
 	Modifier keys.Modifier
-	Name     string
-	Tool     Tool
+	Callback func(SelectManager)
 }
 
 type SelectManager interface {
@@ -39,27 +38,25 @@ type SelectManager interface {
 
 	Select(Selectable)
 	SelectTool(Tool)
+	MoveTool(object.T)
 }
-
-type SelectCallback func(Selectable)
-type SelectFilter func(Selectable) bool
 
 type selectmgr struct {
 	object.T
 	scene    object.T
 	selected Selectable
 	tool     Tool
-
 	camera   mat4.T
 	viewport render.Screen
+
+	// built-in tools
+	Mover *mover.T
 }
 
 func NewSelectManager() SelectManager {
-	return object.New(&selectmgr{})
-}
-
-func (m *selectmgr) Select(obj Selectable) {
-	m.setSelect(mouse.NopEvent(), obj, nil)
+	return object.New(&selectmgr{
+		Mover: mover.New(mover.Args{}),
+	})
 }
 
 func (m *selectmgr) MouseEvent(e mouse.Event) {
@@ -74,6 +71,9 @@ func (m *selectmgr) MouseEvent(e mouse.Event) {
 		// we have a tool selected.
 		// pass on the mouse event
 		m.tool.MouseEvent(e)
+		if e.Handled() {
+			return
+		}
 	}
 
 	canReselect := m.selected == nil || m.tool == nil || m.tool.CanDeselect()
@@ -122,15 +122,7 @@ func (m *selectmgr) KeyEvent(e keys.Event) {
 		}
 		for _, action := range m.selected.Actions() {
 			if action.Key == e.Code() && e.Modifier(action.Modifier) {
-				// woot!
-				if m.tool != action.Tool {
-					log.Println("select tool", action.Name)
-					m.SelectTool(action.Tool)
-				} else {
-					// deselect
-					log.Println("deselect tool", action.Name)
-					m.SelectTool(nil)
-				}
+				action.Callback(m)
 				e.Consume()
 			}
 		}
@@ -138,15 +130,24 @@ func (m *selectmgr) KeyEvent(e keys.Event) {
 }
 
 func (m *selectmgr) SelectTool(tool Tool) {
+	// if we select the same tool twice, deselect it instead
+	sameTool := m.tool == tool
+
 	// deselect tool
 	if m.tool != nil {
 		m.tool.SetActive(false)
 		m.tool = nil
 	}
-	if tool != nil {
+
+	// activate the new tool if its different
+	if !sameTool && tool != nil {
 		m.tool = tool
 		m.tool.SetActive(true)
 	}
+}
+
+func (m *selectmgr) Select(obj Selectable) {
+	m.setSelect(mouse.NopEvent(), obj, nil)
 }
 
 func (m *selectmgr) setSelect(e mouse.Event, object Selectable, collider collider.T) bool {
@@ -177,4 +178,9 @@ func (m *selectmgr) PreDraw(args render.Args, scene object.T) error {
 	m.camera = args.VP
 	m.viewport = args.Viewport
 	return nil
+}
+
+func (m *selectmgr) MoveTool(obj object.T) {
+	m.Mover.SetTarget(obj.Transform())
+	m.SelectTool(m.Mover)
 }

@@ -11,6 +11,7 @@ import (
 	"github.com/johanhenriksson/goworld/geometry/lines"
 	"github.com/johanhenriksson/goworld/geometry/plane"
 	"github.com/johanhenriksson/goworld/math/mat4"
+	"github.com/johanhenriksson/goworld/math/physics"
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
@@ -42,6 +43,7 @@ type T struct {
 	start      vec2.T
 	viewport   render.Screen
 	camera     mat4.T
+	dragging   bool
 }
 
 var _ gizmo.Gizmo = &T{}
@@ -224,6 +226,10 @@ func (g *T) SetTarget(t transform.T) {
 	g.target = t
 }
 
+func (g *T) CanDeselect() bool {
+	return true
+}
+
 func (g *T) DragStart(e mouse.Event, collider collider.T) {
 	axisObj := collider.Parent()
 	switch axisObj {
@@ -266,4 +272,43 @@ func (g *T) PreDraw(args render.Args, scene object.T) error {
 	g.camera = args.VP
 	g.viewport = args.Viewport
 	return nil
+}
+
+func (m *T) MouseEvent(e mouse.Event) {
+	vpi := m.camera.Invert()
+	cursor := m.viewport.NormalizeCursor(e.Position())
+
+	if m.dragging {
+		if e.Action() == mouse.Release {
+			m.DragEnd(e)
+			m.dragging = false
+			e.Consume()
+		} else {
+			m.DragMove(e)
+			e.Consume()
+		}
+	} else if e.Action() == mouse.Press {
+		near := vpi.TransformPoint(vec3.New(cursor.X, cursor.Y, 1))
+		far := vpi.TransformPoint(vec3.New(cursor.X, cursor.Y, 0))
+		dir := far.Sub(near).Normalized()
+
+		// return closest hit
+		// find Collider children of Selectable objects
+		colliders := object.Query[collider.T]().Collect(m)
+
+		closest, hit := collider.ClosestIntersection(colliders, &physics.Ray{
+			Origin: near,
+			Dir:    dir,
+		})
+
+		if hit {
+			m.dragging = true
+			m.DragStart(e, closest)
+			e.Consume()
+		} else if m.dragging {
+			// we hit nothing, deselect
+			m.DragEnd(e)
+			e.Consume()
+		}
+	}
 }

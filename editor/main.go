@@ -14,7 +14,6 @@ import (
 type Editor struct {
 	object.T
 	GUI       gui.Manager
-	GizmoMgr  GizmoManager
 	SelectMgr SelectManager
 	Player    *game.Player
 
@@ -26,7 +25,6 @@ type Editor struct {
 func NewEditor(render renderer.T, workspace object.T) *Editor {
 	editor := object.New(&Editor{
 		GUI:       MakeGUI(render),
-		GizmoMgr:  NewGizmoManager(),
 		SelectMgr: NewSelectManager(),
 
 		Player:    game.NewPlayer(vec3.New(0, 20, -11), nil),

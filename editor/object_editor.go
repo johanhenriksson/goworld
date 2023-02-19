@@ -2,6 +2,7 @@ package editor
 
 import (
 	"github.com/johanhenriksson/goworld/core/collider"
+	"github.com/johanhenriksson/goworld/core/input/keys"
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/gui"
@@ -57,11 +58,13 @@ func (e *ObjectEditor) Target() object.T {
 
 func (e *ObjectEditor) Actions() []Action {
 	actions := []Action{
-		// {
-		// 	Name:     "Move",
-		// 	Key:      keys.W,
-		// 	Modifier: keys.NoMod,
-		// },
+		{
+			Name: "Move",
+			Key:  keys.G,
+			Callback: func(mgr SelectManager) {
+				mgr.MoveTool(e.target)
+			},
+		},
 	}
 	if e.Custom != nil {
 		actions = append(actions, e.Custom.Actions()...)

@@ -76,10 +76,21 @@ func NewEditor(ctx *editor.Context, mesh *Mesh) Editor {
 		Chunk:  chk,
 		Camera: ctx.Camera,
 
-		PlaceTool:   NewPlaceTool(),
-		EraseTool:   NewEraseTool(),
-		SampleTool:  NewSampleTool(),
-		ReplaceTool: NewReplaceTool(),
+		PlaceTool: object.Builder(NewPlaceTool()).
+			Active(false).
+			Create(),
+
+		EraseTool: object.Builder(NewEraseTool()).
+			Active(false).
+			Create(),
+
+		SampleTool: object.Builder(NewSampleTool()).
+			Active(false).
+			Create(),
+
+		ReplaceTool: object.Builder(NewReplaceTool()).
+			Active(false).
+			Create(),
 
 		render: ctx.Render,
 		color:  color.Red,
@@ -118,11 +129,6 @@ func NewEditor(ctx *editor.Context, mesh *Mesh) Editor {
 			Active(false).
 			Create(),
 	})
-
-	e.ReplaceTool.SetActive(false)
-	e.EraseTool.SetActive(false)
-	e.SampleTool.SetActive(false)
-	e.PlaceTool.SetActive(false)
 
 	object.Attach(e, NewGUI(e))
 	object.Attach(e, NewMenu(e))
@@ -184,16 +190,6 @@ func (e *edit) clearChunk() {
 }
 
 func (e *edit) KeyEvent(ev keys.Event) {
-	// clear chunk hotkey
-	if keys.PressedMods(ev, keys.N, keys.Ctrl) {
-		e.clearChunk()
-	}
-
-	// save chunk hotkey
-	if keys.PressedMods(ev, keys.S, keys.Ctrl) {
-		e.saveChunkDialog()
-	}
-
 	// toggle construction planes
 	if keys.PressedMods(ev, keys.X, keys.Ctrl) {
 		e.XPlane.SetActive(!e.XPlane.Active())
@@ -237,24 +233,36 @@ func (e *edit) Recalculate() {
 func (e *edit) Actions() []editor.Action {
 	return []editor.Action{
 		{
-			Name: "Place",
-			Key:  keys.F,
-			Tool: e.PlaceTool,
+			Name:     "Place",
+			Key:      keys.F,
+			Callback: func(mgr editor.SelectManager) { mgr.SelectTool(e.PlaceTool) },
 		},
 		{
-			Name: "Erase",
-			Key:  keys.C,
-			Tool: e.EraseTool,
+			Name:     "Erase",
+			Key:      keys.C,
+			Callback: func(mgr editor.SelectManager) { mgr.SelectTool(e.EraseTool) },
 		},
 		{
-			Name: "Replace",
-			Key:  keys.R,
-			Tool: e.ReplaceTool,
+			Name:     "Replace",
+			Key:      keys.R,
+			Callback: func(mgr editor.SelectManager) { mgr.SelectTool(e.ReplaceTool) },
 		},
 		{
-			Name: "Sample",
-			Key:  keys.T,
-			Tool: e.SampleTool,
+			Name:     "Sample",
+			Key:      keys.T,
+			Callback: func(mgr editor.SelectManager) { mgr.SelectTool(e.SampleTool) },
+		},
+		{
+			Name:     "Clear",
+			Key:      keys.N,
+			Modifier: keys.Ctrl,
+			Callback: func(mgr editor.SelectManager) { e.clearChunk() },
+		},
+		{
+			Name:     "Save",
+			Key:      keys.S,
+			Modifier: keys.Ctrl,
+			Callback: func(mgr editor.SelectManager) { e.saveChunkDialog() },
 		},
 	}
 }
