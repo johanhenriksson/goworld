@@ -4,9 +4,7 @@ import (
 	"github.com/johanhenriksson/goworld/assets"
 	"github.com/johanhenriksson/goworld/gui/quad"
 	"github.com/johanhenriksson/goworld/gui/widget"
-	// "github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/math/vec2"
-	// "github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/font"
@@ -17,7 +15,7 @@ import (
 )
 
 var DefaultFont = "fonts/SourceCodeProRegular.ttf"
-var DefaultSize = 12
+var DefaultSize = 14
 var DefaultColor = color.White
 var DefaultLineHeight = float32(1.0)
 
@@ -84,7 +82,7 @@ func (r *renderer) SetFont(name string) {
 
 func (r *renderer) SetFontSize(size int) {
 	if size <= 0 {
-		size = 12
+		size = DefaultSize
 	}
 	r.invalidTexture = r.invalidTexture || size != r.size
 	r.invalidMesh = r.invalidMesh || size != r.size
@@ -94,7 +92,7 @@ func (r *renderer) SetFontSize(size int) {
 
 func (r *renderer) SetFontColor(clr color.T) {
 	if clr == color.None {
-		clr = color.White
+		clr = DefaultColor
 	}
 	r.invalidMesh = r.invalidMesh || clr != r.color
 	r.color = clr
@@ -102,7 +100,7 @@ func (r *renderer) SetFontColor(clr color.T) {
 
 func (r *renderer) SetLineHeight(lineHeight float32) {
 	if lineHeight <= 0 {
-		lineHeight = 1
+		lineHeight = DefaultLineHeight
 	}
 	r.invalidTexture = lineHeight != r.lineHeight
 	r.invalidMesh = r.invalidMesh || lineHeight != r.lineHeight
@@ -152,28 +150,10 @@ func (r *renderer) Draw(args widget.DrawArgs, label T) {
 		r.invalidMesh = false
 	}
 
-	// resize mesh if needed
-	// if !label.Size().ApproxEqual(r.size) {
-	// 	fmt.Println("label size", label.Size())
-	// 	r.mesh.SetSize(label.Size())
-	// 	r.size = label.Size()
-	// }
-
-	// can the we use the gl viewport to clip anything out of bounds?
-
-	// we can center the label on the mesh by modifying the uvs
-	// scale := label.Size().Div(r.bounds)
-
 	mesh, meshReady := args.Meshes.Fetch(r.mesh.Mesh())
 	if !meshReady {
 		return
 	}
-
-	// try to fix the position to an actual pixel
-	// position := label.Position().Scaled(r.scale)
-	// offset := vec3.Extend(position.Sub(position.Floor()).Scaled(-1), 0)
-	// translate := mat4.Translate(offset)
-	// transform := args.Transform.Mul(&translate)
 
 	args.Commands.Record(func(cmd command.Buffer) {
 		// set scissor bounds
@@ -183,9 +163,8 @@ func (r *renderer) Draw(args widget.DrawArgs, label T) {
 
 		cmd.CmdPushConstant(core1_0.StageAll, 0, &widget.Constants{
 			Viewport: args.ViewProj,
-			// Model:    transform,
-			Model:   args.Transform,
-			Texture: tex.ID,
+			Model:    args.Transform,
+			Texture:  tex.ID,
 		})
 		mesh.Draw(cmd, 0)
 
