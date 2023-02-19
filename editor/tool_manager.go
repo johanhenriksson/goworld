@@ -5,7 +5,7 @@ import (
 	"github.com/johanhenriksson/goworld/core/input/keys"
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/core/object"
-	"github.com/johanhenriksson/goworld/editor/gizmo/mover"
+	"github.com/johanhenriksson/goworld/editor/gizmo"
 	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/math/physics"
 	"github.com/johanhenriksson/goworld/math/vec3"
@@ -13,10 +13,9 @@ import (
 )
 
 type Selectable interface {
-	object.T
+	T
 	Select(mouse.Event, collider.T)
 	Deselect(mouse.Event) bool
-	Actions() []Action
 }
 
 type Tool interface {
@@ -29,19 +28,20 @@ type Action struct {
 	Name     string
 	Key      keys.Code
 	Modifier keys.Modifier
-	Callback func(SelectManager)
+	Callback func(ToolManager)
 }
 
-type SelectManager interface {
+type ToolManager interface {
 	object.T
 	mouse.Handler
 
 	Select(Selectable)
 	SelectTool(Tool)
 	MoveTool(object.T)
+	Tool() Tool
 }
 
-type selectmgr struct {
+type toolmgr struct {
 	object.T
 	scene    object.T
 	selected Selectable
@@ -50,16 +50,18 @@ type selectmgr struct {
 	viewport render.Screen
 
 	// built-in tools
-	Mover *mover.T
+	Mover *gizmo.Mover
 }
 
-func NewSelectManager() SelectManager {
-	return object.New(&selectmgr{
-		Mover: mover.New(mover.Args{}),
+func NewToolManager() ToolManager {
+	return object.New(&toolmgr{
+		Mover: object.Builder(gizmo.NewMover()).
+			Active(false).
+			Create(),
 	})
 }
 
-func (m *selectmgr) MouseEvent(e mouse.Event) {
+func (m *toolmgr) MouseEvent(e mouse.Event) {
 	if m.scene == nil {
 		return
 	}
@@ -110,7 +112,7 @@ func (m *selectmgr) MouseEvent(e mouse.Event) {
 	}
 }
 
-func (m *selectmgr) KeyEvent(e keys.Event) {
+func (m *toolmgr) KeyEvent(e keys.Event) {
 	if e.Action() != keys.Release {
 		return
 	}
@@ -129,7 +131,11 @@ func (m *selectmgr) KeyEvent(e keys.Event) {
 	}
 }
 
-func (m *selectmgr) SelectTool(tool Tool) {
+func (m *toolmgr) Tool() Tool {
+	return m.tool
+}
+
+func (m *toolmgr) SelectTool(tool Tool) {
 	// if we select the same tool twice, deselect it instead
 	sameTool := m.tool == tool
 
@@ -146,11 +152,11 @@ func (m *selectmgr) SelectTool(tool Tool) {
 	}
 }
 
-func (m *selectmgr) Select(obj Selectable) {
+func (m *toolmgr) Select(obj Selectable) {
 	m.setSelect(mouse.NopEvent(), obj, nil)
 }
 
-func (m *selectmgr) setSelect(e mouse.Event, object Selectable, collider collider.T) bool {
+func (m *toolmgr) setSelect(e mouse.Event, object Selectable, collider collider.T) bool {
 	// todo: detect if the object has been deleted
 	// otherwise CanDeselect() will make it impossible to select another object
 
@@ -173,14 +179,14 @@ func (m *selectmgr) setSelect(e mouse.Event, object Selectable, collider collide
 	return true
 }
 
-func (m *selectmgr) PreDraw(args render.Args, scene object.T) error {
+func (m *toolmgr) PreDraw(args render.Args, scene object.T) error {
 	m.scene = scene
 	m.camera = args.VP
 	m.viewport = args.Viewport
 	return nil
 }
 
-func (m *selectmgr) MoveTool(obj object.T) {
+func (m *toolmgr) MoveTool(obj object.T) {
 	m.Mover.SetTarget(obj.Transform())
 	m.SelectTool(m.Mover)
 }

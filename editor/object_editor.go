@@ -61,7 +61,7 @@ func (e *ObjectEditor) Actions() []Action {
 		{
 			Name: "Move",
 			Key:  keys.G,
-			Callback: func(mgr SelectManager) {
+			Callback: func(mgr ToolManager) {
 				mgr.MoveTool(e.target)
 			},
 		},

@@ -235,34 +235,38 @@ func (e *edit) Actions() []editor.Action {
 		{
 			Name:     "Place",
 			Key:      keys.F,
-			Callback: func(mgr editor.SelectManager) { mgr.SelectTool(e.PlaceTool) },
+			Callback: func(mgr editor.ToolManager) { mgr.SelectTool(e.PlaceTool) },
 		},
 		{
 			Name:     "Erase",
 			Key:      keys.C,
-			Callback: func(mgr editor.SelectManager) { mgr.SelectTool(e.EraseTool) },
+			Callback: func(mgr editor.ToolManager) { mgr.SelectTool(e.EraseTool) },
 		},
 		{
 			Name:     "Replace",
 			Key:      keys.R,
-			Callback: func(mgr editor.SelectManager) { mgr.SelectTool(e.ReplaceTool) },
+			Callback: func(mgr editor.ToolManager) { mgr.SelectTool(e.ReplaceTool) },
 		},
 		{
-			Name:     "Sample",
-			Key:      keys.T,
-			Callback: func(mgr editor.SelectManager) { mgr.SelectTool(e.SampleTool) },
+			Name: "Sample",
+			Key:  keys.T,
+			Callback: func(mgr editor.ToolManager) {
+				previousTool := mgr.Tool()
+				e.SampleTool.Reselect = func() { mgr.SelectTool(previousTool) }
+				mgr.SelectTool(e.SampleTool)
+			},
 		},
 		{
 			Name:     "Clear",
 			Key:      keys.N,
 			Modifier: keys.Ctrl,
-			Callback: func(mgr editor.SelectManager) { e.clearChunk() },
+			Callback: func(mgr editor.ToolManager) { e.clearChunk() },
 		},
 		{
 			Name:     "Save",
 			Key:      keys.S,
 			Modifier: keys.Ctrl,
-			Callback: func(mgr editor.SelectManager) { e.saveChunkDialog() },
+			Callback: func(mgr editor.ToolManager) { e.saveChunkDialog() },
 		},
 	}
 }

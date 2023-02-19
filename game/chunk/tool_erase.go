@@ -3,6 +3,7 @@ package chunk
 import (
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/core/object"
+	"github.com/johanhenriksson/goworld/editor"
 	"github.com/johanhenriksson/goworld/game/voxel"
 	"github.com/johanhenriksson/goworld/geometry/box"
 	"github.com/johanhenriksson/goworld/math/vec3"
@@ -13,6 +14,8 @@ type EraseTool struct {
 	object.T
 	Box *box.T
 }
+
+var _ editor.Tool = &EraseTool{}
 
 func NewEraseTool() *EraseTool {
 	return object.New(&EraseTool{

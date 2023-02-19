@@ -2,7 +2,6 @@ package editor
 
 import (
 	"github.com/johanhenriksson/goworld/core/object"
-	"github.com/johanhenriksson/goworld/editor/gizmo/mover"
 	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/engine/renderer"
 	"github.com/johanhenriksson/goworld/game"
@@ -13,9 +12,9 @@ import (
 
 type Editor struct {
 	object.T
-	GUI       gui.Manager
-	SelectMgr SelectManager
-	Player    *game.Player
+	GUI    gui.Manager
+	Tools  ToolManager
+	Player *game.Player
 
 	editors   object.T
 	workspace object.T
@@ -24,8 +23,8 @@ type Editor struct {
 
 func NewEditor(render renderer.T, workspace object.T) *Editor {
 	editor := object.New(&Editor{
-		GUI:       MakeGUI(render),
-		SelectMgr: NewSelectManager(),
+		GUI:   MakeGUI(render),
+		Tools: NewToolManager(),
 
 		Player:    game.NewPlayer(vec3.New(0, 20, -11), nil),
 		editors:   nil,
@@ -37,9 +36,9 @@ func NewEditor(render renderer.T, workspace object.T) *Editor {
 		gui.FragmentFirst,
 		func() node.T {
 			return ObjectList("scene-graph", ObjectListProps{
-				Scene:         workspace,
-				EditorRoot:    editor,
-				SelectManager: editor.SelectMgr,
+				Scene:       workspace,
+				EditorRoot:  editor,
+				ToolManager: editor.Tools,
 			})
 		},
 	))
@@ -70,14 +69,6 @@ func Scene(f engine.SceneFunc) engine.SceneFunc {
 		f(render, workspace)
 
 		editor := NewEditor(render, workspace)
-
-		// mover gizmo
-		mv := object.Builder(mover.New(mover.Args{})).
-			Position(vec3.New(1, 40, 1)).
-			Parent(editor).
-			Create()
-		// mv.SetActive(false)
-		object.Attach(editor, mv)
 
 		// attach editor & game to scene
 		object.Attach(scene, editor)
