@@ -48,23 +48,22 @@ func NewGraph(app vulkan.App) T {
 		shadows := pass.NewShadowPass(app)
 		shadowNode := g.Node(shadows)
 
-		deferred := pass.NewDeferredPass(app, gbuffer, shadows)
-		deferredNode := g.Node(deferred)
-		deferredNode.After(shadowNode, core1_0.PipelineStageTopOfPipe)
+		deferred := g.Node(pass.NewDeferredPass(app, gbuffer, shadows))
+		deferred.After(shadowNode, core1_0.PipelineStageTopOfPipe)
 
 		forward := g.Node(pass.NewForwardPass(app, gbuffer))
-		forward.After(deferredNode, core1_0.PipelineStageTopOfPipe)
+		forward.After(deferred, core1_0.PipelineStageTopOfPipe)
 
 		gbufferCopy := g.Node(pass.NewGBufferCopyPass(gbuffer))
 		gbufferCopy.After(forward, core1_0.PipelineStageTopOfPipe)
 
-		lines := g.Node(pass.NewLinePass(r.app, gbuffer))
+		lines := g.Node(pass.NewLinePass(app, gbuffer))
 		lines.After(forward, core1_0.PipelineStageTopOfPipe)
 
-		gui := g.Node(pass.NewGuiPass(r.app, gbuffer))
+		gui := g.Node(pass.NewGuiPass(app, gbuffer))
 		gui.After(lines, core1_0.PipelineStageTopOfPipe)
 
-		output := g.Node(pass.NewOutputPass(r.app, gbuffer))
+		output := g.Node(pass.NewOutputPass(app, gbuffer))
 		output.After(gui, core1_0.PipelineStageTopOfPipe)
 
 		// editor forward

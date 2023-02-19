@@ -7,5 +7,5 @@ import (
 type T interface {
 	object.T
 
-	CanDeselect() bool
+	Actions() []Action
 }

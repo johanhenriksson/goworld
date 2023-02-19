@@ -4,9 +4,9 @@ import (
 	"github.com/johanhenriksson/goworld/assets"
 	"github.com/johanhenriksson/goworld/gui/quad"
 	"github.com/johanhenriksson/goworld/gui/widget"
-	"github.com/johanhenriksson/goworld/math/mat4"
+	// "github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/math/vec2"
-	"github.com/johanhenriksson/goworld/math/vec3"
+	// "github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/font"
@@ -63,7 +63,7 @@ func NewRenderer(key string) Renderer {
 		invalidFont:    true,
 		invalidTexture: true,
 		invalidMesh:    true,
-		scale:          2,
+		scale:          1,
 		uvs:            quad.DefaultUVs,
 		mesh:           quad.New(key, quad.Props{}),
 	}
@@ -170,10 +170,10 @@ func (r *renderer) Draw(args widget.DrawArgs, label T) {
 	}
 
 	// try to fix the position to an actual pixel
-	position := label.Position().Scaled(r.scale)
-	offset := vec3.Extend(position.Sub(position.Floor()).Scaled(-1), 0)
-	translate := mat4.Translate(offset)
-	transform := args.Transform.Mul(&translate)
+	// position := label.Position().Scaled(r.scale)
+	// offset := vec3.Extend(position.Sub(position.Floor()).Scaled(-1), 0)
+	// translate := mat4.Translate(offset)
+	// transform := args.Transform.Mul(&translate)
 
 	args.Commands.Record(func(cmd command.Buffer) {
 		// set scissor bounds
@@ -183,8 +183,9 @@ func (r *renderer) Draw(args widget.DrawArgs, label T) {
 
 		cmd.CmdPushConstant(core1_0.StageAll, 0, &widget.Constants{
 			Viewport: args.ViewProj,
-			Model:    transform,
-			Texture:  tex.ID,
+			// Model:    transform,
+			Model:   args.Transform,
+			Texture: tex.ID,
 		})
 		mesh.Draw(cmd, 0)
 
@@ -194,6 +195,10 @@ func (r *renderer) Draw(args widget.DrawArgs, label T) {
 }
 
 func (r *renderer) Measure(node *flex.Node, width float32, widthMode flex.MeasureMode, height float32, heightMode flex.MeasureMode) flex.Size {
+	if r.invalidFont {
+		r.font = assets.GetFont(r.fontName, r.size, r.scale)
+		r.invalidFont = false
+	}
 	if r.font == nil {
 		return flex.Size{}
 	}

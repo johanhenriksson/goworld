@@ -45,10 +45,6 @@ func (e *ObjectEditor) Select(ev mouse.Event, collider collider.T) {
 
 func (e *ObjectEditor) Deselect(ev mouse.Event) bool {
 	if e.Custom != nil {
-		// editors may reject deselection
-		if !e.Custom.CanDeselect() {
-			return false
-		}
 		e.Custom.SetActive(false)
 	}
 	e.GUI.SetActive(false)
@@ -57,4 +53,18 @@ func (e *ObjectEditor) Deselect(ev mouse.Event) bool {
 
 func (e *ObjectEditor) Target() object.T {
 	return e.target
+}
+
+func (e *ObjectEditor) Actions() []Action {
+	actions := []Action{
+		// {
+		// 	Name:     "Move",
+		// 	Key:      keys.W,
+		// 	Modifier: keys.NoMod,
+		// },
+	}
+	if e.Custom != nil {
+		actions = append(actions, e.Custom.Actions()...)
+	}
+	return actions
 }
