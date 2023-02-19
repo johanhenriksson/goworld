@@ -21,13 +21,13 @@ type MaterialSorter struct {
 
 	cache      map[uint64][]material.Instance[*material.Descriptors]
 	defaultMat *material.Def
-	target     vulkan.Target
+	app        vulkan.App
 	pass       renderpass.T
 }
 
-func NewMaterialSorter(target vulkan.Target, pass renderpass.T, defaultMat *material.Def) *MaterialSorter {
+func NewMaterialSorter(app vulkan.App, pass renderpass.T, defaultMat *material.Def) *MaterialSorter {
 	ms := &MaterialSorter{
-		target:     target,
+		app:        app,
 		pass:       pass,
 		defaultMat: defaultMat,
 		cache:      map[uint64][]material.Instance[*material.Descriptors]{},
@@ -71,7 +71,7 @@ func (m *MaterialSorter) Load(def *material.Def) bool {
 	pointers := vertex.ParsePointers(def.VertexFormat)
 
 	// fetch shader from cache
-	shader, shaderReady := m.target.Shaders().Fetch(shader.NewRef(def.Shader))
+	shader, shaderReady := m.app.Shaders().Fetch(shader.NewRef(def.Shader))
 	if !shaderReady {
 		// pending
 		return false
@@ -79,7 +79,7 @@ func (m *MaterialSorter) Load(def *material.Def) bool {
 
 	// create material
 	mat := material.New(
-		m.target.Device(),
+		m.app.Device(),
 		material.Args{
 			Shader:     shader,
 			Pass:       m.pass,
@@ -92,7 +92,7 @@ func (m *MaterialSorter) Load(def *material.Def) bool {
 		},
 		desc)
 
-	m.cache[id] = mat.InstantiateMany(m.target.Pool(), m.target.Frames())
+	m.cache[id] = mat.InstantiateMany(m.app.Pool(), m.app.Frames())
 
 	// indicate that the material is ready to be used
 	return true
@@ -138,7 +138,7 @@ func (m *MaterialSorter) DrawCamera(cmds command.Recorder, args render.Args, cam
 
 		begin := index
 		for _, msh := range matMeshes {
-			vkmesh, meshReady := m.target.Meshes().Fetch(msh.Mesh())
+			vkmesh, meshReady := m.app.Meshes().Fetch(msh.Mesh())
 			if !meshReady {
 				continue
 			}

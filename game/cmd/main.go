@@ -35,11 +35,22 @@ func main() {
 			object.Attach(
 				scene,
 				object.Builder(light.NewDirectional(light.DirectionalArgs{
-					Intensity: 1.6,
+					Intensity: 1.2,
 					Color:     color.RGB(0.9*0.973, 0.9*0.945, 0.9*0.776),
 					Shadows:   true,
 				})).
-					Rotation(vec3.New(-30, 0, -30)).
+					Rotation(vec3.New(-30, 45, 0)).
+					Position(vec3.New(1, 2, 3)).
+					Create())
+
+			object.Attach(
+				scene,
+				object.Builder(light.NewDirectional(light.DirectionalArgs{
+					Intensity: 0.6,
+					Color:     color.RGB(0.9*0.973, 0.9*0.945, 0.9*0.776),
+					Shadows:   true,
+				})).
+					Rotation(vec3.New(-25, -20, 0)).
 					Position(vec3.New(1, 2, 3)).
 					Create())
 		}),

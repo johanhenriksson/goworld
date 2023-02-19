@@ -16,30 +16,24 @@ type Depth struct {
 	StencilStoreOp core1_0.AttachmentStoreOp
 	InitialLayout  core1_0.ImageLayout
 	FinalLayout    core1_0.ImageLayout
-	Usage          core1_0.ImageUsageFlags
-	Format         core1_0.Format
 	ClearDepth     float32
 	ClearStencil   uint32
 
 	// Allocation strategy. Defaults to allocating new images.
-	Allocator Allocator
+	Image Image
 }
 
 func (desc *Depth) defaults() {
 	if desc.Samples == 0 {
 		desc.Samples = core1_0.Samples1
 	}
-	if desc.Allocator == nil {
-		desc.Allocator = &alloc{}
+	if desc.Image == nil {
+		panic("no image reference")
 	}
 }
 
 func NewDepth(device device.T, desc Depth) T {
 	desc.defaults()
-
-	if desc.Format == core1_0.Format(0) {
-		desc.Format = device.GetDepthFormat()
-	}
 
 	clear := core1_0.ClearValueDepthStencil{
 		Depth:   desc.ClearDepth,
@@ -47,13 +41,11 @@ func NewDepth(device device.T, desc Depth) T {
 	}
 
 	return &attachment{
-		name:   DepthName,
-		alloc:  desc.Allocator,
-		clear:  clear,
-		format: desc.Format,
-		usage:  desc.Usage,
+		name:  DepthName,
+		image: desc.Image,
+		clear: clear,
 		desc: core1_0.AttachmentDescription{
-			Format:         desc.Format,
+			Format:         desc.Image.Format(),
 			Samples:        desc.Samples,
 			LoadOp:         desc.LoadOp,
 			StoreOp:        desc.StoreOp,

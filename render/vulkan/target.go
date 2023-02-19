@@ -11,7 +11,7 @@ import (
 	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
-type Target interface {
+type App interface {
 	Device() device.T
 	Destroy()
 

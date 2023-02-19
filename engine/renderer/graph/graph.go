@@ -19,20 +19,20 @@ type T interface {
 }
 
 type graph struct {
-	target vulkan.Target
-	pre    PreNode
-	post   Node
-	nodes  []Node
-	todo   map[Node]bool
-	init   NodeFunc
+	app   vulkan.App
+	pre   PreNode
+	post  Node
+	nodes []Node
+	todo  map[Node]bool
+	init  NodeFunc
 }
 
-func New(target vulkan.Target, init NodeFunc) T {
+func New(app vulkan.App, init NodeFunc) T {
 	g := &graph{
-		target: target,
-		nodes:  make([]Node, 0, 16),
-		todo:   make(map[Node]bool, 16),
-		init:   init,
+		app:   app,
+		nodes: make([]Node, 0, 16),
+		todo:  make(map[Node]bool, 16),
+		init:  init,
 	}
 	g.Recreate()
 	return g
@@ -40,15 +40,15 @@ func New(target vulkan.Target, init NodeFunc) T {
 
 func (g *graph) Recreate() {
 	g.Destroy()
-	g.target.Pool().Recreate()
+	g.app.Pool().Recreate()
 	g.init(g)
-	g.pre = newPreNode(g.target)
-	g.post = newPostNode(g.target)
+	g.pre = newPreNode(g.app)
+	g.post = newPostNode(g.app)
 	g.connect()
 }
 
 func (g *graph) Node(pass NodePass) Node {
-	nd := newNode(g.target, pass.Name(), pass)
+	nd := newNode(g.app, pass.Name(), pass)
 	g.nodes = append(g.nodes, nd)
 	return nd
 }
@@ -94,7 +94,7 @@ func (g *graph) Draw(scene object.T) {
 	}
 
 	// select a suitable worker for this frame
-	worker := g.target.Worker(args.Context.Index)
+	worker := g.app.Worker(args.Context.Index)
 
 	for len(g.todo) > 0 {
 		progress := false
@@ -116,7 +116,7 @@ func (g *graph) Draw(scene object.T) {
 }
 
 func (g *graph) Destroy() {
-	g.target.Flush()
+	g.app.Flush()
 	if g.pre != nil {
 		g.pre.Destroy()
 		g.pre = nil

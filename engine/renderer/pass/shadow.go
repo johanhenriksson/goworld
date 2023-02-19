@@ -10,40 +10,40 @@ import (
 	"github.com/johanhenriksson/goworld/game/voxel"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/command"
-	"github.com/johanhenriksson/goworld/render/descriptor"
 	"github.com/johanhenriksson/goworld/render/framebuffer"
-	"github.com/johanhenriksson/goworld/render/image"
 	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/renderpass"
 	"github.com/johanhenriksson/goworld/render/renderpass/attachment"
+	"github.com/johanhenriksson/goworld/render/texture"
 	"github.com/johanhenriksson/goworld/render/vertex"
 
 	"github.com/johanhenriksson/goworld/render/vulkan"
 	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
-type ShadowPass interface {
+type Shadow interface {
 	Pass
 
-	Shadowmap() image.View
-}
-
-type ShadowDescriptors struct {
-	descriptor.Set
-	Camera  *descriptor.Uniform[uniform.Camera]
-	Objects *descriptor.Storage[uniform.Object]
+	Shadowmap(light.T) texture.T
 }
 
 type shadowpass struct {
-	target    vulkan.Target
-	pass      renderpass.T
-	fbuf      framebuffer.T
-	materials *MaterialSorter
+	app  vulkan.App
+	pass renderpass.T
+	size int
+
+	// should be replaced with a proper cache that will evict unused maps
+	shadowmaps map[light.T]Shadowmap
 }
 
-func NewShadowPass(target vulkan.Target) ShadowPass {
+type Shadowmap struct {
+	tex  texture.T
+	fbuf framebuffer.T
+	mats *MaterialSorter
+}
+
+func NewShadowPass(app vulkan.App) Shadow {
 	log.Println("create shadow pass")
-	size := 4096
 
 	subpasses := make([]renderpass.Subpass, 0, 4)
 	dependencies := make([]renderpass.SubpassDependency, 0, 4)
@@ -72,33 +72,57 @@ func NewShadowPass(target vulkan.Target) ShadowPass {
 		Flags:         core1_0.DependencyByRegion,
 	})
 
-	pass := renderpass.New(target.Device(), renderpass.Args{
+	pass := renderpass.New(app.Device(), renderpass.Args{
 		DepthAttachment: &attachment.Depth{
-			Format:        core1_0.FormatD32SignedFloat,
+			Image:         attachment.NewImage("shadowmap", core1_0.FormatD32SignedFloat, core1_0.ImageUsageDepthStencilAttachment|core1_0.ImageUsageInputAttachment|core1_0.ImageUsageSampled),
 			LoadOp:        core1_0.AttachmentLoadOpClear,
 			StencilLoadOp: core1_0.AttachmentLoadOpClear,
 			StoreOp:       core1_0.AttachmentStoreOpStore,
 			FinalLayout:   core1_0.ImageLayoutShaderReadOnlyOptimal,
-			Usage:         core1_0.ImageUsageSampled,
 			ClearDepth:    1,
 		},
 		Subpasses:    subpasses,
 		Dependencies: dependencies,
 	})
 
-	// todo: each light is going to need its own framebuffer
-	fbuf, err := framebuffer.New(target.Device(), size, size, pass)
+	return &shadowpass{
+		app:        app,
+		pass:       pass,
+		shadowmaps: make(map[light.T]Shadowmap),
+		size:       4096,
+	}
+}
+
+func (p *shadowpass) Name() string {
+	return "Shadow"
+}
+
+func (p *shadowpass) createShadowmap(light light.T) Shadowmap {
+	log.Println("creating shadowmap for", light.Name())
+
+	fbuf, err := framebuffer.New(p.app.Device(), p.size, p.size, p.pass)
 	if err != nil {
 		panic(err)
 	}
 
-	mats := NewMaterialSorter(target, pass, &material.Def{
+	// the frame buffer object will allocate a new depth image for us
+	view := fbuf.Attachment(attachment.DepthName)
+	tex, err := texture.FromView(p.app.Device(), view, texture.Args{
+		Key:    light.Name() + "-shadow",
+		Aspect: core1_0.ImageAspectDepth,
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	// each light needs its own shadow materials - or rather, their own descriptors
+	// cheating a bit by creating entire materials for each light, fix it later.
+	mats := NewMaterialSorter(p.app, p.pass, &material.Def{
 		Shader:       "vk/shadow",
 		Subpass:      GeometrySubpass,
 		VertexFormat: voxel.Vertex{},
 		DepthTest:    true,
 		DepthWrite:   true,
-		// CullMode:     core1_0.CullModeBack,
 	})
 	mats.TransformFn = func(d *material.Def) *material.Def {
 		shadowMat := *d
@@ -107,53 +131,63 @@ func NewShadowPass(target vulkan.Target) ShadowPass {
 		return &shadowMat
 	}
 
-	return &shadowpass{
-		target:    target,
-		fbuf:      fbuf,
-		pass:      pass,
-		materials: mats,
+	shadowmap := Shadowmap{
+		tex:  tex,
+		fbuf: fbuf,
+		mats: mats,
 	}
-}
-
-func (p *shadowpass) Name() string {
-	return "Shadow"
+	p.shadowmaps[light] = shadowmap
+	return shadowmap
 }
 
 func (p *shadowpass) Record(cmds command.Recorder, args render.Args, scene object.T) {
-	light, lightExists := object.Query[light.T]().Where(func(lit light.T) bool { return lit.Type() == light.Directional }).First(scene)
-	if !lightExists {
-		return
+	lights := object.Query[light.T]().Where(func(lit light.T) bool { return lit.Type() == light.Directional && lit.Shadows() }).Collect(scene)
+	for _, light := range lights {
+		shadowmap, mapExists := p.shadowmaps[light]
+		if !mapExists {
+			shadowmap = p.createShadowmap(light)
+		}
+
+		lightDesc := light.LightDescriptor(args)
+
+		camera := uniform.Camera{
+			Proj:        lightDesc.Projection,
+			View:        lightDesc.View,
+			ViewProj:    lightDesc.ViewProj,
+			ProjInv:     lightDesc.Projection.Invert(),
+			ViewInv:     lightDesc.View.Invert(),
+			ViewProjInv: lightDesc.ViewProj.Invert(),
+			Eye:         light.Transform().Position(),
+		}
+
+		cmds.Record(func(cmd command.Buffer) {
+			cmd.CmdBeginRenderPass(p.pass, shadowmap.fbuf)
+		})
+
+		objects := object.Query[mesh.T]().Where(isDrawDeferred).Collect(scene)
+		shadowmap.mats.DrawCamera(cmds, args, camera, objects)
+
+		cmds.Record(func(cmd command.Buffer) {
+			cmd.CmdEndRenderPass()
+		})
 	}
-	lightDesc := light.LightDescriptor(args)
-
-	camera := uniform.Camera{
-		Proj:        lightDesc.Projection,
-		View:        lightDesc.View,
-		ViewProj:    lightDesc.ViewProj,
-		ProjInv:     lightDesc.Projection.Invert(),
-		ViewInv:     lightDesc.View.Invert(),
-		ViewProjInv: lightDesc.ViewProj.Invert(),
-		Eye:         light.Transform().Position(),
-	}
-
-	cmds.Record(func(cmd command.Buffer) {
-		cmd.CmdBeginRenderPass(p.pass, p.fbuf)
-	})
-
-	objects := object.Query[mesh.T]().Where(isDrawDeferred).Collect(scene)
-	p.materials.DrawCamera(cmds, args, camera, objects)
-
-	cmds.Record(func(cmd command.Buffer) {
-		cmd.CmdEndRenderPass()
-	})
 }
 
-func (p *shadowpass) Shadowmap() image.View {
-	return p.fbuf.Attachment(attachment.DepthName)
+func (p *shadowpass) Shadowmap(light light.T) texture.T {
+	if shadowmap, exists := p.shadowmaps[light]; exists {
+		return shadowmap.tex
+	}
+	return nil
 }
 
 func (p *shadowpass) Destroy() {
-	p.materials.Destroy()
-	p.fbuf.Destroy()
+	for _, shadowmap := range p.shadowmaps {
+		shadowmap.fbuf.Destroy()
+		shadowmap.tex.Destroy()
+		shadowmap.mats.Destroy()
+	}
+	p.shadowmaps = nil
+
 	p.pass.Destroy()
+	p.pass = nil
 }

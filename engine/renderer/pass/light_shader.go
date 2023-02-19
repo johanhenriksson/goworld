@@ -7,6 +7,7 @@ import (
 	"github.com/johanhenriksson/goworld/math/vec4"
 	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/descriptor"
+	"github.com/johanhenriksson/goworld/render/image"
 	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/pipeline"
 	"github.com/johanhenriksson/goworld/render/renderpass"
@@ -38,13 +39,25 @@ type LightConst struct {
 	Attenuation light.Attenuation
 }
 
-type LightShader material.Instance[*LightDescriptors]
+type LightShader interface {
+	material.Instance[*LightDescriptors]
+	Destroy()
+}
 
-func NewLightShader(target vulkan.Target, pass renderpass.T) LightShader {
+type lightShader struct {
+	material.Instance[*LightDescriptors]
+
+	diffuseView  image.View
+	normalView   image.View
+	positionView image.View
+	depthView    image.View
+}
+
+func NewLightShader(app vulkan.App, pass renderpass.T, gbuffer GeometryBuffer) LightShader {
 	mat := material.New(
-		target.Device(),
+		app.Device(),
 		material.Args{
-			Shader:   target.Shaders().FetchSync(shader.NewRef("vk/light")),
+			Shader:   app.Shaders().FetchSync(shader.NewRef("vk/light")),
 			Pass:     pass,
 			Subpass:  LightingSubpass,
 			Pointers: vertex.ParsePointers(vertex.T{}),
@@ -77,5 +90,34 @@ func NewLightShader(target vulkan.Target, pass renderpass.T) LightShader {
 				Count:  16,
 			},
 		})
-	return mat.Instantiate(target.Pool())
+
+	lightsh := mat.Instantiate(app.Pool())
+
+	diffuseView, _ := gbuffer.Diffuse().View(gbuffer.Diffuse().Format(), core1_0.ImageAspectColor)
+	normalView, _ := gbuffer.Normal().View(gbuffer.Normal().Format(), core1_0.ImageAspectColor)
+	positionView, _ := gbuffer.Position().View(gbuffer.Position().Format(), core1_0.ImageAspectColor)
+	depthView, _ := gbuffer.Depth()[0].View(gbuffer.Depth()[0].Format(), core1_0.ImageAspectDepth)
+
+	lightDesc := lightsh.Descriptors()
+	lightDesc.Diffuse.Set(diffuseView)
+	lightDesc.Normal.Set(normalView)
+	lightDesc.Position.Set(positionView)
+	lightDesc.Depth.Set(depthView)
+
+	return &lightShader{
+		Instance: lightsh,
+
+		diffuseView:  diffuseView,
+		normalView:   normalView,
+		positionView: positionView,
+		depthView:    depthView,
+	}
+}
+
+func (ls *lightShader) Destroy() {
+	ls.Instance.Material().Destroy()
+	ls.diffuseView.Destroy()
+	ls.normalView.Destroy()
+	ls.positionView.Destroy()
+	ls.depthView.Destroy()
 }

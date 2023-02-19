@@ -32,7 +32,7 @@ type Node interface {
 
 type node struct {
 	name       string
-	target     vulkan.Target
+	app        vulkan.App
 	pass       NodePass
 	after      map[string]edge
 	before     map[string]edge
@@ -46,9 +46,9 @@ type edge struct {
 	signal []sync.Semaphore
 }
 
-func newNode(target vulkan.Target, name string, pass NodePass) *node {
+func newNode(app vulkan.App, name string, pass NodePass) *node {
 	return &node{
-		target:     target,
+		app:        app,
 		name:       name,
 		pass:       pass,
 		after:      make(map[string]edge, 4),
@@ -65,7 +65,7 @@ func (n *node) After(nd Node, mask core1_0.PipelineStageFlags) {
 	if _, exists := n.after[nd.Name()]; exists {
 		return
 	}
-	signal := sync.NewSemaphoreArray(n.target.Device(), fmt.Sprintf("%s->%s", nd.Name(), n.name), 3)
+	signal := sync.NewSemaphoreArray(n.app.Device(), fmt.Sprintf("%s->%s", nd.Name(), n.name), 3)
 	n.after[nd.Name()] = edge{
 		node:   nd,
 		mask:   mask,

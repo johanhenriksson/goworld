@@ -15,7 +15,6 @@ import (
 
 type T interface {
 	Draw(scene object.T)
-	Geometry() pass.Deferred
 	GBuffer() pass.GeometryBuffer
 	Recreate()
 	Screenshot()
@@ -24,49 +23,59 @@ type T interface {
 
 type rgraph struct {
 	graph.T
-	target   vulkan.Target
-	gbuffer  pass.GeometryBuffer
-	geometry pass.Deferred
+	app     vulkan.App
+	gbuffer pass.GeometryBuffer
 }
 
-func NewGraph(target vulkan.Target) T {
+func NewGraph(app vulkan.App) T {
 	r := &rgraph{
-		target:  target,
-		gbuffer: nil,
+		app: app,
 	}
-	r.T = graph.New(target, func(g graph.T) {
-		shadows := pass.NewShadowPass(target)
+	r.T = graph.New(app, func(g graph.T) {
+		// this is an awkward place to instantiate render target / gbuffer
+		// todo: maybe move it into the graph?
+		target, err := pass.NewRenderTarget(app.Device(), app.Width(), app.Height(), core1_0.FormatR8G8B8A8UnsignedNormalized, app.Device().GetDepthFormat())
+		if err != nil {
+			panic(err)
+		}
+
+		gbuffer, err := pass.NewGbuffer(app, target)
+		if err != nil {
+			panic(err)
+		}
+		r.gbuffer = gbuffer
+
+		shadows := pass.NewShadowPass(app)
 		shadowNode := g.Node(shadows)
 
-		deferred := pass.NewGeometryPass(target, shadows)
+		deferred := pass.NewDeferredPass(app, gbuffer, shadows)
 		deferredNode := g.Node(deferred)
 		deferredNode.After(shadowNode, core1_0.PipelineStageTopOfPipe)
 
-		// store gbuffer reference
-		r.gbuffer = deferred.GBuffer()
-		r.geometry = deferred
-
-		forward := g.Node(pass.NewForwardPass(target, r.gbuffer))
+		forward := g.Node(pass.NewForwardPass(app, gbuffer))
 		forward.After(deferredNode, core1_0.PipelineStageTopOfPipe)
 
-		gbufferCopy := g.Node(pass.NewGBufferCopyPass(r.gbuffer))
+		gbufferCopy := g.Node(pass.NewGBufferCopyPass(gbuffer))
 		gbufferCopy.After(forward, core1_0.PipelineStageTopOfPipe)
 
-		output := g.Node(pass.NewOutputPass(r.target, r.gbuffer))
-		output.After(forward, core1_0.PipelineStageTopOfPipe)
+		lines := g.Node(pass.NewLinePass(r.app, gbuffer))
+		lines.After(forward, core1_0.PipelineStageTopOfPipe)
 
-		lines := g.Node(pass.NewLinePass(r.target, r.gbuffer))
-		lines.After(output, core1_0.PipelineStageTopOfPipe)
-
-		gui := g.Node(pass.NewGuiPass(r.target))
+		gui := g.Node(pass.NewGuiPass(r.app, gbuffer))
 		gui.After(lines, core1_0.PipelineStageTopOfPipe)
+
+		output := g.Node(pass.NewOutputPass(r.app, gbuffer))
+		output.After(gui, core1_0.PipelineStageTopOfPipe)
+
+		// editor forward
+		// editor lines
 	})
 	return r
 }
 
 func (r *rgraph) Screenshot() {
 	idx := 0
-	ss, err := upload.DownloadImage(r.target.Device(), r.target.Worker(idx), r.target.Surfaces()[idx])
+	ss, err := upload.DownloadImage(r.app.Device(), r.app.Worker(idx), r.app.Surfaces()[idx])
 	if err != nil {
 		panic(err)
 	}
@@ -78,10 +87,6 @@ func (r *rgraph) Screenshot() {
 
 func (r *rgraph) GBuffer() pass.GeometryBuffer {
 	return r.gbuffer
-}
-
-func (r *rgraph) Geometry() pass.Deferred {
-	return r.geometry
 }
 
 func (r *rgraph) Destroy() {

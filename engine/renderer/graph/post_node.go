@@ -12,9 +12,9 @@ type postNode struct {
 	*node
 }
 
-func newPostNode(target vulkan.Target) Node {
+func newPostNode(app vulkan.App) Node {
 	return &postNode{
-		node: newNode(target, "Post", nil),
+		node: newNode(app, "Post", nil),
 	}
 }
 
@@ -36,10 +36,10 @@ func (n *postNode) Draw(worker command.Worker, args render.Args, scene object.T)
 	})
 
 	// submit cache work
-	n.target.Meshes().Submit()
-	n.target.Textures().Submit()
+	n.app.Meshes().Submit()
+	n.app.Textures().Submit()
 
 	// present
-	n.target.Present(worker, args.Context)
+	n.app.Present(worker, args.Context)
 	barrier <- struct{}{}
 }

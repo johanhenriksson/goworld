@@ -44,7 +44,7 @@ func New(device device.T, args Args) (T, error) {
 		args.Usage = core1_0.ImageUsageFlags(core1_0.ImageUsageSampled | core1_0.ImageUsageTransferDst)
 	}
 
-	img, err := image.New2D(device, args.Width, args.Height, args.Format, args.Usage)
+	img, err := image.New2D(device, args.Key, args.Width, args.Height, args.Format, args.Usage)
 	if err != nil {
 		return nil, err
 	}
@@ -64,8 +64,14 @@ func New(device device.T, args Args) (T, error) {
 }
 
 func FromImage(device device.T, img image.T, args Args) (T, error) {
+	if args.Key == "" {
+		args.Key = img.Key()
+	}
 	if args.Aspect == 0 {
 		args.Aspect = core1_0.ImageAspectFlags(core1_0.ImageAspectColor)
+	}
+	if args.Format == 0 {
+		args.Format = img.Format()
 	}
 
 	view, err := img.View(args.Format, args.Aspect)

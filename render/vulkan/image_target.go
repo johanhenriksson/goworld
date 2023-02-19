@@ -14,7 +14,7 @@ type imageTarget struct {
 	context *swapchain.Context
 }
 
-func NewImageTarget(backend T, img image.T) Target {
+func NewImageTarget(backend T, img image.T) App {
 	return &imageTarget{
 		T:     backend,
 		image: img,

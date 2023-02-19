@@ -16,7 +16,6 @@ import (
 	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/renderpass"
 	"github.com/johanhenriksson/goworld/render/renderpass/attachment"
-	"github.com/johanhenriksson/goworld/render/texture"
 	"github.com/johanhenriksson/goworld/render/vertex"
 	"github.com/johanhenriksson/goworld/render/vulkan"
 
@@ -37,8 +36,6 @@ const (
 
 type Deferred interface {
 	Pass
-	GBuffer() GeometryBuffer
-	ShadowTexture() texture.T
 }
 
 type GeometryDescriptors struct {
@@ -48,66 +45,56 @@ type GeometryDescriptors struct {
 	Textures *descriptor.SamplerArray
 }
 
-type GeometryPass struct {
-	gbuffer   GeometryBuffer
-	quad      vertex.Mesh
-	target    vulkan.Target
-	pass      renderpass.T
-	light     LightShader
-	fbuf      framebuffer.T
-	shadowtex texture.T
-
-	shadows ShadowPass
+type deferred struct {
+	gbuffer GeometryBuffer
+	quad    vertex.Mesh
+	app     vulkan.App
+	pass    renderpass.T
+	light   LightShader
+	fbuf    framebuffer.T
+	shadows Shadow
 
 	materials *MaterialSorter
 }
 
-func NewGeometryPass(
-	target vulkan.Target,
-	shadows ShadowPass,
+func NewDeferredPass(
+	app vulkan.App,
+	gbuffer GeometryBuffer,
+	shadows Shadow,
 ) Deferred {
-	diffuseFmt := core1_0.FormatR8G8B8A8UnsignedNormalized
-	normalFmt := core1_0.FormatR8G8B8A8UnsignedNormalized
-	positionFmt := core1_0.FormatR16G16B16A16SignedFloat
-
-	pass := renderpass.New(target.Device(), renderpass.Args{
+	pass := renderpass.New(app.Device(), renderpass.Args{
 		ColorAttachments: []attachment.Color{
 			{
 				Name:          OutputAttachment,
-				Format:        diffuseFmt,
+				Image:         attachment.FromImageArray(gbuffer.Output()),
 				Samples:       0,
 				LoadOp:        core1_0.AttachmentLoadOpClear,
 				StoreOp:       core1_0.AttachmentStoreOpStore,
 				InitialLayout: 0,
 				FinalLayout:   core1_0.ImageLayoutShaderReadOnlyOptimal,
 				Clear:         color.T{},
-				Usage:         core1_0.ImageUsageSampled,
-				Allocator:     nil,
 				Blend:         attachment.BlendAdditive,
 			},
 			{
 				Name:        DiffuseAttachment,
-				Format:      diffuseFmt,
 				LoadOp:      core1_0.AttachmentLoadOpClear,
 				StoreOp:     core1_0.AttachmentStoreOpStore,
 				FinalLayout: core1_0.ImageLayoutShaderReadOnlyOptimal,
-				Usage:       core1_0.ImageUsageInputAttachment | core1_0.ImageUsageTransferSrc,
+				Image:       attachment.FromImage(gbuffer.Diffuse()),
 			},
 			{
 				Name:        NormalsAttachment,
-				Format:      normalFmt,
 				LoadOp:      core1_0.AttachmentLoadOpClear,
 				StoreOp:     core1_0.AttachmentStoreOpStore,
 				FinalLayout: core1_0.ImageLayoutShaderReadOnlyOptimal,
-				Usage:       core1_0.ImageUsageInputAttachment | core1_0.ImageUsageTransferSrc,
+				Image:       attachment.FromImage(gbuffer.Normal()),
 			},
 			{
 				Name:        PositionAttachment,
-				Format:      positionFmt,
 				LoadOp:      core1_0.AttachmentLoadOpClear,
 				StoreOp:     core1_0.AttachmentStoreOpStore,
 				FinalLayout: core1_0.ImageLayoutShaderReadOnlyOptimal,
-				Usage:       core1_0.ImageUsageInputAttachment | core1_0.ImageUsageTransferSrc,
+				Image:       attachment.FromImage(gbuffer.Position()),
 			},
 		},
 		DepthAttachment: &attachment.Depth{
@@ -115,7 +102,7 @@ func NewGeometryPass(
 			StencilLoadOp: core1_0.AttachmentLoadOpClear,
 			StoreOp:       core1_0.AttachmentStoreOpStore,
 			FinalLayout:   core1_0.ImageLayoutShaderReadOnlyOptimal,
-			Usage:         core1_0.ImageUsageInputAttachment,
+			Image:         attachment.FromImageArray(gbuffer.Depth()),
 			ClearDepth:    1,
 		},
 		Subpasses: []renderpass.Subpass{
@@ -166,54 +153,29 @@ func NewGeometryPass(
 		},
 	})
 
-	fbuf, err := framebuffer.New(target.Device(), target.Width(), target.Height(), pass)
+	fbuf, err := framebuffer.New(app.Device(), app.Width(), app.Height(), pass)
 	if err != nil {
 		panic(err)
 	}
-
-	gbuffer := NewGbuffer(
-		target,
-		fbuf.Attachment(DiffuseAttachment),
-		fbuf.Attachment(NormalsAttachment),
-		fbuf.Attachment(PositionAttachment),
-		fbuf.Attachment(OutputAttachment),
-		fbuf.Attachment(attachment.DepthName),
-	)
 
 	quad := vertex.ScreenQuad("geometry-pass-quad")
 
-	lightsh := NewLightShader(target, pass)
-	lightDesc := lightsh.Descriptors()
+	lightsh := NewLightShader(app, pass, gbuffer)
 
-	lightDesc.Diffuse.Set(gbuffer.Diffuse())
-	lightDesc.Normal.Set(gbuffer.Normal())
-	lightDesc.Position.Set(gbuffer.Position())
-	lightDesc.Depth.Set(gbuffer.Depth())
+	app.Textures().Fetch(color.White)
 
-	shadowtex, err := texture.FromView(target.Device(), shadows.Shadowmap(), texture.Args{
-		Key:    "shadowmap-1",
-		Filter: core1_0.FilterNearest,
-		Wrap:   core1_0.SamplerAddressModeClampToEdge,
-	})
-	if err != nil {
-		panic(err)
-	}
-	lightDesc.Shadow.Set(1, shadowtex)
-	target.Textures().Fetch(color.White)
-
-	return &GeometryPass{
+	return &deferred{
 		gbuffer: gbuffer,
-		target:  target,
+		app:     app,
 		quad:    quad,
 		light:   lightsh,
 		pass:    pass,
 
-		shadows:   shadows,
-		fbuf:      fbuf,
-		shadowtex: shadowtex,
+		shadows: shadows,
+		fbuf:    fbuf,
 
 		materials: NewMaterialSorter(
-			target, pass,
+			app, pass,
 			&material.Def{
 				Shader:       "vk/color_d",
 				Subpass:      GeometrySubpass,
@@ -224,7 +186,7 @@ func NewGeometryPass(
 	}
 }
 
-func (p *GeometryPass) Record(cmds command.Recorder, args render.Args, scene object.T) {
+func (p *deferred) Record(cmds command.Recorder, args render.Args, scene object.T) {
 	camera := uniform.Camera{
 		Proj:        args.Projection,
 		View:        args.View,
@@ -264,17 +226,17 @@ func (p *GeometryPass) Record(cmds command.Recorder, args render.Args, scene obj
 	lightDesc.Camera.Set(camera)
 
 	// ambient lights use a plain white texture as their shadow map
-	white, shadowTexReady := p.target.Textures().Fetch(color.White)
+	white, shadowTexReady := p.app.Textures().Fetch(color.White)
 	if shadowTexReady {
 		lightDesc.Shadow.Set(0, white)
 
 		ambient := light.NewAmbient(color.White, 0.33)
-		p.DrawLight(cmds, args, ambient)
+		p.DrawLight(cmds, args, ambient, 0)
 	}
 
 	lights := object.Query[light.T]().Collect(scene)
-	for _, lit := range lights {
-		if err := p.DrawLight(cmds, args, lit); err != nil {
+	for index, lit := range lights {
+		if err := p.DrawLight(cmds, args, lit, index+1); err != nil {
 			fmt.Printf("light draw error in object %s: %s\n", lit.Name(), err)
 		}
 	}
@@ -284,13 +246,23 @@ func (p *GeometryPass) Record(cmds command.Recorder, args render.Args, scene obj
 	})
 }
 
-func (p *GeometryPass) DrawLight(cmds command.Recorder, args render.Args, lit light.T) error {
-	vkmesh, meshReady := p.target.Meshes().Fetch(p.quad)
+func (p *deferred) DrawLight(cmds command.Recorder, args render.Args, lit light.T, shadowIndex int) error {
+	vkmesh, meshReady := p.app.Meshes().Fetch(p.quad)
 	if !meshReady {
 		return nil
 	}
 
 	desc := lit.LightDescriptor(args)
+
+	shadowtex := p.shadows.Shadowmap(lit)
+	if shadowtex != nil {
+		p.light.Descriptors().Shadow.Set(shadowIndex, shadowtex)
+	} else {
+		// no shadowmap available - disable the light until its available
+		if lit.Shadows() {
+			return nil
+		}
+	}
 
 	cmds.Record(func(cmd command.Buffer) {
 		push := &LightConst{
@@ -298,7 +270,7 @@ func (p *GeometryPass) DrawLight(cmds command.Recorder, args render.Args, lit li
 			Color:       desc.Color,
 			Position:    desc.Position,
 			Type:        desc.Type,
-			Shadowmap:   uint32(1),
+			Shadowmap:   uint32(shadowIndex),
 			Range:       desc.Range,
 			Intensity:   desc.Intensity,
 			Attenuation: desc.Attenuation,
@@ -311,27 +283,18 @@ func (p *GeometryPass) DrawLight(cmds command.Recorder, args render.Args, lit li
 	return nil
 }
 
-func (p *GeometryPass) Name() string {
-	return "Geometry"
+func (p *deferred) Name() string {
+	return "Deferred"
 }
 
-func (d *GeometryPass) GBuffer() GeometryBuffer {
-	return d.gbuffer
-}
-
-func (d *GeometryPass) ShadowTexture() texture.T {
-	return d.shadowtex
-}
-
-func (p *GeometryPass) Destroy() {
+func (p *deferred) Destroy() {
 	// destroy subpasses
 	p.materials.Destroy()
-	p.shadowtex.Destroy()
 
 	p.fbuf.Destroy()
 	p.pass.Destroy()
 	p.gbuffer.Destroy()
-	p.light.Material().Destroy()
+	p.light.Destroy()
 }
 
 func isDrawDeferred(m mesh.T) bool {

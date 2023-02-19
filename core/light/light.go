@@ -12,6 +12,7 @@ type T interface {
 	object.T
 
 	Type() Type
+	Shadows() bool
 	LightDescriptor(args render.Args) Descriptor
 }
 

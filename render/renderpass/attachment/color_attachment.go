@@ -9,27 +9,22 @@ import (
 
 type Color struct {
 	Name          Name
-	Format        core1_0.Format
 	Samples       core1_0.SampleCountFlags
 	LoadOp        core1_0.AttachmentLoadOp
 	StoreOp       core1_0.AttachmentStoreOp
 	InitialLayout core1_0.ImageLayout
 	FinalLayout   core1_0.ImageLayout
 	Clear         color.T
-	Usage         core1_0.ImageUsageFlags
-
-	// Allocation strategy. Defaults to allocating new images.
-	Allocator Allocator
-
-	Blend Blend
+	Image         Image
+	Blend         Blend
 }
 
 func (desc *Color) defaults() {
 	if desc.Samples == 0 {
 		desc.Samples = core1_0.Samples1
 	}
-	if desc.Allocator == nil {
-		desc.Allocator = &alloc{}
+	if desc.Image == nil {
+		panic("no image reference")
 	}
 }
 
@@ -39,14 +34,12 @@ func NewColor(device device.T, desc Color) T {
 	clear := core1_0.ClearValueFloat{desc.Clear.R, desc.Clear.G, desc.Clear.B, desc.Clear.A}
 
 	return &attachment{
-		name:   desc.Name,
-		alloc:  desc.Allocator,
-		clear:  clear,
-		blend:  desc.Blend,
-		format: desc.Format,
-		usage:  desc.Usage,
+		name:  desc.Name,
+		image: desc.Image,
+		clear: clear,
+		blend: desc.Blend,
 		desc: core1_0.AttachmentDescription{
-			Format:        desc.Format,
+			Format:        desc.Image.Format(),
 			Samples:       desc.Samples,
 			LoadOp:        desc.LoadOp,
 			StoreOp:       desc.StoreOp,
