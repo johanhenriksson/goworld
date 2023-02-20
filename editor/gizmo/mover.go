@@ -10,7 +10,6 @@ import (
 	"github.com/johanhenriksson/goworld/geometry/lines"
 	"github.com/johanhenriksson/goworld/geometry/plane"
 	"github.com/johanhenriksson/goworld/math/mat4"
-	"github.com/johanhenriksson/goworld/math/physics"
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
@@ -19,7 +18,7 @@ import (
 	"github.com/johanhenriksson/goworld/render/vertex"
 )
 
-// Mover Gizmo is the visual representation of the 3D positioning tool
+// Mover Gizmo can be used to reposition objects in the 3D scene.
 type Mover struct {
 	object.T
 
@@ -43,6 +42,8 @@ type Mover struct {
 	camera     mat4.T
 	dragging   bool
 }
+
+var _ Gizmo = &Mover{}
 
 // NewMover creates a new mover gizmo
 func NewMover() *Mover {
@@ -75,7 +76,7 @@ func NewMover() *Mover {
 			Position(vec3.UnitX).
 			Rotation(vec3.New(0, 0, 270)).
 			Attach(collider.NewBox(collider.Box{
-				Size:   vec3.New(0.2, 1, 0.2),
+				Size:   vec3.New(2*radius, height, 2*radius),
 				Center: vec3.New(0, 0, 0),
 			})).
 			Create(),
@@ -90,6 +91,10 @@ func NewMover() *Mover {
 		})).
 			Position(vec3.New(0.5, 0, 0)).
 			Rotation(vec3.New(0, 0, 270)).
+			Attach(collider.NewBox(collider.Box{
+				Size:   vec3.New(radius, 1, radius),
+				Center: vec3.New(0, 0, 0),
+			})).
 			Create(),
 
 		// Y Arrow Cone
@@ -102,7 +107,7 @@ func NewMover() *Mover {
 		})).
 			Position(vec3.UnitY).
 			Attach(collider.NewBox(collider.Box{
-				Size:   vec3.New(0.2, 1, 0.2),
+				Size:   vec3.New(2*radius, height, 2*radius),
 				Center: vec3.New(0, 0, 0),
 			})).
 			Create(),
@@ -116,6 +121,10 @@ func NewMover() *Mover {
 			Color:    color.Green,
 		})).
 			Position(vec3.New(0, 0.5, 0)).
+			Attach(collider.NewBox(collider.Box{
+				Size:   vec3.New(2*radius, 1, 2*radius),
+				Center: vec3.New(0, 0, 0),
+			})).
 			Create(),
 
 		// Z Arrow Cone
@@ -129,7 +138,7 @@ func NewMover() *Mover {
 			Position(vec3.UnitZ).
 			Rotation(vec3.New(90, 180, 0)).
 			Attach(collider.NewBox(collider.Box{
-				Size:   vec3.New(0.2, 1, 0.2),
+				Size:   vec3.New(2*radius, height, 2*radius),
 				Center: vec3.New(0, 0, 0),
 			})).
 			Create(),
@@ -144,6 +153,10 @@ func NewMover() *Mover {
 		})).
 			Position(vec3.New(0, 0, 0.5)).
 			Rotation(vec3.New(90, 180, 0)).
+			Attach(collider.NewBox(collider.Box{
+				Size:   vec3.New(2*radius, 1, 2*radius),
+				Center: vec3.New(0, 0, 0),
+			})).
 			Create(),
 
 		// XY Plane
@@ -224,13 +237,21 @@ func (g *Mover) CanDeselect() bool {
 }
 
 func (g *Mover) DragStart(e mouse.Event, collider collider.T) {
+	g.dragging = true
+
 	axisObj := collider.Parent()
 	switch axisObj {
 	case g.X:
+		fallthrough
+	case g.Xb:
 		g.axis = vec3.UnitX
 	case g.Y:
+		fallthrough
+	case g.Yb:
 		g.axis = vec3.UnitY
 	case g.Z:
+		fallthrough
+	case g.Zb:
 		g.axis = vec3.UnitZ
 	default:
 		return
@@ -243,6 +264,7 @@ func (g *Mover) DragStart(e mouse.Event, collider collider.T) {
 }
 
 func (g *Mover) DragEnd(e mouse.Event) {
+	g.dragging = false
 }
 
 func (g *Mover) DragMove(e mouse.Event) {
@@ -267,41 +289,10 @@ func (g *Mover) PreDraw(args render.Args, scene object.T) error {
 	return nil
 }
 
+func (g *Mover) Dragging() bool          { return g.dragging }
+func (g *Mover) Viewport() render.Screen { return g.viewport }
+func (g *Mover) Camera() mat4.T          { return g.camera }
+
 func (m *Mover) MouseEvent(e mouse.Event) {
-	vpi := m.camera.Invert()
-	cursor := m.viewport.NormalizeCursor(e.Position())
-
-	if m.dragging {
-		if e.Action() == mouse.Release {
-			m.DragEnd(e)
-			m.dragging = false
-			e.Consume()
-		} else {
-			m.DragMove(e)
-			e.Consume()
-		}
-	} else if e.Action() == mouse.Press {
-		near := vpi.TransformPoint(vec3.New(cursor.X, cursor.Y, 1))
-		far := vpi.TransformPoint(vec3.New(cursor.X, cursor.Y, 0))
-		dir := far.Sub(near).Normalized()
-
-		// return closest hit
-		// find Collider children of Selectable objects
-		colliders := object.Query[collider.T]().Collect(m)
-
-		closest, hit := collider.ClosestIntersection(colliders, &physics.Ray{
-			Origin: near,
-			Dir:    dir,
-		})
-
-		if hit {
-			m.dragging = true
-			m.DragStart(e, closest)
-			e.Consume()
-		} else if m.dragging {
-			// we hit nothing, deselect
-			m.DragEnd(e)
-			e.Consume()
-		}
-	}
+	HandleMouse(m, e)
 }
