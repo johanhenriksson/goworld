@@ -37,7 +37,7 @@ func UseEffect(callback Effect, deps ...any) {
 			}
 		}
 	} else {
-		state.data[index] = deps
+		state.data = append(state.data, deps)
 	}
 
 	if noDeps || changed {
