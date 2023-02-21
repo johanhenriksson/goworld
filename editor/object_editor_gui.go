@@ -2,6 +2,8 @@ package editor
 
 import (
 	"fmt"
+	"log"
+	"strconv"
 
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/gui"
@@ -45,7 +47,11 @@ func objectEditorGui(target object.T) gui.Fragment {
 					}),
 					SidebarItem("position", []node.T{
 						Vec3Editor("position", Vec3EditorProps{
-							Value: target.Transform().WorldPosition(),
+							Value: target.Transform().Position(),
+							OnChange: func(pos vec3.T) {
+								log.Println("update position", pos)
+								target.Transform().SetPosition(pos)
+							},
 						}),
 					}),
 					SidebarItem("test", []node.T{
@@ -68,12 +74,23 @@ func FloatEditor(key string, props FloatEditorProps) node.T {
 	return node.Component(key, props, func(props FloatEditorProps) node.T {
 		value, setValue := hooks.UseState(fmt.Sprintf(FloatFmt, props.Value))
 		onChange := func(v string) {
-			// parse, validate
 			if props.OnChange != nil {
-				props.OnChange(0)
+				// if its a valid float, run the onchange callback
+				// todo: OnChange should probably only be called if the user
+				//       leaves the input, or presses enter.
+				if f, err := strconv.ParseFloat(v, 32); err == nil {
+					props.OnChange(float32(f))
+				} else {
+					log.Println("invalid float", err, "from", v)
+				}
 			}
 			setValue(v)
 		}
+		// how to properly observe changing values with hooks?
+		// this hook would make sure the label is updated any time the prop changes,
+		// even due to an external change (or OnChange effects)
+		hooks.UseEffect(func() { setValue(fmt.Sprintf(FloatFmt, props.Value)) }, props.Value)
+
 		return rect.New(key, rect.Props{
 			Style: rect.Style{
 				Layout:     style.Row{},
@@ -131,14 +148,29 @@ func Vec3Editor(key string, props Vec3EditorProps) node.T {
 				FloatEditor("x", FloatEditorProps{
 					Label: "X",
 					Value: props.Value.X,
+					OnChange: func(x float32) {
+						if props.OnChange != nil {
+							props.OnChange(vec3.New(x, props.Value.Y, props.Value.Z))
+						}
+					},
 				}),
 				FloatEditor("y", FloatEditorProps{
 					Label: "Y",
 					Value: props.Value.Y,
+					OnChange: func(y float32) {
+						if props.OnChange != nil {
+							props.OnChange(vec3.New(props.Value.X, y, props.Value.Z))
+						}
+					},
 				}),
 				FloatEditor("z", FloatEditorProps{
 					Label: "Z",
 					Value: props.Value.Z,
+					OnChange: func(z float32) {
+						if props.OnChange != nil {
+							props.OnChange(vec3.New(props.Value.X, props.Value.Y, z))
+						}
+					},
 				}),
 			},
 		})
