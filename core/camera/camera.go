@@ -71,8 +71,8 @@ func (cam *camera) Update(scene object.T, dt float32) {
 
 func (cam *camera) PreDraw(args render.Args, scene object.T) error {
 	// update view & view-projection matrices
-	aspect := float32(args.Viewport.Width) / float32(args.Viewport.Height)
-	cam.proj = mat4.Perspective(cam.fov, aspect, cam.near, cam.far)
+	cam.aspect = float32(args.Viewport.Width) / float32(args.Viewport.Height)
+	cam.proj = mat4.Perspective(cam.fov, cam.aspect, cam.near, cam.far)
 
 	// Calculate new view matrix based on position & forward vector
 	// why is this different from the parent objects world matrix?
