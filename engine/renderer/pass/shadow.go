@@ -43,8 +43,6 @@ type Shadowmap struct {
 }
 
 func NewShadowPass(app vulkan.App) Shadow {
-	log.Println("create shadow pass")
-
 	pass := renderpass.New(app.Device(), renderpass.Args{
 		Name: "Shadow",
 		DepthAttachment: &attachment.Depth{
@@ -63,24 +61,30 @@ func NewShadowPass(app vulkan.App) Shadow {
 		},
 		Dependencies: []renderpass.SubpassDependency{
 			{
-				Src: renderpass.ExternalSubpass,
-				Dst: GeometrySubpass,
+				Src:   renderpass.ExternalSubpass,
+				Dst:   GeometrySubpass,
+				Flags: core1_0.DependencyByRegion,
 
-				SrcStageMask:  core1_0.PipelineStageBottomOfPipe,
-				DstStageMask:  core1_0.PipelineStageColorAttachmentOutput,
-				SrcAccessMask: core1_0.AccessMemoryRead,
-				DstAccessMask: core1_0.AccessColorAttachmentRead | core1_0.AccessColorAttachmentWrite,
-				Flags:         core1_0.DependencyByRegion,
+				// External passes must finish reading depth textures in fragment shaders
+				SrcStageMask:  core1_0.PipelineStageEarlyFragmentTests | core1_0.PipelineStageLateFragmentTests,
+				SrcAccessMask: core1_0.AccessDepthStencilAttachmentRead,
+
+				// Before we can write to the depth buffer
+				DstStageMask:  core1_0.PipelineStageEarlyFragmentTests | core1_0.PipelineStageLateFragmentTests,
+				DstAccessMask: core1_0.AccessDepthStencilAttachmentWrite,
 			},
 			{
-				Src: GeometrySubpass,
-				Dst: renderpass.ExternalSubpass,
+				Src:   GeometrySubpass,
+				Dst:   renderpass.ExternalSubpass,
+				Flags: core1_0.DependencyByRegion,
 
-				SrcStageMask:  core1_0.PipelineStageColorAttachmentOutput,
-				DstStageMask:  core1_0.PipelineStageEarlyFragmentTests | core1_0.PipelineStageLateFragmentTests,
+				// The shadow pass must finish writing the depth attachment
+				SrcStageMask:  core1_0.PipelineStageEarlyFragmentTests | core1_0.PipelineStageLateFragmentTests,
 				SrcAccessMask: core1_0.AccessDepthStencilAttachmentWrite,
-				DstAccessMask: core1_0.AccessInputAttachmentRead,
-				Flags:         core1_0.DependencyByRegion,
+
+				// Before it can be used as a shadow map texture in a fragment shader
+				DstStageMask:  core1_0.PipelineStageFragmentShader,
+				DstAccessMask: core1_0.AccessShaderRead,
 			},
 		},
 	})

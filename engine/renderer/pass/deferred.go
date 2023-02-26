@@ -122,34 +122,49 @@ func NewDeferredPass(
 		},
 		Dependencies: []renderpass.SubpassDependency{
 			{
-				Src: renderpass.ExternalSubpass,
-				Dst: GeometrySubpass,
+				Src:   renderpass.ExternalSubpass,
+				Dst:   GeometrySubpass,
+				Flags: core1_0.DependencyByRegion,
 
-				SrcStageMask:  core1_0.PipelineStageBottomOfPipe,
-				DstStageMask:  core1_0.PipelineStageColorAttachmentOutput,
-				SrcAccessMask: core1_0.AccessMemoryRead,
-				DstAccessMask: core1_0.AccessColorAttachmentRead | core1_0.AccessColorAttachmentWrite,
-				Flags:         core1_0.DependencyByRegion,
+				// Color & depth attachments must be unused
+				SrcStageMask: core1_0.PipelineStageEarlyFragmentTests |
+					core1_0.PipelineStageLateFragmentTests |
+					core1_0.PipelineStageFragmentShader,
+				SrcAccessMask: core1_0.AccessDepthStencilAttachmentRead |
+					core1_0.AccessInputAttachmentRead,
+
+				// Before we can write to the color & depth attachments
+				DstStageMask: core1_0.PipelineStageEarlyFragmentTests |
+					core1_0.PipelineStageLateFragmentTests |
+					core1_0.PipelineStageColorAttachmentOutput,
+				DstAccessMask: core1_0.AccessColorAttachmentWrite | core1_0.AccessDepthStencilAttachmentWrite,
 			},
 			{
-				Src: GeometrySubpass,
-				Dst: LightingSubpass,
+				Src:   GeometrySubpass,
+				Dst:   LightingSubpass,
+				Flags: core1_0.DependencyByRegion,
+				// todo: consider that shadow maps should be ready before we read them in the fragment shader
 
+				// Color attachments must be written by the geometry pass
 				SrcStageMask:  core1_0.PipelineStageColorAttachmentOutput,
-				DstStageMask:  core1_0.PipelineStageFragmentShader,
 				SrcAccessMask: core1_0.AccessColorAttachmentWrite,
-				DstAccessMask: core1_0.AccessShaderRead,
-				Flags:         core1_0.DependencyByRegion,
+
+				// Before we can read them in the lighting fragment shader
+				DstAccessMask: core1_0.AccessInputAttachmentRead,
+				DstStageMask:  core1_0.PipelineStageFragmentShader,
 			},
 			{
-				Src: LightingSubpass,
-				Dst: renderpass.ExternalSubpass,
+				Src:   LightingSubpass,
+				Dst:   renderpass.ExternalSubpass,
+				Flags: core1_0.DependencyByRegion,
 
+				// Lighting subpass must finish writing the color attachments
 				SrcStageMask:  core1_0.PipelineStageColorAttachmentOutput,
-				DstStageMask:  core1_0.PipelineStageBottomOfPipe,
-				SrcAccessMask: core1_0.AccessColorAttachmentRead | core1_0.AccessColorAttachmentWrite,
-				DstAccessMask: core1_0.AccessMemoryRead,
-				Flags:         core1_0.DependencyByRegion,
+				SrcAccessMask: core1_0.AccessColorAttachmentWrite,
+
+				// Before they can be read in later fragment shaders
+				DstStageMask:  core1_0.PipelineStageFragmentShader,
+				DstAccessMask: core1_0.AccessInputAttachmentRead | core1_0.AccessShaderRead,
 			},
 		},
 	})
