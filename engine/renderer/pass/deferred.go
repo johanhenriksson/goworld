@@ -309,7 +309,6 @@ func (p *deferred) Destroy() {
 
 	p.fbuf.Destroy()
 	p.pass.Destroy()
-	p.gbuffer.Destroy()
 	p.light.Destroy()
 }
 

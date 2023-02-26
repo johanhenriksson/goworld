@@ -21,17 +21,19 @@ type T interface {
 	Near() float32
 	Far() float32
 	Fov() float32
+	Viewport() render.Screen
 }
 
 // camera represents a 3D camera and its transform.
 type camera struct {
 	object.T
 
-	aspect float32
-	fov    float32
-	near   float32
-	far    float32
-	clear  color.T
+	viewport render.Screen
+	aspect   float32
+	fov      float32
+	near     float32
+	far      float32
+	clear    color.T
 
 	proj  mat4.T
 	view  mat4.T
@@ -71,6 +73,7 @@ func (cam *camera) Update(scene object.T, dt float32) {
 
 func (cam *camera) PreDraw(args render.Args, scene object.T) error {
 	// update view & view-projection matrices
+	cam.viewport = args.Viewport
 	cam.aspect = float32(args.Viewport.Width) / float32(args.Viewport.Height)
 	cam.proj = mat4.Perspective(cam.fov, cam.aspect, cam.near, cam.far)
 
@@ -87,13 +90,14 @@ func (cam *camera) PreDraw(args render.Args, scene object.T) error {
 	return nil
 }
 
-func (cam *camera) View() mat4.T        { return cam.view }
-func (cam *camera) ViewInv() mat4.T     { return cam.viewi }
-func (cam *camera) Projection() mat4.T  { return cam.proj }
-func (cam *camera) ViewProj() mat4.T    { return cam.vp }
-func (cam *camera) ViewProjInv() mat4.T { return cam.vpi }
-func (cam *camera) Near() float32       { return cam.near }
-func (cam *camera) Far() float32        { return cam.far }
-func (cam *camera) Fov() float32        { return cam.fov }
+func (cam *camera) View() mat4.T            { return cam.view }
+func (cam *camera) ViewInv() mat4.T         { return cam.viewi }
+func (cam *camera) Projection() mat4.T      { return cam.proj }
+func (cam *camera) ViewProj() mat4.T        { return cam.vp }
+func (cam *camera) ViewProjInv() mat4.T     { return cam.vpi }
+func (cam *camera) Near() float32           { return cam.near }
+func (cam *camera) Far() float32            { return cam.far }
+func (cam *camera) Fov() float32            { return cam.fov }
+func (cam *camera) Viewport() render.Screen { return cam.viewport }
 
 func (cam *camera) ClearColor() color.T { return cam.clear }

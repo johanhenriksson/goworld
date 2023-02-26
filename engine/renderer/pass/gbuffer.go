@@ -6,8 +6,8 @@ import (
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render/command"
+	"github.com/johanhenriksson/goworld/render/device"
 	"github.com/johanhenriksson/goworld/render/image"
-	"github.com/johanhenriksson/goworld/render/vulkan"
 
 	"github.com/vkngwrapper/core/v2/core1_0"
 	"github.com/x448/float16"
@@ -21,8 +21,8 @@ type GeometryBuffer interface {
 	Position() image.T
 	Destroy()
 
-	SamplePosition(cursor vec2.T) (vec3.T, bool)
-	SampleNormal(cursor vec2.T) (vec3.T, bool)
+	SamplePosition(point vec2.T) (vec3.T, bool)
+	SampleNormal(point vec2.T) (vec3.T, bool)
 	RecordBufferCopy(command.Recorder)
 }
 
@@ -38,7 +38,7 @@ type gbuffer struct {
 }
 
 func NewGbuffer(
-	app vulkan.App,
+	device device.T,
 	rt RenderTarget,
 ) (GeometryBuffer, error) {
 	diffuseFmt := core1_0.FormatR8G8B8A8UnsignedNormalized
@@ -46,22 +46,22 @@ func NewGbuffer(
 	positionFmt := core1_0.FormatR16G16B16A16SignedFloat
 	usage := core1_0.ImageUsageSampled | core1_0.ImageUsageColorAttachment | core1_0.ImageUsageInputAttachment
 
-	diffuse, err := image.New2D(app.Device(), "diffuse", rt.Width(), rt.Height(), diffuseFmt, usage)
+	diffuse, err := image.New2D(device, "diffuse", rt.Width(), rt.Height(), diffuseFmt, usage)
 	if err != nil {
 		return nil, err
 	}
 
-	normal, err := image.New2D(app.Device(), "normal", rt.Width(), rt.Height(), normalFmt, usage|core1_0.ImageUsageTransferSrc)
+	normal, err := image.New2D(device, "normal", rt.Width(), rt.Height(), normalFmt, usage|core1_0.ImageUsageTransferSrc)
 	if err != nil {
 		return nil, err
 	}
 
-	position, err := image.New2D(app.Device(), "position", rt.Width(), rt.Height(), positionFmt, usage|core1_0.ImageUsageTransferSrc)
+	position, err := image.New2D(device, "position", rt.Width(), rt.Height(), positionFmt, usage|core1_0.ImageUsageTransferSrc)
 	if err != nil {
 		return nil, err
 	}
 
-	positionBuf, err := image.New(app.Device(), image.Args{
+	positionBuf, err := image.New(device, image.Args{
 		Type:   core1_0.ImageType2D,
 		Key:    "positionBuffer",
 		Width:  rt.Width(),
@@ -75,7 +75,7 @@ func NewGbuffer(
 		return nil, err
 	}
 
-	normalBuf, err := image.New(app.Device(), image.Args{
+	normalBuf, err := image.New(device, image.Args{
 		Type:   core1_0.ImageType2D,
 		Key:    "normalBuffer",
 		Width:  rt.Width(),
@@ -88,16 +88,6 @@ func NewGbuffer(
 	if err != nil {
 		return nil, err
 	}
-
-	// move images to ImageLayoutGeneral to avoid errors on first copy
-	worker := app.Transferer()
-	worker.Queue(func(b command.Buffer) {
-		b.CmdImageBarrier(core1_0.PipelineStageTopOfPipe, core1_0.PipelineStageTransfer, positionBuf, core1_0.ImageLayoutUndefined, core1_0.ImageLayoutGeneral, core1_0.ImageAspectColor)
-		b.CmdImageBarrier(core1_0.PipelineStageTopOfPipe, core1_0.PipelineStageTransfer, normalBuf, core1_0.ImageLayoutUndefined, core1_0.ImageLayoutGeneral, core1_0.ImageAspectColor)
-	})
-	worker.Submit(command.SubmitInfo{
-		Marker: "GBufferInit",
-	})
 
 	return &gbuffer{
 		RenderTarget: rt,
@@ -115,19 +105,19 @@ func (b *gbuffer) Diffuse() image.T  { return b.diffuse }
 func (b *gbuffer) Normal() image.T   { return b.normal }
 func (b *gbuffer) Position() image.T { return b.position }
 
-func (b *gbuffer) pixelOffset(pos vec2.T, img image.T, size int) int {
-	x := int(pos.X * float32(img.Width()) / float32(b.Width()))
-	y := int(pos.Y * float32(img.Height()) / float32(b.Height()))
+func (b *gbuffer) NormalBuf() image.T { return b.normalBuf }
 
-	return size * (y*img.Width() + x)
+func (b *gbuffer) pixelOffset(pos vec2.T, img image.T, size int) int {
+	denormPos := pos.Mul(img.Size().XY())
+	return size * (int(denormPos.Y)*img.Width() + int(denormPos.X))
 }
 
-func (b *gbuffer) SamplePosition(cursor vec2.T) (vec3.T, bool) {
-	if cursor.X < 0 || cursor.Y < 0 || cursor.X > float32(b.Width()) || cursor.Y > float32(b.Height()) {
+func (b *gbuffer) SamplePosition(point vec2.T) (vec3.T, bool) {
+	if point.X < 0 || point.Y < 0 || point.X > 1 || point.Y > 1 {
 		return vec3.Zero, false
 	}
 
-	offset := b.pixelOffset(cursor, b.positionBuf, 8)
+	offset := b.pixelOffset(point, b.positionBuf, 8)
 	output := make([]uint16, 4)
 	b.positionBuf.Memory().Read(offset, output)
 
@@ -142,12 +132,12 @@ func (b *gbuffer) SamplePosition(cursor vec2.T) (vec3.T, bool) {
 	), true
 }
 
-func (b *gbuffer) SampleNormal(cursor vec2.T) (vec3.T, bool) {
-	if cursor.X < 0 || cursor.Y < 0 || cursor.X > float32(b.Width()) || cursor.Y > float32(b.Height()) {
+func (b *gbuffer) SampleNormal(point vec2.T) (vec3.T, bool) {
+	if point.X < 0 || point.Y < 0 || point.X > 1 || point.Y > 1 {
 		return vec3.Zero, false
 	}
 
-	offset := b.pixelOffset(cursor, b.normalBuf, 4)
+	offset := b.pixelOffset(point, b.normalBuf, 4)
 	var output color.RGBA
 	b.normalBuf.Memory().Read(offset, &output)
 
@@ -155,6 +145,7 @@ func (b *gbuffer) SampleNormal(cursor vec2.T) (vec3.T, bool) {
 		return vec3.Zero, false
 	}
 
+	// unpack normal
 	return vec3.New(
 		2*float32(output.R)/255-1,
 		2*float32(output.G)/255-1,
@@ -183,24 +174,22 @@ func (p *gbuffer) Destroy() {
 
 func (p *gbuffer) RecordBufferCopy(cmds command.Recorder) {
 	cmds.Record(func(b command.Buffer) {
-		b.CmdImageBarrier(
-			core1_0.PipelineStageTopOfPipe,
-			core1_0.PipelineStageTransfer,
-			p.position,
-			core1_0.ImageLayoutShaderReadOnlyOptimal,
-			core1_0.ImageLayoutGeneral,
-			core1_0.ImageAspectColor)
+		// transfer position buffer layout to TransferSrcOptimal
+		b.CmdImageBarrier(core1_0.PipelineStageTopOfPipe, core1_0.PipelineStageTransfer, p.position, core1_0.ImageLayoutShaderReadOnlyOptimal, core1_0.ImageLayoutTransferSrcOptimal, core1_0.ImageAspectColor)
 
-		b.CmdCopyImage(p.position, core1_0.ImageLayoutGeneral, p.positionBuf, core1_0.ImageLayoutGeneral, core1_0.ImageAspectColor)
+		// transfer position copy buffer layout to General
+		b.CmdImageBarrier(core1_0.PipelineStageTopOfPipe, core1_0.PipelineStageTransfer, p.positionBuf, core1_0.ImageLayoutUndefined, core1_0.ImageLayoutGeneral, core1_0.ImageAspectColor)
 
-		b.CmdImageBarrier(
-			core1_0.PipelineStageTopOfPipe,
-			core1_0.PipelineStageTransfer,
-			p.normal,
-			core1_0.ImageLayoutShaderReadOnlyOptimal,
-			core1_0.ImageLayoutGeneral,
-			core1_0.ImageAspectColor)
+		// copy position buffer
+		b.CmdCopyImage(p.position, core1_0.ImageLayoutTransferSrcOptimal, p.positionBuf, core1_0.ImageLayoutGeneral, core1_0.ImageAspectColor)
 
-		b.CmdCopyImage(p.normal, core1_0.ImageLayoutGeneral, p.normalBuf, core1_0.ImageLayoutGeneral, core1_0.ImageAspectColor)
+		// transfer normal buffer layout to TransferSrcOptimal
+		b.CmdImageBarrier(core1_0.PipelineStageTopOfPipe, core1_0.PipelineStageTransfer, p.normal, core1_0.ImageLayoutShaderReadOnlyOptimal, core1_0.ImageLayoutTransferSrcOptimal, core1_0.ImageAspectColor)
+
+		// transfer normal copy buffer layout to General
+		b.CmdImageBarrier(core1_0.PipelineStageTopOfPipe, core1_0.PipelineStageTransfer, p.normalBuf, core1_0.ImageLayoutUndefined, core1_0.ImageLayoutGeneral, core1_0.ImageAspectColor)
+
+		// copy normal buffer
+		b.CmdCopyImage(p.normal, core1_0.ImageLayoutTransferSrcOptimal, p.normalBuf, core1_0.ImageLayoutGeneral, core1_0.ImageAspectColor)
 	})
 }

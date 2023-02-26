@@ -158,12 +158,15 @@ func (e *edit) SelectedColor() color.T {
 
 // sample world position at current mouse coords
 func (e *edit) CursorPositionNormal(cursor vec2.T) (bool, vec3.T, vec3.T) {
-	viewPosition, positionExists := e.render.GBuffer().SamplePosition(cursor)
+	// compute normalized screen position
+	screenPos := cursor.Div(e.Camera.Viewport().Size())
+
+	viewPosition, positionExists := e.render.GBuffer().SamplePosition(screenPos)
 	if !positionExists {
 		return false, vec3.Zero, vec3.Zero
 	}
 
-	viewNormal, normalExists := e.render.GBuffer().SampleNormal(cursor)
+	viewNormal, normalExists := e.render.GBuffer().SampleNormal(screenPos)
 	if !normalExists {
 		return false, vec3.Zero, vec3.Zero
 	}
@@ -174,6 +177,7 @@ func (e *edit) CursorPositionNormal(cursor vec2.T) (bool, vec3.T, vec3.T) {
 
 	// transform world coords into object space
 	position = e.Transform().Unproject(position)
+	normal = e.Transform().UnprojectDir(normal)
 
 	return true, position, normal
 }
