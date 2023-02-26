@@ -4,14 +4,14 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"os"
 	"os/exec"
 	"unsafe"
 )
 
-var ErrCompileFailed = errors.New("compilation failed")
+var ErrCompileFailed = errors.New("shader compilation error")
 
 // Disgusting hack that reinterprets a byte slice as a slice of uint32
 func sliceUint32(data []byte) []uint32 {
@@ -35,7 +35,7 @@ func LoadOrCompile(path string, stage ShaderStage) ([]byte, error) {
 	}
 	defer fp.Close()
 	log.Println("loading shader", path)
-	return ioutil.ReadAll(fp)
+	return io.ReadAll(fp)
 }
 
 func Compile(path string, stage ShaderStage) ([]byte, error) {
@@ -56,10 +56,13 @@ func Compile(path string, stage ShaderStage) ([]byte, error) {
 	cmd.Stderr = errors
 
 	if err := cmd.Run(); err != nil {
-		return nil, fmt.Errorf("%w in shader %s:\n%s",
-			ErrCompileFailed,
-			path,
-			errors.String())
+		if errors.Len() > 0 {
+			return nil, fmt.Errorf("%w in %s:\n%s",
+				ErrCompileFailed,
+				path,
+				errors.String())
+		}
+		return nil, fmt.Errorf("%s in %s: %w", ErrCompileFailed, path, err)
 	}
 
 	log.Println("shader compiled successfully:", path)
