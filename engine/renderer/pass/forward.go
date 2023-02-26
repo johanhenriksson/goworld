@@ -27,6 +27,7 @@ type ForwardPass struct {
 
 func NewForwardPass(
 	app vulkan.App,
+	target RenderTarget,
 	gbuffer GeometryBuffer,
 ) *ForwardPass {
 	pass := renderpass.New(app.Device(), renderpass.Args{
@@ -39,7 +40,7 @@ func NewForwardPass(
 				FinalLayout: core1_0.ImageLayoutShaderReadOnlyOptimal,
 				Blend:       attachment.BlendMultiply,
 
-				Image: attachment.FromImageArray(gbuffer.Output()),
+				Image: attachment.FromImageArray(target.Output()),
 			},
 			{
 				Name:        NormalsAttachment,
@@ -64,7 +65,7 @@ func NewForwardPass(
 			StoreOp:       core1_0.AttachmentStoreOpStore,
 			FinalLayout:   core1_0.ImageLayoutShaderReadOnlyOptimal,
 
-			Image: attachment.FromImageArray(gbuffer.Depth()),
+			Image: attachment.FromImageArray(target.Depth()),
 		},
 		Subpasses: []renderpass.Subpass{
 			{

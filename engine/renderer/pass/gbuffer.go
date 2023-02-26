@@ -14,8 +14,6 @@ import (
 )
 
 type GeometryBuffer interface {
-	RenderTarget
-
 	Diffuse() image.T
 	Normal() image.T
 	Position() image.T
@@ -27,8 +25,6 @@ type GeometryBuffer interface {
 }
 
 type gbuffer struct {
-	RenderTarget
-
 	diffuse  image.T
 	normal   image.T
 	position image.T
@@ -39,24 +35,24 @@ type gbuffer struct {
 
 func NewGbuffer(
 	device device.T,
-	rt RenderTarget,
+	width, height int,
 ) (GeometryBuffer, error) {
 	diffuseFmt := core1_0.FormatR8G8B8A8UnsignedNormalized
 	normalFmt := core1_0.FormatR8G8B8A8UnsignedNormalized
 	positionFmt := core1_0.FormatR16G16B16A16SignedFloat
 	usage := core1_0.ImageUsageSampled | core1_0.ImageUsageColorAttachment | core1_0.ImageUsageInputAttachment
 
-	diffuse, err := image.New2D(device, "diffuse", rt.Width(), rt.Height(), diffuseFmt, usage)
+	diffuse, err := image.New2D(device, "diffuse", width, height, diffuseFmt, usage)
 	if err != nil {
 		return nil, err
 	}
 
-	normal, err := image.New2D(device, "normal", rt.Width(), rt.Height(), normalFmt, usage|core1_0.ImageUsageTransferSrc)
+	normal, err := image.New2D(device, "normal", width, height, normalFmt, usage|core1_0.ImageUsageTransferSrc)
 	if err != nil {
 		return nil, err
 	}
 
-	position, err := image.New2D(device, "position", rt.Width(), rt.Height(), positionFmt, usage|core1_0.ImageUsageTransferSrc)
+	position, err := image.New2D(device, "position", width, height, positionFmt, usage|core1_0.ImageUsageTransferSrc)
 	if err != nil {
 		return nil, err
 	}
@@ -64,8 +60,8 @@ func NewGbuffer(
 	positionBuf, err := image.New(device, image.Args{
 		Type:   core1_0.ImageType2D,
 		Key:    "positionBuffer",
-		Width:  rt.Width(),
-		Height: rt.Height(),
+		Width:  width,
+		Height: height,
 		Format: positionFmt,
 		Tiling: core1_0.ImageTilingLinear,
 		Usage:  core1_0.ImageUsageTransferDst,
@@ -78,8 +74,8 @@ func NewGbuffer(
 	normalBuf, err := image.New(device, image.Args{
 		Type:   core1_0.ImageType2D,
 		Key:    "normalBuffer",
-		Width:  rt.Width(),
-		Height: rt.Height(),
+		Width:  width,
+		Height: height,
 		Format: normalFmt,
 		Tiling: core1_0.ImageTilingLinear,
 		Usage:  core1_0.ImageUsageTransferDst,
@@ -90,8 +86,6 @@ func NewGbuffer(
 	}
 
 	return &gbuffer{
-		RenderTarget: rt,
-
 		diffuse:  diffuse,
 		normal:   normal,
 		position: position,
@@ -154,8 +148,6 @@ func (b *gbuffer) SampleNormal(point vec2.T) (vec3.T, bool) {
 }
 
 func (p *gbuffer) Destroy() {
-	p.RenderTarget.Destroy()
-
 	p.diffuse.Destroy()
 	p.diffuse = nil
 

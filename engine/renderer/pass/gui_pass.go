@@ -42,13 +42,13 @@ type GuiPass struct {
 
 var _ Pass = &GuiPass{}
 
-func NewGuiPass(app vulkan.App, gbuffer GeometryBuffer) *GuiPass {
+func NewGuiPass(app vulkan.App, target RenderTarget) *GuiPass {
 	pass := renderpass.New(app.Device(), renderpass.Args{
 		Name: "GUI",
 		ColorAttachments: []attachment.Color{
 			{
 				Name:          OutputAttachment,
-				Image:         attachment.FromImageArray(gbuffer.Output()),
+				Image:         attachment.FromImageArray(target.Output()),
 				LoadOp:        core1_0.AttachmentLoadOpLoad,
 				StoreOp:       core1_0.AttachmentStoreOpStore,
 				InitialLayout: core1_0.ImageLayoutShaderReadOnlyOptimal,

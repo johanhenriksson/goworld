@@ -24,7 +24,7 @@ type LinePass struct {
 	materials *MaterialSorter
 }
 
-func NewLinePass(app vulkan.App, gbuffer GeometryBuffer) *LinePass {
+func NewLinePass(app vulkan.App, target RenderTarget) *LinePass {
 	log.Println("create line pass")
 
 	pass := renderpass.New(app.Device(), renderpass.Args{
@@ -32,7 +32,7 @@ func NewLinePass(app vulkan.App, gbuffer GeometryBuffer) *LinePass {
 		ColorAttachments: []attachment.Color{
 			{
 				Name:          OutputAttachment,
-				Image:         attachment.FromImageArray(gbuffer.Output()),
+				Image:         attachment.FromImageArray(target.Output()),
 				LoadOp:        core1_0.AttachmentLoadOpLoad,
 				StoreOp:       core1_0.AttachmentStoreOpStore,
 				InitialLayout: core1_0.ImageLayoutShaderReadOnlyOptimal,
@@ -40,7 +40,7 @@ func NewLinePass(app vulkan.App, gbuffer GeometryBuffer) *LinePass {
 			},
 		},
 		DepthAttachment: &attachment.Depth{
-			Image:         attachment.FromImageArray(gbuffer.Depth()),
+			Image:         attachment.FromImageArray(target.Depth()),
 			LoadOp:        core1_0.AttachmentLoadOpLoad,
 			InitialLayout: core1_0.ImageLayoutShaderReadOnlyOptimal,
 			FinalLayout:   core1_0.ImageLayoutDepthStencilAttachmentOptimal,

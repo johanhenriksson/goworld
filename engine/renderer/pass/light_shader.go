@@ -53,7 +53,7 @@ type lightShader struct {
 	depthView    image.View
 }
 
-func NewLightShader(app vulkan.App, pass renderpass.T, gbuffer GeometryBuffer) LightShader {
+func NewLightShader(app vulkan.App, pass renderpass.T, target RenderTarget, gbuffer GeometryBuffer) LightShader {
 	mat := material.New(
 		app.Device(),
 		material.Args{
@@ -96,7 +96,7 @@ func NewLightShader(app vulkan.App, pass renderpass.T, gbuffer GeometryBuffer) L
 	diffuseView, _ := gbuffer.Diffuse().View(gbuffer.Diffuse().Format(), core1_0.ImageAspectColor)
 	normalView, _ := gbuffer.Normal().View(gbuffer.Normal().Format(), core1_0.ImageAspectColor)
 	positionView, _ := gbuffer.Position().View(gbuffer.Position().Format(), core1_0.ImageAspectColor)
-	depthView, _ := gbuffer.Depth()[0].View(gbuffer.Depth()[0].Format(), core1_0.ImageAspectDepth)
+	depthView, _ := target.Depth()[0].View(target.Depth()[0].Format(), core1_0.ImageAspectDepth)
 
 	lightDesc := lightsh.Descriptors()
 	lightDesc.Diffuse.Set(diffuseView)
