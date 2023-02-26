@@ -36,6 +36,9 @@ func New(appName string) T {
 		EnabledLayerNames:     layers,
 		EnabledExtensionNames: extensions,
 	})
+	if err != nil {
+		panic(err)
+	}
 	return &instance{
 		ptr: handle,
 	}
