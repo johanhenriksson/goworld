@@ -50,6 +50,7 @@ func NewOutputPass(app vulkan.App, source RenderTarget) *OutputPass {
 	p.quad = vertex.ScreenQuad("output-pass-quad")
 
 	p.pass = renderpass.New(app.Device(), renderpass.Args{
+		Name: "Output",
 		ColorAttachments: []attachment.Color{
 			{
 				Name:        OutputAttachment,

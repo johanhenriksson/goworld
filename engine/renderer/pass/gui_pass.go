@@ -44,6 +44,7 @@ var _ Pass = &GuiPass{}
 
 func NewGuiPass(app vulkan.App, gbuffer GeometryBuffer) *GuiPass {
 	pass := renderpass.New(app.Device(), renderpass.Args{
+		Name: "GUI",
 		ColorAttachments: []attachment.Color{
 			{
 				Name:          OutputAttachment,

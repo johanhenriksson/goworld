@@ -9,6 +9,7 @@ import (
 	"github.com/johanhenriksson/goworld/util"
 
 	"github.com/vkngwrapper/core/v2/core1_0"
+	"github.com/vkngwrapper/core/v2/driver"
 )
 
 type T interface {
@@ -37,6 +38,7 @@ func New(device device.T, args Args) T {
 	attachments := make([]attachment.T, len(args.ColorAttachments))
 	attachmentIndices := make(map[attachment.Name]int)
 
+	log.Println("create renderpass", args.Name)
 	log.Println("attachments")
 	for index, desc := range args.ColorAttachments {
 		attachment := attachment.NewColor(device, desc)
@@ -140,6 +142,9 @@ func New(device device.T, args Args) T {
 	if err != nil {
 		panic(err)
 	}
+
+	// set object name
+	device.SetDebugObjectName(driver.VulkanHandle(ptr.Handle()), core1_0.ObjectTypeRenderPass, args.Name)
 
 	return &renderpass{
 		device:      device,

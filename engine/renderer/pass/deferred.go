@@ -63,6 +63,7 @@ func NewDeferredPass(
 	shadows Shadow,
 ) Deferred {
 	pass := renderpass.New(app.Device(), renderpass.Args{
+		Name: "Deferred",
 		ColorAttachments: []attachment.Color{
 			{
 				Name:          OutputAttachment,

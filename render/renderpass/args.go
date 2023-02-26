@@ -5,6 +5,7 @@ import (
 )
 
 type Args struct {
+	Name             string
 	ColorAttachments []attachment.Color
 	DepthAttachment  *attachment.Depth
 

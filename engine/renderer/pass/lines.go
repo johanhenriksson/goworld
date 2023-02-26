@@ -28,6 +28,7 @@ func NewLinePass(app vulkan.App, gbuffer GeometryBuffer) *LinePass {
 	log.Println("create line pass")
 
 	pass := renderpass.New(app.Device(), renderpass.Args{
+		Name: "Lines",
 		ColorAttachments: []attachment.Color{
 			{
 				Name:          OutputAttachment,

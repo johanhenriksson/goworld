@@ -30,6 +30,7 @@ func NewForwardPass(
 	gbuffer GeometryBuffer,
 ) *ForwardPass {
 	pass := renderpass.New(app.Device(), renderpass.Args{
+		Name: "Forward",
 		ColorAttachments: []attachment.Color{
 			{
 				Name:        OutputAttachment,

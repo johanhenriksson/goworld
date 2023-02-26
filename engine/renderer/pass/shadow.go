@@ -45,34 +45,8 @@ type Shadowmap struct {
 func NewShadowPass(app vulkan.App) Shadow {
 	log.Println("create shadow pass")
 
-	subpasses := make([]renderpass.Subpass, 0, 4)
-	dependencies := make([]renderpass.SubpassDependency, 0, 4)
-	subpasses = append(subpasses, renderpass.Subpass{
-		Name:  GeometrySubpass,
-		Depth: true,
-	})
-	dependencies = append(dependencies, renderpass.SubpassDependency{
-		Src: renderpass.ExternalSubpass,
-		Dst: GeometrySubpass,
-
-		SrcStageMask:  core1_0.PipelineStageBottomOfPipe,
-		DstStageMask:  core1_0.PipelineStageColorAttachmentOutput,
-		SrcAccessMask: core1_0.AccessMemoryRead,
-		DstAccessMask: core1_0.AccessColorAttachmentRead | core1_0.AccessColorAttachmentWrite,
-		Flags:         core1_0.DependencyByRegion,
-	})
-	dependencies = append(dependencies, renderpass.SubpassDependency{
-		Src: GeometrySubpass,
-		Dst: renderpass.ExternalSubpass,
-
-		SrcStageMask:  core1_0.PipelineStageColorAttachmentOutput,
-		DstStageMask:  core1_0.PipelineStageFragmentShader,
-		SrcAccessMask: core1_0.AccessColorAttachmentWrite,
-		DstAccessMask: core1_0.AccessShaderRead,
-		Flags:         core1_0.DependencyByRegion,
-	})
-
 	pass := renderpass.New(app.Device(), renderpass.Args{
+		Name: "Shadow",
 		DepthAttachment: &attachment.Depth{
 			Image:         attachment.NewImage("shadowmap", core1_0.FormatD32SignedFloat, core1_0.ImageUsageDepthStencilAttachment|core1_0.ImageUsageInputAttachment|core1_0.ImageUsageSampled),
 			LoadOp:        core1_0.AttachmentLoadOpClear,
@@ -81,8 +55,34 @@ func NewShadowPass(app vulkan.App) Shadow {
 			FinalLayout:   core1_0.ImageLayoutShaderReadOnlyOptimal,
 			ClearDepth:    1,
 		},
-		Subpasses:    subpasses,
-		Dependencies: dependencies,
+		Subpasses: []renderpass.Subpass{
+			{
+				Name:  GeometrySubpass,
+				Depth: true,
+			},
+		},
+		Dependencies: []renderpass.SubpassDependency{
+			{
+				Src: renderpass.ExternalSubpass,
+				Dst: GeometrySubpass,
+
+				SrcStageMask:  core1_0.PipelineStageBottomOfPipe,
+				DstStageMask:  core1_0.PipelineStageColorAttachmentOutput,
+				SrcAccessMask: core1_0.AccessMemoryRead,
+				DstAccessMask: core1_0.AccessColorAttachmentRead | core1_0.AccessColorAttachmentWrite,
+				Flags:         core1_0.DependencyByRegion,
+			},
+			{
+				Src: GeometrySubpass,
+				Dst: renderpass.ExternalSubpass,
+
+				SrcStageMask:  core1_0.PipelineStageColorAttachmentOutput,
+				DstStageMask:  core1_0.PipelineStageEarlyFragmentTests | core1_0.PipelineStageLateFragmentTests,
+				SrcAccessMask: core1_0.AccessDepthStencilAttachmentWrite,
+				DstAccessMask: core1_0.AccessInputAttachmentRead,
+				Flags:         core1_0.DependencyByRegion,
+			},
+		},
 	})
 
 	return &shadowpass{
