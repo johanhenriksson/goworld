@@ -2,6 +2,7 @@ package pass
 
 import (
 	"github.com/johanhenriksson/goworld/core/object"
+	"github.com/johanhenriksson/goworld/gui/quad"
 	"github.com/johanhenriksson/goworld/gui/widget"
 	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/math/vec2"
@@ -12,7 +13,6 @@ import (
 	"github.com/johanhenriksson/goworld/render/descriptor"
 	"github.com/johanhenriksson/goworld/render/framebuffer"
 	"github.com/johanhenriksson/goworld/render/material"
-	"github.com/johanhenriksson/goworld/render/pipeline"
 	"github.com/johanhenriksson/goworld/render/renderpass"
 	"github.com/johanhenriksson/goworld/render/renderpass/attachment"
 	"github.com/johanhenriksson/goworld/render/shader"
@@ -28,16 +28,29 @@ type UIDescriptors struct {
 	Textures *descriptor.SamplerArray
 }
 
+type UIDescriptors2 struct {
+	descriptor.Set
+	Config   *descriptor.Uniform[UIConfig]
+	Quads    *descriptor.Storage[widget.Quad]
+	Textures *descriptor.SamplerArray
+}
+
+type UIConfig struct {
+	Resolution vec2.T
+}
+
 type GuiDrawable interface {
 	object.T
 	DrawUI(args widget.DrawArgs, scene object.T)
+	DrawUI2(widget.DrawArgs, *widget.QuadBuffer)
 }
 
 type GuiPass struct {
 	app  vulkan.App
-	mat  []material.Instance[*UIDescriptors]
+	mat  []material.Instance[*UIDescriptors2]
 	pass renderpass.T
 	fbuf framebuffer.T
+	quad quad.T
 }
 
 var _ Pass = &GuiPass{}
@@ -76,23 +89,26 @@ func NewGuiPass(app vulkan.App, target RenderTarget) *GuiPass {
 	})
 
 	mat := material.New(app.Device(), material.Args{
-		Pass:     pass,
-		Shader:   app.Shaders().FetchSync(shader.NewRef("ui_texture")),
-		Pointers: vertex.ParsePointers(vertex.UI{}),
-		Constants: []pipeline.PushConstant{
-			{
-				Stages: core1_0.StageAll,
-				Type:   widget.Constants{},
-			},
-		},
+		Pass:       pass,
+		Shader:     app.Shaders().FetchSync(shader.NewRef("ui_quad")),
+		Pointers:   vertex.ParsePointers(vertex.UI{}),
 		DepthTest:  true,
 		DepthWrite: true,
-	}, &UIDescriptors{
+	}, &UIDescriptors2{
+		Config: &descriptor.Uniform[UIConfig]{
+			Stages: core1_0.StageVertex,
+		},
+		Quads: &descriptor.Storage[widget.Quad]{
+			Stages: core1_0.StageVertex,
+			Size:   1000,
+		},
 		Textures: &descriptor.SamplerArray{
 			Stages: core1_0.StageFragment,
-			Count:  2000,
+			Count:  1000,
 		},
 	}).InstantiateMany(app.Pool(), app.Frames())
+
+	mesh := quad.New("gui-quad", quad.Props{Size: vec2.One})
 
 	fbufs, err := framebuffer.New(app.Device(), app.Width(), app.Height(), pass)
 	if err != nil {
@@ -104,6 +120,7 @@ func NewGuiPass(app vulkan.App, target RenderTarget) *GuiPass {
 		mat:  mat,
 		pass: pass,
 		fbuf: fbufs,
+		quad: mesh,
 	}
 }
 
@@ -118,6 +135,11 @@ func (p *GuiPass) Record(cmds command.Recorder, args render.Args, scene object.T
 	proj := mat4.OrthographicRZ(0, size.X, 0, size.Y, 1000, -1000)
 	view := mat4.Ident()
 	vp := proj.Mul(&view)
+
+	mesh, quadExists := p.app.Meshes().Fetch(p.quad.Mesh())
+	if !quadExists {
+		return
+	}
 
 	cmds.Record(func(cmd command.Buffer) {
 		cmd.CmdBeginRenderPass(p.pass, p.fbuf)
@@ -149,11 +171,26 @@ func (p *GuiPass) Record(cmds command.Recorder, args render.Args, scene object.T
 		},
 	}
 
+	mat.Descriptors().Config.Set(UIConfig{
+		Resolution: size,
+	})
+
+	qb := widget.NewQuadBuffer(100)
+
 	// query scene for gui managers
 	guis := object.Query[GuiDrawable]().Collect(scene)
 	for _, gui := range guis {
-		// todo: collect and depth sort
-		gui.DrawUI(uiArgs, scene)
+		gui.DrawUI2(uiArgs, qb)
+	}
+
+	// todo: collect and depth sort
+	mat.Descriptors().Quads.SetRange(0, qb.Data)
+
+	for i := range qb.Data {
+		index := i
+		cmds.Record(func(b command.Buffer) {
+			mesh.Draw(b, index)
+		})
 	}
 
 	cmds.Record(func(cmd command.Buffer) {

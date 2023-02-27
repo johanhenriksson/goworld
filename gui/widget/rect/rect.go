@@ -5,6 +5,9 @@ import (
 	"github.com/johanhenriksson/goworld/gui/node"
 	"github.com/johanhenriksson/goworld/gui/style"
 	"github.com/johanhenriksson/goworld/gui/widget"
+	"github.com/johanhenriksson/goworld/math/mat4"
+	"github.com/johanhenriksson/goworld/math/vec3"
+	"github.com/johanhenriksson/goworld/render/color"
 )
 
 type T interface {
@@ -14,8 +17,8 @@ type T interface {
 
 type rect struct {
 	widget.T
-	Renderer
 
+	color    color.T
 	props    Props
 	children []widget.T
 	state    style.State
@@ -38,19 +41,20 @@ func New(key string, props Props) node.T {
 
 func Create(w widget.T, props Props) T {
 	rect := &rect{
-		T:        w,
-		Renderer: NewRenderer(w.Key()),
+		T: w,
 	}
 	rect.Update(props)
 	return rect
 }
+
+func (f *rect) Color() color.T     { return f.color }
+func (f *rect) SetColor(c color.T) { f.color = c }
 
 func (f *rect) Draw(args widget.DrawArgs) {
 	if f.props.Style.Hidden {
 		return
 	}
 	f.T.Draw(args)
-	f.Renderer.Draw(args, f)
 }
 
 func (f *rect) ZOffset() int {
@@ -205,5 +209,33 @@ func (f *rect) MouseEvent(e mouse.Event) {
 				f.props.OnMouseExit(e)
 			}
 		}
+	}
+}
+
+func (f *rect) Draw2(args widget.DrawArgs, quads *widget.QuadBuffer) {
+	tex := args.Textures.Fetch(color.White)
+	if tex != nil && f.color.A > 0 {
+		quads.Push(widget.Quad{
+			Min:    f.Position(),
+			Max:    f.Position().Add(f.Size()),
+			Color:  f.Color(),
+			ZIndex: args.Position.Z,
+		})
+	}
+
+	// draw children
+	for _, child := range f.Children() {
+		// calculate child transform
+		// try to fix the position to an actual pixel
+		// pos := vec3.Extend(child.Position().Scaled(args.Viewport.Scale).Floor().Scaled(1/args.Viewport.Scale), -1)
+		z := child.ZOffset()
+		pos := vec3.Extend(child.Position(), args.Position.Z-float32(1+z))
+		transform := mat4.Translate(pos)
+		childArgs := args
+		childArgs.Transform = transform // .Mul(&args.Transform)
+		childArgs.Position = pos
+
+		// draw child
+		child.Draw2(childArgs, quads)
 	}
 }

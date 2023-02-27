@@ -44,6 +44,8 @@ type T interface {
 	// Calling Draw() will instantiate any required GPU resources prior to drawing.
 	// Attempting to draw a destroyed component will cause a panic.
 	Draw(DrawArgs)
+
+	Draw2(DrawArgs, *QuadBuffer)
 }
 
 type widget struct {
@@ -103,6 +105,9 @@ func (w *widget) Draw(DrawArgs) {
 	if w.Destroyed() {
 		panic(fmt.Sprintf("attempt to draw destroyed widget %s", w.key))
 	}
+}
+
+func (w *widget) Draw2(DrawArgs, *QuadBuffer) {
 }
 
 func calculatePosition(node *flex.Node) vec2.T {

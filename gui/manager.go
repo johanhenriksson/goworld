@@ -120,6 +120,12 @@ func (m *manager) DrawUI(args widget.DrawArgs, scene object.T) {
 	})
 }
 
+func (m *manager) DrawUI2(args widget.DrawArgs, quads *widget.QuadBuffer) {
+	m.viewport = args.Viewport
+	// draw
+	m.gui.Draw2(args, quads)
+}
+
 func findNodeWithKey(root node.T, key string) node.T {
 	if root.Key() == key {
 		return root
