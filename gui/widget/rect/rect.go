@@ -209,11 +209,16 @@ func (f *rect) Draw(args widget.DrawArgs, quads *widget.QuadBuffer) {
 	tex := args.Textures.Fetch(color.White)
 	if tex != nil && f.color.A > 0 {
 		quads.Push(widget.Quad{
-			Min:     args.Position.XY(),
-			Max:     args.Position.XY().Add(f.Size()),
-			MinUV:   vec2.Zero,
-			MaxUV:   vec2.One,
-			Color:   f.Color(),
+			Min:   args.Position.XY(),
+			Max:   args.Position.XY().Add(f.Size()),
+			MinUV: vec2.Zero,
+			MaxUV: vec2.One,
+			Color: [4]color.T{
+				f.Color(),
+				f.Color(),
+				f.Color(),
+				f.Color(),
+			},
 			ZIndex:  args.Position.Z,
 			Texture: uint32(tex.ID),
 		})

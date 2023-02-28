@@ -185,14 +185,21 @@ func (l *label) Draw(args widget.DrawArgs, quads *widget.QuadBuffer) {
 	}
 
 	quads.Push(widget.Quad{
-		Min:     args.Position.XY(),
-		Max:     args.Position.XY().Add(l.texSize),
-		MinUV:   vec2.Zero,
-		MaxUV:   vec2.One,
-		Color:   l.color,
+		Min:   args.Position.XY(),
+		Max:   args.Position.XY().Add(l.texSize),
+		MinUV: vec2.Zero,
+		MaxUV: vec2.One,
+		Color: [4]color.T{
+			l.color,
+			l.color,
+			l.color,
+			l.color,
+		},
 		ZIndex:  args.Position.Z,
 		Texture: uint32(tex.ID),
 	})
+
+	// todo: cursor
 }
 
 func (l *label) Flex() *flex.Node {

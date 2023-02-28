@@ -13,7 +13,7 @@ struct Quad {
     vec2 max; // bottom right
     vec2 uv_min; // top left uv
     vec2 uv_max; // bottom right uv
-    vec4 color;
+    vec4 color[4];
     uint texture;
     float zindex;
 };
@@ -64,6 +64,6 @@ void main()
         1);
     
     uv0 = tex_pos;
-	color0 = quad.color;
+	color0 = quad.color[gl_VertexIndex];
     texture0 = quad.texture;
 }

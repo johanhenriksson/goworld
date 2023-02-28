@@ -69,11 +69,16 @@ func (i *image) Draw(args widget.DrawArgs, quads *widget.QuadBuffer) {
 		}
 
 		quads.Push(widget.Quad{
-			Min:     args.Position.XY(),
-			Max:     args.Position.XY().Add(i.Size()),
-			MinUV:   vec2.Zero,
-			MaxUV:   vec2.One,
-			Color:   color.White, // todo: add tint prop
+			Min:   args.Position.XY(),
+			Max:   args.Position.XY().Add(i.Size()),
+			MinUV: vec2.Zero,
+			MaxUV: vec2.One,
+			Color: [4]color.T{ // todo: add tint prop
+				color.White,
+				color.White,
+				color.White,
+				color.White,
+			},
 			ZIndex:  args.Position.Z,
 			Texture: uint32(tex.ID),
 		})
