@@ -1,8 +1,6 @@
 package image
 
 import (
-	"log"
-
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/gui/node"
 	"github.com/johanhenriksson/goworld/gui/style"
@@ -70,7 +68,6 @@ func (i *image) Draw(args widget.DrawArgs, quads *widget.QuadBuffer) {
 			i.handle = tex
 		}
 
-		log.Println("draw image with texture", tex.ID, "and size", i.Size())
 		quads.Push(widget.Quad{
 			Min:     args.Position.XY(),
 			Max:     args.Position.XY().Add(i.Size()),

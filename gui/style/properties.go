@@ -31,8 +31,7 @@ type PositionValueProp interface {
 }
 
 type FontWidget interface {
-	SetFont(string)
-	SetFontSize(int)
+	SetFont(Font)
 	SetFontColor(color.T)
 	SetLineHeight(float32)
 }

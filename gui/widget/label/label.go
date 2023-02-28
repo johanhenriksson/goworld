@@ -1,6 +1,7 @@
 package label
 
 import (
+	"github.com/johanhenriksson/goworld/assets"
 	"github.com/johanhenriksson/goworld/core/input/keys"
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/gui/node"
@@ -8,6 +9,9 @@ import (
 	"github.com/johanhenriksson/goworld/gui/widget"
 	"github.com/johanhenriksson/goworld/math"
 	"github.com/johanhenriksson/goworld/math/vec2"
+	"github.com/johanhenriksson/goworld/render/color"
+	"github.com/johanhenriksson/goworld/render/font"
+	"github.com/johanhenriksson/goworld/render/texture"
 
 	"github.com/kjk/flex"
 	"golang.org/x/exp/utf8string"
@@ -37,13 +41,21 @@ type Props struct {
 
 type label struct {
 	widget.T
-	Renderer
 
 	props  Props
 	scale  float32
 	state  style.State
 	cursor int
-	text   string
+	tex    texture.Ref
+
+	version    int
+	text       string
+	size       int
+	fontName   string
+	font       font.T
+	color      color.T
+	lineHeight float32
+	texSize    vec2.T
 }
 
 func New(key string, props Props) node.T {
@@ -52,11 +64,12 @@ func New(key string, props Props) node.T {
 
 func new(w widget.T, props Props) T {
 	lbl := &label{
-		T:        w,
-		Renderer: NewRenderer(w.Key()),
-		scale:    1,
-		cursor:   utf8string.NewString(props.Text).RuneCount(),
-		text:     props.Text,
+		T:      w,
+		scale:  1,
+		cursor: utf8string.NewString(props.Text).RuneCount(),
+		text:   props.Text,
+
+		lineHeight: 1,
 		props: Props{
 			Text: "\x00",
 		},
@@ -65,7 +78,6 @@ func new(w widget.T, props Props) T {
 	return lbl
 }
 
-func (l *label) Size() vec2.T   { return l.T.Size() }
 func (l *label) editable() bool { return l.props.OnChange != nil }
 
 func (l *label) Props() any { return l.props }
@@ -77,38 +89,75 @@ func (l *label) Update(props any) {
 
 	if styleChanged {
 		new.Style.Apply(l, l.state)
-		l.Flex().MarkDirty()
 	}
 
 	if textChanged {
 		l.setText(new.Text)
-		l.Flex().MarkDirty()
 	}
 }
 
-func (l *label) setText(text string) {
-	str := utf8string.NewString(text)
-
-	if text != l.text {
-		// new text is different from what we had before,
-		// move cursor to end of line
-		l.cursor = str.RuneCount()
+func (l *label) invalidate() {
+	l.Flex().MarkDirty()
+	if l.font == nil {
+		l.font = assets.GetFont(l.fontName, l.size, l.scale)
 	}
+
+	fargs := font.Args{
+		LineHeight: l.lineHeight,
+		Color:      color.White,
+	}
+	l.version++
+
+	// todo: immediate updates causes a noticable flash while the text is rendered
+	//       keep a reference until the new texture is ready?
+	l.tex = font.Ref(l.Key(), l.version, l.font, l.text, fargs)
+	l.texSize = l.font.Measure(l.text, fargs)
+}
+
+func (l *label) setText(text string) {
+	if text == l.text {
+		return
+	}
+
+	str := utf8string.NewString(text)
 
 	l.cursor = math.Min(l.cursor, str.RuneCount())
 	l.text = text
 
-	if l.editable() {
-		// we also need to know if it has focus
-		text = str.Slice(0, l.cursor) + "_" + str.Slice(l.cursor, str.RuneCount())
-		// text = l.props.Text[:l.cursor] + "_" + l.props.Text[l.cursor:]
-	}
+	// shit attempt at a cursor.
+	// todo: make a real cursor. a blinking one
+	// if l.editable() {
+	// we also need to know if it has focus
+	// text = str.Slice(0, l.cursor) + "_" + str.Slice(l.cursor, str.RuneCount())
+	// text = l.props.Text[:l.cursor] + "_" + l.props.Text[l.cursor:]
+	// }
 
-	// update renderer
-	l.Renderer.SetText(text)
+	l.invalidate()
 }
 
 // prop accessors
+
+func (l *label) SetFont(font style.Font) {
+	if font.Name == l.fontName && font.Size == l.size {
+		return
+	}
+	l.fontName = font.Name
+	l.size = font.Size
+	l.font = nil
+	l.invalidate()
+}
+
+func (l *label) SetFontColor(color color.T) {
+	l.color = color
+}
+
+func (l *label) SetLineHeight(lineHeight float32) {
+	if lineHeight == l.lineHeight {
+		return
+	}
+	l.lineHeight = lineHeight
+	l.invalidate()
+}
 
 func (l *label) Text() string { return l.props.Text }
 func (l *label) Cursor() int  { return l.cursor }
@@ -120,11 +169,30 @@ func (l *label) Draw(args widget.DrawArgs, quads *widget.QuadBuffer) {
 
 	if args.Viewport.Scale != l.scale {
 		// ui scale has changed
-		l.Flex().MarkDirty()
 		l.scale = args.Viewport.Scale
+		l.font = nil
+		l.invalidate()
+		return
 	}
 
-	// l.Renderer.Draw(args, l)
+	if l.tex == nil {
+		return
+	}
+
+	tex := args.Textures.Fetch(l.tex)
+	if tex == nil {
+		return
+	}
+
+	quads.Push(widget.Quad{
+		Min:     args.Position.XY(),
+		Max:     args.Position.XY().Add(l.texSize),
+		MinUV:   vec2.Zero,
+		MaxUV:   vec2.One,
+		Color:   l.color,
+		ZIndex:  args.Position.Z,
+		Texture: uint32(tex.ID),
+	})
 }
 
 func (l *label) Flex() *flex.Node {
@@ -134,16 +202,19 @@ func (l *label) Flex() *flex.Node {
 }
 
 func (l *label) measure(node *flex.Node, width float32, widthMode flex.MeasureMode, height float32, heightMode flex.MeasureMode) flex.Size {
-	r := l.Renderer.Measure(node, width, widthMode, height, heightMode)
+	req := flex.Size{
+		Width:  l.texSize.X / l.scale,
+		Height: l.texSize.Y / l.scale,
+	}
 
 	if widthMode == flex.MeasureModeExactly {
-		r.Width = width
+		req.Width = width
 	}
 	if widthMode == flex.MeasureModeAtMost {
-		r.Width = math.Min(r.Width, width)
+		req.Width = math.Min(req.Width, width)
 	}
 
-	return r
+	return req
 }
 
 //
@@ -220,6 +291,7 @@ func (l *label) KeyEvent(e keys.Event) {
 		str := utf8string.NewString(l.text)
 		l.text = str.Slice(0, l.cursor) + string(e.Character()) + str.Slice(l.cursor, str.RuneCount())
 		l.cursor = math.Min(l.cursor+1, utf8string.NewString(l.text).RuneCount())
+		l.invalidate()
 		l.props.OnChange(l.text)
 	}
 	if e.Action() == keys.Press || e.Action() == keys.Repeat {
@@ -229,6 +301,7 @@ func (l *label) KeyEvent(e keys.Event) {
 			if l.cursor > 0 {
 				l.cursor--
 				l.text = str.Slice(0, l.cursor) + str.Slice(l.cursor+1, str.RuneCount())
+				l.invalidate()
 				l.props.OnChange(l.text)
 			}
 
@@ -236,6 +309,7 @@ func (l *label) KeyEvent(e keys.Event) {
 			str := utf8string.NewString(l.text)
 			if l.cursor < str.RuneCount() {
 				l.text = str.Slice(0, l.cursor) + str.Slice(l.cursor+1, str.RuneCount())
+				l.invalidate()
 				l.props.OnChange(l.text)
 			}
 

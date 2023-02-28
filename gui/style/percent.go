@@ -18,3 +18,7 @@ func (p Pct) ApplyMargin(fw FlexWidget)    { fw.Flex().StyleSetMarginPercent(fle
 func (p Pct) ApplyPosition(fw FlexWidget, edge flex.Edge) {
 	fw.Flex().StyleSetPositionPercent(edge, float32(p))
 }
+
+func (p Pct) ApplyLineHeight(fw FontWidget) {
+	fw.SetLineHeight(float32(p / 100))
+}
