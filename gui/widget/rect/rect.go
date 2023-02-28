@@ -5,7 +5,7 @@ import (
 	"github.com/johanhenriksson/goworld/gui/node"
 	"github.com/johanhenriksson/goworld/gui/style"
 	"github.com/johanhenriksson/goworld/gui/widget"
-	"github.com/johanhenriksson/goworld/math/mat4"
+	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render/color"
 )
@@ -49,13 +49,6 @@ func Create(w widget.T, props Props) T {
 
 func (f *rect) Color() color.T     { return f.color }
 func (f *rect) SetColor(c color.T) { f.color = c }
-
-func (f *rect) Draw(args widget.DrawArgs) {
-	if f.props.Style.Hidden {
-		return
-	}
-	f.T.Draw(args)
-}
 
 func (f *rect) ZOffset() int {
 	return f.props.Style.ZOffset
@@ -212,14 +205,17 @@ func (f *rect) MouseEvent(e mouse.Event) {
 	}
 }
 
-func (f *rect) Draw2(args widget.DrawArgs, quads *widget.QuadBuffer) {
+func (f *rect) Draw(args widget.DrawArgs, quads *widget.QuadBuffer) {
 	tex := args.Textures.Fetch(color.White)
 	if tex != nil && f.color.A > 0 {
 		quads.Push(widget.Quad{
-			Min:    f.Position(),
-			Max:    f.Position().Add(f.Size()),
-			Color:  f.Color(),
-			ZIndex: args.Position.Z,
+			Min:     args.Position.XY(),
+			Max:     args.Position.XY().Add(f.Size()),
+			MinUV:   vec2.Zero,
+			MaxUV:   vec2.One,
+			Color:   f.Color(),
+			ZIndex:  args.Position.Z,
+			Texture: uint32(tex.ID),
 		})
 	}
 
@@ -229,13 +225,10 @@ func (f *rect) Draw2(args widget.DrawArgs, quads *widget.QuadBuffer) {
 		// try to fix the position to an actual pixel
 		// pos := vec3.Extend(child.Position().Scaled(args.Viewport.Scale).Floor().Scaled(1/args.Viewport.Scale), -1)
 		z := child.ZOffset()
-		pos := vec3.Extend(child.Position(), args.Position.Z-float32(1+z))
-		transform := mat4.Translate(pos)
 		childArgs := args
-		childArgs.Transform = transform // .Mul(&args.Transform)
-		childArgs.Position = pos
+		childArgs.Position = vec3.Extend(child.Position(), args.Position.Z-float32(1+z))
 
 		// draw child
-		child.Draw2(childArgs, quads)
+		child.Draw(childArgs, quads)
 	}
 }

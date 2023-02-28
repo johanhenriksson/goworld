@@ -6,7 +6,6 @@ import (
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/gui/node"
 	"github.com/johanhenriksson/goworld/gui/widget"
-	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/render"
 
@@ -16,7 +15,7 @@ import (
 type Manager interface {
 	object.T
 
-	DrawUI(widget.DrawArgs, object.T)
+	DrawUI(args widget.DrawArgs, quads *widget.QuadBuffer)
 }
 
 type manager struct {
@@ -104,26 +103,10 @@ func (m *manager) Update(scene object.T, dt float32) {
 	// m.updated <- struct{}{}
 }
 
-func (m *manager) DrawUI(args widget.DrawArgs, scene object.T) {
-	// wait for background update
-	// <-m.updated
-
+func (m *manager) DrawUI(args widget.DrawArgs, quads *widget.QuadBuffer) {
 	m.viewport = args.Viewport
 	// draw
-	m.gui.Draw(widget.DrawArgs{
-		Commands:  args.Commands,
-		Meshes:    args.Meshes,
-		Textures:  args.Textures,
-		Transform: mat4.Ident(),
-		ViewProj:  args.ViewProj,
-		Viewport:  args.Viewport,
-	})
-}
-
-func (m *manager) DrawUI2(args widget.DrawArgs, quads *widget.QuadBuffer) {
-	m.viewport = args.Viewport
-	// draw
-	m.gui.Draw2(args, quads)
+	m.gui.Draw(args, quads)
 }
 
 func findNodeWithKey(root node.T, key string) node.T {

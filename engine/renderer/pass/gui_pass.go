@@ -4,7 +4,6 @@ import (
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/gui/quad"
 	"github.com/johanhenriksson/goworld/gui/widget"
-	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/cache"
@@ -41,8 +40,7 @@ type UIConfig struct {
 
 type GuiDrawable interface {
 	object.T
-	DrawUI(args widget.DrawArgs, scene object.T)
-	DrawUI2(widget.DrawArgs, *widget.QuadBuffer)
+	DrawUI(widget.DrawArgs, *widget.QuadBuffer)
 }
 
 type GuiPass struct {
@@ -131,11 +129,6 @@ func (p *GuiPass) Record(cmds command.Recorder, args render.Args, scene object.T
 	scale := args.Viewport.Scale
 	size = size.Scaled(1 / scale)
 
-	// setup viewport
-	proj := mat4.OrthographicRZ(0, size.X, 0, size.Y, 1000, -1000)
-	view := mat4.Ident()
-	vp := proj.Mul(&view)
-
 	mesh, quadExists := p.app.Meshes().Fetch(p.quad.Mesh())
 	if !quadExists {
 		return
@@ -159,11 +152,9 @@ func (p *GuiPass) Record(cmds command.Recorder, args render.Args, scene object.T
 	textures := cache.NewSamplerCache(p.app.Textures(), mat.Descriptors().Textures)
 
 	uiArgs := widget.DrawArgs{
-		Commands:  cmds,
-		Meshes:    p.app.Meshes(),
-		Textures:  textures,
-		ViewProj:  vp,
-		Transform: mat4.Ident(),
+		Commands: cmds,
+		Meshes:   p.app.Meshes(),
+		Textures: textures,
 		Viewport: render.Screen{
 			Width:  int(size.X),
 			Height: int(size.Y),
@@ -180,7 +171,7 @@ func (p *GuiPass) Record(cmds command.Recorder, args render.Args, scene object.T
 	// query scene for gui managers
 	guis := object.Query[GuiDrawable]().Collect(scene)
 	for _, gui := range guis {
-		gui.DrawUI2(uiArgs, qb)
+		gui.DrawUI(uiArgs, qb)
 	}
 
 	// todo: collect and depth sort

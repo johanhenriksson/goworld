@@ -113,7 +113,7 @@ func (l *label) setText(text string) {
 func (l *label) Text() string { return l.props.Text }
 func (l *label) Cursor() int  { return l.cursor }
 
-func (l *label) Draw(args widget.DrawArgs) {
+func (l *label) Draw(args widget.DrawArgs, quads *widget.QuadBuffer) {
 	if l.props.Style.Hidden {
 		return
 	}
@@ -124,8 +124,7 @@ func (l *label) Draw(args widget.DrawArgs) {
 		l.scale = args.Viewport.Scale
 	}
 
-	l.T.Draw(args)
-	l.Renderer.Draw(args, l)
+	// l.Renderer.Draw(args, l)
 }
 
 func (l *label) Flex() *flex.Node {

@@ -11,7 +11,6 @@ import (
 	"github.com/johanhenriksson/goworld/render/texture"
 
 	"github.com/kjk/flex"
-	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
 var DefaultFont = "fonts/SourceCodeProRegular.ttf"
@@ -161,11 +160,11 @@ func (r *renderer) Draw(args widget.DrawArgs, label T) {
 			int(args.Position.X*r.scale), int(args.Position.Y*r.scale),
 			int(label.Size().X*r.scale), int(label.Size().Y*r.scale))
 
-		cmd.CmdPushConstant(core1_0.StageAll, 0, &widget.Constants{
-			Viewport: args.ViewProj,
-			Model:    args.Transform,
-			Texture:  tex.ID,
-		})
+		// cmd.CmdPushConstant(core1_0.StageAll, 0, &widget.Constants{
+		// 	Viewport: args.ViewProj,
+		// 	Model:    args.Transform,
+		// 	Texture:  tex.ID,
+		// })
 		mesh.Draw(cmd, 0)
 
 		// reset scissor

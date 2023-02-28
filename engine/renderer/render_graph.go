@@ -85,7 +85,8 @@ func NewGraph(app vulkan.App) T {
 
 func (r *rgraph) Screenshot() {
 	idx := 0
-	ss, err := upload.DownloadImage(r.app.Device(), r.app.Worker(idx), r.app.Surfaces()[idx])
+	r.app.Device().WaitIdle()
+	ss, err := upload.DownloadImage(r.app.Device(), r.app.Worker(idx), r.gbuffer.NormalBuf()) // r.app.Surfaces()[idx])
 	if err != nil {
 		panic(err)
 	}

@@ -1,10 +1,15 @@
 package image
 
 import (
+	"log"
+
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/gui/node"
 	"github.com/johanhenriksson/goworld/gui/style"
 	"github.com/johanhenriksson/goworld/gui/widget"
+	"github.com/johanhenriksson/goworld/math/vec2"
+	"github.com/johanhenriksson/goworld/render/cache"
+	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/texture"
 	"github.com/kjk/flex"
 )
@@ -17,15 +22,13 @@ type T interface {
 type Props struct {
 	Style   Style
 	Image   texture.Ref
-	Invert  bool
 	OnClick mouse.Callback
 }
 
 type image struct {
 	widget.T
-	Renderer
-	props   Props
-	texture texture.T
+	props  Props
+	handle *cache.SamplerHandle
 }
 
 func New(key string, props Props) node.T {
@@ -36,7 +39,6 @@ func new(w widget.T, props Props) T {
 	img := &image{
 		T: w,
 	}
-	img.Renderer = NewRenderer(w.Key(), img.onLoad)
 	w.Flex().SetMeasureFunc(img.measure)
 	img.Update(props)
 	return img
@@ -49,9 +51,6 @@ func (i *image) Update(props any) {
 	styleChanged := new.Style != i.props.Style
 	i.props = new
 
-	i.Renderer.SetImage(new.Image)
-	i.Renderer.SetInvert(new.Invert)
-
 	if styleChanged {
 		new.Style.Apply(i, style.State{})
 		i.Flex().MarkDirty()
@@ -62,25 +61,36 @@ func (i *image) Update(props any) {
 
 func (i *image) Image() texture.Ref { return i.props.Image }
 
-func (i *image) Draw(args widget.DrawArgs) {
-	i.T.Draw(args)
-	i.Renderer.Draw(args, i)
-}
+func (i *image) Draw(args widget.DrawArgs, quads *widget.QuadBuffer) {
+	tex := args.Textures.Fetch(i.props.Image)
+	if tex != nil {
+		if tex != i.handle {
+			// image handle changed, redo layout
+			i.Flex().MarkDirty()
+			i.handle = tex
+		}
 
-func (i *image) onLoad(tex texture.T) {
-	// update active texture reference & trigger layout update
-	i.texture = tex
-	i.Flex().MarkDirty()
+		log.Println("draw image with texture", tex.ID, "and size", i.Size())
+		quads.Push(widget.Quad{
+			Min:     args.Position.XY(),
+			Max:     args.Position.XY().Add(i.Size()),
+			MinUV:   vec2.Zero,
+			MaxUV:   vec2.One,
+			Color:   color.White, // todo: add tint prop
+			ZIndex:  args.Position.Z,
+			Texture: uint32(tex.ID),
+		})
+	}
 }
 
 func (i *image) measure(node *flex.Node, width float32, widthMode flex.MeasureMode, height float32, heightMode flex.MeasureMode) flex.Size {
-	if i.texture == nil {
+	if i.handle == nil {
 		return flex.Size{}
 	}
 
 	// todo: consider constraints
-	w := float32(i.texture.Image().Width())
-	h := float32(i.texture.Image().Height())
+	w := float32(i.handle.Texture.Image().Width())
+	h := float32(i.handle.Texture.Image().Height())
 	aspect := w / h
 	return flex.Size{
 		Width:  width,

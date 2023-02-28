@@ -6,8 +6,10 @@ import (
 )
 
 type Quad struct {
-	Max     vec2.T
 	Min     vec2.T
+	Max     vec2.T
+	MinUV   vec2.T
+	MaxUV   vec2.T
 	Color   color.T
 	Texture uint32
 	ZIndex  float32
