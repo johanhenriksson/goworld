@@ -6,13 +6,15 @@ import (
 )
 
 type Quad struct {
-	Min     vec2.T
-	Max     vec2.T
-	MinUV   vec2.T
-	MaxUV   vec2.T
-	Color   [4]color.T
-	Texture uint32
-	ZIndex  float32
+	Min      vec2.T
+	Max      vec2.T
+	MinUV    vec2.T
+	MaxUV    vec2.T
+	Color    [4]color.T
+	ZIndex   float32
+	Radius   float32
+	Softness float32
+	Texture  uint32
 }
 
 type QuadBuffer struct {

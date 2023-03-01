@@ -14,8 +14,10 @@ struct Quad {
     vec2 uv_min; // top left uv
     vec2 uv_max; // bottom right uv
     vec4 color[4];
-    uint texture;
     float zindex;
+    float corner_radius;
+    float edge_softness;
+    uint texture;
 };
 
 layout (binding = 0) uniform Config {
@@ -30,8 +32,13 @@ layout (binding = 1) readonly buffer QuadBuffer {
 
 // Varyings
 layout (location = 0) out vec4 color0;
-layout (location = 1) flat out uint texture0;
-layout (location = 2) out vec2 uv0;
+layout (location = 1) out vec2 uv0;
+layout (location = 2) flat out uint texture0;
+layout (location = 3) out vec2 pos;
+layout (location = 4) flat out vec2 center;
+layout (location = 5) flat out vec2 half_size;
+layout (location = 6) flat out float corner_radius;
+layout (location = 7) flat out float edge_softness;
 
 out gl_PerVertex 
 {
@@ -50,21 +57,22 @@ void main()
 {
 	Quad quad = ssbo.quads[gl_InstanceIndex];
 
-    vec2 dst_half_size = (quad.max - quad.min) / 2;
-    vec2 dst_center = (quad.max + quad.min) / 2;
-    vec2 dst_pos = vertices[gl_VertexIndex] * dst_half_size + dst_center;
+    half_size = (quad.max - quad.min) / 2;
+    center = (quad.max + quad.min) / 2;
+    pos = vertices[gl_VertexIndex] * half_size + center;
 
     vec2 tex_half_size = (quad.uv_max - quad.uv_min) / 2;
     vec2 tex_center = (quad.uv_max + quad.uv_min) / 2;
-    vec2 tex_pos = vertices[gl_VertexIndex] * tex_half_size + tex_center;
+    uv0 = vertices[gl_VertexIndex] * tex_half_size + tex_center;
 
     gl_Position = vec4(
-        2 * dst_pos.x / config.resolution.x - 1,
-        2 * dst_pos.y / config.resolution.y - 1,
+        2 * pos.x / config.resolution.x - 1,
+        2 * pos.y / config.resolution.y - 1,
         1 - quad.zindex / config.zmax,
         1);
     
-    uv0 = tex_pos;
 	color0 = quad.color[gl_VertexIndex];
     texture0 = quad.texture;
+    corner_radius = quad.corner_radius;
+    edge_softness = quad.edge_softness;
 }

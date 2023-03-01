@@ -219,8 +219,10 @@ func (f *rect) Draw(args widget.DrawArgs, quads *widget.QuadBuffer) {
 				f.Color(),
 				f.Color(),
 			},
-			ZIndex:  args.Position.Z,
-			Texture: uint32(tex.ID),
+			ZIndex:   args.Position.Z,
+			Radius:   5,
+			Softness: 5,
+			Texture:  uint32(tex.ID),
 		})
 	}
 
