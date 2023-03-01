@@ -78,6 +78,8 @@ func Run(args Args, scenefuncs ...SceneFunc) {
 		// 	1000*timing.Max,
 		// 	1.0/timing.Average)
 	}
+
+	renderer.Screenshot()
 }
 
 func RunGC() {

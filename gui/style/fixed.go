@@ -20,7 +20,3 @@ func (p Px) ApplyMargin(fw FlexWidget)    { fw.Flex().StyleSetMargin(flex.EdgeAl
 func (p Px) ApplyPosition(fw FlexWidget, edge flex.Edge) {
 	fw.Flex().StyleSetPosition(edge, float32(p))
 }
-
-func (p Px) ApplyLineHeight(fw FontWidget) {
-	fw.SetLineHeight(float32(p))
-}

@@ -19,6 +19,8 @@ type GeometryBuffer interface {
 	Position() image.T
 	Destroy()
 
+	NormalBuf() image.T
+
 	SamplePosition(point vec2.T) (vec3.T, bool)
 	SampleNormal(point vec2.T) (vec3.T, bool)
 	RecordBufferCopy(command.Recorder)

@@ -1,8 +1,6 @@
 package widget
 
 import (
-	"fmt"
-
 	"github.com/johanhenriksson/goworld/math/vec2"
 
 	"github.com/kjk/flex"
@@ -43,7 +41,7 @@ type T interface {
 	// Draw the widget. This should only be called by the GUI Draw Pass
 	// Calling Draw() will instantiate any required GPU resources prior to drawing.
 	// Attempting to draw a destroyed component will cause a panic.
-	Draw(DrawArgs)
+	Draw(DrawArgs, *QuadBuffer)
 }
 
 type widget struct {
@@ -97,12 +95,7 @@ func (w *widget) SetChildren(c []T) {
 	}
 }
 
-func (w *widget) Draw(DrawArgs) {
-	// base widget Draw() should be called ahead of overridden draws
-
-	if w.Destroyed() {
-		panic(fmt.Sprintf("attempt to draw destroyed widget %s", w.key))
-	}
+func (w *widget) Draw(DrawArgs, *QuadBuffer) {
 }
 
 func calculatePosition(node *flex.Node) vec2.T {

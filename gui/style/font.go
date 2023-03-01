@@ -8,6 +8,5 @@ type Font struct {
 }
 
 func (f Font) ApplyFont(fw FontWidget) {
-	fw.SetFont(f.Name)
-	fw.SetFontSize(f.Size)
+	fw.SetFont(f)
 }

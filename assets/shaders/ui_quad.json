@@ -1,0 +1,13 @@
+{
+    "Inputs": {
+        "position": {
+            "Index": 0,
+            "Type": "float"
+        }
+    },
+    "Bindings": {
+        "Config": 0,
+        "Quads": 1,
+        "Textures": 2
+    }
+}

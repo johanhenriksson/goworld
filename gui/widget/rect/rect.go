@@ -5,6 +5,9 @@ import (
 	"github.com/johanhenriksson/goworld/gui/node"
 	"github.com/johanhenriksson/goworld/gui/style"
 	"github.com/johanhenriksson/goworld/gui/widget"
+	"github.com/johanhenriksson/goworld/math/vec2"
+	"github.com/johanhenriksson/goworld/math/vec3"
+	"github.com/johanhenriksson/goworld/render/color"
 )
 
 type T interface {
@@ -14,8 +17,8 @@ type T interface {
 
 type rect struct {
 	widget.T
-	Renderer
 
+	color    color.T
 	props    Props
 	children []widget.T
 	state    style.State
@@ -38,20 +41,14 @@ func New(key string, props Props) node.T {
 
 func Create(w widget.T, props Props) T {
 	rect := &rect{
-		T:        w,
-		Renderer: NewRenderer(w.Key()),
+		T: w,
 	}
 	rect.Update(props)
 	return rect
 }
 
-func (f *rect) Draw(args widget.DrawArgs) {
-	if f.props.Style.Hidden {
-		return
-	}
-	f.T.Draw(args)
-	f.Renderer.Draw(args, f)
-}
+func (f *rect) Color() color.T     { return f.color }
+func (f *rect) SetColor(c color.T) { f.color = c }
 
 func (f *rect) ZOffset() int {
 	return f.props.Style.ZOffset
@@ -205,5 +202,69 @@ func (f *rect) MouseEvent(e mouse.Event) {
 				f.props.OnMouseExit(e)
 			}
 		}
+	}
+}
+
+func (f *rect) Draw(args widget.DrawArgs, quads *widget.QuadBuffer) {
+	tex := args.Textures.Fetch(color.White)
+	if tex != nil && f.color.A > 0 {
+		min := args.Position.XY()
+		max := args.Position.XY().Add(f.Size())
+
+		// todo: add style properties
+		shadow := color.Black
+		shadowSoftness := float32(0)
+		shadowOffset := vec2.New(2, 2)
+		borderColor := color.Transparent
+		borderWidth := float32(0) // f.Flex().LayoutGetBorder(flex.EdgeTop)
+		radius := float32(0)
+
+		// drop shadow
+		if shadowSoftness > 0 {
+			quads.Push(widget.Quad{
+				Min:      min.Add(shadowOffset),
+				Max:      max.Add(shadowOffset),
+				Color:    [4]color.T{shadow, shadow, shadow, shadow},
+				ZIndex:   args.Position.Z - 0.1,
+				Radius:   radius,
+				Softness: shadowSoftness,
+				Texture:  uint32(tex.ID),
+			})
+		}
+		// background
+		quads.Push(widget.Quad{
+			Min:     min,
+			Max:     max,
+			MinUV:   vec2.Zero,
+			MaxUV:   vec2.One,
+			Color:   [4]color.T{f.Color(), f.Color(), f.Color(), f.Color()},
+			ZIndex:  args.Position.Z,
+			Radius:  radius,
+			Texture: uint32(tex.ID),
+		})
+		if borderWidth > 0 && borderColor.A > 0 {
+			quads.Push(widget.Quad{
+				Min:     min,
+				Max:     max,
+				Color:   [4]color.T{borderColor, borderColor, borderColor, borderColor},
+				ZIndex:  args.Position.Z + 0.1,
+				Radius:  radius,
+				Border:  borderWidth,
+				Texture: uint32(tex.ID),
+			})
+		}
+	}
+
+	// draw children
+	for _, child := range f.Children() {
+		// calculate child transform
+		// try to fix the position to an actual pixel
+		// pos := vec3.Extend(child.Position().Scaled(args.Viewport.Scale).Floor().Scaled(1/args.Viewport.Scale), -1)
+		z := child.ZOffset()
+		childArgs := args
+		childArgs.Position = vec3.Extend(child.Position(), args.Position.Z+float32(1+z))
+
+		// draw child
+		child.Draw(childArgs, quads)
 	}
 }

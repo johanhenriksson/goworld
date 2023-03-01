@@ -2,10 +2,22 @@ package label
 
 import (
 	. "github.com/johanhenriksson/goworld/gui/style"
+	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/kjk/flex"
 )
 
-var DefaultStyle = &Style{}
+var DefaultFont = Font{
+	Name: "fonts/SourceCodeProRegular.ttf",
+	Size: 14,
+}
+var DefaultColor = color.White
+var DefaultLineHeight = Pct(100)
+
+var DefaultStyle = &Style{
+	Font:       DefaultFont,
+	LineHeight: DefaultLineHeight,
+	Color:      DefaultColor,
+}
 
 type Style struct {
 	Extends *Style
