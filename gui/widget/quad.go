@@ -14,6 +14,7 @@ type Quad struct {
 	ZIndex   float32
 	Radius   float32
 	Softness float32
+	Border   float32
 	Texture  uint32
 }
 

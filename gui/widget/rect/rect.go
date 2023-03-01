@@ -208,22 +208,51 @@ func (f *rect) MouseEvent(e mouse.Event) {
 func (f *rect) Draw(args widget.DrawArgs, quads *widget.QuadBuffer) {
 	tex := args.Textures.Fetch(color.White)
 	if tex != nil && f.color.A > 0 {
+		min := args.Position.XY()
+		max := args.Position.XY().Add(f.Size())
+
+		// todo: add style properties
+		shadow := color.Black
+		shadowSoftness := float32(0)
+		shadowOffset := vec2.New(2, 2)
+		borderColor := color.Transparent
+		borderWidth := float32(0) // f.Flex().LayoutGetBorder(flex.EdgeTop)
+		radius := float32(0)
+
+		// drop shadow
+		if shadowSoftness > 0 {
+			quads.Push(widget.Quad{
+				Min:      min.Add(shadowOffset),
+				Max:      max.Add(shadowOffset),
+				Color:    [4]color.T{shadow, shadow, shadow, shadow},
+				ZIndex:   args.Position.Z - 0.1,
+				Radius:   radius,
+				Softness: shadowSoftness,
+				Texture:  uint32(tex.ID),
+			})
+		}
+		// background
 		quads.Push(widget.Quad{
-			Min:   args.Position.XY(),
-			Max:   args.Position.XY().Add(f.Size()),
-			MinUV: vec2.Zero,
-			MaxUV: vec2.One,
-			Color: [4]color.T{
-				f.Color(),
-				f.Color(),
-				f.Color(),
-				f.Color(),
-			},
-			ZIndex:   args.Position.Z,
-			Radius:   5,
-			Softness: 5,
-			Texture:  uint32(tex.ID),
+			Min:     min,
+			Max:     max,
+			MinUV:   vec2.Zero,
+			MaxUV:   vec2.One,
+			Color:   [4]color.T{f.Color(), f.Color(), f.Color(), f.Color()},
+			ZIndex:  args.Position.Z,
+			Radius:  radius,
+			Texture: uint32(tex.ID),
 		})
+		if borderWidth > 0 && borderColor.A > 0 {
+			quads.Push(widget.Quad{
+				Min:     min,
+				Max:     max,
+				Color:   [4]color.T{borderColor, borderColor, borderColor, borderColor},
+				ZIndex:  args.Position.Z + 0.1,
+				Radius:  radius,
+				Border:  borderWidth,
+				Texture: uint32(tex.ID),
+			})
+		}
 	}
 
 	// draw children

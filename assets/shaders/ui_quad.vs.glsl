@@ -17,6 +17,7 @@ struct Quad {
     float zindex;
     float corner_radius;
     float edge_softness;
+    float border;
     uint texture;
 };
 
@@ -33,12 +34,14 @@ layout (binding = 1) readonly buffer QuadBuffer {
 // Varyings
 layout (location = 0) out vec4 color0;
 layout (location = 1) out vec2 uv0;
-layout (location = 2) flat out uint texture0;
-layout (location = 3) out vec2 pos;
+layout (location = 2) out vec2 pos;
+layout (location = 3) flat out uint texture0;
 layout (location = 4) flat out vec2 center;
 layout (location = 5) flat out vec2 half_size;
 layout (location = 6) flat out float corner_radius;
 layout (location = 7) flat out float edge_softness;
+layout (location = 8) flat out float border;
+
 
 out gl_PerVertex 
 {
@@ -75,4 +78,5 @@ void main()
     texture0 = quad.texture;
     corner_radius = quad.corner_radius;
     edge_softness = quad.edge_softness;
+    border = quad.border;
 }
