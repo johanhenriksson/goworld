@@ -20,6 +20,7 @@ struct Quad {
 
 layout (binding = 0) uniform Config {
     vec2 resolution;
+    float zmax;
 } config;
 
 
@@ -60,7 +61,7 @@ void main()
     gl_Position = vec4(
         2 * dst_pos.x / config.resolution.x - 1,
         2 * dst_pos.y / config.resolution.y - 1,
-        0,
+        1 - quad.zindex / config.zmax,
         1);
     
     uv0 = tex_pos;

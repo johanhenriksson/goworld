@@ -231,7 +231,7 @@ func (f *rect) Draw(args widget.DrawArgs, quads *widget.QuadBuffer) {
 		// pos := vec3.Extend(child.Position().Scaled(args.Viewport.Scale).Floor().Scaled(1/args.Viewport.Scale), -1)
 		z := child.ZOffset()
 		childArgs := args
-		childArgs.Position = vec3.Extend(child.Position(), args.Position.Z-float32(1+z))
+		childArgs.Position = vec3.Extend(child.Position(), args.Position.Z+float32(1+z))
 
 		// draw child
 		child.Draw(childArgs, quads)

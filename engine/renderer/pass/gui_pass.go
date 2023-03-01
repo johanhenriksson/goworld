@@ -4,6 +4,7 @@ import (
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/gui/quad"
 	"github.com/johanhenriksson/goworld/gui/widget"
+	"github.com/johanhenriksson/goworld/math"
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/cache"
@@ -36,6 +37,7 @@ type UIDescriptors2 struct {
 
 type UIConfig struct {
 	Resolution vec2.T
+	ZMax       float32
 }
 
 type GuiDrawable interface {
@@ -162,14 +164,11 @@ func (p *GuiPass) Record(cmds command.Recorder, args render.Args, scene object.T
 		},
 	}
 
-	mat.Descriptors().Config.Set(UIConfig{
-		Resolution: size,
-	})
-
 	qb := widget.NewQuadBuffer(100)
 
 	// query scene for gui managers
 	guis := object.Query[GuiDrawable]().Collect(scene)
+	zmax := float32(0)
 	for _, gui := range guis {
 		gui.DrawUI(uiArgs, qb)
 	}
@@ -177,12 +176,18 @@ func (p *GuiPass) Record(cmds command.Recorder, args render.Args, scene object.T
 	// todo: collect and depth sort
 	mat.Descriptors().Quads.SetRange(0, qb.Data)
 
-	for i := range qb.Data {
+	for i, quad := range qb.Data {
 		index := i
+		zmax = math.Max(zmax, quad.ZIndex)
 		cmds.Record(func(b command.Buffer) {
 			mesh.Draw(b, index)
 		})
 	}
+
+	mat.Descriptors().Config.Set(UIConfig{
+		Resolution: size,
+		ZMax:       zmax,
+	})
 
 	cmds.Record(func(cmd command.Buffer) {
 		cmd.CmdEndRenderPass()
