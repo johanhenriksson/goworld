@@ -167,6 +167,11 @@ func (l *label) Draw(args widget.DrawArgs, quads *widget.QuadBuffer) {
 		return
 	}
 
+	// skip empty strings
+	if l.text == "" {
+		return
+	}
+
 	if args.Viewport.Scale != l.scale {
 		// ui scale has changed
 		l.scale = args.Viewport.Scale
