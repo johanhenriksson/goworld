@@ -120,6 +120,10 @@ func FloatEditor(key string, props FloatEditorProps) node.T {
 							Basis:   style.Pct(100),
 							Shrink:  style.Shrink(1),
 							Grow:    style.Grow(1),
+							Border: style.Border{
+								Width: style.Px(1),
+								Color: color.Red,
+							},
 						},
 					},
 				}),

@@ -22,6 +22,7 @@ type Style struct {
 	Hidden   bool
 	Color    ColorProp
 	Position PositionProp
+	Border   BorderProp
 
 	// Sizing properties
 
@@ -120,6 +121,10 @@ func (style *Style) Apply(w T, state State) {
 	if style.Color != nil {
 		rgba := style.Color.Vec4()
 		w.SetColor(RGBA(rgba.X, rgba.Y, rgba.Z, rgba.W))
+	}
+
+	if style.Border != nil {
+		style.Border.ApplyBorder(w)
 	}
 
 	if state.Hovered {
