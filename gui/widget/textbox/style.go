@@ -24,3 +24,21 @@ var DefaultStyle = Style{
 		},
 	},
 }
+
+var InputErrorStyle = Style{
+	Text: label.Style{
+		Color: color.Black,
+	},
+	Bg: rect.Style{
+		Color:   color.White,
+		Padding: RectXY(4, 2),
+		Basis:   Pct(100),
+		Shrink:  Shrink(1),
+		Grow:    Grow(1),
+		Radius:  Px(5),
+		Border: Border{
+			Width: Px(1),
+			Color: color.Red,
+		},
+	},
+}
