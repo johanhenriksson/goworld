@@ -33,6 +33,7 @@ type Props struct {
 	Text     string
 	OnClick  mouse.Callback
 	OnChange ChangeCallback
+	OnBlur   func()
 
 	OnKeyUp   keys.Callback
 	OnKeyDown keys.Callback
@@ -232,6 +233,18 @@ func (l *label) measure(node *flex.Node, width float32, widthMode flex.MeasureMo
 //
 // Events
 //
+
+func (l *label) FocusEvent() {
+	l.state.Focused = true
+
+}
+
+func (l *label) BlurEvent() {
+	l.state.Focused = false
+	if l.props.OnBlur != nil {
+		l.props.OnBlur()
+	}
+}
 
 func (l *label) MouseEvent(e mouse.Event) {
 	target := e.Position().Sub(l.Position())

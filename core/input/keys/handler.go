@@ -10,7 +10,13 @@ type Handler interface {
 	KeyEvent(Event)
 }
 
-var focused Handler
+type FocusHandler interface {
+	Handler
+	FocusEvent()
+	BlurEvent()
+}
+
+var focused FocusHandler
 
 func KeyCallbackWrapper(handler Handler) glfw.KeyCallback {
 	return func(
@@ -50,6 +56,15 @@ func CharCallbackWrapper(handler Handler) glfw.CharCallback {
 	}
 }
 
-func Focus(handler Handler) {
+func Focus(handler FocusHandler) {
+	if focused == handler {
+		return
+	}
+	if focused != nil {
+		focused.BlurEvent()
+	}
 	focused = handler
+	if focused != nil {
+		focused.FocusEvent()
+	}
 }
