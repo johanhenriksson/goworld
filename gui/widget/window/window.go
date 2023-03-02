@@ -5,7 +5,6 @@ import (
 	"github.com/johanhenriksson/goworld/gui/hooks"
 	"github.com/johanhenriksson/goworld/gui/node"
 	"github.com/johanhenriksson/goworld/gui/style"
-	. "github.com/johanhenriksson/goworld/gui/style"
 	"github.com/johanhenriksson/goworld/gui/widget/button"
 	"github.com/johanhenriksson/goworld/gui/widget/label"
 	"github.com/johanhenriksson/goworld/gui/widget/rect"
@@ -21,11 +20,6 @@ type Props struct {
 	Floating bool
 }
 
-type Style struct {
-	MinWidth MinWidthProp
-	MaxWidth MaxWidthProp
-}
-
 func New(key string, props Props) node.T {
 	return node.Component(key, props, render)
 }
@@ -35,9 +29,9 @@ func render(props Props) node.T {
 	dragOffset, setDragOffset := hooks.UseState(vec2.Zero)
 	var cssPos style.PositionProp = style.Relative{}
 	if props.Floating {
-		cssPos = Absolute{
-			Left: Px(position.X),
-			Top:  Px(position.Y),
+		cssPos = style.Absolute{
+			Left: style.Px(position.X),
+			Top:  style.Px(position.Y),
 		}
 	}
 
@@ -86,48 +80,4 @@ func render(props Props) node.T {
 			}),
 		},
 	})
-}
-
-var TitleStyle = label.Style{
-	Grow: Grow(1),
-
-	Color: RGB(1, 1, 1),
-	Font: Font{
-		Name: "fonts/SourceCodeProRegular.ttf",
-		Size: 16,
-	},
-}
-
-var TitlebarStyle = rect.Style{
-	Color:      RGBA(0, 0, 0, 0.8),
-	Padding:    Px(4),
-	Layout:     Row{},
-	AlignItems: AlignCenter,
-	Pressed: rect.Pressed{
-		Color: RGBA(0.2, 0.2, 0.2, 0.8),
-	},
-}
-
-var FrameStyle = rect.Style{
-	Color:        RGBA(0.1, 0.1, 0.1, 0.8),
-	Padding:      RectXY(10, 10),
-	Layout:       Column{},
-	AlignItems:   AlignStart,
-	AlignContent: AlignStretch,
-}
-
-var CloseButtonStyle = button.Style{
-	Bg: rect.Style{
-		Color: RGB(0.597, 0.098, 0.117),
-		Padding: Rect{
-			Left:   5,
-			Right:  5,
-			Top:    2,
-			Bottom: 2,
-		},
-
-		Hover: rect.Hover{
-			Color: RGB(0.3, 0.3, 0.3),
-		},
-	},
 }

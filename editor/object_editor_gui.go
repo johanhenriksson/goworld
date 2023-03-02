@@ -14,7 +14,6 @@ import (
 	"github.com/johanhenriksson/goworld/gui/widget/rect"
 	"github.com/johanhenriksson/goworld/gui/widget/textbox"
 	"github.com/johanhenriksson/goworld/math/vec3"
-	"github.com/johanhenriksson/goworld/render/color"
 )
 
 func SidebarItem(key string, children []node.T) node.T {
@@ -110,23 +109,7 @@ func FloatEditor(key string, props FloatEditorProps) node.T {
 				textbox.New("value", textbox.Props{
 					Text:     value,
 					OnChange: onChange,
-					Style: textbox.Style{
-						Text: label.Style{
-							Color: color.Black,
-						},
-						Bg: rect.Style{
-							Color:   color.White,
-							Padding: style.RectXY(4, 2),
-							Basis:   style.Pct(100),
-							Shrink:  style.Shrink(1),
-							Grow:    style.Grow(1),
-							Radius:  style.Px(5),
-							Border: style.Border{
-								Width: style.Px(1),
-								Color: color.Black,
-							},
-						},
-					},
+					Style:    textbox.DefaultStyle,
 				}),
 			},
 		})
