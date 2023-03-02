@@ -42,7 +42,9 @@ func (m *meshes) Instantiate(mesh vertex.Mesh, callback func(Mesh)) {
 	idxStage := buffer.NewShared(m.device, idxSize)
 
 	vtxStage.Write(0, mesh.VertexData())
+	vtxStage.Flush()
 	idxStage.Write(0, mesh.IndexData())
+	idxStage.Flush()
 
 	// allocate buffers
 	cached.vertices = buffer.NewRemote(m.device, vtxSize, core1_0.BufferUsageVertexBuffer)

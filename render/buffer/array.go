@@ -12,10 +12,10 @@ import (
 type Array[K any] interface {
 	T
 
-	// Set the value of element i
+	// Set the value of element i and flushes the buffer.
 	Set(index int, data K)
 
-	// Sets a range of elements, starting at i
+	// Sets a range of elements, starting at i and flushes the buffer.
 	SetRange(index int, data []K)
 
 	// Count returns the number of items in the array
@@ -59,12 +59,14 @@ func NewArray[K any](device device.T, args Args) Array[K] {
 
 func (a *array[K]) Set(index int, data K) {
 	a.Write(index*a.element, &data)
+	a.Flush()
 }
 
 func (a *array[K]) SetRange(offset int, data []K) {
 	for i, el := range data {
-		a.Set(offset+i, el)
+		a.Write((i+offset)*a.element, &el)
 	}
+	a.Flush()
 }
 
 func (a *array[K]) Count() int   { return a.count }

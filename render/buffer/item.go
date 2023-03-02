@@ -11,7 +11,7 @@ import (
 type Item[K any] interface {
 	T
 
-	// Set the data in the buffer
+	// Set the data in the buffer and flushes.
 	Set(data K)
 }
 
@@ -43,4 +43,5 @@ func NewItem[K any](device device.T, args Args) Item[K] {
 func (i *item[K]) Set(data K) {
 	ptr := &data
 	i.Write(0, ptr)
+	i.Flush()
 }

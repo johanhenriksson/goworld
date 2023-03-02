@@ -45,6 +45,7 @@ func (t *textures) Instantiate(ref texture.Ref, callback func(texture.T)) {
 
 	// write to staging buffer
 	stage.Write(0, img.Pix)
+	stage.Flush()
 
 	// transfer data to texture buffer
 	t.worker.Queue(func(cmd command.Buffer) {

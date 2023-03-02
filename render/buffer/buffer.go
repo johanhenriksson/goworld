@@ -18,6 +18,8 @@ type T interface {
 	// Write directly to the buffer at the given offset
 	Write(offset int, data any) int
 
+	Flush()
+
 	// Memory returns a handle to the underlying memory block
 	Memory() device.Memory
 }
@@ -119,4 +121,8 @@ func (b *buffer) Write(offset int, data any) int {
 
 func (b *buffer) Read(offset int, data any) int {
 	return b.memory.Read(offset, data)
+}
+
+func (b *buffer) Flush() {
+	b.memory.Flush()
 }

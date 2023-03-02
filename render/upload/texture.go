@@ -33,6 +33,7 @@ func NewTextureSync(dev device.T, worker command.Worker, img *osimage.RGBA) (tex
 
 	// write to staging buffer
 	stage.Write(0, img.Pix)
+	stage.Flush()
 
 	// transfer data to texture buffer
 	worker.Queue(func(cmd command.Buffer) {
