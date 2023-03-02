@@ -17,6 +17,7 @@ var DefaultStyle = Style{
 		Basis:   Pct(100),
 		Shrink:  Shrink(1),
 		Grow:    Grow(1),
+		Radius:  Px(5),
 		Border: Border{
 			Width: Px(1),
 			Color: color.Black,

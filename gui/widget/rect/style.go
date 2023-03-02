@@ -23,6 +23,7 @@ type Style struct {
 	Color    ColorProp
 	Position PositionProp
 	Border   BorderProp
+	Radius   RadiusProp
 
 	// Sizing properties
 
@@ -125,6 +126,9 @@ func (style *Style) Apply(w T, state State) {
 
 	if style.Border != nil {
 		style.Border.ApplyBorder(w)
+	}
+	if style.Radius != nil {
+		style.Radius.ApplyRadius(w)
 	}
 
 	if state.Hovered {

@@ -13,8 +13,10 @@ import (
 
 type T interface {
 	widget.T
+
 	style.Colorizable
 	style.BorderWidget
+	style.RadiusWidget
 }
 
 type rect struct {
@@ -24,6 +26,7 @@ type rect struct {
 	children []widget.T
 	state    style.State
 
+	radius      float32
 	color       color.T
 	borderColor color.T
 }
@@ -51,9 +54,9 @@ func Create(w widget.T, props Props) T {
 	return rect
 }
 
-func (f *rect) SetColor(c color.T) { f.color = c }
-
+func (f *rect) SetColor(c color.T)       { f.color = c }
 func (f *rect) SetBorderColor(c color.T) { f.borderColor = c }
+func (f *rect) SetRadius(r float32)      { f.radius = r }
 
 func (f *rect) ZOffset() int {
 	return f.props.Style.ZOffset
@@ -223,7 +226,6 @@ func (f *rect) drawSelf(args widget.DrawArgs, quads *widget.QuadBuffer) {
 	shadow := color.Black
 	shadowSoftness := float32(0)
 	shadowOffset := vec2.New(2, 2)
-	radius := float32(0)
 
 	// drop shadow
 	if shadowSoftness > 0 {
@@ -232,7 +234,7 @@ func (f *rect) drawSelf(args widget.DrawArgs, quads *widget.QuadBuffer) {
 			Max:      max.Add(shadowOffset),
 			Color:    [4]color.T{shadow, shadow, shadow, shadow},
 			ZIndex:   args.Position.Z - 0.1,
-			Radius:   radius,
+			Radius:   f.radius,
 			Softness: shadowSoftness,
 			Texture:  uint32(tex.ID),
 		})
@@ -246,7 +248,7 @@ func (f *rect) drawSelf(args widget.DrawArgs, quads *widget.QuadBuffer) {
 		MaxUV:   vec2.One,
 		Color:   [4]color.T{f.color, f.color, f.color, f.color},
 		ZIndex:  args.Position.Z,
-		Radius:  radius,
+		Radius:  f.radius,
 		Texture: uint32(tex.ID),
 	})
 
@@ -258,7 +260,7 @@ func (f *rect) drawSelf(args widget.DrawArgs, quads *widget.QuadBuffer) {
 			Max:     max,
 			Color:   [4]color.T{f.borderColor, f.borderColor, f.borderColor, f.borderColor},
 			ZIndex:  args.Position.Z + 0.1,
-			Radius:  radius,
+			Radius:  f.radius,
 			Border:  borderWidth,
 			Texture: uint32(tex.ID),
 		})
