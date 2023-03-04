@@ -14,12 +14,9 @@ import (
 	"github.com/johanhenriksson/goworld/render/texture"
 
 	"github.com/kjk/flex"
-	"golang.org/x/exp/utf8string"
 )
 
 type ChangeCallback func(string)
-
-const CursorBlinkInterval = float32(0.5)
 
 type T interface {
 	widget.T
@@ -43,24 +40,21 @@ type Props struct {
 }
 
 type label struct {
-	key    string
-	flex   *flex.Node
-	props  Props
-	scale  float32
-	state  style.State
-	cursor int
-	tex    texture.Ref
+	key   string
+	flex  *flex.Node
+	props Props
+	scale float32
+	state style.State
+	text  *Text
+	tex   texture.Ref
 
 	version    int
-	text       *utf8string.String
 	size       int
 	fontName   string
 	font       font.T
 	color      color.T
 	lineHeight float32
 	texSize    vec2.T
-	blink      bool
-	blinkDt    float32
 }
 
 func New(key string, props Props) node.T {
@@ -70,14 +64,13 @@ func New(key string, props Props) node.T {
 func new(key string, props Props) T {
 	node := flex.NewNodeWithConfig(flex.NewConfig())
 	node.Context = key
-	text := utf8string.NewString(props.Text)
+	text := NewText(props.Text)
 
 	lbl := &label{
-		key:    key,
-		flex:   node,
-		scale:  1,
-		cursor: text.RuneCount(),
-		text:   text,
+		key:   key,
+		flex:  node,
+		scale: 1,
+		text:  text,
 
 		lineHeight: 1,
 		props: Props{
@@ -154,16 +147,8 @@ func (l *label) setText(text string) {
 		return
 	}
 
-	l.text = utf8string.NewString(text)
-	l.setCursor(math.Min(l.cursor, l.text.RuneCount()))
-
+	l.text.SetText(text)
 	l.invalidate()
-}
-
-func (l *label) setCursor(cursor int) {
-	l.cursor = cursor
-	l.blink = true
-	l.blinkDt = CursorBlinkInterval
 }
 
 //
@@ -193,18 +178,14 @@ func (l *label) SetLineHeight(lineHeight float32) {
 }
 
 func (l *label) Text() string { return l.props.Text }
-func (l *label) Cursor() int  { return l.cursor }
+func (l *label) Cursor() int  { return l.text.cursor }
 
 //
 // Draw
 //
 
 func (l *label) Draw(args widget.DrawArgs, quads *widget.QuadBuffer) {
-	l.blinkDt -= args.Delta
-	if l.blinkDt < 0 {
-		l.blink = !l.blink
-		l.blinkDt = CursorBlinkInterval
-	}
+	l.text.UpdateBlink(args.Delta)
 
 	if l.props.Style.Hidden {
 		return
@@ -251,8 +232,8 @@ func (l *label) Draw(args widget.DrawArgs, quads *widget.QuadBuffer) {
 	})
 
 	// cursor
-	if l.state.Focused && l.blink {
-		cursorPos := l.font.Measure(l.text.Slice(0, l.cursor), font.Args{LineHeight: l.lineHeight})
+	if l.state.Focused && l.text.Blink() {
+		cursorPos := l.font.Measure(l.text.Slice(0, l.text.cursor), font.Args{LineHeight: l.lineHeight})
 		min = min.Add(vec2.New(cursorPos.X, 0))
 		max = min.Add(vec2.New(1, l.lineHeight*l.font.Size()))
 		quads.Push(widget.Quad{
@@ -365,39 +346,36 @@ func (l *label) KeyEvent(e keys.Event) {
 		return
 	}
 	if e.Action() == keys.Char {
-		l.text = utf8string.NewString(l.text.Slice(0, l.cursor) + string(e.Character()) + l.text.Slice(l.cursor, l.text.RuneCount()))
-		l.setCursor(math.Min(l.cursor+1, l.text.RuneCount()))
+		l.text.Insert(e.Character())
 		l.invalidate()
 		l.props.OnChange(l.text.String())
 	}
 	if e.Action() == keys.Press || e.Action() == keys.Repeat {
 		switch e.Code() {
 		case keys.Backspace:
-			if l.cursor > 0 {
-				l.setCursor(l.cursor - 1)
-				l.text = utf8string.NewString(l.text.Slice(0, l.cursor) + l.text.Slice(l.cursor+1, l.text.RuneCount()))
+			if l.text.DeleteBackward() {
 				l.invalidate()
 				l.props.OnChange(l.text.String())
 			}
 
 		case keys.Delete:
-			if l.cursor < l.text.RuneCount() {
-				l.text = utf8string.NewString(l.text.Slice(0, l.cursor) + l.text.Slice(l.cursor+1, l.text.RuneCount()))
+			if l.text.DeleteForward() {
 				l.invalidate()
 				l.props.OnChange(l.text.String())
 			}
 
 		case keys.LeftArrow:
-			l.setCursor(math.Clamp(l.cursor-1, 0, len(l.text.String())))
+			l.text.CursorLeft()
 
 		case keys.RightArrow:
-			l.setCursor(math.Clamp(l.cursor+1, 0, len(l.text.String())))
+			l.text.CursorRight()
 
 		case keys.U:
 			// ctrl+u clears text
 			if e.Modifier(keys.Ctrl) {
-				l.setText("")
-				l.props.OnChange("")
+				if l.text.Clear() {
+					l.props.OnChange("")
+				}
 			}
 		}
 	}
