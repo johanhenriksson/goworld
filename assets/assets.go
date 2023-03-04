@@ -67,12 +67,12 @@ func GetFont(name string, size int, scale float32) font.T {
 
 	file, err := vfs.Open(name)
 	if err != nil {
-		panic(err)
+		panic(fmt.Errorf("error reading font %s: %w", name, err))
 	}
 
 	font, err := font.Load(file, int(float32(size)*scale))
 	if err != nil {
-		panic(err)
+		panic(fmt.Errorf("error loading font %s: %w", name, err))
 	}
 
 	cache.Fonts[key] = font
