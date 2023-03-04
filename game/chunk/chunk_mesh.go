@@ -38,6 +38,10 @@ func NewMesh(chunk *T) *Mesh {
 	return chk
 }
 
+func (cm *Mesh) Name() string {
+	return "Chunk"
+}
+
 func (cm *Mesh) Update(scene object.T, dt float32) {
 	cm.T.Update(scene, dt)
 	select {

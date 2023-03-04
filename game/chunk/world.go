@@ -49,8 +49,7 @@ func (c *World) Update(scene object.T, dt float32) {
 	select {
 	case chk := <-c.ready:
 		key := fmt.Sprintf("Chunk:%d,%d", chk.Cx, chk.Cz)
-		chonk := object.Builder(object.Empty(key)).
-			Attach(NewMesh(chk)).
+		chonk := object.Builder(NewMesh(chk)).
 			Position(vec3.NewI(chk.Cx*c.size, 0, chk.Cz*c.size)).
 			Parent(c).
 			Create()
