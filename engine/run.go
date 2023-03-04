@@ -68,7 +68,7 @@ func Run(args Args, scenefuncs ...SceneFunc) {
 		scene.Update(scene, counter.Delta())
 
 		// draw
-		renderer.Draw(scene)
+		renderer.Draw(scene, counter.Elapsed(), counter.Delta())
 
 		// timing := counter.Sample()
 		// log.Printf(

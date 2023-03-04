@@ -12,6 +12,8 @@ import (
 // Args holds the arguments used to perform a draw pass.
 // Includes the various transformation matrices and position of the camera.
 type Args struct {
+	Time       float32
+	Delta      float32
 	VP         mat4.T
 	VPInv      mat4.T
 	MVP        mat4.T

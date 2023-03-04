@@ -23,7 +23,7 @@ type PreDrawable interface {
 
 type PreNode interface {
 	Node
-	Prepare(object.T) (*render.Args, error)
+	Prepare(scene object.T, time, delta float32) (*render.Args, error)
 }
 
 type preNode struct {
@@ -36,7 +36,7 @@ func newPreNode(app vulkan.App) PreNode {
 	}
 }
 
-func (n *preNode) Prepare(scene object.T) (*render.Args, error) {
+func (n *preNode) Prepare(scene object.T, time, delta float32) (*render.Args, error) {
 	screen := render.Screen{
 		Width:  n.app.Width(),
 		Height: n.app.Height(),
@@ -61,6 +61,8 @@ func (n *preNode) Prepare(scene object.T) (*render.Args, error) {
 
 	// create render arguments
 	args := render.Args{
+		Time:       time,
+		Delta:      delta,
 		Context:    context,
 		Viewport:   screen,
 		Near:       camera.Near(),

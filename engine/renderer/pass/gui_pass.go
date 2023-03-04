@@ -154,6 +154,8 @@ func (p *GuiPass) Record(cmds command.Recorder, args render.Args, scene object.T
 	textures := cache.NewSamplerCache(p.app.Textures(), mat.Descriptors().Textures)
 
 	uiArgs := widget.DrawArgs{
+		Time:     args.Time,
+		Delta:    args.Delta,
 		Commands: cmds,
 		Meshes:   p.app.Meshes(),
 		Textures: textures,

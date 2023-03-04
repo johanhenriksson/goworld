@@ -12,6 +12,8 @@ type Renderer[W T] interface {
 }
 
 type DrawArgs struct {
+	Time     float32
+	Delta    float32
 	Commands command.Recorder
 	Meshes   cache.MeshCache
 	Textures cache.SamplerCache
