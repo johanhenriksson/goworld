@@ -19,6 +19,8 @@ import (
 
 type ChangeCallback func(string)
 
+const CursorBlinkInterval = float32(0.5)
+
 type T interface {
 	widget.T
 	style.FontWidget
@@ -57,6 +59,8 @@ type label struct {
 	color      color.T
 	lineHeight float32
 	texSize    vec2.T
+	blink      bool
+	blinkDt    float32
 }
 
 func New(key string, props Props) node.T {
@@ -151,9 +155,15 @@ func (l *label) setText(text string) {
 	}
 
 	l.text = utf8string.NewString(text)
-	l.cursor = math.Min(l.cursor, l.text.RuneCount())
+	l.setCursor(math.Min(l.cursor, l.text.RuneCount()))
 
 	l.invalidate()
+}
+
+func (l *label) setCursor(cursor int) {
+	l.cursor = cursor
+	l.blink = true
+	l.blinkDt = CursorBlinkInterval
 }
 
 //
@@ -190,6 +200,12 @@ func (l *label) Cursor() int  { return l.cursor }
 //
 
 func (l *label) Draw(args widget.DrawArgs, quads *widget.QuadBuffer) {
+	l.blinkDt -= args.Delta
+	if l.blinkDt < 0 {
+		l.blink = !l.blink
+		l.blinkDt = CursorBlinkInterval
+	}
+
 	if l.props.Style.Hidden {
 		return
 	}
@@ -235,7 +251,7 @@ func (l *label) Draw(args widget.DrawArgs, quads *widget.QuadBuffer) {
 	})
 
 	// cursor
-	if l.state.Focused {
+	if l.state.Focused && l.blink {
 		cursorPos := l.font.Measure(l.text.Slice(0, l.cursor), font.Args{LineHeight: l.lineHeight})
 		min = min.Add(vec2.New(cursorPos.X, 0))
 		max = min.Add(vec2.New(1, l.lineHeight*l.font.Size()))
@@ -350,7 +366,7 @@ func (l *label) KeyEvent(e keys.Event) {
 	}
 	if e.Action() == keys.Char {
 		l.text = utf8string.NewString(l.text.Slice(0, l.cursor) + string(e.Character()) + l.text.Slice(l.cursor, l.text.RuneCount()))
-		l.cursor = math.Min(l.cursor+1, l.text.RuneCount())
+		l.setCursor(math.Min(l.cursor+1, l.text.RuneCount()))
 		l.invalidate()
 		l.props.OnChange(l.text.String())
 	}
@@ -358,7 +374,7 @@ func (l *label) KeyEvent(e keys.Event) {
 		switch e.Code() {
 		case keys.Backspace:
 			if l.cursor > 0 {
-				l.cursor--
+				l.setCursor(l.cursor - 1)
 				l.text = utf8string.NewString(l.text.Slice(0, l.cursor) + l.text.Slice(l.cursor+1, l.text.RuneCount()))
 				l.invalidate()
 				l.props.OnChange(l.text.String())
@@ -372,10 +388,10 @@ func (l *label) KeyEvent(e keys.Event) {
 			}
 
 		case keys.LeftArrow:
-			l.cursor = math.Clamp(l.cursor-1, 0, len(l.text.String()))
+			l.setCursor(math.Clamp(l.cursor-1, 0, len(l.text.String())))
 
 		case keys.RightArrow:
-			l.cursor = math.Clamp(l.cursor+1, 0, len(l.text.String()))
+			l.setCursor(math.Clamp(l.cursor+1, 0, len(l.text.String())))
 
 		case keys.U:
 			// ctrl+u clears text
