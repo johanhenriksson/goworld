@@ -41,8 +41,8 @@ type Props struct {
 }
 
 type label struct {
-	widget.T
-
+	key    string
+	flex   *flex.Node
 	props  Props
 	scale  float32
 	state  style.State
@@ -63,9 +63,12 @@ func New(key string, props Props) node.T {
 	return node.Builtin(key, props, nil, new)
 }
 
-func new(w widget.T, props Props) T {
+func new(key string, props Props) T {
+	node := flex.NewNodeWithConfig(flex.NewConfig())
+	node.Context = key
 	lbl := &label{
-		T:      w,
+		key:    key,
+		flex:   node,
 		scale:  1,
 		cursor: utf8string.NewString(props.Text).RuneCount(),
 		text:   props.Text,
@@ -75,11 +78,26 @@ func new(w widget.T, props Props) T {
 			Text: "\x00",
 		},
 	}
+	lbl.flex.SetMeasureFunc(lbl.measure)
 	lbl.Update(props)
 	return lbl
 }
 
-func (l *label) editable() bool { return l.props.OnChange != nil }
+//
+// Widget implementation
+//
+
+func (l *label) Key() string          { return l.key }
+func (l *label) Flex() *flex.Node     { return l.flex }
+func (l *label) Position() vec2.T     { return vec2.New(l.flex.LayoutGetLeft(), l.flex.LayoutGetTop()) }
+func (l *label) Size() vec2.T         { return vec2.New(l.flex.LayoutGetWidth(), l.flex.LayoutGetHeight()) }
+func (l *label) Children() []widget.T { return nil }
+
+func (l *label) SetChildren(children []widget.T) {
+	if len(children) > 0 {
+		panic("labels may not have children")
+	}
+}
 
 func (l *label) Props() any { return l.props }
 func (l *label) Update(props any) {
@@ -100,7 +118,15 @@ func (l *label) Update(props any) {
 func (l *label) invalidate() {
 	l.Flex().MarkDirty()
 	if l.font == nil {
-		l.font = assets.GetFont(l.fontName, l.size, l.scale)
+		fontName := l.fontName
+		if fontName == "" {
+			fontName = DefaultFont.Name
+		}
+		size := l.size
+		if size == 0 {
+			size = DefaultFont.Size
+		}
+		l.font = assets.GetFont(fontName, size, l.scale)
 	}
 
 	fargs := font.Args{
@@ -114,6 +140,8 @@ func (l *label) invalidate() {
 	l.tex = font.Ref(l.Key(), l.version, l.font, l.text, fargs)
 	l.texSize = l.font.Measure(l.text, fargs)
 }
+
+func (l *label) editable() bool { return l.props.OnChange != nil }
 
 func (l *label) setText(text string) {
 	if text == l.text {
@@ -136,7 +164,9 @@ func (l *label) setText(text string) {
 	l.invalidate()
 }
 
-// prop accessors
+//
+// Styles
+//
 
 func (l *label) SetFont(font style.Font) {
 	if font.Name == l.fontName && font.Size == l.size {
@@ -162,6 +192,10 @@ func (l *label) SetLineHeight(lineHeight float32) {
 
 func (l *label) Text() string { return l.props.Text }
 func (l *label) Cursor() int  { return l.cursor }
+
+//
+// Draw
+//
 
 func (l *label) Draw(args widget.DrawArgs, quads *widget.QuadBuffer) {
 	if l.props.Style.Hidden {
@@ -190,9 +224,12 @@ func (l *label) Draw(args widget.DrawArgs, quads *widget.QuadBuffer) {
 		return
 	}
 
+	zindex := args.Position.Z
+	min := args.Position.XY().Add(l.Position())
+	max := min.Add(l.texSize)
 	quads.Push(widget.Quad{
-		Min:   args.Position.XY(),
-		Max:   args.Position.XY().Add(l.texSize),
+		Min:   min,
+		Max:   max,
 		MinUV: vec2.Zero,
 		MaxUV: vec2.One,
 		Color: [4]color.T{
@@ -201,17 +238,11 @@ func (l *label) Draw(args widget.DrawArgs, quads *widget.QuadBuffer) {
 			l.color,
 			l.color,
 		},
-		ZIndex:  args.Position.Z,
+		ZIndex:  zindex,
 		Texture: uint32(tex.ID),
 	})
 
 	// todo: cursor
-}
-
-func (l *label) Flex() *flex.Node {
-	node := l.T.Flex()
-	node.SetMeasureFunc(l.measure)
-	return node
 }
 
 func (l *label) measure(node *flex.Node, width float32, widthMode flex.MeasureMode, height float32, heightMode flex.MeasureMode) flex.Size {
@@ -247,7 +278,8 @@ func (l *label) BlurEvent() {
 }
 
 func (l *label) MouseEvent(e mouse.Event) {
-	target := e.Position().Sub(l.Position())
+	absolutePos := widget.AbsolutePosition(l.flex)
+	target := e.Position().Sub(absolutePos)
 	size := l.Size()
 	mouseover := target.X >= 0 && target.X < size.X && target.Y >= 0 && target.Y < size.Y
 

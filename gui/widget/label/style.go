@@ -7,7 +7,7 @@ import (
 )
 
 var DefaultFont = Font{
-	Name: "fonts/SourceCodeProRegular.ttf",
+	Name: "fonts/SourceSansPro-Regular.ttf",
 	Size: 14,
 }
 var DefaultColor = color.White

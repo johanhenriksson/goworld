@@ -31,13 +31,13 @@ type node[K widget.T, P any] struct {
 	props    P
 	kind     reflect.Type
 	render   func(P) T
-	hydrate  func(widget.T, P) K
+	hydrate  func(string, P) K
 	widget   widget.T
 	children []T
 	hooks    hooks.State
 }
 
-func Builtin[K widget.T, P any](key string, props P, children []T, hydrate func(widget.T, P) K) T {
+func Builtin[K widget.T, P any](key string, props P, children []T, hydrate func(string, P) K) T {
 	return &node[K, P]{
 		key:      key,
 		props:    props,
@@ -109,7 +109,6 @@ func (n *node[K, P]) Destroy() {
 	if !n.hydrated() {
 		return
 	}
-	n.widget.Destroy()
 	n.widget = nil
 }
 
@@ -151,7 +150,7 @@ func (n *node[K, P]) Hydrate(parentKey string) widget.T {
 		// this node is a built-in element, hydrate it if it does not exist
 		key := joinKeys(n.key, parentKey)
 		if n.widget == nil {
-			n.widget = n.hydrate(widget.New(key), n.props)
+			n.widget = n.hydrate(key, n.props)
 		}
 
 		// rehydrate children if required

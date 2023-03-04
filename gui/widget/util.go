@@ -2,7 +2,17 @@ package widget
 
 import (
 	"github.com/johanhenriksson/goworld/core/input/mouse"
+	"github.com/johanhenriksson/goworld/math/vec2"
+	"github.com/kjk/flex"
 )
+
+func AbsolutePosition(node *flex.Node) vec2.T {
+	pos := vec2.New(node.LayoutGetLeft(), node.LayoutGetTop())
+	if node.Parent != nil {
+		pos = pos.Add(AbsolutePosition(node.Parent))
+	}
+	return pos
+}
 
 func Find(widget T, key string) T {
 	if widget.Key() == key {

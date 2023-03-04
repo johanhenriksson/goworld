@@ -24,7 +24,8 @@ type Props struct {
 }
 
 type image struct {
-	widget.T
+	key    string
+	flex   *flex.Node
 	props  Props
 	handle *cache.SamplerHandle
 }
@@ -33,13 +34,32 @@ func New(key string, props Props) node.T {
 	return node.Builtin(key, props, nil, new)
 }
 
-func new(w widget.T, props Props) T {
+func new(key string, props Props) T {
+	node := flex.NewNodeWithConfig(flex.NewConfig())
+	node.Context = key
 	img := &image{
-		T: w,
+		key:  key,
+		flex: node,
 	}
-	w.Flex().SetMeasureFunc(img.measure)
+	img.flex.SetMeasureFunc(img.measure)
 	img.Update(props)
 	return img
+}
+
+//
+// Widget implementation
+//
+
+func (i *image) Key() string          { return i.key }
+func (i *image) Flex() *flex.Node     { return i.flex }
+func (i *image) Children() []widget.T { return nil }
+func (i *image) Position() vec2.T     { return vec2.New(i.flex.LayoutGetLeft(), i.flex.LayoutGetTop()) }
+func (i *image) Size() vec2.T         { return vec2.New(i.flex.LayoutGetWidth(), i.flex.LayoutGetHeight()) }
+
+func (i *image) SetChildren(children []widget.T) {
+	if len(children) > 0 {
+		panic("images may not have children")
+	}
 }
 
 func (i *image) Props() any { return i.props }
@@ -52,36 +72,6 @@ func (i *image) Update(props any) {
 	if styleChanged {
 		new.Style.Apply(i, style.State{})
 		i.Flex().MarkDirty()
-	}
-}
-
-// prop accessors
-
-func (i *image) Image() texture.Ref { return i.props.Image }
-
-func (i *image) Draw(args widget.DrawArgs, quads *widget.QuadBuffer) {
-	tex := args.Textures.Fetch(i.props.Image)
-	if tex != nil {
-		if tex != i.handle {
-			// image handle changed, redo layout
-			i.Flex().MarkDirty()
-			i.handle = tex
-		}
-
-		quads.Push(widget.Quad{
-			Min:   args.Position.XY(),
-			Max:   args.Position.XY().Add(i.Size()),
-			MinUV: vec2.Zero,
-			MaxUV: vec2.One,
-			Color: [4]color.T{ // todo: add tint prop
-				color.White,
-				color.White,
-				color.White,
-				color.White,
-			},
-			ZIndex:  args.Position.Z,
-			Texture: uint32(tex.ID),
-		})
 	}
 }
 
@@ -98,6 +88,48 @@ func (i *image) measure(node *flex.Node, width float32, widthMode flex.MeasureMo
 		Width:  width,
 		Height: width / aspect,
 	}
+}
+
+//
+// Styles
+//
+
+func (i *image) Image() texture.Ref { return i.props.Image }
+
+//
+// Draw
+//
+
+func (i *image) Draw(args widget.DrawArgs, quads *widget.QuadBuffer) {
+	tex := args.Textures.Fetch(i.props.Image)
+	if tex == nil {
+		return
+	}
+
+	if tex != i.handle {
+		// image handle changed, redo layout
+		i.handle = tex
+		i.Flex().MarkDirty()
+	}
+
+	zindex := args.Position.Z
+	min := args.Position.XY().Add(i.Position())
+	max := min.Add(i.Size())
+
+	quads.Push(widget.Quad{
+		Min:   min,
+		Max:   max,
+		MinUV: vec2.Zero,
+		MaxUV: vec2.One,
+		Color: [4]color.T{ // todo: add tint prop
+			color.White,
+			color.White,
+			color.White,
+			color.White,
+		},
+		ZIndex:  zindex,
+		Texture: uint32(tex.ID),
+	})
 }
 
 //

@@ -15,6 +15,6 @@ type DrawArgs struct {
 	Commands command.Recorder
 	Meshes   cache.MeshCache
 	Textures cache.SamplerCache
-	Position vec3.T
 	Viewport render.Screen
+	Position vec3.T
 }

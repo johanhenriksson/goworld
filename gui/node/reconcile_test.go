@@ -20,9 +20,9 @@ func (w *testWidget) Update(p any) { w.props = p.(*props) }
 func (w *testWidget) Props() any   { return w.props }
 
 func TestReconcile(t *testing.T) {
-	element := &testWidget{T: widget.New("a")}
+	element := &testWidget{}
 	hydrateCalls := 0
-	hydrate := func(w widget.T, p *props) widget.T {
+	hydrate := func(key string, p *props) widget.T {
 		hydrateCalls++
 		return element
 	}
@@ -53,7 +53,7 @@ func TestReconcile(t *testing.T) {
 }
 
 func TestReconcileChildren(t *testing.T) {
-	hydrate := func(w widget.T, p *props) widget.T { return nil }
+	hydrate := func(key string, p *props) widget.T { return nil }
 
 	a := node.Builtin("a", &props{}, []node.T{
 		node.Builtin("b", &props{"child"}, nil, hydrate),

@@ -11,19 +11,19 @@ import (
 )
 
 func TestRowFixedChildren(t *testing.T) {
-	a := rect.Create(widget.New("a"), rect.Props{
+	a := rect.Create("a", rect.Props{
 		Style: rect.Style{
 			Width:  Px(20),
 			Height: Px(20),
 		},
 	})
-	b := rect.Create(widget.New("b"), rect.Props{
+	b := rect.Create("b", rect.Props{
 		Style: rect.Style{
 			Width:  Px(20),
 			Height: Px(20),
 		},
 	})
-	parent := rect.Create(widget.New("parent"), rect.Props{
+	parent := rect.Create("parent", rect.Props{
 		Style: rect.Style{
 			Layout: Row{},
 		},
