@@ -50,7 +50,7 @@ type label struct {
 	tex    texture.Ref
 
 	version    int
-	text       string
+	text       *utf8string.String
 	size       int
 	fontName   string
 	font       font.T
@@ -66,12 +66,14 @@ func New(key string, props Props) node.T {
 func new(key string, props Props) T {
 	node := flex.NewNodeWithConfig(flex.NewConfig())
 	node.Context = key
+	text := utf8string.NewString(props.Text)
+
 	lbl := &label{
 		key:    key,
 		flex:   node,
 		scale:  1,
-		cursor: utf8string.NewString(props.Text).RuneCount(),
-		text:   props.Text,
+		cursor: text.RuneCount(),
+		text:   text,
 
 		lineHeight: 1,
 		props: Props{
@@ -137,29 +139,19 @@ func (l *label) invalidate() {
 
 	// todo: immediate updates causes a noticable flash while the text is rendered
 	//       keep a reference until the new texture is ready?
-	l.tex = font.Ref(l.Key(), l.version, l.font, l.text, fargs)
-	l.texSize = l.font.Measure(l.text, fargs)
+	l.tex = font.Ref(l.Key(), l.version, l.font, l.text.String(), fargs)
+	l.texSize = l.font.Measure(l.text.String(), fargs)
 }
 
 func (l *label) editable() bool { return l.props.OnChange != nil }
 
 func (l *label) setText(text string) {
-	if text == l.text {
+	if text == l.text.String() {
 		return
 	}
 
-	str := utf8string.NewString(text)
-
-	l.cursor = math.Min(l.cursor, str.RuneCount())
-	l.text = text
-
-	// shit attempt at a cursor.
-	// todo: make a real cursor. a blinking one
-	// if l.editable() {
-	// we also need to know if it has focus
-	// text = str.Slice(0, l.cursor) + "_" + str.Slice(l.cursor, str.RuneCount())
-	// text = l.props.Text[:l.cursor] + "_" + l.props.Text[l.cursor:]
-	// }
+	l.text = utf8string.NewString(text)
+	l.cursor = math.Min(l.cursor, l.text.RuneCount())
 
 	l.invalidate()
 }
@@ -203,7 +195,7 @@ func (l *label) Draw(args widget.DrawArgs, quads *widget.QuadBuffer) {
 	}
 
 	// skip empty strings
-	if l.text == "" {
+	if l.text.String() == "" {
 		return
 	}
 
@@ -242,7 +234,19 @@ func (l *label) Draw(args widget.DrawArgs, quads *widget.QuadBuffer) {
 		Texture: uint32(tex.ID),
 	})
 
-	// todo: cursor
+	// cursor
+	if l.state.Focused {
+		cursorPos := l.font.Measure(l.text.Slice(0, l.cursor), font.Args{LineHeight: l.lineHeight})
+		min = min.Add(vec2.New(cursorPos.X, 0))
+		max = min.Add(vec2.New(1, l.lineHeight*l.font.Size()))
+		quads.Push(widget.Quad{
+			Min:     min,
+			Max:     max,
+			Color:   [4]color.T{color.Black, color.Black, color.Black, color.Black},
+			ZIndex:  20,
+			Texture: 0,
+		})
+	}
 }
 
 func (l *label) measure(node *flex.Node, width float32, widthMode flex.MeasureMode, height float32, heightMode flex.MeasureMode) flex.Size {
@@ -345,38 +349,33 @@ func (l *label) KeyEvent(e keys.Event) {
 		return
 	}
 	if e.Action() == keys.Char {
-		str := utf8string.NewString(l.text)
-		l.text = str.Slice(0, l.cursor) + string(e.Character()) + str.Slice(l.cursor, str.RuneCount())
-		l.cursor = math.Min(l.cursor+1, utf8string.NewString(l.text).RuneCount())
+		l.text = utf8string.NewString(l.text.Slice(0, l.cursor) + string(e.Character()) + l.text.Slice(l.cursor, l.text.RuneCount()))
+		l.cursor = math.Min(l.cursor+1, l.text.RuneCount())
 		l.invalidate()
-		l.props.OnChange(l.text)
+		l.props.OnChange(l.text.String())
 	}
 	if e.Action() == keys.Press || e.Action() == keys.Repeat {
 		switch e.Code() {
 		case keys.Backspace:
-			str := utf8string.NewString(l.text)
 			if l.cursor > 0 {
 				l.cursor--
-				l.text = str.Slice(0, l.cursor) + str.Slice(l.cursor+1, str.RuneCount())
+				l.text = utf8string.NewString(l.text.Slice(0, l.cursor) + l.text.Slice(l.cursor+1, l.text.RuneCount()))
 				l.invalidate()
-				l.props.OnChange(l.text)
+				l.props.OnChange(l.text.String())
 			}
 
 		case keys.Delete:
-			str := utf8string.NewString(l.text)
-			if l.cursor < str.RuneCount() {
-				l.text = str.Slice(0, l.cursor) + str.Slice(l.cursor+1, str.RuneCount())
+			if l.cursor < l.text.RuneCount() {
+				l.text = utf8string.NewString(l.text.Slice(0, l.cursor) + l.text.Slice(l.cursor+1, l.text.RuneCount()))
 				l.invalidate()
-				l.props.OnChange(l.text)
+				l.props.OnChange(l.text.String())
 			}
 
 		case keys.LeftArrow:
-			l.cursor = math.Clamp(l.cursor-1, 0, len(l.text))
-			l.setText(l.text)
+			l.cursor = math.Clamp(l.cursor-1, 0, len(l.text.String()))
 
 		case keys.RightArrow:
-			l.cursor = math.Clamp(l.cursor+1, 0, len(l.text))
-			l.setText(l.text)
+			l.cursor = math.Clamp(l.cursor+1, 0, len(l.text.String()))
 
 		case keys.U:
 			// ctrl+u clears text
