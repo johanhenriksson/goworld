@@ -8,7 +8,6 @@ import (
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/cache"
-	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/descriptor"
 	"github.com/johanhenriksson/goworld/render/framebuffer"
@@ -16,7 +15,6 @@ import (
 	"github.com/johanhenriksson/goworld/render/renderpass"
 	"github.com/johanhenriksson/goworld/render/renderpass/attachment"
 	"github.com/johanhenriksson/goworld/render/shader"
-	"github.com/johanhenriksson/goworld/render/texture"
 	"github.com/johanhenriksson/goworld/render/vertex"
 	"github.com/johanhenriksson/goworld/render/vulkan"
 
@@ -136,16 +134,6 @@ func (p *GuiPass) Record(cmds command.Recorder, args render.Args, scene object.T
 		return
 	}
 
-	// set everything to white
-	white, textureReady := p.app.Textures().Fetch(color.White)
-	if textureReady {
-		clear := make([]texture.T, mat.Descriptors().Textures.Count)
-		for i := range clear {
-			clear[i] = white
-		}
-		mat.Descriptors().Textures.SetRange(clear, 0)
-	}
-
 	textures := cache.NewSamplerCache(p.app.Textures(), mat.Descriptors().Textures)
 
 	uiArgs := widget.DrawArgs{
@@ -161,18 +149,24 @@ func (p *GuiPass) Record(cmds command.Recorder, args render.Args, scene object.T
 		},
 	}
 
-	qb := widget.NewQuadBuffer(100)
+	qb := widget.NewQuadBuffer(1000)
 
 	// query scene for gui managers
 	guis := object.Query[GuiDrawable]().Collect(scene)
-	zmax := float32(0)
 	for _, gui := range guis {
 		gui.DrawUI(uiArgs, qb)
 	}
 
+	// update sampler cache
+	textures.UpdateDescriptors()
+
 	// todo: collect and depth sort
+
+	// write quad instance data
 	mat.Descriptors().Quads.SetRange(0, qb.Data)
 
+	// find maximum z
+	zmax := float32(0)
 	for _, quad := range qb.Data {
 		zmax = math.Max(zmax, quad.ZIndex)
 	}
