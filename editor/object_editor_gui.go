@@ -1,7 +1,6 @@
 package editor
 
 import (
-	"log"
 	"strconv"
 	"strings"
 
@@ -49,13 +48,9 @@ func objectEditorGui(target object.T) gui.Fragment {
 						Vec3Editor("position", Vec3EditorProps{
 							Value: target.Transform().Position(),
 							OnChange: func(pos vec3.T) {
-								log.Println("update position", pos)
 								target.Transform().SetPosition(pos)
 							},
 						}),
-					}),
-					SidebarItem("test", []node.T{
-						FloatEditor("test", FloatEditorProps{Label: "F", Value: 13.37}),
 					}),
 				},
 			})
@@ -86,6 +81,11 @@ func FloatEditor(key string, props FloatEditorProps) node.T {
 			setText(newText)
 		}
 
+		revert := func() {
+			setText(fmtFloat(value))
+			setValid(true)
+		}
+
 		updateValue := func() {
 			text = strings.ReplaceAll(text, ",", ".")
 			if f, err := strconv.ParseFloat(text, 32); err == nil {
@@ -94,9 +94,7 @@ func FloatEditor(key string, props FloatEditorProps) node.T {
 					props.OnChange(float32(f))
 				}
 			} else {
-				// otherwise revert to the previous value
-				setText(fmtFloat(value))
-				setValid(true)
+				revert()
 			}
 		}
 
@@ -139,12 +137,12 @@ func FloatEditor(key string, props FloatEditorProps) node.T {
 					OnKeyDown: func(e keys.Event) {
 						if e.Code() == keys.Enter {
 							updateValue()
-							// e.Consume()
+							e.Consume()
 						}
 						if e.Code() == keys.Escape {
-							// revert
-							setText(fmtFloat(value))
-							// e.Consume()
+							// revere
+							revert()
+							e.Consume()
 						}
 					},
 				}),
