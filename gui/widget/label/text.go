@@ -59,54 +59,33 @@ func (t *Text) ResetBlink() {
 	t.blinkDt = CursorBlinkInterval
 }
 
-func (t *Text) Insert(char rune) {
-	start := math.Min(t.cursor, t.selstart)
-	end := math.Max(t.cursor, t.selstart)
-
-	t.text = utf8string.NewString(t.text.Slice(0, start) + string(char) + t.text.Slice(end, t.text.RuneCount()))
-	t.SetCursor(start + 1)
+func (t *Text) Insert(text string) {
+	start, end := t.SelectedRange()
+	t.text = utf8string.NewString(t.text.Slice(0, start) + text + t.text.Slice(end, t.text.RuneCount()))
+	t.SetCursor(start + len(text))
 	t.Deselect()
 }
 
 func (t *Text) DeleteBackward() bool {
-	if t.HasSelection() {
-		// delete selection
-		start := math.Min(t.cursor, t.selstart)
-		end := math.Max(t.cursor, t.selstart)
-		t.text = utf8string.NewString(t.text.Slice(0, start) + t.text.Slice(end, t.text.RuneCount()))
-		t.SetCursor(start)
-		t.Deselect()
-		return true
-	} else {
-		// no selection - normal backspace behavior
-		if t.cursor > 0 {
-			t.SetCursor(t.cursor - 1)
-			t.text = utf8string.NewString(t.text.Slice(0, t.cursor) + t.text.Slice(t.cursor+1, t.text.RuneCount()))
-			t.Deselect()
-			return true
-		}
+	if !t.HasSelection() {
+		t.SelectLeft()
 	}
-	return false
+	return t.DeleteSelection()
 }
 
 func (t *Text) DeleteForward() bool {
-	if t.HasSelection() {
-		// delete selection
-		start := math.Min(t.cursor, t.selstart)
-		end := math.Max(t.cursor, t.selstart)
-		t.text = utf8string.NewString(t.text.Slice(0, start) + t.text.Slice(end, t.text.RuneCount()))
-		t.SetCursor(start)
-		t.Deselect()
-		return true
-	} else {
-		// no selection - normal forward delete behavior
-		if t.cursor < t.text.RuneCount() {
-			t.text = utf8string.NewString(t.text.Slice(0, t.cursor) + t.text.Slice(t.cursor+1, t.text.RuneCount()))
-			t.Deselect()
-			return true
-		}
+	if !t.HasSelection() {
+		t.SelectRight()
 	}
-	return false
+	return t.DeleteSelection()
+}
+
+func (t *Text) DeleteSelection() bool {
+	if !t.HasSelection() {
+		return false
+	}
+	t.Insert("")
+	return true
 }
 
 func (t *Text) CursorLeft() {
@@ -147,6 +126,17 @@ func (t *Text) Clear() bool {
 
 func (t *Text) HasSelection() bool {
 	return t.cursor != t.selstart
+}
+
+func (t *Text) Selection() string {
+	start, end := t.SelectedRange()
+	return t.Slice(start, end)
+}
+
+func (t *Text) SelectedRange() (start, end int) {
+	start = math.Min(t.cursor, t.selstart)
+	end = math.Max(t.cursor, t.selstart)
+	return
 }
 
 func (t *Text) Deselect() {

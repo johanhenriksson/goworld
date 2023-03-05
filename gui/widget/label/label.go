@@ -236,17 +236,17 @@ func (l *label) Draw(args widget.DrawArgs, quads *widget.QuadBuffer) {
 	// selection
 	if l.text.HasSelection() {
 		args := font.Args{LineHeight: l.lineHeight}
-		cursorPos := l.font.Measure(l.text.Slice(0, l.text.cursor), args)
-		selPos := l.font.Measure(l.text.Slice(0, l.text.selstart), args)
-		start := math.Min(cursorPos.X, selPos.X)
-		length := math.Max(math.Max(cursorPos.X, selPos.X)-start, 1)
-		min = min.Add(vec2.New(start, 0))
+		startIdx, _ := l.text.SelectedRange()
+		start := l.font.Measure(l.text.Slice(0, startIdx), args)
+		selectSize := l.font.Measure(l.text.Selection(), args)
+		length := math.Max(selectSize.X, 1)
+		min = min.Add(vec2.New(start.X, 0))
 		max = min.Add(vec2.New(length, l.lineHeight*l.font.Size()))
 		quads.Push(widget.Quad{
 			Min:     min,
 			Max:     max,
 			Color:   [4]color.T{l.highlight, l.highlight, l.highlight, l.highlight},
-			ZIndex:  20,
+			ZIndex:  zindex + 0.1,
 			Texture: 0,
 		})
 	}
@@ -254,14 +254,15 @@ func (l *label) Draw(args widget.DrawArgs, quads *widget.QuadBuffer) {
 	// cursor
 	if l.state.Focused && !l.text.HasSelection() && l.text.Blink() {
 		args := font.Args{LineHeight: l.lineHeight}
-		cursorPos := l.font.Measure(l.text.Slice(0, l.text.cursor), args)
+		cursorIdx, _ := l.text.SelectedRange()
+		cursorPos := l.font.Measure(l.text.Slice(0, cursorIdx), args)
 		min = min.Add(vec2.New(cursorPos.X, 0))
 		max = min.Add(vec2.New(1, l.lineHeight*l.font.Size()))
 		quads.Push(widget.Quad{
 			Min:     min,
 			Max:     max,
 			Color:   [4]color.T{color.Black, color.Black, color.Black, color.Black},
-			ZIndex:  20,
+			ZIndex:  zindex + 0.1,
 			Texture: 0,
 		})
 	}
@@ -368,7 +369,7 @@ func (l *label) KeyEvent(e keys.Event) {
 		return
 	}
 	if e.Action() == keys.Char {
-		l.text.Insert(e.Character())
+		l.text.Insert(string(e.Character()))
 		l.invalidate()
 		l.props.OnChange(l.text.String())
 	}
