@@ -128,10 +128,6 @@ func (b *framebuf) Destroy() {
 		view.Destroy()
 	}
 	b.views = nil
-	for _, image := range b.images {
-		image.Destroy()
-	}
-	b.images = nil
 	b.attachments = nil
 
 	b.ptr.Destroy(nil)
