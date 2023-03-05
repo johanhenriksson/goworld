@@ -136,6 +136,9 @@ func (i *image) Draw(args widget.DrawArgs, quads *widget.QuadBuffer) {
 // Events
 //
 
+func (i *image) Destroy() {
+}
+
 func (l *image) MouseEvent(e mouse.Event) {
 	if e.Action() == mouse.Press && l.props.OnClick != nil {
 		l.props.OnClick(e)

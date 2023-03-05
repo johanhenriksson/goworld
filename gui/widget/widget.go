@@ -24,11 +24,9 @@ type T interface {
 
 	Children() []T
 	SetChildren([]T)
+	Destroy()
 
 	Flex() *flex.Node
 
-	// Draw the widget. This should only be called by the GUI Draw Pass
-	// Calling Draw() will instantiate any required GPU resources prior to drawing.
-	// Attempting to draw a destroyed component will cause a panic.
 	Draw(DrawArgs, *QuadBuffer)
 }

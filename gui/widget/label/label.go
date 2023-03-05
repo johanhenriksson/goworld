@@ -298,6 +298,12 @@ func (l *label) measure(node *flex.Node, width float32, widthMode flex.MeasureMo
 // Events
 //
 
+func (l *label) Destroy() {
+	if l.state.Focused {
+		keys.Focus(nil)
+	}
+}
+
 func (l *label) FocusEvent() {
 	l.state.Focused = true
 	// todo: move cursor to mouse position?

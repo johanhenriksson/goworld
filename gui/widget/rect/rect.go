@@ -201,6 +201,9 @@ func (f *rect) Draw(args widget.DrawArgs, quads *widget.QuadBuffer) {
 // Events
 //
 
+func (f *rect) Destroy() {
+}
+
 func (f *rect) MouseEvent(e mouse.Event) {
 	if f.props.Style.Hidden {
 		return

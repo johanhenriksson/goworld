@@ -106,10 +106,10 @@ func (n *node[K, P]) Destroy() {
 	for _, child := range n.children {
 		child.Destroy()
 	}
-	if !n.hydrated() {
-		return
+	if n.hydrated() {
+		n.widget.Destroy()
+		n.widget = nil
 	}
-	n.widget = nil
 }
 
 func (n *node[K, P]) Hooks() *hooks.State {
