@@ -53,6 +53,7 @@ type label struct {
 	fontName   string
 	font       font.T
 	color      color.T
+	highlight  color.T
 	lineHeight float32
 	texSize    vec2.T
 }
@@ -72,6 +73,7 @@ func new(key string, props Props) T {
 		scale: 1,
 		text:  text,
 
+		highlight:  color.RGBA(0, 0, 0, 0.3),
 		lineHeight: 1,
 		props: Props{
 			Text: "\x00",
@@ -231,9 +233,28 @@ func (l *label) Draw(args widget.DrawArgs, quads *widget.QuadBuffer) {
 		Texture: uint32(tex.ID),
 	})
 
+	// selection
+	if l.text.HasSelection() {
+		args := font.Args{LineHeight: l.lineHeight}
+		cursorPos := l.font.Measure(l.text.Slice(0, l.text.cursor), args)
+		selPos := l.font.Measure(l.text.Slice(0, l.text.selstart), args)
+		start := math.Min(cursorPos.X, selPos.X)
+		length := math.Max(math.Max(cursorPos.X, selPos.X)-start, 1)
+		min = min.Add(vec2.New(start, 0))
+		max = min.Add(vec2.New(length, l.lineHeight*l.font.Size()))
+		quads.Push(widget.Quad{
+			Min:     min,
+			Max:     max,
+			Color:   [4]color.T{l.highlight, l.highlight, l.highlight, l.highlight},
+			ZIndex:  20,
+			Texture: 0,
+		})
+	}
+
 	// cursor
-	if l.state.Focused && l.text.Blink() {
-		cursorPos := l.font.Measure(l.text.Slice(0, l.text.cursor), font.Args{LineHeight: l.lineHeight})
+	if l.state.Focused && !l.text.HasSelection() && l.text.Blink() {
+		args := font.Args{LineHeight: l.lineHeight}
+		cursorPos := l.font.Measure(l.text.Slice(0, l.text.cursor), args)
 		min = min.Add(vec2.New(cursorPos.X, 0))
 		max = min.Add(vec2.New(1, l.lineHeight*l.font.Size()))
 		quads.Push(widget.Quad{
@@ -268,10 +289,11 @@ func (l *label) measure(node *flex.Node, width float32, widthMode flex.MeasureMo
 
 func (l *label) FocusEvent() {
 	l.state.Focused = true
-
+	// todo: move cursor to mouse position?
 }
 
 func (l *label) BlurEvent() {
+	l.text.Deselect()
 	l.state.Focused = false
 	if l.props.OnBlur != nil {
 		l.props.OnBlur()
@@ -365,10 +387,18 @@ func (l *label) KeyEvent(e keys.Event) {
 			}
 
 		case keys.LeftArrow:
-			l.text.CursorLeft()
+			if e.Modifier(keys.Shift) {
+				l.text.SelectLeft()
+			} else {
+				l.text.CursorLeft()
+			}
 
 		case keys.RightArrow:
-			l.text.CursorRight()
+			if e.Modifier(keys.Shift) {
+				l.text.SelectRight()
+			} else {
+				l.text.CursorRight()
+			}
 
 		case keys.U:
 			// ctrl+u clears text
