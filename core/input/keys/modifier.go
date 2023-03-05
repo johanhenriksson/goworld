@@ -6,7 +6,7 @@ type Modifier glfw.ModifierKey
 
 const (
 	NoMod = Modifier(0)
-	Shift = Modifier(glfw.ModSuper)
+	Shift = Modifier(glfw.ModShift)
 	Ctrl  = Modifier(glfw.ModControl)
 	Alt   = Modifier(glfw.ModAlt)
 	Super = Modifier(glfw.ModSuper)
