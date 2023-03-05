@@ -18,7 +18,7 @@ Yet another attempt at building a basic 3D engine from scratch, this time in Go.
 
 Tested on OSX 10.10+ and Manjaro Linux. It should *theoretically* work on Windows.
 
-![Screenshot from 2023-02-06](docs/img/screenshot230206.png)
+![Screenshot from 2023-02-06](docs/img/screenshot230305.png)
 ![Screenshot from 2022-02-27](docs/img/screenshot220227.png)
 ![Screenshot from 2020-09-26](docs/img/screenshot200926.png)
 ![Screenshot from 2019-05-07](docs/img/screenshot190507.png)
