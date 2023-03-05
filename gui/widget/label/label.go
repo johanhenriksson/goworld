@@ -11,7 +11,6 @@ import (
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/font"
-	"github.com/johanhenriksson/goworld/render/texture"
 
 	"github.com/kjk/flex"
 )
@@ -46,16 +45,14 @@ type label struct {
 	scale float32
 	state style.State
 	text  *Text
-	tex   texture.Ref
 
-	version    int
-	size       int
+	fontSize   int
 	fontName   string
 	font       font.T
 	color      color.T
 	highlight  color.T
 	lineHeight float32
-	texSize    vec2.T
+	size       vec2.T
 }
 
 func New(key string, props Props) node.T {
@@ -118,28 +115,22 @@ func (l *label) Update(props any) {
 
 func (l *label) invalidate() {
 	l.Flex().MarkDirty()
+
+	// refresh font if required
 	if l.font == nil {
 		fontName := l.fontName
 		if fontName == "" {
 			fontName = DefaultFont.Name
 		}
-		size := l.size
-		if size == 0 {
-			size = DefaultFont.Size
+		fontSize := l.fontSize
+		if fontSize == 0 {
+			fontSize = DefaultFont.Size
 		}
-		l.font = assets.GetFont(fontName, size, l.scale)
+		l.font = assets.GetFont(fontName, fontSize, l.scale)
 	}
 
-	fargs := font.Args{
-		LineHeight: l.lineHeight,
-		Color:      color.White,
-	}
-	l.version++
-
-	// todo: immediate updates causes a noticable flash while the text is rendered
-	//       keep a reference until the new texture is ready?
-	l.tex = font.Ref(l.Key(), l.version, l.font, l.text.String(), fargs)
-	l.texSize = l.font.Measure(l.text.String(), fargs)
+	// recalculate text size
+	l.size = l.font.Measure(l.text.String(), font.Args{LineHeight: l.lineHeight})
 }
 
 func (l *label) editable() bool { return l.props.OnChange != nil }
@@ -158,11 +149,11 @@ func (l *label) setText(text string) {
 //
 
 func (l *label) SetFont(font style.Font) {
-	if font.Name == l.fontName && font.Size == l.size {
+	if font.Name == l.fontName && font.Size == l.fontSize {
 		return
 	}
 	l.fontName = font.Name
-	l.size = font.Size
+	l.fontSize = font.Size
 	l.font = nil
 	l.invalidate()
 }
@@ -193,11 +184,6 @@ func (l *label) Draw(args widget.DrawArgs, quads *widget.QuadBuffer) {
 		return
 	}
 
-	// skip empty strings
-	if l.text.String() == "" {
-		return
-	}
-
 	if args.Viewport.Scale != l.scale {
 		// ui scale has changed
 		l.scale = args.Viewport.Scale
@@ -206,42 +192,63 @@ func (l *label) Draw(args widget.DrawArgs, quads *widget.QuadBuffer) {
 		return
 	}
 
-	if l.tex == nil {
-		return
-	}
-
-	tex := args.Textures.Fetch(l.tex)
-	if tex == nil {
+	if l.font == nil {
+		// no font yet
 		return
 	}
 
 	zindex := args.Position.Z
-	min := args.Position.XY().Add(l.Position())
-	max := min.Add(l.texSize)
-	quads.Push(widget.Quad{
-		Min:   min,
-		Max:   max,
-		MinUV: vec2.Zero,
-		MaxUV: vec2.One,
-		Color: [4]color.T{
-			l.color,
-			l.color,
-			l.color,
-			l.color,
-		},
-		ZIndex:  zindex,
-		Texture: uint32(tex.ID),
-	})
+	origin := args.Position.XY().Add(l.Position())
+
+	// render glyph quads
+	pos := origin.Add(vec2.New(0, 0.8*l.font.Size()))
+	for _, r := range l.text.String() {
+		glyph, err := l.font.Glyph(r)
+		if err != nil {
+			panic(err)
+		}
+		if glyph.Size.Y == 0 {
+			// whitespace
+			pos.X += glyph.Advance
+			continue
+		}
+
+		handle := args.Textures.Fetch(glyph)
+		if handle != nil {
+			min := pos.Add(glyph.Bearing).Floor()
+			max := min.Add(glyph.Size)
+			quads.Push(widget.Quad{
+				Min:   min,
+				Max:   max,
+				MinUV: vec2.Zero,
+				MaxUV: vec2.One,
+				Color: [4]color.T{
+					l.color,
+					l.color,
+					l.color,
+					l.color,
+				},
+				ZIndex:  zindex,
+				Texture: uint32(handle.ID),
+			})
+		}
+
+		pos.X += glyph.Advance
+	}
 
 	// selection
 	if l.text.HasSelection() {
+		// measure selection size & position
+		// todo: could be cached, perhaps not necessary
 		args := font.Args{LineHeight: l.lineHeight}
 		startIdx, _ := l.text.SelectedRange()
 		start := l.font.Measure(l.text.Slice(0, startIdx), args)
 		selectSize := l.font.Measure(l.text.Selection(), args)
 		length := math.Max(selectSize.X, 1)
-		min = min.Add(vec2.New(start.X, 0))
-		max = min.Add(vec2.New(length, l.lineHeight*l.font.Size()))
+
+		// highlight quad
+		min := origin.Add(vec2.New(start.X, 0))
+		max := min.Add(vec2.New(length, l.lineHeight*l.font.Size()))
 		quads.Push(widget.Quad{
 			Min:     min,
 			Max:     max,
@@ -253,11 +260,14 @@ func (l *label) Draw(args widget.DrawArgs, quads *widget.QuadBuffer) {
 
 	// cursor
 	if l.state.Focused && !l.text.HasSelection() && l.text.Blink() {
+		// measure cursor position
 		args := font.Args{LineHeight: l.lineHeight}
 		cursorIdx, _ := l.text.SelectedRange()
 		cursorPos := l.font.Measure(l.text.Slice(0, cursorIdx), args)
-		min = min.Add(vec2.New(cursorPos.X, 0))
-		max = min.Add(vec2.New(1, l.lineHeight*l.font.Size()))
+
+		// cursor quad
+		min := origin.Add(vec2.New(cursorPos.X, 0))
+		max := min.Add(vec2.New(1, l.lineHeight*l.font.Size()))
 		quads.Push(widget.Quad{
 			Min:     min,
 			Max:     max,
@@ -270,8 +280,8 @@ func (l *label) Draw(args widget.DrawArgs, quads *widget.QuadBuffer) {
 
 func (l *label) measure(node *flex.Node, width float32, widthMode flex.MeasureMode, height float32, heightMode flex.MeasureMode) flex.Size {
 	req := flex.Size{
-		Width:  l.texSize.X / l.scale,
-		Height: l.texSize.Y / l.scale,
+		Width:  l.size.X,
+		Height: l.size.Y,
 	}
 
 	if widthMode == flex.MeasureModeExactly {
