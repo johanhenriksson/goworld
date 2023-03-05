@@ -9,6 +9,7 @@ import (
 
 type Mesh interface {
 	Draw(command.Buffer, int)
+	DrawInstanced(buf command.Buffer, startIndex, coount int)
 	Destroy()
 }
 
@@ -21,6 +22,10 @@ type vkMesh struct {
 }
 
 func (m *vkMesh) Draw(cmd command.Buffer, index int) {
+	m.DrawInstanced(cmd, index, 1)
+}
+
+func (m *vkMesh) DrawInstanced(cmd command.Buffer, startIndex, count int) {
 	if m.elements <= 0 {
 		// nothing to draw
 		return
@@ -30,7 +35,7 @@ func (m *vkMesh) Draw(cmd command.Buffer, index int) {
 	cmd.CmdBindIndexBuffers(m.indices, 0, m.idxType)
 
 	// index of the object properties in the ssbo
-	cmd.CmdDrawIndexed(m.elements, 1, 0, 0, index)
+	cmd.CmdDrawIndexed(m.elements, count, 0, 0, startIndex)
 }
 
 func (m *vkMesh) Destroy() {

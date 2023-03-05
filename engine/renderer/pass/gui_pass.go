@@ -100,7 +100,7 @@ func NewGuiPass(app vulkan.App, target RenderTarget) *GuiPass {
 		},
 		Quads: &descriptor.Storage[widget.Quad]{
 			Stages: core1_0.StageVertex,
-			Size:   1000,
+			Size:   10000,
 		},
 		Textures: &descriptor.SamplerArray{
 			Stages: core1_0.StageFragment,
@@ -135,11 +135,6 @@ func (p *GuiPass) Record(cmds command.Recorder, args render.Args, scene object.T
 	if !quadExists {
 		return
 	}
-
-	cmds.Record(func(cmd command.Buffer) {
-		cmd.CmdBeginRenderPass(p.pass, p.fbuf)
-		mat.Bind(cmd)
-	})
 
 	// set everything to white
 	white, textureReady := p.app.Textures().Fetch(color.White)
@@ -178,21 +173,21 @@ func (p *GuiPass) Record(cmds command.Recorder, args render.Args, scene object.T
 	// todo: collect and depth sort
 	mat.Descriptors().Quads.SetRange(0, qb.Data)
 
-	for i, quad := range qb.Data {
-		index := i
+	for _, quad := range qb.Data {
 		zmax = math.Max(zmax, quad.ZIndex)
-		cmds.Record(func(b command.Buffer) {
-			mesh.Draw(b, index)
-		})
 	}
+
+	// draw everything in a single batch
+	cmds.Record(func(cmd command.Buffer) {
+		cmd.CmdBeginRenderPass(p.pass, p.fbuf)
+		mat.Bind(cmd)
+		mesh.DrawInstanced(cmd, 0, len(qb.Data))
+		cmd.CmdEndRenderPass()
+	})
 
 	mat.Descriptors().Config.Set(UIConfig{
 		Resolution: size,
 		ZMax:       zmax,
-	})
-
-	cmds.Record(func(cmd command.Buffer) {
-		cmd.CmdEndRenderPass()
 	})
 }
 
