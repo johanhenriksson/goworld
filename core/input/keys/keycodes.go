@@ -62,4 +62,5 @@ const (
 	RightSuper   = Code(glfw.KeyRightSuper)
 	LeftArrow    = Code(glfw.KeyLeft)
 	RightArrow   = Code(glfw.KeyRight)
+	NumpadEnter  = Code(glfw.KeyKPEnter)
 )

@@ -9,12 +9,12 @@ import (
 )
 
 type Props struct {
-	Style     Style
-	Text      string
-	OnChange  func(string)
-	OnBlur    func()
-	OnKeyUp   func(keys.Event)
-	OnKeyDown func(keys.Event)
+	Style    Style
+	Text     string
+	OnChange func(string)
+	OnBlur   func()
+	OnAccept func()
+	OnReject func()
 }
 
 type Style struct {
@@ -37,12 +37,26 @@ func render(props Props) node.T {
 		},
 		Children: []node.T{
 			label.New("input", label.Props{
-				Text:      props.Text,
-				Style:     props.Style.Text,
-				OnChange:  props.OnChange,
-				OnBlur:    props.OnBlur,
-				OnKeyUp:   props.OnKeyUp,
-				OnKeyDown: props.OnKeyDown,
+				Text:     props.Text,
+				Style:    props.Style.Text,
+				OnChange: props.OnChange,
+				OnBlur:   props.OnBlur,
+				OnKeyUp: func(e keys.Event) {
+					if props.OnAccept != nil {
+						if e.Code() == keys.Enter || e.Code() == keys.NumpadEnter {
+							props.OnAccept()
+							e.Consume()
+						}
+					}
+				},
+				OnKeyDown: func(e keys.Event) {
+					if props.OnAccept != nil {
+						if e.Code() == keys.Escape {
+							props.OnReject()
+							e.Consume()
+						}
+					}
+				},
 			}),
 		},
 	})
