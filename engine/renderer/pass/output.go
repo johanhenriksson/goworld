@@ -96,8 +96,8 @@ func NewOutputPass(app vulkan.App, source RenderTarget) *OutputPass {
 		if len(p.source.Output()) == 1 {
 			outIdx = 0
 		}
-		p.tex[i], err = texture.FromImage(app.Device(), p.source.Output()[outIdx], texture.Args{
-			Key:    fmt.Sprintf("gbuffer-output-%d", i),
+		key := fmt.Sprintf("gbuffer-output-%d", i)
+		p.tex[i], err = texture.FromImage(app.Device(), key, p.source.Output()[outIdx], texture.Args{
 			Filter: core1_0.FilterNearest,
 			Wrap:   core1_0.SamplerAddressModeClampToEdge,
 		})

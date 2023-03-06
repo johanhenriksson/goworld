@@ -3,16 +3,13 @@ package font
 import (
 	"errors"
 	"fmt"
-	"image"
-	imgcolor "image/color"
-	"io"
-	"io/fs"
 	"sync"
 
 	"github.com/golang/freetype/truetype"
 	"github.com/johanhenriksson/goworld/math"
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/render/color"
+	"github.com/johanhenriksson/goworld/render/image"
 
 	fontlib "golang.org/x/image/font"
 	"golang.org/x/image/math/fixed"
@@ -24,7 +21,6 @@ type T interface {
 	Name() string
 	Glyph(rune) (*Glyph, error)
 	Measure(string, Args) vec2.T
-	Render(string, Args) *image.RGBA
 	Size() float32
 }
 
@@ -35,6 +31,7 @@ type Args struct {
 
 type font struct {
 	size   float32
+	scale  float32
 	fnt    *truetype.Font
 	face   fontlib.Face
 	drawer *fontlib.Drawer
@@ -53,6 +50,7 @@ func (f *font) Glyph(r rune) (*Glyph, error) {
 		return cached, nil
 	}
 
+	// grab the font lock
 	f.mutex.Lock()
 	defer f.mutex.Unlock()
 
@@ -61,43 +59,45 @@ func (f *font) Glyph(r rune) (*Glyph, error) {
 		return nil, ErrNoGlyph
 	}
 
-	// calculate size and bearing
-	bearing := vec2.New(
-		FixToFloat(bounds.Min.X),
-		FixToFloat(bounds.Min.Y))
-
-	dr, mask, offset, _, _ := f.face.Glyph(fixed.Point26_6{X: 0, Y: 0}, r)
+	// calculate bearing
+	bearing := vec2.New(FixToFloat(bounds.Min.X), FixToFloat(bounds.Min.Y))
 
 	// texture size
-	size := vec2.New(
-		float32(dr.Max.X-dr.Min.X),
-		float32(dr.Max.Y-dr.Min.Y))
+	size := vec2.New(FixToFloat(bounds.Max.X), FixToFloat(bounds.Max.Y)).Sub(bearing)
 
-	// copy image mask
-	img := image.NewRGBA(image.Rect(0, 0, int(size.X), int(size.Y)))
-	for y := 0; y < int(size.Y); y++ {
-		for x := 0; x < int(size.X); x++ {
+	// glyph texture
+	_, mask, offset, _, _ := f.face.Glyph(fixed.Point26_6{X: 0, Y: 0}, r)
+	width, height := int(size.X), int(size.Y)
+
+	img := &image.Data{
+		Width:  width,
+		Height: height,
+		Buffer: make([]byte, 4*width*height),
+		Format: image.FormatRGBA8Unorm,
+	}
+	i := 0
+	for y := 0; y < height; y++ {
+		for x := 0; x < width; x++ {
 			// grab alpha value as 16-bit integer
 			_, _, _, alpha := mask.At(offset.X+x, offset.Y+y).RGBA()
-			// create a white texture using the mask as alpha
-			c := imgcolor.RGBA{
-				R: 0xFF,
-				G: 0xFF,
-				B: 0xFF,
-				A: uint8(alpha >> 8),
-			}
-			img.Set(x, y, c)
+			img.Buffer[i+0] = 0xFF // red
+			img.Buffer[i+1] = 0xFF // green
+			img.Buffer[i+2] = 0xFF // blue
+			img.Buffer[i+3] = uint8(alpha >> 8)
+			i += 4
 		}
 	}
 
+	scaleFactor := 1 / f.scale
 	glyph := &Glyph{
-		key:     fmt.Sprintf("glyph:%s:%d:%c", f.Name(), int(f.size), r),
-		Size:    size,
-		Bearing: bearing,
-		Advance: FixToFloat(advance),
+		key:     fmt.Sprintf("glyph:%s:%dx%.2f:%c", f.Name(), int(f.size), f.scale, r),
+		Size:    size.Scaled(scaleFactor),
+		Bearing: bearing.Scaled(scaleFactor),
+		Advance: FixToFloat(advance) * scaleFactor,
 		Mask:    img,
 	}
 	f.glyphs[r] = glyph
+
 	return glyph, nil
 }
 
@@ -132,100 +132,12 @@ func (f *font) Measure(text string, args Args) vec2.T {
 		}
 	}
 
-	lineHeight := int(math.Ceil(f.size * args.LineHeight))
+	lineHeight := int(math.Ceil(f.size * f.scale * args.LineHeight))
 	height := lineHeight*lines + (lineHeight/2)*(lines-1)
-	return vec2.NewI(width, height)
-}
-
-func (f *font) Render(text string, args Args) *image.RGBA {
-	size := f.Measure(text, args)
-
-	f.mutex.Lock()
-	defer f.mutex.Unlock()
-
-	if args.LineHeight == 0 {
-		args.LineHeight = 1
-	}
-
-	f.drawer.Src = image.NewUniform(args.Color.RGBA())
-
-	// todo: its probably not a great idea to allocate an image on every draw
-	// perhaps textures should always have a backing image ?
-	output := image.NewRGBA(image.Rect(0, 0, int(math.Ceil(size.X)), int(math.Ceil(size.Y))))
-	f.drawer.Dst = output
-
-	// debug outline
-	// for y := 0; y < output.Bounds().Size().Y; y++ {
-	// 	for x := 0; x < output.Bounds().Size().X; x++ {
-	// 		if x == 0 || y == 0 || x == output.Bounds().Size().X-1 || y == output.Bounds().Size().Y-1 {
-	// 			output.Set(x, y, color.Red.RGBA())
-	// 		}
-	// 	}
-	// }
-
-	s := 0
-	line := 1
-	lineHeight := int(math.Ceil(f.size * args.LineHeight))
-	yOffset := int(math.Ceil(f.size * 0.20))
-
-	for i, c := range text {
-		if c == '\n' {
-			if i == s {
-				continue // skip empty rows
-			}
-			f.drawer.Dot = fixed.P(0, line*int(lineHeight)-yOffset)
-			f.drawer.DrawString(text[s:i])
-			s = i + 1
-			line++
-		}
-	}
-	if s < len(text) {
-		f.drawer.Dot = fixed.P(0, line*int(lineHeight)-yOffset)
-		f.drawer.DrawString(text[s:])
-	}
-
-	return output
-}
-
-// Load a truetype font
-func Load(file fs.File, size int) (T, error) {
-	// todo: read & parse could be cached, instead of doing it for each size of the font
-	fontBytes, err := io.ReadAll(file)
-	if err != nil {
-		return nil, err
-	}
-
-	fnt, err := truetype.Parse(fontBytes)
-	if err != nil {
-		return nil, err
-	}
-
-	face := truetype.NewFace(fnt, &truetype.Options{
-		Size:    float64(size),
-		Hinting: fontlib.HintingFull,
-	})
-
-	return &font{
-		size:   float32(size),
-		fnt:    fnt,
-		face:   face,
-		glyphs: make(map[rune]*Glyph, 128),
-
-		drawer: &fontlib.Drawer{
-			Face: face,
-		},
-		mutex: &sync.Mutex{},
-	}, nil
+	return vec2.NewI(width, height).Scaled(1 / f.scale).Ceil()
 }
 
 func FixToFloat(v fixed.Int26_6) float32 {
-	div := 1 / float32(1<<6)
-	return float32(v) * div
-}
-
-func PointToVec(p fixed.Point26_6) vec2.T {
-	return vec2.T{
-		X: FixToFloat(p.X),
-		Y: FixToFloat(p.Y),
-	}
+	const scalar = 1 / float32(1<<6)
+	return float32(v) * scalar
 }

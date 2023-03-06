@@ -15,15 +15,17 @@ import (
 	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
-func NewTextureSync(dev device.T, worker command.Worker, img *osimage.RGBA) (texture.T, error) {
+func NewTextureSync(dev device.T, worker command.Worker, key string, img *osimage.RGBA) (texture.T, error) {
 	// allocate texture
-	tex, err := texture.New(dev, texture.Args{
-		Width:  img.Rect.Size().X,
-		Height: img.Rect.Size().Y,
-		Format: core1_0.FormatR8G8B8A8UnsignedNormalized,
-		Filter: core1_0.FilterLinear,
-		Wrap:   core1_0.SamplerAddressModeRepeat,
-	})
+	tex, err := texture.New(dev,
+		key,
+		img.Rect.Size().X,
+		img.Rect.Size().Y,
+		image.FormatRGBA8Unorm,
+		texture.Args{
+			Filter: core1_0.FilterLinear,
+			Wrap:   core1_0.SamplerAddressModeRepeat,
+		})
 	if err != nil {
 		return nil, err
 	}

@@ -1,7 +1,6 @@
 package label
 
 import (
-	"github.com/johanhenriksson/goworld/assets"
 	"github.com/johanhenriksson/goworld/core/input/keys"
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/gui/node"
@@ -126,7 +125,7 @@ func (l *label) invalidate() {
 		if fontSize == 0 {
 			fontSize = DefaultFont.Size
 		}
-		l.font = assets.GetFont(fontName, fontSize, l.scale)
+		l.font = font.Load(fontName, fontSize, l.scale)
 	}
 
 	// recalculate text size
@@ -207,7 +206,7 @@ func (l *label) Draw(args widget.DrawArgs, quads *widget.QuadBuffer) {
 		if err != nil {
 			panic(err)
 		}
-		if glyph.Size.Y == 0 {
+		if glyph.Size.X == 0 {
 			// whitespace
 			pos.X += glyph.Advance
 			continue
@@ -215,7 +214,7 @@ func (l *label) Draw(args widget.DrawArgs, quads *widget.QuadBuffer) {
 
 		handle := args.Textures.Fetch(glyph)
 		if handle != nil {
-			min := pos.Add(glyph.Bearing).Floor()
+			min := pos.Add(glyph.Bearing)
 			max := min.Add(glyph.Size)
 			quads.Push(widget.Quad{
 				Min:   min,

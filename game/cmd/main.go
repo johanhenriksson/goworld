@@ -26,7 +26,7 @@ func main() {
 		editor.Scene(func(r renderer.T, scene object.T) {
 			// make some chonks
 			generator := chunk.ExampleWorldgen(3141389, 32)
-			object.Attach(scene, chunk.NewWorld(32, generator, 100))
+			object.Attach(scene, chunk.NewWorld(32, generator, 200))
 			// chonk := chunk.Generate(generator, 32, 0, 0)
 			// object.Attach(scene, chunk.NewMesh(chonk))
 			// object.Attach(scene, object.Builder(chunk.NewMesh(chonk)).Position(vec3.New(32, 0, 0)).Create())

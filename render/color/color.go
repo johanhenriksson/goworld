@@ -2,13 +2,16 @@ package color
 
 import (
 	"fmt"
-	"image"
 	"image/color"
 	"strconv"
 
 	"github.com/johanhenriksson/goworld/math/byte4"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/math/vec4"
+	"github.com/johanhenriksson/goworld/render/image"
+	"github.com/johanhenriksson/goworld/render/texture"
+
+	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
 // Predefined Colors
@@ -31,6 +34,8 @@ var (
 type T struct {
 	R, G, B, A float32
 }
+
+var _ texture.Ref = T{}
 
 // Color4 creates a color struct from its RGBA components
 func RGBA(r, g, b, a float32) T {
@@ -137,12 +142,21 @@ func Hex(s string) T {
 func (c T) Key() string  { return c.Hex() }
 func (c T) Version() int { return 1 }
 
-func (c T) Load() *image.RGBA {
-	img := image.NewRGBA(image.Rect(0, 0, 1, 1))
+func (c T) ImageData() *image.Data {
 	rgba := c.Byte4()
-	img.Pix[0] = rgba.X
-	img.Pix[1] = rgba.Y
-	img.Pix[2] = rgba.Z
-	img.Pix[3] = rgba.W
-	return img
+	return &image.Data{
+		Width:  1,
+		Height: 1,
+		Format: image.FormatRGBA8Unorm,
+		Buffer: []byte{
+			rgba.X, rgba.Y, rgba.Z, rgba.W,
+		},
+	}
+}
+
+func (c T) TextureArgs() texture.Args {
+	return texture.Args{
+		Filter: core1_0.FilterNearest,
+		Wrap:   core1_0.SamplerAddressModeClampToEdge,
+	}
 }

@@ -111,8 +111,8 @@ func (p *shadowpass) createShadowmap(light light.T) Shadowmap {
 
 	// the frame buffer object will allocate a new depth image for us
 	view := fbuf.Attachment(attachment.DepthName)
-	tex, err := texture.FromView(p.app.Device(), view, texture.Args{
-		Key:    light.Name() + "-shadow",
+	key := light.Name() + "-shadow"
+	tex, err := texture.FromView(p.app.Device(), key, view, texture.Args{
 		Aspect: core1_0.ImageAspectDepth,
 	})
 	if err != nil {

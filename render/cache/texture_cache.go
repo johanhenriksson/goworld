@@ -25,26 +25,28 @@ type textures struct {
 
 func (t *textures) Instantiate(ref texture.Ref, callback func(texture.T)) {
 	// load image data
-	img := ref.Load()
+	img := ref.ImageData()
+
+	// args & defaults
+	args := ref.TextureArgs()
+	if args.Filter == 0 {
+		args.Filter = core1_0.FilterLinear
+	}
+	if args.Wrap == 0 {
+		args.Wrap = core1_0.SamplerAddressModeClampToEdge
+	}
 
 	// allocate texture
-	tex, err := texture.New(t.device, texture.Args{
-		Key:    ref.Key(),
-		Width:  img.Rect.Size().X,
-		Height: img.Rect.Size().Y,
-		Format: core1_0.FormatR8G8B8A8UnsignedNormalized,
-		Filter: core1_0.FilterLinear,
-		Wrap:   core1_0.SamplerAddressModeRepeat,
-	})
+	tex, err := texture.New(t.device, ref.Key(), img.Width, img.Height, img.Format, args)
 	if err != nil {
 		panic(err)
 	}
 
 	// allocate staging buffer
-	stage := buffer.NewShared(t.device, len(img.Pix))
+	stage := buffer.NewShared(t.device, len(img.Buffer))
 
 	// write to staging buffer
-	stage.Write(0, img.Pix)
+	stage.Write(0, img.Buffer)
 	stage.Flush()
 
 	// transfer data to texture buffer

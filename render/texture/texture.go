@@ -18,14 +18,11 @@ type T interface {
 }
 
 type Args struct {
-	Key    string
-	Width  int
-	Height int
-	Format core1_0.Format
 	Filter core1_0.Filter
 	Wrap   core1_0.SamplerAddressMode
 	Aspect core1_0.ImageAspectFlags
 	Usage  core1_0.ImageUsageFlags
+	Border core1_0.BorderColor
 }
 
 type vktexture struct {
@@ -36,25 +33,21 @@ type vktexture struct {
 	view   image.View
 }
 
-func New(device device.T, args Args) (T, error) {
-	if args.Key == "" {
+func New(device device.T, key string, width, height int, format core1_0.Format, args Args) (T, error) {
+	if key == "" {
 		panic("texture must have a key")
 	}
-	if args.Usage == 0 {
-		args.Usage = core1_0.ImageUsageFlags(core1_0.ImageUsageSampled | core1_0.ImageUsageTransferDst)
-	}
+	args.Usage |= core1_0.ImageUsageFlags(core1_0.ImageUsageSampled | core1_0.ImageUsageTransferDst)
 
-	img, err := image.New2D(device, args.Key, args.Width, args.Height, args.Format, args.Usage)
+	img, err := image.New2D(device, key, width, height, format, args.Usage)
 	if err != nil {
 		return nil, err
 	}
 
-	if args.Key != "" {
-		device.SetDebugObjectName(driver.VulkanHandle(img.Ptr().Handle()),
-			core1_0.ObjectTypeImage, args.Key)
-	}
+	device.SetDebugObjectName(driver.VulkanHandle(img.Ptr().Handle()),
+		core1_0.ObjectTypeImage, key)
 
-	tex, err := FromImage(device, img, args)
+	tex, err := FromImage(device, key, img, args)
 	if err != nil {
 		img.Destroy()
 		return nil, err
@@ -63,23 +56,20 @@ func New(device device.T, args Args) (T, error) {
 	return tex, nil
 }
 
-func FromImage(device device.T, img image.T, args Args) (T, error) {
-	if args.Key == "" {
-		args.Key = img.Key()
+func FromImage(device device.T, key string, img image.T, args Args) (T, error) {
+	if key == "" {
+		key = img.Key()
 	}
 	if args.Aspect == 0 {
 		args.Aspect = core1_0.ImageAspectFlags(core1_0.ImageAspectColor)
 	}
-	if args.Format == 0 {
-		args.Format = img.Format()
-	}
 
-	view, err := img.View(args.Format, args.Aspect)
+	view, err := img.View(img.Format(), args.Aspect)
 	if err != nil {
 		return nil, err
 	}
 
-	tex, err := FromView(device, view, args)
+	tex, err := FromView(device, key, view, args)
 	if err != nil {
 		// clean up
 		view.Destroy()
@@ -89,8 +79,8 @@ func FromImage(device device.T, img image.T, args Args) (T, error) {
 	return tex, nil
 }
 
-func FromView(device device.T, view image.View, args Args) (T, error) {
-	if args.Key == "" {
+func FromView(device device.T, key string, view image.View, args Args) (T, error) {
+	if key == "" {
 		panic("texture must have a key")
 	}
 	info := core1_0.SamplerCreateInfo{
@@ -99,6 +89,7 @@ func FromView(device device.T, view image.View, args Args) (T, error) {
 		AddressModeU: args.Wrap,
 		AddressModeV: args.Wrap,
 		AddressModeW: args.Wrap,
+		BorderColor:  args.Border,
 
 		MipmapMode: core1_0.SamplerMipmapModeLinear,
 	}
@@ -111,10 +102,8 @@ func FromView(device device.T, view image.View, args Args) (T, error) {
 		return nil, vkerror.FromResult(result)
 	}
 
-	if args.Key != "" {
-		device.SetDebugObjectName(driver.VulkanHandle(ptr.Handle()),
-			core1_0.ObjectTypeSampler, args.Key)
-	}
+	device.SetDebugObjectName(driver.VulkanHandle(ptr.Handle()),
+		core1_0.ObjectTypeSampler, key)
 
 	return &vktexture{
 		Args:   args,
