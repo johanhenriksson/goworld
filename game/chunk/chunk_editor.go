@@ -130,14 +130,14 @@ func NewEditor(ctx *editor.Context, mesh *Mesh) Editor {
 			Create(),
 	})
 
-	object.Attach(e, NewGUI(e))
+	object.Attach(e, NewGUI(e, mesh))
 	object.Attach(e, NewMenu(e))
 
 	return e
 }
 
 func (e *edit) Name() string {
-	return "Editor"
+	return "Chunk"
 }
 
 func (e *edit) GetVoxel(x, y, z int) voxel.T {

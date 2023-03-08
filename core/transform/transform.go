@@ -122,7 +122,7 @@ func (t *transform) WorldPosition() vec3.T {
 }
 
 func (t *transform) SetWorldPosition(wp vec3.T) {
-	offset := wp.Sub(t.WorldPosition())
+	offset := t.Unproject(wp)
 	t.SetPosition(t.position.Add(offset))
 }
 

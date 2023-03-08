@@ -1,32 +1,28 @@
 package chunk
 
 import (
-	"fmt"
-
 	"github.com/johanhenriksson/goworld/core/input/mouse"
+	"github.com/johanhenriksson/goworld/editor"
 	"github.com/johanhenriksson/goworld/gui"
 	"github.com/johanhenriksson/goworld/gui/node"
 	"github.com/johanhenriksson/goworld/gui/widget/menu"
 	"github.com/johanhenriksson/goworld/gui/widget/palette"
-	"github.com/johanhenriksson/goworld/gui/widget/rect"
 	"github.com/johanhenriksson/goworld/render/color"
 )
 
-func NewGUI(editor *edit) gui.Fragment {
-	key := fmt.Sprintf("chunk:%s", editor.mesh.meshdata.Key())
+func NewGUI(e *edit, target *Mesh) gui.Fragment {
 	return gui.NewFragment(gui.FragmentArgs{
 		Slot:     "sidebar:content",
 		Position: gui.FragmentLast,
 		Render: func() node.T {
-			return rect.New(key, rect.Props{
-				Children: []node.T{
-					palette.New("palette", palette.Props{
-						Palette: color.DefaultPalette,
-						OnPick: func(clr color.T) {
-							editor.SelectColor(clr)
-						},
-					}),
-				},
+			return editor.Inspector(target, []node.T{
+				// extend the default inspector with a color picker palette
+				palette.New("palette", palette.Props{
+					Palette: color.DefaultPalette,
+					OnPick: func(clr color.T) {
+						e.SelectColor(clr)
+					},
+				}),
 			})
 		},
 	})

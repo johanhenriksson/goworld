@@ -7,5 +7,6 @@ import (
 type T interface {
 	object.T
 
+	// EditorGUI(object.T) node.T
 	Actions() []Action
 }
