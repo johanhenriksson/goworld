@@ -35,11 +35,16 @@ type Mover struct {
 	XZ    *plane.T
 	YZ    *plane.T
 
+	// screen size scaling factor
+	size float32
+
+	eye        vec3.T
 	axis       vec3.T
 	screenAxis vec2.T
 	start      vec2.T
 	viewport   render.Screen
 	camera     mat4.T
+	proj       mat4.T
 	dragging   bool
 }
 
@@ -65,6 +70,8 @@ func NewMover() *Mover {
 	}
 
 	g := object.New(&Mover{
+		size: 0.12,
+
 		// X Arrow Cone
 		X: object.Builder(cone.New(cone.Args{
 			Mat:      mat,
@@ -284,9 +291,22 @@ func (g *Mover) DragMove(e mouse.Event) {
 }
 
 func (g *Mover) PreDraw(args render.Args, scene object.T) error {
+	g.eye = args.Position
+	g.proj = args.Projection
 	g.camera = args.VP
 	g.viewport = args.Viewport
 	return nil
+}
+
+func (g *Mover) Update(scene object.T, dt float32) {
+	// the gizmo should be displayed at the same size irrespectively of its distance to the camera.
+	// we can undo the effects of perspective projection by measuring how much a vector would be "squeezed"
+	// at the current distance form the camera, and then applying a scaling factor to counteract it.
+
+	dist := vec3.Distance(g.Transform().WorldPosition(), g.eye)
+	squeeze := g.proj.TransformPoint(vec3.New(1, 0, dist))
+	f := g.size / squeeze.X
+	g.Transform().SetScale(vec3.New(f, f, f))
 }
 
 func (g *Mover) Dragging() bool          { return g.dragging }
