@@ -13,6 +13,7 @@ type StringProps struct {
 	Label    string
 	Value    string
 	OnChange func(string)
+	Validate func(string) bool
 }
 
 func String(key string, props StringProps) node.T {
@@ -21,11 +22,13 @@ func String(key string, props StringProps) node.T {
 		valid, setValid := hooks.UseState(true)
 		text, setText := hooks.UseState(props.Value)
 
-		// todo: prop?
 		validate := func(string) bool { return true }
+		if props.Validate != nil {
+			validate = props.Validate
+		}
 
 		onChange := func(newText string) {
-			setValid(validate(text))
+			setValid(validate(newText))
 			setText(newText)
 		}
 
