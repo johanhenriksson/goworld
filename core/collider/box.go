@@ -33,8 +33,8 @@ func (s *box) Intersect(ray *physics.Ray) (bool, vec3.T) {
 }
 
 func (s *box) Update(scene object.T, dt float32) {
+	// this isnt enough for rotation
 	sz := s.args.Size.Scaled(0.5)
-	center := s.Transform().Project(s.args.Center)
-	s.shape.Min = center.Sub(sz)
-	s.shape.Max = center.Add(sz)
+	s.shape.Min = s.Transform().Project(s.args.Center.Sub(sz))
+	s.shape.Max = s.Transform().Project(s.args.Center.Add(sz))
 }
