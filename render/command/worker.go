@@ -99,12 +99,17 @@ type Wait struct {
 // Submit the current batch of command buffers
 // Blocks until the queue submission is confirmed
 func (w *worker) Submit(submit SubmitInfo) {
+	// grab the list of callbacks & realloc callback buffer
+	// this must happen at the time of submission to ensure that each submit call runs the correct callbacks
+	callbacks := w.callbacks
+	w.callbacks = make([]func(), 0, 32)
+
 	w.work.Invoke(func() {
-		w.submit(submit)
+		w.submit(submit, callbacks)
 	})
 }
 
-func (w *worker) submit(submit SubmitInfo) {
+func (w *worker) submit(submit SubmitInfo, callbacks []func()) {
 	debug.SetPanicOnFault(true)
 	buffers := util.Map(w.batch, func(buf Buffer) core1_0.CommandBuffer { return buf.Ptr() })
 
@@ -124,10 +129,6 @@ func (w *worker) submit(submit SubmitInfo) {
 
 	// clear batch slice but keep memory
 	w.batch = w.batch[:0]
-
-	// grab the list of callbacks & realloc callback buffer
-	callbacks := w.callbacks
-	w.callbacks = make([]func(), 0, 32)
 
 	// fire up a cleanup goroutine that will execute when the work fence is signalled
 	go func() {
