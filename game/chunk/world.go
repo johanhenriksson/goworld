@@ -3,6 +3,7 @@ package chunk
 import (
 	"fmt"
 	"log"
+	"sync"
 
 	"github.com/johanhenriksson/goworld/core/camera"
 	"github.com/johanhenriksson/goworld/core/object"
@@ -16,6 +17,7 @@ type World struct {
 	distance  float32
 	generator Generator
 
+	lock   *sync.Mutex
 	active map[string]object.T
 	ready  chan *T
 }
@@ -28,10 +30,14 @@ func NewWorld(size int, generator Generator, distance float32) *World {
 		distance:  distance,
 		active:    make(map[string]object.T, 100),
 		ready:     make(chan *T, 100),
+		lock:      &sync.Mutex{},
 	})
 }
 
 func (c *World) Update(scene object.T, dt float32) {
+	c.lock.Lock()
+	defer c.lock.Unlock()
+
 	// update chunks
 	c.T.Update(scene, dt)
 
@@ -100,7 +106,10 @@ func (c *World) Update(scene object.T, dt float32) {
 				ix, iz := x, z
 				spawn = func() {
 					log.Println("spawn chunk", key)
+					c.lock.Lock()
 					c.active[key] = nil
+					c.lock.Unlock()
+
 					chunkData := Generate(c.generator, c.size, ix, iz)
 					c.ready <- chunkData
 				}
