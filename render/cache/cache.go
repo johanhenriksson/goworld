@@ -77,8 +77,8 @@ func (c cache[K, V]) MaxAge() int { return c.maxAge }
 
 func (c *cache[K, V]) get(key K) (*line[V], bool) {
 	c.lock.RLock()
-	defer c.lock.RUnlock()
 	ln, hit := c.data[key.Key()]
+	c.lock.RUnlock()
 	return ln, hit
 }
 
@@ -88,8 +88,8 @@ func (c *cache[K, V]) init(key K) *line[V] {
 		wait:      make(chan struct{}),
 	}
 	c.lock.Lock()
-	defer c.lock.Unlock()
 	c.data[key.Key()] = ln
+	c.lock.Unlock()
 	return ln
 }
 
@@ -158,6 +158,8 @@ func (c *cache[K, V]) Fetch(key K) V {
 func (c *cache[K, V]) deleteLater(value V) {
 	// we can reuse the eviction mechanic to delete values later
 	// simply attach it to a cache line with a random key that will never be accessed
+	c.lock.Lock()
+	defer c.lock.Unlock()
 	randomKey := "trash-" + util.NewUUID(8)
 	c.data[randomKey] = &line[V]{
 		value:     value,
@@ -168,6 +170,8 @@ func (c *cache[K, V]) deleteLater(value V) {
 
 func (c *cache[K, V]) Tick() {
 	// eviction
+	c.lock.Lock()
+	defer c.lock.Unlock()
 	for key, line := range c.data {
 		line.age++
 		if line.age > c.maxAge {
