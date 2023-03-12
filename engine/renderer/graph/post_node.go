@@ -38,5 +38,6 @@ func (n *postNode) Draw(worker command.Worker, args render.Args, scene object.T)
 
 	// flush ensures all commands are submitted before we start rendering the next frame. otherwise, frame submissions may overlap.
 	// todo: perhaps its possible to do this at a later stage? e.g. we could run update loop etc while waiting
-	worker.Flush()
+	// note: this is only required if we use multiple/per-frame workers
+	// worker.Flush()
 }

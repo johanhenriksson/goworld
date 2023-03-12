@@ -56,7 +56,7 @@ func New(appName string, deviceIndex int) T {
 	transfer := command.NewWorker(device, core1_0.QueueTransfer|core1_0.QueueGraphics, 0)
 
 	// per frame graphics workers
-	workerCount := frames
+	workerCount := 1 // frames
 	workers := make([]command.Worker, workerCount)
 	for i := range workers {
 		workers[i] = command.NewWorker(device, core1_0.QueueGraphics, i+1)
