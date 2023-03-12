@@ -24,18 +24,19 @@ func (n *postNode) Draw(worker command.Worker, args render.Args, scene object.T)
 		signal = []sync.Semaphore{args.Context.RenderComplete}
 	}
 
-	// barrier := make(chan struct{})
 	worker.Submit(command.SubmitInfo{
 		Marker: n.Name(),
 		Wait:   n.waits(args.Context.Index),
 		Signal: signal,
 		Callback: func() {
-			// <-barrier
 			args.Context.Release()
 		},
 	})
 
 	// present
 	n.app.Present(worker, args.Context)
-	// barrier <- struct{}{}
+
+	// flush ensures all commands are submitted before we start rendering the next frame. otherwise, frame submissions may overlap.
+	// todo: perhaps its possible to do this at a later stage? e.g. we could run update loop etc while waiting
+	worker.Flush()
 }

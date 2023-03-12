@@ -3,6 +3,7 @@ package swapchain
 import (
 	"fmt"
 	gosync "sync"
+	"time"
 
 	"github.com/johanhenriksson/goworld/render/device"
 	"github.com/johanhenriksson/goworld/render/sync"
@@ -10,6 +11,7 @@ import (
 
 type Context struct {
 	Index          int
+	Start          time.Time
 	ImageAvailable sync.Semaphore
 	RenderComplete sync.Semaphore
 

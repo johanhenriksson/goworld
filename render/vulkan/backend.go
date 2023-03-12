@@ -45,7 +45,7 @@ type backend struct {
 }
 
 func New(appName string, deviceIndex int) T {
-	frames := 2
+	frames := 3
 	instance := instance.New(appName)
 	device, err := device.New(instance, instance.EnumeratePhysicalDevices()[0])
 	if err != nil {
