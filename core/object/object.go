@@ -141,9 +141,7 @@ func (b *base) setParent(p T) {
 }
 
 func (b *base) Children() []T {
-	children := make([]T, len(b.children))
-	copy(children, b.children)
-	return children
+	return b.children
 }
 
 func (b *base) attach(children ...T) {
