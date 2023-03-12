@@ -6,6 +6,7 @@ import (
 	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/math/vec4"
 	"github.com/johanhenriksson/goworld/render/color"
+	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/descriptor"
 	"github.com/johanhenriksson/goworld/render/image"
 	"github.com/johanhenriksson/goworld/render/material"
@@ -40,17 +41,19 @@ type LightConst struct {
 }
 
 type LightShader interface {
-	material.Instance[*LightDescriptors]
+	Bind(command.Buffer, int)
+	Descriptors(int) *LightDescriptors
 	Destroy()
 }
 
 type lightShader struct {
-	material.Instance[*LightDescriptors]
+	mat       material.T[*LightDescriptors]
+	instances []material.Instance[*LightDescriptors]
 
-	diffuseView  image.View
-	normalView   image.View
-	positionView image.View
-	depthView    image.View
+	diffuseViews  []image.View
+	normalViews   []image.View
+	positionViews []image.View
+	depthViews    []image.View
 }
 
 func NewLightShader(app vulkan.App, pass renderpass.T, target RenderTarget, gbuffer GeometryBuffer) LightShader {
@@ -91,33 +94,55 @@ func NewLightShader(app vulkan.App, pass renderpass.T, target RenderTarget, gbuf
 			},
 		})
 
-	lightsh := mat.Instantiate(app.Pool())
+	lightsh := mat.InstantiateMany(app.Pool(), app.Frames())
 
-	diffuseView, _ := gbuffer.Diffuse().View(gbuffer.Diffuse().Format(), core1_0.ImageAspectColor)
-	normalView, _ := gbuffer.Normal().View(gbuffer.Normal().Format(), core1_0.ImageAspectColor)
-	positionView, _ := gbuffer.Position().View(gbuffer.Position().Format(), core1_0.ImageAspectColor)
-	depthView, _ := target.Depth()[0].View(target.Depth()[0].Format(), core1_0.ImageAspectDepth)
+	diffuseViews := make([]image.View, app.Frames())
+	normalViews := make([]image.View, app.Frames())
+	positionViews := make([]image.View, app.Frames())
+	depthViews := make([]image.View, app.Frames())
+	for i := 0; i < app.Frames(); i++ {
+		diffuseViews[i], _ = gbuffer.Diffuse()[i].View(gbuffer.Diffuse()[i].Format(), core1_0.ImageAspectColor)
+		normalViews[i], _ = gbuffer.Normal()[i].View(gbuffer.Normal()[i].Format(), core1_0.ImageAspectColor)
+		positionViews[i], _ = gbuffer.Position()[i].View(gbuffer.Position()[i].Format(), core1_0.ImageAspectColor)
+		depthViews[i], _ = target.Depth()[i].View(target.Depth()[i].Format(), core1_0.ImageAspectDepth)
 
-	lightDesc := lightsh.Descriptors()
-	lightDesc.Diffuse.Set(diffuseView)
-	lightDesc.Normal.Set(normalView)
-	lightDesc.Position.Set(positionView)
-	lightDesc.Depth.Set(depthView)
+		lightDesc := lightsh[i].Descriptors()
+		lightDesc.Diffuse.Set(diffuseViews[i])
+		lightDesc.Normal.Set(normalViews[i])
+		lightDesc.Position.Set(positionViews[i])
+		lightDesc.Depth.Set(depthViews[i])
+	}
 
 	return &lightShader{
-		Instance: lightsh,
+		mat:       mat,
+		instances: lightsh,
 
-		diffuseView:  diffuseView,
-		normalView:   normalView,
-		positionView: positionView,
-		depthView:    depthView,
+		diffuseViews:  diffuseViews,
+		normalViews:   normalViews,
+		positionViews: positionViews,
+		depthViews:    depthViews,
 	}
 }
 
+func (ls *lightShader) Bind(buf command.Buffer, frame int) {
+	ls.instances[frame].Bind(buf)
+}
+func (ls *lightShader) Descriptors(frame int) *LightDescriptors {
+	return ls.instances[frame].Descriptors()
+}
+
 func (ls *lightShader) Destroy() {
-	ls.Instance.Material().Destroy()
-	ls.diffuseView.Destroy()
-	ls.normalView.Destroy()
-	ls.positionView.Destroy()
-	ls.depthView.Destroy()
+	ls.mat.Destroy()
+	for _, view := range ls.diffuseViews {
+		view.Destroy()
+	}
+	for _, view := range ls.normalViews {
+		view.Destroy()
+	}
+	for _, view := range ls.positionViews {
+		view.Destroy()
+	}
+	for _, view := range ls.depthViews {
+		view.Destroy()
+	}
 }

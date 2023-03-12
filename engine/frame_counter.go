@@ -58,12 +58,12 @@ func (fc *framecounter) Update() {
 func (fc *framecounter) Sample() Timing {
 	tot := int64(0)
 	max := int64(0)
-	current := int64(0)
 	for _, f := range fc.frames {
 		tot += f
 		max = math.Max(max, f)
-		current = f
 	}
+
+	current := fc.frames[(fc.next-1)%fc.samples]
 	return Timing{
 		Average: float32(tot) / float32(fc.samples) / 1e9,
 		Max:     float32(max) / 1e9,

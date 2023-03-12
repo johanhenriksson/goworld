@@ -7,6 +7,7 @@ import (
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/engine/renderer/graph"
 	"github.com/johanhenriksson/goworld/engine/renderer/pass"
+	"github.com/johanhenriksson/goworld/render/image"
 	"github.com/johanhenriksson/goworld/render/upload"
 	"github.com/johanhenriksson/goworld/render/vulkan"
 
@@ -45,12 +46,14 @@ func NewGraph(app vulkan.App) T {
 		// todo: maybe move it into the graph?
 		// putting it here does not even let us destroy it properly
 		var err error
-		r.target, err = pass.NewRenderTarget(app.Device(), app.Width(), app.Height(), core1_0.FormatR8G8B8A8UnsignedNormalized, app.Device().GetDepthFormat())
+		r.target, err = pass.NewRenderTarget(app.Device(),
+			app.Width(), app.Height(), app.Frames(),
+			image.FormatRGBA8Unorm, app.Device().GetDepthFormat())
 		if err != nil {
 			panic(err)
 		}
 
-		r.gbuffer, err = pass.NewGbuffer(app.Device(), app.Width(), app.Height())
+		r.gbuffer, err = pass.NewGbuffer(app.Device(), app.Width(), app.Height(), app.Frames())
 		if err != nil {
 			panic(err)
 		}

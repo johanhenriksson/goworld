@@ -47,7 +47,7 @@ type GuiPass struct {
 	app  vulkan.App
 	mat  []material.Instance[*UIDescriptors2]
 	pass renderpass.T
-	fbuf framebuffer.T
+	fbuf framebuffer.Array
 	quad quad.T
 
 	textures []cache.SamplerCache
@@ -111,7 +111,7 @@ func NewGuiPass(app vulkan.App, target RenderTarget) *GuiPass {
 
 	mesh := quad.New("gui-quad", quad.Props{Size: vec2.One})
 
-	fbufs, err := framebuffer.New(app.Device(), app.Width(), app.Height(), pass)
+	fbufs, err := framebuffer.NewArray(app.Frames(), app.Device(), app.Width(), app.Height(), pass)
 	if err != nil {
 		panic(err)
 	}
@@ -183,7 +183,7 @@ func (p *GuiPass) Record(cmds command.Recorder, args render.Args, scene object.T
 
 	// draw everything in a single batch
 	cmds.Record(func(cmd command.Buffer) {
-		cmd.CmdBeginRenderPass(p.pass, p.fbuf)
+		cmd.CmdBeginRenderPass(p.pass, p.fbuf[args.Context.Index])
 		mat.Bind(cmd)
 		mesh.DrawInstanced(cmd, 0, len(qb.Data))
 		cmd.CmdEndRenderPass()

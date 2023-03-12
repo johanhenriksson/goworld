@@ -45,7 +45,7 @@ type backend struct {
 }
 
 func New(appName string, deviceIndex int) T {
-	frames := 3
+	frames := 2
 	instance := instance.New(appName)
 	device, err := device.New(instance, instance.EnumeratePhysicalDevices()[0])
 	if err != nil {
@@ -56,7 +56,7 @@ func New(appName string, deviceIndex int) T {
 	transfer := command.NewWorker(device, core1_0.QueueTransfer|core1_0.QueueGraphics, 0)
 
 	// per frame graphics workers
-	workerCount := 3 // frames
+	workerCount := frames
 	workers := make([]command.Worker, workerCount)
 	for i := range workers {
 		workers[i] = command.NewWorker(device, core1_0.QueueGraphics, i+1)

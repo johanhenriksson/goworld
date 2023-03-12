@@ -21,7 +21,7 @@ type ForwardPass struct {
 	gbuffer   GeometryBuffer
 	app       vulkan.App
 	pass      renderpass.T
-	fbuf      framebuffer.T
+	fbuf      framebuffer.Array
 	materials *MaterialSorter
 }
 
@@ -48,7 +48,7 @@ func NewForwardPass(
 				StoreOp:     core1_0.AttachmentStoreOpStore,
 				FinalLayout: core1_0.ImageLayoutShaderReadOnlyOptimal,
 
-				Image: attachment.FromImage(gbuffer.Normal()),
+				Image: attachment.FromImageArray(gbuffer.Normal()),
 			},
 			{
 				Name:        PositionAttachment,
@@ -56,7 +56,7 @@ func NewForwardPass(
 				StoreOp:     core1_0.AttachmentStoreOpStore,
 				FinalLayout: core1_0.ImageLayoutShaderReadOnlyOptimal,
 
-				Image: attachment.FromImage(gbuffer.Position()),
+				Image: attachment.FromImageArray(gbuffer.Position()),
 			},
 		},
 		DepthAttachment: &attachment.Depth{
@@ -77,7 +77,7 @@ func NewForwardPass(
 		},
 	})
 
-	fbuf, err := framebuffer.New(app.Device(), app.Width(), app.Height(), pass)
+	fbuf, err := framebuffer.NewArray(app.Frames(), app.Device(), app.Width(), app.Height(), pass)
 	if err != nil {
 		panic(err)
 	}
@@ -105,7 +105,7 @@ func (p *ForwardPass) Record(cmds command.Recorder, args render.Args, scene obje
 		Collect(scene)
 
 	cmds.Record(func(cmd command.Buffer) {
-		cmd.CmdBeginRenderPass(p.pass, p.fbuf)
+		cmd.CmdBeginRenderPass(p.pass, p.fbuf[args.Context.Index])
 	})
 
 	p.materials.Draw(cmds, args, forwardMeshes)

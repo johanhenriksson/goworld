@@ -24,18 +24,18 @@ func (n *postNode) Draw(worker command.Worker, args render.Args, scene object.T)
 		signal = []sync.Semaphore{args.Context.RenderComplete}
 	}
 
-	barrier := make(chan struct{})
+	// barrier := make(chan struct{})
 	worker.Submit(command.SubmitInfo{
 		Marker: n.Name(),
 		Wait:   n.waits(args.Context.Index),
 		Signal: signal,
 		Callback: func() {
-			<-barrier
+			// <-barrier
 			args.Context.Release()
 		},
 	})
 
 	// present
 	n.app.Present(worker, args.Context)
-	barrier <- struct{}{}
+	// barrier <- struct{}{}
 }

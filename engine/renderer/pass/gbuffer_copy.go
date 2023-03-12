@@ -20,5 +20,5 @@ func (p *copyGbuffer) Name() string { return "GBufferCopy" }
 func (p *copyGbuffer) Destroy()     {}
 
 func (p *copyGbuffer) Record(cmds command.Recorder, args render.Args, scene object.T) {
-	p.gbuffer.RecordBufferCopy(cmds)
+	p.gbuffer.RecordBufferCopy(cmds, args.Context.Index)
 }

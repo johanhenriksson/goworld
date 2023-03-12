@@ -51,7 +51,7 @@ type deferred struct {
 	app     vulkan.App
 	pass    renderpass.T
 	light   LightShader
-	fbuf    framebuffer.T
+	fbuf    framebuffer.Array
 	shadows Shadow
 
 	materials *MaterialSorter
@@ -82,21 +82,21 @@ func NewDeferredPass(
 				LoadOp:      core1_0.AttachmentLoadOpClear,
 				StoreOp:     core1_0.AttachmentStoreOpStore,
 				FinalLayout: core1_0.ImageLayoutShaderReadOnlyOptimal,
-				Image:       attachment.FromImage(gbuffer.Diffuse()),
+				Image:       attachment.FromImageArray(gbuffer.Diffuse()),
 			},
 			{
 				Name:        NormalsAttachment,
 				LoadOp:      core1_0.AttachmentLoadOpClear,
 				StoreOp:     core1_0.AttachmentStoreOpStore,
 				FinalLayout: core1_0.ImageLayoutShaderReadOnlyOptimal,
-				Image:       attachment.FromImage(gbuffer.Normal()),
+				Image:       attachment.FromImageArray(gbuffer.Normal()),
 			},
 			{
 				Name:        PositionAttachment,
 				LoadOp:      core1_0.AttachmentLoadOpClear,
 				StoreOp:     core1_0.AttachmentStoreOpStore,
 				FinalLayout: core1_0.ImageLayoutShaderReadOnlyOptimal,
-				Image:       attachment.FromImage(gbuffer.Position()),
+				Image:       attachment.FromImageArray(gbuffer.Position()),
 			},
 		},
 		DepthAttachment: &attachment.Depth{
@@ -170,7 +170,7 @@ func NewDeferredPass(
 		},
 	})
 
-	fbuf, err := framebuffer.New(app.Device(), app.Width(), app.Height(), pass)
+	fbuf, err := framebuffer.NewArray(app.Frames(), app.Device(), app.Width(), app.Height(), pass)
 	if err != nil {
 		panic(err)
 	}
@@ -219,7 +219,7 @@ func (p *deferred) Record(cmds command.Recorder, args render.Args, scene object.
 	//
 
 	cmds.Record(func(cmd command.Buffer) {
-		cmd.CmdBeginRenderPass(p.pass, p.fbuf)
+		cmd.CmdBeginRenderPass(p.pass, p.fbuf[args.Context.Index])
 	})
 
 	frustum := shape.FrustumFromMatrix(args.VP)
@@ -236,10 +236,10 @@ func (p *deferred) Record(cmds command.Recorder, args render.Args, scene object.
 
 	cmds.Record(func(cmd command.Buffer) {
 		cmd.CmdNextSubpass()
-		p.light.Bind(cmd)
+		p.light.Bind(cmd, args.Context.Index)
 	})
 
-	lightDesc := p.light.Descriptors()
+	lightDesc := p.light.Descriptors(args.Context.Index)
 	lightDesc.Camera.Set(camera)
 
 	// ambient lights use a plain white texture as their shadow map
@@ -266,7 +266,7 @@ func (p *deferred) DrawLight(cmds command.Recorder, args render.Args, lit light.
 
 	shadowtex := p.shadows.Shadowmap(lit)
 	if shadowtex != nil {
-		p.light.Descriptors().Shadow.Set(shadowIndex, shadowtex)
+		p.light.Descriptors(args.Context.Index).Shadow.Set(shadowIndex, shadowtex)
 	} else {
 		// no shadowmap available - disable the light until its available
 		if lit.Shadows() {
