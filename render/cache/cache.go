@@ -2,6 +2,7 @@ package cache
 
 import (
 	"log"
+	"sync"
 
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/util"
@@ -57,6 +58,7 @@ type cache[K Key, V Value] struct {
 	backend Backend[K, V]
 	data    map[string]*line[V]
 	worker  *command.ThreadWorker
+	lock    *sync.RWMutex
 	maxAge  int
 }
 
@@ -65,6 +67,7 @@ func New[K Key, V Value](backend Backend[K, V]) T[K, V] {
 		backend: backend,
 		data:    map[string]*line[V]{},
 		worker:  command.NewThreadWorker(backend.Name(), 100, false),
+		lock:    &sync.RWMutex{},
 		maxAge:  100,
 	}
 	return c
@@ -72,14 +75,28 @@ func New[K Key, V Value](backend Backend[K, V]) T[K, V] {
 
 func (c cache[K, V]) MaxAge() int { return c.maxAge }
 
-func (c *cache[K, V]) fetch(key K) *line[V] {
+func (c *cache[K, V]) get(key K) (*line[V], bool) {
+	c.lock.RLock()
+	defer c.lock.RUnlock()
 	ln, hit := c.data[key.Key()]
+	return ln, hit
+}
+
+func (c *cache[K, V]) init(key K) *line[V] {
+	ln := &line[V]{
+		available: false,
+		wait:      make(chan struct{}),
+	}
+	c.lock.Lock()
+	defer c.lock.Unlock()
+	c.data[key.Key()] = ln
+	return ln
+}
+
+func (c *cache[K, V]) fetch(key K) *line[V] {
+	ln, hit := c.get(key)
 	if !hit {
-		ln = &line[V]{
-			available: false,
-			wait:      make(chan struct{}),
-		}
-		c.data[key.Key()] = ln
+		ln = c.init(key)
 	}
 
 	// check if a newer version has been requested
