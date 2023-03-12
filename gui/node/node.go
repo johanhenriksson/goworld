@@ -148,8 +148,8 @@ func (n *node[K, P]) Hydrate(parentKey string) widget.T {
 		n.widget = component.Hydrate(parentKey)
 	} else {
 		// this node is a built-in element, hydrate it if it does not exist
-		key := joinKeys(n.key, parentKey)
 		if n.widget == nil {
+			key := joinKeys(n.key, parentKey)
 			n.widget = n.hydrate(key, n.props)
 		}
 
@@ -159,7 +159,7 @@ func (n *node[K, P]) Hydrate(parentKey string) widget.T {
 		// perhaps it would make sense to extract it, and perhaps place it here?
 		children := make([]widget.T, 0, len(n.children))
 		for _, child := range n.children {
-			hydrated := child.Hydrate(key)
+			hydrated := child.Hydrate(n.widget.Key())
 			children = append(children, hydrated)
 		}
 		n.widget.SetChildren(children)
