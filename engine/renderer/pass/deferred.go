@@ -55,6 +55,9 @@ type deferred struct {
 	shadows Shadow
 
 	materials *MaterialSorter
+
+	meshQuery  *object.Query[mesh.T]
+	lightQuery *object.Query[light.T]
 }
 
 func NewDeferredPass(
@@ -200,6 +203,9 @@ func NewDeferredPass(
 				DepthTest:    true,
 				DepthWrite:   true,
 			}),
+
+		meshQuery:  object.NewQuery[mesh.T](),
+		lightQuery: object.NewQuery[light.T](),
 	}
 }
 
@@ -224,7 +230,8 @@ func (p *deferred) Record(cmds command.Recorder, args render.Args, scene object.
 
 	frustum := shape.FrustumFromMatrix(args.VP)
 
-	objects := object.Query[mesh.T]().
+	objects := p.meshQuery.
+		Reset().
 		Where(isDrawDeferred).
 		Where(frustumCulled(&frustum)).
 		Collect(scene)
@@ -248,7 +255,9 @@ func (p *deferred) Record(cmds command.Recorder, args render.Args, scene object.
 	ambient := light.NewAmbient(color.White, 0.33)
 	p.DrawLight(cmds, args, ambient, 0)
 
-	lights := object.Query[light.T]().Collect(scene)
+	lights := p.lightQuery.
+		Reset().
+		Collect(scene)
 	for index, lit := range lights {
 		if err := p.DrawLight(cmds, args, lit, index+1); err != nil {
 			fmt.Printf("light draw error in object %s: %s\n", lit.Name(), err)

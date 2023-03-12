@@ -28,11 +28,15 @@ type PreNode interface {
 
 type preNode struct {
 	*node
+	cameraQuery  *object.Query[camera.T]
+	predrawQuery *object.Query[PreDrawable]
 }
 
 func newPreNode(app vulkan.App) PreNode {
 	return &preNode{
-		node: newNode(app, "Pre", nil),
+		node:         newNode(app, "Pre", nil),
+		cameraQuery:  object.NewQuery[camera.T](),
+		predrawQuery: object.NewQuery[PreDrawable](),
 	}
 }
 
@@ -44,7 +48,7 @@ func (n *preNode) Prepare(scene object.T, time, delta float32) (*render.Args, er
 	}
 
 	// find the first active camera
-	camera, cameraExists := object.Query[camera.T]().First(scene)
+	camera, cameraExists := n.cameraQuery.Reset().First(scene)
 	if !cameraExists {
 		return nil, ErrNoCamera
 	}
@@ -81,7 +85,7 @@ func (n *preNode) Prepare(scene object.T, time, delta float32) (*render.Args, er
 	}
 
 	// execute pre-draw pass
-	objects := object.Query[PreDrawable]().Collect(scene)
+	objects := n.predrawQuery.Reset().Collect(scene)
 	for _, object := range objects {
 		object.PreDraw(args.Apply(object.Transform().World()), scene)
 	}

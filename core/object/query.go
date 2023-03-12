@@ -6,40 +6,40 @@ import (
 	"github.com/johanhenriksson/goworld/util"
 )
 
-type query[K T] struct {
+type Query[K T] struct {
 	results []K
 	filters []func(b K) bool
 	sorter  func(a, b K) bool
 }
 
 // Any returns a query for generic components
-func Any() *query[T] {
-	return Query[T]()
+func Any() *Query[T] {
+	return NewQuery[T]()
 }
 
-// Query returns a new query for the given component type
-func Query[K T]() *query[K] {
-	return &query[K]{
+// NewQuery returns a new query for the given component type
+func NewQuery[K T]() *Query[K] {
+	return &Query[K]{
 		filters: make([]func(K) bool, 0, 8),
 		results: make([]K, 0, 128),
 	}
 }
 
 // Where applies a filter predicate to the results
-func (q *query[K]) Where(predicate func(K) bool) *query[K] {
+func (q *Query[K]) Where(predicate func(K) bool) *Query[K] {
 	q.filters = append(q.filters, predicate)
 	return q
 }
 
 // Sort the result using a compare function.
 // The compare function should return true if a is "less than" b
-func (q *query[K]) Sort(sorter func(a, b K) bool) *query[K] {
+func (q *Query[K]) Sort(sorter func(a, b K) bool) *Query[K] {
 	q.sorter = sorter
 	return q
 }
 
 // Match returns true if the passed component matches the query
-func (q *query[K]) match(component K) bool {
+func (q *Query[K]) match(component K) bool {
 	for _, filter := range q.filters {
 		if !filter(component) {
 			return false
@@ -49,23 +49,25 @@ func (q *query[K]) match(component K) bool {
 }
 
 // Append a component to the query results.
-func (q *query[K]) append(result K) {
+func (q *Query[K]) append(result K) {
 	q.results = append(q.results, result)
 }
 
 // Clear the query results, without freeing the memory.
-func (q *query[K]) clear() {
+func (q *Query[K]) Reset() *Query[K] {
 	// clear slice, but keep the memory
 	q.results = q.results[:0]
+	q.filters = q.filters[:0]
+	return q
 }
 
 // First returns the first match
-func (q *query[K]) First(root T) (K, bool) {
+func (q *Query[K]) First(root T) (K, bool) {
 	result, hit := q.first(root)
 	return result, hit
 }
 
-func (q *query[K]) first(root T) (K, bool) {
+func (q *Query[K]) first(root T) (K, bool) {
 	var empty K
 	if !root.Active() {
 		return empty, false
@@ -84,9 +86,7 @@ func (q *query[K]) first(root T) (K, bool) {
 }
 
 // Collect returns all matching components
-func (q *query[K]) Collect(roots ...T) []K {
-	q.clear()
-
+func (q *Query[K]) Collect(roots ...T) []K {
 	// collect all matches
 	for _, root := range roots {
 		q.collect(root)
@@ -102,11 +102,11 @@ func (q *query[K]) Collect(roots ...T) []K {
 	return q.results
 }
 
-func (q *query[K]) CollectObjects(roots ...T) []T {
-	return util.Map(Query[K]().Collect(roots...), func(s K) T { return s })
+func (q *Query[K]) CollectObjects(roots ...T) []T {
+	return util.Map(NewQuery[K]().Collect(roots...), func(s K) T { return s })
 }
 
-func (q *query[K]) collect(object T) {
+func (q *Query[K]) collect(object T) {
 	if !object.Active() {
 		return
 	}

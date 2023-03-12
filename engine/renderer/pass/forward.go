@@ -18,11 +18,13 @@ import (
 const ForwardSubpass = renderpass.Name("forward")
 
 type ForwardPass struct {
-	gbuffer   GeometryBuffer
-	app       vulkan.App
-	pass      renderpass.T
-	fbuf      framebuffer.Array
+	gbuffer GeometryBuffer
+	app     vulkan.App
+	pass    renderpass.T
+	fbuf    framebuffer.Array
+
 	materials *MaterialSorter
+	meshQuery *object.Query[mesh.T]
 }
 
 func NewForwardPass(
@@ -96,11 +98,13 @@ func NewForwardPass(
 			DepthWrite:   true,
 			CullMode:     vertex.CullBack,
 		}),
+		meshQuery: object.NewQuery[mesh.T](),
 	}
 }
 
 func (p *ForwardPass) Record(cmds command.Recorder, args render.Args, scene object.T) {
-	forwardMeshes := object.Query[mesh.T]().
+	forwardMeshes := p.meshQuery.
+		Reset().
 		Where(isDrawForward).
 		Collect(scene)
 

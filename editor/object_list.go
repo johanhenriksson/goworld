@@ -31,7 +31,7 @@ func ObjectList(key string, props ObjectListProps) node.T {
 					if !object.Is[*ObjectEditor](obj) {
 						// look up an editor instead
 						var hit bool
-						obj, hit = object.Query[*ObjectEditor]().Where(func(e *ObjectEditor) bool {
+						obj, hit = object.NewQuery[*ObjectEditor]().Where(func(e *ObjectEditor) bool {
 							return e.Target() == obj
 						}).First(props.EditorRoot)
 						if !hit {

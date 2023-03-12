@@ -47,7 +47,7 @@ func (m *manager) Update(scene object.T, dt float32) {
 	root := m.render()
 
 	// find fragments
-	fragments := object.Query[Fragment]().Collect(scene)
+	fragments := object.NewQuery[Fragment]().Collect(scene)
 
 	// populate with fragments
 	for {

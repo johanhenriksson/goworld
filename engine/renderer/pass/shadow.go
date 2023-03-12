@@ -34,6 +34,9 @@ type shadowpass struct {
 
 	// should be replaced with a proper cache that will evict unused maps
 	shadowmaps map[light.T]Shadowmap
+
+	lightQuery *object.Query[light.T]
+	meshQuery  *object.Query[mesh.T]
 }
 
 type Shadowmap struct {
@@ -94,6 +97,9 @@ func NewShadowPass(app vulkan.App) Shadow {
 		pass:       pass,
 		shadowmaps: make(map[light.T]Shadowmap),
 		size:       4096,
+
+		meshQuery:  object.NewQuery[mesh.T](),
+		lightQuery: object.NewQuery[light.T](),
 	}
 }
 
@@ -145,7 +151,11 @@ func (p *shadowpass) createShadowmap(light light.T) Shadowmap {
 }
 
 func (p *shadowpass) Record(cmds command.Recorder, args render.Args, scene object.T) {
-	lights := object.Query[light.T]().Where(func(lit light.T) bool { return lit.Type() == light.Directional && lit.Shadows() }).Collect(scene)
+	lights := p.lightQuery.
+		Reset().
+		Where(func(lit light.T) bool { return lit.Type() == light.Directional && lit.Shadows() }).
+		Collect(scene)
+
 	for _, light := range lights {
 		shadowmap, mapExists := p.shadowmaps[light]
 		if !mapExists {
@@ -168,8 +178,12 @@ func (p *shadowpass) Record(cmds command.Recorder, args render.Args, scene objec
 			cmd.CmdBeginRenderPass(p.pass, shadowmap.fbuf)
 		})
 
-		objects := object.Query[mesh.T]().Where(isDrawDeferred).Collect(scene)
-		shadowmap.mats.DrawCamera(cmds, args, camera, objects)
+		// todo: filter only meshes that cast shadows
+		meshes := p.meshQuery.
+			Reset().
+			Where(isDrawDeferred).
+			Collect(scene)
+		shadowmap.mats.DrawCamera(cmds, args, camera, meshes)
 
 		cmds.Record(func(cmd command.Buffer) {
 			cmd.CmdEndRenderPass()

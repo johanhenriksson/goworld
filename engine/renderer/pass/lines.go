@@ -22,6 +22,7 @@ type LinePass struct {
 	pass      renderpass.T
 	fbuf      framebuffer.Array
 	materials *MaterialSorter
+	meshQuery *object.Query[mesh.T]
 }
 
 func NewLinePass(app vulkan.App, target RenderTarget) *LinePass {
@@ -72,6 +73,7 @@ func NewLinePass(app vulkan.App, target RenderTarget) *LinePass {
 				Primitive:    vertex.Lines,
 				DepthTest:    true,
 			}),
+		meshQuery: object.NewQuery[mesh.T](),
 	}
 }
 
@@ -80,7 +82,10 @@ func (p *LinePass) Record(cmds command.Recorder, args render.Args, scene object.
 		cmd.CmdBeginRenderPass(p.pass, p.fbuf[args.Context.Index])
 	})
 
-	lines := object.Query[mesh.T]().Where(isDrawLines).Collect(scene)
+	lines := p.meshQuery.
+		Reset().
+		Where(isDrawLines).
+		Collect(scene)
 	p.materials.Draw(cmds, args, lines)
 
 	cmds.Record(func(cmd command.Buffer) {

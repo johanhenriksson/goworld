@@ -2,6 +2,7 @@ package pass
 
 import (
 	"github.com/johanhenriksson/goworld/core/object"
+	"github.com/johanhenriksson/goworld/gui"
 	"github.com/johanhenriksson/goworld/gui/quad"
 	"github.com/johanhenriksson/goworld/gui/widget"
 	"github.com/johanhenriksson/goworld/math"
@@ -52,6 +53,7 @@ type GuiPass struct {
 
 	textures []cache.SamplerCache
 	quads    []*widget.QuadBuffer
+	guiQuery *object.Query[gui.Manager]
 }
 
 var _ Pass = &GuiPass{}
@@ -131,6 +133,7 @@ func NewGuiPass(app vulkan.App, target RenderTarget) *GuiPass {
 		quad:     mesh,
 		textures: textures,
 		quads:    quads,
+		guiQuery: object.NewQuery[gui.Manager](),
 	}
 }
 
@@ -162,7 +165,9 @@ func (p *GuiPass) Record(cmds command.Recorder, args render.Args, scene object.T
 	qb.Reset()
 
 	// query scene for gui managers
-	guis := object.Query[GuiDrawable]().Collect(scene)
+	guis := p.guiQuery.
+		Reset().
+		Collect(scene)
 	for _, gui := range guis {
 		gui.DrawUI(uiArgs, qb)
 	}

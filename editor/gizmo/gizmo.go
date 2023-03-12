@@ -46,7 +46,7 @@ func HandleMouse(m Gizmo, e mouse.Event) {
 
 		// return closest hit
 		// find Collider children of Selectable objects
-		colliders := object.Query[collider.T]().Collect(m)
+		colliders := object.NewQuery[collider.T]().Collect(m)
 
 		closest, hit := collider.ClosestIntersection(colliders, &physics.Ray{
 			Origin: near,

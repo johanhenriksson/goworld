@@ -92,8 +92,8 @@ func (m *toolmgr) MouseEvent(e mouse.Event) {
 		dir := far.Sub(near).Normalized()
 
 		// find Collider children of Selectable objects
-		selectables := object.Query[Selectable]().CollectObjects(m.scene)
-		colliders := object.Query[collider.T]().Collect(selectables...)
+		selectables := object.NewQuery[Selectable]().CollectObjects(m.scene)
+		colliders := object.NewQuery[collider.T]().Collect(selectables...)
 
 		// return closest hit
 		closest, hit := collider.ClosestIntersection(colliders, &physics.Ray{
