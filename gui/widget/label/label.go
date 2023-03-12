@@ -212,8 +212,8 @@ func (l *label) Draw(args widget.DrawArgs, quads *widget.QuadBuffer) {
 			continue
 		}
 
-		handle := args.Textures.Fetch(glyph)
-		if handle != nil {
+		handle, texExists := args.Textures.TryFetch(glyph)
+		if texExists {
 			min := pos.Add(glyph.Bearing)
 			max := min.Add(glyph.Size)
 			quads.Push(widget.Quad{

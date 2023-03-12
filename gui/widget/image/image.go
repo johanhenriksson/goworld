@@ -101,8 +101,8 @@ func (i *image) Image() texture.Ref { return i.props.Image }
 //
 
 func (i *image) Draw(args widget.DrawArgs, quads *widget.QuadBuffer) {
-	tex := args.Textures.Fetch(i.props.Image)
-	if tex == nil {
+	tex, texExists := args.Textures.TryFetch(i.props.Image)
+	if !texExists {
 		return
 	}
 

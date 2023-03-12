@@ -24,33 +24,37 @@ type textures struct {
 }
 
 func (t *textures) Instantiate(ref texture.Ref, callback func(texture.T)) {
-	// load image data
-	img := ref.ImageData()
-
-	// args & defaults
-	args := ref.TextureArgs()
-	if args.Filter == 0 {
-		args.Filter = core1_0.FilterLinear
-	}
-	if args.Wrap == 0 {
-		args.Wrap = core1_0.SamplerAddressModeClampToEdge
-	}
-
-	// allocate texture
-	tex, err := texture.New(t.device, ref.Key(), img.Width, img.Height, img.Format, args)
-	if err != nil {
-		panic(err)
-	}
-
-	// allocate staging buffer
-	stage := buffer.NewShared(t.device, len(img.Buffer))
-
-	// write to staging buffer
-	stage.Write(0, img.Buffer)
-	stage.Flush()
+	var stage buffer.T
+	var tex texture.T
 
 	// transfer data to texture buffer
 	t.worker.Queue(func(cmd command.Buffer) {
+		// load image data
+		img := ref.ImageData()
+
+		// args & defaults
+		args := ref.TextureArgs()
+		if args.Filter == 0 {
+			args.Filter = core1_0.FilterLinear
+		}
+		if args.Wrap == 0 {
+			args.Wrap = core1_0.SamplerAddressModeClampToEdge
+		}
+
+		// allocate texture
+		var err error
+		tex, err = texture.New(t.device, ref.Key(), img.Width, img.Height, img.Format, args)
+		if err != nil {
+			panic(err)
+		}
+
+		// allocate staging buffer
+		stage = buffer.NewShared(t.device, len(img.Buffer))
+
+		// write to staging buffer
+		stage.Write(0, img.Buffer)
+		stage.Flush()
+
 		cmd.CmdImageBarrier(
 			core1_0.PipelineStageTopOfPipe,
 			core1_0.PipelineStageTransfer,
@@ -67,14 +71,13 @@ func (t *textures) Instantiate(ref texture.Ref, callback func(texture.T)) {
 			core1_0.ImageLayoutShaderReadOnlyOptimal,
 			core1_0.ImageAspectColor)
 	})
-	t.worker.OnComplete(func() {
-		stage.Destroy()
-		callback(tex)
+	t.worker.Submit(command.SubmitInfo{
+		Marker: "TextureUpload",
+		Callback: func() {
+			stage.Destroy()
+			callback(tex)
+		},
 	})
-}
-
-func (t *textures) Submit() {
-	t.worker.Submit(command.SubmitInfo{Marker: "TextureUpload"})
 }
 
 func (t *textures) Delete(tex texture.T) {

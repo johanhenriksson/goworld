@@ -22,21 +22,17 @@ type Worker interface {
 	Destroy()
 	Flush()
 	Invoke(func())
-
-	// Schedules a callback to be executed after the next submission completes
-	OnComplete(func())
 }
 
 type Workers []Worker
 
 type worker struct {
-	device    device.T
-	name      string
-	queue     core1_0.Queue
-	pool      Pool
-	batch     []Buffer
-	callbacks []func()
-	work      *ThreadWorker
+	device device.T
+	name   string
+	queue  core1_0.Queue
+	pool   Pool
+	batch  []Buffer
+	work   *ThreadWorker
 }
 
 func NewWorker(device device.T, queueFlags core1_0.QueueFlags, queueIndex int) Worker {
@@ -47,13 +43,12 @@ func NewWorker(device device.T, queueFlags core1_0.QueueFlags, queueIndex int) W
 	device.SetDebugObjectName(driver.VulkanHandle(queue.Handle()), core1_0.ObjectTypeQueue, name)
 
 	return &worker{
-		device:    device,
-		name:      name,
-		queue:     queue,
-		pool:      pool,
-		callbacks: make([]func(), 0, 32),
-		batch:     make([]Buffer, 0, 128),
-		work:      NewThreadWorker(name, 100, true),
+		device: device,
+		name:   name,
+		queue:  queue,
+		pool:   pool,
+		batch:  make([]Buffer, 0, 128),
+		work:   NewThreadWorker(name, 100, true),
 	}
 }
 
@@ -73,6 +68,9 @@ func (w *worker) Queue(batch CommandFn) {
 }
 
 func (w *worker) enqueue(batch CommandFn) {
+	// todo: dont make a command buffer for each call to Queue() !!
+	//       instead, allocate and record everything that we've batched just prior to submission
+
 	// allocate a new buffer
 	buf := w.pool.Allocate(core1_0.CommandBufferLevelPrimary)
 
@@ -86,9 +84,10 @@ func (w *worker) enqueue(batch CommandFn) {
 }
 
 type SubmitInfo struct {
-	Marker string
-	Wait   []Wait
-	Signal []sync.Semaphore
+	Marker   string
+	Wait     []Wait
+	Signal   []sync.Semaphore
+	Callback func()
 }
 
 type Wait struct {
@@ -99,17 +98,12 @@ type Wait struct {
 // Submit the current batch of command buffers
 // Blocks until the queue submission is confirmed
 func (w *worker) Submit(submit SubmitInfo) {
-	// grab the list of callbacks & realloc callback buffer
-	// this must happen at the time of submission to ensure that each submit call runs the correct callbacks
-	callbacks := w.callbacks
-	w.callbacks = make([]func(), 0, 32)
-
 	w.work.Invoke(func() {
-		w.submit(submit, callbacks)
+		w.submit(submit)
 	})
 }
 
-func (w *worker) submit(submit SubmitInfo, callbacks []func()) {
+func (w *worker) submit(submit SubmitInfo) {
 	debug.SetPanicOnFault(true)
 	buffers := util.Map(w.batch, func(buf Buffer) core1_0.CommandBuffer { return buf.Ptr() })
 
@@ -141,18 +135,12 @@ func (w *worker) submit(submit SubmitInfo, callbacks []func()) {
 				w.device.Ptr().FreeCommandBuffers(buffers)
 			}
 
-			// run callbacks (on the worker thead)
-			for _, callback := range callbacks {
-				callback()
+			// run callback (on the worker thead)
+			if submit.Callback != nil {
+				submit.Callback()
 			}
 		})
 	}()
-}
-
-func (w *worker) OnComplete(callback func()) {
-	w.work.Invoke(func() {
-		w.callbacks = append(w.callbacks, callback)
-	})
 }
 
 func (w *worker) Destroy() {

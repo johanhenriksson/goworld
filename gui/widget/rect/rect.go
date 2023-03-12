@@ -128,10 +128,13 @@ func (f *rect) SetRadius(r float32)      { f.radius = r }
 //
 
 func (f *rect) drawSelf(args widget.DrawArgs, quads *widget.QuadBuffer) {
-	tex := args.Textures.Fetch(color.White)
-	if tex == nil && f.color.A <= 0 {
+	// if alpha is zero, skip drawing
+	if f.color.A <= 0 {
 		return
 	}
+
+	// fetch white texture. its always cached
+	tex := args.Textures.Fetch(color.White)
 
 	zindex := args.Position.Z + float32(f.props.Style.ZOffset)
 	min := args.Position.XY().Add(f.Position())
@@ -183,6 +186,10 @@ func (f *rect) drawSelf(args widget.DrawArgs, quads *widget.QuadBuffer) {
 }
 
 func (f *rect) Draw(args widget.DrawArgs, quads *widget.QuadBuffer) {
+	if f.props.Style.Hidden {
+		return
+	}
+
 	f.drawSelf(args, quads)
 
 	position := args.Position.XY().Add(f.Position())

@@ -4,14 +4,27 @@ import (
 	"log"
 
 	"github.com/johanhenriksson/goworld/render/command"
+	"github.com/johanhenriksson/goworld/util"
 )
 
 type T[K Key, V Value] interface {
-	Submit()
-	Fetch(K) (V, bool)
-	FetchSync(K) V
-	Delete(V)
-	Tick(int)
+	// TryFetch returns a value if it exists and is ready to use.
+	// Resets the age of the cache line
+	// Returns a bool indicating whether the value exists.
+	TryFetch(K) (V, bool)
+
+	// Fetch returns a value, waiting until its becomes available if it does not yet exist
+	// Resets the age of the cache line
+	Fetch(K) V
+
+	// MaxAge returns the number of ticks until unused lines are evicted
+	MaxAge() int
+
+	// Tick increments the age of all cache lines, and evicts those
+	// that have not been accessed in maxAge ticks or more.
+	Tick()
+
+	// Destroy the cache and all data held in it.
 	Destroy()
 }
 
@@ -23,127 +36,139 @@ type Key interface {
 type Value interface{}
 
 type Backend[K Key, V Value] interface {
-	Submit()
+	// Instantiate the resource referred to by Key.
+	// Must execute on a background goroutine
 	Instantiate(K, func(V))
+
 	Delete(V)
 	Destroy()
 	Name() string
 }
 
 type line[V Value] struct {
-	value   V
-	age     int
-	version int
-	ready   bool
+	value     V
+	age       int
+	version   int
+	available bool
+	wait      chan struct{}
 }
 
 type cache[K Key, V Value] struct {
 	backend Backend[K, V]
 	data    map[string]*line[V]
-	remove  map[int][]V
-	frame   int
 	worker  *command.ThreadWorker
+	maxAge  int
 }
 
 func New[K Key, V Value](backend Backend[K, V]) T[K, V] {
 	c := &cache[K, V]{
 		backend: backend,
 		data:    map[string]*line[V]{},
-		remove:  map[int][]V{},
 		worker:  command.NewThreadWorker(backend.Name(), 100, false),
+		maxAge:  100,
 	}
 	return c
 }
 
-func (c *cache[K, V]) FetchSync(key K) V {
-	v, exists := c.Fetch(key)
-	if !exists {
-		c.worker.Flush()
-		v, exists = c.Fetch(key)
-		if !exists {
-			panic("resource should exist")
-		}
-	}
-	return v
-}
+func (c cache[K, V]) MaxAge() int { return c.maxAge }
 
-func (c *cache[K, V]) Fetch(key K) (V, bool) {
-	var empty V
-
+func (c *cache[K, V]) fetch(key K) *line[V] {
 	ln, hit := c.data[key.Key()]
 	if !hit {
 		ln = &line[V]{
-			ready: false,
+			available: false,
+			wait:      make(chan struct{}),
 		}
 		c.data[key.Key()] = ln
 	}
 
+	// check if a newer version has been requested
+	// since the initial line has version 0, this always happens on the first request.
 	if ln.version != key.Version() {
+		// update version immediately, so that duplicate instantiantions wont happen.
+		// note that the previous version will be returned until the new one is available
 		ln.version = key.Version()
-		c.worker.Invoke(func() {
-			c.backend.Instantiate(key, func(value V) {
-				if ln.ready {
-					// ready implies that we have a previous value - schedule deletion
-					c.Delete(ln.value)
-				}
-				ln.value = value
-				ln.ready = true
-			})
+
+		// instantiate new version
+		c.backend.Instantiate(key, func(value V) {
+			if ln.available {
+				// available implies that we have a previous value
+				// however, it is most likely in use rendering the in-flight frame!
+				// deleting it here may cause a segfault
+				c.deleteLater(ln.value)
+			}
+			ln.value = value
+
+			// if its the very first time this item is requested, signal any waiting
+			// synchronous fetch that it is ready.
+			if !ln.available {
+				ln.available = true
+				close(ln.wait)
+			}
 		})
 	}
 
 	// reset age
 	ln.age = 0
 
-	// not available yet
-	if !ln.ready {
+	return ln
+}
+
+func (c *cache[K, V]) TryFetch(key K) (V, bool) {
+	var empty V
+
+	ln := c.fetch(key)
+
+	// not available yet - return nothing
+	if !ln.available {
 		return empty, false
 	}
 
 	return ln.value, true
 }
 
-func (c *cache[K, V]) Delete(value V) {
-	c.remove[c.frame] = append(c.remove[c.frame], value)
+func (c *cache[K, V]) Fetch(key K) V {
+	ln := c.fetch(key)
+
+	// not available yet - wait for it.
+	if !ln.available {
+		<-ln.wait
+	}
+
+	return ln.value
 }
 
-// Submit pending work
-func (c *cache[K, V]) Submit() {
-	c.backend.Submit()
+func (c *cache[K, V]) deleteLater(value V) {
+	// we can reuse the eviction mechanic to delete values later
+	// simply attach it to a cache line with a random key that will never be accessed
+	randomKey := "trash-" + util.NewUUID(8)
+	c.data[randomKey] = &line[V]{
+		value:     value,
+		available: true,
+		age:       c.maxAge - 10, // delete in 10 frames
+	}
 }
 
-// Should be called immediately after aquiring a new frame, passing the index of the aquired frame.
-// Releases any unused resources associated with that frame index.
-func (c *cache[K, V]) Tick(frameIndex int) {
-	c.frame = frameIndex
-
+func (c *cache[K, V]) Tick() {
 	// eviction
 	for key, line := range c.data {
 		line.age++
-		if line.age > 100 {
-			log.Println(c.backend, "evict", line.value)
-			c.Delete(line.value)
+		if line.age > c.maxAge {
+			log.Println(c.backend, "evict", key)
 			delete(c.data, key)
-		}
-	}
 
-	if len(c.remove) > 1 {
-		for _, value := range c.remove[c.frame] {
-			c.backend.Delete(value)
+			// delete any instantiated object
+			if line.available {
+				c.backend.Delete(line.value)
+			}
 		}
-		c.remove[c.frame] = nil
 	}
 }
 
 func (c *cache[K, V]) Destroy() {
 	c.worker.Flush()
-	for _, queue := range c.remove {
-		for _, value := range queue {
-			c.backend.Delete(value)
-		}
-	}
 	for _, line := range c.data {
-		if line.ready {
+		if line.available {
 			c.backend.Delete(line.value)
 		}
 	}

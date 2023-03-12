@@ -31,3 +31,7 @@ func NewQuadBuffer(capacity int) *QuadBuffer {
 func (qb *QuadBuffer) Push(quad Quad) {
 	qb.Data = append(qb.Data, quad)
 }
+
+func (qb *QuadBuffer) Reset() {
+	qb.Data = qb.Data[:0]
+}

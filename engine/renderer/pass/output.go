@@ -70,7 +70,7 @@ func NewOutputPass(app vulkan.App, source RenderTarget) *OutputPass {
 	p.material = material.New(
 		app.Device(),
 		material.Args{
-			Shader:     app.Shaders().FetchSync(shader.NewRef("output")),
+			Shader:     app.Shaders().Fetch(shader.NewRef("output")),
 			Pass:       p.pass,
 			Pointers:   vertex.ParsePointers(vertex.T{}),
 			DepthTest:  false,
@@ -113,21 +113,12 @@ func NewOutputPass(app vulkan.App, source RenderTarget) *OutputPass {
 
 func (p *OutputPass) Record(cmds command.Recorder, args render.Args, scene object.T) {
 	ctx := args.Context
+	quad := p.app.Meshes().Fetch(p.quad)
 
 	cmds.Record(func(cmd command.Buffer) {
 		cmd.CmdBeginRenderPass(p.pass, p.fbufs[ctx.Index%len(p.fbufs)])
-	})
-
-	quad, meshReady := p.app.Meshes().Fetch(p.quad)
-	if meshReady {
-		cmds.Record(func(cmd command.Buffer) {
-
-			p.desc[ctx.Index%len(p.desc)].Bind(cmd)
-			quad.Draw(cmd, 0)
-		})
-	}
-
-	cmds.Record(func(cmd command.Buffer) {
+		p.desc[ctx.Index%len(p.desc)].Bind(cmd)
+		quad.Draw(cmd, 0)
 		cmd.CmdEndRenderPass()
 	})
 }

@@ -22,11 +22,11 @@ func (s *shaders) Name() string {
 }
 
 func (s *shaders) Instantiate(key shader.Ref, callback func(shader.T)) {
-	shader := key.Load(s.device)
-	callback(shader)
-}
-
-func (s *shaders) Submit() {
+	// load shader in a background goroutine
+	go func() {
+		shader := key.Load(s.device)
+		callback(shader)
+	}()
 }
 
 func (s *shaders) Delete(shader shader.T) {

@@ -24,7 +24,10 @@ func NewMeshCache(device device.T, worker command.Worker) MeshCache {
 }
 
 func (m *meshes) Instantiate(mesh vertex.Mesh, callback func(Mesh)) {
-	cached := &vkMesh{
+	var cached *vkMesh
+	var vtxStage, idxStage buffer.T
+
+	cached = &vkMesh{
 		key:      mesh.Key(),
 		elements: mesh.Indices(),
 		idxType:  core1_0.IndexTypeUInt16,
@@ -35,22 +38,22 @@ func (m *meshes) Instantiate(mesh vertex.Mesh, callback func(Mesh)) {
 		return
 	}
 
-	vtxSize := mesh.VertexSize() * mesh.Vertices()
-	vtxStage := buffer.NewShared(m.device, vtxSize)
-
-	idxSize := mesh.IndexSize() * mesh.Indices()
-	idxStage := buffer.NewShared(m.device, idxSize)
-
-	vtxStage.Write(0, mesh.VertexData())
-	vtxStage.Flush()
-	idxStage.Write(0, mesh.IndexData())
-	idxStage.Flush()
-
-	// allocate buffers
-	cached.vertices = buffer.NewRemote(m.device, vtxSize, core1_0.BufferUsageVertexBuffer)
-	cached.indices = buffer.NewRemote(m.device, idxSize, core1_0.BufferUsageIndexBuffer)
-
 	m.worker.Queue(func(cmd command.Buffer) {
+		vtxSize := mesh.VertexSize() * mesh.Vertices()
+		vtxStage = buffer.NewShared(m.device, vtxSize)
+
+		idxSize := mesh.IndexSize() * mesh.Indices()
+		idxStage = buffer.NewShared(m.device, idxSize)
+
+		vtxStage.Write(0, mesh.VertexData())
+		vtxStage.Flush()
+		idxStage.Write(0, mesh.IndexData())
+		idxStage.Flush()
+
+		// allocate buffers
+		cached.vertices = buffer.NewRemote(m.device, vtxSize, core1_0.BufferUsageVertexBuffer)
+		cached.indices = buffer.NewRemote(m.device, idxSize, core1_0.BufferUsageIndexBuffer)
+
 		cmd.CmdCopyBuffer(vtxStage, cached.vertices, core1_0.BufferCopy{
 			Size: vtxSize,
 		})
@@ -58,15 +61,14 @@ func (m *meshes) Instantiate(mesh vertex.Mesh, callback func(Mesh)) {
 			Size: idxSize,
 		})
 	})
-	m.worker.OnComplete(func() {
-		vtxStage.Destroy()
-		idxStage.Destroy()
-		callback(cached)
+	m.worker.Submit(command.SubmitInfo{
+		Marker: "MeshCache",
+		Callback: func() {
+			vtxStage.Destroy()
+			idxStage.Destroy()
+			callback(cached)
+		},
 	})
-}
-
-func (m *meshes) Submit() {
-	m.worker.Submit(command.SubmitInfo{Marker: "MeshCache"})
 }
 
 func (m *meshes) Delete(mesh Mesh) {

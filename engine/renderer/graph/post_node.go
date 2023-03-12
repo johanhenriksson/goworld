@@ -25,19 +25,15 @@ func (n *postNode) Draw(worker command.Worker, args render.Args, scene object.T)
 	}
 
 	barrier := make(chan struct{})
-	worker.OnComplete(func() {
-		<-barrier
-		args.Context.Release()
-	})
 	worker.Submit(command.SubmitInfo{
 		Marker: n.Name(),
 		Wait:   n.waits(args.Context.Index),
 		Signal: signal,
+		Callback: func() {
+			<-barrier
+			args.Context.Release()
+		},
 	})
-
-	// submit cache work
-	n.app.Meshes().Submit()
-	n.app.Textures().Submit()
 
 	// present
 	n.app.Present(worker, args.Context)

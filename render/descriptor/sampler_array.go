@@ -18,6 +18,10 @@ type SamplerArray struct {
 	sampler []core1_0.Sampler
 	view    []core1_0.ImageView
 	set     Set
+
+	// re-used update arrays
+	info   []core1_0.DescriptorImageInfo
+	writes []core1_0.WriteDescriptorSet
 }
 
 var _ Descriptor = &SamplerArray{}
@@ -29,6 +33,8 @@ func (d *SamplerArray) Initialize(device device.T) {
 
 	d.sampler = make([]core1_0.Sampler, d.Count)
 	d.view = make([]core1_0.ImageView, d.Count)
+	d.info = make([]core1_0.DescriptorImageInfo, 0, d.Count)
+	d.writes = make([]core1_0.WriteDescriptorSet, 0, 100)
 }
 
 func (d *SamplerArray) String() string {

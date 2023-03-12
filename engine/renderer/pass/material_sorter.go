@@ -71,7 +71,7 @@ func (m *MaterialSorter) Load(def *material.Def) bool {
 	pointers := vertex.ParsePointers(def.VertexFormat)
 
 	// fetch shader from cache
-	shader, shaderReady := m.app.Shaders().Fetch(shader.NewRef(def.Shader))
+	shader, shaderReady := m.app.Shaders().TryFetch(shader.NewRef(def.Shader))
 	if !shaderReady {
 		// pending
 		return false
@@ -138,7 +138,7 @@ func (m *MaterialSorter) DrawCamera(cmds command.Recorder, args render.Args, cam
 
 		begin := index
 		for _, msh := range matMeshes {
-			vkmesh, meshReady := m.app.Meshes().Fetch(msh.Mesh())
+			vkmesh, meshReady := m.app.Meshes().TryFetch(msh.Mesh())
 			if !meshReady {
 				continue
 			}

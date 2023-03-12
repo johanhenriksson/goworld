@@ -49,6 +49,9 @@ type GuiPass struct {
 	pass renderpass.T
 	fbuf framebuffer.T
 	quad quad.T
+
+	textures []cache.SamplerCache
+	quads    []*widget.QuadBuffer
 }
 
 var _ Pass = &GuiPass{}
@@ -88,7 +91,7 @@ func NewGuiPass(app vulkan.App, target RenderTarget) *GuiPass {
 
 	mat := material.New(app.Device(), material.Args{
 		Pass:       pass,
-		Shader:     app.Shaders().FetchSync(shader.NewRef("ui_quad")),
+		Shader:     app.Shaders().Fetch(shader.NewRef("ui_quad")),
 		Pointers:   vertex.ParsePointers(vertex.UI{}),
 		DepthTest:  true,
 		DepthWrite: true,
@@ -113,12 +116,21 @@ func NewGuiPass(app vulkan.App, target RenderTarget) *GuiPass {
 		panic(err)
 	}
 
+	textures := make([]cache.SamplerCache, app.Frames())
+	quads := make([]*widget.QuadBuffer, app.Frames())
+	for i := 0; i < app.Frames(); i++ {
+		textures[i] = cache.NewSamplerCache(app.Textures(), mat[i].Descriptors().Textures)
+		quads[i] = widget.NewQuadBuffer(10000)
+	}
+
 	return &GuiPass{
-		app:  app,
-		mat:  mat,
-		pass: pass,
-		fbuf: fbufs,
-		quad: mesh,
+		app:      app,
+		mat:      mat,
+		pass:     pass,
+		fbuf:     fbufs,
+		quad:     mesh,
+		textures: textures,
+		quads:    quads,
 	}
 }
 
@@ -129,12 +141,9 @@ func (p *GuiPass) Record(cmds command.Recorder, args render.Args, scene object.T
 	scale := args.Viewport.Scale
 	size = size.Scaled(1 / scale)
 
-	mesh, quadExists := p.app.Meshes().Fetch(p.quad.Mesh())
-	if !quadExists {
-		return
-	}
+	mesh := p.app.Meshes().Fetch(p.quad.Mesh())
 
-	textures := cache.NewSamplerCache(p.app.Textures(), mat.Descriptors().Textures)
+	textures := p.textures[args.Context.Index] // cache.NewSamplerCache(p.app.Textures(), mat.Descriptors().Textures)
 
 	uiArgs := widget.DrawArgs{
 		Time:     args.Time,
@@ -149,7 +158,8 @@ func (p *GuiPass) Record(cmds command.Recorder, args render.Args, scene object.T
 		},
 	}
 
-	qb := widget.NewQuadBuffer(1000)
+	qb := p.quads[args.Context.Index] // widget.NewQuadBuffer(1000)
+	qb.Reset()
 
 	// query scene for gui managers
 	guis := object.Query[GuiDrawable]().Collect(scene)

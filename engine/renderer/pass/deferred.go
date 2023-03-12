@@ -243,13 +243,10 @@ func (p *deferred) Record(cmds command.Recorder, args render.Args, scene object.
 	lightDesc.Camera.Set(camera)
 
 	// ambient lights use a plain white texture as their shadow map
-	white, shadowTexReady := p.app.Textures().Fetch(color.White)
-	if shadowTexReady {
-		lightDesc.Shadow.Set(0, white)
-
-		ambient := light.NewAmbient(color.White, 0.33)
-		p.DrawLight(cmds, args, ambient, 0)
-	}
+	white := p.app.Textures().Fetch(color.White)
+	lightDesc.Shadow.Set(0, white)
+	ambient := light.NewAmbient(color.White, 0.33)
+	p.DrawLight(cmds, args, ambient, 0)
 
 	lights := object.Query[light.T]().Collect(scene)
 	for index, lit := range lights {
@@ -264,11 +261,7 @@ func (p *deferred) Record(cmds command.Recorder, args render.Args, scene object.
 }
 
 func (p *deferred) DrawLight(cmds command.Recorder, args render.Args, lit light.T, shadowIndex int) error {
-	vkmesh, meshReady := p.app.Meshes().Fetch(p.quad)
-	if !meshReady {
-		return nil
-	}
-
+	quad := p.app.Meshes().Fetch(p.quad)
 	desc := lit.LightDescriptor(args)
 
 	shadowtex := p.shadows.Shadowmap(lit)
@@ -294,7 +287,7 @@ func (p *deferred) DrawLight(cmds command.Recorder, args render.Args, lit light.
 		}
 		cmd.CmdPushConstant(core1_0.StageFragment, 0, push)
 
-		vkmesh.Draw(cmd, 0)
+		quad.Draw(cmd, 0)
 	})
 
 	return nil

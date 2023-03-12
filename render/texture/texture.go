@@ -12,6 +12,7 @@ import (
 
 type T interface {
 	device.Resource[core1_0.Sampler]
+	Key() string
 	Image() image.T
 	View() image.View
 	Size() vec3.T
@@ -28,6 +29,7 @@ type Args struct {
 type vktexture struct {
 	Args
 	ptr    core1_0.Sampler
+	key    string
 	device device.T
 	image  image.T
 	view   image.View
@@ -107,6 +109,7 @@ func FromView(device device.T, key string, view image.View, args Args) (T, error
 
 	return &vktexture{
 		Args:   args,
+		key:    key,
 		ptr:    ptr,
 		device: device,
 		image:  view.Image(),
@@ -118,6 +121,7 @@ func (t *vktexture) Ptr() core1_0.Sampler {
 	return t.ptr
 }
 
+func (t *vktexture) Key() string      { return t.key }
 func (t *vktexture) Image() image.T   { return t.image }
 func (t *vktexture) View() image.View { return t.view }
 func (t *vktexture) Size() vec3.T     { return t.image.Size() }
