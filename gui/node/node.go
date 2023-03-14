@@ -26,19 +26,19 @@ type T interface {
 	Destroy()
 }
 
-type node[K widget.T, P any] struct {
+type node[P any] struct {
 	key      string
 	props    P
 	kind     reflect.Type
 	render   func(P) T
-	hydrate  func(string, P) K
+	hydrate  func(string, P) widget.T
 	widget   widget.T
 	children []T
 	hooks    hooks.State
 }
 
-func Builtin[K widget.T, P any](key string, props P, children []T, hydrate func(string, P) K) T {
-	return &node[K, P]{
+func Builtin[P any](key string, props P, children []T, hydrate func(string, P) widget.T) T {
+	return &node[P]{
 		key:      key,
 		props:    props,
 		kind:     reflect.TypeOf(props),
@@ -48,7 +48,7 @@ func Builtin[K widget.T, P any](key string, props P, children []T, hydrate func(
 }
 
 func Component[P any](key string, props P, render func(P) T) T {
-	return &node[widget.T, P]{
+	return &node[P]{
 		key:    key,
 		props:  props,
 		kind:   reflect.TypeOf(props),
@@ -56,39 +56,39 @@ func Component[P any](key string, props P, render func(P) T) T {
 	}
 }
 
-func (n *node[K, P]) Key() string {
+func (n *node[P]) Key() string {
 	return n.key
 }
 
-func (n *node[K, P]) Type() reflect.Type {
+func (n *node[P]) Type() reflect.Type {
 	return n.kind
 }
 
-func (n *node[K, P]) Props() any {
+func (n *node[P]) Props() any {
 	return n.props
 }
 
-func (n *node[K, P]) Children() []T {
+func (n *node[P]) Children() []T {
 	return n.children
 }
 
-func (n *node[K, P]) SetChildren(children []T) {
+func (n *node[P]) SetChildren(children []T) {
 	n.children = children
 }
 
-func (n *node[K, P]) Append(child T) {
+func (n *node[P]) Append(child T) {
 	n.SetChildren(append(n.children, child))
 }
 
-func (n *node[K, P]) Prepend(child T) {
+func (n *node[P]) Prepend(child T) {
 	n.SetChildren(append([]T{child}, n.children...))
 }
 
-func (n *node[K, P]) hydrated() bool {
+func (n *node[P]) hydrated() bool {
 	return n.widget != nil
 }
 
-func (n *node[K, P]) Update(props any) {
+func (n *node[P]) Update(props any) {
 	n.props = props.(P)
 
 	if n.render == nil {
@@ -102,7 +102,7 @@ func (n *node[K, P]) Update(props any) {
 	}
 }
 
-func (n *node[K, P]) Destroy() {
+func (n *node[P]) Destroy() {
 	for _, child := range n.children {
 		child.Destroy()
 	}
@@ -112,14 +112,14 @@ func (n *node[K, P]) Destroy() {
 	}
 }
 
-func (n *node[K, P]) Hooks() *hooks.State {
+func (n *node[P]) Hooks() *hooks.State {
 	return &n.hooks
 }
 
 // Expand component & child nodes using its hook state.
 // If the node is a component, its render function will be called
 // to create any dynamic child nodes. This does not cause hydration.
-func (n *node[K, P]) Expand(hook *hooks.State) {
+func (n *node[P]) Expand(hook *hooks.State) {
 	if n.render == nil {
 		return
 	}
@@ -134,7 +134,7 @@ func (n *node[K, P]) Expand(hook *hooks.State) {
 }
 
 // Hydrates the widgets represented by the node and all of its children.
-func (n *node[K, P]) Hydrate(parentKey string) widget.T {
+func (n *node[P]) Hydrate(parentKey string) widget.T {
 	// check if we are a component or a built-in element
 	if n.render != nil {
 		// components should never be hydrated directly.
@@ -168,7 +168,7 @@ func (n *node[K, P]) Hydrate(parentKey string) widget.T {
 	return n.widget
 }
 
-func (n *node[K, P]) String() string {
+func (n *node[P]) String() string {
 	return fmt.Sprintf("Node[%s] %s", n.kind, n.key)
 }
 

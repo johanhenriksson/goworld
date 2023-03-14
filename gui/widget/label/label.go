@@ -58,7 +58,7 @@ func New(key string, props Props) node.T {
 	return node.Builtin(key, props, nil, new)
 }
 
-func new(key string, props Props) T {
+func new(key string, props Props) widget.T {
 	node := flex.NewNodeWithConfig(flex.NewConfig())
 	node.Context = key
 	text := NewText(props.Text)

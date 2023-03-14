@@ -46,7 +46,7 @@ func New(key string, props Props) node.T {
 	return node.Builtin(key, props, props.Children, Create)
 }
 
-func Create(key string, props Props) T {
+func Create(key string, props Props) widget.T {
 	node := flex.NewNodeWithConfig(flex.NewConfig())
 	node.Context = key
 	rect := &rect{

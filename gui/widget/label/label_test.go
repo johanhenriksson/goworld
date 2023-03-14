@@ -24,7 +24,7 @@ var _ = Describe("", func() {
 					props.Text = new
 				},
 			}
-			label = new("label", props)
+			label = new("label", props).(T)
 		})
 
 		It("adds characters", func() {
