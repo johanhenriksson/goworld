@@ -155,11 +155,6 @@ func (n *node[P]) Hydrate(parentKey string) widget.T {
 		n.widget = n.hydrate(key, n.props)
 	}
 
-	// if the node does not have any children, we're done
-	if len(n.children) == 0 {
-		return n.widget
-	}
-
 	// the children array might have changed, so we iterate it and hydrate everything.
 	// calling Hydrate on a node that is already fully hydrated is basically a no-op, so its fine
 
