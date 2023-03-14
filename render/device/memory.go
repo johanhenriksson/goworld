@@ -140,7 +140,7 @@ func (m *memory) Write(offset int, data any) int {
 
 	// flush region
 	// todo: optimize to the smallest possible region
-	m.Flush()
+	// m.Flush()
 
 	// unmap shared memory
 	// m.ptr.Unmap()
