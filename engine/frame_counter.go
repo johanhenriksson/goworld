@@ -21,7 +21,7 @@ func NewFrameCounter(samples int) *framecounter {
 	return &framecounter{
 		samples: samples,
 		last:    time.Now().UnixNano(),
-		frames:  make([]int64, samples),
+		frames:  make([]int64, 0, samples),
 		start:   time.Now(),
 	}
 }
@@ -51,7 +51,11 @@ func (fc *framecounter) Update() {
 	ft := fc.now.UnixNano()
 	ns := ft - fc.last
 	fc.last = ft
-	fc.frames[fc.next%fc.samples] = ns
+	if len(fc.frames) < fc.samples {
+		fc.frames = append(fc.frames, ns)
+	} else {
+		fc.frames[fc.next%fc.samples] = ns
+	}
 	fc.next++
 }
 
@@ -65,7 +69,7 @@ func (fc *framecounter) Sample() Timing {
 
 	current := fc.frames[(fc.next-1)%fc.samples]
 	return Timing{
-		Average: float32(tot) / float32(fc.samples) / 1e9,
+		Average: float32(tot) / float32(len(fc.frames)) / 1e9,
 		Max:     float32(max) / 1e9,
 		Current: float32(current) / 1e9,
 	}
