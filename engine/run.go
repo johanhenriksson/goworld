@@ -57,6 +57,8 @@ func Run(args Args, scenefuncs ...SceneFunc) {
 		scenefunc(renderer, scene)
 	}
 
+	object.Attach(scene, NewStatsGUI())
+
 	// run the render loop
 	log.Println("ready")
 
@@ -69,18 +71,6 @@ func Run(args Args, scenefuncs ...SceneFunc) {
 
 		// draw
 		renderer.Draw(scene, counter.Elapsed(), counter.Delta())
-
-		timing := counter.Sample()
-		log.Printf(
-			"frame: %2.2fms, avg: %.2fms, peak: %.2f, fps: %.1f\n",
-			1000*timing.Current,
-			1000*timing.Average,
-			1000*timing.Max,
-			1.0/timing.Average)
-
-		// util.Timer("GC")
-		// runtime.GC()
-		// util.Elapsed("GC")
 	}
 }
 
