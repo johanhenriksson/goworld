@@ -1,8 +1,6 @@
 package cache
 
 import (
-	"log"
-
 	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/descriptor"
 	"github.com/johanhenriksson/goworld/render/texture"
@@ -107,7 +105,6 @@ func (s *samplers) UpdateDescriptors() {
 		// increase the age of the handle and check for eviction
 		handle.age++
 		if handle.age > s.maxAge {
-			log.Println("release handle", handle.ID, "from", handle.Texture.Key())
 			delete(s.reverse, ref)
 			s.free[handle.ID] = true
 
