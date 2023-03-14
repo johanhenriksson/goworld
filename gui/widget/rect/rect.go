@@ -72,35 +72,37 @@ func (f *rect) Children() []widget.T { return f.children }
 // Updates the widget with a new set of children.
 // The widget takes ownership of the passed child array.
 func (f *rect) SetChildren(c []widget.T) {
-	// reconcile flex children
-	for i, child := range c {
-		if i < len(f.flex.Children) {
-			// we have an existing child at position i
-			if f.flex.Children[i] == child.Flex() {
-				// its identical, move on
+	for i, new := range c {
+		existing := false
+		for j, old := range f.children {
+			if old == nil {
+				// already been reconciled
 				continue
-			} else {
-				// its different, replace it
-				if child.Flex().Parent != nil {
-					child.Flex().Parent.RemoveChild(child.Flex())
-				}
-				f.flex.InsertChild(child.Flex(), i)
 			}
-		} else {
-			// insert new child
-			if child.Flex().Parent != nil {
-				child.Flex().Parent.RemoveChild(child.Flex())
+			if new.Key() == old.Key() {
+				c[i] = f.children[j] // re-use old element
+				f.children[j] = nil  // mark this child as reused
+				existing = true
+				break
 			}
-			f.flex.InsertChild(child.Flex(), i)
+		}
+		if !existing {
+			// no existing element found -> new element at position i
+			f.flex.InsertChild(new.Flex(), i)
 		}
 	}
 
-	// if the array of new children is shorter than the old one, remove any remaining children
-	for i := len(c); i < len(f.children); i++ {
-		f.flex.RemoveChild(f.children[i].Flex())
+	// all elements in the old array that are non-nil do not existe in the new child array, and should be destroyed
+	for _, old := range f.children {
+		if old == nil {
+			// child re-used, skip
+			continue
+		}
+		// this element was deleted
+		f.flex.RemoveChild(old.Flex())
 	}
 
-	// update child array
+	// replace the child array
 	f.children = c
 }
 
