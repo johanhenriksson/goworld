@@ -73,7 +73,17 @@ func (s *swapchain) Resize(width, height int) {
 
 func (s *swapchain) recreate() {
 	log.Println("recreating swapchain")
+
+	// wait for all in-flight frames
+	// no need to release locks, they will be destroyed
+	for _, ctx := range s.contexts {
+		ctx.Aquire()
+	}
+
+	// wait for device idle
 	s.device.WaitIdle()
+
+	// recreate swapchain resources
 	s.Destroy()
 	s.create()
 }
