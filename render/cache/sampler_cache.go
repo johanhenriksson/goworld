@@ -30,8 +30,7 @@ type SamplerHandle struct {
 }
 
 type SamplerCache interface {
-	Fetch(ref texture.Ref) *SamplerHandle
-	TryFetch(ref texture.Ref) (*SamplerHandle, bool)
+	T[texture.Ref, *SamplerHandle]
 
 	// Writes descriptor updates to the backing Sampler Array.
 	UpdateDescriptors()
@@ -53,6 +52,10 @@ func NewSamplerCache(textures TextureCache, desc *descriptor.SamplerArray) Sampl
 	samplers.assignHandle(color.White)
 
 	return samplers
+}
+
+func (s *samplers) MaxAge() int {
+	return s.maxAge
 }
 
 func (s *samplers) nextID() int {
@@ -101,20 +104,9 @@ func (s *samplers) Fetch(ref texture.Ref) *SamplerHandle {
 }
 
 func (s *samplers) UpdateDescriptors() {
-	for ref, handle := range s.reverse {
-		// increase the age of the handle and check for eviction
-		handle.age++
-		if handle.age > s.maxAge {
-			delete(s.reverse, ref)
-			s.free[handle.ID] = true
+	s.Tick()
 
-			// overwrite descriptor with blank texture
-			handle.Texture = s.blank
-			// s.descriptors[handle.ID] = nil
-			// s.desc.Set(handle.ID, s.blank)
-			// continue
-		}
-
+	for _, handle := range s.reverse {
 		tex := handle.Texture
 		if tex == nil {
 			continue
@@ -129,4 +121,25 @@ func (s *samplers) UpdateDescriptors() {
 		s.descriptors[handle.ID] = tex
 		s.desc.Set(handle.ID, tex)
 	}
+}
+
+func (s *samplers) Tick() {
+	for ref, handle := range s.reverse {
+		// increase the age of the handle and check for eviction
+		handle.age++
+		if handle.age > s.maxAge {
+			delete(s.reverse, ref)
+			s.free[handle.ID] = true
+
+			// overwrite descriptor with blank texture
+			handle.Texture = s.blank
+			s.descriptors[handle.ID] = nil
+			s.desc.Set(handle.ID, s.blank)
+		}
+	}
+}
+
+func (s *samplers) Destroy() {
+	// todo: unclear if theres anything to do here
+	// the backing texture cache holds all resources and will release them if unused
 }
