@@ -135,35 +135,45 @@ func (n *node[P]) Expand(hook *hooks.State) {
 
 // Hydrates the widgets represented by the node and all of its children.
 func (n *node[P]) Hydrate(parentKey string) widget.T {
-	// check if we are a component or a built-in element
+	// components should never be hydrated directly.
+	// we expect to have the root element of the component as a single child at
+	// this point, which can be hydrated and returned as this nodes widget,
+	// effectively collapsing their nodes in the widget tree.
 	if n.render != nil {
-		// components should never be hydrated directly.
-		// we expect to have the root element of the component as a single child at
-		// this point, which can be hydrated and returned as this nodes widget,
-		// effectively collapsing their nodes in the widget tree.
 		if len(n.children) != 1 {
 			panic("expected component to have a single child. did you forget to reconcile?")
 		}
 		component := n.children[0]
 		n.widget = component.Hydrate(parentKey)
-	} else {
-		// this node is a built-in element, hydrate it if it does not exist
-		if n.widget == nil {
-			key := joinKeys(n.key, parentKey)
-			n.widget = n.hydrate(key, n.props)
-		}
-
-		// rehydrate children if required
-		// the logic for optimizing this process currently exists within
-		// Rect, since its the only element thay may have child elements.
-		// perhaps it would make sense to extract it, and perhaps place it here?
-		children := make([]widget.T, 0, len(n.children))
-		for _, child := range n.children {
-			hydrated := child.Hydrate(n.widget.Key())
-			children = append(children, hydrated)
-		}
-		n.widget.SetChildren(children)
+		return n.widget
 	}
+
+	// the node is a built-in element, hydrate it if it does not exist
+	// note: this is the only place where hydration performs any actual work
+	if n.widget == nil {
+		key := joinKeys(n.key, parentKey)
+		n.widget = n.hydrate(key, n.props)
+	}
+
+	// if the node does not have any children, we're done
+	if len(n.children) == 0 {
+		return n.widget
+	}
+
+	// the children array might have changed, so we iterate it and hydrate everything.
+	// calling Hydrate on a node that is already fully hydrated is basically a no-op, so its fine
+
+	// the logic for optimizing this process currently exists within
+	// Rect, since its the only element thay may have child elements.
+	// perhaps it would make sense to extract it, and perhaps place it here?
+	children := make([]widget.T, 0, len(n.children))
+	for _, child := range n.children {
+		// hydrate child. if its already hydrated, this is basically a no-op
+		hydrated := child.Hydrate(n.widget.Key())
+
+		children = append(children, hydrated)
+	}
+	n.widget.SetChildren(children)
 
 	return n.widget
 }

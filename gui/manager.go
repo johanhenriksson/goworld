@@ -67,9 +67,9 @@ func (m *manager) Update(scene object.T, dt float32) {
 			frag := fragment.Render()
 			switch fragment.Position() {
 			case FragmentLast:
-				target.SetChildren(append(target.Children(), frag))
+				target.Append(frag)
 			case FragmentFirst:
-				target.SetChildren(append([]node.T{frag}, target.Children()...))
+				target.Prepend(frag)
 			default:
 				panic("invalid fragment position")
 			}
