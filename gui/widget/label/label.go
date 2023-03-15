@@ -196,6 +196,7 @@ func (l *label) Draw(args widget.DrawArgs, quads *widget.QuadBuffer) {
 		return
 	}
 
+	size := l.Size()
 	zindex := args.Position.Z
 	origin := args.Position.XY().Add(l.Position())
 
@@ -216,6 +217,9 @@ func (l *label) Draw(args widget.DrawArgs, quads *widget.QuadBuffer) {
 		if texExists {
 			min := pos.Add(glyph.Bearing)
 			max := min.Add(glyph.Size)
+			if (max.X - origin.X) > size.X {
+				break
+			}
 			quads.Push(widget.Quad{
 				Min:   min,
 				Max:   max,
@@ -248,6 +252,9 @@ func (l *label) Draw(args widget.DrawArgs, quads *widget.QuadBuffer) {
 		// highlight quad
 		min := origin.Add(vec2.New(start.X, 0))
 		max := min.Add(vec2.New(length, l.lineHeight*l.font.Size()))
+		if (max.X - origin.X) > size.X {
+			max.X = size.X
+		}
 		quads.Push(widget.Quad{
 			Min:     min,
 			Max:     max,
