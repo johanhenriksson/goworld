@@ -101,23 +101,38 @@ func (f *font) Glyph(r rune) (*Glyph, error) {
 	return glyph, nil
 }
 
-func (f *font) Measure(text string, args Args) vec2.T {
-	f.mutex.Lock()
-	defer f.mutex.Unlock()
+func (f *font) MeasureLine(text string) vec2.T {
+	size := vec2.Zero
+	for i, r := range text {
+		g, err := f.Glyph(r)
+		if err != nil {
+			panic("no such glyph")
+		}
+		if i < len(text)-1 {
+			size.X += g.Advance
+		} else {
+			size.X += g.Bearing.X + g.Size.X
+		}
+		size.Y = math.Max(size.Y, g.Size.Y)
+	}
+	return size
+}
 
+func (f *font) Measure(text string, args Args) vec2.T {
 	if args.LineHeight == 0 {
 		args.LineHeight = 1
 	}
 
 	lines := 1
-	width := 0
+	width := float32(0)
 	s := 0
 	for i, c := range text {
 		if c == '\n' {
 			line := text[s:i]
-			w := f.drawer.MeasureString(line).Ceil()
-			if w > width {
-				width = w
+			// w := f.drawer.MeasureString(line).Ceil()
+			w := f.MeasureLine(line)
+			if w.X > width {
+				width = w.X
 			}
 			s = i + 1
 			lines++
@@ -126,15 +141,16 @@ func (f *font) Measure(text string, args Args) vec2.T {
 	r := len(text)
 	if s < r {
 		line := text[s:]
-		w := f.drawer.MeasureString(line).Ceil()
-		if w > width {
-			width = w
+		// w := f.drawer.MeasureString(line).Ceil()
+		w := f.MeasureLine(line)
+		if w.X > width {
+			width = w.X
 		}
 	}
 
 	lineHeight := int(math.Ceil(f.size * f.scale * args.LineHeight))
 	height := lineHeight*lines + (lineHeight/2)*(lines-1)
-	return vec2.NewI(width, height).Scaled(1 / f.scale).Ceil()
+	return vec2.New(width, float32(height)).Scaled(1 / f.scale).Ceil()
 }
 
 func FixToFloat(v fixed.Int26_6) float32 {
