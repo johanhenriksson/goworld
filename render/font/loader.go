@@ -63,6 +63,7 @@ func Load(name string, size int, scale float32) T {
 		fnt:    ttf,
 		face:   face,
 		glyphs: make(map[rune]*Glyph, 128),
+		kern:   make(map[runepair]float32, 512),
 		drawer: &fontlib.Drawer{Face: face},
 		mutex:  &sync.Mutex{},
 	}

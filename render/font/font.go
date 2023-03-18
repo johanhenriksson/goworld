@@ -20,6 +20,7 @@ var ErrNoGlyph = errors.New("no glyph for rune")
 type T interface {
 	Name() string
 	Glyph(rune) (*Glyph, error)
+	Kern(rune, rune) float32
 	Measure(string, Args) vec2.T
 	Size() float32
 }
@@ -37,6 +38,11 @@ type font struct {
 	drawer *fontlib.Drawer
 	mutex  *sync.Mutex
 	glyphs map[rune]*Glyph
+	kern   map[runepair]float32
+}
+
+type runepair struct {
+	a, b rune
 }
 
 func (f *font) Name() string {
@@ -101,12 +107,29 @@ func (f *font) Glyph(r rune) (*Glyph, error) {
 	return glyph, nil
 }
 
+func (f *font) Kern(a, b rune) float32 {
+	pair := runepair{a, b}
+	if k, exists := f.kern[pair]; exists {
+		return k
+	}
+
+	f.mutex.Lock()
+	defer f.mutex.Unlock()
+	k := FixToFloat(f.face.Kern(a, b))
+	f.kern[pair] = k
+	return k
+}
+
 func (f *font) MeasureLine(text string) vec2.T {
 	size := vec2.Zero
+	var prev rune
 	for i, r := range text {
 		g, err := f.Glyph(r)
 		if err != nil {
 			panic("no such glyph")
+		}
+		if i > 0 {
+			size.X += f.Kern(prev, r)
 		}
 		if i < len(text)-1 {
 			size.X += g.Advance
@@ -114,6 +137,7 @@ func (f *font) MeasureLine(text string) vec2.T {
 			size.X += g.Bearing.X + g.Size.X
 		}
 		size.Y = math.Max(size.Y, g.Size.Y)
+		prev = r
 	}
 	return size
 }
