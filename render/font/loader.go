@@ -9,6 +9,7 @@ import (
 	fontlib "golang.org/x/image/font"
 
 	"github.com/johanhenriksson/goworld/assets"
+	"github.com/johanhenriksson/goworld/util"
 )
 
 var parseCache map[string]*truetype.Font = make(map[string]*truetype.Font, 32)
@@ -62,8 +63,8 @@ func Load(name string, size int, scale float32) T {
 		scale:  scale,
 		fnt:    ttf,
 		face:   face,
-		glyphs: make(map[rune]*Glyph, 128),
-		kern:   make(map[runepair]float32, 512),
+		glyphs: util.NewSyncMap[rune, *Glyph](),
+		kern:   util.NewSyncMap[runepair, float32](),
 		drawer: &fontlib.Drawer{Face: face},
 		mutex:  &sync.Mutex{},
 	}

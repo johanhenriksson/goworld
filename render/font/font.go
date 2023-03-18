@@ -10,6 +10,7 @@ import (
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/image"
+	"github.com/johanhenriksson/goworld/util"
 
 	fontlib "golang.org/x/image/font"
 	"golang.org/x/image/math/fixed"
@@ -37,8 +38,8 @@ type font struct {
 	face   fontlib.Face
 	drawer *fontlib.Drawer
 	mutex  *sync.Mutex
-	glyphs map[rune]*Glyph
-	kern   map[runepair]float32
+	glyphs *util.SyncMap[rune, *Glyph]
+	kern   *util.SyncMap[runepair, float32]
 }
 
 type runepair struct {
@@ -52,7 +53,7 @@ func (f *font) Name() string {
 func (f *font) Size() float32 { return f.size }
 
 func (f *font) Glyph(r rune) (*Glyph, error) {
-	if cached, exists := f.glyphs[r]; exists {
+	if cached, exists := f.glyphs.Load(r); exists {
 		return cached, nil
 	}
 
@@ -102,21 +103,21 @@ func (f *font) Glyph(r rune) (*Glyph, error) {
 		Advance: FixToFloat(advance) * scaleFactor,
 		Mask:    img,
 	}
-	f.glyphs[r] = glyph
+	f.glyphs.Store(r, glyph)
 
 	return glyph, nil
 }
 
 func (f *font) Kern(a, b rune) float32 {
 	pair := runepair{a, b}
-	if k, exists := f.kern[pair]; exists {
+	if k, exists := f.kern.Load(pair); exists {
 		return k
 	}
 
 	f.mutex.Lock()
 	defer f.mutex.Unlock()
 	k := FixToFloat(f.face.Kern(a, b))
-	f.kern[pair] = k
+	f.kern.Store(pair, k)
 	return k
 }
 
