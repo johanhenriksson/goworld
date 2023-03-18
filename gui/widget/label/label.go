@@ -202,7 +202,8 @@ func (l *label) Draw(args widget.DrawArgs, quads *widget.QuadBuffer) {
 
 	// render glyph quads
 	pos := origin.Add(vec2.New(0, 0.8*l.font.Size()))
-	for _, r := range l.text.String() {
+	var prev rune
+	for i, r := range l.text.String() {
 		glyph, err := l.font.Glyph(r)
 		if err != nil {
 			panic(err)
@@ -211,6 +212,9 @@ func (l *label) Draw(args widget.DrawArgs, quads *widget.QuadBuffer) {
 			// whitespace
 			pos.X += glyph.Advance
 			continue
+		}
+		if i > 0 {
+			pos.X += l.font.Kern(prev, r)
 		}
 
 		handle, texExists := args.Textures.TryFetch(glyph)
@@ -237,6 +241,7 @@ func (l *label) Draw(args widget.DrawArgs, quads *widget.QuadBuffer) {
 		}
 
 		pos.X += glyph.Advance
+		prev = r
 	}
 
 	// selection
