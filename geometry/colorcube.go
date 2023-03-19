@@ -5,6 +5,7 @@ import (
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render/color"
+	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/vertex"
 )
 
@@ -16,12 +17,12 @@ type ColorCube struct {
 }
 
 // NewColorCube creates a vertex colored cube mesh with a given size
-func NewColorCube(color color.T, size float32) *ColorCube {
-	cube := &ColorCube{
-		T:     mesh.New(mesh.Forward, nil),
+func NewColorCube(mat *material.Def, color color.T, size float32) *ColorCube {
+	cube := object.New(&ColorCube{
+		T:     mesh.New(mesh.Forward, mat),
 		Size:  size,
 		Color: color,
-	}
+	})
 	cube.generate()
 	return cube
 }
@@ -73,25 +74,7 @@ func (c *ColorCube) generate() {
 		{P: vec3.New(s, s, -s), N: vec3.UnitZN, C: co},   // 23
 	}
 
-	indices := []uint8{
-		0, 1, 2,
-		0, 2, 3,
-
-		4, 5, 6,
-		4, 7, 5,
-
-		8, 9, 10,
-		10, 9, 11,
-
-		12, 13, 14,
-		13, 15, 14,
-
-		16, 17, 18,
-		17, 19, 18,
-
-		20, 21, 22,
-		22, 21, 23,
-	}
+	indices := []uint16{}
 
 	key := object.Key("colorcube", c)
 	mesh := vertex.NewTriangles(key, vertices, indices)
