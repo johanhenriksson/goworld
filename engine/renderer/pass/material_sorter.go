@@ -107,6 +107,7 @@ func (m *MaterialSorter) Draw(cmds command.Recorder, args render.Args, meshes []
 		ViewInv:     args.View.Invert(),
 		ViewProjInv: args.VP.Invert(),
 		Eye:         args.Position,
+		Forward:     args.Forward,
 	}
 	m.DrawCamera(cmds, args, camera, meshes)
 }

@@ -218,6 +218,7 @@ func (p *deferred) Record(cmds command.Recorder, args render.Args, scene object.
 		ViewInv:     args.View.Invert(),
 		ViewProjInv: args.VP.Invert(),
 		Eye:         args.Position,
+		Forward:     args.Forward,
 	}
 
 	//

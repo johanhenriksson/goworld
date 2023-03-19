@@ -3,6 +3,18 @@
 #extension GL_ARB_separate_shader_objects : enable
 #extension GL_ARB_shading_language_420pack : enable
 
+// Uniforms
+layout (binding = 0) uniform Camera {
+	mat4 Proj;
+	mat4 View;
+	mat4 ViewProj;
+	mat4 ProjInv;
+	mat4 ViewInv;
+	mat4 ViewProjInv;
+	vec3 Eye;
+    vec3 Forward;
+} camera;
+
 // Varying
 layout (location = 0) in vec4 color0;
 layout (location = 1) in vec3 normal0;
@@ -16,9 +28,7 @@ layout (location = 2) out vec4 position;
 
 void main() 
 {
-    vec3 lightPos = vec3(0.25,-0.43,0.86);
-
-    vec3 lightDir = normalize(lightPos);
+    vec3 lightDir = normalize(camera.Forward);
     vec3 surfaceToLight = -lightDir;
     float contrib = max(dot(surfaceToLight, wnormal), 0.2);
 

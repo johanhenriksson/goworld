@@ -172,6 +172,7 @@ func (p *shadowpass) Record(cmds command.Recorder, args render.Args, scene objec
 			ViewInv:     lightDesc.View.Invert(),
 			ViewProjInv: lightDesc.ViewProj.Invert(),
 			Eye:         light.Transform().Position(),
+			Forward:     light.Transform().Forward(),
 		}
 
 		cmds.Record(func(cmd command.Buffer) {

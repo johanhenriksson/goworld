@@ -13,4 +13,6 @@ type Camera struct {
 	ViewInv     mat4.T
 	ViewProjInv mat4.T
 	Eye         vec3.T
+	pad0        float32
+	Forward     vec3.T
 }

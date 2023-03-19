@@ -22,6 +22,7 @@ layout (std140, binding = 4) uniform Camera {
     mat4 ViewInv;
     mat4 ViewProjInv;
     vec3 Eye;
+    vec3 Forward;
 } camera;
 
 layout (binding = 5) uniform sampler2D[] shadowmaps;
