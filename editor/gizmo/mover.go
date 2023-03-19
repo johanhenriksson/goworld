@@ -38,14 +38,16 @@ type Mover struct {
 	// screen size scaling factor
 	size float32
 
-	eye        vec3.T
-	axis       vec3.T
-	screenAxis vec2.T
-	start      vec2.T
-	viewport   render.Screen
-	camera     mat4.T
-	proj       mat4.T
-	dragging   bool
+	eye         vec3.T
+	axis        vec3.T
+	screenAxis  vec2.T
+	start       vec2.T
+	viewport    render.Screen
+	vp          mat4.T
+	proj        mat4.T
+	scale       float32
+	sensitivity float32
+	dragging    bool
 }
 
 var _ Gizmo = &Mover{}
@@ -70,7 +72,8 @@ func NewMover() *Mover {
 	}
 
 	g := object.New(&Mover{
-		size: 0.12,
+		size:        0.12,
+		sensitivity: 6,
 
 		// X Arrow Cone
 		X: object.Builder(cone.New(cone.Args{
@@ -267,7 +270,7 @@ func (g *Mover) DragStart(e mouse.Event, collider collider.T) {
 	g.start = cursor
 
 	localDir := g.Transform().ProjectDir(g.axis)
-	g.screenAxis = g.camera.TransformDir(localDir).XY().Normalized()
+	g.screenAxis = g.vp.TransformDir(localDir).XY().Normalized()
 }
 
 func (g *Mover) DragEnd(e mouse.Event) {
@@ -279,7 +282,7 @@ func (g *Mover) DragMove(e mouse.Event) {
 		cursor := g.viewport.NormalizeCursor(e.Position())
 
 		delta := g.start.Sub(cursor)
-		mag := -5 * vec2.Dot(delta, g.screenAxis) / g.screenAxis.Length()
+		mag := -1 * g.sensitivity * g.scale * vec2.Dot(delta, g.screenAxis) / g.screenAxis.Length()
 		g.start = cursor
 		pos := g.Transform().Position().Add(g.axis.Scaled(mag))
 		g.Transform().SetPosition(pos)
@@ -293,7 +296,7 @@ func (g *Mover) DragMove(e mouse.Event) {
 func (g *Mover) PreDraw(args render.Args, scene object.T) error {
 	g.eye = args.Position
 	g.proj = args.Projection
-	g.camera = args.VP
+	g.vp = args.VP
 	g.viewport = args.Viewport
 	return nil
 }
@@ -308,12 +311,13 @@ func (g *Mover) Update(scene object.T, dt float32) {
 	dist := vec3.Distance(g.Transform().WorldPosition(), g.eye)
 	squeeze := g.proj.TransformPoint(vec3.New(1, 0, dist))
 	f := g.size / squeeze.X
+	g.scale = f
 	g.Transform().SetScale(vec3.New(f, f, f))
 }
 
 func (g *Mover) Dragging() bool          { return g.dragging }
 func (g *Mover) Viewport() render.Screen { return g.viewport }
-func (g *Mover) Camera() mat4.T          { return g.camera }
+func (g *Mover) Camera() mat4.T          { return g.vp }
 
 func (m *Mover) MouseEvent(e mouse.Event) {
 	HandleMouse(m, e)
