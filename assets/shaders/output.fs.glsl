@@ -12,6 +12,6 @@ layout (location = 0) out vec4 outFragColor;
 
 void main() 
 {
-    vec3 color = texture(diffuse, texcoord).rgb;
-    outFragColor = vec4(color, 1.0);
+	vec3 color = texture(diffuse, texcoord).rgb;
+	outFragColor = vec4(color, 1.0);
 }

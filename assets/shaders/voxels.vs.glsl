@@ -37,17 +37,17 @@ layout (location = 2) out vec3 position0;
 
 out gl_PerVertex 
 {
-    vec4 gl_Position;   
+	vec4 gl_Position;   
 };
 
 const vec3 normals[7] = vec3[7] (
-    vec3(0,0,0),  // normal 0 - undefined
-    vec3(1,0,0),  // x+
-    vec3(-1,0,0), // x-
-    vec3(0,1,0),  // y+
-    vec3(0,-1,0), // y-
-    vec3(0,0,1),  // z+
-    vec3(0,0,-1)  // z-
+	vec3(0,0,0),  // normal 0 - undefined
+	vec3(1,0,0),  // x+
+	vec3(-1,0,0), // x-
+	vec3(0,1,0),  // y+
+	vec3(0,-1,0), // y-
+	vec3(0,0,1),  // z+
+	vec3(0,0,-1)  // z-
 );
 
 void main() 
@@ -60,9 +60,9 @@ void main()
 	// gbuffer position
 	position0 = (mv * vec4(position.xyz, 1.0)).xyz;
 
-    // gbuffer view space normal
-    vec3 normal = normals[normal_id];
-    normal0 = normalize((mv * vec4(normal, 0.0)).xyz);
+	// gbuffer view space normal
+	vec3 normal = normals[normal_id];
+	normal0 = normalize((mv * vec4(normal, 0.0)).xyz);
 
 	// vertex clip space position
 	gl_Position = camera.Proj * vec4(position0, 1);

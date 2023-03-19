@@ -10,12 +10,12 @@ layout (location = 0) out vec2 texcoord;
 
 out gl_PerVertex 
 {
-    vec4 gl_Position;   
+	vec4 gl_Position;   
 };
 
 
 void main() 
 {
-    texcoord = texcoord_0;
+	texcoord = texcoord_0;
 	gl_Position = vec4(inPos, 1);
 }

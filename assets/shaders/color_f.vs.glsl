@@ -17,7 +17,7 @@ layout (binding = 0) uniform Camera {
 	mat4 ViewInv;
 	mat4 ViewProjInv;
 	vec3 Eye;
-    vec3 Forward;
+	vec3 Forward;
 } camera;
 
 struct ObjectData{
@@ -38,7 +38,7 @@ layout (location = 3) out vec3 wnormal;
 
 out gl_PerVertex 
 {
-    vec4 gl_Position;   
+	vec4 gl_Position;   
 };
 
 void main() 
@@ -52,7 +52,7 @@ void main()
 	// gbuffer position
 	position0 = (mv * vec4(position.xyz, 1.0)).xyz;
 
-    // gbuffer view space normal
+	// gbuffer view space normal
 	normal0 = normalize((mv * vec4(normal, 0.0)).xyz);
 
 	// world normal

@@ -15,10 +15,10 @@ layout (location = 2) out vec4 position;
 
 void main() 
 {
-    diffuse = vec4(color0, 1);
+	diffuse = vec4(color0, 1);
 
-    vec4 pack_normal = vec4((normal0 + 1.0) / 2.0, 1);
-    normal = pack_normal;
+	vec4 pack_normal = vec4((normal0 + 1.0) / 2.0, 1);
+	normal = pack_normal;
 
-    position = vec4(position0, 1);
+	position = vec4(position0, 1);
 }

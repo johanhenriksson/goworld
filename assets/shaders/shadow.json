@@ -1,13 +1,13 @@
 {
-    "Inputs": {
-        "position": {
-            "Index": 0,
-            "Type": "float"
-        }
-    },
-    "Bindings": {
-        "Camera": 0,
-        "Objects": 1,
-        "Textures": 2
-    }
+	"Inputs": {
+		"position": {
+			"Index": 0,
+			"Type": "float"
+		}
+	},
+	"Bindings": {
+		"Camera": 0,
+		"Objects": 1,
+		"Textures": 2
+	}
 }

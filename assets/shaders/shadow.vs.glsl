@@ -15,7 +15,7 @@ layout (binding = 0) uniform Camera {
 	mat4 ViewInv;
 	mat4 ViewProjInv;
 	vec3 Eye;
-    vec3 Forward;
+	vec3 Forward;
 } camera;
 
 struct ObjectData{
@@ -28,7 +28,7 @@ layout (binding = 1) readonly buffer ObjectBuffer {
 
 out gl_PerVertex 
 {
-    vec4 gl_Position;   
+	vec4 gl_Position;   
 };
 
 void main() 
