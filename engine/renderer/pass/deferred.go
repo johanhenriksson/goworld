@@ -273,14 +273,18 @@ func (p *deferred) DrawLight(cmds command.Recorder, args render.Args, lit light.
 	quad := p.app.Meshes().Fetch(p.quad)
 	desc := lit.LightDescriptor(args)
 
-	shadowtex := p.shadows.Shadowmap(lit)
-	if shadowtex != nil {
-		p.light.Descriptors(args.Context.Index).Shadow.Set(shadowIndex, shadowtex)
-	} else {
-		// no shadowmap available - disable the light until its available
-		if lit.Shadows() {
+	if lit.Shadows() {
+		shadowtex := p.shadows.Shadowmap(lit)
+		if shadowtex == nil {
+			// no shadowmap available - disable the light until its available
 			return nil
 		}
+		p.light.Descriptors(args.Context.Index).Shadow.Set(shadowIndex, shadowtex)
+
+	} else {
+		// shadows are disabled - use a blank white texture as shadowmap
+		blank := p.app.Textures().Fetch(color.White)
+		p.light.Descriptors(args.Context.Index).Shadow.Set(shadowIndex, blank)
 	}
 
 	cmds.Record(func(cmd command.Buffer) {
