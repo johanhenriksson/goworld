@@ -19,6 +19,7 @@ type Gizmo interface {
 	DragStart(e mouse.Event, collider collider.T)
 	DragEnd(e mouse.Event)
 	DragMove(e mouse.Event)
+	Hover(bool, collider.T)
 
 	Camera() mat4.T
 	Viewport() render.Screen
@@ -31,6 +32,19 @@ func HandleMouse(m Gizmo, e mouse.Event) {
 	vpi = vpi.Invert()
 	cursor := m.Viewport().NormalizeCursor(e.Position())
 
+	near := vpi.TransformPoint(vec3.New(cursor.X, cursor.Y, 1))
+	far := vpi.TransformPoint(vec3.New(cursor.X, cursor.Y, 0))
+	dir := far.Sub(near).Normalized()
+
+	// return closest hit
+	// find Collider children of Selectable objects
+	colliders := object.NewQuery[collider.T]().Collect(m)
+
+	closest, hit := collider.ClosestIntersection(colliders, &physics.Ray{
+		Origin: near,
+		Dir:    dir,
+	})
+
 	if m.Dragging() {
 		if e.Action() == mouse.Release {
 			m.DragEnd(e)
@@ -40,19 +54,6 @@ func HandleMouse(m Gizmo, e mouse.Event) {
 			e.Consume()
 		}
 	} else if e.Action() == mouse.Press {
-		near := vpi.TransformPoint(vec3.New(cursor.X, cursor.Y, 1))
-		far := vpi.TransformPoint(vec3.New(cursor.X, cursor.Y, 0))
-		dir := far.Sub(near).Normalized()
-
-		// return closest hit
-		// find Collider children of Selectable objects
-		colliders := object.NewQuery[collider.T]().Collect(m)
-
-		closest, hit := collider.ClosestIntersection(colliders, &physics.Ray{
-			Origin: near,
-			Dir:    dir,
-		})
-
 		if hit {
 			m.DragStart(e, closest)
 			e.Consume()
@@ -61,5 +62,7 @@ func HandleMouse(m Gizmo, e mouse.Event) {
 			m.DragEnd(e)
 			e.Consume()
 		}
+	} else if e.Action() == mouse.Move {
+		m.Hover(hit, closest)
 	}
 }

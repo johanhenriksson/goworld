@@ -48,6 +48,7 @@ type Mover struct {
 	scale       float32
 	sensitivity float32
 	dragging    bool
+	hoverScale  vec3.T
 }
 
 var _ Gizmo = &Mover{}
@@ -74,6 +75,7 @@ func NewMover() *Mover {
 	g := object.New(&Mover{
 		size:        0.12,
 		sensitivity: 6,
+		hoverScale:  vec3.New(1.2, 1.2, 1.2),
 
 		// X Arrow Cone
 		X: object.Builder(cone.New(cone.Args{
@@ -246,26 +248,29 @@ func (g *Mover) CanDeselect() bool {
 	return true
 }
 
-func (g *Mover) DragStart(e mouse.Event, collider collider.T) {
-	g.dragging = true
-
+func (g *Mover) getColliderAxis(collider collider.T) vec3.T {
 	axisObj := collider.Parent()
 	switch axisObj {
 	case g.X:
 		fallthrough
 	case g.Xb:
-		g.axis = vec3.UnitX
+		return vec3.UnitX
 	case g.Y:
 		fallthrough
 	case g.Yb:
-		g.axis = vec3.UnitY
+		return vec3.UnitY
 	case g.Z:
 		fallthrough
 	case g.Zb:
-		g.axis = vec3.UnitZ
-	default:
-		return
+		return vec3.UnitZ
 	}
+	return vec3.Zero
+}
+
+func (g *Mover) DragStart(e mouse.Event, collider collider.T) {
+	g.dragging = true
+
+	g.axis = g.getColliderAxis(collider)
 	cursor := g.viewport.NormalizeCursor(e.Position())
 	g.start = cursor
 
@@ -290,6 +295,33 @@ func (g *Mover) DragMove(e mouse.Event) {
 		if g.target != nil {
 			g.target.SetWorldPosition(pos)
 		}
+	}
+}
+
+func (g *Mover) Hover(hovering bool, collider collider.T) {
+	if hovering {
+		// hover start
+		axis := g.getColliderAxis(collider)
+		switch axis {
+		case vec3.UnitX:
+			g.X.Transform().SetScale(g.hoverScale)
+			g.Y.Transform().SetScale(vec3.One)
+			g.Z.Transform().SetScale(vec3.One)
+		case vec3.UnitY:
+			g.X.Transform().SetScale(vec3.One)
+			g.Y.Transform().SetScale(g.hoverScale)
+			g.Z.Transform().SetScale(vec3.One)
+		case vec3.UnitZ:
+			g.X.Transform().SetScale(vec3.One)
+			g.Y.Transform().SetScale(vec3.One)
+			g.Z.Transform().SetScale(g.hoverScale)
+		}
+	}
+	if !hovering {
+		// reset scaling
+		g.X.Transform().SetScale(vec3.One)
+		g.Y.Transform().SetScale(vec3.One)
+		g.Z.Transform().SetScale(vec3.One)
 	}
 }
 
