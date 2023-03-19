@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/golang/freetype/truetype"
 	"github.com/johanhenriksson/goworld/math"
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/render/color"
@@ -34,7 +33,7 @@ type Args struct {
 type font struct {
 	size   float32
 	scale  float32
-	fnt    *truetype.Font
+	name   string
 	face   fontlib.Face
 	drawer *fontlib.Drawer
 	mutex  *sync.Mutex
@@ -46,10 +45,7 @@ type runepair struct {
 	a, b rune
 }
 
-func (f *font) Name() string {
-	return f.fnt.Name(truetype.NameIDFontFullName)
-}
-
+func (f *font) Name() string  { return f.name }
 func (f *font) Size() float32 { return f.size }
 
 func (f *font) Glyph(r rune) (*Glyph, error) {
