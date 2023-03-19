@@ -299,6 +299,8 @@ func (g *Mover) PreDraw(args render.Args, scene object.T) error {
 }
 
 func (g *Mover) Update(scene object.T, dt float32) {
+	g.T.Update(scene, dt)
+
 	// the gizmo should be displayed at the same size irrespectively of its distance to the camera.
 	// we can undo the effects of perspective projection by measuring how much a vector would be "squeezed"
 	// at the current distance form the camera, and then applying a scaling factor to counteract it.
