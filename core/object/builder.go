@@ -26,11 +26,13 @@ func Builder[K T](object K) *builder[K] {
 	}
 }
 
+// Attach a child component
 func (b *builder[K]) Attach(child T) *builder[K] {
 	b.children = append(b.children, child)
 	return b
 }
 
+// Set the parent of the object
 func (b *builder[K]) Parent(parent T) *builder[K] {
 	b.parent = parent
 	return b
