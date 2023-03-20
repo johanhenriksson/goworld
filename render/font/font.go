@@ -136,7 +136,7 @@ func (f *font) MeasureLine(text string) vec2.T {
 		size.Y = math.Max(size.Y, g.Size.Y)
 		prev = r
 	}
-	return size
+	return size.Scaled(f.scale)
 }
 
 func (f *font) Measure(text string, args Args) vec2.T {
