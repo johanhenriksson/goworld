@@ -38,22 +38,22 @@ type node[P any] struct {
 }
 
 func Builtin[P any](key string, props P, children []T, hydrate func(string, P) widget.T) T {
-	return &node[P]{
-		key:      key,
-		props:    props,
-		kind:     reflect.TypeOf(props),
-		hydrate:  hydrate,
-		children: children,
-	}
+	kind := reflect.TypeOf(props)
+	n := Alloc[P](globalPool, kind)
+	n.key = key
+	n.props = props
+	n.hydrate = hydrate
+	n.children = children
+	return n
 }
 
 func Component[P any](key string, props P, render func(P) T) T {
-	return &node[P]{
-		key:    key,
-		props:  props,
-		kind:   reflect.TypeOf(props),
-		render: render,
-	}
+	kind := reflect.TypeOf(props)
+	n := Alloc[P](globalPool, kind)
+	n.key = key
+	n.props = props
+	n.render = render
+	return n
 }
 
 func (n *node[P]) Key() string {
@@ -110,6 +110,11 @@ func (n *node[P]) Destroy() {
 		n.widget.Destroy()
 		n.widget = nil
 	}
+	n.hooks = hooks.State{}
+	n.render = nil
+	n.hydrate = nil
+	n.children = nil
+	Free(globalPool, n)
 }
 
 func (n *node[P]) Hooks() *hooks.State {
@@ -161,12 +166,10 @@ func (n *node[P]) Hydrate(parentKey string) widget.T {
 	// the logic for optimizing this process currently exists within
 	// Rect, since its the only element thay may have child elements.
 	// perhaps it would make sense to extract it, and perhaps place it here?
-	children := make([]widget.T, 0, len(n.children))
-	for _, child := range n.children {
+	children := make([]widget.T, len(n.children))
+	for i, child := range n.children {
 		// hydrate child. if its already hydrated, this is basically a no-op
-		hydrated := child.Hydrate(n.widget.Key())
-
-		children = append(children, hydrated)
+		children[i] = child.Hydrate(n.widget.Key())
 	}
 	n.widget.SetChildren(children)
 

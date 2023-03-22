@@ -10,9 +10,8 @@ func Reconcile(target, new T) T {
 		target = new
 	}
 
-	// element types are different - so we obviously can not reconcile
 	// if the keys dont match, reconcilation is not considered
-	if target.Type() != new.Type() || target.Key() != new.Key() {
+	if target.Key() != new.Key() {
 		target.Destroy()
 		target = new
 	}
@@ -60,6 +59,11 @@ func Reconcile(target, new T) T {
 	// and should be destroyed
 	for _, child := range previous {
 		child.Destroy()
+	}
+
+	if new != target {
+		new.SetChildren(nil)
+		new.Destroy()
 	}
 
 	return target
