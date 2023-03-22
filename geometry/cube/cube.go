@@ -1,4 +1,4 @@
-package geometry
+package cube
 
 import (
 	"github.com/johanhenriksson/goworld/core/mesh"
@@ -9,25 +9,29 @@ import (
 	"github.com/johanhenriksson/goworld/render/vertex"
 )
 
-// ColorCube is a vertex colored cube mesh
-type ColorCube struct {
+// T is a vertex colored cube mesh
+type T struct {
 	mesh.T
+	Args
+}
+
+type Args struct {
+	Mat   *material.Def
 	Size  float32
 	Color color.T
 }
 
-// NewColorCube creates a vertex colored cube mesh with a given size
-func NewColorCube(mat *material.Def, color color.T, size float32) *ColorCube {
-	cube := object.New(&ColorCube{
-		T:     mesh.New(mesh.Forward, mat),
-		Size:  size,
-		Color: color,
+// New creates a vertex colored cube mesh with a given size
+func New(args Args) *T {
+	cube := object.New(&T{
+		T:    mesh.New(mesh.Forward, args.Mat),
+		Args: args,
 	})
 	cube.generate()
 	return cube
 }
 
-func (c *ColorCube) generate() {
+func (c *T) generate() {
 	s := c.Size / 2
 	co := c.Color.Vec4()
 	vertices := []vertex.C{
@@ -76,7 +80,7 @@ func (c *ColorCube) generate() {
 
 	indices := []uint16{}
 
-	key := object.Key("colorcube", c)
+	key := object.Key("cube", c)
 	mesh := vertex.NewTriangles(key, vertices, indices)
 	c.SetMesh(mesh)
 }
