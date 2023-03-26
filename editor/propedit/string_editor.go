@@ -16,6 +16,12 @@ type StringProps struct {
 	Validate func(string) bool
 }
 
+func StringField(key string, title string, props StringProps) node.T {
+	return Field(key, title, []node.T{
+		String(key, props),
+	})
+}
+
 func String(key string, props StringProps) node.T {
 	return node.Component(key, props, func(props StringProps) node.T {
 		value, setValue := hooks.UseState(props.Value)

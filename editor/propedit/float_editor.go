@@ -13,8 +13,10 @@ type FloatProps struct {
 	Validate func(float32) bool
 }
 
-func fmtFloat(v float32) string {
-	return strconv.FormatFloat(float64(v), 'f', -1, 32)
+func FloatField(key string, title string, props FloatProps) node.T {
+	return Field(key, title, []node.T{
+		Float(key, props),
+	})
 }
 
 func Float(key string, props FloatProps) node.T {
@@ -37,4 +39,8 @@ func Float(key string, props FloatProps) node.T {
 			},
 		})
 	})
+}
+
+func fmtFloat(v float32) string {
+	return strconv.FormatFloat(float64(v), 'f', -1, 32)
 }

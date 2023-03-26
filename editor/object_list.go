@@ -6,6 +6,7 @@ import (
 	"github.com/johanhenriksson/goworld/gui/hooks"
 	"github.com/johanhenriksson/goworld/gui/node"
 	"github.com/johanhenriksson/goworld/gui/style"
+	"github.com/johanhenriksson/goworld/gui/widget/icon"
 	"github.com/johanhenriksson/goworld/gui/widget/label"
 	"github.com/johanhenriksson/goworld/gui/widget/rect"
 	"github.com/johanhenriksson/goworld/render/color"
@@ -63,27 +64,27 @@ func ObjectListEntry(key string, props ObjectListEntryProps) node.T {
 		}
 
 		open, setOpen := hooks.UseState(false)
-		icon := "+"
+		ico := icon.IconChevronRight
 		if open {
-			icon = "-"
+			ico = icon.IconExpandMore
 		}
 
 		title := rect.New("title-row", rect.Props{
 			Style: rect.Style{
-				Layout: style.Row{},
+				Layout:       style.Row{},
+				AlignContent: style.AlignCenter,
 			},
 			Children: []node.T{
-				label.New("toggle", label.Props{
-					Text: icon,
+				icon.New("toggle", icon.IconProps{
+					Icon:  ico,
+					Color: clr,
+					Size:  18,
 					OnClick: func(e mouse.Event) {
 						setOpen(!open)
 					},
-					Style: label.Style{
-						Color: clr,
-					},
 				}),
 				label.New("title", label.Props{
-					Text: " " + obj.Name(),
+					Text: obj.Name(),
 					OnClick: func(e mouse.Event) {
 						if props.OnSelect != nil {
 							props.OnSelect(obj)

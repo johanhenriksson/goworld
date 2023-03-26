@@ -12,6 +12,12 @@ type Vec3Props struct {
 	OnChange func(vec3.T)
 }
 
+func Vec3Field(key string, title string, props Vec3Props) node.T {
+	return Field(key, title, []node.T{
+		Vec3(key, props),
+	})
+}
+
 func Vec3(key string, props Vec3Props) node.T {
 	return node.Component(key, props, func(props Vec3Props) node.T {
 		return rect.New(key, rect.Props{

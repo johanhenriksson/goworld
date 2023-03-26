@@ -7,23 +7,17 @@ import (
 
 func Transform(key string, tf transform.T) node.T {
 	return Container(key, []node.T{
-		Field("position", "Position", []node.T{
-			Vec3("position", Vec3Props{
-				Value:    tf.Position(),
-				OnChange: tf.SetPosition,
-			}),
+		Vec3Field("position", "Position", Vec3Props{
+			Value:    tf.Position(),
+			OnChange: tf.SetPosition,
 		}),
-		Field("rotation", "Rotation", []node.T{
-			Vec3("rotation", Vec3Props{
-				Value:    tf.Rotation(),
-				OnChange: tf.SetRotation,
-			}),
+		Vec3Field("rotation", "Rotation", Vec3Props{
+			Value:    tf.Rotation(),
+			OnChange: tf.SetRotation,
 		}),
-		Field("scale", "Scale", []node.T{
-			Vec3("scale", Vec3Props{
-				Value:    tf.Scale(),
-				OnChange: tf.SetScale,
-			}),
+		Vec3Field("scale", "Scale", Vec3Props{
+			Value:    tf.Scale(),
+			OnChange: tf.SetScale,
 		}),
 	})
 }
