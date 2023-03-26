@@ -38,6 +38,10 @@ type buffer struct {
 }
 
 func New(device device.T, args Args) T {
+	if args.Size == 0 {
+		panic("buffer size cant be 0")
+	}
+
 	queueIdx := device.GetQueueFamilyIndex(core1_0.QueueGraphics)
 	ptr, _, err := device.Ptr().CreateBuffer(nil, core1_0.BufferCreateInfo{
 		Flags:              0,

@@ -182,6 +182,9 @@ func (d *device) GetLimits() *core1_0.PhysicalDeviceLimits {
 }
 
 func (d *device) Allocate(req core1_0.MemoryRequirements, flags core1_0.MemoryPropertyFlags) Memory {
+	if req.Size == 0 {
+		panic("allocating 0 bytes of memory")
+	}
 	return alloc(d, req, flags)
 }
 
