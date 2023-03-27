@@ -2,6 +2,7 @@ package chunk
 
 import (
 	"github.com/johanhenriksson/goworld/core/input/mouse"
+	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/editor"
 	"github.com/johanhenriksson/goworld/gui"
 	"github.com/johanhenriksson/goworld/gui/node"
@@ -48,6 +49,18 @@ func NewMenu(editor *edit) gui.Fragment {
 						Key:     "action-clear",
 						Title:   "Clear",
 						OnClick: func(e mouse.Event) { editor.clearChunk() },
+					},
+					{
+						Key:   "new",
+						Title: "New",
+						OnClick: func(e mouse.Event) {
+							eye := editor.Camera.Transform().WorldPosition()
+							offset := editor.Camera.Transform().Forward().Scaled(3)
+							object.Builder(NewMesh(New(8, 0, 0))).
+								Position(eye.Add(offset)).
+								Parent(editor.Context.Scene).
+								Create()
+						},
 					},
 				},
 			})

@@ -3,7 +3,6 @@ package chunk
 import (
 	"log"
 
-	"github.com/johanhenriksson/goworld/core/camera"
 	"github.com/johanhenriksson/goworld/core/input/keys"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/editor"
@@ -35,13 +34,11 @@ type Editor interface {
 // Editor base struct
 type edit struct {
 	object.T
+	*editor.Context
 
 	// editor target
-	mesh *Mesh
-
-	Chunk  *T
-	Camera camera.T
-
+	mesh  *Mesh
+	Chunk *T
 	color color.T
 
 	PlaceTool   *PlaceTool
@@ -72,9 +69,9 @@ func NewEditor(ctx *editor.Context, mesh *Mesh) Editor {
 	center := dimensions.Scaled(0.5)
 
 	e := object.New(&edit{
-		mesh:   mesh,
-		Chunk:  chk,
-		Camera: ctx.Camera,
+		Context: ctx,
+		mesh:    mesh,
+		Chunk:   chk,
 
 		PlaceTool: object.Builder(NewPlaceTool()).
 			Active(false).

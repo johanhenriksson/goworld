@@ -55,6 +55,7 @@ func (e *Editor) Update(scene object.T, dt float32) {
 		Camera: e.Player.Camera,
 		Render: e.render,
 		Root:   scene,
+		Scene:  e.workspace,
 	}
 	e.editors = ConstructEditors(context, e.editors, e.workspace)
 	if e.editors.Parent() == nil {
