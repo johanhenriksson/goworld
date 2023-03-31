@@ -71,7 +71,7 @@ void main()
 	gl_Position = vec4(
 		2 * pos.x / config.resolution.x - 1,
 		2 * pos.y / config.resolution.y - 1,
-		1 - quad.zindex / config.zmax,
+		1 - quad.zindex / (config.zmax+1),
 		1);
 	
 	color0 = quad.color[gl_VertexIndex];
