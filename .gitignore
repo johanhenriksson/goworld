@@ -5,6 +5,7 @@ profiling/
 .idea/*
 .DS_Store
 TODO.md
+__debug_bin
 
 # temproarily ignore models
 assets/models/
