@@ -11,7 +11,6 @@ import (
 )
 
 type DirectionalArgs struct {
-	Direction vec3.T
 	Color     color.T
 	Intensity float32
 	Shadows   bool
