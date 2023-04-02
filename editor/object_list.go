@@ -69,52 +69,48 @@ func ObjectListEntry(key string, props ObjectListEntryProps) node.T {
 			ico = icon.IconExpandMore
 		}
 
-		title := rect.New("title-row", rect.Props{
-			Style: rect.Style{
-				Layout:       style.Row{},
-				AlignContent: style.AlignCenter,
-			},
-			Children: []node.T{
-				icon.New("toggle", icon.IconProps{
-					Icon:  ico,
-					Color: clr,
-					Size:  18,
-					OnClick: func(e mouse.Event) {
-						setOpen(!open)
-					},
-				}),
-				label.New("title", label.Props{
-					Text: obj.Name(),
-					OnClick: func(e mouse.Event) {
-						if props.OnSelect != nil {
-							props.OnSelect(obj)
-						}
-					},
-					Style: label.Style{
-						Color: clr,
-					},
-				}),
-			},
-		})
-
-		nodes := make([]node.T, 0, len(obj.Children())+1)
-		nodes = append(nodes, title)
-
-		if open {
-			for _, obj := range obj.Children() {
-				key := object.Key("object", obj)
-				nodes = append(nodes, ObjectListEntry(key, ObjectListEntryProps{
-					Object:   obj,
-					OnSelect: props.OnSelect,
-				}))
-			}
-		}
-
 		return rect.New(key, rect.Props{
 			Style: rect.Style{
 				Padding: style.RectXY(5, 3),
 			},
-			Children: nodes,
+			Children: []node.T{
+				rect.New("title-row", rect.Props{
+					Style: rect.Style{
+						Layout:       style.Row{},
+						AlignContent: style.AlignCenter,
+					},
+					Children: []node.T{
+						icon.New("toggle", icon.IconProps{
+							Icon:  ico,
+							Color: clr,
+							Size:  18,
+							OnClick: func(e mouse.Event) {
+								setOpen(!open)
+							},
+						}),
+						label.New("title", label.Props{
+							Text: obj.Name(),
+							OnClick: func(e mouse.Event) {
+								if props.OnSelect != nil {
+									props.OnSelect(obj)
+								}
+							},
+							Style: label.Style{
+								Color: clr,
+							},
+						}),
+					},
+				}),
+				node.If(open, rect.New("children", rect.Props{
+					Children: node.Map(obj.Children(), func(obj object.T) node.T {
+						key := object.Key("object", obj)
+						return ObjectListEntry(key, ObjectListEntryProps{
+							Object:   obj,
+							OnSelect: props.OnSelect,
+						})
+					}),
+				})),
+			},
 		})
 	})
 }

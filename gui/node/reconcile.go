@@ -5,6 +5,10 @@ import (
 )
 
 func Reconcile(target, new T) T {
+	if new == nil {
+		panic("reconcile nil node")
+	}
+
 	// no source tree - just go with the new one
 	if target == nil {
 		target = new
@@ -27,6 +31,9 @@ func Reconcile(target, new T) T {
 	// this allows us to reuse nodes and keep track of deletions
 	previous := map[string]T{}
 	for _, child := range target.Children() {
+		if child == nil {
+			continue
+		}
 		if _, exists := previous[child.Key()]; exists {
 			panic(fmt.Errorf("duplicate key %s in children of %s", child.Key(), target.Key()))
 		}
@@ -34,9 +41,16 @@ func Reconcile(target, new T) T {
 	}
 
 	children := new.Children()
-	for idx, child := range children {
-		// todo: handle nil children
 
+	// remove any nil children
+	for i := 0; i < len(children); i++ {
+		if children[i] == nil {
+			children = append(children[:i], children[i+1:]...)
+			i--
+		}
+	}
+
+	for idx, child := range children {
 		if existing, ok := previous[child.Key()]; ok {
 			// since each key can only appear once, we can remove the child from the mapping
 			// this prevents the old element from being destroyed later. if its no longer needed,
