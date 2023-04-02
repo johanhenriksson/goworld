@@ -60,4 +60,36 @@ var _ = Describe("reconcile nodes", func() {
 		cp := child.Props().(*props)
 		Expect(cp.Text).To(Equal("updated"))
 	})
+
+	Context("handles nil elements", func() {
+		It("nil becomes element", func() {
+			hydrate := func(key string, p *props) widget.T { return nil }
+
+			a := node.Builtin("a", &props{}, []node.T{
+				nil,
+			}, hydrate)
+			b := node.Builtin("a", &props{}, []node.T{
+				node.Builtin("b", &props{"new"}, nil, hydrate),
+			}, hydrate)
+
+			r := node.Reconcile(a, b)
+			child := r.Children()[0]
+			cp := child.Props().(*props)
+			Expect(cp.Text).To(Equal("new"))
+		})
+
+		It("element becomes nil", func() {
+			hydrate := func(key string, p *props) widget.T { return nil }
+
+			a := node.Builtin("a", &props{}, []node.T{
+				node.Builtin("b", &props{"new"}, nil, hydrate),
+			}, hydrate)
+			b := node.Builtin("a", &props{}, []node.T{
+				nil,
+			}, hydrate)
+
+			r := node.Reconcile(a, b)
+			Expect(r.Children()).To(HaveLen(0))
+		})
+	})
 })

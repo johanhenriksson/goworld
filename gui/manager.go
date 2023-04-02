@@ -110,6 +110,9 @@ func (m *manager) DrawUI(args widget.DrawArgs, quads *widget.QuadBuffer) {
 }
 
 func findNodeWithKey(root node.T, key string) node.T {
+	if root == nil {
+		return nil
+	}
 	if root.Key() == key {
 		return root
 	}
