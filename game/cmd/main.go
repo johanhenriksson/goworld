@@ -24,7 +24,6 @@ func main() {
 		Title:  "goworld",
 	},
 		editor.Scene(func(r renderer.T, scene object.T) {
-			// make some chonks
 			generator := chunk.ExampleWorldgen(3141389, 32)
 			object.Attach(scene, chunk.NewWorld(32, generator, 500))
 			// chonk := chunk.Generate(generator, 32, 0, 0)
