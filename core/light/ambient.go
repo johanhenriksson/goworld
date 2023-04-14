@@ -12,7 +12,7 @@ type ambient struct {
 	Intensity float32
 }
 
-func (lit *ambient) LightDescriptor(args render.Args) Descriptor {
+func (lit *ambient) LightDescriptor(args render.Args, _ int) Descriptor {
 	return Descriptor{
 		Type:      Ambient,
 		Color:     lit.Color,
@@ -24,6 +24,7 @@ func (lit *ambient) Shadows() bool { return false }
 func (lit *ambient) Type() Type {
 	return Ambient
 }
+func (lit *ambient) Cascades() []Cascade { return nil }
 
 func NewAmbient(clr color.T, intensity float32) T {
 	return object.New(&ambient{

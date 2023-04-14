@@ -25,7 +25,17 @@ layout (std140, binding = 4) uniform Camera {
 	vec3 Forward;
 } camera;
 
-layout (binding = 5) uniform sampler2D[] shadowmaps;
+struct Light {
+	mat4 ViewProj[4];
+	int Shadowmap[4];
+	float Distance[4];
+};
+
+layout (binding = 5) readonly buffer LightBuffer {
+	Light lights[];
+} ssbo;
+
+layout (binding = 6) uniform sampler2D[] shadowmaps;
 
 layout(push_constant) uniform constants
 {
@@ -37,6 +47,7 @@ layout(push_constant) uniform constants
 	float Range;
 	float Intensity;
 	Attenuation Attenuation;
+	int Index;
 } light;
 
 layout (input_attachment_index = 0, binding = 0) uniform subpassInput tex_diffuse;
@@ -63,9 +74,9 @@ vec3 getWorldNormal() {
 	return normalize(worldNormal.xyz);
 }
 
-float sampleShadowmap(sampler2D shadowmap, vec3 position, float bias) {
+float sampleShadowmap(sampler2D shadowmap, mat4 viewProj, vec3 position, float bias) {
 	/* world -> light clip coords */
-	vec4 light_pos = light.ViewProj * vec4(position, 1);
+	vec4 light_pos = viewProj * vec4(position, 1);
 	light_pos = light_pos / light_pos.w;
 
 	/* convert light clip to light ndc by dividing by W, then map values to 0-1 */
@@ -154,9 +165,25 @@ void main() {
 		// angle-dependent bias
 		float surface_bias = max(shadow_bias * (1-dot(normal, surfaceToLight)), shadow_bias*0.1);  
 
+		// find light struct
+		Light dirlight = ssbo.lights[light.Shadowmap];
+
+		float zNear = 0.1;
+		float zFar = 200;
+		float depth_norm = zNear / (zFar - depth * (zFar - zNear));
+
+		// pick cascade index
+		int index = 0;
+		for(int i = 0; i < 4; i++) {
+			if (depth_norm <= dirlight.Distance[i]) {
+				index = i;
+				break;
+			}
+		}
+
 		// experimental shadows
 		if (light.Shadowmap > 0) {
-			shadow = sampleShadowmap(shadowmaps[light.Shadowmap], position, surface_bias);
+			shadow = sampleShadowmap(shadowmaps[dirlight.Shadowmap[index]], dirlight.ViewProj[index], position, surface_bias);
 		}
 	}
 	else if (light.Type == POINT_LIGHT) {

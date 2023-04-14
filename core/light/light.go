@@ -13,7 +13,8 @@ type T interface {
 
 	Type() Type
 	Shadows() bool
-	LightDescriptor(args render.Args) Descriptor
+	LightDescriptor(args render.Args, cascade int) Descriptor
+	Cascades() []Cascade
 }
 
 // Descriptor holds rendering information for lights
@@ -26,8 +27,9 @@ type Descriptor struct {
 	Type        Type
 	Range       float32
 	Intensity   float32
-	Shadows     int32
+	Shadows     uint32
 	Attenuation Attenuation
+	Index       int
 }
 
 // Attenuation properties for point lights

@@ -26,6 +26,7 @@ type LightDescriptors struct {
 	Position *descriptor.InputAttachment
 	Depth    *descriptor.InputAttachment
 	Camera   *descriptor.Uniform[uniform.Camera]
+	Lights   *descriptor.Storage[uniform.Light]
 	Shadow   *descriptor.SamplerArray
 }
 
@@ -38,6 +39,7 @@ type LightConst struct {
 	Range       float32
 	Intensity   float32
 	Attenuation light.Attenuation
+	Index       int
 }
 
 type LightShader interface {
@@ -87,6 +89,10 @@ func NewLightShader(app vulkan.App, pass renderpass.T, target RenderTarget, gbuf
 			},
 			Camera: &descriptor.Uniform[uniform.Camera]{
 				Stages: core1_0.StageFragment,
+			},
+			Lights: &descriptor.Storage[uniform.Light]{
+				Stages: core1_0.StageFragment,
+				Size:   256,
 			},
 			Shadow: &descriptor.SamplerArray{
 				Stages: core1_0.StageFragment,

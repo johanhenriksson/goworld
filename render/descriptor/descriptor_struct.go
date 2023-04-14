@@ -102,7 +102,7 @@ func CopyDescriptorStruct[S Set](template S, blank Set, resolver Resolver) (S, [
 			// bind it to our blank descriptor set
 			binding, exists := resolver.Descriptor(fieldName)
 			if !exists {
-				panic("unresolved descriptor")
+				panic(fmt.Errorf("unresolved descriptor: %s", fieldName))
 			}
 			descriptor.Bind(blank, binding)
 			descriptors = append(descriptors, descriptor)

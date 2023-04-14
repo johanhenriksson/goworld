@@ -37,8 +37,9 @@ func main() {
 					Intensity: 1.5,
 					Color:     color.RGB(0.9*0.973, 0.9*0.945, 0.9*0.776),
 					Shadows:   true,
+					Cascades:  4,
 				})).
-					Rotation(vec3.New(-30, 45, 0)).
+					Rotation(vec3.New(-30, 0, 0)).
 					Position(vec3.New(1, 2, 3)).
 					Create())
 		}),

@@ -2,6 +2,7 @@ package pass
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/johanhenriksson/goworld/core/light"
 	"github.com/johanhenriksson/goworld/core/mesh"
@@ -260,7 +261,7 @@ func (p *deferred) Record(cmds command.Recorder, args render.Args, scene object.
 		Reset().
 		Collect(scene)
 	for index, lit := range lights {
-		if err := p.DrawLight(cmds, args, lit, index+1); err != nil {
+		if err := p.DrawLight(cmds, args, lit, 5*index+1); err != nil {
 			fmt.Printf("light draw error in object %s: %s\n", lit.Name(), err)
 		}
 	}
@@ -272,16 +273,27 @@ func (p *deferred) Record(cmds command.Recorder, args render.Args, scene object.
 
 func (p *deferred) DrawLight(cmds command.Recorder, args render.Args, lit light.T, shadowIndex int) error {
 	quad := p.app.Meshes().Fetch(p.quad)
-	desc := lit.LightDescriptor(args)
+	desc := lit.LightDescriptor(args, 0)
 
 	if lit.Shadows() {
-		shadowtex := p.shadows.Shadowmap(lit)
-		if shadowtex == nil {
-			// no shadowmap available - disable the light until its available
-			return nil
-		}
-		p.light.Descriptors(args.Context.Index).Shadow.Set(shadowIndex, shadowtex)
+		dirlight := uniform.Light{}
+		for i, cascade := range lit.Cascades() {
+			shadowtex := p.shadows.Shadowmap(lit, i)
+			if shadowtex == nil {
+				// no shadowmap available - disable the light until its available
+				log.Println("missing cascade shadowmap", i)
+				return nil
+			}
+			p.light.Descriptors(args.Context.Index).Shadow.Set(shadowIndex+i, shadowtex)
 
+			index := i
+			dirlight.ViewProj[i] = cascade.ViewProj
+			dirlight.Distance[i] = cascade.FarSplit
+			dirlight.Shadowmap[i] = uint32(shadowIndex + index)
+			log.Println("light", shadowIndex, "cascade", i, "idx", shadowIndex+i, "far split", cascade.FarSplit)
+		}
+
+		p.light.Descriptors(args.Context.Index).Lights.Set(shadowIndex, dirlight)
 	} else {
 		// shadows are disabled - use a blank white texture as shadowmap
 		blank := p.app.Textures().Fetch(color.White)
@@ -298,6 +310,7 @@ func (p *deferred) DrawLight(cmds command.Recorder, args render.Args, lit light.
 			Range:       desc.Range,
 			Intensity:   desc.Intensity,
 			Attenuation: desc.Attenuation,
+			Index:       shadowIndex,
 		}
 		cmd.CmdPushConstant(core1_0.StageFragment, 0, push)
 

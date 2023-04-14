@@ -150,3 +150,7 @@ func Round(f float32) float32 {
 func Snap(f, multiple float32) float32 {
 	return Round(f/multiple) * multiple
 }
+
+func Pow(f, x float32) float32 {
+	return float32(math.Pow(float64(f), float64(x)))
+}

@@ -1,6 +1,7 @@
 package pass
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/johanhenriksson/goworld/core/light"
@@ -24,7 +25,7 @@ import (
 type Shadow interface {
 	Pass
 
-	Shadowmap(light.T) texture.T
+	Shadowmap(lit light.T, cascade int) texture.T
 }
 
 type shadowpass struct {
@@ -40,9 +41,13 @@ type shadowpass struct {
 }
 
 type Shadowmap struct {
-	tex  texture.T
-	fbuf framebuffer.T
-	mats *MaterialSorter
+	Cascades []Cascade
+	mats     *MaterialSorter
+}
+
+type Cascade struct {
+	Texture texture.T
+	Frame   framebuffer.T
 }
 
 func NewShadowPass(app vulkan.App) Shadow {
@@ -110,19 +115,25 @@ func (p *shadowpass) Name() string {
 func (p *shadowpass) createShadowmap(light light.T) Shadowmap {
 	log.Println("creating shadowmap for", light.Name())
 
-	fbuf, err := framebuffer.New(p.app.Device(), p.size, p.size, p.pass)
-	if err != nil {
-		panic(err)
-	}
+	cascades := make([]Cascade, 4)
+	for i := range cascades {
+		fbuf, err := framebuffer.New(p.app.Device(), p.size, p.size, p.pass)
+		if err != nil {
+			panic(err)
+		}
 
-	// the frame buffer object will allocate a new depth image for us
-	view := fbuf.Attachment(attachment.DepthName)
-	key := light.Name() + "-shadow"
-	tex, err := texture.FromView(p.app.Device(), key, view, texture.Args{
-		Aspect: core1_0.ImageAspectDepth,
-	})
-	if err != nil {
-		panic(err)
+		// the frame buffer object will allocate a new depth image for us
+		view := fbuf.Attachment(attachment.DepthName)
+		key := fmt.Sprintf("%s-%d", object.Key("shadow", light), i)
+		tex, err := texture.FromView(p.app.Device(), key, view, texture.Args{
+			Aspect: core1_0.ImageAspectDepth,
+		})
+		if err != nil {
+			panic(err)
+		}
+
+		cascades[i].Texture = tex
+		cascades[i].Frame = fbuf
 	}
 
 	// each light needs its own shadow materials - or rather, their own descriptors
@@ -142,9 +153,8 @@ func (p *shadowpass) createShadowmap(light light.T) Shadowmap {
 	}
 
 	shadowmap := Shadowmap{
-		tex:  tex,
-		fbuf: fbuf,
-		mats: mats,
+		Cascades: cascades,
+		mats:     mats,
 	}
 	p.shadowmaps[light] = shadowmap
 	return shadowmap
@@ -162,47 +172,51 @@ func (p *shadowpass) Record(cmds command.Recorder, args render.Args, scene objec
 			shadowmap = p.createShadowmap(light)
 		}
 
-		lightDesc := light.LightDescriptor(args)
+		for index, cascade := range shadowmap.Cascades {
+			lightDesc := light.LightDescriptor(args, index)
+			camera := uniform.Camera{
+				Proj:        lightDesc.Projection,
+				View:        lightDesc.View,
+				ViewProj:    lightDesc.ViewProj,
+				ProjInv:     lightDesc.Projection.Invert(),
+				ViewInv:     lightDesc.View.Invert(),
+				ViewProjInv: lightDesc.ViewProj.Invert(),
+				Eye:         light.Transform().Position(),
+				Forward:     light.Transform().Forward(),
+			}
 
-		camera := uniform.Camera{
-			Proj:        lightDesc.Projection,
-			View:        lightDesc.View,
-			ViewProj:    lightDesc.ViewProj,
-			ProjInv:     lightDesc.Projection.Invert(),
-			ViewInv:     lightDesc.View.Invert(),
-			ViewProjInv: lightDesc.ViewProj.Invert(),
-			Eye:         light.Transform().Position(),
-			Forward:     light.Transform().Forward(),
+			frame := cascade.Frame
+			cmds.Record(func(cmd command.Buffer) {
+				cmd.CmdBeginRenderPass(p.pass, frame)
+			})
+
+			// todo: filter only meshes that cast shadows
+			meshes := p.meshQuery.
+				Reset().
+				Where(isDrawDeferred).
+				Collect(scene)
+			shadowmap.mats.DrawCamera(cmds, args, camera, meshes)
+
+			cmds.Record(func(cmd command.Buffer) {
+				cmd.CmdEndRenderPass()
+			})
 		}
-
-		cmds.Record(func(cmd command.Buffer) {
-			cmd.CmdBeginRenderPass(p.pass, shadowmap.fbuf)
-		})
-
-		// todo: filter only meshes that cast shadows
-		meshes := p.meshQuery.
-			Reset().
-			Where(isDrawDeferred).
-			Collect(scene)
-		shadowmap.mats.DrawCamera(cmds, args, camera, meshes)
-
-		cmds.Record(func(cmd command.Buffer) {
-			cmd.CmdEndRenderPass()
-		})
 	}
 }
 
-func (p *shadowpass) Shadowmap(light light.T) texture.T {
+func (p *shadowpass) Shadowmap(light light.T, cascade int) texture.T {
 	if shadowmap, exists := p.shadowmaps[light]; exists {
-		return shadowmap.tex
+		return shadowmap.Cascades[cascade].Texture
 	}
 	return nil
 }
 
 func (p *shadowpass) Destroy() {
 	for _, shadowmap := range p.shadowmaps {
-		shadowmap.fbuf.Destroy()
-		shadowmap.tex.Destroy()
+		for _, cascade := range shadowmap.Cascades {
+			cascade.Frame.Destroy()
+			cascade.Texture.Destroy()
+		}
 		shadowmap.mats.Destroy()
 	}
 	p.shadowmaps = nil
