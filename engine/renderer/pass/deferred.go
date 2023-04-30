@@ -2,6 +2,7 @@ package pass
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/johanhenriksson/goworld/core/light"
 	"github.com/johanhenriksson/goworld/core/mesh"
@@ -173,7 +174,7 @@ func NewDeferredPass(
 		},
 	})
 
-	fbuf, err := framebuffer.NewArray(app.Frames(), app.Device(), app.Width(), app.Height(), pass)
+	fbuf, err := framebuffer.NewArray(app.Frames(), app.Device(), "deferred", app.Width(), app.Height(), pass)
 	if err != nil {
 		panic(err)
 	}
@@ -254,13 +255,14 @@ func (p *deferred) Record(cmds command.Recorder, args render.Args, scene object.
 	white := p.app.Textures().Fetch(color.White)
 	lightDesc.Shadow.Set(0, white)
 	ambient := light.NewAmbient(color.White, 0.33)
-	p.DrawLight(cmds, args, ambient, 0)
+	p.DrawLight(cmds, args, ambient, 0, 0)
 
 	lights := p.lightQuery.
 		Reset().
 		Collect(scene)
 	for index, lit := range lights {
-		if err := p.DrawLight(cmds, args, lit, index+1); err != nil {
+		lightIndex := index + 1
+		if err := p.DrawLight(cmds, args, lit, lightIndex, 5*lightIndex); err != nil {
 			fmt.Printf("light draw error in object %s: %s\n", lit.Name(), err)
 		}
 	}
@@ -270,22 +272,33 @@ func (p *deferred) Record(cmds command.Recorder, args render.Args, scene object.
 	})
 }
 
-func (p *deferred) DrawLight(cmds command.Recorder, args render.Args, lit light.T, shadowIndex int) error {
+func (p *deferred) DrawLight(cmds command.Recorder, args render.Args, lit light.T, lightIndex, textureIndexOffset int) error {
 	quad := p.app.Meshes().Fetch(p.quad)
-	desc := lit.LightDescriptor(args)
+	desc := lit.LightDescriptor(args, 0)
 
 	if lit.Shadows() {
-		shadowtex := p.shadows.Shadowmap(lit)
-		if shadowtex == nil {
-			// no shadowmap available - disable the light until its available
-			return nil
-		}
-		p.light.Descriptors(args.Context.Index).Shadow.Set(shadowIndex, shadowtex)
+		dirlight := uniform.Light{}
+		for cascadeIndex, cascade := range lit.Cascades() {
+			textureIndex := textureIndexOffset + cascadeIndex
 
+			shadowtex := p.shadows.Shadowmap(lit, cascadeIndex)
+			if shadowtex == nil {
+				// no shadowmap available - disable the light until its available
+				log.Println("missing cascade shadowmap", cascadeIndex)
+				return nil
+			}
+			p.light.Descriptors(args.Context.Index).Shadow.Set(textureIndex, shadowtex)
+
+			dirlight.ViewProj[cascadeIndex] = cascade.ViewProj
+			dirlight.Distance[cascadeIndex] = cascade.FarSplit
+			dirlight.Shadowmap[cascadeIndex] = uint32(textureIndex)
+		}
+
+		p.light.Descriptors(args.Context.Index).Lights.Set(lightIndex, dirlight)
 	} else {
 		// shadows are disabled - use a blank white texture as shadowmap
 		blank := p.app.Textures().Fetch(color.White)
-		p.light.Descriptors(args.Context.Index).Shadow.Set(shadowIndex, blank)
+		p.light.Descriptors(args.Context.Index).Shadow.Set(lightIndex, blank)
 	}
 
 	cmds.Record(func(cmd command.Buffer) {
@@ -294,7 +307,7 @@ func (p *deferred) DrawLight(cmds command.Recorder, args render.Args, lit light.
 			Color:       desc.Color,
 			Position:    desc.Position,
 			Type:        desc.Type,
-			Shadowmap:   uint32(shadowIndex),
+			Index:       uint32(lightIndex),
 			Range:       desc.Range,
 			Intensity:   desc.Intensity,
 			Attenuation: desc.Attenuation,

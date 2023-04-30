@@ -5,6 +5,7 @@ import (
 
 	"github.com/johanhenriksson/goworld/core/light"
 	"github.com/johanhenriksson/goworld/core/object"
+	"github.com/johanhenriksson/goworld/core/script"
 	"github.com/johanhenriksson/goworld/editor"
 	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/engine/renderer"
@@ -31,15 +32,20 @@ func main() {
 			// object.Attach(scene, object.Builder(chunk.NewMesh(chonk)).Position(vec3.New(32, 0, 0)).Create())
 
 			// directional light
+			rot := float32(-20)
 			object.Attach(
 				scene,
 				object.Builder(light.NewDirectional(light.DirectionalArgs{
 					Intensity: 1.5,
 					Color:     color.RGB(0.9*0.973, 0.9*0.945, 0.9*0.776),
 					Shadows:   true,
+					Cascades:  4,
 				})).
-					Rotation(vec3.New(-30, 45, 0)).
 					Position(vec3.New(1, 2, 3)).
+					Attach(script.New(func(scene, self object.T, dt float32) {
+						rot -= dt
+						self.Parent().Transform().SetRotation(vec3.New(rot, 0, 0))
+					})).
 					Create())
 		}),
 	)

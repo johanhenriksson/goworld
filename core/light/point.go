@@ -26,11 +26,12 @@ func NewPoint(args PointArgs) T {
 	})
 }
 
-func (lit *pointlight) Name() string  { return "PointLight" }
-func (lit *pointlight) Type() Type    { return Point }
-func (lit *pointlight) Shadows() bool { return false }
+func (lit *pointlight) Name() string        { return "PointLight" }
+func (lit *pointlight) Type() Type          { return Point }
+func (lit *pointlight) Shadows() bool       { return false }
+func (lit *pointlight) Cascades() []Cascade { return nil }
 
-func (lit *pointlight) LightDescriptor(args render.Args) Descriptor {
+func (lit *pointlight) LightDescriptor(args render.Args, _ int) Descriptor {
 	return Descriptor{
 		Type:        Point,
 		Position:    vec4.Extend(lit.Transform().WorldPosition(), 0),

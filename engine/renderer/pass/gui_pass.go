@@ -73,7 +73,7 @@ func NewGuiPass(app vulkan.App, target RenderTarget) *GuiPass {
 			},
 		},
 		DepthAttachment: &attachment.Depth{
-			Image:          attachment.NewImage("gui-depth", app.Device().GetDepthFormat(), core1_0.ImageUsageDepthStencilAttachment|core1_0.ImageUsageInputAttachment),
+			Image:          attachment.NewImage("depth", app.Device().GetDepthFormat(), core1_0.ImageUsageDepthStencilAttachment|core1_0.ImageUsageInputAttachment),
 			LoadOp:         core1_0.AttachmentLoadOpClear,
 			StoreOp:        core1_0.AttachmentStoreOpDontCare,
 			StencilLoadOp:  core1_0.AttachmentLoadOpClear,
@@ -113,7 +113,7 @@ func NewGuiPass(app vulkan.App, target RenderTarget) *GuiPass {
 
 	mesh := quad.New("gui-quad", quad.Props{Size: vec2.One})
 
-	fbufs, err := framebuffer.NewArray(app.Frames(), app.Device(), app.Width(), app.Height(), pass)
+	fbufs, err := framebuffer.NewArray(app.Frames(), app.Device(), "gui", app.Width(), app.Height(), pass)
 	if err != nil {
 		panic(err)
 	}

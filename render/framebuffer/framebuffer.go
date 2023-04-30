@@ -9,6 +9,7 @@ import (
 	"github.com/johanhenriksson/goworld/util"
 
 	"github.com/vkngwrapper/core/v2/core1_0"
+	"github.com/vkngwrapper/core/v2/driver"
 )
 
 type T interface {
@@ -21,6 +22,7 @@ type T interface {
 type framebuf struct {
 	ptr         core1_0.Framebuffer
 	device      device.T
+	name        string
 	attachments map[attachment.Name]image.View
 	views       []image.View
 	images      []image.T
@@ -28,7 +30,7 @@ type framebuf struct {
 	height      int
 }
 
-func New(device device.T, width, height int, pass renderpass.T) (T, error) {
+func New(device device.T, name string, width, height int, pass renderpass.T) (T, error) {
 	attachments := pass.Attachments()
 	depth := pass.Depth()
 
@@ -49,6 +51,7 @@ func New(device device.T, width, height int, pass renderpass.T) (T, error) {
 	allocate := func(attach attachment.T, aspect core1_0.ImageAspectFlags) error {
 		img, err := attach.Image().Next(
 			device,
+			name,
 			width, height,
 		)
 		if err != nil {
@@ -97,9 +100,12 @@ func New(device device.T, width, height int, pass renderpass.T) (T, error) {
 		return nil, vkerror.FromResult(result)
 	}
 
+	device.SetDebugObjectName(driver.VulkanHandle(ptr.Handle()), core1_0.ObjectTypeFramebuffer, name)
+
 	return &framebuf{
 		ptr:         ptr,
 		device:      device,
+		name:        name,
 		width:       width,
 		height:      height,
 		images:      images,

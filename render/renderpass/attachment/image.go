@@ -2,6 +2,7 @@ package attachment
 
 import (
 	"errors"
+	"fmt"
 	"log"
 
 	"github.com/johanhenriksson/goworld/render/device"
@@ -14,7 +15,7 @@ var ErrArrayExhausted = errors.New("image array allocator exhausted")
 
 type Image interface {
 	Format() core1_0.Format
-	Next(device device.T, width, height int) (image.T, error)
+	Next(device device.T, name string, width, height int) (image.T, error)
 }
 
 type alloc struct {
@@ -31,12 +32,14 @@ func (im *alloc) Format() core1_0.Format {
 
 func (im *alloc) Next(
 	device device.T,
+	name string,
 	width, height int,
 ) (image.T, error) {
-	log.Println("attachment alloc", im.key)
+	key := fmt.Sprintf("%s-%s", name, im.key)
+	log.Println("attachment alloc", key)
 	return image.New2D(
 		device,
-		im.key,
+		key,
 		width, height,
 		im.format, im.usage,
 	)
@@ -61,6 +64,7 @@ func (im *imageArray) Format() core1_0.Format {
 
 func (im *imageArray) Next(
 	device device.T,
+	name string,
 	width, height int,
 ) (image.T, error) {
 	if im.next >= len(im.images) {
@@ -93,6 +97,7 @@ func (im *imageRef) Format() core1_0.Format {
 
 func (im *imageRef) Next(
 	device device.T,
+	name string,
 	width, height int,
 ) (image.T, error) {
 	return im.image, nil

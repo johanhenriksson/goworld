@@ -84,7 +84,7 @@ func NewOutputPass(app vulkan.App, source RenderTarget) *OutputPass {
 
 	frames := app.Frames()
 	var err error
-	p.fbufs, err = framebuffer.NewArray(frames, app.Device(), app.Width(), app.Height(), p.pass)
+	p.fbufs, err = framebuffer.NewArray(frames, app.Device(), "output", app.Width(), app.Height(), p.pass)
 	if err != nil {
 		panic(err)
 	}

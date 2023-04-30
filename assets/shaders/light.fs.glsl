@@ -25,7 +25,20 @@ layout (std140, binding = 4) uniform Camera {
 	vec3 Forward;
 } camera;
 
-layout (binding = 5) uniform sampler2D[] shadowmaps;
+// could be a pipeline parameter
+const int cascades = 4;
+
+struct Light {
+	mat4 ViewProj[cascades];
+	int Shadowmap[cascades];
+	float Distance[cascades];
+};
+
+layout (std430, binding = 5) readonly buffer LightBuffer {
+	Light lights[];
+} ssbo;
+
+layout (binding = 6) uniform sampler2D[] shadowmaps;
 
 layout(push_constant) uniform constants
 {
@@ -33,7 +46,7 @@ layout(push_constant) uniform constants
 	vec4 Color;
 	vec4 Position;
 	int Type;
-	int Shadowmap;
+	int Index;
 	float Range;
 	float Intensity;
 	Attenuation Attenuation;
@@ -46,14 +59,23 @@ layout (input_attachment_index = 3, binding = 3) uniform subpassInput tex_depth;
 
 layout (location = 0) out vec4 color;
 
-float shadow_bias = 0.002;
-bool soft_shadows = true;
-float shadow_strength = 0.75;
+const mat4 biasMat = mat4( 
+	0.5, 0.0, 0.0, 0.0,
+	0.0, 0.5, 0.0, 0.0,
+	0.0, 0.0, 1.0, 0.0,
+	0.5, 0.5, 0.0, 1.0 
+);
 
-vec3 getWorldPosition() {
-	/* world position */
-	vec4 pos_ws = camera.ViewInv * vec4(subpassLoad(tex_position).xyz, 1);
+float shadow_bias = 0.005;
+
+vec3 getWorldPosition(vec3 viewPos) {
+	// transform view space to world space
+	vec4 pos_ws = camera.ViewInv * vec4(viewPos, 1);
 	return pos_ws.xyz / pos_ws.w;
+}
+
+float getDepth() {
+	return subpassLoad(tex_position).z;
 }
 
 vec3 getWorldNormal() {
@@ -63,40 +85,17 @@ vec3 getWorldNormal() {
 	return normalize(worldNormal.xyz);
 }
 
-float sampleShadowmap(sampler2D shadowmap, vec3 position, float bias) {
-	/* world -> light clip coords */
-	vec4 light_pos = light.ViewProj * vec4(position, 1);
-	light_pos = light_pos / light_pos.w;
+float sampleShadowmap(sampler2D shadowmap, mat4 viewProj, vec3 position) {
+	vec4 shadowCoord = biasMat * viewProj * vec4(position, 1);
 
-	/* convert light clip to light ndc by dividing by W, then map values to 0-1 */
-	light_pos.st = light_pos.st * 0.5 + 0.5;
-
-	/* depth of position in light space */
-	float z = light_pos.z;
-	if (z < -1 || z > 1) {
-		return 0.0;
-	}
-
-	float shadow = 0.0;
-	if (soft_shadows) {
-		vec2 texelSize = 1.0 / textureSize(shadowmap, 0);
-		for(int x = -1; x <= 1; ++x) {
-			for(int y = -1; y <= 1; ++y) {
-				float pcf_depth = texture(shadowmap, light_pos.st + vec2(x, y) * texelSize).r; 
-				shadow += pcf_depth > (z - bias) ? 1.0 : 0.0;        
-			}    
-		}
-		shadow /= 9.0;
-	}
-	else {
-		/* sample shadow map depth */
-		float depth = texture(shadowmap, light_pos.st).r;
-		if (depth > (z - bias)) {
-			shadow = 1.0; 
+	float shadow = 1.0;
+	if (shadowCoord.z > -1.0 && shadowCoord.z < 1.0) {
+		float dist = texture(shadowmap, shadowCoord.st).r;
+		if (shadowCoord.w > 0 && dist < shadowCoord.z - shadow_bias) {
+			shadow = 0;
 		}
 	}
-
-	return shadow * shadow_strength;
+	return shadow;
 }
 
 /* calculates lighting contribution from a point light source */
@@ -119,24 +118,15 @@ float calculatePointLightContrib(vec3 surfaceToLight, float distanceToLight, vec
 }
 
 void main() {
-	// discard empty fragments
-	float depth = subpassLoad(tex_depth).r;
-	if (depth == 1) {
-		discard;
-	}
+	vec3 viewPos = subpassLoad(tex_position).xyz;
 
 	// unpack data from geometry buffer
 	vec4 t = subpassLoad(tex_diffuse);
 	vec3 diffuseColor = t.rgb;
 	float occlusion = t.a;
 
-	vec3 position = getWorldPosition();
+	vec3 position = getWorldPosition(viewPos);
 	vec3 normal = getWorldNormal();
-
-	// now we should be able to calculate the position in light space!
-	// since the directional light matrix is orthographic the z value will
-	// correspond to depth, so we can test Z against the shadow map depth buffer
-	// from the shadow pass! woop
 
 	// calculate contribution from the light source
 	float contrib = 0.0;
@@ -151,12 +141,21 @@ void main() {
 		vec3 surfaceToLight = -lightDir;
 		contrib = max(dot(surfaceToLight, normal), 0.0);
 
-		// angle-dependent bias
-		float surface_bias = max(shadow_bias * (1-dot(normal, surfaceToLight)), shadow_bias*0.1);  
-
 		// experimental shadows
-		if (light.Shadowmap > 0) {
-			shadow = sampleShadowmap(shadowmaps[light.Shadowmap], position, surface_bias);
+		if (light.Index > 0) {
+			// find light struct
+			Light dirlight = ssbo.lights[light.Index];
+
+			// pick cascade index
+			int index = 0;
+			for(int i = 0; i < cascades; i++) {
+				if (viewPos.z < dirlight.Distance[i]) {
+					index = i;
+					break;
+				}
+			}
+
+			shadow = sampleShadowmap(shadowmaps[dirlight.Shadowmap[index]], dirlight.ViewProj[index], position);
 		}
 	}
 	else if (light.Type == POINT_LIGHT) {
@@ -173,5 +172,5 @@ void main() {
 	// lightColor *= mix(1, ssao, ssao_amount);
 
 	// write fragment color & restore depth buffer
-	color = vec4(lightColor,  1.0);
+	color = vec4(lightColor, 1.0);
 }

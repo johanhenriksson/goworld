@@ -79,7 +79,7 @@ func NewForwardPass(
 		},
 	})
 
-	fbuf, err := framebuffer.NewArray(app.Frames(), app.Device(), app.Width(), app.Height(), pass)
+	fbuf, err := framebuffer.NewArray(app.Frames(), app.Device(), "forward", app.Width(), app.Height(), pass)
 	if err != nil {
 		panic(err)
 	}
