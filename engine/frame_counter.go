@@ -23,6 +23,7 @@ func NewFrameCounter(samples int) *framecounter {
 		last:    time.Now().UnixNano(),
 		frames:  make([]int64, 0, samples),
 		start:   time.Now(),
+		now:     time.Now(),
 	}
 }
 
