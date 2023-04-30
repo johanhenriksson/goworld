@@ -43,7 +43,7 @@ func main() {
 				})).
 					Position(vec3.New(1, 2, 3)).
 					Attach(script.New(func(scene, self object.T, dt float32) {
-						rot -= dt
+						// rot -= dt
 						self.Parent().Transform().SetRotation(vec3.New(rot, 0, 0))
 					})).
 					Create())

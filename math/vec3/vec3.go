@@ -128,6 +128,11 @@ func (v T) Ceil() T {
 	return T{math.Ceil(v.X), math.Ceil(v.Y), math.Ceil(v.Z)}
 }
 
+// Round each component of the vector
+func (v T) Round() T {
+	return T{math.Round(v.X), math.Round(v.Y), math.Round(v.Z)}
+}
+
 // Add each element of the vector with the corresponding element of another vector
 func (v T) Add(v2 T) T {
 	return T{
