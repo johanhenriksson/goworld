@@ -25,10 +25,13 @@ layout (std140, binding = 4) uniform Camera {
 	vec3 Forward;
 } camera;
 
+// could be a pipeline parameter
+const int cascades = 4;
+
 struct Light {
-	mat4 ViewProj[4];
-	int Shadowmap[4];
-	float Distance[4];
+	mat4 ViewProj[cascades];
+	int Shadowmap[cascades];
+	float Distance[cascades];
 };
 
 layout (binding = 5) readonly buffer LightBuffer {
@@ -57,9 +60,11 @@ layout (input_attachment_index = 3, binding = 3) uniform subpassInput tex_depth;
 
 layout (location = 0) out vec4 color;
 
+
 float shadow_bias = 0.002;
 bool soft_shadows = true;
 float shadow_strength = 0.75;
+bool debug = true;
 
 vec3 getWorldPosition() {
 	/* world position */
@@ -166,6 +171,7 @@ void main() {
 		float surface_bias = max(shadow_bias * (1-dot(normal, surfaceToLight)), shadow_bias*0.1);  
 
 		// find light struct
+		// light.Shadowmap should be renamed to light.Index
 		Light dirlight = ssbo.lights[light.Shadowmap];
 
 		float zNear = 0.1;
@@ -174,7 +180,7 @@ void main() {
 
 		// pick cascade index
 		int index = 0;
-		for(int i = 0; i < 4; i++) {
+		for(int i = 0; i < cascades; i++) {
 			if (depth_norm <= dirlight.Distance[i]) {
 				index = i;
 				break;
@@ -184,6 +190,11 @@ void main() {
 		// experimental shadows
 		if (light.Shadowmap > 0) {
 			shadow = sampleShadowmap(shadowmaps[dirlight.Shadowmap[index]], dirlight.ViewProj[index], position, surface_bias);
+		}
+
+		if (debug) {
+			diffuseColor = mix(vec3(1,0,0), vec3(0,1,0), 1.0 - float(index) / float(cascades-1));
+			shadow = 1;
 		}
 	}
 	else if (light.Type == POINT_LIGHT) {
