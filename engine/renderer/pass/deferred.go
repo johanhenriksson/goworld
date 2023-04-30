@@ -255,13 +255,14 @@ func (p *deferred) Record(cmds command.Recorder, args render.Args, scene object.
 	white := p.app.Textures().Fetch(color.White)
 	lightDesc.Shadow.Set(0, white)
 	ambient := light.NewAmbient(color.White, 0.33)
-	p.DrawLight(cmds, args, ambient, 0)
+	p.DrawLight(cmds, args, ambient, 0, 0)
 
 	lights := p.lightQuery.
 		Reset().
 		Collect(scene)
 	for index, lit := range lights {
-		if err := p.DrawLight(cmds, args, lit, 5*index+1); err != nil {
+		lightIndex := index + 1
+		if err := p.DrawLight(cmds, args, lit, lightIndex, 5*lightIndex); err != nil {
 			fmt.Printf("light draw error in object %s: %s\n", lit.Name(), err)
 		}
 	}
@@ -271,33 +272,33 @@ func (p *deferred) Record(cmds command.Recorder, args render.Args, scene object.
 	})
 }
 
-func (p *deferred) DrawLight(cmds command.Recorder, args render.Args, lit light.T, shadowIndex int) error {
+func (p *deferred) DrawLight(cmds command.Recorder, args render.Args, lit light.T, lightIndex, textureIndexOffset int) error {
 	quad := p.app.Meshes().Fetch(p.quad)
 	desc := lit.LightDescriptor(args, 0)
 
 	if lit.Shadows() {
 		dirlight := uniform.Light{}
-		for i, cascade := range lit.Cascades() {
-			shadowtex := p.shadows.Shadowmap(lit, i)
+		for cascadeIndex, cascade := range lit.Cascades() {
+			textureIndex := textureIndexOffset + cascadeIndex
+
+			shadowtex := p.shadows.Shadowmap(lit, cascadeIndex)
 			if shadowtex == nil {
 				// no shadowmap available - disable the light until its available
-				log.Println("missing cascade shadowmap", i)
+				log.Println("missing cascade shadowmap", cascadeIndex)
 				return nil
 			}
-			p.light.Descriptors(args.Context.Index).Shadow.Set(shadowIndex+i, shadowtex)
+			p.light.Descriptors(args.Context.Index).Shadow.Set(textureIndex, shadowtex)
 
-			index := i
-			dirlight.ViewProj[i] = cascade.ViewProj
-			dirlight.Distance[i] = cascade.FarSplit
-			dirlight.Shadowmap[i] = uint32(shadowIndex + index)
-			log.Println("light", shadowIndex, "cascade", i, "idx", shadowIndex+i, "far split", cascade.FarSplit)
+			dirlight.ViewProj[cascadeIndex] = cascade.ViewProj
+			dirlight.Distance[cascadeIndex] = cascade.FarSplit
+			dirlight.Shadowmap[cascadeIndex] = uint32(textureIndex)
 		}
 
-		p.light.Descriptors(args.Context.Index).Lights.Set(shadowIndex, dirlight)
+		p.light.Descriptors(args.Context.Index).Lights.Set(lightIndex, dirlight)
 	} else {
 		// shadows are disabled - use a blank white texture as shadowmap
 		blank := p.app.Textures().Fetch(color.White)
-		p.light.Descriptors(args.Context.Index).Shadow.Set(shadowIndex, blank)
+		p.light.Descriptors(args.Context.Index).Shadow.Set(lightIndex, blank)
 	}
 
 	cmds.Record(func(cmd command.Buffer) {
@@ -306,11 +307,10 @@ func (p *deferred) DrawLight(cmds command.Recorder, args render.Args, lit light.
 			Color:       desc.Color,
 			Position:    desc.Position,
 			Type:        desc.Type,
-			Shadowmap:   uint32(shadowIndex),
+			Index:       uint32(lightIndex),
 			Range:       desc.Range,
 			Intensity:   desc.Intensity,
 			Attenuation: desc.Attenuation,
-			Index:       shadowIndex,
 		}
 		cmd.CmdPushConstant(core1_0.StageFragment, 0, push)
 

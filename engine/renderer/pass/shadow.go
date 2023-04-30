@@ -42,12 +42,12 @@ type shadowpass struct {
 
 type Shadowmap struct {
 	Cascades []Cascade
-	mats     *MaterialSorter
 }
 
 type Cascade struct {
 	Texture texture.T
 	Frame   framebuffer.T
+	Mats    *MaterialSorter
 }
 
 func NewShadowPass(app vulkan.App) Shadow {
@@ -101,7 +101,7 @@ func NewShadowPass(app vulkan.App) Shadow {
 		app:        app,
 		pass:       pass,
 		shadowmaps: make(map[light.T]Shadowmap),
-		size:       4096,
+		size:       2048,
 
 		meshQuery:  object.NewQuery[mesh.T](),
 		lightQuery: object.NewQuery[light.T](),
@@ -115,7 +115,7 @@ func (p *shadowpass) Name() string {
 func (p *shadowpass) createShadowmap(light light.T) Shadowmap {
 	log.Println("creating shadowmap for", light.Name())
 
-	cascades := make([]Cascade, 4)
+	cascades := make([]Cascade, len(light.Cascades()))
 	for i := range cascades {
 		key := fmt.Sprintf("%s-%d", object.Key("light", light), i)
 		fbuf, err := framebuffer.New(p.app.Device(), key, p.size, p.size, p.pass)
@@ -134,27 +134,27 @@ func (p *shadowpass) createShadowmap(light light.T) Shadowmap {
 
 		cascades[i].Texture = tex
 		cascades[i].Frame = fbuf
-	}
 
-	// each light needs its own shadow materials - or rather, their own descriptors
-	// cheating a bit by creating entire materials for each light, fix it later.
-	mats := NewMaterialSorter(p.app, p.pass, &material.Def{
-		Shader:       "shadow",
-		Subpass:      GeometrySubpass,
-		VertexFormat: voxel.Vertex{},
-		DepthTest:    true,
-		DepthWrite:   true,
-	})
-	mats.TransformFn = func(d *material.Def) *material.Def {
-		shadowMat := *d
-		shadowMat.Shader = "shadow"
-		shadowMat.CullMode = vertex.CullFront
-		return &shadowMat
+		// each light cascade needs its own shadow materials - or rather, their own descriptors
+		// cheating a bit by creating entire materials for each light, fix it later.
+		mats := NewMaterialSorter(p.app, p.pass, &material.Def{
+			Shader:       "shadow",
+			Subpass:      GeometrySubpass,
+			VertexFormat: voxel.Vertex{},
+			DepthTest:    true,
+			DepthWrite:   true,
+		})
+		mats.TransformFn = func(d *material.Def) *material.Def {
+			shadowMat := *d
+			shadowMat.Shader = "shadow"
+			shadowMat.CullMode = vertex.CullFront
+			return &shadowMat
+		}
+		cascades[i].Mats = mats
 	}
 
 	shadowmap := Shadowmap{
 		Cascades: cascades,
-		mats:     mats,
 	}
 	p.shadowmaps[light] = shadowmap
 	return shadowmap
@@ -195,7 +195,7 @@ func (p *shadowpass) Record(cmds command.Recorder, args render.Args, scene objec
 				Reset().
 				Where(isDrawDeferred).
 				Collect(scene)
-			shadowmap.mats.DrawCamera(cmds, args, camera, meshes)
+			cascade.Mats.DrawCamera(cmds, args, camera, meshes)
 
 			cmds.Record(func(cmd command.Buffer) {
 				cmd.CmdEndRenderPass()
@@ -216,8 +216,8 @@ func (p *shadowpass) Destroy() {
 		for _, cascade := range shadowmap.Cascades {
 			cascade.Frame.Destroy()
 			cascade.Texture.Destroy()
+			cascade.Mats.Destroy()
 		}
-		shadowmap.mats.Destroy()
 	}
 	p.shadowmaps = nil
 

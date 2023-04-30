@@ -35,11 +35,10 @@ type LightConst struct {
 	Color       color.T
 	Position    vec4.T
 	Type        light.Type
-	Shadowmap   uint32
+	Index       uint32
 	Range       float32
 	Intensity   float32
 	Attenuation light.Attenuation
-	Index       int
 }
 
 type LightShader interface {

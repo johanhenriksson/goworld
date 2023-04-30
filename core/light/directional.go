@@ -23,6 +23,7 @@ type Cascade struct {
 	ViewProj  mat4.T
 	NearSplit float32
 	FarSplit  float32
+	radius    float32
 }
 
 type dirlight struct {
@@ -44,7 +45,7 @@ func (lit *dirlight) Shadows() bool       { return lit.args.Shadows }
 func (lit *dirlight) Cascades() []Cascade { return lit.cascades }
 
 func farSplitDist(cascade, cascades int, near, far float32) float32 {
-	cascadeSplitLambda := float32(0.56)
+	cascadeSplitLambda := float32(0.96)
 	clipRange := far - near
 	minZ := near
 	maxZ := near + clipRange
@@ -125,12 +126,12 @@ func (lit *dirlight) calculateCascade(args render.Args, cascade, cascades int) C
 	}
 	center = center.Scaled(float32(1) / 8)
 
-	radius := float32(0)
+	radius := lit.cascades[cascade].radius
 	for _, corner := range frustumCorners {
 		distance := vec3.Distance(corner, center)
 		radius = math.Max(radius, distance)
 	}
-	radius = math.Snap(radius, 16)
+	lit.cascades[cascade].radius = radius
 
 	// create light view matrix looking at the center of the
 	// camera frustum
@@ -149,7 +150,7 @@ func (lit *dirlight) calculateCascade(args render.Args, cascade, cascades int) C
 		Proj:      lproj,
 		View:      lview,
 		ViewProj:  lvp,
-		NearSplit: nearSplit,
-		FarSplit:  farSplit,
+		NearSplit: nearSplit * args.Far,
+		FarSplit:  farSplit * args.Far,
 	}
 }
