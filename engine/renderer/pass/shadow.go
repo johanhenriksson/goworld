@@ -117,14 +117,14 @@ func (p *shadowpass) createShadowmap(light light.T) Shadowmap {
 
 	cascades := make([]Cascade, 4)
 	for i := range cascades {
-		fbuf, err := framebuffer.New(p.app.Device(), p.size, p.size, p.pass)
+		key := fmt.Sprintf("%s-%d", object.Key("light", light), i)
+		fbuf, err := framebuffer.New(p.app.Device(), key, p.size, p.size, p.pass)
 		if err != nil {
 			panic(err)
 		}
 
 		// the frame buffer object will allocate a new depth image for us
 		view := fbuf.Attachment(attachment.DepthName)
-		key := fmt.Sprintf("%s-%d", object.Key("shadow", light), i)
 		tex, err := texture.FromView(p.app.Device(), key, view, texture.Args{
 			Aspect: core1_0.ImageAspectDepth,
 		})

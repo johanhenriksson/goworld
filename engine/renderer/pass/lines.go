@@ -56,7 +56,7 @@ func NewLinePass(app vulkan.App, target RenderTarget) *LinePass {
 		},
 	})
 
-	fbufs, err := framebuffer.NewArray(app.Frames(), app.Device(), app.Width(), app.Height(), pass)
+	fbufs, err := framebuffer.NewArray(app.Frames(), app.Device(), "lines", app.Width(), app.Height(), pass)
 	if err != nil {
 		panic(err)
 	}
