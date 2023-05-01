@@ -16,6 +16,7 @@ import (
 // Materials combine pipelines and descriptors into a common unit.
 type T[D descriptor.Set] interface {
 	Destroy()
+	TextureSlots() []string
 	Bind(cmd command.Buffer)
 	Instantiate(descriptor.Pool) Instance[D]
 	InstantiateMany(descriptor.Pool, int) []Instance[D]
@@ -101,6 +102,10 @@ func New[D descriptor.Set](device device.T, args Args, descriptors D) T[D] {
 
 func (m *material[D]) Bind(cmd command.Buffer) {
 	cmd.CmdBindGraphicsPipeline(m.pipe)
+}
+
+func (m *material[D]) TextureSlots() []string {
+	return m.shader.Textures()
 }
 
 func (m *material[D]) Destroy() {

@@ -15,6 +15,7 @@ type InputDetails struct {
 type Details struct {
 	Inputs   map[string]InputDetails
 	Bindings map[string]int
+	Textures []string
 }
 
 func (d *Details) ParseInputs() (Inputs, error) {

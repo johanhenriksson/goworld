@@ -4,6 +4,7 @@ import (
 	"github.com/johanhenriksson/goworld/core/mesh"
 	"github.com/johanhenriksson/goworld/engine/renderer/uniform"
 	"github.com/johanhenriksson/goworld/render"
+	"github.com/johanhenriksson/goworld/render/cache"
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/descriptor"
 	"github.com/johanhenriksson/goworld/render/material"
@@ -19,10 +20,16 @@ type MaterialTransform func(*material.Def) *material.Def
 type MaterialSorter struct {
 	TransformFn MaterialTransform
 
-	cache      map[uint64][]material.Instance[*material.Descriptors]
+	cache      map[uint64][]*MaterialData
 	defaultMat *material.Def
 	app        vulkan.App
 	pass       renderpass.T
+}
+
+type MaterialData struct {
+	Instance material.Instance[*material.Descriptors]
+	Objects  []uniform.Object
+	Textures cache.SamplerCache
 }
 
 func NewMaterialSorter(app vulkan.App, pass renderpass.T, defaultMat *material.Def) *MaterialSorter {
@@ -30,7 +37,7 @@ func NewMaterialSorter(app vulkan.App, pass renderpass.T, defaultMat *material.D
 		app:        app,
 		pass:       pass,
 		defaultMat: defaultMat,
-		cache:      map[uint64][]material.Instance[*material.Descriptors]{},
+		cache:      map[uint64][]*MaterialData{},
 
 		TransformFn: func(d *material.Def) *material.Def { return d },
 	}
@@ -40,7 +47,8 @@ func NewMaterialSorter(app vulkan.App, pass renderpass.T, defaultMat *material.D
 
 func (m *MaterialSorter) Destroy() {
 	for _, mat := range m.cache {
-		mat[0].Material().Destroy()
+		mat[0].Instance.Material().Destroy()
+		// todo: destroy more
 	}
 }
 
@@ -93,7 +101,15 @@ func (m *MaterialSorter) Load(def *material.Def) bool {
 		},
 		desc)
 
-	m.cache[id] = mat.InstantiateMany(m.app.Pool(), m.app.Frames())
+	m.cache[id] = make([]*MaterialData, m.app.Frames())
+	for frame := 0; frame < m.app.Frames(); frame++ {
+		instance := mat.Instantiate(m.app.Pool())
+		m.cache[id][frame] = &MaterialData{
+			Instance: instance,
+			Objects:  make([]uniform.Object, instance.Descriptors().Objects.Size),
+			Textures: cache.NewSamplerCache(m.app.Textures(), instance.Descriptors().Textures),
+		}
+	}
 
 	// indicate that the material is ready to be used
 	return true
@@ -127,36 +143,44 @@ func (m *MaterialSorter) DrawCamera(cmds command.Recorder, args render.Args, cam
 		meshGroups[matId] = append(meshGroups[matId], msh)
 	}
 
-	descriptors := make([]uniform.Object, len(meshes))
-
-	index := 0
 	for matId, matMeshes := range meshGroups {
 		mat := m.cache[matId][args.Context.Index]
-		mat.Descriptors().Camera.Set(camera)
+		mat.Instance.Descriptors().Camera.Set(camera)
 
 		cmds.Record(func(cmd command.Buffer) {
-			mat.Bind(cmd)
+			mat.Instance.Bind(cmd)
 		})
 
-		begin := index
-		for _, msh := range matMeshes {
+		for i, msh := range matMeshes {
 			vkmesh, meshReady := m.app.Meshes().TryFetch(msh.Mesh())
 			if !meshReady {
 				continue
 			}
 
-			descriptors[index] = uniform.Object{
-				Model: msh.Transform().World(),
+			textureIds := [4]uint32{}
+			textures := mat.Instance.Material().TextureSlots()
+			for id, textureSlot := range textures {
+				ref := msh.Texture(textureSlot)
+				if ref != nil {
+					handle, exists := mat.Textures.TryFetch(ref)
+					if exists {
+						textureIds[id] = uint32(handle.ID)
+					}
+				}
 			}
 
-			i := index - begin
-			cmds.Record(func(cmd command.Buffer) {
-				vkmesh.Draw(cmd, i)
-			})
+			mat.Objects[i] = uniform.Object{
+				Model:    msh.Transform().World(),
+				Textures: textureIds,
+			}
 
-			index++
+			index := i
+			cmds.Record(func(cmd command.Buffer) {
+				vkmesh.Draw(cmd, index)
+			})
 		}
 
-		mat.Descriptors().Objects.SetRange(0, descriptors[begin:index])
+		mat.Instance.Descriptors().Objects.SetRange(0, mat.Objects[:len(matMeshes)])
+		mat.Textures.UpdateDescriptors()
 	}
 }

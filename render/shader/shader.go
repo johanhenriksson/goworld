@@ -34,6 +34,7 @@ type T interface {
 	Destroy()
 	Input(name string) (int, types.Type, bool)
 	Descriptor(name string) (int, bool)
+	Textures() []string
 }
 
 type shader struct {
@@ -41,6 +42,7 @@ type shader struct {
 	modules  []Module
 	inputs   Inputs
 	bindings Bindings
+	textures []string
 }
 
 func New(device device.T, path string) T {
@@ -65,6 +67,7 @@ func New(device device.T, path string) T {
 		modules:  modules,
 		inputs:   inputs,
 		bindings: details.Bindings,
+		textures: details.Textures,
 	}
 }
 
@@ -86,6 +89,10 @@ func (s *shader) Destroy() {
 
 func (s *shader) Input(name string) (int, types.Type, bool) {
 	return s.inputs.Input(name)
+}
+
+func (s *shader) Textures() []string {
+	return s.textures
 }
 
 func (s *shader) Descriptor(name string) (int, bool) {

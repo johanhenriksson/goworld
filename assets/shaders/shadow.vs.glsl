@@ -20,6 +20,7 @@ layout (binding = 0) uniform Camera {
 
 struct ObjectData{
 	mat4 model;
+	uint textures[4];
 };
 
 layout (binding = 1) readonly buffer ObjectBuffer {

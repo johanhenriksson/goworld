@@ -6,6 +6,7 @@ import (
 	"github.com/johanhenriksson/goworld/math/shape"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render/material"
+	"github.com/johanhenriksson/goworld/render/texture"
 	"github.com/johanhenriksson/goworld/render/vertex"
 )
 
@@ -19,6 +20,9 @@ type T interface {
 	Material() *material.Def
 	MaterialID() uint64
 
+	Texture(string) texture.Ref
+	SetTexture(string, texture.Ref)
+
 	BoundingSphere() shape.Sphere
 }
 
@@ -30,6 +34,8 @@ type mesh struct {
 	mode  DrawMode
 	mat   *material.Def
 	matId uint64
+
+	textures map[string]texture.Ref
 
 	// bounding radius
 	center vec3.T
@@ -49,9 +55,10 @@ func NewLines(mat *material.Def) T {
 // NewPrimitiveMesh creates a new mesh composed of a given GL primitive
 func NewPrimitiveMesh(primitive vertex.Primitive, mode DrawMode, mat *material.Def) *mesh {
 	m := object.New(&mesh{
-		mode:  mode,
-		mat:   mat,
-		matId: material.Hash(mat),
+		mode:     mode,
+		mat:      mat,
+		matId:    material.Hash(mat),
+		textures: make(map[string]texture.Ref),
 	})
 	return m
 }
@@ -70,6 +77,14 @@ func (m *mesh) SetMesh(data vertex.Mesh) {
 	max := data.Max()
 	m.radius = math.Max(min.Length(), max.Length())
 	m.center = max.Sub(min).Scaled(0.5)
+}
+
+func (m *mesh) Texture(slot string) texture.Ref {
+	return m.textures[slot]
+}
+
+func (m *mesh) SetTexture(slot string, ref texture.Ref) {
+	m.textures[slot] = ref
 }
 
 func (m mesh) CastShadows() bool {
