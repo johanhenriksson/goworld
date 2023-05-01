@@ -228,7 +228,7 @@ func (e *edit) KeyEvent(ev keys.Event) {
 
 func (e *edit) Recalculate() {
 	e.Chunk.Light.Calculate()
-	e.mesh.Compute()
+	e.mesh.Refresh()
 }
 
 func (e *edit) Actions() []editor.Action {
