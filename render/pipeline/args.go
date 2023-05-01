@@ -23,6 +23,7 @@ type Args struct {
 
 	DepthTest  bool
 	DepthWrite bool
+	DepthClamp bool
 	DepthFunc  core1_0.CompareOp
 
 	StencilTest bool

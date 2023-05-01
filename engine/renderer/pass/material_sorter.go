@@ -87,6 +87,7 @@ func (m *MaterialSorter) Load(def *material.Def) bool {
 			Pointers:   pointers,
 			DepthTest:  def.DepthTest,
 			DepthWrite: def.DepthWrite,
+			DepthClamp: def.DepthClamp,
 			Primitive:  def.Primitive,
 			CullMode:   def.CullMode,
 		},

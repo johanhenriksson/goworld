@@ -32,6 +32,7 @@ type Def struct {
 	VertexFormat any
 	DepthTest    bool
 	DepthWrite   bool
+	DepthClamp   bool
 	Primitive    vertex.Primitive
 	CullMode     vertex.CullMode
 }
@@ -66,6 +67,7 @@ func FromDef(dev device.T, pool descriptor.Pool, rpass renderpass.T, def *Def) T
 			Pointers:   pointers,
 			DepthTest:  def.DepthTest,
 			DepthWrite: def.DepthWrite,
+			DepthClamp: def.DepthClamp,
 			Primitive:  def.Primitive,
 			CullMode:   def.CullMode,
 		},

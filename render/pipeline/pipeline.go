@@ -120,7 +120,8 @@ func New(device device.T, args Args) T {
 
 		// rasterization state
 		RasterizationState: &core1_0.PipelineRasterizationStateCreateInfo{
-			DepthClampEnable:        false,
+			DepthClampEnable:        args.DepthClamp,
+			DepthBiasEnable:         false,
 			RasterizerDiscardEnable: false,
 			PolygonMode:             args.PolygonFillMode,
 			CullMode:                core1_0.CullModeFlags(args.CullMode),

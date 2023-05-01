@@ -85,6 +85,7 @@ func New(instance instance.T, physDevice core1_0.PhysicalDevice) (T, error) {
 		},
 		EnabledFeatures: &core1_0.PhysicalDeviceFeatures{
 			IndependentBlend: true,
+			DepthClamp:       true,
 		},
 	})
 	if err != nil {

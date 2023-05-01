@@ -59,6 +59,7 @@ layout (input_attachment_index = 3, binding = 3) uniform subpassInput tex_depth;
 
 layout (location = 0) out vec4 color;
 
+// transforms ndc -> depth texture space
 const mat4 biasMat = mat4( 
 	0.5, 0.0, 0.0, 0.0,
 	0.0, 0.5, 0.0, 0.0,
@@ -66,7 +67,12 @@ const mat4 biasMat = mat4(
 	0.5, 0.5, 0.0, 1.0 
 );
 
+float shadow_power = 60;
 float shadow_bias = 0.005;
+float sample_radius = 1;
+float normal_offset = 0.1;
+int shadow_samples = 2;
+const bool debug = false;
 
 vec3 getWorldPosition(vec3 viewPos) {
 	// transform view space to world space
@@ -85,17 +91,81 @@ vec3 getWorldNormal() {
 	return normalize(worldNormal.xyz);
 }
 
-float sampleShadowmap(sampler2D shadowmap, mat4 viewProj, vec3 position) {
+float sampleShadowmap(sampler2D shadowmap, mat4 viewProj, vec3 position, float bias) {
 	vec4 shadowCoord = biasMat * viewProj * vec4(position, 1);
 
 	float shadow = 1.0;
-	if (shadowCoord.z > -1.0 && shadowCoord.z < 1.0) {
+	if (shadowCoord.z > -1.0 && shadowCoord.z < 1.0 && shadowCoord.w > 0) {
 		float dist = texture(shadowmap, shadowCoord.st).r;
-		if (shadowCoord.w > 0 && dist < shadowCoord.z - shadow_bias) {
+		float actual = exp(shadow_power * shadowCoord.z - bias) / exp(shadow_power);
+
+		if (dist < actual) {
 			shadow = 0;
 		}
 	}
 	return shadow;
+}
+
+float sampleShadowmapPCF(sampler2D shadowmap, mat4 viewProj, vec3 position, float bias, int numSamples, float sampleRadius) {
+	if (numSamples <= 0) {
+		return sampleShadowmap(shadowmap, viewProj, position, bias);
+	}
+
+	vec4 shadowCoord = biasMat * viewProj * vec4(position, 1);
+    shadowCoord = shadowCoord / shadowCoord.w;
+
+    float shadow = 1.0;
+    if (shadowCoord.z > -1.0 && shadowCoord.z < 1.0 && shadowCoord.w > 0) {
+        vec2 shadowMapSize = textureSize(shadowmap, 0).xy;
+        vec2 texelSize = 1.0 / shadowMapSize;
+        float actual = exp(shadow_power * (shadowCoord.z - bias)) / exp(shadow_power);
+
+        float count = 0.0;
+        for (int x = -numSamples; x <= numSamples; ++x) {
+            for (int y = -numSamples; y <= numSamples; ++y) {
+                vec2 offset = vec2(float(x), float(y)) * texelSize * sampleRadius;
+                float dist = texture(shadowmap, shadowCoord.st + offset).r;
+
+                // Compare the difference between exponential depth values
+                if (dist - actual < 0) {
+                    count += 1.0;
+                }
+            }
+        }
+
+        shadow = 1 - count / float((2 * numSamples + 1) * (2 * numSamples + 1));
+    }
+    return shadow;
+}
+
+float blendCascades(int shadowIndices[cascades], mat4 viewProj[cascades], float cascadeSplits[cascades], vec3 position, float depth, float bias, float blendRange, int numSamples, float sampleRadius) {
+    // determine the cascade index
+    int cascadeIndex = 0;
+    for (int i = 0; i < cascades; ++i) {
+        if (depth < cascadeSplits[i]) {
+            cascadeIndex = i;
+            break;
+        }
+    }
+    sampleRadius *= cascadeIndex + 1;
+
+    float shadowCurrent = sampleShadowmapPCF(shadowmaps[shadowIndices[cascadeIndex]], viewProj[cascadeIndex], position, shadow_bias, numSamples, sampleRadius);
+
+    // sample previous cascade
+    if (cascadeIndex > 0) {
+        // 4. Blend shadow results
+        float cascadeStart = cascadeSplits[cascadeIndex - 1];
+        float cascadeEnd = cascadeSplits[cascadeIndex];
+		float blendDistance = cascadeSplits[cascadeIndex-1] * blendRange;
+        float blendFactor = smoothstep(cascadeStart, cascadeStart + blendDistance, depth);
+
+        if (blendFactor > 0) {
+			float shadowPrev = sampleShadowmapPCF(shadowmaps[shadowIndices[cascadeIndex - 1]], viewProj[cascadeIndex - 1], position, shadow_bias, numSamples-1, sampleRadius);
+			return mix(shadowPrev, shadowCurrent, blendFactor);
+        }
+    }
+
+    return shadowCurrent;
 }
 
 /* calculates lighting contribution from a point light source */
@@ -146,16 +216,20 @@ void main() {
 			// find light struct
 			Light dirlight = ssbo.lights[light.Index];
 
-			// pick cascade index
-			int index = 0;
-			for(int i = 0; i < cascades; i++) {
-				if (viewPos.z < dirlight.Distance[i]) {
-					index = i;
-					break;
-				}
-			}
+			float bias = shadow_bias * max(0.0, 1.0 - dot(normal, lightDir));
+			position += normal * normal_offset;
+			shadow = blendCascades(dirlight.Shadowmap, dirlight.ViewProj, dirlight.Distance, position, viewPos.z, bias, 0.3, shadow_samples, sample_radius);
 
-			shadow = sampleShadowmap(shadowmaps[dirlight.Shadowmap[index]], dirlight.ViewProj[index], position);
+			if (debug) {
+				int index = -1;
+				for(int i = 0; i < cascades; i++) {
+					if (viewPos.z < dirlight.Distance[i]) {
+						index = i;
+						break;
+					}
+				}
+				diffuseColor = mix(vec3(0,1,0), vec3(1,0,0), float(index) / (cascades - 1));
+			}
 		}
 	}
 	else if (light.Type == POINT_LIGHT) {

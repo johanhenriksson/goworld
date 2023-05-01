@@ -44,7 +44,7 @@ func (lit *dirlight) Shadows() bool       { return lit.args.Shadows }
 func (lit *dirlight) Cascades() []Cascade { return lit.cascades }
 
 func farSplitDist(cascade, cascades int, near, far float32) float32 {
-	cascadeSplitLambda := float32(0.96)
+	cascadeSplitLambda := float32(0.90)
 	clipRange := far - near
 	minZ := near
 	maxZ := near + clipRange
@@ -93,6 +93,8 @@ func (lit *dirlight) updateCascades(args render.Args) {
 }
 
 func (lit *dirlight) calculateCascade(args render.Args, cascade, cascades int) Cascade {
+	texSize := float32(2048)
+
 	frustumCorners := []vec3.T{
 		vec3.New(-1, 1, -1),  // NTL
 		vec3.New(1, 1, -1),   // NTR
@@ -139,21 +141,18 @@ func (lit *dirlight) calculateCascade(args render.Args, cascade, cascades int) C
 	lview := mat4.LookAt(position, center, vec3.UnitY)
 
 	lproj := mat4.Orthographic(
-		-radius, radius,
-		-radius, radius,
+		-radius-0.01, radius+0.01,
+		-radius-0.01, radius+0.01,
 		0, 2*radius)
 
 	lvp := lproj.Mul(&lview)
 
 	// round the center of the lights projection to the nearest texel
-	texSize := float32(2048)
 	origin := lvp.TransformPoint(vec3.New(0, 0, 0)).Scaled(texSize / 2.0)
 	offset := origin.Round().Sub(origin)
 	offset.Scale(2.0 / texSize)
-	offset.Z = 0
 	lproj[12] = offset.X
 	lproj[13] = offset.Y
-	lproj[14] = offset.Z
 
 	// re-create view-projection after rounding
 	lvp = lproj.Mul(&lview)

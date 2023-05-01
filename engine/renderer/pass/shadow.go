@@ -148,6 +148,7 @@ func (p *shadowpass) createShadowmap(light light.T) Shadowmap {
 			shadowMat := *d
 			shadowMat.Shader = "shadow"
 			shadowMat.CullMode = vertex.CullFront
+			shadowMat.DepthClamp = true
 			return &shadowMat
 		}
 		cascades[i].Mats = mats
