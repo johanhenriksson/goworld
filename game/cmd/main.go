@@ -10,6 +10,8 @@ import (
 	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/engine/renderer"
 	"github.com/johanhenriksson/goworld/game/chunk"
+	"github.com/johanhenriksson/goworld/game/terrain"
+	"github.com/johanhenriksson/goworld/math/ivec2"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render/color"
 )
@@ -26,13 +28,21 @@ func main() {
 	},
 		editor.Scene(func(r renderer.T, scene object.T) {
 			generator := chunk.ExampleWorldgen(3141389, 32)
-			object.Attach(scene, chunk.NewWorld(32, generator, 500))
+			chonk := chunk.NewWorld(32, generator, 500)
+			object.Attach(scene, chonk)
+
 			// chonk := chunk.Generate(generator, 32, 0, 0)
 			// object.Attach(scene, chunk.NewMesh(chonk))
 			// object.Attach(scene, object.Builder(chunk.NewMesh(chonk)).Position(vec3.New(32, 0, 0)).Create())
 
+			tile := terrain.NewTile(ivec2.New(0, 0), 2, color.Red)
+			object.Builder(terrain.NewMesh(tile)).
+				Position(vec3.New(0, 30, 0)).
+				Parent(scene).
+				Create()
+
 			// directional light
-			rot := float32(-20)
+			rot := float32(-40)
 			object.Attach(
 				scene,
 				object.Builder(light.NewDirectional(light.DirectionalArgs{
@@ -43,7 +53,7 @@ func main() {
 				})).
 					Position(vec3.New(1, 2, 3)).
 					Attach(script.New(func(scene, self object.T, dt float32) {
-						// rot -= dt
+						rot -= dt
 						self.Parent().Transform().SetRotation(vec3.New(rot, 0, 0))
 					})).
 					Create())
