@@ -23,7 +23,8 @@ func NewMesh(tile *Tile) *Mesh {
 		DepthWrite:   true,
 		CullMode:     vertex.CullBack,
 	}, TileVertexGenerator(tile))
-	msh.SetTexture("heightmap", texture.PathRef("textures/uv_checker.png"))
+	msh.SetTexture("heightmap", texture.PathRef("textures/heightmap.png"))
+	msh.SetTexture("diffuse", texture.PathRef("textures/uv_checker.png"))
 	return &Mesh{
 		Dynamic: msh,
 		Tile:    tile,

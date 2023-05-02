@@ -2,6 +2,7 @@
 
 #extension GL_ARB_separate_shader_objects : enable
 #extension GL_ARB_shading_language_420pack : enable
+#extension GL_EXT_nonuniform_qualifier : enable
 
 // Attributes
 layout (location = 0) in vec3 position;
@@ -31,9 +32,9 @@ layout (binding = 1) readonly buffer ObjectBuffer {
 layout (binding = 2) uniform sampler2D[] Textures;
 
 // Varyings
-layout (location = 0) out vec3 normal0;
-layout (location = 1) out vec3 position0;
-layout (location = 2) out flat uint texture0;
+layout (location = 0) out flat uint objectIndex;
+layout (location = 1) out vec3 normal0;
+layout (location = 2) out vec3 position0;
 layout (location = 3) out vec2 texcoord0;
 
 out gl_PerVertex 
@@ -43,17 +44,31 @@ out gl_PerVertex
 
 void main() 
 {
-	mat4 mv = camera.View * ssbo.objects[gl_InstanceIndex].model;
+	objectIndex = gl_InstanceIndex;
+
+	mat4 mv = camera.View * ssbo.objects[objectIndex].model;
 
 	// textures
-	texture0 = ssbo.objects[gl_InstanceIndex].textures[0];
 	texcoord0 = texcoord_0;
+	uint texture0 = ssbo.objects[objectIndex].textures[0];
 
 	// gbuffer position
-	position0 = (mv * vec4(position.xyz, 1.0)).xyz;
+	float center = texture(Textures[texture0], texcoord0).r;
+	vec3 shadedPosition = position;
+	shadedPosition.y = center;
+
+	position0 = (mv * vec4(shadedPosition.xyz, 1.0)).xyz;
 
 	// gbuffer view space normal
-	normal0 = normalize((mv * vec4(normal, 0.0)).xyz);
+	float fx0 = textureOffset(Textures[texture0], texcoord0, ivec2(-1,0)).r;
+	float fx1 = textureOffset(Textures[texture0], texcoord0, ivec2(1,0)).r;
+	float fy0 = textureOffset(Textures[texture0], texcoord0, ivec2(0,-1)).r;
+	float fy1 = textureOffset(Textures[texture0], texcoord0, ivec2(0,1)).r;
+
+	float eps = 1.0 / textureSize(Textures[texture0], 0).x;
+	vec3 computedNormal = normalize(vec3((fx0 - fx1)/(2*eps), (fy0 - fy1)/(2*eps), 1));
+
+	normal0 = normalize((mv * vec4(computedNormal, 0.0)).xyz);
 
 	// vertex clip space position
 	gl_Position = camera.Proj * vec4(position0, 1);
