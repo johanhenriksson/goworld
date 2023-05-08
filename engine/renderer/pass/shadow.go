@@ -146,7 +146,7 @@ func (p *shadowpass) createShadowmap(light light.T) Shadowmap {
 		})
 		mats.TransformFn = func(d *material.Def) *material.Def {
 			shadowMat := *d
-			shadowMat.Shader = "shadow"
+			shadowMat.Shader = fmt.Sprintf("%s_shadow", d.Shader)
 			shadowMat.CullMode = vertex.CullFront
 			shadowMat.DepthClamp = true
 			return &shadowMat
