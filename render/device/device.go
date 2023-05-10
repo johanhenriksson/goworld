@@ -68,19 +68,7 @@ func New(instance instance.T, physDevice core1_0.PhysicalDevice) (T, error) {
 		QueueCreateInfos: []core1_0.DeviceQueueCreateInfo{
 			{
 				QueueFamilyIndex: 0,
-				QueuePriorities:  []float32{1},
-			},
-			{
-				QueueFamilyIndex: 1,
-				QueuePriorities:  []float32{1},
-			},
-			{
-				QueueFamilyIndex: 2,
-				QueuePriorities:  []float32{1},
-			},
-			{
-				QueueFamilyIndex: 3,
-				QueuePriorities:  []float32{1},
+				QueuePriorities:  []float32{0.1, 1, 1, 1},
 			},
 		},
 		EnabledFeatures: &core1_0.PhysicalDeviceFeatures{
@@ -120,7 +108,8 @@ func (d *device) Physical() core1_0.PhysicalDevice {
 }
 
 func (d *device) GetQueue(queueIndex int, flags core1_0.QueueFlags) core1_0.Queue {
-	return d.ptr.GetQueue(queueIndex, 0)
+	family := d.GetQueueFamilyIndex(flags)
+	return d.ptr.GetQueue(family, queueIndex)
 }
 
 func (d *device) GetQueueFamilyIndex(flags core1_0.QueueFlags) int {
