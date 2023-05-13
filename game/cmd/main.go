@@ -35,10 +35,10 @@ func main() {
 			// object.Attach(scene, chunk.NewMesh(chonk))
 			// object.Attach(scene, object.Builder(chunk.NewMesh(chonk)).Position(vec3.New(32, 0, 0)).Create())
 
-			tile := terrain.NewTile(ivec2.New(0, 0), 32, color.Red)
+			tile := terrain.NewTile(ivec2.New(0, 0), 64, color.Red)
 			object.Builder(terrain.NewMesh(tile)).
 				Position(vec3.New(0, 20, 0)).
-				Scale(vec3.New(1, 10, 1)).
+				Scale(vec3.New(1, 1, 1)).
 				Parent(scene).
 				Create()
 

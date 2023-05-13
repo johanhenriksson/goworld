@@ -45,7 +45,6 @@ out gl_PerVertex
 void main() 
 {
 	objectIndex = gl_InstanceIndex;
-
 	mat4 mv = camera.View * ssbo.objects[objectIndex].model;
 
 	// textures
@@ -53,22 +52,10 @@ void main()
 	uint texture0 = ssbo.objects[objectIndex].textures[0];
 
 	// gbuffer position
-	float center = texture(Textures[texture0], texcoord0).r;
-	vec3 shadedPosition = position;
-	shadedPosition.y = center;
+	position0 = (mv * vec4(position, 1)).xyz;
 
-	position0 = (mv * vec4(shadedPosition.xyz, 1.0)).xyz;
-
-	// gbuffer view space normal
-	float fx0 = textureOffset(Textures[texture0], texcoord0, ivec2(-1,0)).r;
-	float fx1 = textureOffset(Textures[texture0], texcoord0, ivec2(1,0)).r;
-	float fy0 = textureOffset(Textures[texture0], texcoord0, ivec2(0,-1)).r;
-	float fy1 = textureOffset(Textures[texture0], texcoord0, ivec2(0,1)).r;
-
-	float eps = 1.0 / textureSize(Textures[texture0], 0).x;
-	vec3 computedNormal = normalize(vec3((fx0 - fx1)/(2*eps), (fy0 - fy1)/(2*eps), 1));
-
-	normal0 = normalize((mv * vec4(computedNormal, 0.0)).xyz);
+	// gbuffer normal
+	normal0 = normalize((mv * vec4(normal, 0.0)).xyz);
 
 	// vertex clip space position
 	gl_Position = camera.Proj * vec4(position0, 1);

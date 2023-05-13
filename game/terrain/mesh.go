@@ -34,29 +34,41 @@ func NewMesh(tile *Tile) *Mesh {
 func TileVertexGenerator(tile *Tile) mesh.Generator[vertex.T, uint16] {
 	return func() mesh.Data[vertex.T, uint16] {
 		side := tile.Size + 1
-		vertices := make([]vertex.T, 0, side*side)
-		for y := 0; y < side; y++ {
-			for x := 0; x < side; x++ {
-				vertices = append(vertices, vertex.T{
-					P: vec3.NewI(x, 0, y),
-					T: vec2.New(float32(x)/float32(tile.Size), 1-float32(y)/float32(tile.Size)),
-				})
+
+		getVertex := func(x, z int) vertex.T {
+			return vertex.T{
+				P: vec3.New(float32(x), tile.points[z][x].Height, float32(z)),
+				T: vec2.New(float32(x)/float32(tile.Size), 1-float32(z)/float32(tile.Size)),
 			}
 		}
 
-		indices := make([]uint16, 0, tile.Size*tile.Size*6)
-		for y := 0; y < tile.Size; y++ {
-			for x := 0; x < tile.Size; x++ {
-				// t1
-				indices = append(indices, uint16(side*(y)+x+1))
-				indices = append(indices, uint16(side*(y)+x))
-				indices = append(indices, uint16(side*(y+1)+x))
+		// generate two faces for each square
+		vertices := make([]vertex.T, 0, side*side*6)
+		addTriangle := func(v0, v1, v2 vertex.T) {
+			a := v1.P.Sub(v0.P)
+			b := v2.P.Sub(v0.P)
+			n := vec3.Cross(a, b).Normalized()
+			v0.N = n
+			v1.N = n
+			v2.N = n
+			vertices = append(vertices, v0, v1, v2)
+		}
 
-				// t2
-				indices = append(indices, uint16(side*(y+1)+x))
-				indices = append(indices, uint16(side*(y+1)+x+1))
-				indices = append(indices, uint16(side*(y)+x+1))
+		for z := 0; z < tile.Size; z++ {
+			for x := 0; x < tile.Size; x++ {
+				v00 := getVertex(x, z)
+				v01 := getVertex(x, z+1)
+				v10 := getVertex(x+1, z)
+				v11 := getVertex(x+1, z+1)
+
+				addTriangle(v00, v11, v10)
+				addTriangle(v00, v01, v11)
 			}
+		}
+
+		indices := make([]uint16, 0, len(vertices))
+		for i := range indices {
+			indices[i] = uint16(i)
 		}
 
 		return mesh.Data[vertex.T, uint16]{
