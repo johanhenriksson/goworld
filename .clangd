@@ -1,0 +1,2 @@
+CompileFlags:
+    Add: [-I/usr/local/include/bullet]

@@ -6,6 +6,7 @@ profiling/
 .DS_Store
 TODO.md
 __debug_bin
+*.test
 
 # temproarily ignore models
 assets/models/
