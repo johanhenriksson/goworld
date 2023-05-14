@@ -36,7 +36,7 @@ type worker struct {
 }
 
 func NewWorker(device device.T, queueFlags core1_0.QueueFlags, queueIndex int) Worker {
-	pool := NewPool(device, core1_0.CommandPoolCreateTransient, queueIndex)
+	pool := NewPool(device, core1_0.CommandPoolCreateTransient, 0)
 	queue := device.GetQueue(queueIndex, queueFlags)
 
 	name := fmt.Sprintf("Worker:%d", queueIndex)
