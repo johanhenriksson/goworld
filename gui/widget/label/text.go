@@ -29,6 +29,10 @@ func (t *Text) Slice(i, j int) string {
 	return t.text.Slice(i, j)
 }
 
+func (t *Text) Len() int {
+	return t.text.RuneCount()
+}
+
 func (t *Text) SetText(text string) {
 	t.text = utf8string.NewString(text)
 	t.SetCursor(len(text))

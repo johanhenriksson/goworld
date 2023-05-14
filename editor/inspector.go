@@ -31,6 +31,10 @@ func Inspector(target object.T, extraNodes []node.T) node.T {
 				},
 			},
 		}),
+		propedit.StringField("testy", "Test String", propedit.StringProps{
+			Value:    "hello world this is a long string",
+			OnChange: func(string) {},
+		}),
 		propedit.Transform("transform", target.Transform()),
 	}...)
 	children = append(children, extraNodes...)

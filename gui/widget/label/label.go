@@ -199,11 +199,27 @@ func (l *label) Draw(args widget.DrawArgs, quads *widget.QuadBuffer) {
 	size := l.Size()
 	zindex := args.Position.Z
 	origin := args.Position.XY().Add(l.Position())
+	truncate := 0
+	// truncated := vec2.Zero
+
+	if l.state.Focused {
+		// if the cursor would be overflowing, we need to offset the text
+		for {
+			preCursor := l.text.Slice(truncate, l.text.cursor)
+			preSize := l.font.Measure(preCursor, font.Args{})
+			if preSize.X < size.X {
+				break
+			}
+			truncate++
+			// truncated = l.font.Measure(l.text.Slice(0, truncate), font.Args{})
+		}
+	}
 
 	// render glyph quads
 	pos := origin.Add(vec2.New(0, 0.8*l.font.Size()))
+	displayText := l.text.Slice(truncate, l.text.Len())
 	var prev rune
-	for i, r := range l.text.String() {
+	for i, r := range displayText {
 		glyph, err := l.font.Glyph(r)
 		if err != nil {
 			panic(err)
@@ -249,10 +265,10 @@ func (l *label) Draw(args widget.DrawArgs, quads *widget.QuadBuffer) {
 		// measure selection size & position
 		// todo: could be cached, perhaps not necessary
 		args := font.Args{LineHeight: l.lineHeight}
-		startIdx, _ := l.text.SelectedRange()
+		startIdx, endIdx := l.text.SelectedRange()
 		start := l.font.Measure(l.text.Slice(0, startIdx), args)
-		selectSize := l.font.Measure(l.text.Selection(), args)
-		length := math.Max(selectSize.X, 1)
+		selectSize := l.font.Measure(l.text.Slice(startIdx-truncate, endIdx-truncate), args)
+		length := math.Clamp(selectSize.X, 1, size.X)
 
 		// highlight quad
 		min := origin.Add(vec2.New(start.X, 0))
@@ -274,7 +290,7 @@ func (l *label) Draw(args widget.DrawArgs, quads *widget.QuadBuffer) {
 		// measure cursor position
 		args := font.Args{LineHeight: l.lineHeight}
 		cursorIdx, _ := l.text.SelectedRange()
-		cursorPos := l.font.Measure(l.text.Slice(0, cursorIdx), args)
+		cursorPos := l.font.Measure(l.text.Slice(truncate, cursorIdx), args)
 
 		// cursor quad
 		min := origin.Add(vec2.New(cursorPos.X, 0))
@@ -318,6 +334,7 @@ func (l *label) Destroy() {
 func (l *label) FocusEvent() {
 	l.state.Focused = true
 	// todo: move cursor to mouse position?
+	// todo: reset truncation point
 }
 
 func (l *label) BlurEvent() {
