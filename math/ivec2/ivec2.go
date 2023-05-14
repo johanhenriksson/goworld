@@ -1,5 +1,10 @@
 package ivec2
 
+var Zero = T{}
+var One = T{X: 1, Y: 1}
+var UnitX = T{X: 1}
+var UnitY = T{Y: 1}
+
 type T struct {
 	X int
 	Y int
