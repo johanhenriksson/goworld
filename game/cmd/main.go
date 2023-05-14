@@ -7,6 +7,7 @@ import (
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/core/script"
 	"github.com/johanhenriksson/goworld/editor"
+	"github.com/johanhenriksson/goworld/editor/gizmo"
 	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/engine/renderer"
 	"github.com/johanhenriksson/goworld/game/chunk"
@@ -47,6 +48,11 @@ func main() {
 						self.Parent().Transform().SetRotation(vec3.New(rot, 0, 0))
 					})).
 					Create())
+
+			object.Builder(gizmo.NewScaler()).
+				Parent(scene).
+				Position(vec3.New(0, 26, 0)).
+				Create()
 		}),
 	)
 }
