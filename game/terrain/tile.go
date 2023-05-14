@@ -7,12 +7,13 @@ import (
 )
 
 type Tile struct {
+	Map      *Map
 	Position ivec2.T
 	Size     int
 	points   [][]Point
 }
 
-func NewTile(position ivec2.T, size int, color color.T) *Tile {
+func NewTile(m *Map, position ivec2.T, size int, color color.T) *Tile {
 	if size < 1 {
 		panic("size must be at least 1")
 	}
@@ -34,8 +35,13 @@ func NewTile(position ivec2.T, size int, color color.T) *Tile {
 	}
 
 	return &Tile{
+		Map:      m,
 		Position: position,
 		Size:     size,
 		points:   points,
 	}
+}
+
+func (t *Tile) Point(x, z int) Point {
+	return t.points[z][x]
 }

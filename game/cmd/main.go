@@ -11,7 +11,6 @@ import (
 	"github.com/johanhenriksson/goworld/engine/renderer"
 	"github.com/johanhenriksson/goworld/game/chunk"
 	"github.com/johanhenriksson/goworld/game/terrain"
-	"github.com/johanhenriksson/goworld/math/ivec2"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render/color"
 )
@@ -35,7 +34,8 @@ func main() {
 			// object.Attach(scene, chunk.NewMesh(chonk))
 			// object.Attach(scene, object.Builder(chunk.NewMesh(chonk)).Position(vec3.New(32, 0, 0)).Create())
 
-			tile := terrain.NewTile(ivec2.New(0, 0), 64, color.Red)
+			m := terrain.NewMap(32, 3)
+			tile := m.GetTile(0, 0, true)
 			object.Builder(terrain.NewMesh(tile)).
 				Position(vec3.New(0, 20, 0)).
 				Scale(vec3.New(1, 1, 1)).
