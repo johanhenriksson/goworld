@@ -30,11 +30,25 @@ func main() {
 			chonk := chunk.NewWorld(32, generator, 500)
 			object.Attach(scene, chonk)
 
-			// chonk := chunk.Generate(generator, 32, 0, 0)
-			// object.Attach(scene, chunk.NewMesh(chonk))
-			// object.Attach(scene, object.Builder(chunk.NewMesh(chonk)).Position(vec3.New(32, 0, 0)).Create())
+			chonk := chunk.Generate(generator, 32, 0, 0)
+			object.Attach(scene, chunk.NewMesh(chonk))
+			object.Attach(scene, object.Builder(chunk.NewMesh(chonk)).Position(vec3.New(32, 0, 0)).Create())
 
-			m := terrain.NewMap(32, 3)
+			// physics boxes
+			for x := 0; x < 5; x++ {
+				for z := 0; z < 5; z++ {
+					chonk := chunk.Generate(generator, 1, 100*x, 100*z)
+					object.Builder(physics.NewRigidBody(5, physics.NewBox(vec3.New(0.5, 0.5, 0.5)))).
+						Position(vec3.New(20+3*float32(x), 60, 15+3*float32(z))).
+						Attach(object.Builder(chunk.NewMesh(chonk)).
+							Position(vec3.New(-0.5, -0.5, -0.5)).
+							Create()).
+						Parent(world).
+						Create()
+				}
+			}
+
+			m := terrain.NewMap(64, 3)
 			tile := m.GetTile(0, 0, true)
 			object.Builder(terrain.NewMesh(tile)).
 				Position(vec3.New(0, 20, 0)).
