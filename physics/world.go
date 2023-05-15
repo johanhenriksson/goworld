@@ -18,6 +18,7 @@ import (
 type World struct {
 	object.T
 	handle C.goDynamicsWorldHandle
+	debug  bool
 }
 
 func NewWorld() *World {
@@ -35,6 +36,10 @@ func (w *World) Update(scene object.T, dt float32) {
 	w.T.Update(scene, dt)
 
 	w.Step(dt)
+
+	if w.debug {
+		w.debugDraw()
+	}
 }
 
 func (w *World) SetGravity(gravity vec3.T) {
@@ -51,4 +56,13 @@ func (w *World) AddRigidBody(body *RigidBody) {
 
 func (w *World) RemoveRigidBody(body *RigidBody) {
 	C.goRemoveRigidBody(w.handle, body.handle)
+}
+
+func (w *World) EnableDebug() {
+	C.goEnableDebug(w.handle)
+	w.debug = true
+}
+
+func (w *World) debugDraw() {
+	C.goDebugDraw(w.handle)
 }

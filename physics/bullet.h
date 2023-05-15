@@ -1,6 +1,9 @@
 #ifndef BULLET_C_API_H
 #define BULLET_C_API_H
 
+typedef void (*goDebugCallback)(float start_x, float start_y, float start_z, float end_x, float end_y, float end_z,
+                                float r, float g, float b);
+
 #define GO_DECLARE_HANDLE(name) \
     typedef struct name##__ {   \
         int unused;             \
@@ -125,6 +128,10 @@ typedef struct goRayCastResult {
 
 extern int goRayCast(goDynamicsWorldHandle world, const goVector3 rayStart, const goVector3 rayEnd,
                      goRayCastResult res);
+
+extern void goEnableDebug(goDynamicsWorldHandle world);
+
+extern void goDebugDraw(goDynamicsWorldHandle world);
 
 #ifdef __cplusplus
 }

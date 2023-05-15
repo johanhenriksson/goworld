@@ -1,10 +1,11 @@
-
 #include "bullet.h"
 
 #include "BulletCollision/CollisionDispatch/btGhostObject.h"
 #include "BulletDynamics/Character/btKinematicCharacterController.h"
+#include "_cgo_export.h"
 #include "btBulletCollisionCommon.h"
 #include "btBulletDynamicsCommon.h"
+#include "bullet.hpp"
 
 btVector3 vec3FromGo(goVector3 v) { return btVector3(v[0], v[1], v[2]); }
 
@@ -36,6 +37,7 @@ void goDeleteDynamicsWorld(goDynamicsWorldHandle world) {
 
 void goSetGravity(goDynamicsWorldHandle world, goVector3 gravity) {
     btDynamicsWorld* dynamicsWorld = reinterpret_cast<btDynamicsWorld*>(world);
+    btAssert(dynamicsWorld);
     dynamicsWorld->setGravity(btVector3(gravity[0], gravity[1], gravity[2]));
 }
 
@@ -73,7 +75,7 @@ goRigidBodyHandle goCreateRigidBody(void* user_data, float mass, goShapeHandle c
     trans.setIdentity();
 
     btVector3 localInertia(0, 0, 0);
-    if (mass) {
+    if (mass > 0) {
         // calculate inertia if dynamic (mass > 0)
         shape->calculateLocalInertia(mass, localInertia);
     }
@@ -127,18 +129,25 @@ goTriangleMeshHandle goNewTriangleMesh(void* vertex_ptr, int vertex_count, int v
                                        int index_count, int index_stride) {
     auto mesh = btIndexedMesh();
 
-    mesh.m_vertexType = PHY_FLOAT;
     mesh.m_numVertices = vertex_count;
     mesh.m_vertexBase = (const unsigned char*)vertex_ptr;
     mesh.m_vertexStride = vertex_stride;
 
-    mesh.m_indexType = PHY_SHORT;
     mesh.m_numTriangles = index_count / 3;
     mesh.m_triangleIndexBase = (const unsigned char*)index_ptr;
     mesh.m_triangleIndexStride = 3 * index_stride;
 
+    // infer index type from its stride. this is kinda stupid
+    PHY_ScalarType indexType = PHY_INTEGER;
+    switch (index_stride) {
+        case 1:
+            indexType = PHY_UCHAR;
+        case 2:
+            indexType = PHY_SHORT;
+    }
+
     auto array = new btTriangleIndexVertexArray();
-    array->addIndexedMesh(mesh, mesh.m_indexType);
+    array->addIndexedMesh(mesh, indexType);
     return (goTriangleMeshHandle)array;
 }
 
@@ -237,4 +246,20 @@ void goSetRotation(goRigidBodyHandle object, const goVector3 rotation) {
         body->getMotionState()->setWorldTransform(transf);
     }
     body->activate();
+}
+
+void goEnableDebug(goDynamicsWorldHandle world) {
+    btDynamicsWorld* dynamicsWorld = reinterpret_cast<btDynamicsWorld*>(world);
+    btAssert(dynamicsWorld);
+
+    auto drawer = new GoDebugDrawer(GoDebugCallback);
+    drawer->setDebugMode(btIDebugDraw::DBG_DrawWireframe | btIDebugDraw::DBG_DrawAabb);
+
+    dynamicsWorld->setDebugDrawer(drawer);
+}
+
+void goDebugDraw(goDynamicsWorldHandle world) {
+    btDynamicsWorld* dynamicsWorld = reinterpret_cast<btDynamicsWorld*>(world);
+    btAssert(dynamicsWorld);
+    dynamicsWorld->debugDrawWorld();
 }

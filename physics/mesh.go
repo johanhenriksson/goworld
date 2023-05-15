@@ -25,18 +25,28 @@ var _ Shape = &Mesh{}
 
 func NewMesh(mesh vertex.Mesh) *Mesh {
 	vertices := mesh.VertexData()
-	vertexValue := reflect.ValueOf(vertices)
-	firstVertex := vertexValue.Index(0)
-	vertexPtr := firstVertex.Addr().Pointer()
+	vertexArray := reflect.ValueOf(vertices)
+	if vertexArray.Kind() != reflect.Slice {
+		panic("vertex data is not a slice")
+	}
+	if vertexArray.Len() < 1 {
+		panic("vertex data is empty")
+	}
+	vertexPtr := vertexArray.Index(0).UnsafeAddr()
 	vertexStride := mesh.VertexSize()
-	vertexCount := vertexValue.Len()
+	vertexCount := vertexArray.Len()
 
 	indices := mesh.IndexData()
-	indexValue := reflect.ValueOf(indices)
-	firstIndex := indexValue.Index(0)
-	indexPtr := firstIndex.Addr().Pointer()
+	indexArray := reflect.ValueOf(indices)
+	if indexArray.Kind() != reflect.Slice {
+		panic("index data is not a slice")
+	}
+	if indexArray.Len() < 1 {
+		panic("index data is empty")
+	}
+	indexPtr := indexArray.Index(0).UnsafeAddr()
 	indexStride := mesh.IndexSize()
-	indexCount := indexValue.Len()
+	indexCount := indexArray.Len()
 
 	meshHandle := C.goNewTriangleMesh(
 		unsafe.Pointer(vertexPtr), C.int(vertexCount), C.int(vertexStride),
