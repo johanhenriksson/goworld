@@ -21,12 +21,12 @@ var _ = Describe("physics tests", func() {
 		world := physics.NewWorld()
 		world.SetGravity(vec3.New(0, -10, 0))
 
-		boxShape := physics.NewBoxShape(vec3.One)
+		boxShape := physics.NewBox(vec3.One)
 		box := physics.NewRigidBody(10, boxShape)
 		// box.SetPosition(vec3.New(0, 2, 0))
 		world.AddRigidBody(box)
 
-		groundShape := physics.NewBoxShape(vec3.New(100, 1, 100))
+		groundShape := physics.NewBox(vec3.New(100, 1, 100))
 		ground := physics.NewRigidBody(0, groundShape)
 		ground.SetPosition(vec3.New(0, -5, 0))
 		world.AddRigidBody(ground)

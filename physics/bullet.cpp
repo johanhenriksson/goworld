@@ -65,7 +65,7 @@ void goRemoveRigidBody(goDynamicsWorldHandle world, goRigidBodyHandle object) {
 
 /* Rigid Body  */
 
-goRigidBodyHandle goCreateRigidBody(void* user_data, float mass, goCollisionShapeHandle cshape) {
+goRigidBodyHandle goCreateRigidBody(void* user_data, float mass, goShapeHandle cshape) {
     btCollisionShape* shape = reinterpret_cast<btCollisionShape*>(cshape);
     btAssert(shape);
 
@@ -96,24 +96,22 @@ void goDeleteRigidBody(goRigidBodyHandle cbody) {
 
 /* Collision Shape definition */
 
-goCollisionShapeHandle goNewSphereShape(goReal radius) { return (goCollisionShapeHandle) new btSphereShape(radius); }
+goShapeHandle goNewSphereShape(goReal radius) { return (goShapeHandle) new btSphereShape(radius); }
 
-goCollisionShapeHandle goNewBoxShape(goVector3 size) {
-    return (goCollisionShapeHandle) new btBoxShape(vec3FromGo(size));
+goShapeHandle goNewBoxShape(goVector3 size) { return (goShapeHandle) new btBoxShape(vec3FromGo(size)); }
+
+goShapeHandle goNewCylinderShape(goReal radius, goReal height) {
+    return (goShapeHandle) new btCylinderShape(btVector3(radius, height, radius));
 }
 
-goCollisionShapeHandle goNewCylinderShape(goReal radius, goReal height) {
-    return (goCollisionShapeHandle) new btCylinderShape(btVector3(radius, height, radius));
-}
-
-goCollisionShapeHandle goNewCapsuleShape(goReal radius, goReal height) {
+goShapeHandle goNewCapsuleShape(goReal radius, goReal height) {
     const int numSpheres = 2;
     btVector3 positions[numSpheres] = {btVector3(0, height, 0), btVector3(0, -height, 0)};
     btScalar radi[numSpheres] = {radius, radius};
-    return (goCollisionShapeHandle) new btMultiSphereShape(positions, radi, numSpheres);
+    return (goShapeHandle) new btMultiSphereShape(positions, radi, numSpheres);
 }
 
-goCollisionShapeHandle goNewController(goVector3 position, goReal height, goReal stepHeight) {
+goShapeHandle goNewController(goVector3 position, goReal height, goReal stepHeight) {
     auto ghostObject = new btPairCachingGhostObject();
     btTransform transf;
     transf.setIdentity();
@@ -121,16 +119,39 @@ goCollisionShapeHandle goNewController(goVector3 position, goReal height, goReal
 
     auto capsule = new btCapsuleShape(0.8, height);
     auto character = new btKinematicCharacterController(ghostObject, capsule, stepHeight);
-    return (goCollisionShapeHandle)character;
+    return (goShapeHandle)character;
 }
 
 /* Concave static triangle meshes */
-goMeshInterfaceHandle goNewMeshInterface() { return 0; }
+goTriangleMeshHandle goNewTriangleMesh(void* vertex_ptr, int vertex_count, int vertex_stride, void* index_ptr,
+                                       int index_count, int index_stride) {
+    auto mesh = btIndexedMesh();
 
-goCollisionShapeHandle goNewCompoundShape() { return (goCollisionShapeHandle) new btCompoundShape(); }
+    mesh.m_vertexType = PHY_FLOAT;
+    mesh.m_numVertices = vertex_count;
+    mesh.m_vertexBase = (const unsigned char*)vertex_ptr;
+    mesh.m_vertexStride = vertex_stride;
 
-void goAddChildShape(goCollisionShapeHandle compoundShapeHandle, goCollisionShapeHandle childShapeHandle,
-                     goVector3 childPos, goQuaternion childOrn) {
+    mesh.m_indexType = PHY_SHORT;
+    mesh.m_numTriangles = index_count / 3;
+    mesh.m_triangleIndexBase = (const unsigned char*)index_ptr;
+    mesh.m_triangleIndexStride = 3 * index_stride;
+
+    auto array = new btTriangleIndexVertexArray();
+    array->addIndexedMesh(mesh, mesh.m_indexType);
+    return (goTriangleMeshHandle)array;
+}
+
+goShapeHandle goNewStaticTriangleMeshShape(goTriangleMeshHandle meshHandle) {
+    auto mesh = reinterpret_cast<btTriangleMesh*>(meshHandle);
+    btAssert(mesh);
+    return (goShapeHandle) new btBvhTriangleMeshShape(mesh, true);
+}
+
+goShapeHandle goNewCompoundShape() { return (goShapeHandle) new btCompoundShape(); }
+
+void goAddChildShape(goShapeHandle compoundShapeHandle, goShapeHandle childShapeHandle, goVector3 childPos,
+                     goQuaternion childOrn) {
     btCollisionShape* colShape = reinterpret_cast<btCollisionShape*>(compoundShapeHandle);
     btAssert(colShape->getShapeType() == COMPOUND_SHAPE_PROXYTYPE);
 
@@ -146,10 +167,10 @@ void goAddChildShape(goCollisionShapeHandle compoundShapeHandle, goCollisionShap
 }
 
 //	extern  void		goAddTriangle(goMeshInterfaceHandle meshHandle,
-// goVector3 v0,goVector3 v1,goVector3 v2); 	extern  goCollisionShapeHandle
+// goVector3 v0,goVector3 v1,goVector3 v2); 	extern  goShapeHandle
 // goNewStaticTriangleMeshShape(goMeshInterfaceHandle);
 
-void goAddVertex(goCollisionShapeHandle cshape, goReal x, goReal y, goReal z) {
+void goAddVertex(goShapeHandle cshape, goReal x, goReal y, goReal z) {
     btCollisionShape* colShape = reinterpret_cast<btCollisionShape*>(cshape);
     btAssert(colShape->getShapeType() == CONVEX_HULL_SHAPE_PROXYTYPE);
 
@@ -157,13 +178,13 @@ void goAddVertex(goCollisionShapeHandle cshape, goReal x, goReal y, goReal z) {
     convexHullShape->addPoint(btVector3(x, y, z));
 }
 
-void goDeleteShape(goCollisionShapeHandle cshape) {
+void goDeleteShape(goShapeHandle cshape) {
     btCollisionShape* shape = reinterpret_cast<btCollisionShape*>(cshape);
     btAssert(shape);
     delete shape;
 }
 
-void goSetScaling(goCollisionShapeHandle cshape, goVector3 cscaling) {
+void goSetScaling(goShapeHandle cshape, goVector3 cscaling) {
     btCollisionShape* shape = reinterpret_cast<btCollisionShape*>(cshape);
     btAssert(shape);
 
@@ -186,6 +207,12 @@ void goSetPosition(goRigidBodyHandle object, const goVector3 position) {
     btTransform transf = body->getWorldTransform();
     transf.setOrigin(pos);
     body->setWorldTransform(transf);
+
+    if (body->getMotionState()) {
+        body->getMotionState()->setWorldTransform(transf);
+    }
+
+    body->activate();
 }
 
 void goGetRotation(goRigidBodyHandle body_handle, goVector3 rotation) {
@@ -193,7 +220,7 @@ void goGetRotation(goRigidBodyHandle body_handle, goVector3 rotation) {
     btAssert(body);
 
     btTransform transf = body->getWorldTransform();
-    transf.getRotation().getEulerZYX(rotation[0], rotation[1], rotation[2]);
+    transf.getRotation().getEulerZYX(rotation[2], rotation[1], rotation[0]);
 }
 
 void goSetRotation(goRigidBodyHandle object, const goVector3 rotation) {
@@ -201,8 +228,13 @@ void goSetRotation(goRigidBodyHandle object, const goVector3 rotation) {
     btAssert(body);
 
     btQuaternion orient;
-    orient.setEuler(rotation[0], rotation[1], rotation[2]);
+    orient.setEulerZYX(rotation[2], rotation[1], rotation[0]);
     btTransform transf = body->getWorldTransform();
     transf.setRotation(orient);
+
     body->setWorldTransform(transf);
+    if (body->getMotionState()) {
+        body->getMotionState()->setWorldTransform(transf);
+    }
+    body->activate();
 }

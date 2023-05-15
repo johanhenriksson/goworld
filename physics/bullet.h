@@ -22,13 +22,14 @@ GO_DECLARE_HANDLE(goDynamicsWorldHandle);
 GO_DECLARE_HANDLE(goRigidBodyHandle);
 
 /** 	Collision Shape/Geometry, property of a Rigid Body (C-API)*/
-GO_DECLARE_HANDLE(goCollisionShapeHandle);
+GO_DECLARE_HANDLE(goShapeHandle);
 
 /** Constraint for Rigid Bodies (C-API)*/
 GO_DECLARE_HANDLE(goConstraintHandle);
 
 /** Triangle Mesh interface (C-API)*/
 GO_DECLARE_HANDLE(goMeshInterfaceHandle);
+GO_DECLARE_HANDLE(goTriangleMeshHandle);
 
 /** Broadphase Scene/Proxy Handles (C-API)*/
 GO_DECLARE_HANDLE(goCollisionBroadphaseHandle);
@@ -76,35 +77,36 @@ extern void goRemoveRigidBody(goDynamicsWorldHandle world, goRigidBodyHandle obj
 
 /* Rigid Body  */
 
-extern goRigidBodyHandle goCreateRigidBody(void* user_data, float mass, goCollisionShapeHandle cshape);
+extern goRigidBodyHandle goCreateRigidBody(void* user_data, float mass, goShapeHandle cshape);
 
 extern void goDeleteRigidBody(goRigidBodyHandle body);
 
 /* Collision Shape definition */
 
-extern goCollisionShapeHandle goNewSphereShape(goReal radius);
+extern goShapeHandle goNewSphereShape(goReal radius);
 
-extern goCollisionShapeHandle goNewBoxShape(goVector3 size);
+extern goShapeHandle goNewBoxShape(goVector3 size);
 
-extern goCollisionShapeHandle goNewCylinderShape(goReal radius, goReal height);
+extern goShapeHandle goNewCylinderShape(goReal radius, goReal height);
 
-extern goCollisionShapeHandle goNewCompoundShape(void);
+extern goShapeHandle goNewCompoundShape(void);
 
-extern void goAddChildShape(goCollisionShapeHandle compoundShape, goCollisionShapeHandle childShape, goVector3 childPos,
+extern void goAddChildShape(goShapeHandle compoundShape, goShapeHandle childShape, goVector3 childPos,
                             goQuaternion childOrn);
 
-extern void goDeleteShape(goCollisionShapeHandle shape);
+extern void goDeleteShape(goShapeHandle shape);
 
 /* Convex Meshes */
-extern goCollisionShapeHandle goNewConvexHullShape(void);
-extern void goAddVertex(goCollisionShapeHandle convexHull, goReal x, goReal y, goReal z);
+extern goShapeHandle goNewConvexHullShape(void);
+extern void goAddVertex(goShapeHandle convexHull, goReal x, goReal y, goReal z);
 
 /* Concave static triangle meshes */
-extern goMeshInterfaceHandle goNewMeshInterface(void);
-extern void goAddTriangle(goMeshInterfaceHandle meshHandle, goVector3 v0, goVector3 v1, goVector3 v2);
-extern goCollisionShapeHandle goNewStaticTriangleMeshShape(goMeshInterfaceHandle);
+extern goTriangleMeshHandle goNewTriangleMesh(void* vertex_ptr, int vertex_count, int vertex_stride, void* index_ptr,
+                                              int index_count, int index_stride);
 
-extern void goSetScaling(goCollisionShapeHandle shape, goVector3 scaling);
+extern goShapeHandle goNewStaticTriangleMeshShape(goTriangleMeshHandle);
+
+extern void goSetScaling(goShapeHandle shape, goVector3 scaling);
 
 /* get world transform */
 extern void goGetPosition(goRigidBodyHandle object, goVector3 position);
@@ -116,7 +118,7 @@ extern void goSetRotation(goRigidBodyHandle object, const goVector3 rotation);
 
 typedef struct goRayCastResult {
     goRigidBodyHandle m_body;
-    goCollisionShapeHandle m_shape;
+    goShapeHandle m_shape;
     goVector3 m_positionWorld;
     goVector3 m_normalWorld;
 } goRayCastResult;
