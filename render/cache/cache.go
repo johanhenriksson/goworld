@@ -1,7 +1,6 @@
 package cache
 
 import (
-	"log"
 	"sync"
 
 	"github.com/johanhenriksson/goworld/render/command"
@@ -175,7 +174,6 @@ func (c *cache[K, V]) Tick() {
 	for key, line := range c.data {
 		line.age++
 		if line.age > c.maxAge {
-			log.Println(c.backend, "evict", key)
 			delete(c.data, key)
 
 			// delete any instantiated object

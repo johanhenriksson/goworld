@@ -17,7 +17,11 @@ func NewTile(m *Map, position ivec2.T, size int, color color.T) *Tile {
 	if size < 1 {
 		panic("size must be at least 1")
 	}
-	noise := math.NewNoise(10000, 1.0/40.0)
+
+	noiseScale := float32(1)
+	heightScale := float32(20)
+	height := math.NewNoise(11000, 1.0/40.0)
+	noise := math.NewNoise(418941, 0.2)
 
 	vertices := size + 1
 	points := make([][]Point, vertices)
@@ -30,7 +34,7 @@ func NewTile(m *Map, position ivec2.T, size int, color color.T) *Tile {
 			points[z][x].B = b.Z
 
 			wx, wz := x+size*position.X, z+size*position.Y
-			points[z][x].Height = 40 * noise.Sample(wx, 0, wz)
+			points[z][x].Height = heightScale*height.Sample(wx, 0, wz) + noiseScale*noise.Sample(wx, 0, wz)
 		}
 	}
 

@@ -12,6 +12,7 @@ import (
 	"github.com/johanhenriksson/goworld/game/chunk"
 	"github.com/johanhenriksson/goworld/game/terrain"
 	"github.com/johanhenriksson/goworld/math/vec3"
+	"github.com/johanhenriksson/goworld/physics"
 	"github.com/johanhenriksson/goworld/render/color"
 )
 
@@ -26,18 +27,19 @@ func main() {
 		Title:  "goworld",
 	},
 		editor.Scene(func(r renderer.T, scene object.T) {
-			generator := chunk.ExampleWorldgen(3141389, 32)
-			chonk := chunk.NewWorld(32, generator, 500)
+			world := physics.NewWorld()
+			world.EnableDebug()
+			object.Attach(scene, world)
+
+			generator := chunk.ExampleWorldgen(4, 123123)
+			chonk := chunk.NewWorld(4, generator, 40)
 			object.Attach(scene, chonk)
 
-			chonk := chunk.Generate(generator, 32, 0, 0)
-			object.Attach(scene, chunk.NewMesh(chonk))
-			object.Attach(scene, object.Builder(chunk.NewMesh(chonk)).Position(vec3.New(32, 0, 0)).Create())
-
 			// physics boxes
+			boxgen := chunk.NewRandomGen()
 			for x := 0; x < 5; x++ {
 				for z := 0; z < 5; z++ {
-					chonk := chunk.Generate(generator, 1, 100*x, 100*z)
+					chonk := chunk.Generate(boxgen, 1, 100*x, 100*z)
 					object.Builder(physics.NewRigidBody(5, physics.NewBox(vec3.New(0.5, 0.5, 0.5)))).
 						Position(vec3.New(20+3*float32(x), 60, 15+3*float32(z))).
 						Attach(object.Builder(chunk.NewMesh(chonk)).
@@ -50,10 +52,14 @@ func main() {
 
 			m := terrain.NewMap(64, 3)
 			tile := m.GetTile(0, 0, true)
-			object.Builder(terrain.NewMesh(tile)).
-				Position(vec3.New(0, 20, 0)).
-				Scale(vec3.New(1, 1, 1)).
-				Parent(scene).
+			tileMesh := terrain.NewMesh(tile)
+			tileMesh.RefreshSync()
+
+			meshShape := physics.NewMesh(tileMesh.Mesh())
+			object.Builder(physics.NewRigidBody(0, meshShape)).
+				Position(vec3.New(0, 10, 0)).
+				Attach(tileMesh).
+				Parent(world).
 				Create()
 
 			// directional light
