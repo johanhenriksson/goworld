@@ -1,10 +1,11 @@
 # goworld
 
-*Not in active development! Working on it occasionally.*
+_Not in active development! Working on it occasionally._
 
-Yet another attempt at building a basic 3D engine from scratch, this time in Go. The goal is to create a engine capable of producing *some* kind of *passable* graphics with a coherent art style. So far, the style is based around colored voxels.
+Yet another attempt at building a basic 3D engine from scratch, this time in Go. The goal is to create a engine capable of producing _some_ kind of _passable_ graphics with a coherent art style. So far, the style is based around colored voxels.
 
 **Features:**
+
 - Voxel world/editor demo
 - Deferred Rendering Pipeline
 - Directional Lights
@@ -16,7 +17,7 @@ Yet another attempt at building a basic 3D engine from scratch, this time in Go.
 - Screen-Space Ambient Occlusion (HBAO) (not yet ported to vulkan)
 - Color Grading with Lookup Tables (not yet ported to vulkan)
 
-Tested on OSX 10.10+ and Manjaro Linux. It should *theoretically* work on Windows.
+Tested on OSX 10.10+ and Manjaro Linux. It should _theoretically_ work on Windows.
 
 ![Screenshot from 2023-02-06](docs/img/screenshot230305.png)
 ![Screenshot from 2022-02-27](docs/img/screenshot220227.png)
@@ -25,5 +26,30 @@ Tested on OSX 10.10+ and Manjaro Linux. It should *theoretically* work on Window
 
 ## System Requirements
 
- * Vulkan 1.0
- * MacOS users need MoltenVK.
+- Vulkan 1.0
+- MacOS users need MoltenVK.
+
+## Build Bullet SDK
+
+```bash
+# check out bullet3
+git clone https://github.com/bulletphysics/bullet3.git
+cd bullet3
+
+# configure build
+cmake . \
+    -DBUILD_SHARED_LIBS=ON \
+    -DINSTALL_LIBS=ON \
+    -DUSE_DOUBLE_PRECISION=OFF \
+    -DBUILD_BULLET2_DEMOS=OFF \
+    -DBUILD_CPU_DEMOS=OFF \
+    -DBUILD_OPENGL3_DEMOS=OFF \
+    -DBUILD_BULLET3=ON \
+    -DBUILD_PYBULLET=OFF \
+    -DBUILD_EXTRAS=OFF \
+    -G "Unix Makefiles"
+
+# compile & install
+make
+make install
+```
