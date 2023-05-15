@@ -5,6 +5,7 @@ import (
 
 	"github.com/johanhenriksson/goworld/core/mesh"
 	"github.com/johanhenriksson/goworld/core/object"
+	lineShape "github.com/johanhenriksson/goworld/geometry/lines"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/framebuffer"
@@ -87,6 +88,13 @@ func (p *LinePass) Record(cmds command.Recorder, args render.Args, scene object.
 		Where(isDrawLines).
 		Collect(scene)
 	p.materials.Draw(cmds, args, lines)
+
+	// debug lines
+	if lineShape.Debug.Count() > 0 {
+		lineShape.Debug.Refresh()
+		p.materials.Draw(cmds, args, []mesh.T{lineShape.Debug})
+		lineShape.Debug.Clear()
+	}
 
 	cmds.Record(func(cmd command.Buffer) {
 		cmd.CmdEndRenderPass()

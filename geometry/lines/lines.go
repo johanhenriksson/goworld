@@ -3,6 +3,8 @@ package lines
 import (
 	"github.com/johanhenriksson/goworld/core/mesh"
 	"github.com/johanhenriksson/goworld/core/object"
+	"github.com/johanhenriksson/goworld/math/vec3"
+	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/vertex"
 )
@@ -15,6 +17,8 @@ type T struct {
 type Args struct {
 	Mat   *material.Def
 	Lines []Line
+
+	lineMesh vertex.MutableMesh[vertex.C, uint16]
 }
 
 func New(args Args) *T {
@@ -22,11 +26,29 @@ func New(args Args) *T {
 		T:    mesh.NewLines(args.Mat),
 		Args: args,
 	})
-	b.compute()
+	b.lineMesh = vertex.NewLines(object.Key("lines", b), []vertex.C{}, []uint16{})
+	b.SetMesh(b.lineMesh)
+	b.Refresh()
 	return b
 }
 
-func (li *T) compute() {
+func (li *T) Add(from, to vec3.T, clr color.T) {
+	li.Lines = append(li.Lines, Line{
+		Start: from,
+		End:   to,
+		Color: clr,
+	})
+}
+
+func (li *T) Clear() {
+	li.Lines = li.Lines[:0]
+}
+
+func (li *T) Count() int {
+	return len(li.Lines)
+}
+
+func (li *T) Refresh() {
 	count := len(li.Lines)
 	vertices := make([]vertex.C, 2*count)
 	for i := 0; i < count; i++ {
@@ -38,8 +60,5 @@ func (li *T) compute() {
 		b.P = line.End
 		b.C = line.Color.Vec4()
 	}
-
-	key := object.Key("lines", li)
-	mesh := vertex.NewLines(key, vertices, []uint16{})
-	li.SetMesh(mesh)
+	li.lineMesh.Update(vertices, []uint16{})
 }
