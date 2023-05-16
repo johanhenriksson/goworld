@@ -13,12 +13,26 @@ import (
 	"github.com/johanhenriksson/goworld/render/color"
 )
 
-//export GoDebugCallback
-func GoDebugCallback(start_x, start_y, start_z, end_x, end_y, end_z, color_r, color_g, color_b C.float) {
+var debugWorlds = map[C.goDynamicsWorldHandle]*World{}
+
+func enableDebug(w *World) {
+	debugWorlds[w.handle] = w
+	C.goEnableDebug(w.handle)
+}
+
+func disableDebug(w *World) {
+	C.goDisableDebug(w.handle)
+	delete(debugWorlds, w.handle)
+}
+
+//export GoDrawLineCallback
+func GoDrawLineCallback(handle C.goDynamicsWorldHandle, start_x, start_y, start_z, end_x, end_y, end_z, color_r, color_g, color_b C.float) {
 	start := vec3.New(float32(start_x), float32(start_y), float32(start_z))
 	end := vec3.New(float32(end_x), float32(end_y), float32(end_z))
 	color := color.RGB(float32(color_r), float32(color_g), float32(color_b))
-	// fmt.Printf("DrawDebugLine: %s -> %s (%s)\n", start, end, color)
+
+	// retrive world object
+	// world := debugWorlds[handle]
 
 	lines.Debug.Add(start, end, color)
 }

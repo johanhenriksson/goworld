@@ -175,10 +175,6 @@ void goAddChildShape(goShapeHandle compoundShapeHandle, goShapeHandle childShape
     compoundShape->addChildShape(localTrans, childShape);
 }
 
-//	extern  void		goAddTriangle(goMeshInterfaceHandle meshHandle,
-// goVector3 v0,goVector3 v1,goVector3 v2); 	extern  goShapeHandle
-// goNewStaticTriangleMeshShape(goMeshInterfaceHandle);
-
 void goAddVertex(goShapeHandle cshape, goReal x, goReal y, goReal z) {
     btCollisionShape* colShape = reinterpret_cast<btCollisionShape*>(cshape);
     btAssert(colShape->getShapeType() == CONVEX_HULL_SHAPE_PROXYTYPE);
@@ -252,10 +248,28 @@ void goEnableDebug(goDynamicsWorldHandle world) {
     btDynamicsWorld* dynamicsWorld = reinterpret_cast<btDynamicsWorld*>(world);
     btAssert(dynamicsWorld);
 
-    auto drawer = new GoDebugDrawer(GoDebugCallback);
-    drawer->setDebugMode(btIDebugDraw::DBG_DrawWireframe | btIDebugDraw::DBG_DrawAabb);
+    auto drawer = dynamicsWorld->getDebugDrawer();
+    if (!drawer) {
+        auto drawline = [world](const btVector3& from, const btVector3 to, const btVector3 color) -> void {
+            GoDrawLineCallback(world, from.getX(), from.getY(), from.getZ(), to.getX(), to.getY(), to.getZ(),
+                               color.getX(), color.getY(), color.getZ());
+        };
 
-    dynamicsWorld->setDebugDrawer(drawer);
+        drawer = new GoDebugDrawer(drawline);
+        dynamicsWorld->setDebugDrawer(drawer);
+    }
+
+    drawer->setDebugMode(btIDebugDraw::DBG_DrawWireframe | btIDebugDraw::DBG_DrawAabb);
+}
+
+void goDisableDebug(goDynamicsWorldHandle world) {
+    btDynamicsWorld* dynamicsWorld = reinterpret_cast<btDynamicsWorld*>(world);
+    btAssert(dynamicsWorld);
+
+    auto drawer = dynamicsWorld->getDebugDrawer();
+    if (drawer) {
+        drawer->setDebugMode(btIDebugDraw::DBG_NoDebug);
+    }
 }
 
 void goDebugDraw(goDynamicsWorldHandle world) {

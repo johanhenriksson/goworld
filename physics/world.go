@@ -58,9 +58,13 @@ func (w *World) RemoveRigidBody(body *RigidBody) {
 	C.goRemoveRigidBody(w.handle, body.handle)
 }
 
-func (w *World) EnableDebug() {
-	C.goEnableDebug(w.handle)
-	w.debug = true
+func (w *World) Debug(enabled bool) {
+	if enabled {
+		enableDebug(w)
+	} else {
+		disableDebug(w)
+	}
+	w.debug = enabled
 }
 
 func (w *World) debugDraw() {

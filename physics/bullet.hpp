@@ -1,16 +1,23 @@
 
+#include <functional>
+
 #include "LinearMath/btIDebugDraw.h"
 #include "LinearMath/btVector3.h"
 #include "bullet.h"
 
+typedef void (*DrawLineCallback)(const btVector3&, const btVector3&, const btVector3&);
+
 class GoDebugDrawer : public btIDebugDraw {
     int m_debugMode;
 
-    goDebugCallback callback;
+    std::function<void(const btVector3&, const btVector3&, const btVector3&)> drawline;
 
    public:
-    GoDebugDrawer(goDebugCallback cb) {
-        this->callback = cb;
+    GoDebugDrawer(std::function<void(const btVector3&, const btVector3&, const btVector3&)> drawline_cb) {
+        // callbacks
+        this->drawline = drawline_cb;
+
+        // default drawing mode
         this->m_debugMode = DBG_DrawAabb;
     }
 
@@ -18,8 +25,7 @@ class GoDebugDrawer : public btIDebugDraw {
         // Here is where you would actually draw the line.
         // This could be done using OpenGL, DirectX, or any other graphics API.
         // The parameters "from" and "to" specify the endpoints of the line, and "color" specifies its color.
-        this->callback(from.getX(), from.getY(), from.getZ(), to.getX(), to.getY(), to.getZ(), color.getX(),
-                       color.getY(), color.getZ());
+        this->drawline(from, to, color);
     }
 
     virtual void reportErrorWarning(const char* warningString) { printf("PHYS WARNING: %s\n", warningString); }
