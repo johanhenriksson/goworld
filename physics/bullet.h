@@ -15,30 +15,28 @@ typedef goReal goQuaternion[4];
 extern "C" {
 #endif
 
-/** 	Dynamics world, belonging to some physics SDK (C-API)*/
+// 	Dynamics world, belonging to some physics SDK
 GO_DECLARE_HANDLE(goDynamicsWorldHandle);
 
-/** Rigid Body that can be part of a Dynamics World (C-API)*/
+// Rigid Body that can be part of a Dynamics World
 GO_DECLARE_HANDLE(goRigidBodyHandle);
 
-/** 	Collision Shape/Geometry, property of a Rigid Body (C-API)*/
+// 	Collision Shape/Geometry, property of a Rigid Body
 GO_DECLARE_HANDLE(goShapeHandle);
 
-/** Constraint for Rigid Bodies (C-API)*/
+// Constraint for Rigid Bodies */
 GO_DECLARE_HANDLE(goConstraintHandle);
 
-/** Triangle Mesh interface (C-API)*/
+// Triangle Mesh interface
 GO_DECLARE_HANDLE(goMeshInterfaceHandle);
 GO_DECLARE_HANDLE(goTriangleMeshHandle);
 
-/** Broadphase Scene/Proxy Handles (C-API)*/
+// Broadphase Scene/Proxy Handles
 GO_DECLARE_HANDLE(goCollisionBroadphaseHandle);
 GO_DECLARE_HANDLE(goBroadphaseProxyHandle);
 GO_DECLARE_HANDLE(goCollisionWorldHandle);
 
-/** Collision World, not strictly necessary, you can also just create a Dynamics
- * World with Rigid Bodies which internally manages the Collision World with
- * Collision Objects */
+GO_DECLARE_HANDLE(goCharacterHandle);
 
 typedef void (*btBroadphaseCallback)(void* clientData, void* object1, void* object2);
 
@@ -56,10 +54,6 @@ extern void goSetBoundingBox(goBroadphaseProxyHandle proxyHandle, goReal minX, g
                              goReal maxY, goReal maxZ);
 
 /* todo: add pair cache support with queries like add/remove/find pair */
-
-extern goCollisionWorldHandle goCreateCollisionWorld();
-
-/* todo: add/remove objects */
 
 /* Dynamics World */
 
@@ -87,7 +81,7 @@ extern goShapeHandle goNewSphereShape(goReal radius);
 
 extern goShapeHandle goNewBoxShape(goVector3 size);
 
-extern goShapeHandle goNewCylinderShape(goReal radius, goReal height);
+extern goShapeHandle goNewCapsuleShape(goReal radius, goReal height);
 
 extern goShapeHandle goNewCompoundShape(void);
 
@@ -116,6 +110,8 @@ extern void goGetRotation(goRigidBodyHandle object, goVector3 rotation);
 extern void goSetPosition(goRigidBodyHandle object, const goVector3 position);
 extern void goSetRotation(goRigidBodyHandle object, const goVector3 rotation);
 
+// raycast
+
 typedef struct goRayCastResult {
     goRigidBodyHandle m_body;
     goShapeHandle m_shape;
@@ -126,10 +122,23 @@ typedef struct goRayCastResult {
 extern int goRayCast(goDynamicsWorldHandle world, const goVector3 rayStart, const goVector3 rayEnd,
                      goRayCastResult res);
 
+// debugging
+
 extern void goEnableDebug(goDynamicsWorldHandle world);
 extern void goDisableDebug(goDynamicsWorldHandle world);
 
 extern void goDebugDraw(goDynamicsWorldHandle world);
+
+// character controller
+
+extern goCharacterHandle goCreateCharacter(goShapeHandle shapeHandle, float height, float radius, float stepHeight);
+extern void goDeleteCharacter(goCharacterHandle handle);
+extern void goCharacterWalkDirection(goCharacterHandle handle, goVector3 direction);
+extern void goCharacterJump(goCharacterHandle handle);
+extern void goCharacterWarp(goCharacterHandle handle, goVector3 direction);
+extern void goCharacterUpdate(goCharacterHandle handle, goDynamicsWorldHandle world, float dt);
+extern void goAddCharacter(goDynamicsWorldHandle world, goCharacterHandle handle);
+extern void goRemoveCharacter(goDynamicsWorldHandle world, goCharacterHandle handle);
 
 #ifdef __cplusplus
 }

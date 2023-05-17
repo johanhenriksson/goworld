@@ -7,6 +7,7 @@ package physics
 #include "bullet.h"
 */
 import "C"
+
 import (
 	"github.com/johanhenriksson/goworld/geometry/lines"
 	"github.com/johanhenriksson/goworld/math/vec3"

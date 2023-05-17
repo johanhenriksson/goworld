@@ -18,6 +18,10 @@ type Shape interface {
 	shape() C.goShapeHandle
 }
 
+//
+// Box shape
+//
+
 type Box struct {
 	handle C.goShapeHandle
 	size   vec3.T
@@ -27,16 +31,43 @@ var _ Shape = &Box{}
 
 func NewBox(size vec3.T) *Box {
 	handle := C.goNewBoxShape(vec3ptr(&size))
-	shape := &Box{
+	box := &Box{
 		handle: handle,
 		size:   size,
 	}
-	runtime.SetFinalizer(shape, func(b *Box) {
+	runtime.SetFinalizer(box, func(b *Box) {
 		C.goDeleteShape(b.shape())
 	})
-	return shape
+	return box
 }
 
 func (b *Box) shape() C.goShapeHandle {
 	return b.handle
+}
+
+//
+// Capsule shape
+//
+
+type Capsule struct {
+	handle C.goShapeHandle
+	height float32
+	radius float32
+}
+
+var _ = &Capsule{}
+
+func NewCapsule(radius, height float32) *Capsule {
+	handle := C.goNewCapsuleShape(C.float(radius), C.float(height))
+	capsule := &Capsule{
+		handle: handle,
+	}
+	runtime.SetFinalizer(capsule, func(c *Capsule) {
+		C.goDeleteShape(c.shape())
+	})
+	return capsule
+}
+
+func (c *Capsule) shape() C.goShapeHandle {
+	return c.handle
 }

@@ -25,6 +25,14 @@ goDynamicsWorldHandle goCreateDynamicsWorld() {
 
     auto world = new btDiscreteDynamicsWorld(dispatcher, broadphase, solver, colConfig);
 
+    btStaticPlaneShape* groundShape = new btStaticPlaneShape(btVector3(0, 1, 0), 1);
+    btDefaultMotionState* groundMotionState =
+        new btDefaultMotionState(btTransform(btQuaternion(0, 0, 0, 1), btVector3(0, -1, 0)));
+    btRigidBody::btRigidBodyConstructionInfo groundRigidBodyCI(0, groundMotionState, groundShape, btVector3(0, 0, 0));
+    btRigidBody* groundRigidBody = new btRigidBody(groundRigidBodyCI);
+    groundRigidBody->setCollisionFlags(btCollisionObject::CF_STATIC_OBJECT);
+    world->addRigidBody(groundRigidBody);
+
     return (goDynamicsWorldHandle)world;
 }
 
@@ -107,21 +115,7 @@ goShapeHandle goNewCylinderShape(goReal radius, goReal height) {
 }
 
 goShapeHandle goNewCapsuleShape(goReal radius, goReal height) {
-    const int numSpheres = 2;
-    btVector3 positions[numSpheres] = {btVector3(0, height, 0), btVector3(0, -height, 0)};
-    btScalar radi[numSpheres] = {radius, radius};
-    return (goShapeHandle) new btMultiSphereShape(positions, radi, numSpheres);
-}
-
-goShapeHandle goNewController(goVector3 position, goReal height, goReal stepHeight) {
-    auto ghostObject = new btPairCachingGhostObject();
-    btTransform transf;
-    transf.setIdentity();
-    ghostObject->setWorldTransform(transf);
-
-    auto capsule = new btCapsuleShape(0.8, height);
-    auto character = new btKinematicCharacterController(ghostObject, capsule, stepHeight);
-    return (goShapeHandle)character;
+    return (goShapeHandle) new btCapsuleShape(radius, height);
 }
 
 /* Concave static triangle meshes */

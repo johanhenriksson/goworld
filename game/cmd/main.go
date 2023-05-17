@@ -28,7 +28,7 @@ func main() {
 	},
 		editor.Scene(func(r renderer.T, scene object.T) {
 			world := physics.NewWorld()
-			world.Debug(false)
+			world.Debug(true)
 			object.Attach(scene, world)
 
 			generator := chunk.ExampleWorldgen(4, 123123)
@@ -41,7 +41,7 @@ func main() {
 				for z := 0; z < 5; z++ {
 					chonk := chunk.Generate(boxgen, 1, 100*x, 100*z)
 					object.Builder(physics.NewRigidBody(5, physics.NewBox(vec3.New(0.5, 0.5, 0.5)))).
-						Position(vec3.New(20+3*float32(x), 60, 15+3*float32(z))).
+						Position(vec3.New(20+3*float32(x), 30, 15+3*float32(z))).
 						Attach(object.Builder(chunk.NewMesh(chonk)).
 							Position(vec3.New(-0.5, -0.5, -0.5)).
 							Create()).
@@ -49,6 +49,11 @@ func main() {
 						Create()
 				}
 			}
+
+			// character
+			character := physics.NewCharacter(1.83, 0.6, 0.15)
+			character.Warp(vec3.New(5, 15, 5))
+			object.Attach(world, character)
 
 			m := terrain.NewMap(64, 3)
 			tile := m.GetTile(0, 0, true)
