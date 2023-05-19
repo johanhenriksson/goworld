@@ -1,3 +1,7 @@
+// Based on code from github.com/go-gl/mathgl:
+// Copyright 2014 The go-gl Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
 package quat
 
 import (

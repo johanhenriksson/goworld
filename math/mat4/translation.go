@@ -1,3 +1,7 @@
+// Based on code from github.com/go-gl/mathgl:
+// Copyright 2014 The go-gl Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
 package mat4
 
 import (
@@ -21,7 +25,7 @@ func Scale(scale vec3.T) T {
 // Rotate creates a homogenous 3D rotation matrix from euler angles in degrees
 func Rotate(rotation vec3.T) T {
 	rad := rotation.Scaled(math.Pi / 180.0) // translate rotaiton to radians
-	rot := mgl.AnglesToQuat(rad.X, rad.Y, rad.Z, mgl.XYZ).Mat4()
+	rot := mgl.AnglesToQuat(rad.Z, rad.Y, rad.X, mgl.ZYX).Mat4()
 	return T(rot)
 }
 
