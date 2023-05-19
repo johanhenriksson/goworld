@@ -461,3 +461,25 @@ func BetweenVectors(start, dest vec3.T) T {
 		axis.Scaled(1.0 / s),
 	}
 }
+
+func ToEuler(q T) vec3.T {
+	// modified from https://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles
+	angles := vec3.Zero
+
+	// roll (x-axis rotation)
+	sinr_cosp := 2 * (q.W*q.V.X + q.V.Y*q.V.Z)
+	cosr_cosp := 1 - 2*(q.V.X*q.V.X+q.V.Y*q.V.Y)
+	angles.X = math.Atan2(sinr_cosp, cosr_cosp)
+
+	// yaw (y-axis rotation)
+	siny_cosp := 2 * (q.W*q.V.Z + q.V.X*q.V.Y)
+	cosy_cosp := 1 - 2*(q.V.Y*q.V.Y+q.V.Z*q.V.Z)
+	angles.Y = math.Atan2(siny_cosp, cosy_cosp)
+
+	// pitch (z-axis rotation)
+	sinp := math.Sqrt(1 + 2*(q.W*q.V.Y-q.V.X*q.V.Z))
+	cosp := math.Sqrt(1 - 2*(q.W*q.V.Y-q.V.X*q.V.Z))
+	angles.Z = 2*math.Atan2(sinp, cosp) - math.PiOver2
+
+	return angles
+}

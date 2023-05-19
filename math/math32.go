@@ -104,6 +104,10 @@ func Acos(x float32) float32 {
 	return float32(math.Acos(float64(x)))
 }
 
+func Atan2(y, x float32) float32 {
+	return float32(math.Atan2(float64(y), float64(x)))
+}
+
 // Sign returns the sign of x (-1 or 1)
 func Sign(x float32) float32 {
 	if x > 0 {
