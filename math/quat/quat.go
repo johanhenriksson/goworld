@@ -462,24 +462,92 @@ func BetweenVectors(start, dest vec3.T) T {
 	}
 }
 
-func ToEuler(q T) vec3.T {
-	// modified from https://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles
-	angles := vec3.Zero
+func (q T) ToAngles(order RotationOrder) vec3.T {
+	// this function was adapted from a Go port of Three.js math, github.com/tengge1/go-three-math
+	// Copyright 2017-2020 The ShadowEditor Authors. All rights reserved.
+	// Use of e source code is governed by a MIT-style
+	// license that can be found in the LICENSE file.
 
-	// roll (x-axis rotation)
-	sinr_cosp := 2 * (q.W*q.V.X + q.V.Y*q.V.Z)
-	cosr_cosp := 1 - 2*(q.V.X*q.V.X+q.V.Y*q.V.Y)
-	angles.X = math.Atan2(sinr_cosp, cosr_cosp)
+	// assumes the upper 3x3 of m is a pure rotation matrix (i.e, unscaled)
+	te := q.Mat4()
+	m11, m12, m13 := te[0], te[4], te[8]
+	m21, m22, m23 := te[1], te[5], te[9]
+	m31, m32, m33 := te[2], te[6], te[10]
 
-	// yaw (y-axis rotation)
-	siny_cosp := 2 * (q.W*q.V.Z + q.V.X*q.V.Y)
-	cosy_cosp := 1 - 2*(q.V.Y*q.V.Y+q.V.Z*q.V.Z)
-	angles.Y = math.Atan2(siny_cosp, cosy_cosp)
+	e := vec3.Zero
+	switch order {
+	default:
+		panic("unsupported rotation order")
+	case XYZ:
+		e.Y = math.Asin(math.Clamp(m13, -1, 1))
 
-	// pitch (z-axis rotation)
-	sinp := math.Sqrt(1 + 2*(q.W*q.V.Y-q.V.X*q.V.Z))
-	cosp := math.Sqrt(1 - 2*(q.W*q.V.Y-q.V.X*q.V.Z))
-	angles.Z = 2*math.Atan2(sinp, cosp) - math.PiOver2
+		if math.Abs(m13) < 0.9999999 {
+			e.X = math.Atan2(-m23, m33)
+			e.Z = math.Atan2(-m12, m11)
+		} else {
+			e.X = math.Atan2(m32, m22)
+			e.Z = 0
+		}
+	case YXZ:
+		e.X = math.Asin(-math.Clamp(m23, -1, 1))
 
-	return angles
+		if math.Abs(m23) < 0.9999999 {
+			e.Y = math.Atan2(m13, m33)
+			e.Z = math.Atan2(m21, m22)
+		} else {
+			e.Y = math.Atan2(-m31, m11)
+			e.Z = 0
+		}
+	case ZXY:
+		e.X = math.Asin(math.Clamp(m32, -1, 1))
+
+		if math.Abs(m32) < 0.9999999 {
+			e.Y = math.Atan2(-m31, m33)
+			e.Z = math.Atan2(-m12, m22)
+		} else {
+			e.Y = 0
+			e.Z = math.Atan2(m21, m11)
+		}
+	case ZYX:
+		e.Y = math.Asin(-math.Clamp(m31, -1, 1))
+
+		if math.Abs(m31) < 0.9999999 {
+			e.X = math.Atan2(m32, m33)
+			e.Z = math.Atan2(m21, m11)
+		} else {
+			e.X = 0
+			e.Z = math.Atan2(-m12, m22)
+		}
+	case YZX:
+		e.Z = math.Asin(math.Clamp(m21, -1, 1))
+
+		if math.Abs(m21) < 0.9999999 {
+			e.X = math.Atan2(-m23, m22)
+			e.Y = math.Atan2(-m31, m11)
+		} else {
+			e.X = 0
+			e.Y = math.Atan2(m13, m33)
+		}
+	case XZY:
+		e.Z = math.Asin(-math.Clamp(m12, -1, 1))
+
+		if math.Abs(m12) < 0.9999999 {
+			e.X = math.Atan2(m32, m22)
+			e.Y = math.Atan2(m13, m11)
+		} else {
+			e.X = math.Atan2(-m23, m33)
+			e.Y = 0
+		}
+	}
+
+	return e
+}
+
+func (q T) Euler() vec3.T {
+	// convert radians to degrees
+	return q.ToAngles(ZXY).Scaled(180.0 / math.Pi)
+}
+
+func Euler(x, y, z float32) T {
+	return FromAngles(math.DegToRad(z), math.DegToRad(x), math.DegToRad(y), ZXY)
 }

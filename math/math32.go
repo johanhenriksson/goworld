@@ -104,6 +104,10 @@ func Acos(x float32) float32 {
 	return float32(math.Acos(float64(x)))
 }
 
+func Asin(x float32) float32 {
+	return float32(math.Asin(float64(x)))
+}
+
 func Atan2(y, x float32) float32 {
 	return float32(math.Atan2(float64(y), float64(x)))
 }
@@ -114,6 +118,10 @@ func Sign(x float32) float32 {
 		return 1
 	}
 	return -1
+}
+
+func Copysign(f, sign float32) float32 {
+	return float32(math.Copysign(float64(f), float64(sign)))
 }
 
 // DegToRad converts degrees to radians
