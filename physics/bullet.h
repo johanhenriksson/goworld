@@ -8,8 +8,18 @@
 
 typedef float goReal;
 
-typedef goReal goVector3[3];
-typedef goReal goQuaternion[4];
+typedef struct {
+    goReal x;
+    goReal y;
+    goReal z;
+} goVector3;
+
+typedef struct {
+    goReal w;
+    goReal x;
+    goReal y;
+    goReal z;
+} goQuaternion;
 
 #ifdef __cplusplus
 extern "C" {
@@ -59,7 +69,7 @@ extern void goSetBoundingBox(goBroadphaseProxyHandle proxyHandle, goReal minX, g
 
 extern goDynamicsWorldHandle goCreateDynamicsWorld();
 
-extern void goSetGravity(goDynamicsWorldHandle world, goVector3 gravity);
+extern void goSetGravity(goDynamicsWorldHandle world, goVector3* gravity);
 
 extern void goDeleteDynamicsWorld(goDynamicsWorldHandle world);
 
@@ -79,14 +89,14 @@ extern void goDeleteRigidBody(goRigidBodyHandle body);
 
 extern goShapeHandle goNewSphereShape(goReal radius);
 
-extern goShapeHandle goNewBoxShape(goVector3 size);
+extern goShapeHandle goNewBoxShape(goVector3* size);
 
 extern goShapeHandle goNewCapsuleShape(goReal radius, goReal height);
 
 extern goShapeHandle goNewCompoundShape(void);
 
-extern void goAddChildShape(goShapeHandle compoundShape, goShapeHandle childShape, goVector3 childPos,
-                            goQuaternion childOrn);
+extern void goAddChildShape(goShapeHandle compoundShape, goShapeHandle childShape, goVector3* childPos,
+                            goQuaternion* childOrn);
 
 extern void goDeleteShape(goShapeHandle shape);
 
@@ -100,15 +110,15 @@ extern goTriangleMeshHandle goNewTriangleMesh(void* vertex_ptr, int vertex_count
 
 extern goShapeHandle goNewStaticTriangleMeshShape(goTriangleMeshHandle);
 
-extern void goSetScaling(goShapeHandle shape, goVector3 scaling);
+extern void goSetScaling(goShapeHandle shape, goVector3* scaling);
 
 /* get world transform */
-extern void goGetPosition(goRigidBodyHandle object, goVector3 position);
-extern void goGetRotation(goRigidBodyHandle object, goVector3 rotation);
+extern void goGetPosition(goRigidBodyHandle object, goVector3* position);
+extern void goGetRotation(goRigidBodyHandle object, goQuaternion* rotation);
 
 /* set world transform (position/orientation) */
-extern void goSetPosition(goRigidBodyHandle object, const goVector3 position);
-extern void goSetRotation(goRigidBodyHandle object, const goVector3 rotation);
+extern void goSetPosition(goRigidBodyHandle object, goVector3* position);
+extern void goSetRotation(goRigidBodyHandle object, goQuaternion* rotation);
 
 // raycast
 
@@ -119,8 +129,7 @@ typedef struct goRayCastResult {
     goVector3 m_normalWorld;
 } goRayCastResult;
 
-extern int goRayCast(goDynamicsWorldHandle world, const goVector3 rayStart, const goVector3 rayEnd,
-                     goRayCastResult res);
+extern int goRayCast(goDynamicsWorldHandle world, goVector3* rayStart, goVector3* rayEnd, goRayCastResult res);
 
 // debugging
 
@@ -133,9 +142,9 @@ extern void goDebugDraw(goDynamicsWorldHandle world);
 
 extern goCharacterHandle goCreateCharacter(goShapeHandle shapeHandle, float height, float radius, float stepHeight);
 extern void goDeleteCharacter(goCharacterHandle handle);
-extern void goCharacterWalkDirection(goCharacterHandle handle, goVector3 direction);
+extern void goCharacterWalkDirection(goCharacterHandle handle, goVector3* direction);
 extern void goCharacterJump(goCharacterHandle handle);
-extern void goCharacterWarp(goCharacterHandle handle, goVector3 direction);
+extern void goCharacterWarp(goCharacterHandle handle, goVector3* direction);
 extern void goCharacterUpdate(goCharacterHandle handle, goDynamicsWorldHandle world, float dt);
 extern void goAddCharacter(goDynamicsWorldHandle world, goCharacterHandle handle);
 extern void goRemoveCharacter(goDynamicsWorldHandle world, goCharacterHandle handle);

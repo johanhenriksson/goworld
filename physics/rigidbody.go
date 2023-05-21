@@ -12,7 +12,7 @@ import (
 	"runtime"
 
 	"github.com/johanhenriksson/goworld/core/object"
-	"github.com/johanhenriksson/goworld/math"
+	"github.com/johanhenriksson/goworld/math/quat"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
 )
@@ -58,7 +58,7 @@ func (b *RigidBody) Update(scene object.T, dt float32) {
 	}
 
 	b.SetPosition(b.Transform().Position())
-	b.SetRotation(b.Transform().Rotation())
+	// b.SetRotation(b.Transform().Rotation())
 }
 
 func (b *RigidBody) Position() vec3.T {
@@ -71,15 +71,12 @@ func (b *RigidBody) SetPosition(position vec3.T) {
 	C.goSetPosition(b.handle, vec3ptr(&position))
 }
 
-func (b *RigidBody) Rotation() vec3.T {
-	// import rotation: rad to deg
-	rot := vec3.New(0, 0, 0)
-	C.goGetRotation(b.handle, vec3ptr(&rot))
-	return vec3.New(math.RadToDeg(rot.X), math.RadToDeg(rot.Y), math.RadToDeg(rot.Z))
+func (b *RigidBody) Rotation() quat.T {
+	q := quat.Ident()
+	C.goGetRotation(b.handle, quatPtr(&q))
+	return q
 }
 
-func (b *RigidBody) SetRotation(rotation vec3.T) {
-	// export rotation: deg to rad
-	rad := vec3.New(math.DegToRad(rotation.X), math.DegToRad(rotation.Y), math.DegToRad(rotation.Z))
-	C.goSetRotation(b.handle, vec3ptr(&rad))
+func (b *RigidBody) SetRotation(q quat.T) {
+	C.goSetRotation(b.handle, quatPtr(&q))
 }

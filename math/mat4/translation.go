@@ -25,7 +25,7 @@ func Scale(scale vec3.T) T {
 // Rotate creates a homogenous 3D rotation matrix from euler angles in degrees
 func Rotate(rotation vec3.T) T {
 	rad := rotation.Scaled(math.Pi / 180.0) // translate rotaiton to radians
-	rot := mgl.AnglesToQuat(rad.Z, rad.Y, rad.X, mgl.ZYX).Mat4()
+	rot := mgl.AnglesToQuat(rad.Z, rad.X, rad.Y, mgl.ZXY).Mat4()
 	return T(rot)
 }
 

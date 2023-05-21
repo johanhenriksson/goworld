@@ -2,6 +2,7 @@ package transform
 
 import (
 	"github.com/johanhenriksson/goworld/math/mat4"
+	"github.com/johanhenriksson/goworld/math/quat"
 	"github.com/johanhenriksson/goworld/math/vec3"
 )
 
@@ -15,8 +16,8 @@ type T interface {
 	Position() vec3.T
 	SetPosition(vec3.T)
 
-	Rotation() vec3.T
-	SetRotation(vec3.T)
+	Rotation() quat.T
+	SetRotation(quat.T)
 
 	Scale() vec3.T
 	SetScale(vec3.T)
@@ -47,12 +48,12 @@ type transform struct {
 	right    vec3.T
 	up       vec3.T
 	position vec3.T
-	rotation vec3.T
 	scale    vec3.T
+	rotation quat.T
 }
 
 // NewTransform creates a new 3D transform
-func New(position, rotation, scale vec3.T) T {
+func New(position vec3.T, rotation quat.T, scale vec3.T) T {
 	t := &transform{
 		world:    mat4.Ident(),
 		local:    mat4.Ident(),
@@ -69,13 +70,18 @@ func New(position, rotation, scale vec3.T) T {
 
 // Identity returns a new transform that does nothing.
 func Identity() T {
-	return New(vec3.Zero, vec3.Zero, vec3.One)
+	return New(vec3.Zero, quat.Ident(), vec3.One)
 }
 
 // Update transform matrix and its right/up/forward vectors
 func (t *transform) Recalculate(parent T) {
 	// Update transform
-	m := mat4.Transform(t.position, t.rotation, t.scale)
+	T := mat4.Translate(t.position)
+	R := t.rotation.Mat4()
+	S := mat4.Scale(t.scale)
+	// T * R * S
+	tr := T.Mul(&R)
+	m := tr.Mul(&S)
 
 	// Update parent -> local transformation matrix
 	t.local = m
@@ -132,8 +138,8 @@ func (t *transform) Forward() vec3.T      { return t.forward }
 func (t *transform) Right() vec3.T        { return t.right }
 func (t *transform) Up() vec3.T           { return t.up }
 func (t *transform) Position() vec3.T     { return t.position }
-func (t *transform) Rotation() vec3.T     { return t.rotation }
+func (t *transform) Rotation() quat.T     { return t.rotation }
 func (t *transform) Scale() vec3.T        { return t.scale }
 func (t *transform) SetPosition(p vec3.T) { t.position = p }
-func (t *transform) SetRotation(r vec3.T) { t.rotation = r }
+func (t *transform) SetRotation(r quat.T) { t.rotation = r }
 func (t *transform) SetScale(s vec3.T)    { t.scale = s }

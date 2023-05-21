@@ -1,13 +1,16 @@
 package object
 
-import "github.com/johanhenriksson/goworld/math/vec3"
+import (
+	"github.com/johanhenriksson/goworld/math/quat"
+	"github.com/johanhenriksson/goworld/math/vec3"
+)
 
 // Builder API for game objects
 type builder[K T] struct {
 	object K
 
 	position vec3.T
-	rotation vec3.T
+	rotation quat.T
 	scale    vec3.T
 	active   bool
 
@@ -20,7 +23,7 @@ func Builder[K T](object K) *builder[K] {
 	return &builder[K]{
 		object:   object,
 		position: vec3.Zero,
-		rotation: vec3.Zero,
+		rotation: quat.Ident(),
 		scale:    vec3.One,
 		active:   true,
 	}
@@ -45,7 +48,7 @@ func (b *builder[K]) Position(p vec3.T) *builder[K] {
 }
 
 // Rotation sets the intial rotation of the object.
-func (b *builder[K]) Rotation(r vec3.T) *builder[K] {
+func (b *builder[K]) Rotation(r quat.T) *builder[K] {
 	b.rotation = r
 	return b
 }

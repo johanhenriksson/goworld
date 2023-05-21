@@ -11,6 +11,7 @@ import (
 	"github.com/johanhenriksson/goworld/engine/renderer"
 	"github.com/johanhenriksson/goworld/game/chunk"
 	"github.com/johanhenriksson/goworld/game/terrain"
+	"github.com/johanhenriksson/goworld/math/quat"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/physics"
 	"github.com/johanhenriksson/goworld/render/color"
@@ -80,7 +81,7 @@ func main() {
 					Position(vec3.New(1, 2, 3)).
 					Attach(script.New(func(scene, self object.T, dt float32) {
 						rot -= dt
-						self.Parent().Transform().SetRotation(vec3.New(rot, 0, 0))
+						self.Parent().Transform().SetRotation(quat.Euler(rot, 0, 0))
 					})).
 					Create())
 		}),

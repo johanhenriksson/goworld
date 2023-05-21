@@ -7,12 +7,21 @@
 #include "btBulletDynamicsCommon.h"
 #include "bullet.hpp"
 
-btVector3 vec3FromGo(goVector3 v) { return btVector3(v[0], v[1], v[2]); }
+btVector3 vec3FromGo(goVector3* v) { return btVector3(v->x, v->y, v->z); }
 
-void vec3ToGo(btVector3& v, goVector3 out) {
-    out[0] = v.getX();
-    out[1] = v.getY();
-    out[2] = v.getZ();
+void vec3ToGo(btVector3& v, goVector3* out) {
+    out->x = v.getX();
+    out->y = v.getY();
+    out->z = v.getZ();
+}
+
+btQuaternion quatFromGo(goQuaternion* q) { return btQuaternion(q->x, q->y, q->z, q->w); }
+
+void quatToGo(btQuaternion& q, goQuaternion* out) {
+    out->x = q.getX();
+    out->y = q.getY();
+    out->z = q.getZ();
+    out->w = q.getW();
 }
 
 /* Dynamics World */
@@ -43,10 +52,10 @@ void goDeleteDynamicsWorld(goDynamicsWorldHandle world) {
     delete dynamicsWorld;
 }
 
-void goSetGravity(goDynamicsWorldHandle world, goVector3 gravity) {
+void goSetGravity(goDynamicsWorldHandle world, goVector3* gravity) {
     btDynamicsWorld* dynamicsWorld = reinterpret_cast<btDynamicsWorld*>(world);
     btAssert(dynamicsWorld);
-    dynamicsWorld->setGravity(btVector3(gravity[0], gravity[1], gravity[2]));
+    dynamicsWorld->setGravity(vec3FromGo(gravity));
 }
 
 void goStepSimulation(goDynamicsWorldHandle world, goReal timeStep) {
@@ -108,7 +117,7 @@ void goDeleteRigidBody(goRigidBodyHandle cbody) {
 
 goShapeHandle goNewSphereShape(goReal radius) { return (goShapeHandle) new btSphereShape(radius); }
 
-goShapeHandle goNewBoxShape(goVector3 size) { return (goShapeHandle) new btBoxShape(vec3FromGo(size)); }
+goShapeHandle goNewBoxShape(goVector3* size) { return (goShapeHandle) new btBoxShape(vec3FromGo(size)); }
 
 goShapeHandle goNewCylinderShape(goReal radius, goReal height) {
     return (goShapeHandle) new btCylinderShape(btVector3(radius, height, radius));
@@ -153,8 +162,8 @@ goShapeHandle goNewStaticTriangleMeshShape(goTriangleMeshHandle meshHandle) {
 
 goShapeHandle goNewCompoundShape() { return (goShapeHandle) new btCompoundShape(); }
 
-void goAddChildShape(goShapeHandle compoundShapeHandle, goShapeHandle childShapeHandle, goVector3 childPos,
-                     goQuaternion childOrn) {
+void goAddChildShape(goShapeHandle compoundShapeHandle, goShapeHandle childShapeHandle, goVector3* childPos,
+                     goQuaternion* childOrn) {
     btCollisionShape* colShape = reinterpret_cast<btCollisionShape*>(compoundShapeHandle);
     btAssert(colShape->getShapeType() == COMPOUND_SHAPE_PROXYTYPE);
 
@@ -164,8 +173,8 @@ void goAddChildShape(goShapeHandle compoundShapeHandle, goShapeHandle childShape
 
     btTransform localTrans;
     localTrans.setIdentity();
-    localTrans.setOrigin(btVector3(childPos[0], childPos[1], childPos[2]));
-    localTrans.setRotation(btQuaternion(childOrn[0], childOrn[1], childOrn[2], childOrn[3]));
+    localTrans.setOrigin(vec3FromGo(childPos));
+    localTrans.setRotation(quatFromGo(childOrn));
     compoundShape->addChildShape(localTrans, childShape);
 }
 
@@ -183,28 +192,26 @@ void goDeleteShape(goShapeHandle cshape) {
     delete shape;
 }
 
-void goSetScaling(goShapeHandle cshape, goVector3 cscaling) {
+void goSetScaling(goShapeHandle cshape, goVector3* cscaling) {
     btCollisionShape* shape = reinterpret_cast<btCollisionShape*>(cshape);
     btAssert(shape);
 
-    btVector3 scaling(cscaling[0], cscaling[1], cscaling[2]);
-    shape->setLocalScaling(scaling);
+    shape->setLocalScaling(vec3FromGo(cscaling));
 }
 
-void goGetPosition(goRigidBodyHandle object, goVector3 position) {
+void goGetPosition(goRigidBodyHandle object, goVector3* position) {
     btRigidBody* body = reinterpret_cast<btRigidBody*>(object);
     btAssert(body);
 
     vec3ToGo(body->getWorldTransform().getOrigin(), position);
 }
 
-void goSetPosition(goRigidBodyHandle object, const goVector3 position) {
+void goSetPosition(goRigidBodyHandle object, goVector3* position) {
     btRigidBody* body = reinterpret_cast<btRigidBody*>(object);
     btAssert(body);
 
-    btVector3 pos(position[0], position[1], position[2]);
     btTransform transf = body->getWorldTransform();
-    transf.setOrigin(pos);
+    transf.setOrigin(vec3FromGo(position));
     body->setWorldTransform(transf);
 
     if (body->getMotionState()) {
@@ -214,20 +221,20 @@ void goSetPosition(goRigidBodyHandle object, const goVector3 position) {
     body->activate();
 }
 
-void goGetRotation(goRigidBodyHandle body_handle, goVector3 rotation) {
+void goGetRotation(goRigidBodyHandle body_handle, goQuaternion* rotation) {
     btRigidBody* body = reinterpret_cast<btRigidBody*>(body_handle);
     btAssert(body);
 
     btTransform transf = body->getWorldTransform();
-    transf.getRotation().getEulerZYX(rotation[2], rotation[1], rotation[0]);
+    btQuaternion q = transf.getRotation();
+    quatToGo(q, rotation);
 }
 
-void goSetRotation(goRigidBodyHandle object, const goVector3 rotation) {
+void goSetRotation(goRigidBodyHandle object, goQuaternion* rotation) {
     btRigidBody* body = reinterpret_cast<btRigidBody*>(object);
     btAssert(body);
 
-    btQuaternion orient;
-    orient.setEulerZYX(rotation[2], rotation[1], rotation[0]);
+    btQuaternion orient = quatFromGo(rotation);
     btTransform transf = body->getWorldTransform();
     transf.setRotation(orient);
 

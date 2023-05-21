@@ -7,6 +7,7 @@ import (
 	"github.com/johanhenriksson/goworld/game"
 	"github.com/johanhenriksson/goworld/gui"
 	"github.com/johanhenriksson/goworld/gui/node"
+	"github.com/johanhenriksson/goworld/math/quat"
 	"github.com/johanhenriksson/goworld/math/vec3"
 )
 
@@ -43,7 +44,7 @@ func NewEditor(render renderer.T, workspace object.T) *Editor {
 		},
 	))
 
-	editor.Player.Eye.Transform().SetRotation(vec3.New(-30, 0, 0))
+	editor.Player.Eye.Transform().SetRotation(quat.Euler(-30, 0, 0))
 
 	return editor
 }

@@ -57,10 +57,10 @@ void goRemoveCharacter(goDynamicsWorldHandle worldHandle, goCharacterHandle hand
     world->removeCollisionObject(character->getGhostObject());
 }
 
-void goCharacterWalkDirection(goCharacterHandle handle, goVector3 direction) {
+void goCharacterWalkDirection(goCharacterHandle handle, goVector3* direction) {
     btKinematicCharacterController* character = reinterpret_cast<btKinematicCharacterController*>(handle);
     btAssert(character);
-    character->setWalkDirection(btVector3(direction[0], direction[1], direction[2]));
+    character->setWalkDirection(btVector3(direction->x, direction->y, direction->z));
 }
 
 void goCharacterJump(goCharacterHandle handle) {
@@ -69,10 +69,10 @@ void goCharacterJump(goCharacterHandle handle) {
     character->jump();
 }
 
-void goCharacterWarp(goCharacterHandle handle, goVector3 position) {
+void goCharacterWarp(goCharacterHandle handle, goVector3* position) {
     btKinematicCharacterController* character = reinterpret_cast<btKinematicCharacterController*>(handle);
     btAssert(character);
-    character->warp(btVector3(position[0], position[1], position[2]));
+    character->warp(btVector3(position->x, position->y, position->z));
 }
 
 void goCharacterUpdate(goCharacterHandle handle, goDynamicsWorldHandle worldHandle, float dt) {

@@ -7,6 +7,7 @@ import (
 	"github.com/johanhenriksson/goworld/core/light"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/math"
+	"github.com/johanhenriksson/goworld/math/quat"
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render/color"
@@ -43,7 +44,7 @@ func NewPlayer(position vec3.T, collide CollisionCheck) *Player {
 			Attach(cam).
 			Attach(light.NewPoint(light.PointArgs{
 				Attenuation: light.DefaultAttenuation,
-				Range:       30,
+				Range:       20,
 				Intensity:   2.5,
 				Color:       color.White,
 			})).
@@ -208,14 +209,17 @@ func (p *Player) MouseEvent(e mouse.Event) {
 		sensitivity := vec2.New(0.045, 0.04)
 		delta := e.Delta().Mul(sensitivity)
 
-		xrot := p.Eye.Transform().Rotation().X - delta.Y
-		yrot := p.Eye.Transform().Rotation().Y - delta.X
+		eye := p.Eye.Transform().Rotation().Euler()
+
+		xrot := eye.X - delta.Y
+		yrot := eye.Y - delta.X
 
 		// camera angle limits
 		xrot = math.Clamp(xrot, -89.9, 89.9)
 		yrot = math.Mod(yrot, 360)
+		rot := quat.Euler(xrot, yrot, 0)
 
-		p.Eye.Transform().SetRotation(vec3.New(xrot, yrot, 0))
+		p.Eye.Transform().SetRotation(rot)
 
 		e.Consume()
 	}
