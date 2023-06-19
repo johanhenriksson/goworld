@@ -29,8 +29,10 @@ goDynamicsWorldHandle goCreateDynamicsWorld() {
     // these objects currently leak:
     auto colConfig = new btDefaultCollisionConfiguration();
     auto dispatcher = new btCollisionDispatcher(colConfig);
-    auto broadphase = new btDbvtBroadphase();
     auto solver = new btSequentialImpulseConstraintSolver();
+
+    auto broadphase = new btDbvtBroadphase();
+    broadphase->getOverlappingPairCache()->setInternalGhostPairCallback(new btGhostPairCallback());
 
     auto world = new btDiscreteDynamicsWorld(dispatcher, broadphase, solver, colConfig);
 
