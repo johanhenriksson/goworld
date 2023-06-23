@@ -10,6 +10,7 @@ import "C"
 
 import (
 	"runtime"
+	"unsafe"
 
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/math/quat"
@@ -26,6 +27,12 @@ type RigidBody struct {
 	shape  Shape
 }
 
+type rigidbodyState struct {
+	position vec3.T
+	rotation quat.T
+	mass     float32
+}
+
 func NewRigidBody(mass float32, shape Shape) *RigidBody {
 	body := object.New(&RigidBody{
 		mass:  mass,
@@ -39,8 +46,10 @@ func NewRigidBody(mass float32, shape Shape) *RigidBody {
 }
 
 func (b *RigidBody) PreDraw(args render.Args, scene object.T) error {
-	b.Transform().SetPosition(b.Position())
-	b.Transform().SetRotation(b.Rotation())
+	state := rigidbodyState{}
+	C.goRigidBodyGetState(b.handle, (*C.goRigidBodyState)(unsafe.Pointer(&state)))
+	b.Transform().SetPosition(state.position)
+	b.Transform().SetRotation(state.rotation)
 	return nil
 }
 
@@ -64,26 +73,9 @@ func (b *RigidBody) Update(scene object.T, dt float32) {
 		}
 	}
 
-	b.SetPosition(b.Transform().Position())
-	// b.SetRotation(b.Transform().Rotation())
-}
-
-func (b *RigidBody) Position() vec3.T {
-	position := vec3.New(0, 0, 0)
-	C.goGetPosition(b.handle, vec3ptr(&position))
-	return position
-}
-
-func (b *RigidBody) SetPosition(position vec3.T) {
-	C.goSetPosition(b.handle, vec3ptr(&position))
-}
-
-func (b *RigidBody) Rotation() quat.T {
-	q := quat.Ident()
-	C.goGetRotation(b.handle, quatPtr(&q))
-	return q
-}
-
-func (b *RigidBody) SetRotation(q quat.T) {
-	C.goSetRotation(b.handle, quatPtr(&q))
+	state := rigidbodyState{
+		position: b.Transform().Position(),
+		rotation: b.Transform().Rotation(),
+	}
+	C.goRigidBodySetState(b.handle, (*C.goRigidBodyState)(unsafe.Pointer(&state)))
 }

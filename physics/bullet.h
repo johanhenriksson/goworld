@@ -83,9 +83,18 @@ extern void goRemoveRigidBody(goDynamicsWorldHandle world, goRigidBodyHandle obj
 
 /* Rigid Body  */
 
+typedef struct {
+    goVector3 position;
+    goQuaternion rotation;
+    goReal mass;
+} goRigidBodyState;
+
 extern goRigidBodyHandle goCreateRigidBody(void* user_data, float mass, goShapeHandle cshape);
 
 extern void goDeleteRigidBody(goRigidBodyHandle body);
+
+extern void goRigidBodyGetState(goRigidBodyHandle body, goRigidBodyState* state);
+extern void goRigidBodySetState(goRigidBodyHandle body, goRigidBodyState* state);
 
 /* Collision Shape definition */
 
@@ -113,14 +122,6 @@ extern goTriangleMeshHandle goNewTriangleMesh(void* vertex_ptr, int vertex_count
 extern goShapeHandle goNewStaticTriangleMeshShape(goTriangleMeshHandle);
 
 extern void goSetScaling(goShapeHandle shape, goVector3* scaling);
-
-/* get world transform */
-extern void goGetPosition(goRigidBodyHandle object, goVector3* position);
-extern void goGetRotation(goRigidBodyHandle object, goQuaternion* rotation);
-
-/* set world transform (position/orientation) */
-extern void goSetPosition(goRigidBodyHandle object, goVector3* position);
-extern void goSetRotation(goRigidBodyHandle object, goQuaternion* rotation);
 
 // raycast
 

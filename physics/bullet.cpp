@@ -115,6 +115,28 @@ void goDeleteRigidBody(goRigidBodyHandle cbody) {
     delete body;
 }
 
+void goRigidBodyGetState(goRigidBodyHandle object, goRigidBodyState* state) {
+    btRigidBody* body = reinterpret_cast<btRigidBody*>(object);
+    btAssert(body);
+
+    auto transf = body->getWorldTransform();
+    vec3ToGo(transf.getOrigin(), &state->position);
+    auto rot = transf.getRotation();
+    quatToGo(rot, &state->rotation);
+}
+
+void goRigidBodySetState(goRigidBodyHandle object, goRigidBodyState* state) {
+    btRigidBody* body = reinterpret_cast<btRigidBody*>(object);
+    btAssert(body);
+
+    auto transf = body->getWorldTransform();
+    auto pos = vec3FromGo(&state->position);
+    auto rot = quatFromGo(&state->rotation);
+    transf.setOrigin(pos);
+    transf.setRotation(rot);
+    body->setWorldTransform(transf);
+}
+
 /* Collision Shape definition */
 
 goShapeHandle goNewSphereShape(goReal radius) { return (goShapeHandle) new btSphereShape(radius); }
@@ -199,52 +221,6 @@ void goSetScaling(goShapeHandle cshape, goVector3* cscaling) {
     btAssert(shape);
 
     shape->setLocalScaling(vec3FromGo(cscaling));
-}
-
-void goGetPosition(goRigidBodyHandle object, goVector3* position) {
-    btRigidBody* body = reinterpret_cast<btRigidBody*>(object);
-    btAssert(body);
-
-    vec3ToGo(body->getWorldTransform().getOrigin(), position);
-}
-
-void goSetPosition(goRigidBodyHandle object, goVector3* position) {
-    btRigidBody* body = reinterpret_cast<btRigidBody*>(object);
-    btAssert(body);
-
-    btTransform transf = body->getWorldTransform();
-    transf.setOrigin(vec3FromGo(position));
-    body->setWorldTransform(transf);
-
-    if (body->getMotionState()) {
-        body->getMotionState()->setWorldTransform(transf);
-    }
-
-    body->activate();
-}
-
-void goGetRotation(goRigidBodyHandle body_handle, goQuaternion* rotation) {
-    btRigidBody* body = reinterpret_cast<btRigidBody*>(body_handle);
-    btAssert(body);
-
-    btTransform transf = body->getWorldTransform();
-    btQuaternion q = transf.getRotation();
-    quatToGo(q, rotation);
-}
-
-void goSetRotation(goRigidBodyHandle object, goQuaternion* rotation) {
-    btRigidBody* body = reinterpret_cast<btRigidBody*>(object);
-    btAssert(body);
-
-    btQuaternion orient = quatFromGo(rotation);
-    btTransform transf = body->getWorldTransform();
-    transf.setRotation(orient);
-
-    body->setWorldTransform(transf);
-    if (body->getMotionState()) {
-        body->getMotionState()->setWorldTransform(transf);
-    }
-    body->activate();
 }
 
 void goEnableDebug(goDynamicsWorldHandle world) {
