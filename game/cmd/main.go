@@ -53,7 +53,7 @@ func main() {
 
 			// character
 			character := physics.NewCharacter(1.83, 0.6, 0.15)
-			character.Warp(vec3.New(5, 15, 5))
+			character.Transform().SetPosition(vec3.New(5, 16, 5))
 			object.Attach(world, character)
 
 			m := terrain.NewMap(64, 3)

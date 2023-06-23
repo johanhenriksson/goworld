@@ -1,6 +1,8 @@
 #ifndef BULLET_C_API_H
 #define BULLET_C_API_H
 
+#include <stdbool.h>
+
 #define GO_DECLARE_HANDLE(name) \
     typedef struct name##__ {   \
         int unused;             \
@@ -140,14 +142,21 @@ extern void goDebugDraw(goDynamicsWorldHandle world);
 
 // character controller
 
+typedef struct {
+    goVector3 position;
+    goQuaternion rotation;
+    bool grounded;
+} goCharacterState;
+
 extern goCharacterHandle goCreateCharacter(goShapeHandle shapeHandle, float height, float radius, float stepHeight);
 extern void goDeleteCharacter(goCharacterHandle handle);
-extern void goCharacterWalkDirection(goCharacterHandle handle, goVector3* direction);
+extern void goCharacterMove(goCharacterHandle handle, goVector3* direction);
 extern void goCharacterJump(goCharacterHandle handle);
-extern void goCharacterWarp(goCharacterHandle handle, goVector3* direction);
-extern void goCharacterUpdate(goCharacterHandle handle, goDynamicsWorldHandle world, float dt);
 extern void goAddCharacter(goDynamicsWorldHandle world, goCharacterHandle handle);
 extern void goRemoveCharacter(goDynamicsWorldHandle world, goCharacterHandle handle);
+
+extern void goCharacterSetState(goCharacterHandle handle, goCharacterState* state);
+extern void goCharacterGetState(goCharacterHandle handle, goCharacterState* state);
 
 #ifdef __cplusplus
 }

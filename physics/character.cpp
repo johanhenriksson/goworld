@@ -1,3 +1,5 @@
+#include <stdbool.h>
+
 #include "BulletCollision/CollisionDispatch/btGhostObject.h"
 #include "BulletDynamics/Character/btKinematicCharacterController.h"
 #include "btBulletCollisionCommon.h"
@@ -13,12 +15,13 @@ goCharacterHandle goCreateCharacter(goShapeHandle shapeHandle, float height, flo
     trans.setOrigin(btVector3(5, 15, 5));
 
     auto ghostObject = new btPairCachingGhostObject();
-    ghostObject->setWorldTransform(trans);
-    ghostObject->setCollisionShape(capsule);
-    ghostObject->setCollisionFlags(btCollisionObject::CF_CHARACTER_OBJECT);
 
     btKinematicCharacterController* character =
         new btKinematicCharacterController(ghostObject, capsule, stepHeight, btVector3(0, 1, 0));
+
+    ghostObject->setWorldTransform(trans);
+    ghostObject->setCollisionShape(capsule);
+    ghostObject->setCollisionFlags(btCollisionObject::CF_CHARACTER_OBJECT);
 
     return (goCharacterHandle)character;
 }
@@ -39,7 +42,7 @@ void goAddCharacter(goDynamicsWorldHandle worldHandle, goCharacterHandle handle)
     btAssert(character->getGhostObject());
 
     world->addCollisionObject(character->getGhostObject(), btBroadphaseProxy::CharacterFilter,
-                              btBroadphaseProxy::StaticFilter | btBroadphaseProxy::DefaultFilter);
+                              btBroadphaseProxy::AllFilter);
 
     world->addAction(character);
 }
@@ -57,7 +60,7 @@ void goRemoveCharacter(goDynamicsWorldHandle worldHandle, goCharacterHandle hand
     world->removeCollisionObject(character->getGhostObject());
 }
 
-void goCharacterWalkDirection(goCharacterHandle handle, goVector3* direction) {
+void goCharacterMove(goCharacterHandle handle, goVector3* direction) {
     btKinematicCharacterController* character = reinterpret_cast<btKinematicCharacterController*>(handle);
     btAssert(character);
     character->setWalkDirection(btVector3(direction->x, direction->y, direction->z));
@@ -69,16 +72,37 @@ void goCharacterJump(goCharacterHandle handle) {
     character->jump();
 }
 
-void goCharacterWarp(goCharacterHandle handle, goVector3* position) {
+void goCharacterGetState(goCharacterHandle handle, goCharacterState* state) {
     btKinematicCharacterController* character = reinterpret_cast<btKinematicCharacterController*>(handle);
     btAssert(character);
-    character->warp(btVector3(position->x, position->y, position->z));
+
+    auto transf = character->getGhostObject()->getWorldTransform();
+
+    auto pos = transf.getOrigin();
+    state->position.x = pos.x();
+    state->position.y = pos.y();
+    state->position.z = pos.z();
+
+    auto rot = transf.getRotation();
+    state->rotation.x = rot.x();
+    state->rotation.y = rot.y();
+    state->rotation.z = rot.z();
+    state->rotation.w = rot.w();
+
+    state->grounded = character->onGround();
 }
 
-void goCharacterUpdate(goCharacterHandle handle, goDynamicsWorldHandle worldHandle, float dt) {
+void goCharacterSetState(goCharacterHandle handle, goCharacterState* state) {
     btKinematicCharacterController* character = reinterpret_cast<btKinematicCharacterController*>(handle);
     btAssert(character);
-    auto world = reinterpret_cast<btDynamicsWorld*>(worldHandle);
-    btAssert(world);
-    character->playerStep(world, dt);
+
+    auto transf = character->getGhostObject()->getWorldTransform();
+
+    auto rot = btQuaternion(state->rotation.x, state->rotation.y, state->rotation.z, state->rotation.w);
+    transf.setRotation(rot);
+
+    auto pos = btVector3(state->position.x, state->position.y, state->position.z);
+    transf.setOrigin(pos);
+
+    character->getGhostObject()->setWorldTransform(transf);
 }
