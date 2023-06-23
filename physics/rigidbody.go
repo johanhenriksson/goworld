@@ -55,6 +55,13 @@ func (b *RigidBody) Update(scene object.T, dt float32) {
 		} else {
 			return
 		}
+	} else {
+		// detach from world if required
+		world, _ := object.FindInParents[*World](b)
+		if world != b.world {
+			b.world.RemoveRigidBody(b)
+			b.world = nil
+		}
 	}
 
 	b.SetPosition(b.Transform().Position())

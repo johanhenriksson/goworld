@@ -74,6 +74,13 @@ func (c *Character) Update(scene object.T, dt float32) {
 		} else {
 			return
 		}
+	} else {
+		// detach from world if required
+		world, _ := object.FindInParents[*World](c)
+		if world != c.world {
+			c.world.RemoveCharacter(c)
+			c.world = nil
+		}
 	}
 
 	// push engine state
