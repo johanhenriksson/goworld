@@ -17,7 +17,6 @@ type CollisionCheck func(*Player, vec3.T) (bool, vec3.T)
 
 type Player struct {
 	object.T
-	Eye    object.T
 	Camera camera.T
 
 	Gravity     float32
@@ -37,11 +36,9 @@ type Player struct {
 }
 
 func NewPlayer(position vec3.T, collide CollisionCheck) *Player {
-	cam := camera.New(50.0, 0.1, 500, color.Hex("#eddaab"))
 	p := object.New(&Player{
-		Eye: object.Builder(object.Empty("Eye")).
+		Camera: object.Builder(camera.New(50.0, 0.1, 500, color.Hex("#eddaab"))).
 			Position(vec3.New(0, 1.75, 0)).
-			Attach(cam).
 			Attach(light.NewPoint(light.PointArgs{
 				Attenuation: light.DefaultAttenuation,
 				Range:       20,
@@ -49,7 +46,6 @@ func NewPlayer(position vec3.T, collide CollisionCheck) *Player {
 				Color:       color.White,
 			})).
 			Create(),
-		Camera:      cam,
 		collide:     collide,
 		Gravity:     float32(53),
 		Speed:       float32(60),
@@ -103,8 +99,8 @@ func (p *Player) Update(scene object.T, dt float32) {
 	}
 
 	if moving {
-		right := p.Eye.Transform().Right().Scaled(move.X)
-		forward := p.Eye.Transform().Forward().Scaled(move.Z)
+		right := p.Camera.Transform().Right().Scaled(move.X)
+		forward := p.Camera.Transform().Forward().Scaled(move.Z)
 		up := vec3.New(0, move.Y, 0)
 
 		move = right.Add(forward)
@@ -209,17 +205,17 @@ func (p *Player) MouseEvent(e mouse.Event) {
 		sensitivity := vec2.New(0.045, 0.04)
 		delta := e.Delta().Mul(sensitivity)
 
-		eye := p.Eye.Transform().Rotation().Euler()
+		eye := p.Camera.Transform().Rotation().Euler()
 
-		xrot := eye.X - delta.Y
-		yrot := eye.Y - delta.X
+		xrot := eye.X + delta.Y
+		yrot := eye.Y + delta.X
 
 		// camera angle limits
 		xrot = math.Clamp(xrot, -89.9, 89.9)
 		yrot = math.Mod(yrot, 360)
 		rot := quat.Euler(xrot, yrot, 0)
 
-		p.Eye.Transform().SetRotation(rot)
+		p.Camera.Transform().SetRotation(rot)
 
 		e.Consume()
 	}

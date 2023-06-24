@@ -44,7 +44,7 @@ func NewEditor(render renderer.T, workspace object.T) *Editor {
 		},
 	))
 
-	editor.Player.Eye.Transform().SetRotation(quat.Euler(-30, 0, 0))
+	editor.Player.Camera.Transform().SetRotation(quat.Euler(-30, 0, 0))
 
 	return editor
 }

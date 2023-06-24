@@ -87,7 +87,7 @@ func (n *preNode) Prepare(scene object.T, time, delta float32) (*render.Args, er
 	// execute pre-draw pass
 	objects := n.predrawQuery.Reset().Collect(scene)
 	for _, object := range objects {
-		object.PreDraw(args.Apply(object.Transform().World()), scene)
+		object.PreDraw(args.Apply(object.Transform().Matrix()), scene)
 	}
 
 	// fire off render start signals

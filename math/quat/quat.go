@@ -545,9 +545,9 @@ func (q T) ToAngles(order RotationOrder) vec3.T {
 
 func (q T) Euler() vec3.T {
 	// convert radians to degrees
-	return q.ToAngles(ZXY).Scaled(180.0 / math.Pi)
+	return q.ToAngles(YXZ).Scaled(180.0 / math.Pi)
 }
 
 func Euler(x, y, z float32) T {
-	return FromAngles(math.DegToRad(z), math.DegToRad(x), math.DegToRad(y), ZXY)
+	return FromAngles(math.DegToRad(y), math.DegToRad(x), math.DegToRad(z), YXZ)
 }
