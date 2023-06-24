@@ -21,13 +21,9 @@ func New() *T {
 	return object.New(&T{
 		Character: physics.NewCharacter(1.8, 0.5, 0.2),
 		Camera:    NewEye(),
-		Speed:     0.3,
+		Speed:     0.05,
 		keys:      keys.NewState(),
 	})
-}
-
-func (p *T) Name() string {
-	return "Player"
 }
 
 func (p *T) Update(scene object.T, dt float32) {
@@ -52,21 +48,29 @@ func (p *T) KeyEvent(e keys.Event) {
 	}
 
 	forward, right := float32(0), float32(0)
-	if p.keys.Down(keys.RightArrow) {
+	if p.keys.Down(keys.D) {
 		right += 1
 	}
-	if p.keys.Down(keys.LeftArrow) {
+	if p.keys.Down(keys.A) {
 		right -= 1
 	}
-	if p.keys.Down(keys.UpArrow) {
+	if p.keys.Down(keys.W) {
 		forward += 1
 	}
-	if p.keys.Down(keys.DownArrow) {
+	if p.keys.Down(keys.S) {
 		forward -= 1
 	}
 
-	dirForward := p.Transform().Forward().Scaled(forward)
-	dirRight := p.Transform().Right().Scaled(right)
+	camFwd := p.Camera.Transform().Forward()
+	camFwd.Y = 0
+	camFwd.Normalize()
+
+	camRight := p.Camera.Transform().Right()
+	camRight.Y = 0
+	camRight.Normalize()
+
+	dirForward := camFwd.Scaled(forward)
+	dirRight := camRight.Scaled(right)
 	dir := dirForward.Add(dirRight)
 	p.Move(dir.Scaled(p.Speed))
 }
