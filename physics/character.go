@@ -16,7 +16,6 @@ import (
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/math/quat"
 	"github.com/johanhenriksson/goworld/math/vec3"
-	"github.com/johanhenriksson/goworld/render"
 )
 
 type Character struct {
@@ -39,7 +38,7 @@ type characterState struct {
 
 func NewCharacter(height, radius, stepHeight float32) *Character {
 	handle := C.goCreateCharacter(nil, C.float(height), C.float(radius), C.float(stepHeight))
-	character := object.New(&Character{
+	character := object.Component(&Character{
 		handle: handle,
 		step:   stepHeight,
 		keys:   keys.NewState(),
@@ -51,7 +50,7 @@ func NewCharacter(height, radius, stepHeight float32) *Character {
 	return character
 }
 
-func (c *Character) PreDraw(args render.Args, scene object.T) error {
+func (c *Character) fetchState() {
 	// pull physics state
 	state := characterState{}
 	C.goCharacterGetState(c.handle, (*C.goCharacterState)(unsafe.Pointer(&state)))
@@ -59,13 +58,9 @@ func (c *Character) PreDraw(args render.Args, scene object.T) error {
 	c.Transform().SetPosition(state.position)
 	c.Transform().SetRotation(state.rotation)
 	c.grounded = state.grounded
-
-	return nil
 }
 
 func (c *Character) Update(scene object.T, dt float32) {
-	c.T.Update(scene, dt)
-
 	if c.world == nil {
 		var ok bool
 		c.world, ok = object.FindInParents[*World](c)
@@ -93,51 +88,18 @@ func (c *Character) Update(scene object.T, dt float32) {
 	C.goCharacterSetState(c.handle, (*C.goCharacterState)(unsafe.Pointer(&state)))
 }
 
-func (p *Character) KeyEvent(e keys.Event) {
-	p.keys.KeyEvent(e)
-
-	if !p.grounded {
-		return
-	}
-
-	if e.Code() == keys.Space {
-		p.Jump()
-	}
-
-	forward, right := float32(0), float32(0)
-	if p.keys.Down(keys.RightArrow) {
-		right += 1
-	}
-	if p.keys.Down(keys.LeftArrow) {
-		right -= 1
-	}
-	if p.keys.Down(keys.UpArrow) {
-		forward += 1
-	}
-	if p.keys.Down(keys.DownArrow) {
-		forward -= 1
-	}
-
-	dirForward := p.Transform().Forward().Scaled(forward)
-	dirRight := p.Transform().Right().Scaled(right)
-	dir := dirForward.Add(dirRight)
-	p.Move(dir.Scaled(p.speed))
-}
-
+// Move the character controller. Called every frame to apply movement.
 func (c *Character) Move(dir vec3.T) {
 	C.goCharacterMove(c.handle, vec3ptr(&dir))
 }
 
+// Jump applies a jumping force to the character
+// todo: configurable?
 func (c *Character) Jump() {
 	C.goCharacterJump(c.handle)
 }
 
-func (w *World) AddCharacter(character *Character) {
-	C.goAddCharacter(w.handle, character.handle)
-	character.world = w
-}
-
-func (w *World) RemoveCharacter(character *Character) {
-	C.goRemoveCharacter(w.handle, character.handle)
-	character.world = nil
+// Grounded returns true if the character is in contact with ground.
+func (c *Character) Grounded() bool {
+	return c.grounded
 }

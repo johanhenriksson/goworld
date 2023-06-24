@@ -15,7 +15,6 @@ import (
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/math/quat"
 	"github.com/johanhenriksson/goworld/math/vec3"
-	"github.com/johanhenriksson/goworld/render"
 )
 
 type RigidBody struct {
@@ -45,12 +44,11 @@ func NewRigidBody(mass float32, shape Shape) *RigidBody {
 	return body
 }
 
-func (b *RigidBody) PreDraw(args render.Args, scene object.T) error {
+func (b *RigidBody) fetchState() {
 	state := rigidbodyState{}
 	C.goRigidBodyGetState(b.handle, (*C.goRigidBodyState)(unsafe.Pointer(&state)))
 	b.Transform().SetPosition(state.position)
 	b.Transform().SetRotation(state.rotation)
-	return nil
 }
 
 func (b *RigidBody) Update(scene object.T, dt float32) {
@@ -60,7 +58,7 @@ func (b *RigidBody) Update(scene object.T, dt float32) {
 		var ok bool
 		b.world, ok = object.FindInParents[*World](b)
 		if ok {
-			b.world.AddRigidBody(b)
+			b.world.addRigidBody(b)
 		} else {
 			return
 		}
@@ -68,7 +66,7 @@ func (b *RigidBody) Update(scene object.T, dt float32) {
 		// detach from world if required
 		world, _ := object.FindInParents[*World](b)
 		if world != b.world {
-			b.world.RemoveRigidBody(b)
+			b.world.removeRigidBody(b)
 			b.world = nil
 		}
 	}

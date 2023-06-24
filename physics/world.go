@@ -15,10 +15,16 @@ import (
 	"github.com/johanhenriksson/goworld/math/vec3"
 )
 
+type Object interface {
+	fetchState()
+}
+
 type World struct {
 	object.T
 	handle C.goDynamicsWorldHandle
 	debug  bool
+
+	objects []Object
 }
 
 func NewWorld() *World {
@@ -35,7 +41,7 @@ func NewWorld() *World {
 func (w *World) Update(scene object.T, dt float32) {
 	w.T.Update(scene, dt)
 
-	w.Step(dt)
+	w.step(dt)
 
 	if w.debug {
 		w.debugDraw()
@@ -46,16 +52,51 @@ func (w *World) SetGravity(gravity vec3.T) {
 	C.goSetGravity(w.handle, vec3ptr(&gravity))
 }
 
-func (w *World) Step(timestep float32) {
+func (w *World) step(timestep float32) {
 	C.goStepSimulation(w.handle, (C.goReal)(timestep))
+	// fetch physics object state
+	for _, obj := range w.objects {
+		obj.fetchState()
+	}
 }
 
-func (w *World) AddRigidBody(body *RigidBody) {
-	C.goAddRigidBody(w.handle, body.handle)
+func (w *World) addObject(obj Object) bool {
+	w.objects = append(w.objects, obj)
+	return true
 }
 
-func (w *World) RemoveRigidBody(body *RigidBody) {
-	C.goRemoveRigidBody(w.handle, body.handle)
+func (w *World) removeObject(obj Object) bool {
+	for i, o := range w.objects {
+		if o == obj {
+			w.objects = append(w.objects[:i], w.objects[i+1:]...)
+			return true
+		}
+	}
+	return false
+}
+
+func (w *World) addRigidBody(body *RigidBody) {
+	if w.addObject(body) {
+		C.goAddRigidBody(w.handle, body.handle)
+	}
+}
+
+func (w *World) removeRigidBody(body *RigidBody) {
+	if w.removeObject(body) {
+		C.goRemoveRigidBody(w.handle, body.handle)
+	}
+}
+
+func (w *World) AddCharacter(character *Character) {
+	if w.addObject(character) {
+		C.goAddCharacter(w.handle, character.handle)
+	}
+}
+
+func (w *World) RemoveCharacter(character *Character) {
+	if w.removeObject(character) {
+		C.goRemoveCharacter(w.handle, character.handle)
+	}
 }
 
 func (w *World) Debug(enabled bool) {
