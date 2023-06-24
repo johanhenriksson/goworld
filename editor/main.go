@@ -4,7 +4,6 @@ import (
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/engine/renderer"
-	"github.com/johanhenriksson/goworld/game"
 	"github.com/johanhenriksson/goworld/gui"
 	"github.com/johanhenriksson/goworld/gui/node"
 	"github.com/johanhenriksson/goworld/math/quat"
@@ -15,7 +14,7 @@ type Editor struct {
 	object.T
 	GUI    gui.Manager
 	Tools  ToolManager
-	Player *game.Player
+	Player *Player
 
 	editors   object.T
 	workspace object.T
@@ -27,7 +26,7 @@ func NewEditor(render renderer.T, workspace object.T) *Editor {
 		GUI:   MakeGUI(render),
 		Tools: NewToolManager(),
 
-		Player:    game.NewPlayer(vec3.New(0, 20, -11), nil),
+		Player:    NewPlayer(vec3.New(0, 25, -11), quat.Euler(-10, 30, 0)),
 		editors:   nil,
 		workspace: workspace,
 		render:    render,
@@ -43,8 +42,6 @@ func NewEditor(render renderer.T, workspace object.T) *Editor {
 			})
 		},
 	))
-
-	editor.Player.Camera.Transform().SetRotation(quat.Euler(-30, 0, 0))
 
 	return editor
 }
