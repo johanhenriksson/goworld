@@ -79,7 +79,7 @@ func (t *transform) Recalculate(parent T) {
 		rotation = rotation.Mul(parent.Rotation())
 
 		position = parent.Rotation().Rotate(parent.Scale().Mul(position))
-		position = parent.Position().Add(position)
+		position = parent.WorldPosition().Add(position)
 	}
 
 	// calculate basis vectors
