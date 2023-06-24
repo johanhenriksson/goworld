@@ -1,6 +1,7 @@
 package editor
 
 import (
+	"github.com/johanhenriksson/goworld/core/input/keys"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/engine/renderer"
@@ -67,10 +68,38 @@ func Scene(f engine.SceneFunc) engine.SceneFunc {
 		workspace := object.Empty("Workspace")
 		f(render, workspace)
 
-		editor := NewEditor(render, workspace)
+		editorScene := NewEditorScene(render, workspace)
+		object.Attach(scene, editorScene)
+	}
+}
 
-		// attach editor & game to scene
-		object.Attach(scene, editor)
-		object.Attach(scene, workspace)
+type EditorScene struct {
+	object.T
+	Editor    object.T
+	Workspace object.T
+
+	playing bool
+}
+
+func NewEditorScene(render renderer.T, workspace object.T) *EditorScene {
+	return object.New(&EditorScene{
+		Editor:    NewEditor(render, workspace),
+		Workspace: workspace,
+	})
+}
+
+func (s *EditorScene) KeyEvent(e keys.Event) {
+	if e.Action() == keys.Release && e.Code() == keys.H {
+		s.playing = !s.playing
+		s.Editor.SetActive(!s.playing)
+	} else {
+		s.T.KeyEvent(e)
+	}
+}
+
+func (s *EditorScene) Update(scene object.T, dt float32) {
+	s.Editor.Update(scene, dt)
+	if s.playing {
+		s.Workspace.Update(scene, dt)
 	}
 }
