@@ -4,7 +4,6 @@ go 1.18
 
 require (
 	github.com/go-gl/glfw/v3.3/glfw v0.0.0-20211213063430-748e38ca8aec
-	github.com/go-gl/mathgl v1.0.0
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
 	github.com/kjk/flex v0.0.0-20171203210503-ed34d6b6a425
 	github.com/mitchellh/hashstructure/v2 v2.0.2

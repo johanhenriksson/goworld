@@ -40,7 +40,7 @@ type Attenuation struct {
 }
 
 var DefaultAttenuation = Attenuation{
-	Constant:  1.0,
+	Constant:  0.8,
 	Linear:    0.35,
-	Quadratic: 0.44,
+	Quadratic: 0.24,
 }

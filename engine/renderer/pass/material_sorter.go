@@ -170,7 +170,7 @@ func (m *MaterialSorter) DrawCamera(cmds command.Recorder, args render.Args, cam
 			}
 
 			mat.Objects[i] = uniform.Object{
-				Model:    msh.Transform().World(),
+				Model:    msh.Transform().Matrix(),
 				Textures: textureIds,
 			}
 

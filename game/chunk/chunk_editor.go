@@ -13,6 +13,7 @@ import (
 	"github.com/johanhenriksson/goworld/gui"
 	"github.com/johanhenriksson/goworld/gui/node"
 	"github.com/johanhenriksson/goworld/gui/widget/window/modal"
+	"github.com/johanhenriksson/goworld/math/quat"
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render/color"
@@ -103,7 +104,7 @@ func NewEditor(ctx *editor.Context, mesh *Mesh) Editor {
 			Color: color.Red.WithAlpha(0.25),
 		})).
 			Position(center.WithX(0)).
-			Rotation(vec3.New(-90, 0, 90)).
+			Rotation(quat.Euler(-90, 0, 90)).
 			Active(false).
 			Create(),
 
@@ -122,7 +123,7 @@ func NewEditor(ctx *editor.Context, mesh *Mesh) Editor {
 			Color: color.Blue.WithAlpha(0.25),
 		})).
 			Position(center.WithZ(0)).
-			Rotation(vec3.New(-90, 0, 0)).
+			Rotation(quat.Euler(-90, 0, 0)).
 			Active(false).
 			Create(),
 	})

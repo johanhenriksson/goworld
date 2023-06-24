@@ -2,6 +2,7 @@ package transform
 
 import (
 	"github.com/johanhenriksson/goworld/math/mat4"
+	"github.com/johanhenriksson/goworld/math/quat"
 	"github.com/johanhenriksson/goworld/math/vec3"
 )
 
@@ -15,14 +16,13 @@ type T interface {
 	Position() vec3.T
 	SetPosition(vec3.T)
 
-	Rotation() vec3.T
-	SetRotation(vec3.T)
+	Rotation() quat.T
+	SetRotation(quat.T)
 
 	Scale() vec3.T
 	SetScale(vec3.T)
 
-	World() mat4.T
-	Local() mat4.T
+	Matrix() mat4.T
 
 	ProjectDir(dir vec3.T) vec3.T
 
@@ -40,28 +40,23 @@ type T interface {
 
 // Transform represents a 3D transformation
 type transform struct {
-	world mat4.T
-	local mat4.T
-
-	forward  vec3.T
-	right    vec3.T
-	up       vec3.T
 	position vec3.T
-	rotation vec3.T
 	scale    vec3.T
+	rotation quat.T
+
+	matrix  mat4.T
+	right   vec3.T
+	up      vec3.T
+	forward vec3.T
 }
 
 // NewTransform creates a new 3D transform
-func New(position, rotation, scale vec3.T) T {
+func New(position vec3.T, rotation quat.T, scale vec3.T) T {
 	t := &transform{
-		world:    mat4.Ident(),
-		local:    mat4.Ident(),
+		matrix:   mat4.Ident(),
 		position: position,
 		rotation: rotation,
 		scale:    scale,
-		right:    vec3.UnitX,
-		up:       vec3.UnitY,
-		forward:  vec3.UnitZ,
 	}
 	t.Recalculate(nil)
 	return t
@@ -69,29 +64,42 @@ func New(position, rotation, scale vec3.T) T {
 
 // Identity returns a new transform that does nothing.
 func Identity() T {
-	return New(vec3.Zero, vec3.Zero, vec3.One)
+	return New(vec3.Zero, quat.Ident(), vec3.One)
 }
 
 // Update transform matrix and its right/up/forward vectors
 func (t *transform) Recalculate(parent T) {
-	// Update transform
-	m := mat4.Transform(t.position, t.rotation, t.scale)
+	position := t.position
+	rotation := t.rotation
+	scale := t.scale
 
-	// Update parent -> local transformation matrix
-	t.local = m
-
-	// Update local -> world matrix
 	if parent != nil {
-		pt := parent.World()
-		t.world = pt.Mul(&t.local)
-	} else {
-		t.world = m
+		scale = scale.Mul(parent.Scale())
+
+		rotation = rotation.Mul(parent.Rotation())
+
+		position = parent.Rotation().Rotate(parent.Scale().Mul(position))
+		position = parent.Position().Add(position)
 	}
 
-	// Grab axis vectors from transformation matrix
-	t.up = t.world.Up()
-	t.right = t.world.Right()
-	t.forward = t.world.Forward()
+	// calculate basis vectors
+	t.right = rotation.Rotate(vec3.Right)
+	t.up = rotation.Rotate(vec3.Up)
+	t.forward = rotation.Rotate(vec3.Forward)
+
+	// apply scaling
+	x := t.right.Scaled(scale.X)
+	y := t.up.Scaled(scale.Y)
+	z := t.forward.Scaled(scale.Z)
+
+	// create transformation matrix
+	p := position
+	t.matrix = mat4.T{
+		x.X, x.Y, x.Z, 0,
+		y.X, y.Y, y.Z, 0,
+		z.X, z.Y, z.Z, 0,
+		p.X, p.Y, p.Z, 1,
+	}
 }
 
 // Translate this transform by the given offset
@@ -100,25 +108,25 @@ func (t *transform) Translate(offset vec3.T) {
 }
 
 func (t *transform) Project(point vec3.T) vec3.T {
-	return t.world.TransformPoint(point)
+	return t.matrix.TransformPoint(point)
 }
 
 func (t *transform) Unproject(point vec3.T) vec3.T {
-	inv := t.world.Invert()
+	inv := t.matrix.Invert()
 	return inv.TransformPoint(point)
 }
 
 func (t *transform) ProjectDir(dir vec3.T) vec3.T {
-	return t.world.TransformDir(dir)
+	return t.matrix.TransformDir(dir)
 }
 
 func (t *transform) UnprojectDir(dir vec3.T) vec3.T {
-	inv := t.world.Invert()
+	inv := t.matrix.Invert()
 	return inv.TransformDir(dir)
 }
 
 func (t *transform) WorldPosition() vec3.T {
-	return t.world.Origin()
+	return t.matrix.Origin()
 }
 
 func (t *transform) SetWorldPosition(wp vec3.T) {
@@ -126,14 +134,32 @@ func (t *transform) SetWorldPosition(wp vec3.T) {
 	t.SetPosition(t.position.Add(offset))
 }
 
-func (t *transform) World() mat4.T        { return t.world }
-func (t *transform) Local() mat4.T        { return t.local }
-func (t *transform) Forward() vec3.T      { return t.forward }
-func (t *transform) Right() vec3.T        { return t.right }
-func (t *transform) Up() vec3.T           { return t.up }
+func (t *transform) Matrix() mat4.T  { return t.matrix }
+func (t *transform) Right() vec3.T   { return t.right }
+func (t *transform) Up() vec3.T      { return t.up }
+func (t *transform) Forward() vec3.T { return t.forward }
+
 func (t *transform) Position() vec3.T     { return t.position }
-func (t *transform) Rotation() vec3.T     { return t.rotation }
+func (t *transform) Rotation() quat.T     { return t.rotation }
 func (t *transform) Scale() vec3.T        { return t.scale }
 func (t *transform) SetPosition(p vec3.T) { t.position = p }
-func (t *transform) SetRotation(r vec3.T) { t.rotation = r }
+func (t *transform) SetRotation(r quat.T) { t.rotation = r }
 func (t *transform) SetScale(s vec3.T)    { t.scale = s }
+
+func Matrix(position vec3.T, rotation quat.T, scale vec3.T) mat4.T {
+	x := rotation.Rotate(vec3.Right)
+	y := rotation.Rotate(vec3.Up)
+	z := rotation.Rotate(vec3.Forward)
+
+	x.Scale(scale.X)
+	y.Scale(scale.Y)
+	z.Scale(scale.Z)
+
+	p := position
+	return mat4.T{
+		x.X, x.Y, x.Z, 0,
+		y.X, y.Y, y.Z, 0,
+		z.X, z.Y, z.Z, 0,
+		p.X, p.Y, p.Z, 1,
+	}
+}

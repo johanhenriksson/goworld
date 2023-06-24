@@ -10,6 +10,7 @@ import (
 	"github.com/johanhenriksson/goworld/geometry/lines"
 	"github.com/johanhenriksson/goworld/geometry/plane"
 	"github.com/johanhenriksson/goworld/math/mat4"
+	"github.com/johanhenriksson/goworld/math/quat"
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render"
@@ -86,7 +87,7 @@ func NewMover() *Mover {
 			Color:    color.Red,
 		})).
 			Position(vec3.UnitX).
-			Rotation(vec3.New(0, 0, 270)).
+			Rotation(quat.Euler(0, 0, 270)).
 			Attach(collider.NewBox(collider.Box{
 				Size:   vec3.New(2*radius, height, 2*radius),
 				Center: vec3.New(0, 0, 0),
@@ -102,7 +103,7 @@ func NewMover() *Mover {
 			Color:    color.Red,
 		})).
 			Position(vec3.New(0.5, 0, 0)).
-			Rotation(vec3.New(0, 0, 270)).
+			Rotation(quat.Euler(0, 0, 270)).
 			Attach(collider.NewBox(collider.Box{
 				Size:   vec3.New(radius, 1, radius),
 				Center: vec3.New(0, 0, 0),
@@ -148,7 +149,7 @@ func NewMover() *Mover {
 			Color:    color.Blue,
 		})).
 			Position(vec3.UnitZ).
-			Rotation(vec3.New(90, 180, 0)).
+			Rotation(quat.Euler(90, 180, 0)).
 			Attach(collider.NewBox(collider.Box{
 				Size:   vec3.New(2*radius, height, 2*radius),
 				Center: vec3.New(0, 0, 0),
@@ -164,7 +165,7 @@ func NewMover() *Mover {
 			Color:    color.Blue,
 		})).
 			Position(vec3.New(0, 0, 0.5)).
-			Rotation(vec3.New(90, 180, 0)).
+			Rotation(quat.Euler(90, 180, 0)).
 			Attach(collider.NewBox(collider.Box{
 				Size:   vec3.New(2*radius, 1, 2*radius),
 				Center: vec3.New(0, 0, 0),
@@ -178,7 +179,7 @@ func NewMover() *Mover {
 			Color: color.Blue.WithAlpha(planeAlpha),
 		})).
 			Position(vec3.New(s, s, 0)).
-			Rotation(vec3.New(90, 0, 0)).
+			Rotation(quat.Euler(90, 0, 0)).
 			Create(),
 
 		// XZ Plane
@@ -187,7 +188,7 @@ func NewMover() *Mover {
 			Size:  side,
 			Color: color.Green.WithAlpha(planeAlpha),
 		})).
-			Rotation(vec3.New(0, 90, 0)).
+			Rotation(quat.Euler(0, 90, 0)).
 			Position(vec3.New(s, 0, s)).
 			Create(),
 
@@ -198,7 +199,7 @@ func NewMover() *Mover {
 			Color: color.Red.WithAlpha(planeAlpha),
 		})).
 			Position(vec3.New(0, s, s)).
-			Rotation(vec3.New(0, 0, 90)).
+			Rotation(quat.Euler(0, 0, 90)).
 			Create(),
 
 		// Lines
