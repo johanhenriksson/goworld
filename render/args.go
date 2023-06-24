@@ -53,7 +53,7 @@ func (d Args) Apply(t mat4.T) Args {
 }
 
 func (d Args) Set(t transform.T) Args {
-	d.Transform = t.World()
+	d.Transform = t.Matrix()
 	d.MVP = d.VP.Mul(&d.Transform)
 	return d
 }

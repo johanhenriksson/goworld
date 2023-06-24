@@ -16,6 +16,7 @@ type Data[V vertex.Vertex, I vertex.Index] struct {
 type Dynamic[V vertex.Vertex, I vertex.Index] interface {
 	T
 	Refresh()
+	RefreshSync()
 }
 
 type dynamic[V vertex.Vertex, I vertex.Index] struct {
@@ -35,8 +36,8 @@ func NewDynamic[V vertex.Vertex, I vertex.Index](name string, mode DrawMode, mat
 	}
 	m.meshdata = vertex.NewTriangles(object.Key(name, m), []V{}, []I{})
 	m.SetMesh(m.meshdata)
+	m.RefreshSync()
 
-	m.Refresh()
 	return m
 }
 
@@ -49,6 +50,12 @@ func (m *dynamic[V, I]) Refresh() {
 		data := m.refresh()
 		m.updated <- data
 	}()
+}
+
+func (m *dynamic[V, I]) RefreshSync() {
+	data := m.refresh()
+	m.meshdata.Update(data.Vertices, data.Indices)
+	m.SetMesh(m.meshdata)
 }
 
 func (m *dynamic[V, I]) Update(scene object.T, dt float32) {
