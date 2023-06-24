@@ -10,6 +10,7 @@ import (
 	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/engine/renderer"
 	"github.com/johanhenriksson/goworld/game/chunk"
+	"github.com/johanhenriksson/goworld/game/player"
 	"github.com/johanhenriksson/goworld/game/terrain"
 	"github.com/johanhenriksson/goworld/math/quat"
 	"github.com/johanhenriksson/goworld/math/vec3"
@@ -52,9 +53,9 @@ func main() {
 			}
 
 			// character
-			character := physics.NewCharacter(1.83, 0.6, 0.15)
-			character.Transform().SetPosition(vec3.New(5, 16, 5))
-			object.Attach(world, character)
+			char := player.New()
+			char.Transform().SetPosition(vec3.New(5, 16, 5))
+			object.Attach(world, char)
 
 			m := terrain.NewMap(64, 3)
 			tile := m.GetTile(0, 0, true)

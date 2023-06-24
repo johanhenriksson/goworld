@@ -120,6 +120,7 @@ func (b *base) Update(scene T, dt float32) {
 }
 
 func (b *base) Transform() transform.T {
+	// todo: rewrite/refactor
 	var pt transform.T = nil
 	if b.parent != nil {
 		pt = b.parent.Transform()
