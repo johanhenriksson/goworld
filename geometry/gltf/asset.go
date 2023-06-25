@@ -6,6 +6,7 @@ import (
 
 	"github.com/johanhenriksson/goworld/core/mesh"
 	"github.com/johanhenriksson/goworld/core/object"
+	"github.com/johanhenriksson/goworld/math/quat"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render/types"
 	"github.com/johanhenriksson/goworld/render/vertex"
@@ -32,7 +33,7 @@ func loadScene(doc *gltf.Document, scene *gltf.Scene) object.T {
 	}
 
 	// rotate to get Y+ up
-	root.Transform().SetRotation(vec3.New(90, 0, 0))
+	root.Transform().SetRotation(quat.Euler(90, 0, 0))
 
 	return root
 }
@@ -51,7 +52,7 @@ func loadNode(doc *gltf.Document, node *gltf.Node) object.T {
 
 	// object transform
 	obj.Transform().SetPosition(vec3.FromSlice(node.Translation[:3]))
-	obj.Transform().SetRotation(vec3.FromSlice(node.Rotation[:3]))
+	obj.Transform().SetRotation(quat.T{W: node.Rotation[3], V: vec3.FromSlice(node.Rotation[:3])})
 	obj.Transform().SetScale(vec3.FromSlice(node.Scale[:3]))
 
 	// child objects
