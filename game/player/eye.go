@@ -45,7 +45,7 @@ func (p *ArcballCamera) MouseEvent(e mouse.Event) {
 
 	// orbit
 	if e.Action() == mouse.Move && p.mouselook {
-		sensitivity := vec2.New(0.045, 0.04)
+		sensitivity := vec2.New(0.1, 0.1)
 		delta := e.Delta().Mul(sensitivity)
 
 		eye := p.Transform().Rotation().Euler()
