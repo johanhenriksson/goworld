@@ -12,7 +12,6 @@ import (
 	"runtime"
 	"unsafe"
 
-	"github.com/johanhenriksson/goworld/core/input/keys"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/math/quat"
 	"github.com/johanhenriksson/goworld/math/vec3"
@@ -25,8 +24,6 @@ type Character struct {
 	shape    Shape
 	step     float32
 	world    *World
-	keys     keys.State
-	speed    float32
 	grounded bool
 }
 
@@ -37,12 +34,12 @@ type characterState struct {
 }
 
 func NewCharacter(height, radius, stepHeight float32) *Character {
-	handle := C.goCreateCharacter(nil, C.float(height), C.float(radius), C.float(stepHeight))
+	shape := NewCapsule(height, radius)
+	handle := C.goCreateCharacter(shape.handle, C.float(stepHeight))
 	character := object.Component(&Character{
 		handle: handle,
+		shape:  shape,
 		step:   stepHeight,
-		keys:   keys.NewState(),
-		speed:  0.5,
 	})
 	runtime.SetFinalizer(character, func(c *Character) {
 		C.goDeleteCharacter(c.handle)

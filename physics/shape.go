@@ -9,13 +9,57 @@ package physics
 import "C"
 
 import (
+	"fmt"
 	"runtime"
+	"unsafe"
 
 	"github.com/johanhenriksson/goworld/math/vec3"
 )
 
 type Shape interface {
+	Type() ShapeType
+
 	shape() C.goShapeHandle
+}
+
+type ShapeType int
+
+const (
+	BoxShape      = ShapeType(1)
+	SphereShape   = ShapeType(2)
+	CylinderShape = ShapeType(3)
+	CapsuleShape  = ShapeType(4)
+	MeshShape     = ShapeType(5)
+)
+
+type shapeBase struct {
+	kind   ShapeType
+	handle C.goShapeHandle
+}
+
+func (s *shapeBase) Type() ShapeType {
+	return s.kind
+}
+
+func (s *shapeBase) shape() C.goShapeHandle {
+	return s.handle
+}
+
+func restoreShape(ptr unsafe.Pointer) Shape {
+	if ptr == unsafe.Pointer(uintptr(0)) {
+		panic("shape pointer is nil")
+	}
+	base := (*shapeBase)(ptr)
+	switch base.kind {
+	case BoxShape:
+		return (*Box)(ptr)
+	case CapsuleShape:
+		return (*Capsule)(ptr)
+	case MeshShape:
+		return (*Mesh)(ptr)
+	default:
+		panic(fmt.Sprintf("invalid shape kind: %d", base.kind))
+	}
 }
 
 //
@@ -23,26 +67,29 @@ type Shape interface {
 //
 
 type Box struct {
-	handle C.goShapeHandle
-	size   vec3.T
+	shapeBase
+	size vec3.T
 }
 
 var _ Shape = &Box{}
 
 func NewBox(size vec3.T) *Box {
-	handle := C.goNewBoxShape(vec3ptr(&size))
 	box := &Box{
-		handle: handle,
-		size:   size,
+		shapeBase: shapeBase{
+			kind: BoxShape,
+		},
+		size: size,
 	}
+	box.handle = C.goNewBoxShape((*C.char)(unsafe.Pointer(box)), vec3ptr(&size))
+
 	runtime.SetFinalizer(box, func(b *Box) {
 		C.goDeleteShape(b.shape())
 	})
 	return box
 }
 
-func (b *Box) shape() C.goShapeHandle {
-	return b.handle
+func (b *Box) String() string {
+	return fmt.Sprintf("Box[Size=%s]", b.size)
 }
 
 //
@@ -50,24 +97,28 @@ func (b *Box) shape() C.goShapeHandle {
 //
 
 type Capsule struct {
-	handle C.goShapeHandle
+	shapeBase
 	height float32
 	radius float32
 }
 
 var _ = &Capsule{}
 
-func NewCapsule(radius, height float32) *Capsule {
-	handle := C.goNewCapsuleShape(C.float(radius), C.float(height))
+func NewCapsule(height, radius float32) *Capsule {
 	capsule := &Capsule{
-		handle: handle,
+		shapeBase: shapeBase{
+			kind: CapsuleShape,
+		},
+		radius: radius,
+		height: height,
 	}
+	capsule.handle = C.goNewCapsuleShape((*C.char)(unsafe.Pointer(capsule)), C.float(radius), C.float(height))
 	runtime.SetFinalizer(capsule, func(c *Capsule) {
 		C.goDeleteShape(c.shape())
 	})
 	return capsule
 }
 
-func (c *Capsule) shape() C.goShapeHandle {
-	return c.handle
+func (c *Capsule) String() string {
+	return fmt.Sprintf("Capsule[Height=%.2f,Radius=%.2f]", c.height, c.radius)
 }

@@ -17,7 +17,7 @@ import (
 )
 
 type Mesh struct {
-	handle     C.goShapeHandle
+	shapeBase
 	meshHandle C.goTriangleMeshHandle
 }
 
@@ -52,18 +52,17 @@ func NewMesh(mesh vertex.Mesh) *Mesh {
 		unsafe.Pointer(vertexPtr), C.int(vertexCount), C.int(vertexStride),
 		unsafe.Pointer(indexPtr), C.int(indexCount), C.int(indexStride))
 
-	handle := C.goNewStaticTriangleMeshShape(meshHandle)
-
-	physMesh := &Mesh{
-		handle:     handle,
+	shape := &Mesh{
+		shapeBase: shapeBase{
+			kind: MeshShape,
+		},
 		meshHandle: meshHandle,
 	}
-	runtime.SetFinalizer(physMesh, func(m *Mesh) {
+
+	shape.handle = C.goNewTriangleMeshShape((*C.char)(unsafe.Pointer(shape)), meshHandle)
+
+	runtime.SetFinalizer(shape, func(m *Mesh) {
 		C.goDeleteShape(m.handle)
 	})
-	return physMesh
-}
-
-func (m *Mesh) shape() C.goShapeHandle {
-	return m.handle
+	return shape
 }

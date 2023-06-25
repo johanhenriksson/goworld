@@ -6,22 +6,14 @@
 #include "btBulletDynamicsCommon.h"
 #include "bullet.h"
 
-goCharacterHandle goCreateCharacter(goShapeHandle shapeHandle, float height, float radius, float stepHeight) {
-    btConvexShape* capsule = new btCapsuleShape(radius, height);
-    btAssert(capsule->getShapeType() == CONVEX_HULL_SHAPE_PROXYTYPE);
-
-    btTransform trans;
-    trans.setIdentity();
-    trans.setOrigin(btVector3(5, 15, 5));
+goCharacterHandle goCreateCharacter(goShapeHandle shapeHandle, float stepHeight) {
+    auto shape = reinterpret_cast<btConvexShape*>(shapeHandle);
 
     auto ghostObject = new btPairCachingGhostObject();
-
-    btKinematicCharacterController* character =
-        new btKinematicCharacterController(ghostObject, capsule, stepHeight, btVector3(0, 1, 0));
-
-    ghostObject->setWorldTransform(trans);
-    ghostObject->setCollisionShape(capsule);
+    ghostObject->setCollisionShape(shape);
     ghostObject->setCollisionFlags(btCollisionObject::CF_CHARACTER_OBJECT);
+
+    auto character = new btKinematicCharacterController(ghostObject, shape, stepHeight, btVector3(0, 1, 0));
 
     return (goCharacterHandle)character;
 }

@@ -89,7 +89,7 @@ typedef struct {
     goReal mass;
 } goRigidBodyState;
 
-extern goRigidBodyHandle goCreateRigidBody(void* user_data, float mass, goShapeHandle cshape);
+extern goRigidBodyHandle goCreateRigidBody(char* user_data, float mass, goShapeHandle cshape);
 
 extern void goDeleteRigidBody(goRigidBodyHandle body);
 
@@ -98,11 +98,11 @@ extern void goRigidBodySetState(goRigidBodyHandle body, goRigidBodyState* state)
 
 /* Collision Shape definition */
 
-extern goShapeHandle goNewSphereShape(goReal radius);
+extern goShapeHandle goNewSphereShape(char* user, goReal radius);
 
-extern goShapeHandle goNewBoxShape(goVector3* size);
+extern goShapeHandle goNewBoxShape(char* user, goVector3* size);
 
-extern goShapeHandle goNewCapsuleShape(goReal radius, goReal height);
+extern goShapeHandle goNewCapsuleShape(char* user, goReal radius, goReal height);
 
 extern goShapeHandle goNewCompoundShape(void);
 
@@ -119,20 +119,19 @@ extern void goAddVertex(goShapeHandle convexHull, goReal x, goReal y, goReal z);
 extern goTriangleMeshHandle goNewTriangleMesh(void* vertex_ptr, int vertex_count, int vertex_stride, void* index_ptr,
                                               int index_count, int index_stride);
 
-extern goShapeHandle goNewStaticTriangleMeshShape(goTriangleMeshHandle);
+extern goShapeHandle goNewTriangleMeshShape(char* user, goTriangleMeshHandle);
 
 extern void goSetScaling(goShapeHandle shape, goVector3* scaling);
 
 // raycast
 
 typedef struct goRayCastResult {
-    goRigidBodyHandle m_body;
-    goShapeHandle m_shape;
-    goVector3 m_positionWorld;
-    goVector3 m_normalWorld;
+    void* shape;
+    goVector3 point;
+    goVector3 normal;
 } goRayCastResult;
 
-extern int goRayCast(goDynamicsWorldHandle world, goVector3* rayStart, goVector3* rayEnd, goRayCastResult res);
+extern int goRayCast(goDynamicsWorldHandle world, goVector3* rayStart, goVector3* rayEnd, goRayCastResult* res);
 
 // debugging
 
@@ -149,7 +148,7 @@ typedef struct {
     bool grounded;
 } goCharacterState;
 
-extern goCharacterHandle goCreateCharacter(goShapeHandle shapeHandle, float height, float radius, float stepHeight);
+extern goCharacterHandle goCreateCharacter(goShapeHandle shapeHandle, float stepHeight);
 extern void goDeleteCharacter(goCharacterHandle handle);
 extern void goCharacterMove(goCharacterHandle handle, goVector3* direction);
 extern void goCharacterJump(goCharacterHandle handle);

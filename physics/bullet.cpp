@@ -1,5 +1,8 @@
 #include "bullet.h"
 
+#include <iostream>
+#include <ostream>
+
 #include "BulletCollision/CollisionDispatch/btGhostObject.h"
 #include "BulletDynamics/Character/btKinematicCharacterController.h"
 #include "_cgo_export.h"
@@ -32,17 +35,11 @@ goDynamicsWorldHandle goCreateDynamicsWorld() {
     auto solver = new btSequentialImpulseConstraintSolver();
 
     auto broadphase = new btDbvtBroadphase();
+
+    // this line is required to use the character controller
     broadphase->getOverlappingPairCache()->setInternalGhostPairCallback(new btGhostPairCallback());
 
     auto world = new btDiscreteDynamicsWorld(dispatcher, broadphase, solver, colConfig);
-
-    btStaticPlaneShape* groundShape = new btStaticPlaneShape(btVector3(0, 1, 0), 1);
-    btDefaultMotionState* groundMotionState =
-        new btDefaultMotionState(btTransform(btQuaternion(0, 0, 0, 1), btVector3(0, -1, 0)));
-    btRigidBody::btRigidBodyConstructionInfo groundRigidBodyCI(0, groundMotionState, groundShape, btVector3(0, 0, 0));
-    btRigidBody* groundRigidBody = new btRigidBody(groundRigidBodyCI);
-    groundRigidBody->setCollisionFlags(btCollisionObject::CF_STATIC_OBJECT);
-    world->addRigidBody(groundRigidBody);
 
     return (goDynamicsWorldHandle)world;
 }
@@ -86,7 +83,7 @@ void goRemoveRigidBody(goDynamicsWorldHandle world, goRigidBodyHandle object) {
 
 /* Rigid Body  */
 
-goRigidBodyHandle goCreateRigidBody(void* user_data, float mass, goShapeHandle cshape) {
+goRigidBodyHandle goCreateRigidBody(char* user, float mass, goShapeHandle cshape) {
     btCollisionShape* shape = reinterpret_cast<btCollisionShape*>(cshape);
     btAssert(shape);
 
@@ -104,7 +101,7 @@ goRigidBodyHandle goCreateRigidBody(void* user_data, float mass, goShapeHandle c
     btRigidBody::btRigidBodyConstructionInfo rbci(mass, motionState, shape, localInertia);
     btRigidBody* body = new btRigidBody(rbci);
 
-    body->setUserPointer(user_data);
+    body->setUserPointer(user);
 
     return (goRigidBodyHandle)body;
 }
@@ -139,16 +136,28 @@ void goRigidBodySetState(goRigidBodyHandle object, goRigidBodyState* state) {
 
 /* Collision Shape definition */
 
-goShapeHandle goNewSphereShape(goReal radius) { return (goShapeHandle) new btSphereShape(radius); }
-
-goShapeHandle goNewBoxShape(goVector3* size) { return (goShapeHandle) new btBoxShape(vec3FromGo(size)); }
-
-goShapeHandle goNewCylinderShape(goReal radius, goReal height) {
-    return (goShapeHandle) new btCylinderShape(btVector3(radius, height, radius));
+goShapeHandle goNewSphereShape(char* user, goReal radius) {
+    auto shape = new btSphereShape(radius);
+    shape->setUserPointer(user);
+    return (goShapeHandle)shape;
 }
 
-goShapeHandle goNewCapsuleShape(goReal radius, goReal height) {
-    return (goShapeHandle) new btCapsuleShape(radius, height);
+goShapeHandle goNewBoxShape(char* user, goVector3* size) {
+    auto shape = new btBoxShape(vec3FromGo(size));
+    shape->setUserPointer(user);
+    return (goShapeHandle)shape;
+}
+
+goShapeHandle goNewCylinderShape(char* user, goReal radius, goReal height) {
+    auto shape = new btCylinderShape(btVector3(radius, height, radius));
+    shape->setUserPointer(user);
+    return (goShapeHandle)shape;
+}
+
+goShapeHandle goNewCapsuleShape(char* user, goReal radius, goReal height) {
+    auto shape = new btCapsuleShape(radius, height);
+    shape->setUserPointer(user);
+    return (goShapeHandle)shape;
 }
 
 /* Concave static triangle meshes */
@@ -178,10 +187,12 @@ goTriangleMeshHandle goNewTriangleMesh(void* vertex_ptr, int vertex_count, int v
     return (goTriangleMeshHandle)array;
 }
 
-goShapeHandle goNewStaticTriangleMeshShape(goTriangleMeshHandle meshHandle) {
+goShapeHandle goNewTriangleMeshShape(char* user, goTriangleMeshHandle meshHandle) {
     auto mesh = reinterpret_cast<btTriangleMesh*>(meshHandle);
     btAssert(mesh);
-    return (goShapeHandle) new btBvhTriangleMeshShape(mesh, true);
+    auto shape = new btBvhTriangleMeshShape(mesh, true);
+    shape->setUserPointer(shape);
+    return (goShapeHandle)shape;
 }
 
 goShapeHandle goNewCompoundShape() { return (goShapeHandle) new btCompoundShape(); }
@@ -255,4 +266,26 @@ void goDebugDraw(goDynamicsWorldHandle world) {
     btDynamicsWorld* dynamicsWorld = reinterpret_cast<btDynamicsWorld*>(world);
     btAssert(dynamicsWorld);
     dynamicsWorld->debugDrawWorld();
+}
+
+int goRayCast(goDynamicsWorldHandle world, goVector3* rayStart, goVector3* rayEnd, goRayCastResult* res) {
+    btDynamicsWorld* dynamicsWorld = reinterpret_cast<btDynamicsWorld*>(world);
+    btAssert(dynamicsWorld);
+
+    auto from = vec3FromGo(rayStart);
+    auto to = vec3FromGo(rayEnd);
+    auto callback = btCollisionWorld::ClosestRayResultCallback(from, to);
+
+    dynamicsWorld->rayTest(from, to, callback);
+
+    if (callback.hasHit()) {
+        vec3ToGo(callback.m_hitPointWorld, &res->point);
+        vec3ToGo(callback.m_hitNormalWorld, &res->normal);
+        auto shape = callback.m_collisionObject->getCollisionShape();
+        std::cout << "shape type:" << shape->getShapeType() << std::endl;
+        res->shape = shape->getUserPointer();
+        return 1;
+    }
+
+    return 0;
 }

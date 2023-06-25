@@ -40,7 +40,7 @@ func NewRigidBody(mass float32, shape Shape) *RigidBody {
 	runtime.SetFinalizer(body, func(b *RigidBody) {
 		C.goDeleteRigidBody(b.handle)
 	})
-	body.handle = C.goCreateRigidBody(nil, C.goReal(mass), shape.shape())
+	body.handle = C.goCreateRigidBody((*C.char)(unsafe.Pointer(body)), C.goReal(mass), shape.shape())
 	return body
 }
 
