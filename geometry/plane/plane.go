@@ -9,8 +9,19 @@ import (
 	"github.com/johanhenriksson/goworld/render/vertex"
 )
 
+type Plane struct {
+	object.G
+	*Mesh
+}
+
+func Group(args Args) *Plane {
+	return object.Group("Plane", &Plane{
+		Mesh: New(args),
+	})
+}
+
 // Plane is a colored, one segment, one-sided 3D plane
-type T struct {
+type Mesh struct {
 	mesh.T
 	Args
 }
@@ -21,8 +32,8 @@ type Args struct {
 	Mat   *material.Def
 }
 
-func New(args Args) *T {
-	plane := object.New(&T{
+func New(args Args) *Mesh {
+	plane := object.New(&Mesh{
 		T:    mesh.New(mesh.Forward, args.Mat),
 		Args: args,
 	})
@@ -30,7 +41,7 @@ func New(args Args) *T {
 	return plane
 }
 
-func (p *T) generate() {
+func (p *Mesh) generate() {
 	s := p.Size / 2
 	y := float32(0.001)
 	c := p.Color.Vec4()
