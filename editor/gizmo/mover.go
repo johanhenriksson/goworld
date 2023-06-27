@@ -6,7 +6,7 @@ import (
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/core/transform"
 	"github.com/johanhenriksson/goworld/geometry/cone"
-	"github.com/johanhenriksson/goworld/geometry/cyllinder"
+	"github.com/johanhenriksson/goworld/geometry/cylinder"
 	"github.com/johanhenriksson/goworld/geometry/lines"
 	"github.com/johanhenriksson/goworld/geometry/plane"
 	"github.com/johanhenriksson/goworld/math/mat4"
@@ -21,20 +21,20 @@ import (
 
 // Mover Gizmo can be used to reposition objects in the 3D scene.
 type Mover struct {
-	object.T
+	object.G
 
 	target transform.T
 
 	Lines *lines.T
-	X     *cone.T
-	Xb    *cyllinder.T
-	Y     *cone.T
-	Yb    *cyllinder.T
-	Z     *cone.T
-	Zb    *cyllinder.T
-	XY    *plane.T
-	XZ    *plane.T
-	YZ    *plane.T
+	X     *cone.Cone
+	Xb    *cylinder.Cylinder
+	Y     *cone.Cone
+	Yb    *cylinder.Cylinder
+	Z     *cone.Cone
+	Zb    *cylinder.Cylinder
+	XY    *plane.Plane
+	XZ    *plane.Plane
+	YZ    *plane.Plane
 
 	// screen size scaling factor
 	size float32
@@ -79,13 +79,14 @@ func NewMover() *Mover {
 		hoverScale:  vec3.New(1.2, 1.2, 1.2),
 
 		// X Arrow Cone
-		X: object.Builder(cone.New(cone.Args{
-			Mat:      mat,
-			Radius:   radius,
-			Height:   height,
-			Segments: segments,
-			Color:    color.Red,
-		})).
+		X: object.Builder(
+			cone.Group(cone.Args{
+				Mat:      mat,
+				Radius:   radius,
+				Height:   height,
+				Segments: segments,
+				Color:    color.Red,
+			})).
 			Position(vec3.UnitX).
 			Rotation(quat.Euler(0, 0, 270)).
 			Attach(collider.NewBox(collider.Box{
@@ -95,7 +96,7 @@ func NewMover() *Mover {
 			Create(),
 
 		// X Arrow Body
-		Xb: object.Builder(cyllinder.New(cyllinder.Args{
+		Xb: object.Builder(cylinder.Group(cylinder.Args{
 			Mat:      mat,
 			Radius:   bodyRadius,
 			Height:   1,
@@ -111,7 +112,7 @@ func NewMover() *Mover {
 			Create(),
 
 		// Y Arrow Cone
-		Y: object.Builder(cone.New(cone.Args{
+		Y: object.Builder(cone.Group(cone.Args{
 			Mat:      mat,
 			Radius:   radius,
 			Height:   height,
@@ -126,7 +127,7 @@ func NewMover() *Mover {
 			Create(),
 
 		// Y Arrow body
-		Yb: object.Builder(cyllinder.New(cyllinder.Args{
+		Yb: object.Builder(cylinder.Group(cylinder.Args{
 			Mat:      mat,
 			Radius:   bodyRadius,
 			Height:   1,
@@ -141,7 +142,7 @@ func NewMover() *Mover {
 			Create(),
 
 		// Z Arrow Cone
-		Z: object.Builder(cone.New(cone.Args{
+		Z: object.Builder(cone.Group(cone.Args{
 			Mat:      mat,
 			Radius:   radius,
 			Height:   height,
@@ -157,7 +158,7 @@ func NewMover() *Mover {
 			Create(),
 
 		// Z Arrow Body
-		Zb: object.Builder(cyllinder.New(cyllinder.Args{
+		Zb: object.Builder(cylinder.Group(cylinder.Args{
 			Mat:      mat,
 			Radius:   bodyRadius,
 			Height:   1,
@@ -173,7 +174,7 @@ func NewMover() *Mover {
 			Create(),
 
 		// XY Plane
-		XY: object.Builder(plane.New(plane.Args{
+		XY: object.Builder(plane.Group(plane.Args{
 			Mat:   mat,
 			Size:  side,
 			Color: color.Blue.WithAlpha(planeAlpha),
@@ -183,7 +184,7 @@ func NewMover() *Mover {
 			Create(),
 
 		// XZ Plane
-		XZ: object.Builder(plane.New(plane.Args{
+		XZ: object.Builder(plane.Group(plane.Args{
 			Mat:   mat,
 			Size:  side,
 			Color: color.Green.WithAlpha(planeAlpha),
@@ -193,7 +194,7 @@ func NewMover() *Mover {
 			Create(),
 
 		// YZ Plane
-		YZ: object.Builder(plane.New(plane.Args{
+		YZ: object.Builder(plane.Group(plane.Args{
 			Mat:   mat,
 			Size:  side,
 			Color: color.Red.WithAlpha(planeAlpha),
@@ -335,7 +336,7 @@ func (g *Mover) PreDraw(args render.Args, scene object.T) error {
 }
 
 func (g *Mover) Update(scene object.T, dt float32) {
-	g.T.Update(scene, dt)
+	g.G.Update(scene, dt)
 
 	// the gizmo should be displayed at the same size irrespectively of its distance to the camera.
 	// we can undo the effects of perspective projection by measuring how much a vector would be "squeezed"
