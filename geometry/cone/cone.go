@@ -10,8 +10,19 @@ import (
 	"github.com/johanhenriksson/goworld/render/vertex"
 )
 
+type Cone struct {
+	object.G
+	*Mesh
+}
+
+func Group(args Args) *Cone {
+	return object.Group("Cone", &Cone{
+		Mesh: New(args),
+	})
+}
+
 // A Cone is a forward rendered colored cone mesh
-type T struct {
+type Mesh struct {
 	mesh.T
 	Args
 }
@@ -24,8 +35,8 @@ type Args struct {
 	Color    color.T
 }
 
-func New(args Args) *T {
-	cone := object.New(&T{
+func New(args Args) *Mesh {
+	cone := object.New(&Mesh{
 		T:    mesh.New(mesh.Forward, args.Mat),
 		Args: args,
 	})
@@ -33,7 +44,7 @@ func New(args Args) *T {
 	return cone
 }
 
-func (c *T) generate() {
+func (c *Mesh) generate() {
 	data := make([]vertex.C, 6*c.Segments)
 
 	// cone
