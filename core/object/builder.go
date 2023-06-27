@@ -6,7 +6,7 @@ import (
 )
 
 // Builder API for game objects
-type builder[K T] struct {
+type builder[K G] struct {
 	object K
 
 	position vec3.T
@@ -14,12 +14,12 @@ type builder[K T] struct {
 	scale    vec3.T
 	active   bool
 
-	parent   T
+	parent   G
 	children []T
 }
 
-// Builder instantiates a new object builder.
-func Builder[K T](object K) *builder[K] {
+// Builder instantiates a new group builder.
+func Builder[K G](object K) *builder[K] {
 	return &builder[K]{
 		object:   object,
 		position: vec3.Zero,
@@ -36,7 +36,7 @@ func (b *builder[K]) Attach(child T) *builder[K] {
 }
 
 // Set the parent of the object
-func (b *builder[K]) Parent(parent T) *builder[K] {
+func (b *builder[K]) Parent(parent G) *builder[K] {
 	b.parent = parent
 	return b
 }

@@ -77,9 +77,11 @@ func (q *Query[K]) first(root T) (K, bool) {
 			return k, true
 		}
 	}
-	for _, child := range root.Children() {
-		if match, found := q.first(child); found {
-			return match, true
+	if group, ok := root.(G); ok {
+		for _, child := range group.Children() {
+			if match, found := q.first(child); found {
+				return match, true
+			}
 		}
 	}
 	return empty, false
@@ -115,7 +117,9 @@ func (q *Query[K]) collect(object T) {
 			q.append(k)
 		}
 	}
-	for _, child := range object.Children() {
-		q.collect(child)
+	if group, ok := object.(G); ok {
+		for _, child := range group.Children() {
+			q.collect(child)
+		}
 	}
 }

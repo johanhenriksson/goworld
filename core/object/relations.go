@@ -2,7 +2,7 @@ package object
 
 // Attach an object to a parent object
 // If the object already has a parent, it will be detached first.
-func Attach(parent, child T) {
+func Attach(parent G, child T) {
 	Detach(child)
 	child.setParent(parent)
 	parent.attach(child)
@@ -51,10 +51,12 @@ func FindInChildren[K T](root T) (K, bool) {
 	if k, ok := root.(K); ok {
 		return k, true
 	}
-	// todo: rewrite as breadth-first
-	for _, child := range root.Children() {
-		if hit, ok := FindInChildren[K](child); ok {
-			return hit, true
+	if group, ok := root.(G); ok {
+		// todo: rewrite as breadth-first
+		for _, child := range group.Children() {
+			if hit, ok := FindInChildren[K](child); ok {
+				return hit, true
+			}
 		}
 	}
 	var empty K

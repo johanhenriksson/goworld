@@ -17,10 +17,7 @@ type T interface {
 	Name() string
 
 	// Parent returns the parent of this object, or nil
-	Parent() T
-
-	// Children returns a slice containing the objects children.
-	Children() []T
+	Parent() G
 
 	// Transform returns the object transform
 	Transform() transform.T
@@ -39,9 +36,7 @@ type T interface {
 
 	ID() uint
 	setName(string)
-	setParent(T)
-	attach(...T)
-	detach(T)
+	setParent(G)
 }
 
 type base struct {
@@ -49,18 +44,8 @@ type base struct {
 	transform transform.T
 	name      string
 	enabled   bool
-	parent    T
+	parent    G
 	children  []T
-}
-
-// Empty creates a new, empty object.
-func Empty(name string) T {
-	return &base{
-		id:        ID(),
-		name:      name,
-		enabled:   true,
-		transform: transform.Identity(),
-	}
 }
 
 func New[K T](obj K) K {
@@ -99,9 +84,7 @@ func New[K T](obj K) K {
 				continue
 			}
 			// initialize recursively?
-			if child.Parent() == nil {
-				Attach(obj, child)
-			}
+			panic("only groups can have children")
 		}
 	}
 	return obj
@@ -133,8 +116,8 @@ func (b *base) Transform() transform.T {
 func (b *base) Active() bool     { return b.enabled }
 func (b *base) SetActive(a bool) { b.enabled = a }
 
-func (b *base) Parent() T { return b.parent }
-func (b *base) setParent(p T) {
+func (b *base) Parent() G { return b.parent }
+func (b *base) setParent(p G) {
 	if b.parent == p {
 		return
 	}
