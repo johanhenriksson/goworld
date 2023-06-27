@@ -28,7 +28,7 @@ func main() {
 		Height: 1200,
 		Title:  "goworld",
 	},
-		editor.Scene(func(r renderer.T, scene object.T) {
+		editor.Scene(func(r renderer.T, scene object.G) {
 			world := physics.NewWorld()
 			world.Debug(true)
 			object.Attach(scene, world)
@@ -42,9 +42,11 @@ func main() {
 			for x := 0; x < 5; x++ {
 				for z := 0; z < 5; z++ {
 					chonk := chunk.Generate(boxgen, 1, 100*x, 100*z)
-					object.Builder(physics.NewRigidBody(5, physics.NewBox(vec3.New(0.5, 0.5, 0.5)))).
+					object.Builder(object.Empty("Box")).
+						Attach(physics.NewRigidBody(5, physics.NewBox(vec3.New(0.5, 0.5, 0.5)))).
 						Position(vec3.New(20+3*float32(x), 30, 15+3*float32(z))).
-						Attach(object.Builder(chunk.NewMesh(chonk)).
+						Attach(object.Builder(object.Empty("Mesh")).
+							Attach(chunk.NewMesh(chonk)).
 							Position(vec3.New(-0.5, -0.5, -0.5)).
 							Create()).
 						Parent(world).
@@ -63,7 +65,8 @@ func main() {
 			// tileMesh.RefreshSync()
 
 			meshShape := physics.NewMesh(nil)
-			object.Builder(physics.NewRigidBody(0, nil)).
+			object.Builder(object.Empty("Terrain")).
+				Attach(physics.NewRigidBody(0, nil)).
 				Position(vec3.New(0, 10, 0)).
 				Attach(tileMesh).
 				Attach(meshShape).
@@ -74,12 +77,13 @@ func main() {
 			rot := float32(-40)
 			object.Attach(
 				scene,
-				object.Builder(light.NewDirectional(light.DirectionalArgs{
-					Intensity: 1.5,
-					Color:     color.RGB(0.9*0.973, 0.9*0.945, 0.9*0.776),
-					Shadows:   true,
-					Cascades:  4,
-				})).
+				object.Builder(object.Empty("Sun")).
+					Attach(light.NewDirectional(light.DirectionalArgs{
+						Intensity: 1.5,
+						Color:     color.RGB(0.9*0.973, 0.9*0.945, 0.9*0.776),
+						Shadows:   true,
+						Cascades:  4,
+					})).
 					Position(vec3.New(1, 2, 3)).
 					Attach(script.New(func(scene, self object.T, dt float32) {
 						rot -= dt

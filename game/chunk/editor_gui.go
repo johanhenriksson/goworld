@@ -56,7 +56,8 @@ func NewMenu(editor *edit) gui.Fragment {
 						OnClick: func(e mouse.Event) {
 							eye := editor.Camera.Transform().WorldPosition()
 							offset := editor.Camera.Transform().Forward().Scaled(3)
-							object.Builder(NewMesh(New(8, 0, 0))).
+							object.Builder(object.Empty("New Chunk")).
+								Attach(NewMesh(New(8, 0, 0))).
 								Position(eye.Add(offset)).
 								Parent(editor.Context.Scene).
 								Create()

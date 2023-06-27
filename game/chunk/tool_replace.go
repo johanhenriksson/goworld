@@ -11,14 +11,14 @@ import (
 )
 
 type ReplaceTool struct {
-	object.T
+	object.G
 	Box *box.T
 }
 
 var _ editor.Tool = &ReplaceTool{}
 
 func NewReplaceTool() *ReplaceTool {
-	return object.New(&ReplaceTool{
+	return object.Group("Replace Tool", &ReplaceTool{
 		Box: box.New(box.Args{
 			Size:  vec3.One,
 			Color: color.Yellow,

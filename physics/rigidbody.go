@@ -45,6 +45,9 @@ func NewRigidBody(mass float32, shape Shape) *RigidBody {
 }
 
 func (b *RigidBody) fetchState() {
+	if b.handle == nil {
+		return
+	}
 	state := rigidbodyState{}
 	C.goRigidBodyGetState(b.handle, (*C.goRigidBodyState)(unsafe.Pointer(&state)))
 	b.Transform().SetPosition(state.position)
@@ -65,11 +68,13 @@ func (b *RigidBody) Update(scene object.T, dt float32) {
 		}
 	}
 
-	state := rigidbodyState{
-		position: b.Transform().Position(),
-		rotation: b.Transform().Rotation(),
+	if b.handle != nil {
+		state := rigidbodyState{
+			position: b.Transform().Position(),
+			rotation: b.Transform().Rotation(),
+		}
+		C.goRigidBodySetState(b.handle, (*C.goRigidBodyState)(unsafe.Pointer(&state)))
 	}
-	C.goRigidBodySetState(b.handle, (*C.goRigidBodyState)(unsafe.Pointer(&state)))
 }
 
 func (b *RigidBody) OnActivate() {

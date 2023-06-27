@@ -4,15 +4,10 @@ import (
 	"log"
 	"reflect"
 
-	"github.com/johanhenriksson/goworld/core/input"
-	"github.com/johanhenriksson/goworld/core/input/keys"
-	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/core/transform"
 )
 
 type T interface {
-	input.Handler
-
 	// Name is used to identify the object within the scene.
 	Name() string
 
@@ -40,12 +35,18 @@ type T interface {
 }
 
 type base struct {
-	id        uint
-	transform transform.T
-	name      string
-	enabled   bool
-	parent    G
-	children  []T
+	id      uint
+	name    string
+	enabled bool
+	parent  G
+}
+
+func emptyBase(name string) *base {
+	return &base{
+		id:      ID(),
+		name:    name,
+		enabled: true,
+	}
 }
 
 func New[K T](obj K) K {
@@ -58,7 +59,7 @@ func New[K T](obj K) K {
 		field := t.Field(i)
 		if field.Name == "T" {
 			if v.Field(i).IsZero() {
-				base := Empty(t.Name())
+				base := emptyBase(t.Name())
 				v.Field(i).Set(reflect.ValueOf(base))
 			}
 			init = true
@@ -95,22 +96,13 @@ func (b *base) ID() uint {
 }
 
 func (b *base) Update(scene T, dt float32) {
-	for _, child := range b.children {
-		if child.Active() {
-			child.Update(scene, dt)
-		}
-	}
 }
 
 func (b *base) Transform() transform.T {
-	// todo: rewrite/refactor
-	var pt transform.T = nil
-	if b.parent != nil {
-		pt = b.parent.Transform()
+	if b.parent == nil {
+		return transform.Identity()
 	}
-	b.transform.Recalculate(pt)
-
-	return b.transform
+	return b.parent.Transform()
 }
 
 func (b *base) Active() bool     { return b.enabled }
@@ -124,73 +116,12 @@ func (b *base) setParent(p G) {
 	b.parent = p
 }
 
-func (b *base) Children() []T {
-	return b.children
-}
-
-func (b *base) attach(children ...T) {
-	for _, child := range children {
-		b.attachIfNotChild(child)
-	}
-}
-
-func (b *base) attachIfNotChild(child T) {
-	for _, existing := range b.children {
-		if existing.ID() == child.ID() {
-			return
-		}
-	}
-	b.children = append(b.children, child)
-}
-
-func (b *base) detach(child T) {
-	for i, existing := range b.children {
-		if existing.ID() == child.ID() {
-			b.children = append(b.children[:i], b.children[i+1:]...)
-			return
-		}
-	}
-}
-
 func (b *base) setName(n string) { b.name = n }
 func (b *base) Name() string     { return b.name }
 func (b *base) String() string   { return b.Name() }
 
 func (o *base) Destroy() {
-	// iterate over a copy of the child slice, since it will be mutated
-	// when the child detaches itself during destruction
-	children := make([]T, len(o.Children()))
-	copy(children, o.Children()[:])
-
-	for _, child := range o.Children() {
-		child.Destroy()
-	}
-
 	if o.parent != nil {
 		o.parent.detach(o)
-	}
-}
-
-func (o *base) KeyEvent(e keys.Event) {
-	for _, child := range o.children {
-		if !child.Active() {
-			continue
-		}
-		child.KeyEvent(e)
-		if e.Handled() {
-			return
-		}
-	}
-}
-
-func (o *base) MouseEvent(e mouse.Event) {
-	for _, child := range o.children {
-		if !child.Active() {
-			continue
-		}
-		child.MouseEvent(e)
-		if e.Handled() {
-			return
-		}
 	}
 }

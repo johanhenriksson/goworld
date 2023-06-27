@@ -1,6 +1,8 @@
 package editor
 
 import (
+	"log"
+
 	"github.com/johanhenriksson/goworld/core/collider"
 	"github.com/johanhenriksson/goworld/core/input/keys"
 	"github.com/johanhenriksson/goworld/core/input/mouse"
@@ -9,6 +11,7 @@ import (
 	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/math/physics"
 	"github.com/johanhenriksson/goworld/math/vec3"
+	phys "github.com/johanhenriksson/goworld/physics"
 	"github.com/johanhenriksson/goworld/render"
 )
 
@@ -42,8 +45,8 @@ type ToolManager interface {
 }
 
 type toolmgr struct {
-	object.T
-	scene    object.T
+	object.G
+	scene    object.G
 	selected Selectable
 	tool     Tool
 	camera   mat4.T
@@ -54,7 +57,7 @@ type toolmgr struct {
 }
 
 func NewToolManager() ToolManager {
-	return object.New(&toolmgr{
+	return object.Group("Tool Manager", &toolmgr{
 		Mover: object.Builder(gizmo.NewMover()).
 			Active(false).
 			Create(),
@@ -87,9 +90,16 @@ func (m *toolmgr) MouseEvent(e mouse.Event) {
 	// look for something else to select.
 	if e.Button() == mouse.Button1 && e.Action() == mouse.Release {
 		// calculate a ray going into the screen
-		near := vpi.TransformPoint(vec3.New(cursor.X, cursor.Y, 1))
-		far := vpi.TransformPoint(vec3.New(cursor.X, cursor.Y, 0))
+		near := vpi.TransformPoint(vec3.New(cursor.X, cursor.Y, 0))
+		far := vpi.TransformPoint(vec3.New(cursor.X, cursor.Y, 1))
 		dir := far.Sub(near).Normalized()
+
+		world, worldExists := object.NewQuery[*phys.World]().First(m.scene)
+		if worldExists {
+			hit, ok := world.Raycast(near, far)
+			log.Println("cast from", near, "to", far)
+			log.Println("hit:", ok, "=", hit)
+		}
 
 		// find Collider children of Selectable objects
 		selectables := object.NewQuery[Selectable]().CollectObjects(m.scene)
@@ -179,7 +189,7 @@ func (m *toolmgr) setSelect(e mouse.Event, object Selectable, collider collider.
 	return true
 }
 
-func (m *toolmgr) PreDraw(args render.Args, scene object.T) error {
+func (m *toolmgr) PreDraw(args render.Args, scene object.G) error {
 	m.scene = scene
 	m.camera = args.VP
 	m.viewport = args.Viewport

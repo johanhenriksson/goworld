@@ -10,7 +10,7 @@ import (
 )
 
 type T struct {
-	object.T
+	object.G
 	Character *physics.Character
 	Camera    *ArcballCamera
 	Speed     float32
@@ -22,7 +22,7 @@ type T struct {
 }
 
 func New() *T {
-	return object.New(&T{
+	return object.Group("Player", &T{
 		Character: physics.NewCharacter(1.8, 0.5, 0.2),
 		Camera:    NewEye(),
 		Speed:     7,
@@ -37,7 +37,7 @@ func (p *T) Name() string {
 }
 
 func (p *T) Update(scene object.T, dt float32) {
-	p.T.Update(scene, dt)
+	p.G.Update(scene, dt)
 
 	forward, right := float32(0), float32(0)
 	mouseMove := p.mouse.Down(mouse.Button1) && p.mouse.Down(mouse.Button2)
@@ -88,7 +88,7 @@ func (p *T) Update(scene object.T, dt float32) {
 }
 
 func (p *T) KeyEvent(e keys.Event) {
-	p.T.KeyEvent(e)
+	p.G.KeyEvent(e)
 	p.keys.KeyEvent(e)
 
 	if p.Character.Grounded() && e.Code() == keys.Space {
@@ -97,6 +97,6 @@ func (p *T) KeyEvent(e keys.Event) {
 }
 
 func (p *T) MouseEvent(e mouse.Event) {
-	p.T.MouseEvent(e)
+	p.G.MouseEvent(e)
 	p.mouse.MouseEvent(e)
 }

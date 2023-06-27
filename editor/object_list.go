@@ -102,7 +102,7 @@ func ObjectListEntry(key string, props ObjectListEntryProps) node.T {
 					},
 				}),
 				node.If(open, rect.New("children", rect.Props{
-					Children: node.Map(obj.Children(), func(obj object.T) node.T {
+					Children: node.Map(object.Children(obj), func(obj object.T) node.T {
 						key := object.Key("object", obj)
 						return ObjectListEntry(key, ObjectListEntryProps{
 							Object:   obj,

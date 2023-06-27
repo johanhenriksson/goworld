@@ -14,8 +14,8 @@ import (
 )
 
 type Player struct {
-	object.T
-	Camera   camera.T
+	object.G
+	Camera   *camera.G
 	Speed    float32
 	Friction vec3.T
 
@@ -25,8 +25,13 @@ type Player struct {
 }
 
 func NewPlayer(position vec3.T, rotation quat.T) *Player {
-	p := object.Builder(object.New(&Player{
-		Camera: object.Builder(camera.New(50.0, 0.1, 500, color.Hex("#eddaab"))).
+	p := object.Builder(object.Group("Player", &Player{
+		Camera: object.Builder(camera.Group(camera.Args{
+			Fov:   50.0,
+			Near:  0.1,
+			Far:   500,
+			Clear: color.Hex("#eddaab"),
+		})).
 			Rotation(rotation).
 			Attach(light.NewPoint(light.PointArgs{
 				Attenuation: light.DefaultAttenuation,
@@ -103,7 +108,7 @@ func (p *Player) Update(scene object.T, dt float32) {
 	position = position.Add(step)
 	p.Transform().SetPosition(position)
 
-	p.T.Update(scene, dt)
+	p.G.Update(scene, dt)
 }
 
 func (p *Player) MouseEvent(e mouse.Event) {

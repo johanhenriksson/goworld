@@ -12,8 +12,8 @@ import (
 )
 
 type ArcballCamera struct {
-	object.T
-	Camera   camera.T
+	object.G
+	Camera   *camera.G
 	Distance float32
 
 	mouselook bool
@@ -21,12 +21,18 @@ type ArcballCamera struct {
 
 func NewEye() *ArcballCamera {
 	distance := float32(10)
-	return object.Builder(object.New(&ArcballCamera{
-		Camera: object.Builder(camera.New(60, 0.1, 100, color.Black)).
+	return object.Builder(object.Group("Arcball", &ArcballCamera{
+		Camera: object.Builder(camera.Group(camera.Args{
+			Fov:   60,
+			Near:  0.1,
+			Far:   100,
+			Clear: color.Black,
+		})).
 			Position(vec3.New(0, 0, -distance)).
 			Create(),
 		Distance: distance,
 	})).
+		Position(vec3.New(0, 1.2, 0)).
 		Rotation(quat.Euler(30, 45, 0)).
 		Create()
 }
@@ -66,8 +72,8 @@ func (p *ArcballCamera) MouseEvent(e mouse.Event) {
 	// zoom
 	if e.Action() == mouse.Scroll {
 		p.Distance += e.Scroll().Y
-		if p.Distance < 1 {
-			p.Distance = 1
+		if p.Distance < 0 {
+			p.Distance = 0
 		}
 		p.Camera.Transform().SetPosition(vec3.New(0, 0, -p.Distance))
 	}

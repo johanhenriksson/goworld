@@ -31,11 +31,11 @@ type group struct {
 func Empty(name string) G {
 	return &group{
 		base: base{
-			id:        ID(),
-			name:      name,
-			enabled:   true,
-			transform: transform.Identity(),
+			id:      ID(),
+			name:    name,
+			enabled: true,
 		},
+		transform: transform.Identity(),
 	}
 }
 
@@ -49,7 +49,7 @@ func Group[K G](name string, obj K) K {
 		field := t.Field(i)
 		if field.Name == "G" {
 			if v.Field(i).IsZero() {
-				base := Empty(t.Name())
+				base := Empty(name)
 				v.Field(i).Set(reflect.ValueOf(base))
 			}
 			init = true
@@ -63,7 +63,7 @@ func Group[K G](name string, obj K) K {
 	// add Object fields as children
 	for i := 0; i < t.NumField(); i++ {
 		field := t.Field(i)
-		if field.Name == "T" {
+		if field.Name == "G" {
 			continue
 		}
 		if !field.IsExported() {
@@ -81,6 +81,17 @@ func Group[K G](name string, obj K) K {
 		}
 	}
 	return obj
+}
+
+func (g *group) Transform() transform.T {
+	// todo: rewrite/refactor
+	var pt transform.T = nil
+	if g.parent != nil {
+		pt = g.parent.Transform()
+	}
+	g.transform.Recalculate(pt)
+
+	return g.transform
 }
 
 func (g *group) Update(scene T, dt float32) {
@@ -144,5 +155,20 @@ func (g *group) MouseEvent(e mouse.Event) {
 				return
 			}
 		}
+	}
+}
+
+func (o *group) Destroy() {
+	// iterate over a copy of the child slice, since it will be mutated
+	// when the child detaches itself during destruction
+	children := make([]T, len(o.Children()))
+	copy(children, o.Children()[:])
+
+	for _, child := range o.Children() {
+		child.Destroy()
+	}
+
+	if o.parent != nil {
+		o.parent.detach(o)
 	}
 }

@@ -34,7 +34,7 @@ type Editor interface {
 
 // Editor base struct
 type edit struct {
-	object.T
+	object.G
 	*editor.Context
 
 	// editor target
@@ -47,9 +47,9 @@ type edit struct {
 	SampleTool  *SampleTool
 	ReplaceTool *ReplaceTool
 
-	XPlane *plane.T
-	YPlane *plane.T
-	ZPlane *plane.T
+	XPlane *plane.Plane
+	YPlane *plane.Plane
+	ZPlane *plane.Plane
 
 	xp, yp, zp int
 
@@ -69,7 +69,7 @@ func NewEditor(ctx *editor.Context, mesh *Mesh) Editor {
 	dimensions := vec3.NewI(chk.Sx, chk.Sy, chk.Sz)
 	center := dimensions.Scaled(0.5)
 
-	e := object.New(&edit{
+	e := object.Group("ChunkEditor", &edit{
 		Context: ctx,
 		mesh:    mesh,
 		Chunk:   chk,
@@ -99,7 +99,7 @@ func NewEditor(ctx *editor.Context, mesh *Mesh) Editor {
 		}),
 
 		// X Construction Plane
-		XPlane: object.Builder(plane.New(plane.Args{
+		XPlane: object.Builder(plane.Group(plane.Args{
 			Size:  float32(chk.Sx),
 			Color: color.Red.WithAlpha(0.25),
 		})).
@@ -109,7 +109,7 @@ func NewEditor(ctx *editor.Context, mesh *Mesh) Editor {
 			Create(),
 
 		// Y Construction Plane
-		YPlane: object.Builder(plane.New(plane.Args{
+		YPlane: object.Builder(plane.Group(plane.Args{
 			Size:  float32(chk.Sy),
 			Color: color.Green.WithAlpha(0.25),
 		})).
@@ -118,7 +118,7 @@ func NewEditor(ctx *editor.Context, mesh *Mesh) Editor {
 			Create(),
 
 		// Z Construction Plane
-		ZPlane: object.Builder(plane.New(plane.Args{
+		ZPlane: object.Builder(plane.Group(plane.Args{
 			Size:  float32(chk.Sz),
 			Color: color.Blue.WithAlpha(0.25),
 		})).
@@ -157,7 +157,7 @@ func (e *edit) SelectedColor() color.T {
 // sample world position at current mouse coords
 func (e *edit) CursorPositionNormal(cursor vec2.T) (bool, vec3.T, vec3.T) {
 	// compute normalized screen position
-	screenPos := cursor.Div(e.Camera.Viewport().Size())
+	screenPos := cursor.Div(e.Camera.Viewport.Size())
 
 	viewPosition, positionExists := e.render.GBuffer().SamplePosition(screenPos)
 	if !positionExists {
@@ -169,7 +169,7 @@ func (e *edit) CursorPositionNormal(cursor vec2.T) (bool, vec3.T, vec3.T) {
 		return false, vec3.Zero, vec3.Zero
 	}
 
-	viewInv := e.Camera.ViewInv()
+	viewInv := e.Camera.ViewInv
 	normal := viewInv.TransformDir(viewNormal)
 	position := viewInv.TransformPoint(viewPosition)
 

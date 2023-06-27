@@ -18,29 +18,29 @@ var ErrRecreate = errors.New("recreate renderer")
 
 type PreDrawable interface {
 	object.T
-	PreDraw(render.Args, object.T) error
+	PreDraw(render.Args, object.G) error
 }
 
 type PreNode interface {
 	Node
-	Prepare(scene object.T, time, delta float32) (*render.Args, error)
+	Prepare(scene object.G, time, delta float32) (*render.Args, error)
 }
 
 type preNode struct {
 	*node
-	cameraQuery  *object.Query[camera.T]
+	cameraQuery  *object.Query[*camera.T]
 	predrawQuery *object.Query[PreDrawable]
 }
 
 func newPreNode(app vulkan.App) PreNode {
 	return &preNode{
 		node:         newNode(app, "Pre", nil),
-		cameraQuery:  object.NewQuery[camera.T](),
+		cameraQuery:  object.NewQuery[*camera.T](),
 		predrawQuery: object.NewQuery[PreDrawable](),
 	}
 }
 
-func (n *preNode) Prepare(scene object.T, time, delta float32) (*render.Args, error) {
+func (n *preNode) Prepare(scene object.G, time, delta float32) (*render.Args, error) {
 	screen := render.Screen{
 		Width:  n.app.Width(),
 		Height: n.app.Height(),
@@ -69,17 +69,17 @@ func (n *preNode) Prepare(scene object.T, time, delta float32) (*render.Args, er
 		Delta:      delta,
 		Context:    context,
 		Viewport:   screen,
-		Near:       camera.Near(),
-		Far:        camera.Far(),
-		Fov:        camera.Fov(),
-		Projection: camera.Projection(),
-		View:       camera.View(),
-		ViewInv:    camera.ViewInv(),
-		VP:         camera.ViewProj(),
-		VPInv:      camera.ViewProjInv(),
-		MVP:        camera.ViewProj(),
+		Near:       camera.Near,
+		Far:        camera.Far,
+		Fov:        camera.Fov,
+		Projection: camera.Proj,
+		View:       camera.View,
+		ViewInv:    camera.ViewInv,
+		VP:         camera.ViewProj,
+		VPInv:      camera.ViewProjInv,
+		MVP:        camera.ViewProj,
 		Position:   camera.Transform().WorldPosition(),
-		Clear:      camera.ClearColor(),
+		Clear:      camera.Clear,
 		Forward:    camera.Transform().Forward(),
 		Transform:  mat4.Ident(),
 	}

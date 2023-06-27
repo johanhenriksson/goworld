@@ -58,7 +58,7 @@ func ConstructEditors(ctx *Context, current object.T, target object.T) object.T 
 		existingEditors[childEdit.target] = childEdit
 	}
 
-	for _, child := range target.Children() {
+	for _, child := range object.Children(target) {
 		current, exists := existingEditors[child]
 		if exists {
 			ConstructEditors(ctx, current, child)

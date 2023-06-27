@@ -11,14 +11,14 @@ import (
 )
 
 type EraseTool struct {
-	object.T
+	object.G
 	Box *box.T
 }
 
 var _ editor.Tool = &EraseTool{}
 
 func NewEraseTool() *EraseTool {
-	return object.New(&EraseTool{
+	return object.Group("Erase Tool", &EraseTool{
 		Box: box.New(box.Args{
 			Size:  vec3.One,
 			Color: color.Red,

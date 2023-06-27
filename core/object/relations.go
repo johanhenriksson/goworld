@@ -1,5 +1,12 @@
 package object
 
+func Children(object T) []T {
+	if group, ok := object.(G); ok {
+		return group.Children()
+	}
+	return nil
+}
+
 // Attach an object to a parent object
 // If the object already has a parent, it will be detached first.
 func Attach(parent G, child T) {

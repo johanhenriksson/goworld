@@ -36,7 +36,7 @@ type characterState struct {
 func NewCharacter(height, radius, stepHeight float32) *Character {
 	shape := NewCapsule(height, radius)
 	handle := C.goCreateCharacter(shape.handle, C.float(stepHeight))
-	character := object.Component(&Character{
+	character := object.New(&Character{
 		handle: handle,
 		shape:  shape,
 		step:   stepHeight,

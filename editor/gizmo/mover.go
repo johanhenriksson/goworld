@@ -73,7 +73,7 @@ func NewMover() *Mover {
 		DepthWrite:   true,
 	}
 
-	g := object.New(&Mover{
+	g := object.Group("Mover Gizmo", &Mover{
 		size:        0.12,
 		sensitivity: 6,
 		hoverScale:  vec3.New(1.2, 1.2, 1.2),
@@ -231,10 +231,6 @@ func NewMover() *Mover {
 	return g
 }
 
-func (g *Mover) Name() string {
-	return "MoverGizmo"
-}
-
 func (g *Mover) Target() transform.T {
 	return g.target
 }
@@ -327,7 +323,7 @@ func (g *Mover) Hover(hovering bool, collider collider.T) {
 	}
 }
 
-func (g *Mover) PreDraw(args render.Args, scene object.T) error {
+func (g *Mover) PreDraw(args render.Args, scene object.G) error {
 	g.eye = args.Position
 	g.proj = args.Projection
 	g.vp = args.VP

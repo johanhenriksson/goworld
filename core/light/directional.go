@@ -68,7 +68,7 @@ func nearSplitDist(cascade, cascades int, near, far float32) float32 {
 	return farSplitDist(cascade-1, cascades, near, far)
 }
 
-func (lit *dirlight) PreDraw(args render.Args, scene object.T) error {
+func (lit *dirlight) PreDraw(args render.Args, scene object.G) error {
 	lit.updateCascades(args)
 	return nil
 }

@@ -12,7 +12,7 @@ import (
 )
 
 type World struct {
-	object.T
+	object.G
 	size      int
 	distance  float32
 	generator Generator
@@ -24,7 +24,7 @@ type World struct {
 
 // Builds a world of chunks around the active camera as it moves around
 func NewWorld(size int, generator Generator, distance float32) *World {
-	return object.New(&World{
+	return object.Group("World", &World{
 		size:      size,
 		generator: generator,
 		distance:  distance,
@@ -39,11 +39,11 @@ func (c *World) Update(scene object.T, dt float32) {
 	defer c.lock.Unlock()
 
 	// update chunks
-	c.T.Update(scene, dt)
+	c.G.Update(scene, dt)
 
 	// find the active camera
 	root := object.Root(scene)
-	cam, exists := object.FindInChildren[camera.T](root)
+	cam, exists := object.FindInChildren[*camera.T](root)
 	if !exists {
 		return
 	}
@@ -55,7 +55,8 @@ func (c *World) Update(scene object.T, dt float32) {
 	select {
 	case chk := <-c.ready:
 		key := fmt.Sprintf("Chunk:%d,%d", chk.Cx, chk.Cz)
-		chonk := object.Builder(NewMesh(chk)).
+		chonk := object.Builder(object.Empty(key)).
+			Attach(NewMesh(chk)).
 			Position(vec3.NewI(chk.Cx*c.size, 0, chk.Cz*c.size)).
 			Parent(c).
 			Create()
