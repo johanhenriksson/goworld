@@ -1,4 +1,4 @@
-package cyllinder
+package cylinder
 
 import (
 	"github.com/johanhenriksson/goworld/core/mesh"
@@ -10,8 +10,19 @@ import (
 	"github.com/johanhenriksson/goworld/render/vertex"
 )
 
-// A Cyllinder is a forward rendered colored cyllinder mesh
-type T struct {
+type Cylinder struct {
+	object.G
+	*Mesh
+}
+
+func Group(args Args) *Cylinder {
+	return object.Group("Cylinder", &Cylinder{
+		Mesh: New(args),
+	})
+}
+
+// A Cylinder is a forward rendered colored cyllinder mesh
+type Mesh struct {
 	mesh.T
 	Args
 }
@@ -24,8 +35,8 @@ type Args struct {
 	Color    color.T
 }
 
-func New(args Args) *T {
-	cyllinder := object.New(&T{
+func New(args Args) *Mesh {
+	cyllinder := object.New(&Mesh{
 		T:    mesh.New(mesh.Forward, args.Mat),
 		Args: args,
 	})
@@ -34,7 +45,7 @@ func New(args Args) *T {
 	return cyllinder
 }
 
-func (c *T) generate() {
+func (c *Mesh) generate() {
 	// vertex order: clockwise
 
 	data := make([]vertex.C, 2*2*3*c.Segments)
