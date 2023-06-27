@@ -176,9 +176,13 @@ func (b *base) String() string   { return b.Name() }
 func (o *base) Destroy() {
 	// iterate over a copy of the child slice, since it will be mutated
 	// when the child detaches itself during destruction
+	children := make([]T, len(o.Children()))
+	copy(children, o.Children()[:])
+
 	for _, child := range o.Children() {
 		child.Destroy()
 	}
+
 	if o.parent != nil {
 		o.parent.detach(o)
 	}

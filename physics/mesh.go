@@ -9,21 +9,48 @@ package physics
 import "C"
 
 import (
+	"log"
 	"reflect"
 	"runtime"
 	"unsafe"
 
+	"github.com/johanhenriksson/goworld/core/mesh"
+	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/render/vertex"
 )
 
 type Mesh struct {
 	shapeBase
+	object.T
 	meshHandle C.goTriangleMeshHandle
 }
 
 var _ Shape = &Mesh{}
+var _ mesh.UpdateHandler = &Mesh{}
 
 func NewMesh(mesh vertex.Mesh) *Mesh {
+	shape := object.New(&Mesh{
+		shapeBase: shapeBase{
+			kind: MeshShape,
+		},
+	})
+
+	runtime.SetFinalizer(shape, func(m *Mesh) {
+		m.destroy()
+	})
+
+	if mesh != nil {
+		shape.SetMeshData(mesh)
+
+	}
+
+	return shape
+}
+
+func (m *Mesh) SetMeshData(mesh vertex.Mesh) {
+	// delete any existing physics mesh
+	m.destroy()
+
 	vertices := mesh.VertexData()
 	vertexArray := reflect.ValueOf(vertices)
 	if vertexArray.Kind() != reflect.Slice {
@@ -48,21 +75,38 @@ func NewMesh(mesh vertex.Mesh) *Mesh {
 	indexStride := mesh.IndexSize()
 	indexCount := indexArray.Len()
 
-	meshHandle := C.goNewTriangleMesh(
+	m.meshHandle = C.goNewTriangleMesh(
 		unsafe.Pointer(vertexPtr), C.int(vertexCount), C.int(vertexStride),
 		unsafe.Pointer(indexPtr), C.int(indexCount), C.int(indexStride))
 
-	shape := &Mesh{
-		shapeBase: shapeBase{
-			kind: MeshShape,
-		},
-		meshHandle: meshHandle,
-	}
+	m.handle = C.goNewTriangleMeshShape((*C.char)(unsafe.Pointer(m)), m.meshHandle)
+}
 
-	shape.handle = C.goNewTriangleMeshShape((*C.char)(unsafe.Pointer(shape)), meshHandle)
+func (m *Mesh) destroy() {
+	// todo: delete mesh handle
 
-	runtime.SetFinalizer(shape, func(m *Mesh) {
+	// delete shape
+	if m.handle != nil {
 		C.goDeleteShape(m.handle)
-	})
-	return shape
+		m.handle = nil
+	}
+}
+
+func (m *Mesh) OnActivate() {
+	log.Println("activate mesh collider")
+	log.Println("siblings:", m.Parent().Children())
+	for _, sibling := range m.Parent().Children() {
+		log.Println(sibling)
+	}
+	mesh, ok := object.FindInSiblings[mesh.T](m)
+	if !ok {
+		m.SetMeshData(mesh.Mesh())
+	} else {
+		log.Println("no mesh found for collider :(")
+	}
+}
+
+func (m *Mesh) OnMeshUpdate(mesh vertex.Mesh) {
+	log.Println("physics mesh: mesh update")
+	m.SetMeshData(mesh)
 }

@@ -1,6 +1,8 @@
 package mesh
 
 import (
+	"log"
+
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/vertex"
@@ -46,6 +48,7 @@ func (m *dynamic[V, I]) Name() string {
 }
 
 func (m *dynamic[V, I]) Refresh() {
+	log.Println("mesh", m, ": async refresh")
 	go func() {
 		data := m.refresh()
 		m.updated <- data
@@ -53,6 +56,7 @@ func (m *dynamic[V, I]) Refresh() {
 }
 
 func (m *dynamic[V, I]) RefreshSync() {
+	log.Println("mesh", m, ": blocking refresh")
 	data := m.refresh()
 	m.meshdata.Update(data.Vertices, data.Indices)
 	m.SetMesh(m.meshdata)

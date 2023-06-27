@@ -6,6 +6,10 @@ func Attach(parent, child T) {
 	Detach(child)
 	child.setParent(parent)
 	parent.attach(child)
+
+	if handler, ok := child.(ActivateHandler); ok {
+		handler.OnActivate()
+	}
 }
 
 // Detach an object from its parent object
@@ -58,18 +62,35 @@ func FindInChildren[K T](root T) (K, bool) {
 }
 
 // FindInSiblings finds the first object that implements the given interface
-// in the siblings of the given root node.
-func FindInSiblings[K T](root T) (K, bool) {
-	if root.Parent() != nil {
-		for _, child := range root.Parent().Children() {
-			if child == root {
-				continue
-			}
-			if hit, ok := child.(K); ok {
-				return hit, true
-			}
+// in the siblings of the given node.
+func FindInSiblings[K T](self T) (K, bool) {
+	var empty K
+	if self.Parent() == nil {
+		return empty, false
+	}
+
+	for _, child := range self.Parent().Children() {
+		if child == self {
+			continue
+		}
+		if hit, ok := child.(K); ok {
+			return hit, true
 		}
 	}
-	var empty K
+
 	return empty, false
+}
+
+func FindAllInSiblings[K T](self T, callback func(K)) {
+	if self.Parent() == nil {
+		return
+	}
+	for _, child := range self.Parent().Children() {
+		if child == self {
+			continue
+		}
+		if hit, ok := child.(K); ok {
+			callback(hit)
+		}
+	}
 }

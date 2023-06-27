@@ -1,6 +1,8 @@
 package mesh
 
 import (
+	"log"
+
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/math"
 	"github.com/johanhenriksson/goworld/math/shape"
@@ -73,10 +75,19 @@ func (m mesh) Mesh() vertex.Mesh {
 
 func (m *mesh) SetMesh(data vertex.Mesh) {
 	m.data = data
+
+	// refresh AABB
 	min := data.Min()
 	max := data.Max()
 	m.radius = math.Max(min.Length(), max.Length())
 	m.center = max.Sub(min).Scaled(0.5)
+
+	log.Println("mesh", m, ": trigger mesh update event")
+
+	// raise a mesh update event
+	object.FindAllInSiblings[UpdateHandler](m, func(handler UpdateHandler) {
+		handler.OnMeshUpdate(data)
+	})
 }
 
 func (m *mesh) Texture(slot string) texture.Ref {

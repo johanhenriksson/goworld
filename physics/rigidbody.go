@@ -9,6 +9,7 @@ package physics
 import "C"
 
 import (
+	"log"
 	"runtime"
 	"unsafe"
 
@@ -38,9 +39,8 @@ func NewRigidBody(mass float32, shape Shape) *RigidBody {
 		shape: shape,
 	})
 	runtime.SetFinalizer(body, func(b *RigidBody) {
-		C.goDeleteRigidBody(b.handle)
+		b.destroy()
 	})
-	body.handle = C.goCreateRigidBody((*C.char)(unsafe.Pointer(body)), C.goReal(mass), shape.shape())
 	return body
 }
 
@@ -55,13 +55,7 @@ func (b *RigidBody) Update(scene object.T, dt float32) {
 	b.T.Update(scene, dt)
 
 	if b.world == nil {
-		var ok bool
-		b.world, ok = object.FindInParents[*World](b)
-		if ok {
-			b.world.addRigidBody(b)
-		} else {
-			return
-		}
+		b.create()
 	} else {
 		// detach from world if required
 		world, _ := object.FindInParents[*World](b)
@@ -76,4 +70,66 @@ func (b *RigidBody) Update(scene object.T, dt float32) {
 		rotation: b.Transform().Rotation(),
 	}
 	C.goRigidBodySetState(b.handle, (*C.goRigidBodyState)(unsafe.Pointer(&state)))
+}
+
+func (b *RigidBody) OnActivate() {
+	// find shapes
+
+	// if no shapes, exit.
+
+	// create a rigidbody
+
+	// find world in parent
+
+	// if no world, exit.
+
+	// add to world
+}
+
+func (b *RigidBody) OnDeactivate() {
+	// remove from world
+
+	// destroy ?
+}
+
+// called when a child object is attached
+// or any decendant? :think:
+func (b *RigidBody) OnAttach(obj object.T) {
+	// if its a shape, we need to recreate
+}
+
+func (b *RigidBody) OnDetach(obj object.T) {
+	// if its a shape, we need to recreate
+}
+
+func (b *RigidBody) create() {
+	var ok bool
+	if b.shape == nil {
+		b.shape, ok = object.FindInChildren[Shape](b)
+		if !ok {
+			return
+		}
+		log.Println("rigidbody", b, ": found shape", b.shape)
+	}
+
+	if b.handle == nil {
+		b.handle = C.goCreateRigidBody((*C.char)(unsafe.Pointer(b)), C.goReal(b.mass), b.shape.shape())
+		log.Println("rigidbody", b, ": created")
+	}
+
+	if b.world == nil {
+		b.world, ok = object.FindInParents[*World](b)
+		if ok {
+			b.world.addRigidBody(b)
+			log.Println("rigidbody", b, ": added to world", b.world)
+		}
+	}
+}
+
+func (b *RigidBody) destroy() {
+	if b.handle != nil {
+		log.Println("destroy rigidbody", b)
+		C.goDeleteRigidBody(b.handle)
+		b.handle = nil
+	}
 }

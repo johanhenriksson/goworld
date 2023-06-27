@@ -60,12 +60,13 @@ func main() {
 			m := terrain.NewMap(64, 3)
 			tile := m.GetTile(0, 0, true)
 			tileMesh := terrain.NewMesh(tile)
-			tileMesh.RefreshSync()
+			// tileMesh.RefreshSync()
 
-			meshShape := physics.NewMesh(tileMesh.Mesh())
-			object.Builder(physics.NewRigidBody(0, meshShape)).
+			meshShape := physics.NewMesh(nil)
+			object.Builder(physics.NewRigidBody(0, nil)).
 				Position(vec3.New(0, 10, 0)).
 				Attach(tileMesh).
+				Attach(meshShape).
 				Parent(world).
 				Create()
 
