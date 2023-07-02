@@ -9,12 +9,14 @@ import (
 	"github.com/johanhenriksson/goworld/gui/node"
 	"github.com/johanhenriksson/goworld/math/quat"
 	"github.com/johanhenriksson/goworld/math/vec3"
+	"github.com/johanhenriksson/goworld/physics"
 )
 
 type Editor struct {
 	object.G
 	GUI    gui.Manager
 	Tools  ToolManager
+	World  *physics.World
 	Player *Player
 
 	editors   object.T
@@ -26,6 +28,7 @@ func NewEditor(render renderer.T, workspace object.G) *Editor {
 	editor := object.Group("Editor", &Editor{
 		GUI:   MakeGUI(render),
 		Tools: NewToolManager(),
+		World: physics.NewWorld(),
 
 		Player:    NewPlayer(vec3.New(0, 25, -11), quat.Euler(-10, 30, 0)),
 		editors:   nil,
@@ -98,8 +101,9 @@ func (s *EditorScene) KeyEvent(e keys.Event) {
 }
 
 func (s *EditorScene) Update(scene object.T, dt float32) {
-	s.Editor.Update(scene, dt)
 	if s.playing {
 		s.Workspace.Update(scene, dt)
+	} else {
+		s.Editor.Update(scene, dt)
 	}
 }

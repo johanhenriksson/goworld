@@ -94,10 +94,10 @@ func (m *toolmgr) MouseEvent(e mouse.Event) {
 		far := vpi.TransformPoint(vec3.New(cursor.X, cursor.Y, 1))
 		dir := far.Sub(near).Normalized()
 
-		world, worldExists := object.NewQuery[*phys.World]().First(m.scene)
+		world, worldExists := object.FindInParents[*phys.World](m)
 		if worldExists {
 			hit, ok := world.Raycast(near, far)
-			log.Println("cast from", near, "to", far)
+			log.Println("cast from", near, "to", far, "in world", world.Parent().Name())
 			log.Println("hit:", ok, "=", hit)
 		}
 
@@ -132,6 +132,8 @@ func (m *toolmgr) KeyEvent(e keys.Event) {
 			e.Consume()
 			return
 		}
+
+		// todo: consider all editors
 		for _, action := range m.selected.Actions() {
 			if action.Key == e.Code() && e.Modifier(action.Modifier) {
 				action.Callback(m)
@@ -169,6 +171,9 @@ func (m *toolmgr) Select(obj Selectable) {
 func (m *toolmgr) setSelect(e mouse.Event, object Selectable, collider collider.T) bool {
 	// todo: detect if the object has been deleted
 	// otherwise CanDeselect() will make it impossible to select another object
+
+	// todo: refactor to enable ALL component editors on the object group
+	// group := collider.Parent()
 
 	// deselect
 	if m.selected != nil {

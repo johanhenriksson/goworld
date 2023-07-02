@@ -13,6 +13,7 @@ type Icon string
 const (
 	IconExpandMore   = Icon(rune(0xe5cf))
 	IconChevronRight = Icon(rune(0xe5cc))
+	IconCheckbox     = Icon(rune(0xe835))
 )
 
 type IconProps struct {

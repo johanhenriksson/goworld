@@ -28,7 +28,7 @@ type Mesh struct {
 var _ Shape = &Mesh{}
 var _ mesh.UpdateHandler = &Mesh{}
 
-func NewMesh(mesh vertex.Mesh) *Mesh {
+func NewMesh() *Mesh {
 	shape := object.New(&Mesh{
 		shapeBase: shapeBase{
 			kind: MeshShape,
@@ -38,11 +38,6 @@ func NewMesh(mesh vertex.Mesh) *Mesh {
 	runtime.SetFinalizer(shape, func(m *Mesh) {
 		m.destroy()
 	})
-
-	if mesh != nil {
-		shape.SetMeshData(mesh)
-
-	}
 
 	return shape
 }
@@ -93,20 +88,18 @@ func (m *Mesh) destroy() {
 }
 
 func (m *Mesh) OnActivate() {
-	log.Println("activate mesh collider")
-	log.Println("siblings:", m.Parent().Children())
-	for _, sibling := range m.Parent().Children() {
-		log.Println(sibling)
-	}
 	mesh, ok := object.FindInSiblings[mesh.T](m)
-	if !ok {
+	if ok {
 		m.SetMeshData(mesh.Mesh())
+		log.Println("added mesh data from", m.Parent().Name())
 	} else {
-		log.Println("no mesh found for collider :(")
+		log.Println("no mesh found for collider :(", m.Parent().Name())
 	}
 }
 
 func (m *Mesh) OnMeshUpdate(mesh vertex.Mesh) {
 	log.Println("physics mesh: mesh update")
 	m.SetMeshData(mesh)
+
+	// todo: recreate/update the rigidbody
 }

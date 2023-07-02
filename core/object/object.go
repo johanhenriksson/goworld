@@ -105,8 +105,20 @@ func (b *base) Transform() transform.T {
 	return b.parent.Transform()
 }
 
-func (b *base) Active() bool     { return b.enabled }
-func (b *base) SetActive(a bool) { b.enabled = a }
+func (b *base) Active() bool { return b.enabled }
+
+func (b *base) SetActive(active bool) {
+	if b.enabled && !active {
+		// disable
+		// if attached, raise OnDeactivate()
+		b.enabled = false
+	}
+	if !b.enabled && active {
+		// enable
+		// if attached, raise OnActivate()
+		b.enabled = true
+	}
+}
 
 func (b *base) Parent() G { return b.parent }
 func (b *base) setParent(p G) {

@@ -7,6 +7,7 @@ import (
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/core/script"
 	"github.com/johanhenriksson/goworld/editor"
+	_ "github.com/johanhenriksson/goworld/editor/builtin"
 	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/engine/renderer"
 	"github.com/johanhenriksson/goworld/game/chunk"
@@ -33,23 +34,24 @@ func main() {
 			world.Debug(true)
 			object.Attach(scene, world)
 
-			generator := chunk.ExampleWorldgen(4, 123123)
-			chonk := chunk.NewWorld(4, generator, 40)
-			object.Attach(scene, chonk)
+			// generator := chunk.ExampleWorldgen(4, 123123)
+			// chonk := chunk.NewWorld(4, generator, 40)
+			// object.Attach(scene, chonk)
 
 			// physics boxes
 			boxgen := chunk.NewRandomGen()
-			for x := 0; x < 5; x++ {
-				for z := 0; z < 5; z++ {
+			for x := 0; x < 3; x++ {
+				for z := 0; z < 3; z++ {
 					chonk := chunk.Generate(boxgen, 1, 100*x, 100*z)
 					object.Builder(object.Empty("Box")).
-						Attach(physics.NewRigidBody(5, physics.NewBox(vec3.New(0.5, 0.5, 0.5)))).
+						Attach(physics.NewRigidBody(5)).
+						Attach(physics.NewBox(vec3.New(0.5, 0.5, 0.5))).
 						Position(vec3.New(20+3*float32(x), 30, 15+3*float32(z))).
-						Attach(object.Builder(object.Empty("Mesh")).
+						Attach(object.Builder(object.Empty("ChunkMesh")).
 							Attach(chunk.NewMesh(chonk)).
 							Position(vec3.New(-0.5, -0.5, -0.5)).
 							Create()).
-						Parent(world).
+						Parent(scene).
 						Create()
 				}
 			}
@@ -57,20 +59,19 @@ func main() {
 			// character
 			char := player.New()
 			char.Transform().SetPosition(vec3.New(5, 16, 5))
-			object.Attach(world, char)
+			object.Attach(scene, char)
 
 			m := terrain.NewMap(64, 3)
 			tile := m.GetTile(0, 0, true)
 			tileMesh := terrain.NewMesh(tile)
-			// tileMesh.RefreshSync()
 
-			meshShape := physics.NewMesh(nil)
+			meshShape := physics.NewMesh()
 			object.Builder(object.Empty("Terrain")).
-				Attach(physics.NewRigidBody(0, nil)).
+				Attach(physics.NewRigidBody(0)).
 				Position(vec3.New(0, 10, 0)).
 				Attach(tileMesh).
 				Attach(meshShape).
-				Parent(world).
+				Parent(scene).
 				Create()
 
 			// directional light

@@ -24,7 +24,8 @@ type RigidBody struct {
 	world  *World
 	handle C.goRigidBodyHandle
 	mass   float32
-	shape  Shape
+
+	Shape Shape
 }
 
 type rigidbodyState struct {
@@ -33,10 +34,9 @@ type rigidbodyState struct {
 	mass     float32
 }
 
-func NewRigidBody(mass float32, shape Shape) *RigidBody {
+func NewRigidBody(mass float32) *RigidBody {
 	body := object.New(&RigidBody{
-		mass:  mass,
-		shape: shape,
+		mass: mass,
 	})
 	runtime.SetFinalizer(body, func(b *RigidBody) {
 		b.destroy()
@@ -69,8 +69,9 @@ func (b *RigidBody) Update(scene object.T, dt float32) {
 	}
 
 	if b.handle != nil {
+		// todo: world rotation
 		state := rigidbodyState{
-			position: b.Transform().Position(),
+			position: b.Transform().WorldPosition(),
 			rotation: b.Transform().Rotation(),
 		}
 		C.goRigidBodySetState(b.handle, (*C.goRigidBodyState)(unsafe.Pointer(&state)))
@@ -109,16 +110,22 @@ func (b *RigidBody) OnDetach(obj object.T) {
 
 func (b *RigidBody) create() {
 	var ok bool
-	if b.shape == nil {
-		b.shape, ok = object.FindInChildren[Shape](b)
+	if b.Shape == nil {
+		b.Shape, ok = object.FindInSiblings[Shape](b)
 		if !ok {
+			log.Println("rigidbody", b.Parent().Name(), ": no shape")
 			return
 		}
-		log.Println("rigidbody", b, ": found shape", b.shape)
+		log.Println("rigidbody", b.Parent().Name(), ": found shape", b.Shape.Name())
+	}
+
+	if b.Shape.shape() == nil {
+		// the shape is not available yet
+		return
 	}
 
 	if b.handle == nil {
-		b.handle = C.goCreateRigidBody((*C.char)(unsafe.Pointer(b)), C.goReal(b.mass), b.shape.shape())
+		b.handle = C.goCreateRigidBody((*C.char)(unsafe.Pointer(b)), C.goReal(b.mass), b.Shape.shape())
 		log.Println("rigidbody", b, ": created")
 	}
 
@@ -126,7 +133,7 @@ func (b *RigidBody) create() {
 		b.world, ok = object.FindInParents[*World](b)
 		if ok {
 			b.world.addRigidBody(b)
-			log.Println("rigidbody", b, ": added to world", b.world)
+			log.Println("rigidbody", b, ": added to world", b.world.Parent().Name(), "at", b.Transform().WorldPosition())
 		}
 	}
 }

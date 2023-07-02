@@ -9,6 +9,7 @@ package physics
 import "C"
 
 import (
+	"log"
 	"runtime"
 	"unsafe"
 
@@ -58,6 +59,8 @@ func (c *Character) fetchState() {
 }
 
 func (c *Character) Update(scene object.T, dt float32) {
+	log.Println("DT", dt)
+
 	if c.world == nil {
 		var ok bool
 		c.world, ok = object.FindInParents[*World](c)

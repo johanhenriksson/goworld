@@ -1,5 +1,6 @@
 package object
 
+// Returns all the children of an objects, both components and subgroups
 func Children(object T) []T {
 	if group, ok := object.(G); ok {
 		return group.Children()
@@ -7,6 +8,7 @@ func Children(object T) []T {
 	return nil
 }
 
+// Returns the subgroups attached to an object
 func Subgroups(object T) []G {
 	children := Children(object)
 	groups := make([]G, 0, len(children))
@@ -16,6 +18,19 @@ func Subgroups(object T) []G {
 		}
 	}
 	return groups
+}
+
+// Returns the components attached to an object
+func Components(object T) []T {
+	children := Children(object)
+	components := make([]T, 0, len(children))
+	for _, child := range children {
+		_, group := child.(G)
+		if !group {
+			components = append(components, child)
+		}
+	}
+	return components
 }
 
 // Attach an object to a parent object
@@ -56,6 +71,17 @@ func FindInParents[K T](root T) (K, bool) {
 	if k, ok := root.(K); ok {
 		return k, true
 	}
+
+	// consider components of direct ancestors
+	for _, child := range Children(root) {
+		if _, group := child.(G); group {
+			continue
+		}
+		if k, ok := child.(K); ok {
+			return k, true
+		}
+	}
+
 	if root.Parent() != nil {
 		return FindInParents[K](root.Parent())
 	}

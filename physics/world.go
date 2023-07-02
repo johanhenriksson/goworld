@@ -20,7 +20,7 @@ type Object interface {
 }
 
 type World struct {
-	object.G
+	object.T
 	handle C.goDynamicsWorldHandle
 	debug  bool
 
@@ -29,7 +29,7 @@ type World struct {
 
 func NewWorld() *World {
 	handle := C.goCreateDynamicsWorld()
-	world := object.Group("World", &World{
+	world := object.New(&World{
 		handle: handle,
 	})
 	runtime.SetFinalizer(world, func(w *World) {
@@ -39,13 +39,7 @@ func NewWorld() *World {
 }
 
 func (w *World) Update(scene object.T, dt float32) {
-	w.G.Update(scene, dt)
-
 	w.step(dt)
-
-	if w.debug {
-		w.debugDraw()
-	}
 }
 
 func (w *World) SetGravity(gravity vec3.T) {
@@ -108,6 +102,6 @@ func (w *World) Debug(enabled bool) {
 	w.debug = enabled
 }
 
-func (w *World) debugDraw() {
+func (w *World) DebugDraw() {
 	C.goDebugDraw(w.handle)
 }

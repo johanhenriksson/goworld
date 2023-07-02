@@ -44,8 +44,8 @@ func ConstructEditors(ctx *Context, current object.T, target object.T) object.T 
 			// todo: how to figure out the bounds?
 			// todo: how to deal with other shapes?
 			collider.Box{
-				Center: vec3.New(2, 2, 2),
-				Size:   vec3.New(4, 4, 4),
+				Center: vec3.New(0.5, 0.5, 0.5),
+				Size:   vec3.New(1, 1, 1),
 			},
 			customEditor,
 		)

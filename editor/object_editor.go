@@ -57,6 +57,11 @@ func NewObjectEditor(target object.T, bounds collider.Box, editor T) *ObjectEdit
 
 var _ Selectable = &ObjectEditor{}
 
+func (e *ObjectEditor) Update(scene object.T, dt float32) {
+	e.G.Update(scene, dt)
+	e.Custom.Update(scene, dt)
+}
+
 func (e *ObjectEditor) Select(ev mouse.Event, collider collider.T) {
 	e.Custom.SetActive(true)
 }
