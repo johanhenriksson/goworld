@@ -63,6 +63,9 @@ func ObjectListEntry(key string, props ObjectListEntryProps) node.T {
 			clr = color.RGB(0.7, 0.7, 0.7)
 		}
 
+		children := object.Subgroups(obj)
+		hasChildren := len(children) > 0
+
 		open, setOpen := hooks.UseState(false)
 		ico := icon.IconChevronRight
 		if open {
@@ -80,14 +83,19 @@ func ObjectListEntry(key string, props ObjectListEntryProps) node.T {
 						AlignContent: style.AlignCenter,
 					},
 					Children: []node.T{
-						icon.New("toggle", icon.IconProps{
+						node.If(hasChildren, icon.New("toggle", icon.IconProps{
 							Icon:  ico,
 							Color: clr,
 							Size:  18,
 							OnClick: func(e mouse.Event) {
 								setOpen(!open)
 							},
-						}),
+						})),
+						node.If(!hasChildren, icon.New("item", icon.IconProps{
+							Icon:  icon.Icon(0xe5df),
+							Color: clr,
+							Size:  18,
+						})),
 						label.New("title", label.Props{
 							Text: obj.Name(),
 							OnClick: func(e mouse.Event) {
@@ -102,10 +110,10 @@ func ObjectListEntry(key string, props ObjectListEntryProps) node.T {
 					},
 				}),
 				node.If(open, rect.New("children", rect.Props{
-					Children: node.Map(object.Children(obj), func(obj object.T) node.T {
-						key := object.Key("object", obj)
+					Children: node.Map(children, func(group object.G) node.T {
+						key := object.Key("object", group)
 						return ObjectListEntry(key, ObjectListEntryProps{
-							Object:   obj,
+							Object:   group,
 							OnSelect: props.OnSelect,
 						})
 					}),

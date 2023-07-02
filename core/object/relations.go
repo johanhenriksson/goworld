@@ -7,6 +7,17 @@ func Children(object T) []T {
 	return nil
 }
 
+func Subgroups(object T) []G {
+	children := Children(object)
+	groups := make([]G, 0, len(children))
+	for _, child := range children {
+		if group, ok := child.(G); ok {
+			groups = append(groups, group)
+		}
+	}
+	return groups
+}
+
 // Attach an object to a parent object
 // If the object already has a parent, it will be detached first.
 func Attach(parent G, child T) {

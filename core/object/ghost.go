@@ -1,7 +1,10 @@
 package object
 
+import "github.com/johanhenriksson/goworld/core/transform"
+
 type ghost struct {
 	group
+	target T
 }
 
 func Ghost(object T) G {
@@ -12,7 +15,11 @@ func Ghost(object T) G {
 				name:    "Ghost:" + object.Name(),
 				enabled: true,
 			},
-			transform: object.Transform(),
 		},
+		target: object,
 	}
+}
+
+func (g *ghost) Transform() transform.T {
+	return g.target.Transform()
 }
