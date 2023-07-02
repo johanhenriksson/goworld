@@ -7,8 +7,10 @@ import (
 
 	"github.com/johanhenriksson/goworld/core/camera"
 	"github.com/johanhenriksson/goworld/core/object"
+	"github.com/johanhenriksson/goworld/geometry/box"
 	"github.com/johanhenriksson/goworld/math"
 	"github.com/johanhenriksson/goworld/math/vec3"
+	"github.com/johanhenriksson/goworld/render/color"
 )
 
 type World struct {
@@ -57,6 +59,10 @@ func (c *World) Update(scene object.T, dt float32) {
 		key := fmt.Sprintf("Chunk:%d,%d", chk.Cx, chk.Cz)
 		chonk := object.Builder(object.Empty(key)).
 			Attach(NewMesh(chk)).
+			Attach(box.New(box.Args{
+				Size:  vec3.NewI(c.size, c.size, c.size),
+				Color: color.Purple,
+			})).
 			Position(vec3.NewI(chk.Cx*c.size, 0, chk.Cz*c.size)).
 			Parent(c).
 			Create()
