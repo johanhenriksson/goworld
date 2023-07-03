@@ -84,7 +84,7 @@ func (p *T) Update(scene object.T, dt float32) {
 	if p.Character.Grounded() {
 		p.velocity = dir.Scaled(p.Speed)
 	}
-	p.Character.Move(p.velocity.Scaled(dt))
+	p.Character.Move(p.velocity)
 }
 
 func (p *T) KeyEvent(e keys.Event) {

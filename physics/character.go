@@ -9,7 +9,6 @@ package physics
 import "C"
 
 import (
-	"log"
 	"runtime"
 	"unsafe"
 
@@ -59,8 +58,6 @@ func (c *Character) fetchState() {
 }
 
 func (c *Character) Update(scene object.T, dt float32) {
-	log.Println("DT", dt)
-
 	if c.world == nil {
 		var ok bool
 		c.world, ok = object.FindInParents[*World](c)
@@ -90,6 +87,7 @@ func (c *Character) Update(scene object.T, dt float32) {
 
 // Move the character controller. Called every frame to apply movement.
 func (c *Character) Move(dir vec3.T) {
+	dir.Scale(0.016)
 	C.goCharacterMove(c.handle, vec3ptr(&dir))
 }
 
