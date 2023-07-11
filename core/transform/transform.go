@@ -48,6 +48,9 @@ type transform struct {
 	right   vec3.T
 	up      vec3.T
 	forward vec3.T
+
+	inv   *mat4.T
+	dirty bool
 }
 
 // NewTransform creates a new 3D transform
@@ -80,6 +83,10 @@ func (t *transform) Recalculate(parent T) {
 
 		position = parent.Rotation().Rotate(parent.Scale().Mul(position))
 		position = parent.WorldPosition().Add(position)
+	} else if !t.dirty {
+		// no parent, no change -> nothing to do
+		// this will be common for floating objects, i.e. rigidbodies
+		return
 	}
 
 	// calculate basis vectors
@@ -100,6 +107,20 @@ func (t *transform) Recalculate(parent T) {
 		z.X, z.Y, z.Z, 0,
 		p.X, p.Y, p.Z, 1,
 	}
+
+	// mark as clean
+	t.dirty = false
+
+	// clear inversion cache
+	t.inv = nil
+}
+
+func (t *transform) inverse() *mat4.T {
+	if t.inv == nil {
+		inv := t.matrix.Invert()
+		t.inv = &inv
+	}
+	return t.inv
 }
 
 // Translate this transform by the given offset
@@ -112,8 +133,7 @@ func (t *transform) Project(point vec3.T) vec3.T {
 }
 
 func (t *transform) Unproject(point vec3.T) vec3.T {
-	inv := t.matrix.Invert()
-	return inv.TransformPoint(point)
+	return t.inverse().TransformPoint(point)
 }
 
 func (t *transform) ProjectDir(dir vec3.T) vec3.T {
@@ -121,8 +141,7 @@ func (t *transform) ProjectDir(dir vec3.T) vec3.T {
 }
 
 func (t *transform) UnprojectDir(dir vec3.T) vec3.T {
-	inv := t.matrix.Invert()
-	return inv.TransformDir(dir)
+	return t.inverse().TransformDir(dir)
 }
 
 func (t *transform) WorldPosition() vec3.T {
@@ -132,6 +151,7 @@ func (t *transform) WorldPosition() vec3.T {
 func (t *transform) SetWorldPosition(wp vec3.T) {
 	offset := t.Unproject(wp)
 	t.SetPosition(t.position.Add(offset))
+	t.dirty = true
 }
 
 func (t *transform) Matrix() mat4.T  { return t.matrix }
@@ -142,9 +162,9 @@ func (t *transform) Forward() vec3.T { return t.forward }
 func (t *transform) Position() vec3.T     { return t.position }
 func (t *transform) Rotation() quat.T     { return t.rotation }
 func (t *transform) Scale() vec3.T        { return t.scale }
-func (t *transform) SetPosition(p vec3.T) { t.position = p }
-func (t *transform) SetRotation(r quat.T) { t.rotation = r }
-func (t *transform) SetScale(s vec3.T)    { t.scale = s }
+func (t *transform) SetPosition(p vec3.T) { t.position = p; t.dirty = true }
+func (t *transform) SetRotation(r quat.T) { t.rotation = r; t.dirty = true }
+func (t *transform) SetScale(s vec3.T)    { t.scale = s; t.dirty = true }
 
 func Matrix(position vec3.T, rotation quat.T, scale vec3.T) mat4.T {
 	x := rotation.Rotate(vec3.Right)
