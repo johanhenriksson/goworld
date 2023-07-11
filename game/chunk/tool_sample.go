@@ -53,8 +53,8 @@ func (pt *SampleTool) CanDeselect() bool {
 }
 
 func (pt *SampleTool) MouseEvent(ev mouse.Event) {
-	editor, exists := object.FindInParents[Editor](pt)
-	if !exists {
+	editor := object.GetInParents[Editor](pt)
+	if editor == nil {
 		// hm?
 		return
 	}

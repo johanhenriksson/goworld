@@ -12,11 +12,6 @@ type Query[K T] struct {
 	sorter  func(a, b K) bool
 }
 
-// Any returns a query for generic components
-func Any() *Query[T] {
-	return NewQuery[T]()
-}
-
 // NewQuery returns a new query for the given component type
 func NewQuery[K T]() *Query[K] {
 	return &Query[K]{
@@ -61,7 +56,7 @@ func (q *Query[K]) Reset() *Query[K] {
 	return q
 }
 
-// First returns the first match
+// First returns the first match in a depth-first fashion
 func (q *Query[K]) First(root T) (K, bool) {
 	result, hit := q.first(root)
 	return result, hit

@@ -85,9 +85,9 @@ func (m *mesh) SetMesh(data vertex.Mesh) {
 	log.Println("mesh", m, ": trigger mesh update event")
 
 	// raise a mesh update event
-	object.FindAllInSiblings[UpdateHandler](m, func(handler UpdateHandler) {
+	for _, handler := range object.GetAll[UpdateHandler](m) {
 		handler.OnMeshUpdate(data)
-	})
+	}
 }
 
 func (m *mesh) Texture(slot string) texture.Ref {

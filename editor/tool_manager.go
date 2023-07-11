@@ -94,8 +94,7 @@ func (m *toolmgr) MouseEvent(e mouse.Event) {
 		far := vpi.TransformPoint(vec3.New(cursor.X, cursor.Y, 1))
 		dir := far.Sub(near).Normalized()
 
-		world, worldExists := object.FindInParents[*phys.World](m)
-		if worldExists {
+		if world := object.GetInParents[*phys.World](m); world != nil {
 			hit, ok := world.Raycast(near, far)
 			log.Println("cast from", near, "to", far, "in world", world.Parent().Name())
 			log.Println("hit:", ok, "=", hit)
@@ -112,7 +111,7 @@ func (m *toolmgr) MouseEvent(e mouse.Event) {
 		})
 
 		if hit {
-			if selectable, ok := object.FindInParents[Selectable](closest); ok {
+			if selectable := object.GetInParents[Selectable](closest); selectable != nil {
 				m.setSelect(e, selectable, closest)
 			}
 		} else if m.selected != nil {

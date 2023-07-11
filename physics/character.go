@@ -59,16 +59,14 @@ func (c *Character) fetchState() {
 
 func (c *Character) Update(scene object.T, dt float32) {
 	if c.world == nil {
-		var ok bool
-		c.world, ok = object.FindInParents[*World](c)
-		if ok {
+		if c.world = object.GetInParents[*World](c); c.world != nil {
 			c.world.AddCharacter(c)
 		} else {
 			return
 		}
 	} else {
 		// detach from world if required
-		world, _ := object.FindInParents[*World](c)
+		world := object.GetInParents[*World](c)
 		if world != c.world {
 			c.world.RemoveCharacter(c)
 			c.world = nil

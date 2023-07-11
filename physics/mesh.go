@@ -88,8 +88,7 @@ func (m *Mesh) destroy() {
 }
 
 func (m *Mesh) OnActivate() {
-	mesh, ok := object.FindInSiblings[mesh.T](m)
-	if ok {
+	if mesh := object.Get[mesh.T](m); mesh != nil {
 		m.SetMeshData(mesh.Mesh())
 		log.Println("added mesh data from", m.Parent().Name())
 	} else {
@@ -98,8 +97,8 @@ func (m *Mesh) OnActivate() {
 }
 
 func (m *Mesh) OnMeshUpdate(mesh vertex.Mesh) {
+	// todo: OnCollisionMeshUpdate ?
+	// we might not want to use the actual mesh...
 	log.Println("physics mesh: mesh update")
 	m.SetMeshData(mesh)
-
-	// todo: recreate/update the rigidbody
 }

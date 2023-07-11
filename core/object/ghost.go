@@ -15,6 +15,7 @@ func Ghost(object T) G {
 				name:    "Ghost:" + object.Name(),
 				enabled: true,
 			},
+			transform: transform.Identity(),
 		},
 		target: object,
 	}

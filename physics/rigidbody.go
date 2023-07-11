@@ -61,7 +61,7 @@ func (b *RigidBody) Update(scene object.T, dt float32) {
 		b.create()
 	} else {
 		// detach from world if required
-		world, _ := object.FindInParents[*World](b)
+		world := object.GetInParents[*World](b)
 		if world != b.world {
 			b.world.removeRigidBody(b)
 			b.world = nil
@@ -109,10 +109,9 @@ func (b *RigidBody) OnDetach(obj object.T) {
 }
 
 func (b *RigidBody) create() {
-	var ok bool
 	if b.Shape == nil {
-		b.Shape, ok = object.FindInSiblings[Shape](b)
-		if !ok {
+		b.Shape = object.Get[Shape](b)
+		if b.Shape == nil {
 			log.Println("rigidbody", b.Parent().Name(), ": no shape")
 			return
 		}
@@ -130,8 +129,8 @@ func (b *RigidBody) create() {
 	}
 
 	if b.world == nil {
-		b.world, ok = object.FindInParents[*World](b)
-		if ok {
+		b.world = object.GetInParents[*World](b)
+		if b.world != nil {
 			b.world.addRigidBody(b)
 			log.Println("rigidbody", b, ": added to world", b.world.Parent().Name(), "at", b.Transform().WorldPosition())
 		}

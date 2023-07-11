@@ -39,10 +39,6 @@ func Attach(parent G, child T) {
 	Detach(child)
 	child.setParent(parent)
 	parent.attach(child)
-
-	if handler, ok := child.(ActivateHandler); ok {
-		handler.OnActivate()
-	}
 }
 
 // Detach an object from its parent object
@@ -63,80 +59,151 @@ func Root(obj T) T {
 	return obj
 }
 
-// TODO: The Find functions should be rewritten as Queries.
-
-// FindInParents finds the first object that implements the given interface
-// in the root object or one of its ancestors.
-func FindInParents[K T](root T) (K, bool) {
-	if k, ok := root.(K); ok {
-		return k, true
+// Gets a reference to a component of type K in the same group as the object specified.
+func Get[K T](self T) K {
+	var empty K
+	group, ok := self.(G)
+	if !ok {
+		group = self.Parent()
 	}
-
-	// consider components of direct ancestors
-	for _, child := range Children(root) {
-		if _, group := child.(G); group {
+	if group == nil {
+		return empty
+	}
+	for _, child := range group.Children() {
+		if child == self {
 			continue
 		}
-		if k, ok := child.(K); ok {
-			return k, true
+		if hit, ok := child.(K); ok {
+			return hit
 		}
 	}
-
-	if root.Parent() != nil {
-		return FindInParents[K](root.Parent())
-	}
-	var empty K
-	return empty, false
+	return empty
 }
 
-// FindInChildren finds the first object that implements the given interface
-// in the root object or one of its decendants.
-func FindInChildren[K T](root T) (K, bool) {
-	if k, ok := root.(K); ok {
-		return k, true
+// Gets references to all components of type K in the same group as the object specified.
+func GetAll[K T](self T) []K {
+	group, ok := self.(G)
+	if !ok {
+		group = self.Parent()
 	}
-	if group, ok := root.(G); ok {
-		// todo: rewrite as breadth-first
+	if group == nil {
+		return nil
+	}
+	var results []K
+	for _, child := range group.Children() {
+		if hit, ok := child.(K); ok {
+			results = append(results, hit)
+		}
+	}
+	return results
+}
+
+// Gets a reference to a component of type K in the same group as the component specified, or any parent of the group.
+func GetInParents[K T](self T) K {
+	var empty K
+	group, ok := self.(G)
+	if !ok {
+		group = self.Parent()
+	}
+
+	for group != nil {
 		for _, child := range group.Children() {
-			if hit, ok := FindInChildren[K](child); ok {
-				return hit, true
+			if child == self {
+				continue
+			}
+			if hit, ok := child.(K); ok {
+				return hit
+			}
+		}
+		group = group.Parent()
+	}
+
+	return empty
+}
+
+// Gets references to all components of type K in the same group as the object specified, or any parent of the group.
+func GetAllInParents[K T](self T) []K {
+	group, ok := self.(G)
+	if !ok {
+		group = self.Parent()
+	}
+	var results []K
+	for group != nil {
+		for _, child := range group.Children() {
+			if child == self {
+				continue
+			}
+			if hit, ok := child.(K); ok {
+				results = append(results, hit)
+			}
+		}
+		group = group.Parent()
+	}
+	return results
+}
+
+// Gets a reference to a component of type K in the same group as the object specified, or any child of the group.
+func GetInChildren[K T](self T) K {
+	var empty K
+	group, ok := self.(G)
+	if !ok {
+		group = self.Parent()
+	}
+	if group == nil {
+		return empty
+	}
+
+	todo := []G{group}
+
+	for len(todo) > 0 {
+		group = todo[0]
+		todo = todo[1:]
+
+		for _, child := range group.Children() {
+			if child == self {
+				continue
+			}
+			if hit, ok := child.(K); ok {
+				return hit
+			}
+			if childgroup, ok := child.(G); ok {
+				todo = append(todo, childgroup)
 			}
 		}
 	}
-	var empty K
-	return empty, false
+
+	return empty
 }
 
-// FindInSiblings finds the first object that implements the given interface
-// in the siblings of the given node.
-func FindInSiblings[K T](self T) (K, bool) {
-	var empty K
-	if self.Parent() == nil {
-		return empty, false
+// Gets references to all components of type K in the same group as the object specified, or any child of the group.
+func GetAllInChildren[K T](self T) []K {
+	group, ok := self.(G)
+	if !ok {
+		group = self.Parent()
+	}
+	if group == nil {
+		return nil
 	}
 
-	for _, child := range self.Parent().Children() {
-		if child == self {
-			continue
-		}
-		if hit, ok := child.(K); ok {
-			return hit, true
+	todo := []G{group}
+	var results []K
+
+	for len(todo) > 0 {
+		group = todo[0]
+		todo = todo[1:]
+
+		for _, child := range group.Children() {
+			if child == self {
+				continue
+			}
+			if hit, ok := child.(K); ok {
+				results = append(results, hit)
+			}
+			if childgroup, ok := child.(G); ok {
+				todo = append(todo, childgroup)
+			}
 		}
 	}
 
-	return empty, false
-}
-
-func FindAllInSiblings[K T](self T, callback func(K)) {
-	if self.Parent() == nil {
-		return
-	}
-	for _, child := range self.Parent().Children() {
-		if child == self {
-			continue
-		}
-		if hit, ok := child.(K); ok {
-			callback(hit)
-		}
-	}
+	return results
 }

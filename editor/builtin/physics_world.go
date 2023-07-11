@@ -29,6 +29,5 @@ func (e *WorldEditor) Actions() []editor.Action {
 }
 
 func (e *WorldEditor) Update(scene object.T, dt float32) {
-	e.target.Update(scene, dt)
 	e.target.DebugDraw()
 }

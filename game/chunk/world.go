@@ -45,8 +45,8 @@ func (c *World) Update(scene object.T, dt float32) {
 
 	// find the active camera
 	root := object.Root(scene)
-	cam, exists := object.FindInChildren[*camera.T](root)
-	if !exists {
+	cam := object.GetInChildren[*camera.T](root)
+	if cam == nil {
 		return
 	}
 
