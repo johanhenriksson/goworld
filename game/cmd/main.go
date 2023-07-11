@@ -43,8 +43,7 @@ func main() {
 			for x := 0; x < 3; x++ {
 				for z := 0; z < 3; z++ {
 					chonk := chunk.Generate(boxgen, 1, 100*x, 100*z)
-					object.Builder(object.Empty("Box")).
-						Attach(physics.NewRigidBody(5)).
+					object.Builder(physics.NewRigidBody("Box", 5)).
 						Attach(physics.NewBox(vec3.New(0.5, 0.5, 0.5))).
 						Position(vec3.New(20+3*float32(x), 30, 15+3*float32(z))).
 						Attach(object.Builder(object.Empty("ChunkMesh")).
@@ -66,8 +65,7 @@ func main() {
 			tileMesh := terrain.NewMesh(tile)
 
 			meshShape := physics.NewMesh()
-			object.Builder(object.Empty("Terrain")).
-				Attach(physics.NewRigidBody(0)).
+			object.Builder(physics.NewRigidBody("Terrain", 0)).
 				Position(vec3.New(0, 10, 0)).
 				Attach(tileMesh).
 				Attach(meshShape).

@@ -97,6 +97,10 @@ func (b *Box) String() string {
 	return fmt.Sprintf("Box[Size=%s]", b.size)
 }
 
+func (b *Box) Size() vec3.T {
+	return b.size
+}
+
 //
 // Capsule shape
 //

@@ -36,6 +36,9 @@ type T interface {
 
 	WorldPosition() vec3.T
 	SetWorldPosition(vec3.T)
+
+	WorldRotation() quat.T
+	SetWorldRotation(quat.T)
 }
 
 // Transform represents a 3D transformation
@@ -149,8 +152,20 @@ func (t *transform) WorldPosition() vec3.T {
 }
 
 func (t *transform) SetWorldPosition(wp vec3.T) {
+	// todo: incorrect, fix me
 	offset := t.Unproject(wp)
 	t.SetPosition(t.position.Add(offset))
+	t.dirty = true
+}
+
+func (t *transform) WorldRotation() quat.T {
+	// todo: implement me
+	return t.rotation
+}
+
+func (t *transform) SetWorldRotation(rot quat.T) {
+	// todo: implement me
+	t.rotation = rot
 	t.dirty = true
 }
 

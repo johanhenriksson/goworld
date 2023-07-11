@@ -14,12 +14,14 @@ import (
 	"unsafe"
 
 	"github.com/johanhenriksson/goworld/core/object"
+	"github.com/johanhenriksson/goworld/core/transform"
 	"github.com/johanhenriksson/goworld/math/quat"
 	"github.com/johanhenriksson/goworld/math/vec3"
 )
 
 type RigidBody struct {
-	object.T
+	object.G
+	transform *Transform
 
 	world  *World
 	handle C.goRigidBodyHandle
@@ -34,9 +36,10 @@ type rigidbodyState struct {
 	mass     float32
 }
 
-func NewRigidBody(mass float32) *RigidBody {
-	body := object.New(&RigidBody{
-		mass: mass,
+func NewRigidBody(name string, mass float32) *RigidBody {
+	body := object.Group(name, &RigidBody{
+		mass:      mass,
+		transform: identity(),
 	})
 	runtime.SetFinalizer(body, func(b *RigidBody) {
 		b.destroy()
@@ -50,12 +53,12 @@ func (b *RigidBody) fetchState() {
 	}
 	state := rigidbodyState{}
 	C.goRigidBodyGetState(b.handle, (*C.goRigidBodyState)(unsafe.Pointer(&state)))
-	b.Transform().SetPosition(state.position)
-	b.Transform().SetRotation(state.rotation)
+	b.Transform().SetWorldPosition(state.position)
+	b.Transform().SetWorldRotation(state.rotation)
 }
 
 func (b *RigidBody) Update(scene object.T, dt float32) {
-	b.T.Update(scene, dt)
+	b.G.Update(scene, dt)
 
 	if b.world == nil {
 		b.create()
@@ -63,16 +66,18 @@ func (b *RigidBody) Update(scene object.T, dt float32) {
 		// detach from world if required
 		world := object.GetInParents[*World](b)
 		if world != b.world {
+			log.Println("remove rigidbody", b.Parent().Name(), "from world", world.Parent().Name())
 			b.world.removeRigidBody(b)
 			b.world = nil
 		}
 	}
 
 	if b.handle != nil {
-		// todo: world rotation
+		// rigidbodies can only be attached to floating objects
+		// thus, we dont need to use WorldPosition/WorldRotation
 		state := rigidbodyState{
 			position: b.Transform().WorldPosition(),
-			rotation: b.Transform().Rotation(),
+			rotation: b.Transform().WorldRotation(),
 		}
 		C.goRigidBodySetState(b.handle, (*C.goRigidBodyState)(unsafe.Pointer(&state)))
 	}
@@ -132,7 +137,7 @@ func (b *RigidBody) create() {
 		b.world = object.GetInParents[*World](b)
 		if b.world != nil {
 			b.world.addRigidBody(b)
-			log.Println("rigidbody", b, ": added to world", b.world.Parent().Name(), "at", b.Transform().WorldPosition())
+			log.Println("rigidbody", b.Parent().Name(), ": added to world", b.world.Parent().Name(), "at", b.Transform().WorldPosition())
 		}
 	}
 }
@@ -143,4 +148,9 @@ func (b *RigidBody) destroy() {
 		C.goDeleteRigidBody(b.handle)
 		b.handle = nil
 	}
+}
+
+func (b *RigidBody) Transform() transform.T {
+	b.transform.Recalculate(nil)
+	return b.transform
 }

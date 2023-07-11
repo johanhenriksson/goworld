@@ -39,6 +39,10 @@ func Attach(parent G, child T) {
 	Detach(child)
 	child.setParent(parent)
 	parent.attach(child)
+
+	if handler, ok := child.(ActivateHandler); ok {
+		handler.OnActivate()
+	}
 }
 
 // Detach an object from its parent object
