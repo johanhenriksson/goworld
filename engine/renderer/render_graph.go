@@ -15,7 +15,7 @@ import (
 )
 
 type T interface {
-	Draw(scene object.G, time, delta float32)
+	Draw(scene object.Object, time, delta float32)
 	GBuffer() pass.GeometryBuffer
 	Recreate()
 	Screenshot()

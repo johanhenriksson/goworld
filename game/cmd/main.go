@@ -29,7 +29,7 @@ func main() {
 		Height: 1200,
 		Title:  "goworld",
 	},
-		editor.Scene(func(r renderer.T, scene object.G) {
+		editor.Scene(func(r renderer.T, scene object.Object) {
 			world := physics.NewWorld()
 			world.Debug(true)
 			object.Attach(scene, world)

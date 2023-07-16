@@ -13,14 +13,14 @@ import (
 )
 
 type PlaceTool struct {
-	object.G
+	object.Object
 	Box *box.T
 }
 
 var _ editor.Tool = &PlaceTool{}
 
 func NewPlaceTool() *PlaceTool {
-	return object.Group("Place Tool", &PlaceTool{
+	return object.New("Place Tool", &PlaceTool{
 		Box: box.New(box.Args{
 			Size:  vec3.One,
 			Color: color.Blue,

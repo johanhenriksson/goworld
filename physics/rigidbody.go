@@ -20,7 +20,7 @@ import (
 )
 
 type RigidBody struct {
-	object.G
+	object.Object
 	transform *Transform
 
 	world  *World
@@ -37,7 +37,7 @@ type rigidbodyState struct {
 }
 
 func NewRigidBody(name string, mass float32) *RigidBody {
-	body := object.Group(name, &RigidBody{
+	body := object.New(name, &RigidBody{
 		mass:      mass,
 		transform: identity(),
 	})
@@ -58,7 +58,7 @@ func (b *RigidBody) fetchState() {
 }
 
 func (b *RigidBody) Update(scene object.Component, dt float32) {
-	b.G.Update(scene, dt)
+	b.Object.Update(scene, dt)
 
 	if b.world == nil {
 		b.create()

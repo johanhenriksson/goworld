@@ -14,7 +14,7 @@ import (
 )
 
 type World struct {
-	object.G
+	object.Object
 	size      int
 	distance  float32
 	generator Generator
@@ -26,7 +26,7 @@ type World struct {
 
 // Builds a world of chunks around the active camera as it moves around
 func NewWorld(size int, generator Generator, distance float32) *World {
-	return object.Group("World", &World{
+	return object.New("World", &World{
 		size:      size,
 		generator: generator,
 		distance:  distance,
@@ -41,7 +41,7 @@ func (c *World) Update(scene object.Component, dt float32) {
 	defer c.lock.Unlock()
 
 	// update chunks
-	c.G.Update(scene, dt)
+	c.Object.Update(scene, dt)
 
 	// find the active camera
 	root := object.Root(scene)

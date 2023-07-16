@@ -21,7 +21,7 @@ import (
 
 // Mover Gizmo can be used to reposition objects in the 3D scene.
 type Mover struct {
-	object.G
+	object.Object
 
 	target transform.T
 
@@ -73,14 +73,14 @@ func NewMover() *Mover {
 		DepthWrite:   true,
 	}
 
-	g := object.Group("Mover Gizmo", &Mover{
+	g := object.New("Mover Gizmo", &Mover{
 		size:        0.12,
 		sensitivity: 6,
 		hoverScale:  vec3.New(1.2, 1.2, 1.2),
 
 		// X Arrow Cone
 		X: object.Builder(
-			cone.Group(cone.Args{
+			cone.Object(cone.Args{
 				Mat:      mat,
 				Radius:   radius,
 				Height:   height,
@@ -96,7 +96,7 @@ func NewMover() *Mover {
 			Create(),
 
 		// X Arrow Body
-		Xb: object.Builder(cylinder.Group(cylinder.Args{
+		Xb: object.Builder(cylinder.Object(cylinder.Args{
 			Mat:      mat,
 			Radius:   bodyRadius,
 			Height:   1,
@@ -112,7 +112,7 @@ func NewMover() *Mover {
 			Create(),
 
 		// Y Arrow Cone
-		Y: object.Builder(cone.Group(cone.Args{
+		Y: object.Builder(cone.Object(cone.Args{
 			Mat:      mat,
 			Radius:   radius,
 			Height:   height,
@@ -127,7 +127,7 @@ func NewMover() *Mover {
 			Create(),
 
 		// Y Arrow body
-		Yb: object.Builder(cylinder.Group(cylinder.Args{
+		Yb: object.Builder(cylinder.Object(cylinder.Args{
 			Mat:      mat,
 			Radius:   bodyRadius,
 			Height:   1,
@@ -142,7 +142,7 @@ func NewMover() *Mover {
 			Create(),
 
 		// Z Arrow Cone
-		Z: object.Builder(cone.Group(cone.Args{
+		Z: object.Builder(cone.Object(cone.Args{
 			Mat:      mat,
 			Radius:   radius,
 			Height:   height,
@@ -158,7 +158,7 @@ func NewMover() *Mover {
 			Create(),
 
 		// Z Arrow Body
-		Zb: object.Builder(cylinder.Group(cylinder.Args{
+		Zb: object.Builder(cylinder.Object(cylinder.Args{
 			Mat:      mat,
 			Radius:   bodyRadius,
 			Height:   1,
@@ -174,7 +174,7 @@ func NewMover() *Mover {
 			Create(),
 
 		// XY Plane
-		XY: object.Builder(plane.Group(plane.Args{
+		XY: object.Builder(plane.Object(plane.Args{
 			Mat:   mat,
 			Size:  side,
 			Color: color.Blue.WithAlpha(planeAlpha),
@@ -184,7 +184,7 @@ func NewMover() *Mover {
 			Create(),
 
 		// XZ Plane
-		XZ: object.Builder(plane.Group(plane.Args{
+		XZ: object.Builder(plane.Object(plane.Args{
 			Mat:   mat,
 			Size:  side,
 			Color: color.Green.WithAlpha(planeAlpha),
@@ -194,7 +194,7 @@ func NewMover() *Mover {
 			Create(),
 
 		// YZ Plane
-		YZ: object.Builder(plane.Group(plane.Args{
+		YZ: object.Builder(plane.Object(plane.Args{
 			Mat:   mat,
 			Size:  side,
 			Color: color.Red.WithAlpha(planeAlpha),
@@ -323,7 +323,7 @@ func (g *Mover) Hover(hovering bool, collider collider.T) {
 	}
 }
 
-func (g *Mover) PreDraw(args render.Args, scene object.G) error {
+func (g *Mover) PreDraw(args render.Args, scene object.Object) error {
 	g.eye = args.Position
 	g.proj = args.Projection
 	g.vp = args.VP
@@ -332,7 +332,7 @@ func (g *Mover) PreDraw(args render.Args, scene object.G) error {
 }
 
 func (g *Mover) Update(scene object.Component, dt float32) {
-	g.G.Update(scene, dt)
+	g.Object.Update(scene, dt)
 
 	// the gizmo should be displayed at the same size irrespectively of its distance to the camera.
 	// we can undo the effects of perspective projection by measuring how much a vector would be "squeezed"

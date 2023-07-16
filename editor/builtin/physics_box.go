@@ -11,7 +11,7 @@ func init() {
 }
 
 type BoxEditor struct {
-	object.G
+	object.Object
 	target *physics.Box
 
 	Shape physics.Shape
@@ -22,7 +22,7 @@ func NewBoxEditor(ctx *editor.Context, box *physics.Box) *BoxEditor {
 	body := physics.NewRigidBody("Collider", 0)
 	body.Shape = physics.NewBox(box.Size())
 
-	return object.Group("BoxEditor", &BoxEditor{
+	return object.New("BoxEditor", &BoxEditor{
 		target: box,
 		Body:   body,
 		Shape:  body.Shape,

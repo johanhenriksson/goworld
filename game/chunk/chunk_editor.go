@@ -34,7 +34,7 @@ type Editor interface {
 
 // Editor base struct
 type edit struct {
-	object.G
+	object.Object
 	*editor.Context
 
 	// editor target
@@ -69,7 +69,7 @@ func NewEditor(ctx *editor.Context, mesh *Mesh) Editor {
 	dimensions := vec3.NewI(chk.Sx, chk.Sy, chk.Sz)
 	center := dimensions.Scaled(0.5)
 
-	e := object.Group("ChunkEditor", &edit{
+	e := object.New("ChunkEditor", &edit{
 		Context: ctx,
 		mesh:    mesh,
 		Chunk:   chk,
@@ -99,7 +99,7 @@ func NewEditor(ctx *editor.Context, mesh *Mesh) Editor {
 		}),
 
 		// X Construction Plane
-		XPlane: object.Builder(plane.Group(plane.Args{
+		XPlane: object.Builder(plane.Object(plane.Args{
 			Size:  float32(chk.Sx),
 			Color: color.Red.WithAlpha(0.25),
 		})).
@@ -109,7 +109,7 @@ func NewEditor(ctx *editor.Context, mesh *Mesh) Editor {
 			Create(),
 
 		// Y Construction Plane
-		YPlane: object.Builder(plane.Group(plane.Args{
+		YPlane: object.Builder(plane.Object(plane.Args{
 			Size:  float32(chk.Sy),
 			Color: color.Green.WithAlpha(0.25),
 		})).
@@ -118,7 +118,7 @@ func NewEditor(ctx *editor.Context, mesh *Mesh) Editor {
 			Create(),
 
 		// Z Construction Plane
-		ZPlane: object.Builder(plane.Group(plane.Args{
+		ZPlane: object.Builder(plane.Object(plane.Args{
 			Size:  float32(chk.Sz),
 			Color: color.Blue.WithAlpha(0.25),
 		})).
@@ -139,7 +139,7 @@ func (e *edit) Name() string {
 }
 
 func (e *edit) Update(scene object.Component, dt float32) {
-	e.G.Update(scene, dt)
+	e.Object.Update(scene, dt)
 	e.mesh.Update(scene, dt)
 }
 

@@ -10,7 +10,7 @@ import (
 	"github.com/johanhenriksson/goworld/render/vulkan"
 )
 
-type SceneFunc func(renderer.T, object.G)
+type SceneFunc func(renderer.T, object.Object)
 type RendererFunc func(vulkan.App) renderer.T
 
 type Args struct {

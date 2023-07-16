@@ -10,7 +10,7 @@ import (
 )
 
 type SampleTool struct {
-	object.G
+	object.Object
 	Box *box.T
 
 	Reselect func()
@@ -19,7 +19,7 @@ type SampleTool struct {
 var _ editor.Tool = &SampleTool{}
 
 func NewSampleTool() *SampleTool {
-	return object.Group("Sample Tool", &SampleTool{
+	return object.New("Sample Tool", &SampleTool{
 		Box: box.New(box.Args{
 			Size:  vec3.One,
 			Color: color.Purple,

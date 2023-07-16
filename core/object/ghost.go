@@ -7,7 +7,7 @@ type ghost struct {
 	target Component
 }
 
-func Ghost(object Component) G {
+func Ghost(object Component) Object {
 	return &ghost{
 		group: group{
 			base: base{

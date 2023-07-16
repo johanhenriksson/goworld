@@ -11,13 +11,13 @@ type DeactivateHandler interface {
 }
 
 type AttachHandler interface {
-	G
+	Object
 	// OnAttach is called when a component or child is attached to the group
 	OnAttach(Component)
 }
 
 type DetachHandler interface {
-	G
+	Object
 	// OnDetach is called when a component or child is detached from the group
 	OnDetach(Component)
 }
@@ -25,13 +25,13 @@ type DetachHandler interface {
 type AttachedHandler interface {
 	Component
 	// OnAttached is called when the component or group is attached to a parent group
-	OnAttached(G)
+	OnAttached(Object)
 }
 
 type DetachedHandler interface {
 	Component
 	// OnDetached is called when the component or group is detached from a parent group
-	OnDetached(G)
+	OnDetached(Object)
 }
 
 type ChildEventHandler interface {
@@ -42,8 +42,8 @@ type ChildEventHandler interface {
 
 type ParentEventHandler interface {
 	Component
-	OnAttachTo(G)
-	OnDetachFrom(G)
+	OnAttachTo(Object)
+	OnDetachFrom(Object)
 }
 
 type SiblingEventHandler interface {

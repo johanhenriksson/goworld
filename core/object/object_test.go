@@ -11,7 +11,7 @@ import (
 )
 
 type A struct {
-	object.G
+	object.Object
 	B *B
 }
 
@@ -24,7 +24,7 @@ func NewB() *B {
 }
 
 func NewA() *A {
-	return object.Group("a", &A{
+	return object.New("a", &A{
 		B: NewB(),
 	})
 }

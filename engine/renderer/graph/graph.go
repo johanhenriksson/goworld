@@ -14,7 +14,7 @@ type NodeFunc func(T)
 type T interface {
 	Node(pass NodePass) Node
 	Recreate()
-	Draw(scene object.G, time, delta float32)
+	Draw(scene object.Object, time, delta float32)
 	Destroy()
 }
 
@@ -67,7 +67,7 @@ func (g *graph) connect() {
 	}
 }
 
-func (g *graph) Draw(scene object.G, time, delta float32) {
+func (g *graph) Draw(scene object.Object, time, delta float32) {
 	// put all nodes in a todo list
 	// for each node in todo list
 	//   if all Before nodes are not in todo list
