@@ -23,7 +23,7 @@ func Group(args Args) *Cylinder {
 
 // A Cylinder is a forward rendered colored cyllinder mesh
 type Mesh struct {
-	mesh.T
+	mesh.Component
 	Args
 }
 
@@ -36,9 +36,9 @@ type Args struct {
 }
 
 func New(args Args) *Mesh {
-	cyllinder := object.New(&Mesh{
-		T:    mesh.New(mesh.Forward, args.Mat),
-		Args: args,
+	cyllinder := object.NewComponent(&Mesh{
+		Component: mesh.New(mesh.Forward, args.Mat),
+		Args:      args,
 	})
 	// this should not run on the main thread
 	cyllinder.generate()

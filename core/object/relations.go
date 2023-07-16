@@ -1,7 +1,7 @@
 package object
 
 // Returns all the children of an objects, both components and subgroups
-func Children(object T) []T {
+func Children(object Component) []Component {
 	if group, ok := object.(G); ok {
 		return group.Children()
 	}
@@ -9,7 +9,7 @@ func Children(object T) []T {
 }
 
 // Returns the subgroups attached to an object
-func Subgroups(object T) []G {
+func Subgroups(object Component) []G {
 	children := Children(object)
 	groups := make([]G, 0, len(children))
 	for _, child := range children {
@@ -21,9 +21,9 @@ func Subgroups(object T) []G {
 }
 
 // Returns the components attached to an object
-func Components(object T) []T {
+func Components(object Component) []Component {
 	children := Children(object)
-	components := make([]T, 0, len(children))
+	components := make([]Component, 0, len(children))
 	for _, child := range children {
 		_, group := child.(G)
 		if !group {
@@ -35,7 +35,7 @@ func Components(object T) []T {
 
 // Attach an object to a parent object
 // If the object already has a parent, it will be detached first.
-func Attach(parent G, child T) {
+func Attach(parent G, child Component) {
 	Detach(child)
 	child.setParent(parent)
 	parent.attach(child)
@@ -47,7 +47,7 @@ func Attach(parent G, child T) {
 
 // Detach an object from its parent object
 // Does nothing if the given object has no parent.
-func Detach(child T) {
+func Detach(child Component) {
 	if child.Parent() == nil {
 		return
 	}
@@ -56,7 +56,7 @@ func Detach(child T) {
 }
 
 // Root returns the first ancestor of the given object
-func Root(obj T) T {
+func Root(obj Component) Component {
 	for obj.Parent() != nil {
 		obj = obj.Parent()
 	}
@@ -64,7 +64,7 @@ func Root(obj T) T {
 }
 
 // Gets a reference to a component of type K in the same group as the object specified.
-func Get[K T](self T) K {
+func Get[K Component](self Component) K {
 	var empty K
 	group, ok := self.(G)
 	if !ok {
@@ -85,7 +85,7 @@ func Get[K T](self T) K {
 }
 
 // Gets references to all components of type K in the same group as the object specified.
-func GetAll[K T](self T) []K {
+func GetAll[K Component](self Component) []K {
 	group, ok := self.(G)
 	if !ok {
 		group = self.Parent()
@@ -103,7 +103,7 @@ func GetAll[K T](self T) []K {
 }
 
 // Gets a reference to a component of type K in the same group as the component specified, or any parent of the group.
-func GetInParents[K T](self T) K {
+func GetInParents[K Component](self Component) K {
 	var empty K
 	group, ok := self.(G)
 	if !ok {
@@ -126,7 +126,7 @@ func GetInParents[K T](self T) K {
 }
 
 // Gets references to all components of type K in the same group as the object specified, or any parent of the group.
-func GetAllInParents[K T](self T) []K {
+func GetAllInParents[K Component](self Component) []K {
 	group, ok := self.(G)
 	if !ok {
 		group = self.Parent()
@@ -147,7 +147,7 @@ func GetAllInParents[K T](self T) []K {
 }
 
 // Gets a reference to a component of type K in the same group as the object specified, or any child of the group.
-func GetInChildren[K T](self T) K {
+func GetInChildren[K Component](self Component) K {
 	var empty K
 	group, ok := self.(G)
 	if !ok {
@@ -180,7 +180,7 @@ func GetInChildren[K T](self T) K {
 }
 
 // Gets references to all components of type K in the same group as the object specified, or any child of the group.
-func GetAllInChildren[K T](self T) []K {
+func GetAllInChildren[K Component](self Component) []K {
 	group, ok := self.(G)
 	if !ok {
 		group = self.Parent()

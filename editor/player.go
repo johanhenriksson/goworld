@@ -53,7 +53,7 @@ func (p *Player) KeyEvent(e keys.Event) {
 	p.keys.KeyEvent(e)
 }
 
-func (p *Player) Update(scene object.T, dt float32) {
+func (p *Player) Update(scene object.Component, dt float32) {
 	move := vec3.Zero
 	moving := false
 	if p.keys.Down(keys.W) && p.keys.Up(keys.S) {

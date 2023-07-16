@@ -9,6 +9,6 @@ import (
 // a callback if a sibling Mesh updates its mesh data.
 // This allows other components to react to changing meshes.
 type UpdateHandler interface {
-	object.T
+	object.Component
 	OnMeshUpdate(vertex.Mesh)
 }

@@ -11,20 +11,20 @@ import (
 )
 
 type G interface {
-	T
+	Component
 	input.Handler
 
 	// Children returns a slice containing the objects children.
-	Children() []T
+	Children() []Component
 
-	attach(...T)
-	detach(T)
+	attach(...Component)
+	detach(Component)
 }
 
 type group struct {
 	base
 	transform transform.T
-	children  []T
+	children  []Component
 }
 
 // Empty creates a new, empty object.
@@ -69,7 +69,7 @@ func Group[K G](name string, obj K) K {
 		if !field.IsExported() {
 			continue
 		}
-		if child, ok := v.Field(i).Interface().(T); ok {
+		if child, ok := v.Field(i).Interface().(Component); ok {
 			if reflect.ValueOf(child) == reflect.Zero(field.Type) {
 				log.Println(t.Name(), " child ", field.Name, " is nil")
 				continue
@@ -94,7 +94,7 @@ func (g *group) Transform() transform.T {
 	return g.transform
 }
 
-func (g *group) Update(scene T, dt float32) {
+func (g *group) Update(scene Component, dt float32) {
 	for _, child := range g.children {
 		if child.Active() {
 			child.Update(scene, dt)
@@ -102,17 +102,17 @@ func (g *group) Update(scene T, dt float32) {
 	}
 }
 
-func (g *group) Children() []T {
+func (g *group) Children() []Component {
 	return g.children
 }
 
-func (g *group) attach(children ...T) {
+func (g *group) attach(children ...Component) {
 	for _, child := range children {
 		g.attachIfNotChild(child)
 	}
 }
 
-func (g *group) attachIfNotChild(child T) {
+func (g *group) attachIfNotChild(child Component) {
 	for _, existing := range g.children {
 		if existing.ID() == child.ID() {
 			return
@@ -121,7 +121,7 @@ func (g *group) attachIfNotChild(child T) {
 	g.children = append(g.children, child)
 }
 
-func (g *group) detach(child T) {
+func (g *group) detach(child Component) {
 	for i, existing := range g.children {
 		if existing.ID() == child.ID() {
 			g.children = append(g.children[:i], g.children[i+1:]...)
@@ -161,7 +161,7 @@ func (g *group) MouseEvent(e mouse.Event) {
 func (o *group) Destroy() {
 	// iterate over a copy of the child slice, since it will be mutated
 	// when the child detaches itself during destruction
-	children := make([]T, len(o.Children()))
+	children := make([]Component, len(o.Children()))
 	copy(children, o.Children()[:])
 
 	for _, child := range o.Children() {

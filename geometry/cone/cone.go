@@ -23,7 +23,7 @@ func Group(args Args) *Cone {
 
 // A Cone is a forward rendered colored cone mesh
 type Mesh struct {
-	mesh.T
+	mesh.Component
 	Args
 }
 
@@ -36,9 +36,9 @@ type Args struct {
 }
 
 func New(args Args) *Mesh {
-	cone := object.New(&Mesh{
-		T:    mesh.New(mesh.Forward, args.Mat),
-		Args: args,
+	cone := object.NewComponent(&Mesh{
+		Component: mesh.New(mesh.Forward, args.Mat),
+		Args:      args,
 	})
 	cone.generate()
 	return cone

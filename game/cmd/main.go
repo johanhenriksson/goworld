@@ -84,7 +84,7 @@ func main() {
 						Cascades:  4,
 					})).
 					Position(vec3.New(1, 2, 3)).
-					Attach(script.New(func(scene, self object.T, dt float32) {
+					Attach(script.New(func(scene, self object.Component, dt float32) {
 						rot -= dt
 						self.Parent().Transform().SetRotation(quat.Euler(rot, 0, 0))
 					})).

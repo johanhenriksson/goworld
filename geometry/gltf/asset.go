@@ -14,7 +14,7 @@ import (
 	"github.com/qmuntal/gltf"
 )
 
-func Load(path string) object.T {
+func Load(path string) object.Component {
 	assetPath := fmt.Sprintf("assets/%s", path)
 	doc, _ := gltf.Open(assetPath)
 
@@ -24,7 +24,7 @@ func Load(path string) object.T {
 	return loadScene(doc, scene)
 }
 
-func loadScene(doc *gltf.Document, scene *gltf.Scene) object.T {
+func loadScene(doc *gltf.Document, scene *gltf.Scene) object.Component {
 	root := object.Empty(scene.Name)
 
 	for _, nodeId := range scene.Nodes {
@@ -38,7 +38,7 @@ func loadScene(doc *gltf.Document, scene *gltf.Scene) object.T {
 	return root
 }
 
-func loadNode(doc *gltf.Document, node *gltf.Node) object.T {
+func loadNode(doc *gltf.Document, node *gltf.Node) object.Component {
 	obj := object.Empty(node.Name)
 
 	// mesh components
@@ -63,7 +63,7 @@ func loadNode(doc *gltf.Document, node *gltf.Node) object.T {
 	return obj
 }
 
-func loadPrimitive(doc *gltf.Document, name string, primitive *gltf.Primitive) mesh.T {
+func loadPrimitive(doc *gltf.Document, name string, primitive *gltf.Primitive) mesh.Component {
 	kind := mapPrimitiveType(primitive.Mode)
 
 	// create interleaved buffers

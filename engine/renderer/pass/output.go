@@ -111,7 +111,7 @@ func NewOutputPass(app vulkan.App, source RenderTarget) *OutputPass {
 	return p
 }
 
-func (p *OutputPass) Record(cmds command.Recorder, args render.Args, scene object.T) {
+func (p *OutputPass) Record(cmds command.Recorder, args render.Args, scene object.Component) {
 	ctx := args.Context
 	quad := p.app.Meshes().Fetch(p.quad)
 

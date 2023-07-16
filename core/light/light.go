@@ -9,7 +9,7 @@ import (
 )
 
 type T interface {
-	object.T
+	object.Component
 
 	Type() Type
 	Shadows() bool

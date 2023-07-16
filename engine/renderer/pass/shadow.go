@@ -37,7 +37,7 @@ type shadowpass struct {
 	shadowmaps map[light.T]Shadowmap
 
 	lightQuery *object.Query[light.T]
-	meshQuery  *object.Query[mesh.T]
+	meshQuery  *object.Query[mesh.Component]
 }
 
 type Shadowmap struct {
@@ -103,7 +103,7 @@ func NewShadowPass(app vulkan.App) Shadow {
 		shadowmaps: make(map[light.T]Shadowmap),
 		size:       2048,
 
-		meshQuery:  object.NewQuery[mesh.T](),
+		meshQuery:  object.NewQuery[mesh.Component](),
 		lightQuery: object.NewQuery[light.T](),
 	}
 }
@@ -161,7 +161,7 @@ func (p *shadowpass) createShadowmap(light light.T) Shadowmap {
 	return shadowmap
 }
 
-func (p *shadowpass) Record(cmds command.Recorder, args render.Args, scene object.T) {
+func (p *shadowpass) Record(cmds command.Recorder, args render.Args, scene object.Component) {
 	lights := p.lightQuery.
 		Reset().
 		Where(func(lit light.T) bool { return lit.Type() == light.Directional && lit.Shadows() }).

@@ -12,8 +12,8 @@ import (
 	"github.com/johanhenriksson/goworld/render/vertex"
 )
 
-type T interface {
-	object.T
+type Component interface {
+	object.Component
 
 	Mesh() vertex.Mesh
 	SetMesh(vertex.Mesh)
@@ -30,7 +30,7 @@ type T interface {
 
 // mesh base
 type mesh struct {
-	object.T
+	object.Component
 
 	data  vertex.Mesh
 	mode  DrawMode
@@ -45,18 +45,18 @@ type mesh struct {
 }
 
 // New creates a new mesh component
-func New(mode DrawMode, mat *material.Def) T {
+func New(mode DrawMode, mat *material.Def) Component {
 	return NewPrimitiveMesh(vertex.Triangles, mode, mat)
 }
 
 // NewLines creates a new line mesh component
-func NewLines(mat *material.Def) T {
+func NewLines(mat *material.Def) Component {
 	return NewPrimitiveMesh(vertex.Lines, Lines, mat)
 }
 
 // NewPrimitiveMesh creates a new mesh composed of a given GL primitive
 func NewPrimitiveMesh(primitive vertex.Primitive, mode DrawMode, mat *material.Def) *mesh {
-	m := object.New(&mesh{
+	m := object.NewComponent(&mesh{
 		mode:     mode,
 		mat:      mat,
 		matId:    material.Hash(mat),

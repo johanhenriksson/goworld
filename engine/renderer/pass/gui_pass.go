@@ -40,7 +40,7 @@ type UIConfig struct {
 }
 
 type GuiDrawable interface {
-	object.T
+	object.Component
 	DrawUI(widget.DrawArgs, *widget.QuadBuffer)
 }
 
@@ -137,7 +137,7 @@ func NewGuiPass(app vulkan.App, target RenderTarget) *GuiPass {
 	}
 }
 
-func (p *GuiPass) Record(cmds command.Recorder, args render.Args, scene object.T) {
+func (p *GuiPass) Record(cmds command.Recorder, args render.Args, scene object.Component) {
 	mat := p.mat[args.Context.Index]
 
 	size := vec2.NewI(args.Viewport.Width, args.Viewport.Height)

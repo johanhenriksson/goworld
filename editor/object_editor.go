@@ -15,7 +15,7 @@ type ObjectEditor struct {
 	Bounds collider.T
 	Custom T
 
-	target object.T
+	target object.Component
 }
 
 type DefaultEditor struct {
@@ -25,7 +25,7 @@ type DefaultEditor struct {
 
 func (d *DefaultEditor) Actions() []Action { return nil }
 
-func NewObjectEditor(target object.T, bounds collider.Box, editor T) *ObjectEditor {
+func NewObjectEditor(target object.Component, bounds collider.Box, editor T) *ObjectEditor {
 	var boundsCol collider.T
 	if editor != nil {
 		boundsCol = collider.NewBox(bounds)
@@ -57,7 +57,7 @@ func NewObjectEditor(target object.T, bounds collider.Box, editor T) *ObjectEdit
 
 var _ Selectable = &ObjectEditor{}
 
-func (e *ObjectEditor) Update(scene object.T, dt float32) {
+func (e *ObjectEditor) Update(scene object.Component, dt float32) {
 	e.G.Update(scene, dt)
 	e.Custom.Update(scene, dt)
 }
@@ -72,7 +72,7 @@ func (e *ObjectEditor) Deselect(ev mouse.Event) bool {
 	return true
 }
 
-func (e *ObjectEditor) Target() object.T {
+func (e *ObjectEditor) Target() object.Component {
 	return e.target
 }
 

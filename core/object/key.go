@@ -5,7 +5,7 @@ import (
 	"strconv"
 )
 
-func Key(prefix string, object T) string {
+func Key(prefix string, object Component) string {
 	p := len(prefix)
 	buffer := make([]byte, p+1, p+9)
 	copy(buffer, []byte(prefix))

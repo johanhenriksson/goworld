@@ -14,7 +14,7 @@ import (
 // 3D components. Perhaps this should merge with the general Tool
 // interface?
 type Gizmo interface {
-	object.T
+	object.Component
 
 	DragStart(e mouse.Event, collider collider.T)
 	DragEnd(e mouse.Event)

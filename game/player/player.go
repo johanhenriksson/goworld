@@ -36,7 +36,7 @@ func (p *T) Name() string {
 	return "Player"
 }
 
-func (p *T) Update(scene object.T, dt float32) {
+func (p *T) Update(scene object.Component, dt float32) {
 	p.G.Update(scene, dt)
 
 	forward, right := float32(0), float32(0)

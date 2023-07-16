@@ -21,7 +21,7 @@ import (
 
 type Mesh struct {
 	shapeBase
-	object.T
+	object.Component
 	meshHandle C.goTriangleMeshHandle
 }
 
@@ -29,7 +29,7 @@ var _ Shape = &Mesh{}
 var _ mesh.UpdateHandler = &Mesh{}
 
 func NewMesh() *Mesh {
-	shape := object.New(&Mesh{
+	shape := object.NewComponent(&Mesh{
 		shapeBase: shapeBase{
 			kind: MeshShape,
 		},
@@ -88,7 +88,7 @@ func (m *Mesh) destroy() {
 }
 
 func (m *Mesh) OnActivate() {
-	if mesh := object.Get[mesh.T](m); mesh != nil {
+	if mesh := object.Get[mesh.Component](m); mesh != nil {
 		m.SetMeshData(mesh.Mesh())
 		log.Println("added mesh data from", m.Parent().Name())
 	} else {

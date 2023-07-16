@@ -20,7 +20,7 @@ type Object interface {
 }
 
 type World struct {
-	object.T
+	object.Component
 	handle C.goDynamicsWorldHandle
 	debug  bool
 
@@ -29,7 +29,7 @@ type World struct {
 
 func NewWorld() *World {
 	handle := C.goCreateDynamicsWorld()
-	world := object.New(&World{
+	world := object.NewComponent(&World{
 		handle: handle,
 	})
 	runtime.SetFinalizer(world, func(w *World) {
@@ -38,7 +38,7 @@ func NewWorld() *World {
 	return world
 }
 
-func (w *World) Update(scene object.T, dt float32) {
+func (w *World) Update(scene object.Component, dt float32) {
 	w.step(dt)
 }
 

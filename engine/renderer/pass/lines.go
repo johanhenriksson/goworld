@@ -23,7 +23,7 @@ type LinePass struct {
 	pass      renderpass.T
 	fbuf      framebuffer.Array
 	materials *MaterialSorter
-	meshQuery *object.Query[mesh.T]
+	meshQuery *object.Query[mesh.Component]
 }
 
 func NewLinePass(app vulkan.App, target RenderTarget) *LinePass {
@@ -74,11 +74,11 @@ func NewLinePass(app vulkan.App, target RenderTarget) *LinePass {
 				Primitive:    vertex.Lines,
 				DepthTest:    true,
 			}),
-		meshQuery: object.NewQuery[mesh.T](),
+		meshQuery: object.NewQuery[mesh.Component](),
 	}
 }
 
-func (p *LinePass) Record(cmds command.Recorder, args render.Args, scene object.T) {
+func (p *LinePass) Record(cmds command.Recorder, args render.Args, scene object.Component) {
 	cmds.Record(func(cmd command.Buffer) {
 		cmd.CmdBeginRenderPass(p.pass, p.fbuf[args.Context.Index])
 	})
@@ -92,7 +92,7 @@ func (p *LinePass) Record(cmds command.Recorder, args render.Args, scene object.
 	// debug lines
 	if lineShape.Debug.Count() > 0 {
 		lineShape.Debug.Refresh()
-		p.materials.Draw(cmds, args, []mesh.T{lineShape.Debug})
+		p.materials.Draw(cmds, args, []mesh.Component{lineShape.Debug})
 		lineShape.Debug.Clear()
 	}
 
@@ -111,6 +111,6 @@ func (p *LinePass) Destroy() {
 	p.materials.Destroy()
 }
 
-func isDrawLines(m mesh.T) bool {
+func isDrawLines(m mesh.Component) bool {
 	return m.Mode() == mesh.Lines
 }

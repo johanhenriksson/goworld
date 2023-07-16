@@ -16,7 +16,7 @@ type G struct {
 
 // Camera Component
 type T struct {
-	object.T
+	object.Component
 	Args
 
 	Viewport    render.Screen
@@ -39,7 +39,7 @@ type Args struct {
 
 // New creates a new camera component.
 func New(args Args) *T {
-	return object.New(&T{
+	return object.NewComponent(&T{
 		Args:   args,
 		Aspect: 1,
 	})

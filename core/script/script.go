@@ -3,22 +3,22 @@ package script
 import "github.com/johanhenriksson/goworld/core/object"
 
 type T interface {
-	object.T
+	object.Component
 }
 
 type script struct {
-	object.T
+	object.Component
 	fn Behavior
 }
 
-type Behavior func(scene, self object.T, dt float32)
+type Behavior func(scene, self object.Component, dt float32)
 
 func New(fn Behavior) T {
-	return object.New(&script{
+	return object.NewComponent(&script{
 		fn: fn,
 	})
 }
 
-func (s *script) Update(scene object.T, dt float32) {
+func (s *script) Update(scene object.Component, dt float32) {
 	s.fn(scene, s, dt)
 }

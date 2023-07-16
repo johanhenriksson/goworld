@@ -10,7 +10,7 @@ import (
 )
 
 type T struct {
-	mesh.T
+	mesh.Component
 	Args
 }
 
@@ -24,9 +24,9 @@ type Args struct {
 }
 
 func New(args Args) *T {
-	b := object.New(&T{
-		T:    mesh.NewLines(args.Mat),
-		Args: args,
+	b := object.NewComponent(&T{
+		Component: mesh.NewLines(args.Mat),
+		Args:      args,
 	})
 	b.compute()
 	return b

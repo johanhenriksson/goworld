@@ -8,7 +8,7 @@ import (
 )
 
 type T interface {
-	object.T
+	object.Component
 
 	Intersect(ray *physics.Ray) (bool, vec3.T)
 }

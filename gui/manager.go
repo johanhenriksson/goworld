@@ -13,13 +13,13 @@ import (
 )
 
 type Manager interface {
-	object.T
+	object.Component
 
 	DrawUI(args widget.DrawArgs, quads *widget.QuadBuffer)
 }
 
 type manager struct {
-	object.T
+	object.Component
 
 	viewport render.Screen
 	render   node.RenderFunc
@@ -31,7 +31,7 @@ type manager struct {
 }
 
 func New(renderNodes node.RenderFunc) Manager {
-	return object.New(&manager{
+	return object.NewComponent(&manager{
 		viewport: render.Screen{
 			Scale: 1,
 		},
@@ -42,7 +42,7 @@ func New(renderNodes node.RenderFunc) Manager {
 
 func (m *manager) Name() string { return "UIManager" }
 
-func (m *manager) Update(scene object.T, dt float32) {
+func (m *manager) Update(scene object.Component, dt float32) {
 	// render root tree
 	root := m.render()
 

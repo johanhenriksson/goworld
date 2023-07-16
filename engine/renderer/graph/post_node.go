@@ -18,7 +18,7 @@ func newPostNode(app vulkan.App) Node {
 	}
 }
 
-func (n *postNode) Draw(worker command.Worker, args render.Args, scene object.T) {
+func (n *postNode) Draw(worker command.Worker, args render.Args, scene object.Component) {
 	var signal []sync.Semaphore
 	if args.Context.RenderComplete != nil {
 		signal = []sync.Semaphore{args.Context.RenderComplete}

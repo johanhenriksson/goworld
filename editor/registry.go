@@ -9,20 +9,20 @@ import (
 	"github.com/johanhenriksson/goworld/math/vec3"
 )
 
-type Constructor func(*Context, object.T) T
+type Constructor func(*Context, object.Component) T
 
 var editors = map[reflect.Type]Constructor{}
 
 // Register an Editor constructor for a given object type
-func Register[K object.T, E T](obj object.T, constructor func(*Context, K) E) {
+func Register[K object.Component, E T](obj object.Component, constructor func(*Context, K) E) {
 	t := reflect.TypeOf(obj).Elem()
-	editors[t] = func(ctx *Context, obj object.T) T {
+	editors[t] = func(ctx *Context, obj object.Component) T {
 		k := obj.(K)
 		return constructor(ctx, k)
 	}
 }
 
-func ConstructEditors(ctx *Context, current object.T, target object.T) object.T {
+func ConstructEditors(ctx *Context, current object.Component, target object.Component) object.Component {
 	var editor *ObjectEditor
 
 	if current != nil {
@@ -51,7 +51,7 @@ func ConstructEditors(ctx *Context, current object.T, target object.T) object.T 
 		)
 	}
 
-	existingEditors := map[object.T]*ObjectEditor{}
+	existingEditors := map[object.Component]*ObjectEditor{}
 	for _, child := range editor.Children() {
 		childEdit, isEdit := child.(*ObjectEditor)
 		if !isEdit {

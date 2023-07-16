@@ -57,7 +57,7 @@ func (b *RigidBody) fetchState() {
 	b.Transform().SetWorldRotation(state.rotation)
 }
 
-func (b *RigidBody) Update(scene object.T, dt float32) {
+func (b *RigidBody) Update(scene object.Component, dt float32) {
 	b.G.Update(scene, dt)
 
 	if b.world == nil {
@@ -105,11 +105,11 @@ func (b *RigidBody) OnDeactivate() {
 
 // called when a child object is attached
 // or any decendant? :think:
-func (b *RigidBody) OnAttach(obj object.T) {
+func (b *RigidBody) OnAttach(obj object.Component) {
 	// if its a shape, we need to recreate
 }
 
-func (b *RigidBody) OnDetach(obj object.T) {
+func (b *RigidBody) OnDetach(obj object.Component) {
 	// if its a shape, we need to recreate
 }
 

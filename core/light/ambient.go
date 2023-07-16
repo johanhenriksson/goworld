@@ -7,7 +7,7 @@ import (
 )
 
 type ambient struct {
-	object.T
+	object.Component
 	Color     color.T
 	Intensity float32
 }
@@ -27,7 +27,7 @@ func (lit *ambient) Type() Type {
 func (lit *ambient) Cascades() []Cascade { return nil }
 
 func NewAmbient(clr color.T, intensity float32) T {
-	return object.New(&ambient{
+	return object.NewComponent(&ambient{
 		Color:     clr,
 		Intensity: intensity,
 	})

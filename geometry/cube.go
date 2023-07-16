@@ -10,15 +10,15 @@ import (
 
 // Cube mesh, textured
 type Cube struct {
-	mesh.T
+	mesh.Component
 	Size float32
 }
 
 // NewCube creates a new textured cube mesh with a given size
 func NewCube(size float32) *Cube {
 	cube := &Cube{
-		T:    mesh.New(mesh.Deferred, nil),
-		Size: size,
+		Component: mesh.New(mesh.Deferred, nil),
+		Size:      size,
 	}
 	cube.generate()
 	return cube

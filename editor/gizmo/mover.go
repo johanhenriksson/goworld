@@ -331,7 +331,7 @@ func (g *Mover) PreDraw(args render.Args, scene object.G) error {
 	return nil
 }
 
-func (g *Mover) Update(scene object.T, dt float32) {
+func (g *Mover) Update(scene object.Component, dt float32) {
 	g.G.Update(scene, dt)
 
 	// the gizmo should be displayed at the same size irrespectively of its distance to the camera.

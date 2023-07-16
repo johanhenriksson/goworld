@@ -19,7 +19,7 @@ type Editor struct {
 	World  *physics.World
 	Player *Player
 
-	editors   object.T
+	editors   object.Component
 	workspace object.G
 	render    renderer.T
 }
@@ -50,7 +50,7 @@ func NewEditor(render renderer.T, workspace object.G) *Editor {
 	return editor
 }
 
-func (e *Editor) Update(scene object.T, dt float32) {
+func (e *Editor) Update(scene object.Component, dt float32) {
 	e.G.Update(scene, dt)
 
 	context := &Context{
@@ -100,7 +100,7 @@ func (s *EditorScene) KeyEvent(e keys.Event) {
 	}
 }
 
-func (s *EditorScene) Update(scene object.T, dt float32) {
+func (s *EditorScene) Update(scene object.Component, dt float32) {
 	if s.playing {
 		s.Workspace.Update(scene, dt)
 	} else {

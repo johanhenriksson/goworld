@@ -18,7 +18,7 @@ import (
 )
 
 type Shape interface {
-	object.T
+	object.Component
 
 	Type() ShapeType
 
@@ -72,14 +72,14 @@ func restoreShape(ptr unsafe.Pointer) Shape {
 
 type Box struct {
 	shapeBase
-	object.T
+	object.Component
 	size vec3.T
 }
 
 var _ Shape = &Box{}
 
 func NewBox(size vec3.T) *Box {
-	box := object.New(&Box{
+	box := object.NewComponent(&Box{
 		shapeBase: shapeBase{
 			kind: BoxShape,
 		},
@@ -107,7 +107,7 @@ func (b *Box) Size() vec3.T {
 
 type Capsule struct {
 	shapeBase
-	object.T
+	object.Component
 	height float32
 	radius float32
 }
@@ -115,7 +115,7 @@ type Capsule struct {
 var _ = &Capsule{}
 
 func NewCapsule(height, radius float32) *Capsule {
-	capsule := object.New(&Capsule{
+	capsule := object.NewComponent(&Capsule{
 		shapeBase: shapeBase{
 			kind: CapsuleShape,
 		},
