@@ -10,7 +10,7 @@ import (
 	"github.com/johanhenriksson/goworld/core/transform"
 )
 
-type G interface {
+type Object interface {
 	Component
 	input.Handler
 
@@ -28,7 +28,7 @@ type group struct {
 }
 
 // Empty creates a new, empty object.
-func Empty(name string) G {
+func Empty(name string) Object {
 	return &group{
 		base: base{
 			id:      ID(),
@@ -39,7 +39,7 @@ func Empty(name string) G {
 	}
 }
 
-func Group[K G](name string, obj K) K {
+func New[K Object](name string, obj K) K {
 	t := reflect.TypeOf(obj).Elem()
 	v := reflect.ValueOf(obj).Elem()
 
@@ -47,7 +47,7 @@ func Group[K G](name string, obj K) K {
 	init := false
 	for i := 0; i < t.NumField(); i++ {
 		field := t.Field(i)
-		if field.Name == "G" {
+		if field.Name == "Object" {
 			if v.Field(i).IsZero() {
 				base := Empty(name)
 				v.Field(i).Set(reflect.ValueOf(base))
@@ -63,7 +63,7 @@ func Group[K G](name string, obj K) K {
 	// add Object fields as children
 	for i := 0; i < t.NumField(); i++ {
 		field := t.Field(i)
-		if field.Name == "G" {
+		if field.Name == "Object" {
 			continue
 		}
 		if !field.IsExported() {

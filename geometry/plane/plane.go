@@ -10,12 +10,12 @@ import (
 )
 
 type Plane struct {
-	object.G
+	object.Object
 	*Mesh
 }
 
-func Group(args Args) *Plane {
-	return object.Group("Plane", &Plane{
+func Object(args Args) *Plane {
+	return object.New("Plane", &Plane{
 		Mesh: New(args),
 	})
 }

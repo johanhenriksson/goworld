@@ -11,12 +11,12 @@ import (
 )
 
 type Cylinder struct {
-	object.G
+	object.Object
 	*Mesh
 }
 
-func Group(args Args) *Cylinder {
-	return object.Group("Cylinder", &Cylinder{
+func Object(args Args) *Cylinder {
+	return object.New("Cylinder", &Cylinder{
 		Mesh: New(args),
 	})
 }

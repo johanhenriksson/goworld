@@ -10,7 +10,7 @@ import (
 
 // Camera Group
 type G struct {
-	object.G
+	object.Object
 	*T
 }
 
@@ -45,8 +45,8 @@ func New(args Args) *T {
 	})
 }
 
-func Group(args Args) *G {
-	return object.Group("Camera", &G{
+func Object(args Args) *G {
+	return object.New("Camera", &G{
 		T: New(args),
 	})
 }
@@ -63,7 +63,7 @@ func (cam *T) Unproject(pos vec3.T) vec3.T {
 	return cam.ViewProjInv.TransformPoint(pos)
 }
 
-func (cam *T) PreDraw(args render.Args, scene object.G) error {
+func (cam *T) PreDraw(args render.Args, scene object.Object) error {
 	// update view & view-projection matrices
 	cam.Viewport = args.Viewport
 	cam.Aspect = float32(args.Viewport.Width) / float32(args.Viewport.Height)

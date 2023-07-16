@@ -10,5 +10,5 @@ type Context struct {
 	Render renderer.T
 	Camera *camera.T
 	Root   object.Component
-	Scene  object.G
+	Scene  object.Object
 }

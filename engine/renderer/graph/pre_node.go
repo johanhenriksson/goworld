@@ -18,12 +18,12 @@ var ErrRecreate = errors.New("recreate renderer")
 
 type PreDrawable interface {
 	object.Component
-	PreDraw(render.Args, object.G) error
+	PreDraw(render.Args, object.Object) error
 }
 
 type PreNode interface {
 	Node
-	Prepare(scene object.G, time, delta float32) (*render.Args, error)
+	Prepare(scene object.Object, time, delta float32) (*render.Args, error)
 }
 
 type preNode struct {
@@ -40,7 +40,7 @@ func newPreNode(app vulkan.App) PreNode {
 	}
 }
 
-func (n *preNode) Prepare(scene object.G, time, delta float32) (*render.Args, error) {
+func (n *preNode) Prepare(scene object.Object, time, delta float32) (*render.Args, error) {
 	screen := render.Screen{
 		Width:  n.app.Width(),
 		Height: n.app.Height(),

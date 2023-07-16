@@ -12,7 +12,7 @@ type Component interface {
 	Name() string
 
 	// Parent returns the parent of this object, or nil
-	Parent() G
+	Parent() Object
 
 	// Transform returns the object transform
 	Transform() transform.T
@@ -31,14 +31,14 @@ type Component interface {
 
 	ID() uint
 	setName(string)
-	setParent(G)
+	setParent(Object)
 }
 
 type base struct {
 	id      uint
 	name    string
 	enabled bool
-	parent  G
+	parent  Object
 }
 
 func emptyBase(name string) *base {
@@ -122,8 +122,8 @@ func (b *base) SetActive(active bool) {
 	}
 }
 
-func (b *base) Parent() G { return b.parent }
-func (b *base) setParent(p G) {
+func (b *base) Parent() Object { return b.parent }
+func (b *base) setParent(p Object) {
 	if b.parent == p {
 		return
 	}

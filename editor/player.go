@@ -14,7 +14,7 @@ import (
 )
 
 type Player struct {
-	object.G
+	object.Object
 	Camera   *camera.G
 	Speed    float32
 	Friction vec3.T
@@ -25,8 +25,8 @@ type Player struct {
 }
 
 func NewPlayer(position vec3.T, rotation quat.T) *Player {
-	p := object.Builder(object.Group("Player", &Player{
-		Camera: object.Builder(camera.Group(camera.Args{
+	p := object.Builder(object.New("Player", &Player{
+		Camera: object.Builder(camera.Object(camera.Args{
 			Fov:   50.0,
 			Near:  0.1,
 			Far:   500,
@@ -108,7 +108,7 @@ func (p *Player) Update(scene object.Component, dt float32) {
 	position = position.Add(step)
 	p.Transform().SetPosition(position)
 
-	p.G.Update(scene, dt)
+	p.Object.Update(scene, dt)
 }
 
 func (p *Player) MouseEvent(e mouse.Event) {

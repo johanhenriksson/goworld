@@ -2,18 +2,18 @@ package object
 
 // Returns all the children of an objects, both components and subgroups
 func Children(object Component) []Component {
-	if group, ok := object.(G); ok {
+	if group, ok := object.(Object); ok {
 		return group.Children()
 	}
 	return nil
 }
 
 // Returns the subgroups attached to an object
-func Subgroups(object Component) []G {
+func Subgroups(object Component) []Object {
 	children := Children(object)
-	groups := make([]G, 0, len(children))
+	groups := make([]Object, 0, len(children))
 	for _, child := range children {
-		if group, ok := child.(G); ok {
+		if group, ok := child.(Object); ok {
 			groups = append(groups, group)
 		}
 	}
@@ -25,7 +25,7 @@ func Components(object Component) []Component {
 	children := Children(object)
 	components := make([]Component, 0, len(children))
 	for _, child := range children {
-		_, group := child.(G)
+		_, group := child.(Object)
 		if !group {
 			components = append(components, child)
 		}
@@ -35,7 +35,7 @@ func Components(object Component) []Component {
 
 // Attach an object to a parent object
 // If the object already has a parent, it will be detached first.
-func Attach(parent G, child Component) {
+func Attach(parent Object, child Component) {
 	Detach(child)
 	child.setParent(parent)
 	parent.attach(child)
@@ -66,7 +66,7 @@ func Root(obj Component) Component {
 // Gets a reference to a component of type K in the same group as the object specified.
 func Get[K Component](self Component) K {
 	var empty K
-	group, ok := self.(G)
+	group, ok := self.(Object)
 	if !ok {
 		group = self.Parent()
 	}
@@ -86,7 +86,7 @@ func Get[K Component](self Component) K {
 
 // Gets references to all components of type K in the same group as the object specified.
 func GetAll[K Component](self Component) []K {
-	group, ok := self.(G)
+	group, ok := self.(Object)
 	if !ok {
 		group = self.Parent()
 	}
@@ -105,7 +105,7 @@ func GetAll[K Component](self Component) []K {
 // Gets a reference to a component of type K in the same group as the component specified, or any parent of the group.
 func GetInParents[K Component](self Component) K {
 	var empty K
-	group, ok := self.(G)
+	group, ok := self.(Object)
 	if !ok {
 		group = self.Parent()
 	}
@@ -127,7 +127,7 @@ func GetInParents[K Component](self Component) K {
 
 // Gets references to all components of type K in the same group as the object specified, or any parent of the group.
 func GetAllInParents[K Component](self Component) []K {
-	group, ok := self.(G)
+	group, ok := self.(Object)
 	if !ok {
 		group = self.Parent()
 	}
@@ -149,7 +149,7 @@ func GetAllInParents[K Component](self Component) []K {
 // Gets a reference to a component of type K in the same group as the object specified, or any child of the group.
 func GetInChildren[K Component](self Component) K {
 	var empty K
-	group, ok := self.(G)
+	group, ok := self.(Object)
 	if !ok {
 		group = self.Parent()
 	}
@@ -157,7 +157,7 @@ func GetInChildren[K Component](self Component) K {
 		return empty
 	}
 
-	todo := []G{group}
+	todo := []Object{group}
 
 	for len(todo) > 0 {
 		group = todo[0]
@@ -170,7 +170,7 @@ func GetInChildren[K Component](self Component) K {
 			if hit, ok := child.(K); ok {
 				return hit
 			}
-			if childgroup, ok := child.(G); ok {
+			if childgroup, ok := child.(Object); ok {
 				todo = append(todo, childgroup)
 			}
 		}
@@ -181,7 +181,7 @@ func GetInChildren[K Component](self Component) K {
 
 // Gets references to all components of type K in the same group as the object specified, or any child of the group.
 func GetAllInChildren[K Component](self Component) []K {
-	group, ok := self.(G)
+	group, ok := self.(Object)
 	if !ok {
 		group = self.Parent()
 	}
@@ -189,7 +189,7 @@ func GetAllInChildren[K Component](self Component) []K {
 		return nil
 	}
 
-	todo := []G{group}
+	todo := []Object{group}
 	var results []K
 
 	for len(todo) > 0 {
@@ -203,7 +203,7 @@ func GetAllInChildren[K Component](self Component) []K {
 			if hit, ok := child.(K); ok {
 				results = append(results, hit)
 			}
-			if childgroup, ok := child.(G); ok {
+			if childgroup, ok := child.(Object); ok {
 				todo = append(todo, childgroup)
 			}
 		}

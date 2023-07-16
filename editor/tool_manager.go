@@ -45,8 +45,8 @@ type ToolManager interface {
 }
 
 type toolmgr struct {
-	object.G
-	scene    object.G
+	object.Object
+	scene    object.Object
 	selected Selectable
 	tool     Tool
 	camera   mat4.T
@@ -57,7 +57,7 @@ type toolmgr struct {
 }
 
 func NewToolManager() ToolManager {
-	return object.Group("Tool Manager", &toolmgr{
+	return object.New("Tool Manager", &toolmgr{
 		Mover: object.Builder(gizmo.NewMover()).
 			Active(false).
 			Create(),
@@ -193,7 +193,7 @@ func (m *toolmgr) setSelect(e mouse.Event, object Selectable, collider collider.
 	return true
 }
 
-func (m *toolmgr) PreDraw(args render.Args, scene object.G) error {
+func (m *toolmgr) PreDraw(args render.Args, scene object.Object) error {
 	m.scene = scene
 	m.camera = args.VP
 	m.viewport = args.Viewport

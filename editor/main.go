@@ -13,19 +13,19 @@ import (
 )
 
 type Editor struct {
-	object.G
+	object.Object
 	GUI    gui.Manager
 	Tools  ToolManager
 	World  *physics.World
 	Player *Player
 
 	editors   object.Component
-	workspace object.G
+	workspace object.Object
 	render    renderer.T
 }
 
-func NewEditor(render renderer.T, workspace object.G) *Editor {
-	editor := object.Group("Editor", &Editor{
+func NewEditor(render renderer.T, workspace object.Object) *Editor {
+	editor := object.New("Editor", &Editor{
 		GUI:   MakeGUI(render),
 		Tools: NewToolManager(),
 		World: physics.NewWorld(),
@@ -51,7 +51,7 @@ func NewEditor(render renderer.T, workspace object.G) *Editor {
 }
 
 func (e *Editor) Update(scene object.Component, dt float32) {
-	e.G.Update(scene, dt)
+	e.Object.Update(scene, dt)
 
 	context := &Context{
 		Camera: e.Player.Camera.T,
@@ -66,7 +66,7 @@ func (e *Editor) Update(scene object.Component, dt float32) {
 }
 
 func Scene(f engine.SceneFunc) engine.SceneFunc {
-	return func(render renderer.T, scene object.G) {
+	return func(render renderer.T, scene object.Object) {
 		// create subscene in a child object
 		workspace := object.Empty("Workspace")
 		f(render, workspace)
@@ -77,15 +77,15 @@ func Scene(f engine.SceneFunc) engine.SceneFunc {
 }
 
 type EditorScene struct {
-	object.G
-	Editor    object.G
-	Workspace object.G
+	object.Object
+	Editor    object.Object
+	Workspace object.Object
 
 	playing bool
 }
 
-func NewEditorScene(render renderer.T, workspace object.G) *EditorScene {
-	return object.Group("EditorScene", &EditorScene{
+func NewEditorScene(render renderer.T, workspace object.Object) *EditorScene {
+	return object.New("EditorScene", &EditorScene{
 		Editor:    NewEditor(render, workspace),
 		Workspace: workspace,
 	})
@@ -96,7 +96,7 @@ func (s *EditorScene) KeyEvent(e keys.Event) {
 		s.playing = !s.playing
 		s.Editor.SetActive(!s.playing)
 	} else {
-		s.G.KeyEvent(e)
+		s.Object.KeyEvent(e)
 	}
 }
 

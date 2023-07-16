@@ -11,12 +11,12 @@ import (
 )
 
 type Cone struct {
-	object.G
+	object.Object
 	*Mesh
 }
 
-func Group(args Args) *Cone {
-	return object.Group("Cone", &Cone{
+func Object(args Args) *Cone {
+	return object.New("Cone", &Cone{
 		Mesh: New(args),
 	})
 }

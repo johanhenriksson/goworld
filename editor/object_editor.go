@@ -10,7 +10,7 @@ import (
 )
 
 type ObjectEditor struct {
-	object.G
+	object.Object
 
 	Bounds collider.T
 	Custom T
@@ -19,7 +19,7 @@ type ObjectEditor struct {
 }
 
 type DefaultEditor struct {
-	object.G
+	object.Object
 	GUI gui.Fragment
 }
 
@@ -31,7 +31,7 @@ func NewObjectEditor(target object.Component, bounds collider.Box, editor T) *Ob
 		boundsCol = collider.NewBox(bounds)
 	} else {
 		// instantiate default object inspector
-		editor = object.Group("DefaultEditor", &DefaultEditor{
+		editor = object.New("DefaultEditor", &DefaultEditor{
 			GUI: gui.NewFragment(gui.FragmentArgs{
 				Slot:     "sidebar:content",
 				Position: gui.FragmentLast,
@@ -43,8 +43,8 @@ func NewObjectEditor(target object.Component, bounds collider.Box, editor T) *Ob
 	}
 	editor.SetActive(false)
 
-	return object.Group("ObjectEditor", &ObjectEditor{
-		G:      object.Ghost(target),
+	return object.New("ObjectEditor", &ObjectEditor{
+		Object: object.Ghost(target),
 		target: target,
 
 		Custom: editor,
@@ -58,7 +58,7 @@ func NewObjectEditor(target object.Component, bounds collider.Box, editor T) *Ob
 var _ Selectable = &ObjectEditor{}
 
 func (e *ObjectEditor) Update(scene object.Component, dt float32) {
-	e.G.Update(scene, dt)
+	e.Object.Update(scene, dt)
 	e.Custom.Update(scene, dt)
 }
 
