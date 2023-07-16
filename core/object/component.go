@@ -8,6 +8,9 @@ import (
 )
 
 type Component interface {
+	// ID returns a unique identifier for this object.
+	ID() uint
+
 	// Name is used to identify the object within the scene.
 	Name() string
 
@@ -17,11 +20,13 @@ type Component interface {
 	// Transform returns the object transform
 	Transform() transform.T
 
-	// Active indicates whether the object is currently enabled or not.
+	// Active indicates whether the object is active in the scene or not.
+	// E.g. the object/component and all its parents are enabled and active.
 	Active() bool
 
-	// SetActive enables or disables the object
-	SetActive(bool)
+	// Enabled indicates whether the object is currently enabled or not.
+	// Note that the object can still be inactive if an ancestor is disabled.
+	Enabled() bool
 
 	// Update the object. Called on every frame.
 	Update(Component, float32)
@@ -29,15 +34,17 @@ type Component interface {
 	// Destroy the object
 	Destroy()
 
-	ID() uint
 	setName(string)
 	setParent(Object)
+	setEnabled(bool) bool
+	setActive(bool) bool
 }
 
 type base struct {
 	id      uint
 	name    string
 	enabled bool
+	active  bool
 	parent  Object
 }
 
@@ -46,6 +53,7 @@ func emptyBase(name string) *base {
 		id:      ID(),
 		name:    name,
 		enabled: true,
+		active:  false,
 	}
 }
 
@@ -107,19 +115,18 @@ func (b *base) Transform() transform.T {
 	return b.parent.Transform()
 }
 
-func (b *base) Active() bool { return b.enabled }
+func (b *base) Active() bool { return b.active }
+func (b *base) setActive(active bool) bool {
+	prev := b.active
+	b.active = active
+	return prev
+}
 
-func (b *base) SetActive(active bool) {
-	if b.enabled && !active {
-		// disable
-		// if attached, raise OnDeactivate()
-		b.enabled = false
-	}
-	if !b.enabled && active {
-		// enable
-		// if attached, raise OnActivate()
-		b.enabled = true
-	}
+func (b *base) Enabled() bool { return b.enabled }
+func (b *base) setEnabled(enabled bool) bool {
+	prev := b.enabled
+	b.enabled = enabled
+	return prev
 }
 
 func (b *base) Parent() Object { return b.parent }

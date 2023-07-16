@@ -16,7 +16,8 @@ import (
 )
 
 type Object interface {
-	fetchState()
+	pullState()
+	pushState()
 }
 
 type World struct {
@@ -42,15 +43,20 @@ func (w *World) Update(scene object.Component, dt float32) {
 	w.step(dt)
 }
 
+func (w *World) OnEnable() {
+}
+
 func (w *World) SetGravity(gravity vec3.T) {
 	C.goSetGravity(w.handle, vec3ptr(&gravity))
 }
 
 func (w *World) step(timestep float32) {
-	C.goStepSimulation(w.handle, (C.goReal)(timestep))
-	// fetch physics object state
 	for _, obj := range w.objects {
-		obj.fetchState()
+		obj.pushState()
+	}
+	C.goStepSimulation(w.handle, (C.goReal)(timestep))
+	for _, obj := range w.objects {
+		obj.pullState()
 	}
 }
 

@@ -96,7 +96,7 @@ func (g *group) Transform() transform.T {
 
 func (g *group) Update(scene Component, dt float32) {
 	for _, child := range g.children {
-		if child.Active() {
+		if child.Enabled() {
 			child.Update(scene, dt)
 		}
 	}
@@ -130,9 +130,23 @@ func (g *group) detach(child Component) {
 	}
 }
 
+func (g *group) setActive(active bool) bool {
+	prev := g.base.setActive(active)
+	if active {
+		for _, child := range g.children {
+			activate(child)
+		}
+	} else {
+		for _, child := range g.children {
+			deactivate(child)
+		}
+	}
+	return prev
+}
+
 func (g *group) KeyEvent(e keys.Event) {
 	for _, child := range g.children {
-		if !child.Active() {
+		if !child.Enabled() {
 			continue
 		}
 		if handler, ok := child.(input.KeyHandler); ok {
@@ -146,7 +160,7 @@ func (g *group) KeyEvent(e keys.Event) {
 
 func (g *group) MouseEvent(e mouse.Event) {
 	for _, child := range g.children {
-		if !child.Active() {
+		if !child.Enabled() {
 			continue
 		}
 		if handler, ok := child.(input.MouseHandler); ok {

@@ -22,9 +22,9 @@ type Selectable interface {
 }
 
 type Tool interface {
+	object.Component
 	mouse.Handler
 	CanDeselect() bool
-	SetActive(bool)
 }
 
 type Action struct {
@@ -152,14 +152,14 @@ func (m *toolmgr) SelectTool(tool Tool) {
 
 	// deselect tool
 	if m.tool != nil {
-		m.tool.SetActive(false)
+		object.Disable(m.tool)
 		m.tool = nil
 	}
 
 	// activate the new tool if its different
 	if !sameTool && tool != nil {
 		m.tool = tool
-		m.tool.SetActive(true)
+		object.Enable(m.tool)
 	}
 }
 
