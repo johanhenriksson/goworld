@@ -52,11 +52,11 @@ var _ = Describe("Object", func() {
 		Expect(b.Parent()).To(BeNil())
 	})
 
-	It("instantiates object structs", func() {
+	It("instantiates component structs", func() {
 		b := object.NewComponent(&B{})
 		Expect(b.Component).ToNot(BeNil())
 
-		a := object.NewComponent(&A{
+		a := object.New("A", &A{
 			B: b,
 		})
 		Expect(a.Children()).To(HaveLen(1))
