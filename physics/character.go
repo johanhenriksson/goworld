@@ -9,6 +9,7 @@ package physics
 import "C"
 
 import (
+	"log"
 	"runtime"
 	"unsafe"
 
@@ -47,7 +48,7 @@ func NewCharacter(height, radius, stepHeight float32) *Character {
 	return character
 }
 
-func (c *Character) fetchState() {
+func (c *Character) pullState() {
 	// pull physics state
 	state := characterState{}
 	C.goCharacterGetState(c.handle, (*C.goCharacterState)(unsafe.Pointer(&state)))
@@ -57,23 +58,7 @@ func (c *Character) fetchState() {
 	c.grounded = state.grounded
 }
 
-func (c *Character) Update(scene object.Component, dt float32) {
-	if c.world == nil {
-		if c.world = object.GetInParents[*World](c); c.world != nil {
-			c.world.AddCharacter(c)
-		} else {
-			return
-		}
-	} else {
-		// detach from world if required
-		world := object.GetInParents[*World](c)
-		if world != c.world {
-			c.world.RemoveCharacter(c)
-			c.world = nil
-		}
-	}
-
-	// push engine state
+func (c *Character) pushState() {
 	// todo: not required unless we changed something
 	// todo: include movement dir?
 	state := characterState{
@@ -98,4 +83,19 @@ func (c *Character) Jump() {
 // Grounded returns true if the character is in contact with ground.
 func (c *Character) Grounded() bool {
 	return c.grounded
+}
+
+func (c *Character) OnEnable() {
+	if c.world = object.GetInParents[*World](c); c.world != nil {
+		c.world.AddCharacter(c)
+	} else {
+		log.Println("Character: No physics world in parents")
+	}
+}
+
+func (c *Character) OnDisable() {
+	if c.world != nil {
+		c.world.RemoveCharacter(c)
+		c.world = nil
+	}
 }

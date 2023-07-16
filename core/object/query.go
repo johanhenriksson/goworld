@@ -64,7 +64,7 @@ func (q *Query[K]) First(root Component) (K, bool) {
 
 func (q *Query[K]) first(root Component) (K, bool) {
 	var empty K
-	if !root.Active() {
+	if !root.Enabled() {
 		return empty, false
 	}
 	if k, ok := root.(K); ok {
@@ -104,7 +104,7 @@ func (q *Query[K]) CollectObjects(roots ...Component) []Component {
 }
 
 func (q *Query[K]) collect(object Component) {
-	if !object.Active() {
+	if !object.Enabled() {
 		return
 	}
 	if k, ok := object.(K); ok {

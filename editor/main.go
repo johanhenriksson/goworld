@@ -86,6 +86,7 @@ type EditorScene struct {
 
 func NewEditorScene(render renderer.T, workspace object.Object) *EditorScene {
 	return object.New("EditorScene", &EditorScene{
+		Object:    object.Scene(),
 		Editor:    NewEditor(render, workspace),
 		Workspace: workspace,
 	})
@@ -93,8 +94,8 @@ func NewEditorScene(render renderer.T, workspace object.Object) *EditorScene {
 
 func (s *EditorScene) KeyEvent(e keys.Event) {
 	if e.Action() == keys.Release && e.Code() == keys.H {
+		object.Toggle(s.Editor, s.playing)
 		s.playing = !s.playing
-		s.Editor.SetActive(!s.playing)
 	} else {
 		s.Object.KeyEvent(e)
 	}

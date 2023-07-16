@@ -41,10 +41,10 @@ func (pt *SampleTool) Use(editor Editor, position, normal vec3.T) {
 func (pt *SampleTool) Hover(editor Editor, position, normal vec3.T) {
 	p := position.Sub(normal.Scaled(0.5))
 	if editor.InBounds(p) {
-		pt.Box.SetActive(true)
+		object.Enable(pt.Box)
 		pt.Transform().SetPosition(p.Floor())
 	} else {
-		pt.Box.SetActive(false)
+		object.Disable(pt.Box)
 	}
 }
 

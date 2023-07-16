@@ -199,13 +199,13 @@ func (e *edit) clearChunk() {
 func (e *edit) KeyEvent(ev keys.Event) {
 	// toggle construction planes
 	if keys.PressedMods(ev, keys.X, keys.Ctrl) {
-		e.XPlane.SetActive(!e.XPlane.Active())
+		object.Toggle(e.XPlane, !e.XPlane.Enabled())
 	}
 	if keys.PressedMods(ev, keys.Y, keys.Ctrl) {
-		e.YPlane.SetActive(!e.YPlane.Active())
+		object.Toggle(e.YPlane, !e.YPlane.Enabled())
 	}
 	if keys.PressedMods(ev, keys.Z, keys.Ctrl) {
-		e.ZPlane.SetActive(!e.ZPlane.Active())
+		object.Toggle(e.ZPlane, !e.ZPlane.Enabled())
 	}
 
 	m := 1

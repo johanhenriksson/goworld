@@ -71,12 +71,16 @@ func (b *builder[K]) Create() K {
 	obj.Transform().SetPosition(b.position)
 	obj.Transform().SetRotation(b.rotation)
 	obj.Transform().SetScale(b.scale)
-	obj.SetActive(b.active)
-	if b.parent != nil {
-		Attach(b.parent, obj)
+	if b.active {
+		Enable(obj)
+	} else {
+		Disable(obj)
 	}
 	for _, child := range b.children {
 		Attach(obj, child)
+	}
+	if b.parent != nil {
+		Attach(b.parent, obj)
 	}
 	return obj
 }

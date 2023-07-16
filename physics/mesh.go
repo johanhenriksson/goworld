@@ -87,7 +87,7 @@ func (m *Mesh) destroy() {
 	}
 }
 
-func (m *Mesh) OnActivate() {
+func (m *Mesh) OnEnable() {
 	if mesh := object.Get[mesh.Component](m); mesh != nil {
 		m.SetMeshData(mesh.Mesh())
 		log.Println("added mesh data from", m.Parent().Name())

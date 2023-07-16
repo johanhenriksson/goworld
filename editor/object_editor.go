@@ -41,7 +41,7 @@ func NewObjectEditor(target object.Component, bounds collider.Box, editor T) *Ob
 			}),
 		})
 	}
-	editor.SetActive(false)
+	object.Disable(editor)
 
 	return object.New("ObjectEditor", &ObjectEditor{
 		Object: object.Ghost(target),
@@ -63,12 +63,12 @@ func (e *ObjectEditor) Update(scene object.Component, dt float32) {
 }
 
 func (e *ObjectEditor) Select(ev mouse.Event, collider collider.T) {
-	e.Custom.SetActive(true)
+	object.Enable(e.Custom)
 }
 
 func (e *ObjectEditor) Deselect(ev mouse.Event) bool {
 	// todo: check with editor if we can deselect?
-	e.Custom.SetActive(false)
+	object.Disable(e.Custom)
 	return true
 }
 

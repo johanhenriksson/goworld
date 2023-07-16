@@ -1,6 +1,6 @@
 package object
 
-// Returns all the children of an objects, both components and subgroups
+// Returns all the children of an objects, both components and child objects
 func Children(object Component) []Component {
 	if group, ok := object.(Object); ok {
 		return group.Children()
@@ -8,7 +8,7 @@ func Children(object Component) []Component {
 	return nil
 }
 
-// Returns the subgroups attached to an object
+// Returns the child objects attached to an object
 func Subgroups(object Component) []Object {
 	children := Children(object)
 	groups := make([]Object, 0, len(children))
@@ -33,29 +33,70 @@ func Components(object Component) []Component {
 	return components
 }
 
-// Attach an object to a parent object
+// Attach a child component/object to a parent object
 // If the object already has a parent, it will be detached first.
 func Attach(parent Object, child Component) {
 	Detach(child)
 	child.setParent(parent)
 	parent.attach(child)
-
-	if handler, ok := child.(ActivateHandler); ok {
-		handler.OnActivate()
-	}
+	activate(child)
 }
 
-// Detach an object from its parent object
+// Detach a child component/object from its parent object
 // Does nothing if the given object has no parent.
 func Detach(child Component) {
 	if child.Parent() == nil {
 		return
 	}
+	deactivate(child)
 	child.Parent().detach(child)
 	child.setParent(nil)
 }
 
-// Root returns the first ancestor of the given object
+func Enable(object Component) {
+	object.setEnabled(true)
+	activate(object)
+}
+
+func activate(object Component) {
+	if !object.Enabled() {
+		return
+	}
+	if object.Parent() == nil || !object.Parent().Active() {
+		return
+	}
+	// activate if parent is active
+	if wasActive := object.setActive(true); !wasActive {
+		// enabled
+		for _, handler := range GetAll[EnableHandler](object) {
+			handler.OnEnable()
+		}
+	}
+}
+
+func Disable(object Component) {
+	object.setEnabled(false)
+	deactivate(object)
+}
+
+func deactivate(object Component) {
+	if wasActive := object.setActive(false); wasActive {
+		// disabled
+		for _, handler := range GetAll[DisableHandler](object) {
+			handler.OnDisable()
+		}
+	}
+}
+
+func Toggle(object Component, enabled bool) {
+	if enabled {
+		Enable(object)
+	} else {
+		Disable(object)
+	}
+}
+
+// Root returns the first ancestor of the given component/object
 func Root(obj Component) Component {
 	for obj.Parent() != nil {
 		obj = obj.Parent()
@@ -63,8 +104,11 @@ func Root(obj Component) Component {
 	return obj
 }
 
-// Gets a reference to a component of type K in the same group as the object specified.
+// Gets a reference to a component of type K on the same object as the component/object specified.
 func Get[K Component](self Component) K {
+	if hit, ok := self.(K); ok {
+		return hit
+	}
 	var empty K
 	group, ok := self.(Object)
 	if !ok {
@@ -84,7 +128,7 @@ func Get[K Component](self Component) K {
 	return empty
 }
 
-// Gets references to all components of type K in the same group as the object specified.
+// Gets references to all components of type K on the same object as the component/object specified.
 func GetAll[K Component](self Component) []K {
 	group, ok := self.(Object)
 	if !ok {
@@ -94,6 +138,9 @@ func GetAll[K Component](self Component) []K {
 		return nil
 	}
 	var results []K
+	if hit, ok := group.(K); ok {
+		results = append(results, hit)
+	}
 	for _, child := range group.Children() {
 		if hit, ok := child.(K); ok {
 			results = append(results, hit)
@@ -102,7 +149,7 @@ func GetAll[K Component](self Component) []K {
 	return results
 }
 
-// Gets a reference to a component of type K in the same group as the component specified, or any parent of the group.
+// Gets a reference to a component of type K on the same object as the component/object specified, or any parent of the object.
 func GetInParents[K Component](self Component) K {
 	var empty K
 	group, ok := self.(Object)
@@ -125,7 +172,7 @@ func GetInParents[K Component](self Component) K {
 	return empty
 }
 
-// Gets references to all components of type K in the same group as the object specified, or any parent of the group.
+// Gets references to all components of type K on the same object as the component/object specified, or any parent of the object.
 func GetAllInParents[K Component](self Component) []K {
 	group, ok := self.(Object)
 	if !ok {
@@ -146,7 +193,7 @@ func GetAllInParents[K Component](self Component) []K {
 	return results
 }
 
-// Gets a reference to a component of type K in the same group as the object specified, or any child of the group.
+// Gets a reference to a component of type K on the same object as the component/object specified, or any child of the object.
 func GetInChildren[K Component](self Component) K {
 	var empty K
 	group, ok := self.(Object)
@@ -179,7 +226,7 @@ func GetInChildren[K Component](self Component) K {
 	return empty
 }
 
-// Gets references to all components of type K in the same group as the object specified, or any child of the group.
+// Gets references to all components of type K on the same object as the component/object specified, or any child of the object.
 func GetAllInChildren[K Component](self Component) []K {
 	group, ok := self.(Object)
 	if !ok {

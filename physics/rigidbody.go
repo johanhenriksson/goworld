@@ -47,7 +47,7 @@ func NewRigidBody(name string, mass float32) *RigidBody {
 	return body
 }
 
-func (b *RigidBody) fetchState() {
+func (b *RigidBody) pullState() {
 	if b.handle == nil {
 		return
 	}
@@ -57,63 +57,20 @@ func (b *RigidBody) fetchState() {
 	b.Transform().SetWorldRotation(state.rotation)
 }
 
-func (b *RigidBody) Update(scene object.Component, dt float32) {
-	b.Object.Update(scene, dt)
-
-	if b.world == nil {
-		b.create()
-	} else {
-		// detach from world if required
-		world := object.GetInParents[*World](b)
-		if world != b.world {
-			log.Println("remove rigidbody", b.Parent().Name(), "from world", world.Parent().Name())
-			b.world.removeRigidBody(b)
-			b.world = nil
-		}
+func (b *RigidBody) pushState() {
+	if b.handle == nil {
+		return
 	}
-
-	if b.handle != nil {
-		// rigidbodies can only be attached to floating objects
-		// thus, we dont need to use WorldPosition/WorldRotation
-		state := rigidbodyState{
-			position: b.Transform().WorldPosition(),
-			rotation: b.Transform().WorldRotation(),
-		}
-		C.goRigidBodySetState(b.handle, (*C.goRigidBodyState)(unsafe.Pointer(&state)))
+	// rigidbodies can only be attached to floating objects
+	// thus, we dont need to use WorldPosition/WorldRotation
+	state := rigidbodyState{
+		position: b.Transform().WorldPosition(),
+		rotation: b.Transform().WorldRotation(),
 	}
+	C.goRigidBodySetState(b.handle, (*C.goRigidBodyState)(unsafe.Pointer(&state)))
 }
 
-func (b *RigidBody) OnActivate() {
-	// find shapes
-
-	// if no shapes, exit.
-
-	// create a rigidbody
-
-	// find world in parent
-
-	// if no world, exit.
-
-	// add to world
-}
-
-func (b *RigidBody) OnDeactivate() {
-	// remove from world
-
-	// destroy ?
-}
-
-// called when a child object is attached
-// or any decendant? :think:
-func (b *RigidBody) OnAttach(obj object.Component) {
-	// if its a shape, we need to recreate
-}
-
-func (b *RigidBody) OnDetach(obj object.Component) {
-	// if its a shape, we need to recreate
-}
-
-func (b *RigidBody) create() {
+func (b *RigidBody) OnEnable() {
 	if b.Shape == nil {
 		b.Shape = object.Get[Shape](b)
 		if b.Shape == nil {
@@ -133,6 +90,8 @@ func (b *RigidBody) create() {
 		log.Println("rigidbody", b, ": created")
 	}
 
+	b.pushState()
+
 	if b.world == nil {
 		b.world = object.GetInParents[*World](b)
 		if b.world != nil {
@@ -142,7 +101,17 @@ func (b *RigidBody) create() {
 	}
 }
 
+func (b *RigidBody) OnDisable() {
+	b.destroy()
+	b.Shape = nil
+	b.world = nil
+}
+
 func (b *RigidBody) destroy() {
+	if b.world != nil {
+		b.world.removeRigidBody(b)
+		b.world = nil
+	}
 	if b.handle != nil {
 		log.Println("destroy rigidbody", b)
 		C.goDeleteRigidBody(b.handle)
@@ -151,6 +120,7 @@ func (b *RigidBody) destroy() {
 }
 
 func (b *RigidBody) Transform() transform.T {
+	// floating object
 	b.transform.Recalculate(nil)
 	return b.transform
 }
