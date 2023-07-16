@@ -12,14 +12,14 @@ type Box struct {
 }
 
 type box struct {
-	object.T
+	object.Component
 	args  Box
 	shape physics.Box
 }
 
 func NewBox(args Box) T {
 	half := args.Size.Scaled(0.5)
-	return object.New(&box{
+	return object.NewComponent(&box{
 		args: args,
 		shape: physics.Box{
 			Min: args.Center.Sub(half),
@@ -32,7 +32,7 @@ func (s *box) Intersect(ray *physics.Ray) (bool, vec3.T) {
 	return s.shape.Intersect(ray)
 }
 
-func (s *box) Update(scene object.T, dt float32) {
+func (s *box) Update(scene object.Component, dt float32) {
 	// this isnt enough for rotation
 	sz := s.args.Size.Scaled(0.5)
 	s.shape.Min = s.Transform().Project(s.args.Center.Sub(sz))

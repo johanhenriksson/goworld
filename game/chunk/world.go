@@ -20,7 +20,7 @@ type World struct {
 	generator Generator
 
 	lock   *sync.Mutex
-	active map[string]object.T
+	active map[string]object.Component
 	ready  chan *T
 }
 
@@ -30,13 +30,13 @@ func NewWorld(size int, generator Generator, distance float32) *World {
 		size:      size,
 		generator: generator,
 		distance:  distance,
-		active:    make(map[string]object.T, 100),
+		active:    make(map[string]object.Component, 100),
 		ready:     make(chan *T, 100),
 		lock:      &sync.Mutex{},
 	})
 }
 
-func (c *World) Update(scene object.T, dt float32) {
+func (c *World) Update(scene object.Component, dt float32) {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 

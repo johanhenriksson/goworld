@@ -7,7 +7,7 @@ import (
 	"github.com/johanhenriksson/goworld/core/transform"
 )
 
-type T interface {
+type Component interface {
 	// Name is used to identify the object within the scene.
 	Name() string
 
@@ -24,7 +24,7 @@ type T interface {
 	SetActive(bool)
 
 	// Update the object. Called on every frame.
-	Update(T, float32)
+	Update(Component, float32)
 
 	// Destroy the object
 	Destroy()
@@ -49,7 +49,7 @@ func emptyBase(name string) *base {
 	}
 }
 
-func New[K T](obj K) K {
+func NewComponent[K Component](obj K) K {
 	t := reflect.TypeOf(obj).Elem()
 	v := reflect.ValueOf(obj).Elem()
 
@@ -57,7 +57,7 @@ func New[K T](obj K) K {
 	init := false
 	for i := 0; i < t.NumField(); i++ {
 		field := t.Field(i)
-		if field.Name == "T" {
+		if field.Name == "Component" {
 			if v.Field(i).IsZero() {
 				base := emptyBase(t.Name())
 				v.Field(i).Set(reflect.ValueOf(base))
@@ -67,19 +67,21 @@ func New[K T](obj K) K {
 		}
 	}
 	if !init {
-		panic("struct does not appear to be an Object")
+		// todo: does this even matter?
+		// this forces extending structs to be named Component as well
+		panic("struct does not appear to be a Component")
 	}
 
 	// add Object fields as children
 	for i := 0; i < t.NumField(); i++ {
 		field := t.Field(i)
-		if field.Name == "T" {
+		if field.Name == "Component" {
 			continue
 		}
 		if !field.IsExported() {
 			continue
 		}
-		if child, ok := v.Field(i).Interface().(T); ok {
+		if child, ok := v.Field(i).Interface().(Component); ok {
 			if reflect.ValueOf(child) == reflect.Zero(field.Type) {
 				log.Println(t.Name(), " child ", field.Name, " is nil")
 				continue
@@ -95,7 +97,7 @@ func (b *base) ID() uint {
 	return b.id
 }
 
-func (b *base) Update(scene T, dt float32) {
+func (b *base) Update(scene Component, dt float32) {
 }
 
 func (b *base) Transform() transform.T {

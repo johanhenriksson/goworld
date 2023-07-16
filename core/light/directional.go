@@ -26,13 +26,13 @@ type Cascade struct {
 }
 
 type dirlight struct {
-	object.T
+	object.Component
 	args     DirectionalArgs
 	cascades []Cascade
 }
 
 func NewDirectional(args DirectionalArgs) T {
-	return object.New(&dirlight{
+	return object.NewComponent(&dirlight{
 		args:     args,
 		cascades: make([]Cascade, args.Cascades),
 	})

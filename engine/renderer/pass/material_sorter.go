@@ -115,7 +115,7 @@ func (m *MaterialSorter) Load(def *material.Def) bool {
 	return true
 }
 
-func (m *MaterialSorter) Draw(cmds command.Recorder, args render.Args, meshes []mesh.T) {
+func (m *MaterialSorter) Draw(cmds command.Recorder, args render.Args, meshes []mesh.Component) {
 	camera := uniform.Camera{
 		Proj:        args.Projection,
 		View:        args.View,
@@ -129,9 +129,9 @@ func (m *MaterialSorter) Draw(cmds command.Recorder, args render.Args, meshes []
 	m.DrawCamera(cmds, args, camera, meshes)
 }
 
-func (m *MaterialSorter) DrawCamera(cmds command.Recorder, args render.Args, camera uniform.Camera, meshes []mesh.T) {
+func (m *MaterialSorter) DrawCamera(cmds command.Recorder, args render.Args, camera uniform.Camera, meshes []mesh.Component) {
 	// sort meshes by material
-	meshGroups := map[uint64][]mesh.T{}
+	meshGroups := map[uint64][]mesh.Component{}
 	for _, msh := range meshes {
 		matId := msh.MaterialID()
 		if _, exists := m.cache[matId]; !exists {

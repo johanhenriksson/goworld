@@ -6,14 +6,14 @@ import (
 	"github.com/johanhenriksson/goworld/util"
 )
 
-type Query[K T] struct {
+type Query[K Component] struct {
 	results []K
 	filters []func(b K) bool
 	sorter  func(a, b K) bool
 }
 
 // NewQuery returns a new query for the given component type
-func NewQuery[K T]() *Query[K] {
+func NewQuery[K Component]() *Query[K] {
 	return &Query[K]{
 		filters: make([]func(K) bool, 0, 8),
 		results: make([]K, 0, 128),
@@ -57,12 +57,12 @@ func (q *Query[K]) Reset() *Query[K] {
 }
 
 // First returns the first match in a depth-first fashion
-func (q *Query[K]) First(root T) (K, bool) {
+func (q *Query[K]) First(root Component) (K, bool) {
 	result, hit := q.first(root)
 	return result, hit
 }
 
-func (q *Query[K]) first(root T) (K, bool) {
+func (q *Query[K]) first(root Component) (K, bool) {
 	var empty K
 	if !root.Active() {
 		return empty, false
@@ -83,7 +83,7 @@ func (q *Query[K]) first(root T) (K, bool) {
 }
 
 // Collect returns all matching components
-func (q *Query[K]) Collect(roots ...T) []K {
+func (q *Query[K]) Collect(roots ...Component) []K {
 	// collect all matches
 	for _, root := range roots {
 		q.collect(root)
@@ -99,11 +99,11 @@ func (q *Query[K]) Collect(roots ...T) []K {
 	return q.results
 }
 
-func (q *Query[K]) CollectObjects(roots ...T) []T {
-	return util.Map(NewQuery[K]().Collect(roots...), func(s K) T { return s })
+func (q *Query[K]) CollectObjects(roots ...Component) []Component {
+	return util.Map(NewQuery[K]().Collect(roots...), func(s K) Component { return s })
 }
 
-func (q *Query[K]) collect(object T) {
+func (q *Query[K]) collect(object Component) {
 	if !object.Active() {
 		return
 	}

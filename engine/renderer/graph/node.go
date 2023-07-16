@@ -14,7 +14,7 @@ import (
 
 type NodePass interface {
 	Name() string
-	Record(command.Recorder, render.Args, object.T)
+	Record(command.Recorder, render.Args, object.Component)
 	Destroy()
 }
 
@@ -25,7 +25,7 @@ type Node interface {
 	Dependants() []Node
 
 	Name() string
-	Draw(command.Worker, render.Args, object.T)
+	Draw(command.Worker, render.Args, object.Component)
 	Detach(Node)
 	Destroy()
 }
@@ -171,7 +171,7 @@ func (n *node) signals(index int) []sync.Semaphore {
 	return signals
 }
 
-func (n *node) Draw(worker command.Worker, args render.Args, scene object.T) {
+func (n *node) Draw(worker command.Worker, args render.Args, scene object.Component) {
 	if n.pass == nil {
 		return
 	}

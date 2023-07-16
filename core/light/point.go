@@ -15,13 +15,13 @@ type PointArgs struct {
 }
 
 type pointlight struct {
-	object.T
+	object.Component
 
 	PointArgs
 }
 
 func NewPoint(args PointArgs) T {
-	return object.New(&pointlight{
+	return object.NewComponent(&pointlight{
 		PointArgs: args,
 	})
 }

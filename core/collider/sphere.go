@@ -12,13 +12,13 @@ type Sphere struct {
 }
 
 type sphere struct {
-	object.T
+	object.Component
 	args  Sphere
 	shape physics.Sphere
 }
 
 func NewSphere(args Sphere) T {
-	return object.New(&sphere{
+	return object.NewComponent(&sphere{
 		args: args,
 		shape: physics.Sphere{
 			Center: args.Center,
@@ -31,6 +31,6 @@ func (s *sphere) Intersect(ray *physics.Ray) (bool, vec3.T) {
 	return s.shape.Intersect(ray)
 }
 
-func (s *sphere) Update(scene object.T, dt float32) {
+func (s *sphere) Update(scene object.Component, dt float32) {
 	s.shape.Center = s.Transform().Project(s.args.Center)
 }

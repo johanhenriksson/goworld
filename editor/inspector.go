@@ -10,7 +10,7 @@ import (
 	"github.com/johanhenriksson/goworld/render/color"
 )
 
-func Inspector(target object.T, extraNodes []node.T) node.T {
+func Inspector(target object.Component, extraNodes []node.T) node.T {
 	key := object.Key("editor", target)
 	children := make([]node.T, 0, 4+len(extraNodes))
 	children = append(children, []node.T{

@@ -107,7 +107,7 @@ func makeSidebar() node.T {
 	})
 }
 
-func SidebarFragment(position gui.FragmentPosition, render node.RenderFunc) object.T {
+func SidebarFragment(position gui.FragmentPosition, render node.RenderFunc) object.Component {
 	return gui.NewFragment(gui.FragmentArgs{
 		Slot:     "sidebar:content",
 		Position: position,

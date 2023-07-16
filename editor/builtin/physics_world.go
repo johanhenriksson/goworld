@@ -13,13 +13,13 @@ func init() {
 }
 
 type WorldEditor struct {
-	object.T
+	object.Component
 	target *physics.World
 }
 
 func NewWorldEditor(ctx *editor.Context, world *physics.World) *WorldEditor {
 	log.Println("create physics world editor")
-	return object.New(&WorldEditor{
+	return object.NewComponent(&WorldEditor{
 		target: world,
 	})
 }
@@ -28,6 +28,6 @@ func (e *WorldEditor) Actions() []editor.Action {
 	return nil
 }
 
-func (e *WorldEditor) Update(scene object.T, dt float32) {
+func (e *WorldEditor) Update(scene object.Component, dt float32) {
 	e.target.DebugDraw()
 }

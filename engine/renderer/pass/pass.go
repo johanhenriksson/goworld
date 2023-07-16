@@ -11,7 +11,7 @@ import (
 
 type Pass interface {
 	Name() string
-	Record(command.Recorder, render.Args, object.T)
+	Record(command.Recorder, render.Args, object.Component)
 	Destroy()
 }
 

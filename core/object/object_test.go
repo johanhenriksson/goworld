@@ -16,11 +16,11 @@ type A struct {
 }
 
 type B struct {
-	object.T
+	object.Component
 }
 
 func NewB() *B {
-	return object.New(&B{})
+	return object.NewComponent(&B{})
 }
 
 func NewA() *A {
@@ -53,10 +53,10 @@ var _ = Describe("Object", func() {
 	})
 
 	It("instantiates object structs", func() {
-		b := object.New(&B{})
-		Expect(b.T).ToNot(BeNil())
+		b := object.NewComponent(&B{})
+		Expect(b.Component).ToNot(BeNil())
 
-		a := object.New(&A{
+		a := object.NewComponent(&A{
 			B: b,
 		})
 		Expect(a.Children()).To(HaveLen(1))
@@ -64,7 +64,7 @@ var _ = Describe("Object", func() {
 	})
 
 	It("correctly creates a key string", func() {
-		b := object.New(&B{})
+		b := object.NewComponent(&B{})
 		key := object.Key("hello", b)
 		Expect(key).To(Equal(fmt.Sprintf("hello-%x", b.ID())))
 	})

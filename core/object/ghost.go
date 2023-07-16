@@ -4,10 +4,10 @@ import "github.com/johanhenriksson/goworld/core/transform"
 
 type ghost struct {
 	group
-	target T
+	target Component
 }
 
-func Ghost(object T) G {
+func Ghost(object Component) G {
 	return &ghost{
 		group: group{
 			base: base{

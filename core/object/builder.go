@@ -15,7 +15,7 @@ type builder[K G] struct {
 	active   bool
 
 	parent   G
-	children []T
+	children []Component
 }
 
 // Builder instantiates a new group builder.
@@ -30,7 +30,7 @@ func Builder[K G](object K) *builder[K] {
 }
 
 // Attach a child component
-func (b *builder[K]) Attach(child T) *builder[K] {
+func (b *builder[K]) Attach(child Component) *builder[K] {
 	b.children = append(b.children, child)
 	return b
 }

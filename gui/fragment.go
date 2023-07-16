@@ -12,7 +12,7 @@ const FragmentFirst FragmentPosition = 1
 
 // A Fragment contains a UI subtree to be rendered as a child of a given element
 type Fragment interface {
-	object.T
+	object.Component
 	Render() node.T
 
 	Slot() string
@@ -26,12 +26,12 @@ type FragmentArgs struct {
 }
 
 type fragment struct {
-	object.T
+	object.Component
 	FragmentArgs
 }
 
 func NewFragment(args FragmentArgs) Fragment {
-	return object.New(&fragment{
+	return object.NewComponent(&fragment{
 		FragmentArgs: args,
 	})
 }

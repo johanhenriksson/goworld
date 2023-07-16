@@ -18,7 +18,7 @@ import (
 )
 
 type Character struct {
-	object.T
+	object.Component
 
 	handle   C.goCharacterHandle
 	shape    Shape
@@ -36,7 +36,7 @@ type characterState struct {
 func NewCharacter(height, radius, stepHeight float32) *Character {
 	shape := NewCapsule(height, radius)
 	handle := C.goCreateCharacter(shape.handle, C.float(stepHeight))
-	character := object.New(&Character{
+	character := object.NewComponent(&Character{
 		handle: handle,
 		shape:  shape,
 		step:   stepHeight,
@@ -57,7 +57,7 @@ func (c *Character) fetchState() {
 	c.grounded = state.grounded
 }
 
-func (c *Character) Update(scene object.T, dt float32) {
+func (c *Character) Update(scene object.Component, dt float32) {
 	if c.world == nil {
 		if c.world = object.GetInParents[*World](c); c.world != nil {
 			c.world.AddCharacter(c)

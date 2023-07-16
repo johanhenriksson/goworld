@@ -17,7 +17,7 @@ var ErrNoCamera = errors.New("no active camera")
 var ErrRecreate = errors.New("recreate renderer")
 
 type PreDrawable interface {
-	object.T
+	object.Component
 	PreDraw(render.Args, object.G) error
 }
 

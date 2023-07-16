@@ -12,11 +12,11 @@ import (
 	"github.com/johanhenriksson/goworld/render/color"
 )
 
-type SelectObjectHandler func(object.T)
+type SelectObjectHandler func(object.Component)
 
 type ObjectListProps struct {
-	Scene       object.T
-	EditorRoot  object.T
+	Scene       object.Component
+	EditorRoot  object.Component
 	ToolManager ToolManager
 }
 
@@ -28,7 +28,7 @@ func ObjectList(key string, props ObjectListProps) node.T {
 		Children: []node.T{
 			ObjectListEntry("scene", ObjectListEntryProps{
 				Object: props.Scene,
-				OnSelect: func(obj object.T) {
+				OnSelect: func(obj object.Component) {
 					if !object.Is[*ObjectEditor](obj) {
 						// look up an editor instead
 						var hit bool
@@ -51,7 +51,7 @@ func ObjectList(key string, props ObjectListProps) node.T {
 }
 
 type ObjectListEntryProps struct {
-	Object   object.T
+	Object   object.Component
 	OnSelect SelectObjectHandler
 }
 

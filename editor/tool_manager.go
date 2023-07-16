@@ -35,12 +35,12 @@ type Action struct {
 }
 
 type ToolManager interface {
-	object.T
+	object.Component
 	mouse.Handler
 
 	Select(Selectable)
 	SelectTool(Tool)
-	MoveTool(object.T)
+	MoveTool(object.Component)
 	Tool() Tool
 }
 
@@ -200,7 +200,7 @@ func (m *toolmgr) PreDraw(args render.Args, scene object.G) error {
 	return nil
 }
 
-func (m *toolmgr) MoveTool(obj object.T) {
+func (m *toolmgr) MoveTool(obj object.Component) {
 	m.Mover.SetTarget(obj.Transform())
 	m.SelectTool(m.Mover)
 }

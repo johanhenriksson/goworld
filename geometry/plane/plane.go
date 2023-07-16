@@ -22,7 +22,7 @@ func Group(args Args) *Plane {
 
 // Plane is a colored, one segment, one-sided 3D plane
 type Mesh struct {
-	mesh.T
+	mesh.Component
 	Args
 }
 
@@ -33,9 +33,9 @@ type Args struct {
 }
 
 func New(args Args) *Mesh {
-	plane := object.New(&Mesh{
-		T:    mesh.New(mesh.Forward, args.Mat),
-		Args: args,
+	plane := object.NewComponent(&Mesh{
+		Component: mesh.New(mesh.Forward, args.Mat),
+		Args:      args,
 	})
 	plane.generate()
 	return plane

@@ -138,7 +138,7 @@ func (e *edit) Name() string {
 	return "Chunk"
 }
 
-func (e *edit) Update(scene object.T, dt float32) {
+func (e *edit) Update(scene object.Component, dt float32) {
 	e.G.Update(scene, dt)
 	e.mesh.Update(scene, dt)
 }

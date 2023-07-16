@@ -11,7 +11,7 @@ import (
 
 // T is a vertex colored cube mesh
 type T struct {
-	mesh.T
+	mesh.Component
 	Args
 }
 
@@ -23,9 +23,9 @@ type Args struct {
 
 // New creates a vertex colored cube mesh with a given size
 func New(args Args) *T {
-	cube := object.New(&T{
-		T:    mesh.New(mesh.Forward, args.Mat),
-		Args: args,
+	cube := object.NewComponent(&T{
+		Component: mesh.New(mesh.Forward, args.Mat),
+		Args:      args,
 	})
 	cube.generate()
 	return cube
