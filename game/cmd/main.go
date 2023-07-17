@@ -31,7 +31,6 @@ func main() {
 	},
 		editor.Scene(func(r renderer.T, scene object.Object) {
 			world := physics.NewWorld()
-			world.Debug(true)
 			object.Attach(scene, world)
 
 			// generator := chunk.ExampleWorldgen(4, 123123)

@@ -1,7 +1,6 @@
 package gizmo
 
 import (
-	"github.com/johanhenriksson/goworld/core/collider"
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/core/transform"
@@ -13,6 +12,7 @@ import (
 	"github.com/johanhenriksson/goworld/math/quat"
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/math/vec3"
+	"github.com/johanhenriksson/goworld/physics"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/material"
@@ -89,10 +89,7 @@ func NewMover() *Mover {
 			})).
 			Position(vec3.UnitX).
 			Rotation(quat.Euler(0, 0, 270)).
-			Attach(collider.NewBox(collider.Box{
-				Size:   vec3.New(2*radius, height, 2*radius),
-				Center: vec3.New(0, 0, 0),
-			})).
+			Attach(physics.NewBox(vec3.New(2*radius, height, 2*radius))).
 			Create(),
 
 		// X Arrow Body
@@ -105,10 +102,7 @@ func NewMover() *Mover {
 		})).
 			Position(vec3.New(0.5, 0, 0)).
 			Rotation(quat.Euler(0, 0, 270)).
-			Attach(collider.NewBox(collider.Box{
-				Size:   vec3.New(radius, 1, radius),
-				Center: vec3.New(0, 0, 0),
-			})).
+			Attach(physics.NewBox(vec3.New(2*radius, 1, 2*radius))).
 			Create(),
 
 		// Y Arrow Cone
@@ -120,10 +114,7 @@ func NewMover() *Mover {
 			Color:    color.Green,
 		})).
 			Position(vec3.UnitY).
-			Attach(collider.NewBox(collider.Box{
-				Size:   vec3.New(2*radius, height, 2*radius),
-				Center: vec3.New(0, 0, 0),
-			})).
+			Attach(physics.NewBox(vec3.New(2*radius, height, 2*radius))).
 			Create(),
 
 		// Y Arrow body
@@ -135,10 +126,7 @@ func NewMover() *Mover {
 			Color:    color.Green,
 		})).
 			Position(vec3.New(0, 0.5, 0)).
-			Attach(collider.NewBox(collider.Box{
-				Size:   vec3.New(2*radius, 1, 2*radius),
-				Center: vec3.New(0, 0, 0),
-			})).
+			Attach(physics.NewBox(vec3.New(2*radius, 1, 2*radius))).
 			Create(),
 
 		// Z Arrow Cone
@@ -151,10 +139,7 @@ func NewMover() *Mover {
 		})).
 			Position(vec3.UnitZ).
 			Rotation(quat.Euler(90, 180, 0)).
-			Attach(collider.NewBox(collider.Box{
-				Size:   vec3.New(2*radius, height, 2*radius),
-				Center: vec3.New(0, 0, 0),
-			})).
+			Attach(physics.NewBox(vec3.New(2*radius, height, 2*radius))).
 			Create(),
 
 		// Z Arrow Body
@@ -163,14 +148,10 @@ func NewMover() *Mover {
 			Radius:   bodyRadius,
 			Height:   1,
 			Segments: segments,
-			Color:    color.Blue,
 		})).
 			Position(vec3.New(0, 0, 0.5)).
 			Rotation(quat.Euler(90, 180, 0)).
-			Attach(collider.NewBox(collider.Box{
-				Size:   vec3.New(2*radius, 1, 2*radius),
-				Center: vec3.New(0, 0, 0),
-			})).
+			Attach(physics.NewBox(vec3.New(2*radius, 1, 2*radius))).
 			Create(),
 
 		// XY Plane
@@ -246,7 +227,7 @@ func (g *Mover) CanDeselect() bool {
 	return true
 }
 
-func (g *Mover) getColliderAxis(collider collider.T) vec3.T {
+func (g *Mover) getColliderAxis(collider physics.Shape) vec3.T {
 	axisObj := collider.Parent()
 	switch axisObj {
 	case g.X:
@@ -265,10 +246,10 @@ func (g *Mover) getColliderAxis(collider collider.T) vec3.T {
 	return vec3.Zero
 }
 
-func (g *Mover) DragStart(e mouse.Event, collider collider.T) {
+func (g *Mover) DragStart(e mouse.Event, shape physics.Shape) {
 	g.dragging = true
 
-	g.axis = g.getColliderAxis(collider)
+	g.axis = g.getColliderAxis(shape)
 	cursor := g.viewport.NormalizeCursor(e.Position())
 	g.start = cursor
 
@@ -296,10 +277,10 @@ func (g *Mover) DragMove(e mouse.Event) {
 	}
 }
 
-func (g *Mover) Hover(hovering bool, collider collider.T) {
+func (g *Mover) Hover(hovering bool, shape physics.Shape) {
 	if hovering {
 		// hover start
-		axis := g.getColliderAxis(collider)
+		axis := g.getColliderAxis(shape)
 		switch axis {
 		case vec3.UnitX:
 			g.X.Transform().SetScale(g.hoverScale)

@@ -132,7 +132,7 @@ func (g *group) detach(child Component) {
 }
 
 func (g *group) setActive(active bool) bool {
-	prev := g.base.setActive(active)
+	wasActive := g.base.setActive(active)
 	if active {
 		for _, child := range g.children {
 			activate(child)
@@ -142,7 +142,7 @@ func (g *group) setActive(active bool) bool {
 			deactivate(child)
 		}
 	}
-	return prev
+	return wasActive
 }
 
 func (g *group) KeyEvent(e keys.Event) {

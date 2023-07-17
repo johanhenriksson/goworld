@@ -47,6 +47,7 @@ func NewEditor(render renderer.T, workspace object.Object) *Editor {
 		},
 	))
 
+	editor.World.Debug(true)
 	return editor
 }
 

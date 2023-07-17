@@ -1,12 +1,11 @@
 package gizmo
 
 import (
-	"github.com/johanhenriksson/goworld/core/collider"
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/math/mat4"
-	"github.com/johanhenriksson/goworld/math/physics"
 	"github.com/johanhenriksson/goworld/math/vec3"
+	"github.com/johanhenriksson/goworld/physics"
 	"github.com/johanhenriksson/goworld/render"
 )
 
@@ -16,10 +15,10 @@ import (
 type Gizmo interface {
 	object.Component
 
-	DragStart(e mouse.Event, collider collider.T)
+	DragStart(e mouse.Event, collider physics.Shape)
 	DragEnd(e mouse.Event)
 	DragMove(e mouse.Event)
-	Hover(bool, collider.T)
+	Hover(bool, physics.Shape)
 
 	Camera() mat4.T
 	Viewport() render.Screen
@@ -34,16 +33,9 @@ func HandleMouse(m Gizmo, e mouse.Event) {
 
 	near := vpi.TransformPoint(vec3.New(cursor.X, cursor.Y, 1))
 	far := vpi.TransformPoint(vec3.New(cursor.X, cursor.Y, 0))
-	dir := far.Sub(near).Normalized()
 
-	// return closest hit
-	// find Collider children of Selectable objects
-	colliders := object.NewQuery[collider.T]().Collect(m)
-
-	closest, hit := collider.ClosestIntersection(colliders, &physics.Ray{
-		Origin: near,
-		Dir:    dir,
-	})
+	world := object.GetInParents[*physics.World](m)
+	hit, ok := world.Raycast(near, far)
 
 	if m.Dragging() {
 		if e.Action() == mouse.Release {
@@ -54,8 +46,8 @@ func HandleMouse(m Gizmo, e mouse.Event) {
 			e.Consume()
 		}
 	} else if e.Action() == mouse.Press {
-		if hit {
-			m.DragStart(e, closest)
+		if ok {
+			m.DragStart(e, hit.Shape)
 			e.Consume()
 		} else if m.Dragging() {
 			// we hit nothing, deselect
@@ -63,6 +55,6 @@ func HandleMouse(m Gizmo, e mouse.Event) {
 			e.Consume()
 		}
 	} else if e.Action() == mouse.Move {
-		m.Hover(hit, closest)
+		m.Hover(ok, hit.Shape)
 	}
 }

@@ -30,7 +30,7 @@ func (e *BoxEditor) Bounds() physics.Shape {
 }
 
 func (e *BoxEditor) OnEnable() {
-	log.Println("ENABLE BOX EDITOR")
+	log.Println("ENABLE BOX EDITOR FOR", e.target.Parent().Name())
 }
 
 func (e *BoxEditor) Actions() []editor.Action {

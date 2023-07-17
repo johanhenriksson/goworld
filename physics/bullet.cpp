@@ -122,6 +122,16 @@ void goRigidBodyGetState(goRigidBodyHandle object, goRigidBodyState* state) {
     quatToGo(rot, &state->rotation);
 }
 
+void goRigidBodySetShape(goRigidBodyHandle objectPtr, goShapeHandle shapePtr) {
+    btRigidBody* body = reinterpret_cast<btRigidBody*>(objectPtr);
+    btAssert(body);
+
+    btCollisionShape* shape = reinterpret_cast<btCollisionShape*>(shapePtr);
+    btAssert(shape);
+
+    body->setCollisionShape(shape);
+}
+
 void goRigidBodySetState(goRigidBodyHandle object, goRigidBodyState* state) {
     btRigidBody* body = reinterpret_cast<btRigidBody*>(object);
     btAssert(body);
@@ -282,7 +292,6 @@ int goRayCast(goDynamicsWorldHandle world, goVector3* rayStart, goVector3* rayEn
         vec3ToGo(callback.m_hitPointWorld, &res->point);
         vec3ToGo(callback.m_hitNormalWorld, &res->normal);
         auto shape = callback.m_collisionObject->getCollisionShape();
-        std::cout << "shape type:" << shape->getShapeType() << std::endl;
         res->shape = shape->getUserPointer();
         return 1;
     }
