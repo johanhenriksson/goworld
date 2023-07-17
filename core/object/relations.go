@@ -68,7 +68,7 @@ func activate(object Component) {
 	// activate if parent is active
 	if wasActive := object.setActive(true); !wasActive {
 		// enabled
-		for _, handler := range GetAll[EnableHandler](object) {
+		if handler, ok := object.(EnableHandler); ok {
 			handler.OnEnable()
 		}
 	}
@@ -82,7 +82,7 @@ func Disable(object Component) {
 func deactivate(object Component) {
 	if wasActive := object.setActive(false); wasActive {
 		// disabled
-		for _, handler := range GetAll[DisableHandler](object) {
+		if handler, ok := object.(DisableHandler); ok {
 			handler.OnDisable()
 		}
 	}
