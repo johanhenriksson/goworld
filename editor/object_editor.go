@@ -7,29 +7,31 @@ import (
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/gui"
 	"github.com/johanhenriksson/goworld/gui/node"
+	"github.com/johanhenriksson/goworld/physics"
 )
 
 type ObjectEditor struct {
 	object.Object
 
-	Bounds collider.T
+	Body *physics.RigidBody
+
 	Custom T
 
 	target object.Component
 }
+
+var _ Selectable = &ObjectEditor{}
 
 type DefaultEditor struct {
 	object.Object
 	GUI gui.Fragment
 }
 
-func (d *DefaultEditor) Actions() []Action { return nil }
+func (d *DefaultEditor) Actions() []Action     { return nil }
+func (d *DefaultEditor) Bounds() physics.Shape { return nil }
 
 func NewObjectEditor(target object.Component, bounds collider.Box, editor T) *ObjectEditor {
-	var boundsCol collider.T
-	if editor != nil {
-		boundsCol = collider.NewBox(bounds)
-	} else {
+	if editor == nil {
 		// instantiate default object inspector
 		editor = object.New("DefaultEditor", &DefaultEditor{
 			GUI: gui.NewFragment(gui.FragmentArgs{
@@ -43,6 +45,12 @@ func NewObjectEditor(target object.Component, bounds collider.Box, editor T) *Ob
 	}
 	object.Disable(editor)
 
+	var body *physics.RigidBody
+	if editor.Bounds() != nil {
+		body = physics.NewRigidBody("Collider:"+target.Name(), 0)
+		object.Attach(body, editor.Bounds())
+	}
+
 	return object.New("ObjectEditor", &ObjectEditor{
 		Object: object.Ghost(target),
 		target: target,
@@ -51,18 +59,17 @@ func NewObjectEditor(target object.Component, bounds collider.Box, editor T) *Ob
 
 		// the bounds collider must be held outside the editor object, so that it is not
 		// disabled along with the editor on deselection. this prevents re-selection
-		Bounds: boundsCol,
+
+		Body: body,
 	})
 }
-
-var _ Selectable = &ObjectEditor{}
 
 func (e *ObjectEditor) Update(scene object.Component, dt float32) {
 	e.Object.Update(scene, dt)
 	e.Custom.Update(scene, dt)
 }
 
-func (e *ObjectEditor) Select(ev mouse.Event, collider collider.T) {
+func (e *ObjectEditor) Select(ev mouse.Event) {
 	object.Enable(e.Custom)
 }
 

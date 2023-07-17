@@ -158,6 +158,9 @@ func GetInParents[K Component](self Component) K {
 	}
 
 	for group != nil {
+		if hit, ok := group.(K); ok {
+			return hit
+		}
 		for _, child := range group.Children() {
 			if child == self {
 				continue
@@ -180,6 +183,9 @@ func GetAllInParents[K Component](self Component) []K {
 	}
 	var results []K
 	for group != nil {
+		if hit, ok := group.(K); ok {
+			results = append(results, hit)
+		}
 		for _, child := range group.Children() {
 			if child == self {
 				continue

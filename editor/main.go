@@ -78,7 +78,7 @@ func Scene(f engine.SceneFunc) engine.SceneFunc {
 
 type EditorScene struct {
 	object.Object
-	Editor    object.Object
+	Editor    *Editor
 	Workspace object.Object
 
 	playing bool
@@ -106,5 +106,6 @@ func (s *EditorScene) Update(scene object.Component, dt float32) {
 		s.Workspace.Update(scene, dt)
 	} else {
 		s.Editor.Update(scene, dt)
+		s.Editor.World.DebugDraw()
 	}
 }

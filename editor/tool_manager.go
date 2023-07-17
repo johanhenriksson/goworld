@@ -1,23 +1,21 @@
 package editor
 
 import (
-	"log"
-
-	"github.com/johanhenriksson/goworld/core/collider"
 	"github.com/johanhenriksson/goworld/core/input/keys"
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/editor/gizmo"
 	"github.com/johanhenriksson/goworld/math/mat4"
-	"github.com/johanhenriksson/goworld/math/physics"
 	"github.com/johanhenriksson/goworld/math/vec3"
-	phys "github.com/johanhenriksson/goworld/physics"
+	"github.com/johanhenriksson/goworld/physics"
 	"github.com/johanhenriksson/goworld/render"
 )
 
 type Selectable interface {
-	T
-	Select(mouse.Event, collider.T)
+	object.Object
+
+	Actions() []Action
+	Select(mouse.Event)
 	Deselect(mouse.Event) bool
 }
 
@@ -36,7 +34,6 @@ type Action struct {
 
 type ToolManager interface {
 	object.Component
-	mouse.Handler
 
 	Select(Selectable)
 	SelectTool(Tool)
@@ -92,31 +89,23 @@ func (m *toolmgr) MouseEvent(e mouse.Event) {
 		// calculate a ray going into the screen
 		near := vpi.TransformPoint(vec3.New(cursor.X, cursor.Y, 0))
 		far := vpi.TransformPoint(vec3.New(cursor.X, cursor.Y, 1))
-		dir := far.Sub(near).Normalized()
 
-		if world := object.GetInParents[*phys.World](m); world != nil {
-			hit, ok := world.Raycast(near, far)
-			log.Println("cast from", near, "to", far, "in world", world.Parent().Name())
-			log.Println("hit:", ok, "=", hit)
+		world := object.GetInParents[*physics.World](m)
+		if world == nil {
+			return
 		}
 
-		// find Collider children of Selectable objects
-		selectables := object.NewQuery[Selectable]().CollectObjects(m.scene)
-		colliders := object.NewQuery[collider.T]().Collect(selectables...)
+		hit, _ := world.Raycast(near, far)
+		if hit.Shape == nil {
+			return
+		}
 
-		// return closest hit
-		closest, hit := collider.ClosestIntersection(colliders, &physics.Ray{
-			Origin: near,
-			Dir:    dir,
-		})
-
-		if hit {
-			if selectable := object.GetInParents[Selectable](closest); selectable != nil {
-				m.setSelect(e, selectable, closest)
-			}
-		} else if m.selected != nil {
-			// we hit nothing, deselect
-			m.setSelect(e, nil, nil)
+		if object := object.GetInParents[Selectable](hit.Shape); object != nil {
+			// todo: pass physics hit info instead
+			m.setSelect(e, object)
+		} else {
+			// deselect
+			m.setSelect(e, nil)
 		}
 	}
 }
@@ -127,7 +116,7 @@ func (m *toolmgr) KeyEvent(e keys.Event) {
 	}
 	if m.selected != nil {
 		if e.Code() == keys.Escape {
-			m.setSelect(mouse.NopEvent(), nil, nil)
+			m.setSelect(mouse.NopEvent(), nil)
 			e.Consume()
 			return
 		}
@@ -164,10 +153,10 @@ func (m *toolmgr) SelectTool(tool Tool) {
 }
 
 func (m *toolmgr) Select(obj Selectable) {
-	m.setSelect(mouse.NopEvent(), obj, nil)
+	m.setSelect(mouse.NopEvent(), obj)
 }
 
-func (m *toolmgr) setSelect(e mouse.Event, object Selectable, collider collider.T) bool {
+func (m *toolmgr) setSelect(e mouse.Event, object Selectable) bool {
 	// todo: detect if the object has been deleted
 	// otherwise CanDeselect() will make it impossible to select another object
 
@@ -188,7 +177,7 @@ func (m *toolmgr) setSelect(e mouse.Event, object Selectable, collider collider.
 	// select
 	if object != nil {
 		m.selected = object
-		object.Select(e, collider)
+		object.Select(e)
 	}
 	return true
 }
