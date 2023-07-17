@@ -1,6 +1,8 @@
 package builtin
 
 import (
+	"log"
+
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/editor"
 	"github.com/johanhenriksson/goworld/physics"
@@ -13,20 +15,22 @@ func init() {
 type BoxEditor struct {
 	object.Object
 	target *physics.Box
-
-	Shape physics.Shape
-	Body  *physics.RigidBody
+	shape  physics.Shape
 }
 
 func NewBoxEditor(ctx *editor.Context, box *physics.Box) *BoxEditor {
-	body := physics.NewRigidBody("Collider", 0)
-	body.Shape = physics.NewBox(box.Size())
-
 	return object.New("BoxEditor", &BoxEditor{
 		target: box,
-		Body:   body,
-		Shape:  body.Shape,
+		shape:  physics.NewBox(box.Size()),
 	})
+}
+
+func (e *BoxEditor) Bounds() physics.Shape {
+	return e.shape
+}
+
+func (e *BoxEditor) OnEnable() {
+	log.Println("ENABLE BOX EDITOR")
 }
 
 func (e *BoxEditor) Actions() []editor.Action {

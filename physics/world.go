@@ -109,5 +109,7 @@ func (w *World) Debug(enabled bool) {
 }
 
 func (w *World) DebugDraw() {
-	C.goDebugDraw(w.handle)
+	if w.handle != nil {
+		C.goDebugDraw(w.handle)
+	}
 }

@@ -16,6 +16,7 @@ import (
 	"github.com/johanhenriksson/goworld/math/quat"
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/math/vec3"
+	"github.com/johanhenriksson/goworld/physics"
 	"github.com/johanhenriksson/goworld/render/color"
 )
 
@@ -53,8 +54,9 @@ type edit struct {
 
 	xp, yp, zp int
 
-	Bounds *box.T
-	render renderer.T
+	BoundingBox *box.T
+	shape       physics.Shape
+	render      renderer.T
 }
 
 var _ editor.T = &edit{}
@@ -93,10 +95,12 @@ func NewEditor(ctx *editor.Context, mesh *Mesh) Editor {
 		render: ctx.Render,
 		color:  color.Red,
 
-		Bounds: box.New(box.Args{
+		BoundingBox: box.New(box.Args{
 			Size:  dimensions,
 			Color: color.White,
 		}),
+
+		shape: physics.NewBox(dimensions.Scaled(0.5)),
 
 		// X Construction Plane
 		XPlane: object.Builder(plane.Object(plane.Args{
@@ -136,6 +140,10 @@ func NewEditor(ctx *editor.Context, mesh *Mesh) Editor {
 
 func (e *edit) Name() string {
 	return "Chunk"
+}
+
+func (e *edit) Bounds() physics.Shape {
+	return e.shape
 }
 
 func (e *edit) Update(scene object.Component, dt float32) {

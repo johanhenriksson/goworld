@@ -76,6 +76,7 @@ func New[K Object](name string, obj K) K {
 			}
 			// initialize recursively?
 			if child.Parent() == nil {
+				log.Println("Attaching child", child.Name(), "to", obj.Name())
 				Attach(obj, child)
 			}
 		}

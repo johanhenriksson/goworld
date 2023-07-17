@@ -28,6 +28,10 @@ func (e *WorldEditor) Actions() []editor.Action {
 	return nil
 }
 
+func (e *WorldEditor) Bounds() physics.Shape {
+	return nil
+}
+
 func (e *WorldEditor) Update(scene object.Component, dt float32) {
-	e.target.DebugDraw()
+	// e.target.DebugDraw()
 }

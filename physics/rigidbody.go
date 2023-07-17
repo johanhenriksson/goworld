@@ -51,6 +51,9 @@ func (b *RigidBody) pullState() {
 	if b.handle == nil {
 		return
 	}
+	if b.mass == 0 {
+		return
+	}
 	state := rigidbodyState{}
 	C.goRigidBodyGetState(b.handle, (*C.goRigidBodyState)(unsafe.Pointer(&state)))
 	b.Transform().SetWorldPosition(state.position)
@@ -71,33 +74,24 @@ func (b *RigidBody) pushState() {
 }
 
 func (b *RigidBody) OnEnable() {
+	log.Println("Enable Rigidbody", b.Name())
 	if b.Shape == nil {
 		b.Shape = object.Get[Shape](b)
 		if b.Shape == nil {
 			log.Println("rigidbody", b.Parent().Name(), ": no shape")
 			return
 		}
-		log.Println("rigidbody", b.Parent().Name(), ": found shape", b.Shape.Name())
 	}
 
-	if b.Shape.shape() == nil {
-		// the shape is not available yet
-		return
-	}
-
-	if b.handle == nil {
-		b.handle = C.goCreateRigidBody((*C.char)(unsafe.Pointer(b)), C.goReal(b.mass), b.Shape.shape())
-		log.Println("rigidbody", b, ": created")
-	}
-
+	b.handle = C.goCreateRigidBody((*C.char)(unsafe.Pointer(b)), C.goReal(b.mass), b.Shape.shape())
 	b.pushState()
 
-	if b.world == nil {
-		b.world = object.GetInParents[*World](b)
-		if b.world != nil {
-			b.world.addRigidBody(b)
-			log.Println("rigidbody", b.Parent().Name(), ": added to world", b.world.Parent().Name(), "at", b.Transform().WorldPosition())
-		}
+	b.world = object.GetInParents[*World](b)
+	if b.world != nil {
+		b.world.addRigidBody(b)
+		log.Println("Rigidbody", b.Name(), "added to physics world", b.world.Parent().Name())
+	} else {
+		log.Println("Rigidbody", b.Name(), ": No physics world in parents")
 	}
 }
 
@@ -120,6 +114,9 @@ func (b *RigidBody) destroy() {
 }
 
 func (b *RigidBody) Transform() transform.T {
+	if b.mass == 0 {
+		return b.Object.Transform()
+	}
 	// floating object
 	b.transform.Recalculate(nil)
 	return b.transform

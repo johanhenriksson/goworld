@@ -89,7 +89,7 @@ func (c *Character) OnEnable() {
 	if c.world = object.GetInParents[*World](c); c.world != nil {
 		c.world.AddCharacter(c)
 	} else {
-		log.Println("Character: No physics world in parents")
+		log.Println("Character", c.Name(), ": No physics world in parents")
 	}
 }
 
