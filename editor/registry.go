@@ -4,9 +4,7 @@ import (
 	"log"
 	"reflect"
 
-	"github.com/johanhenriksson/goworld/core/collider"
 	"github.com/johanhenriksson/goworld/core/object"
-	"github.com/johanhenriksson/goworld/math/vec3"
 )
 
 type Constructor func(*Context, object.Component) T
@@ -41,12 +39,6 @@ func ConstructEditors(ctx *Context, current object.Component, target object.Comp
 		}
 		editor = NewObjectEditor(
 			target,
-			// todo: how to figure out the bounds?
-			// todo: how to deal with other shapes?
-			collider.Box{
-				Center: vec3.New(0.5, 0.5, 0.5),
-				Size:   vec3.New(1, 1, 1),
-			},
 			customEditor,
 		)
 	}

@@ -1,7 +1,6 @@
 package editor
 
 import (
-	"github.com/johanhenriksson/goworld/core/collider"
 	"github.com/johanhenriksson/goworld/core/input/keys"
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/core/object"
@@ -30,7 +29,7 @@ type DefaultEditor struct {
 func (d *DefaultEditor) Actions() []Action     { return nil }
 func (d *DefaultEditor) Bounds() physics.Shape { return nil }
 
-func NewObjectEditor(target object.Component, bounds collider.Box, editor T) *ObjectEditor {
+func NewObjectEditor(target object.Component, editor T) *ObjectEditor {
 	if editor == nil {
 		// instantiate default object inspector
 		editor = object.New("DefaultEditor", &DefaultEditor{

@@ -30,6 +30,8 @@ type RigidBody struct {
 	Shape Shape
 }
 
+var _ object.Object = &RigidBody{}
+
 type rigidbodyState struct {
 	position vec3.T
 	rotation quat.T
