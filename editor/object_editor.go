@@ -4,43 +4,26 @@ import (
 	"github.com/johanhenriksson/goworld/core/input/keys"
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/core/object"
-	"github.com/johanhenriksson/goworld/gui"
-	"github.com/johanhenriksson/goworld/gui/node"
 	"github.com/johanhenriksson/goworld/physics"
 )
 
+// ObjectEditor connects a scene object with an editor implementation.
+// ObjectEditors mirrors the transformation of its target.
 type ObjectEditor struct {
 	object.Object
 
 	Body *physics.RigidBody
 
-	Custom T
+	Editor T
 
 	target object.Component
 }
 
 var _ Selectable = &ObjectEditor{}
 
-type DefaultEditor struct {
-	object.Object
-	GUI gui.Fragment
-}
-
-func (d *DefaultEditor) Actions() []Action     { return nil }
-func (d *DefaultEditor) Bounds() physics.Shape { return nil }
-
 func NewObjectEditor(target object.Component, editor T) *ObjectEditor {
 	if editor == nil {
-		// instantiate default object inspector
-		editor = object.New("DefaultEditor", &DefaultEditor{
-			GUI: gui.NewFragment(gui.FragmentArgs{
-				Slot:     "sidebar:content",
-				Position: gui.FragmentLast,
-				Render: func() node.T {
-					return Inspector(target, nil)
-				},
-			}),
-		})
+		editor = NewDefaultEditor(target)
 	}
 	object.Disable(editor)
 
@@ -54,9 +37,9 @@ func NewObjectEditor(target object.Component, editor T) *ObjectEditor {
 		Object: object.Ghost(target),
 		target: target,
 
-		Custom: editor,
+		Editor: editor,
 
-		// the bounds collider must be held outside the editor object, so that it is not
+		// the bounds rigidbody must be held outside the editor object, so that it is not
 		// disabled along with the editor on deselection. this prevents re-selection
 
 		Body: body,
@@ -65,16 +48,16 @@ func NewObjectEditor(target object.Component, editor T) *ObjectEditor {
 
 func (e *ObjectEditor) Update(scene object.Component, dt float32) {
 	e.Object.Update(scene, dt)
-	e.Custom.Update(scene, dt)
+	e.Editor.Update(scene, dt)
 }
 
 func (e *ObjectEditor) Select(ev mouse.Event) {
-	object.Enable(e.Custom)
+	object.Enable(e.Editor)
 }
 
 func (e *ObjectEditor) Deselect(ev mouse.Event) bool {
 	// todo: check with editor if we can deselect?
-	object.Disable(e.Custom)
+	object.Disable(e.Editor)
 	return true
 }
 
@@ -92,6 +75,6 @@ func (e *ObjectEditor) Actions() []Action {
 			},
 		},
 	}
-	actions = append(actions, e.Custom.Actions()...)
+	actions = append(actions, e.Editor.Actions()...)
 	return actions
 }
