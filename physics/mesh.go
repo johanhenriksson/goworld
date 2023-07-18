@@ -23,6 +23,7 @@ type Mesh struct {
 	shapeBase
 	object.Component
 	meshHandle C.goTriangleMeshHandle
+	data       vertex.Mesh
 }
 
 var _ Shape = &Mesh{}
@@ -75,6 +76,11 @@ func (m *Mesh) SetMeshData(mesh vertex.Mesh) {
 		unsafe.Pointer(indexPtr), C.int(indexCount), C.int(indexStride))
 
 	m.handle = C.goNewTriangleMeshShape((*C.char)(unsafe.Pointer(m)), m.meshHandle)
+	m.data = mesh
+}
+
+func (m *Mesh) MeshData() vertex.Mesh {
+	return m.data
 }
 
 func (m *Mesh) destroy() {
