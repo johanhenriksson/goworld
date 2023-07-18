@@ -3,12 +3,23 @@ package editor
 import (
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/editor/propedit"
+	"github.com/johanhenriksson/goworld/gui"
 	"github.com/johanhenriksson/goworld/gui/node"
 	"github.com/johanhenriksson/goworld/gui/style"
 	"github.com/johanhenriksson/goworld/gui/widget/label"
 	"github.com/johanhenriksson/goworld/gui/widget/rect"
 	"github.com/johanhenriksson/goworld/render/color"
 )
+
+func InspectorGUI(target object.Component, extraNodes []node.T) gui.Fragment {
+	return gui.NewFragment(gui.FragmentArgs{
+		Slot:     "sidebar:content",
+		Position: gui.FragmentLast,
+		Render: func() node.T {
+			return Inspector(target, extraNodes)
+		},
+	})
+}
 
 func Inspector(target object.Component, extraNodes []node.T) node.T {
 	key := object.Key("editor", target)
