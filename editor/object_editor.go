@@ -1,6 +1,8 @@
 package editor
 
 import (
+	"fmt"
+
 	"github.com/johanhenriksson/goworld/core/input/keys"
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/core/object"
@@ -8,7 +10,9 @@ import (
 )
 
 // ObjectEditor connects a scene object with an editor implementation.
-// ObjectEditors mirrors the transformation of its target.
+// Its primary purpose is to toggle the editor implementation, and provide
+// editor object picking by inserting a collider in the editor physics world.
+// ObjectEditors mirrors the transformation of its target object.
 type ObjectEditor struct {
 	object.Object
 
@@ -19,14 +23,13 @@ type ObjectEditor struct {
 	target object.Component
 }
 
-var _ Selectable = &ObjectEditor{}
-
 func NewObjectEditor(target object.Component, editor T) *ObjectEditor {
 	if editor == nil {
 		editor = NewDefaultEditor(target)
 	}
 	object.Disable(editor)
 
+	// collider for object picking
 	var body *physics.RigidBody
 	if editor.Bounds() != nil {
 		body = physics.NewRigidBody("Collider:"+target.Name(), 0)
@@ -44,6 +47,11 @@ func NewObjectEditor(target object.Component, editor T) *ObjectEditor {
 
 		Body: body,
 	})
+}
+
+func (e *ObjectEditor) Name() string {
+	_, isObject := e.target.(object.Object)
+	return fmt.Sprintf("ObjectEditor[%s,%t]", e.target.Name(), isObject)
 }
 
 func (e *ObjectEditor) Update(scene object.Component, dt float32) {

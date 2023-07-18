@@ -11,7 +11,7 @@ import (
 	"github.com/johanhenriksson/goworld/render/color"
 )
 
-func InspectorGUI(target object.Component, extraNodes []node.T) gui.Fragment {
+func InspectorGUI(target object.Component, extraNodes ...node.T) gui.Fragment {
 	return gui.NewFragment(gui.FragmentArgs{
 		Slot:     "sidebar:content",
 		Position: gui.FragmentLast,
@@ -22,11 +22,11 @@ func InspectorGUI(target object.Component, extraNodes []node.T) gui.Fragment {
 }
 
 func Inspector(target object.Component, extraNodes []node.T) node.T {
-	key := object.Key("editor", target)
+	key := object.Key("inspector", target)
 	children := make([]node.T, 0, 4+len(extraNodes))
 	children = append(children, []node.T{
 		label.New("title", label.Props{
-			Text: target.Name(),
+			Text: "Object: " + target.Name(),
 			Style: label.Style{
 				Font: style.Font{
 					Size: 16,
@@ -42,7 +42,6 @@ func Inspector(target object.Component, extraNodes []node.T) node.T {
 				},
 			},
 		}),
-		propedit.Transform("transform", target.Transform()),
 	}...)
 	children = append(children, extraNodes...)
 	return propedit.Container(key, children)

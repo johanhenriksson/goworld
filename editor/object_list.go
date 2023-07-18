@@ -41,7 +41,7 @@ func ObjectList(key string, props ObjectListProps) node.T {
 					}
 
 					// check if we found something selectable
-					if selectable, ok := obj.(Selectable); ok {
+					if selectable, ok := obj.(*ObjectEditor); ok {
 						props.ToolManager.Select(selectable)
 					}
 				},

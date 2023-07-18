@@ -11,14 +11,6 @@ import (
 	"github.com/johanhenriksson/goworld/render"
 )
 
-type Selectable interface {
-	object.Object
-
-	Actions() []Action
-	Select(mouse.Event)
-	Deselect(mouse.Event) bool
-}
-
 type Tool interface {
 	object.Component
 	mouse.Handler
@@ -35,7 +27,7 @@ type Action struct {
 type ToolManager interface {
 	object.Component
 
-	Select(Selectable)
+	Select(*ObjectEditor)
 	SelectTool(Tool)
 	MoveTool(object.Component)
 	Tool() Tool
@@ -44,7 +36,7 @@ type ToolManager interface {
 type toolmgr struct {
 	object.Object
 	scene    object.Object
-	selected Selectable
+	selected []*ObjectEditor
 	tool     Tool
 	camera   mat4.T
 	viewport render.Screen
@@ -58,6 +50,8 @@ func NewToolManager() ToolManager {
 		Mover: object.Builder(gizmo.NewMover()).
 			Active(false).
 			Create(),
+
+		selected: make([]*ObjectEditor, 0, 16),
 	})
 }
 
@@ -100,7 +94,7 @@ func (m *toolmgr) MouseEvent(e mouse.Event) {
 			return
 		}
 
-		if object := object.GetInParents[Selectable](hit.Shape); object != nil {
+		if object := object.GetInParents[*ObjectEditor](hit.Shape); object != nil {
 			// todo: pass physics hit info instead
 			m.setSelect(e, object)
 		} else {
@@ -122,10 +116,12 @@ func (m *toolmgr) KeyEvent(e keys.Event) {
 		}
 
 		// todo: consider all editors
-		for _, action := range m.selected.Actions() {
-			if action.Key == e.Code() && e.Modifier(action.Modifier) {
-				action.Callback(m)
-				e.Consume()
+		for _, editor := range m.selected {
+			for _, action := range editor.Actions() {
+				if action.Key == e.Code() && e.Modifier(action.Modifier) {
+					action.Callback(m)
+					e.Consume()
+				}
 			}
 		}
 	}
@@ -152,16 +148,18 @@ func (m *toolmgr) SelectTool(tool Tool) {
 	}
 }
 
-func (m *toolmgr) Select(obj Selectable) {
+func (m *toolmgr) Select(obj *ObjectEditor) {
 	m.setSelect(mouse.NopEvent(), obj)
 }
 
-func (m *toolmgr) setSelect(e mouse.Event, object Selectable) bool {
+func (m *toolmgr) setSelect(e mouse.Event, component *ObjectEditor) bool {
 	// todo: detect if the object has been deleted
 	// otherwise CanDeselect() will make it impossible to select another object
 
 	// todo: refactor to enable ALL component editors on the object group
 	// group := collider.Parent()
+
+	// editors := object.Children(group)
 
 	// deselect
 	if m.selected != nil {
@@ -169,15 +167,40 @@ func (m *toolmgr) setSelect(e mouse.Event, object Selectable) bool {
 		m.SelectTool(nil)
 
 		// deselect object
-		if !m.selected.Deselect(e) {
-			return false
+		for _, editor := range m.selected {
+			if !editor.Deselect(e) {
+				return false
+			}
 		}
-		m.selected = nil
+		m.selected = m.selected[0:]
 	}
+
 	// select
-	if object != nil {
-		m.selected = object
-		object.Select(e)
+	if component != nil {
+		group := component
+		_, ok := component.Target().(object.Object)
+		if !ok {
+			group, ok = component.Parent().(*ObjectEditor)
+			if !ok {
+				return true
+			}
+		}
+
+		// select game object editor
+		group.Select(e)
+		m.selected = m.selected[:0]
+		m.selected = append(m.selected, group)
+
+		// select child component editors
+		for _, child := range group.Children() {
+			if childEdit, ok := child.(*ObjectEditor); ok {
+				if _, isObject := childEdit.target.(object.Object); isObject {
+					continue
+				}
+				childEdit.Select(e)
+				m.selected = append(m.selected, childEdit)
+			}
+		}
 	}
 	return true
 }

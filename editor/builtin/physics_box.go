@@ -5,6 +5,7 @@ import (
 
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/editor"
+	"github.com/johanhenriksson/goworld/gui"
 	"github.com/johanhenriksson/goworld/physics"
 )
 
@@ -16,12 +17,16 @@ type BoxEditor struct {
 	object.Object
 	target *physics.Box
 	shape  physics.Shape
+
+	GUI gui.Fragment
 }
 
 func NewBoxEditor(ctx *editor.Context, box *physics.Box) *BoxEditor {
 	return object.New("BoxEditor", &BoxEditor{
 		target: box,
 		shape:  physics.NewBox(box.Size()),
+
+		GUI: editor.InspectorGUI(box, nil),
 	})
 }
 
@@ -30,7 +35,11 @@ func (e *BoxEditor) Bounds() physics.Shape {
 }
 
 func (e *BoxEditor) OnEnable() {
-	log.Println("ENABLE BOX EDITOR FOR", e.target.Parent().Name())
+	log.Println("ENABLE PHYSICS BOX EDITOR FOR", e.target.Parent().Name())
+}
+
+func (e *BoxEditor) OnDisable() {
+	log.Println("DISABLE PHYSICS BOX EDITOR FOR", e.target.Parent().Name())
 }
 
 func (e *BoxEditor) Actions() []editor.Action {

@@ -93,6 +93,10 @@ func NewBox(size vec3.T) *Box {
 	return box
 }
 
+func (b *Box) Name() string {
+	return "BoxCollider"
+}
+
 func (b *Box) String() string {
 	return fmt.Sprintf("Box[Size=%s]", b.size)
 }
