@@ -2,6 +2,7 @@ package editor
 
 import (
 	"github.com/johanhenriksson/goworld/core/object"
+	"github.com/johanhenriksson/goworld/editor/propedit"
 	"github.com/johanhenriksson/goworld/gui"
 	"github.com/johanhenriksson/goworld/physics"
 )
@@ -16,6 +17,9 @@ func (d *DefaultEditor) Bounds() physics.Shape { return nil }
 
 func NewDefaultEditor(target object.Component) *DefaultEditor {
 	return object.New("DefaultEditor", &DefaultEditor{
-		GUI: InspectorGUI(target, nil),
+		GUI: InspectorGUI(
+			target,
+			propedit.Transform("transform", target.Transform()),
+		),
 	})
 }
