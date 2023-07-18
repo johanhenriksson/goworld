@@ -201,7 +201,7 @@ goShapeHandle goNewTriangleMeshShape(char* user, goTriangleMeshHandle meshHandle
     auto mesh = reinterpret_cast<btTriangleMesh*>(meshHandle);
     btAssert(mesh);
     auto shape = new btBvhTriangleMeshShape(mesh, true);
-    shape->setUserPointer(shape);
+    shape->setUserPointer(user);
     return (goShapeHandle)shape;
 }
 
