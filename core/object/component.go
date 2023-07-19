@@ -1,7 +1,6 @@
 package object
 
 import (
-	"log"
 	"reflect"
 
 	"github.com/johanhenriksson/goworld/core/transform"
@@ -57,48 +56,47 @@ func emptyBase(name string) *base {
 	}
 }
 
-func NewComponent[K Component](obj K) K {
-	t := reflect.TypeOf(obj).Elem()
-	v := reflect.ValueOf(obj).Elem()
+var componentType = reflect.TypeOf((*Component)(nil)).Elem()
 
-	// initialize object base
-	init := false
+func NewComponent[K Component](cmp K) K {
+	t := reflect.TypeOf(cmp).Elem()
+	v := reflect.ValueOf(cmp).Elem()
+
+	// find & initialize base component
+	baseIdx := -1
 	for i := 0; i < t.NumField(); i++ {
 		field := t.Field(i)
-		if field.Name == "Component" {
-			if v.Field(i).IsZero() {
-				base := emptyBase(t.Name())
-				v.Field(i).Set(reflect.ValueOf(base))
-			}
-			init = true
-			break
-		}
-	}
-	if !init {
-		// todo: does this even matter?
-		// this forces extending structs to be named Component as well
-		panic("struct does not appear to be a Component")
-	}
-
-	// add Object fields as children
-	for i := 0; i < t.NumField(); i++ {
-		field := t.Field(i)
-		if field.Name == "Component" {
+		if !field.Anonymous {
+			// only anonymous fields are considered
 			continue
 		}
 		if !field.IsExported() {
+			// only exported fields can be base fields
 			continue
 		}
-		if child, ok := v.Field(i).Interface().(Component); ok {
-			if reflect.ValueOf(child) == reflect.Zero(field.Type) {
-				log.Println(t.Name(), " child ", field.Name, " is nil")
-				continue
+
+		value := v.Field(i)
+		if field.Type == componentType {
+			// the components directly extends the base component
+			// if its nil, create a new empty component base
+			if value.IsZero() {
+				base := emptyBase(t.Name())
+				value.Set(reflect.ValueOf(base))
 			}
-			// initialize recursively?
-			panic("only groups can have children")
+		} else if _, isComponent := value.Interface().(Component); isComponent {
+			// this object extends some other non-base object
+		} else {
+			// its not an object, move on
+			continue
 		}
+
+		baseIdx = i
 	}
-	return obj
+	if baseIdx < 0 {
+		panic("struct does not embed a Component")
+	}
+
+	return cmp
 }
 
 func (b *base) ID() uint {

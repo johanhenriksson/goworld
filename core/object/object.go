@@ -1,7 +1,6 @@
 package object
 
 import (
-	"log"
 	"reflect"
 
 	"github.com/johanhenriksson/goworld/core/input"
@@ -20,6 +19,8 @@ type Object interface {
 	attach(...Component)
 	detach(Component)
 }
+
+var objectType = reflect.TypeOf((*Object)(nil)).Elem()
 
 type group struct {
 	base
@@ -43,44 +44,70 @@ func New[K Object](name string, obj K) K {
 	t := reflect.TypeOf(obj).Elem()
 	v := reflect.ValueOf(obj).Elem()
 
-	// initialize group base
-	init := false
+	// find & initialize base object
+	baseIdx := -1
 	for i := 0; i < t.NumField(); i++ {
 		field := t.Field(i)
-		if field.Name == "Object" {
-			if v.Field(i).IsZero() {
-				base := Empty(name)
-				v.Field(i).Set(reflect.ValueOf(base))
-			}
-			init = true
-			break
-		}
-	}
-	if !init {
-		panic("struct does not appear to be an Object")
-	}
-
-	// add Object fields as children
-	for i := 0; i < t.NumField(); i++ {
-		field := t.Field(i)
-		if field.Name == "Object" {
+		if !field.Anonymous {
+			// only anonymous fields are considered
 			continue
 		}
 		if !field.IsExported() {
+			// only exported fields can be base fields
 			continue
 		}
-		if child, ok := v.Field(i).Interface().(Component); ok {
-			if reflect.ValueOf(child) == reflect.Zero(field.Type) {
-				log.Println(t.Name(), " child ", field.Name, " is nil")
-				continue
+
+		value := v.Field(i)
+		if field.Type == objectType {
+			// the object directly extends the base object
+			// if its nil, create a new empty object base
+			if value.IsZero() {
+				base := Empty(name)
+				value.Set(reflect.ValueOf(base))
 			}
-			// initialize recursively?
+		} else if _, isObject := value.Interface().(Object); isObject {
+			// this object extends some other non-base object
+		} else {
+			// its not an object, move on
+			continue
+		}
+
+		// if we already found a base field, the user has embedded multiple objects
+		if baseIdx >= 0 {
+			panic("struct embeds multiple Object types")
+		}
+		baseIdx = i
+	}
+	if baseIdx < 0 {
+		panic("struct does not embed an Object")
+	}
+
+	// add Component fields as children
+	for i := 0; i < t.NumField(); i++ {
+		field := t.Field(i)
+		if i == baseIdx {
+			continue
+		}
+
+		if !field.IsExported() {
+			continue
+		}
+
+		// all uninitialized fields are ignored since they cant contain valid component references
+		value := v.Field(i)
+		if value.IsZero() {
+			continue
+		}
+
+		// the field contains a reference to an instantiated component
+		// if its an orphan, add it to the object's children
+		if child, ok := value.Interface().(Component); ok {
 			if child.Parent() == nil {
-				log.Println("Attaching child", child.Name(), "to", obj.Name())
 				Attach(obj, child)
 			}
 		}
 	}
+
 	return obj
 }
 
