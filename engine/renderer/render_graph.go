@@ -7,7 +7,6 @@ import (
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/engine/renderer/graph"
 	"github.com/johanhenriksson/goworld/engine/renderer/pass"
-	"github.com/johanhenriksson/goworld/render/image"
 	"github.com/johanhenriksson/goworld/render/upload"
 	"github.com/johanhenriksson/goworld/render/vulkan"
 
@@ -24,60 +23,40 @@ type T interface {
 
 type rgraph struct {
 	graph.T
-	app     vulkan.App
+	app vulkan.App
+
+	// temporary reference
+	// get rid of it once the editor no longer needs it
 	gbuffer pass.GeometryBuffer
-	target  pass.RenderTarget
 }
 
 func NewGraph(app vulkan.App) T {
 	r := &rgraph{
 		app: app,
 	}
-	r.T = graph.New(app, func(g graph.T) {
-		if r.target != nil {
-			r.target.Destroy()
-			r.target = nil
-		}
-		if r.gbuffer != nil {
-			r.gbuffer.Destroy()
-			r.gbuffer = nil
-		}
-		// this is an awkward place to instantiate render target / gbuffer
-		// todo: maybe move it into the graph?
-		// putting it here does not even let us destroy it properly
-		var err error
-		r.target, err = pass.NewRenderTarget(app.Device(),
-			app.Width(), app.Height(), app.Frames(),
-			image.FormatRGBA8Unorm, app.Device().GetDepthFormat())
-		if err != nil {
-			panic(err)
-		}
-
-		r.gbuffer, err = pass.NewGbuffer(app.Device(), app.Width(), app.Height(), app.Frames())
-		if err != nil {
-			panic(err)
-		}
+	r.T = graph.New(app, func(g graph.T, target pass.RenderTarget, gbuffer pass.GeometryBuffer) {
+		r.gbuffer = gbuffer
 
 		shadows := pass.NewShadowPass(app)
 		shadowNode := g.Node(shadows)
 
-		deferred := g.Node(pass.NewDeferredPass(app, r.target, r.gbuffer, shadows))
+		deferred := g.Node(pass.NewDeferredPass(app, target, gbuffer, shadows))
 		deferred.After(shadowNode, core1_0.PipelineStageTopOfPipe)
 
-		forward := g.Node(pass.NewForwardPass(app, r.target, r.gbuffer))
+		forward := g.Node(pass.NewForwardPass(app, target, gbuffer))
 		forward.After(deferred, core1_0.PipelineStageTopOfPipe)
 
 		// at this point we are done writing to the gbuffer, so we may copy it.
-		gbufferCopy := g.Node(pass.NewGBufferCopyPass(r.gbuffer))
+		gbufferCopy := g.Node(pass.NewGBufferCopyPass(gbuffer))
 		gbufferCopy.After(forward, core1_0.PipelineStageTopOfPipe)
 
-		lines := g.Node(pass.NewLinePass(app, r.target))
+		lines := g.Node(pass.NewLinePass(app, target))
 		lines.After(forward, core1_0.PipelineStageTopOfPipe)
 
-		gui := g.Node(pass.NewGuiPass(app, r.target))
+		gui := g.Node(pass.NewGuiPass(app, target))
 		gui.After(lines, core1_0.PipelineStageTopOfPipe)
 
-		output := g.Node(pass.NewOutputPass(app, r.target))
+		output := g.Node(pass.NewOutputPass(app, target))
 		output.After(gui, core1_0.PipelineStageTopOfPipe)
 
 		// editor forward

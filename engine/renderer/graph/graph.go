@@ -4,12 +4,14 @@ import (
 	"log"
 
 	"github.com/johanhenriksson/goworld/core/object"
+	"github.com/johanhenriksson/goworld/engine/renderer/pass"
+	"github.com/johanhenriksson/goworld/render/image"
 	"github.com/johanhenriksson/goworld/render/vulkan"
 
 	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
-type NodeFunc func(T)
+type NodeFunc func(T, pass.RenderTarget, pass.GeometryBuffer)
 
 // The render graph is responsible for synchronization between
 // different render nodes.
@@ -27,6 +29,9 @@ type graph struct {
 	nodes []Node
 	todo  map[Node]bool
 	init  NodeFunc
+
+	target  pass.RenderTarget
+	gbuffer pass.GeometryBuffer
 }
 
 func New(app vulkan.App, init NodeFunc) T {
@@ -41,9 +46,24 @@ func New(app vulkan.App, init NodeFunc) T {
 }
 
 func (g *graph) Recreate() {
+	var err error
+
 	g.Destroy()
 	g.app.Pool().Recreate()
-	g.init(g)
+
+	g.target, err = pass.NewRenderTarget(g.app.Device(),
+		g.app.Width(), g.app.Height(), g.app.Frames(),
+		image.FormatRGBA8Unorm, g.app.Device().GetDepthFormat())
+	if err != nil {
+		panic(err)
+	}
+
+	g.gbuffer, err = pass.NewGbuffer(g.app.Device(), g.app.Width(), g.app.Height(), g.app.Frames())
+	if err != nil {
+		panic(err)
+	}
+
+	g.init(g, g.target, g.gbuffer)
 	g.pre = newPreNode(g.app)
 	g.post = newPostNode(g.app)
 	g.connect()
@@ -120,6 +140,14 @@ func (g *graph) Draw(scene object.Object, time, delta float32) {
 
 func (g *graph) Destroy() {
 	g.app.Flush()
+	if g.gbuffer != nil {
+		g.gbuffer.Destroy()
+		g.gbuffer = nil
+	}
+	if g.target != nil {
+		g.target.Destroy()
+		g.target = nil
+	}
 	if g.pre != nil {
 		g.pre.Destroy()
 		g.pre = nil

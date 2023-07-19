@@ -49,7 +49,7 @@ func New(device device.T, name string, width, height int, pass renderpass.T) (T,
 	}
 
 	allocate := func(attach attachment.T, aspect core1_0.ImageAspectFlags) error {
-		img, err := attach.Image().Next(
+		img, ownership, err := attach.Image().Next(
 			device,
 			name,
 			width, height,
@@ -57,7 +57,10 @@ func New(device device.T, name string, width, height int, pass renderpass.T) (T,
 		if err != nil {
 			return err
 		}
-		images = append(images, img)
+		if ownership {
+			// the framebuffer is responsible for deallocating the image
+			images = append(images, img)
+		}
 
 		view, err := img.View(img.Format(), core1_0.ImageAspectFlags(aspect))
 		if err != nil {
@@ -130,10 +133,17 @@ func (b *framebuf) Destroy() {
 	if b.ptr == nil {
 		panic("framebuffer already destroyed")
 	}
+
+	for _, image := range b.images {
+		image.Destroy()
+	}
+	b.images = nil
+
 	for _, view := range b.views {
 		view.Destroy()
 	}
 	b.views = nil
+
 	b.attachments = nil
 
 	b.ptr.Destroy(nil)

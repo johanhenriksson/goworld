@@ -15,7 +15,7 @@ var ErrArrayExhausted = errors.New("image array allocator exhausted")
 
 type Image interface {
 	Format() core1_0.Format
-	Next(device device.T, name string, width, height int) (image.T, error)
+	Next(device device.T, name string, width, height int) (image.T, bool, error)
 }
 
 type alloc struct {
@@ -34,15 +34,16 @@ func (im *alloc) Next(
 	device device.T,
 	name string,
 	width, height int,
-) (image.T, error) {
+) (image.T, bool, error) {
 	key := fmt.Sprintf("%s-%s", name, im.key)
 	log.Println("attachment alloc", key)
-	return image.New2D(
+	img, err := image.New2D(
 		device,
 		key,
 		width, height,
 		im.format, im.usage,
 	)
+	return img, true, err
 }
 
 func NewImage(key string, format core1_0.Format, usage core1_0.ImageUsageFlags) Image {
@@ -66,13 +67,13 @@ func (im *imageArray) Next(
 	device device.T,
 	name string,
 	width, height int,
-) (image.T, error) {
+) (image.T, bool, error) {
 	if im.next >= len(im.images) {
-		return nil, ErrArrayExhausted
+		return nil, false, ErrArrayExhausted
 	}
 	img := im.images[im.next]
 	im.next++
-	return img, nil
+	return img, false, nil
 }
 
 func FromImageArray(images []image.T) Image {
@@ -99,6 +100,6 @@ func (im *imageRef) Next(
 	device device.T,
 	name string,
 	width, height int,
-) (image.T, error) {
-	return im.image, nil
+) (image.T, bool, error) {
+	return im.image, false, nil
 }
