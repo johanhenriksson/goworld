@@ -9,8 +9,8 @@ import (
 	"github.com/johanhenriksson/goworld/render/vertex"
 )
 
-type T struct {
-	mesh.Component
+type Mesh struct {
+	*mesh.Static
 	Args
 }
 
@@ -23,16 +23,16 @@ type Args struct {
 	Color color.T
 }
 
-func New(args Args) *T {
-	b := object.NewComponent(&T{
-		Component: mesh.NewLines(args.Mat),
-		Args:      args,
+func New(args Args) *Mesh {
+	b := object.NewComponent(&Mesh{
+		Static: mesh.NewLines(args.Mat),
+		Args:   args,
 	})
 	b.compute()
 	return b
 }
 
-func (b *T) compute() {
+func (b *Mesh) compute() {
 	var x, y, z float32
 	w, h, d := b.Size.X, b.Size.Y, b.Size.Z
 	c := b.Color.Vec4()
@@ -69,5 +69,5 @@ func (b *T) compute() {
 		2, 6,
 		3, 7,
 	})
-	b.SetMesh(mesh)
+	b.SetVertices(mesh)
 }

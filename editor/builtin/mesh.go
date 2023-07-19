@@ -11,18 +11,18 @@ import (
 )
 
 func init() {
-	var kind mesh.Component
+	var kind mesh.Mesh
 	editor.Register(kind, NewMeshEditor)
 }
 
 type MeshEditor struct {
 	object.Object
-	target mesh.Component
+	target mesh.Mesh
 	shape  *physics.Mesh
 	mesh   vertex.Mesh
 }
 
-func NewMeshEditor(ctx *editor.Context, mesh mesh.Component) *MeshEditor {
+func NewMeshEditor(ctx *editor.Context, mesh mesh.Mesh) *MeshEditor {
 	return object.New("MeshEditor", &MeshEditor{
 		target: mesh,
 		shape:  physics.NewMesh(),
@@ -42,7 +42,7 @@ func (e *MeshEditor) Actions() []editor.Action {
 }
 
 func (e *MeshEditor) Update(scene object.Component, dt float32) {
-	mesh := e.target.Mesh()
+	mesh := e.target.Vertices()
 	if mesh != e.mesh {
 		e.shape.SetMeshData(mesh)
 		e.mesh = mesh

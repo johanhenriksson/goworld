@@ -13,7 +13,7 @@ import (
 
 type ArcballCamera struct {
 	object.Object
-	Camera   *camera.G
+	Camera   *camera.Object
 	Distance float32
 
 	mouselook bool
@@ -22,7 +22,7 @@ type ArcballCamera struct {
 func NewEye() *ArcballCamera {
 	distance := float32(10)
 	return object.Builder(object.New("Arcball", &ArcballCamera{
-		Camera: object.Builder(camera.Object(camera.Args{
+		Camera: object.Builder(camera.NewObject(camera.Args{
 			Fov:   60,
 			Near:  0.1,
 			Far:   100,

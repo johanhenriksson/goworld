@@ -8,7 +8,7 @@ import (
 )
 
 type Mesh struct {
-	mesh.Dynamic[voxel.Vertex, uint16]
+	*mesh.Dynamic[voxel.Vertex, uint16]
 	Chunk *T
 }
 

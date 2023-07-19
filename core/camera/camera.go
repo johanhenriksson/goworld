@@ -9,13 +9,13 @@ import (
 )
 
 // Camera Group
-type G struct {
+type Object struct {
 	object.Object
-	*T
+	*Camera
 }
 
 // Camera Component
-type T struct {
+type Camera struct {
 	object.Component
 	Args
 
@@ -38,23 +38,23 @@ type Args struct {
 }
 
 // New creates a new camera component.
-func New(args Args) *T {
-	return object.NewComponent(&T{
+func New(args Args) *Camera {
+	return object.NewComponent(&Camera{
 		Args:   args,
 		Aspect: 1,
 	})
 }
 
-func Object(args Args) *G {
-	return object.New("Camera", &G{
-		T: New(args),
+func NewObject(args Args) *Object {
+	return object.New("Camera", &Object{
+		Camera: New(args),
 	})
 }
 
-func (cam *G) Name() string { return "Camera" }
+func (cam *Object) Name() string { return "Camera" }
 
 // Unproject screen space coordinates into world space
-func (cam *T) Unproject(pos vec3.T) vec3.T {
+func (cam *Camera) Unproject(pos vec3.T) vec3.T {
 	// screen space -> clip space
 	pos.Y = 1 - pos.Y
 	pos = pos.Scaled(2).Sub(vec3.One)
@@ -63,7 +63,7 @@ func (cam *T) Unproject(pos vec3.T) vec3.T {
 	return cam.ViewProjInv.TransformPoint(pos)
 }
 
-func (cam *T) PreDraw(args render.Args, scene object.Object) error {
+func (cam *Camera) PreDraw(args render.Args, scene object.Object) error {
 	// update view & view-projection matrices
 	cam.Viewport = args.Viewport
 	cam.Aspect = float32(args.Viewport.Width) / float32(args.Viewport.Height)

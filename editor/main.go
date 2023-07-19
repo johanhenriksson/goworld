@@ -55,7 +55,7 @@ func (e *Editor) Update(scene object.Component, dt float32) {
 	e.Object.Update(scene, dt)
 
 	context := &Context{
-		Camera: e.Player.Camera.T,
+		Camera: e.Player.Camera.Camera,
 		Render: e.render,
 		Root:   scene,
 		Scene:  e.workspace,

@@ -20,22 +20,19 @@ type Object interface {
 	detach(Component)
 }
 
+// objectType caches a reference to Object's reflect.Type
 var objectType = reflect.TypeOf((*Object)(nil)).Elem()
 
-type group struct {
-	base
+type object struct {
+	component
 	transform transform.T
 	children  []Component
 }
 
 // Empty creates a new, empty object.
 func Empty(name string) Object {
-	return &group{
-		base: base{
-			id:      ID(),
-			name:    name,
-			enabled: true,
-		},
+	return &object{
+		component: emptyComponent(name),
 		transform: transform.Identity(),
 	}
 }
@@ -111,7 +108,7 @@ func New[K Object](name string, obj K) K {
 	return obj
 }
 
-func (g *group) Transform() transform.T {
+func (g *object) Transform() transform.T {
 	// todo: rewrite/refactor
 	var pt transform.T = nil
 	if g.parent != nil {
@@ -122,7 +119,7 @@ func (g *group) Transform() transform.T {
 	return g.transform
 }
 
-func (g *group) Update(scene Component, dt float32) {
+func (g *object) Update(scene Component, dt float32) {
 	for _, child := range g.children {
 		if child.Enabled() {
 			child.Update(scene, dt)
@@ -130,17 +127,17 @@ func (g *group) Update(scene Component, dt float32) {
 	}
 }
 
-func (g *group) Children() []Component {
+func (g *object) Children() []Component {
 	return g.children
 }
 
-func (g *group) attach(children ...Component) {
+func (g *object) attach(children ...Component) {
 	for _, child := range children {
 		g.attachIfNotChild(child)
 	}
 }
 
-func (g *group) attachIfNotChild(child Component) {
+func (g *object) attachIfNotChild(child Component) {
 	for _, existing := range g.children {
 		if existing.ID() == child.ID() {
 			return
@@ -149,7 +146,7 @@ func (g *group) attachIfNotChild(child Component) {
 	g.children = append(g.children, child)
 }
 
-func (g *group) detach(child Component) {
+func (g *object) detach(child Component) {
 	for i, existing := range g.children {
 		if existing.ID() == child.ID() {
 			g.children = append(g.children[:i], g.children[i+1:]...)
@@ -158,8 +155,8 @@ func (g *group) detach(child Component) {
 	}
 }
 
-func (g *group) setActive(active bool) bool {
-	wasActive := g.base.setActive(active)
+func (g *object) setActive(active bool) bool {
+	wasActive := g.component.setActive(active)
 	if active {
 		for _, child := range g.children {
 			activate(child)
@@ -172,7 +169,7 @@ func (g *group) setActive(active bool) bool {
 	return wasActive
 }
 
-func (g *group) KeyEvent(e keys.Event) {
+func (g *object) KeyEvent(e keys.Event) {
 	for _, child := range g.children {
 		if !child.Enabled() {
 			continue
@@ -186,7 +183,7 @@ func (g *group) KeyEvent(e keys.Event) {
 	}
 }
 
-func (g *group) MouseEvent(e mouse.Event) {
+func (g *object) MouseEvent(e mouse.Event) {
 	for _, child := range g.children {
 		if !child.Enabled() {
 			continue
@@ -200,7 +197,7 @@ func (g *group) MouseEvent(e mouse.Event) {
 	}
 }
 
-func (o *group) Destroy() {
+func (o *object) Destroy() {
 	// iterate over a copy of the child slice, since it will be mutated
 	// when the child detaches itself during destruction
 	children := make([]Component, len(o.Children()))

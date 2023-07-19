@@ -9,8 +9,8 @@ import (
 	"github.com/johanhenriksson/goworld/render/vertex"
 )
 
-type T struct {
-	mesh.Component
+type Mesh struct {
+	*mesh.Static
 	Args
 }
 
@@ -21,18 +21,18 @@ type Args struct {
 	lineMesh vertex.MutableMesh[vertex.C, uint16]
 }
 
-func New(args Args) *T {
-	b := object.NewComponent(&T{
-		Component: mesh.NewLines(args.Mat),
-		Args:      args,
+func New(args Args) *Mesh {
+	b := object.NewComponent(&Mesh{
+		Static: mesh.NewLines(args.Mat),
+		Args:   args,
 	})
 	b.lineMesh = vertex.NewLines(object.Key("lines", b), []vertex.C{}, []uint16{})
-	b.SetMesh(b.lineMesh)
+	b.SetVertices(b.lineMesh)
 	b.Refresh()
 	return b
 }
 
-func (li *T) Add(from, to vec3.T, clr color.T) {
+func (li *Mesh) Add(from, to vec3.T, clr color.T) {
 	li.Lines = append(li.Lines, Line{
 		Start: from,
 		End:   to,
@@ -40,15 +40,15 @@ func (li *T) Add(from, to vec3.T, clr color.T) {
 	})
 }
 
-func (li *T) Clear() {
+func (li *Mesh) Clear() {
 	li.Lines = li.Lines[:0]
 }
 
-func (li *T) Count() int {
+func (li *Mesh) Count() int {
 	return len(li.Lines)
 }
 
-func (li *T) Refresh() {
+func (li *Mesh) Refresh() {
 	count := len(li.Lines)
 	vertices := make([]vertex.C, 2*count)
 	for i := 0; i < count; i++ {

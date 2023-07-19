@@ -12,24 +12,22 @@ import (
 	"github.com/johanhenriksson/goworld/render/vertex"
 )
 
-type Component interface {
+type Mesh interface {
 	object.Component
 
-	Mesh() vertex.Mesh
-	SetMesh(vertex.Mesh)
+	Vertices() vertex.Mesh
 	Mode() DrawMode
 	CastShadows() bool
 	Material() *material.Def
 	MaterialID() uint64
 
 	Texture(string) texture.Ref
-	SetTexture(string, texture.Ref)
 
 	BoundingSphere() shape.Sphere
 }
 
 // mesh base
-type mesh struct {
+type Static struct {
 	object.Component
 
 	data  vertex.Mesh
@@ -45,18 +43,18 @@ type mesh struct {
 }
 
 // New creates a new mesh component
-func New(mode DrawMode, mat *material.Def) Component {
+func New(mode DrawMode, mat *material.Def) *Static {
 	return NewPrimitiveMesh(vertex.Triangles, mode, mat)
 }
 
 // NewLines creates a new line mesh component
-func NewLines(mat *material.Def) Component {
+func NewLines(mat *material.Def) *Static {
 	return NewPrimitiveMesh(vertex.Lines, Lines, mat)
 }
 
 // NewPrimitiveMesh creates a new mesh composed of a given GL primitive
-func NewPrimitiveMesh(primitive vertex.Primitive, mode DrawMode, mat *material.Def) *mesh {
-	m := object.NewComponent(&mesh{
+func NewPrimitiveMesh(primitive vertex.Primitive, mode DrawMode, mat *material.Def) *Static {
+	m := object.NewComponent(&Static{
 		mode:     mode,
 		mat:      mat,
 		matId:    material.Hash(mat),
@@ -65,15 +63,15 @@ func NewPrimitiveMesh(primitive vertex.Primitive, mode DrawMode, mat *material.D
 	return m
 }
 
-func (m mesh) Name() string {
+func (m *Static) Name() string {
 	return "Mesh"
 }
 
-func (m mesh) Mesh() vertex.Mesh {
+func (m *Static) Vertices() vertex.Mesh {
 	return m.data
 }
 
-func (m *mesh) SetMesh(data vertex.Mesh) {
+func (m *Static) SetVertices(data vertex.Mesh) {
 	m.data = data
 
 	// refresh AABB
@@ -90,31 +88,31 @@ func (m *mesh) SetMesh(data vertex.Mesh) {
 	}
 }
 
-func (m *mesh) Texture(slot string) texture.Ref {
+func (m *Static) Texture(slot string) texture.Ref {
 	return m.textures[slot]
 }
 
-func (m *mesh) SetTexture(slot string, ref texture.Ref) {
+func (m *Static) SetTexture(slot string, ref texture.Ref) {
 	m.textures[slot] = ref
 }
 
-func (m mesh) CastShadows() bool {
+func (m *Static) CastShadows() bool {
 	return m.mode != Lines
 }
 
-func (m mesh) Mode() DrawMode {
+func (m *Static) Mode() DrawMode {
 	return m.mode
 }
 
-func (m mesh) Material() *material.Def {
+func (m *Static) Material() *material.Def {
 	return m.mat
 }
 
-func (m mesh) MaterialID() uint64 {
+func (m *Static) MaterialID() uint64 {
 	return m.matId
 }
 
-func (m mesh) BoundingSphere() shape.Sphere {
+func (m *Static) BoundingSphere() shape.Sphere {
 	return shape.Sphere{
 		Center: m.Transform().WorldPosition().Add(m.center),
 		Radius: m.radius,

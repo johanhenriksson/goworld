@@ -39,7 +39,7 @@ type Component interface {
 	setActive(bool) bool
 }
 
-type base struct {
+type component struct {
 	id      uint
 	name    string
 	enabled bool
@@ -47,8 +47,8 @@ type base struct {
 	parent  Object
 }
 
-func emptyBase(name string) *base {
-	return &base{
+func emptyComponent(name string) component {
+	return component{
 		id:      ID(),
 		name:    name,
 		enabled: true,
@@ -56,6 +56,7 @@ func emptyBase(name string) *base {
 	}
 }
 
+// componentType caches a reference to Component's reflect.Type
 var componentType = reflect.TypeOf((*Component)(nil)).Elem()
 
 func NewComponent[K Component](cmp K) K {
@@ -80,8 +81,8 @@ func NewComponent[K Component](cmp K) K {
 			// the components directly extends the base component
 			// if its nil, create a new empty component base
 			if value.IsZero() {
-				base := emptyBase(t.Name())
-				value.Set(reflect.ValueOf(base))
+				base := emptyComponent(t.Name())
+				value.Set(reflect.ValueOf(&base))
 			}
 		} else if _, isComponent := value.Interface().(Component); isComponent {
 			// this object extends some other non-base object
@@ -99,47 +100,47 @@ func NewComponent[K Component](cmp K) K {
 	return cmp
 }
 
-func (b *base) ID() uint {
+func (b *component) ID() uint {
 	return b.id
 }
 
-func (b *base) Update(scene Component, dt float32) {
+func (b *component) Update(scene Component, dt float32) {
 }
 
-func (b *base) Transform() transform.T {
+func (b *component) Transform() transform.T {
 	if b.parent == nil {
 		return transform.Identity()
 	}
 	return b.parent.Transform()
 }
 
-func (b *base) Active() bool { return b.active }
-func (b *base) setActive(active bool) bool {
+func (b *component) Active() bool { return b.active }
+func (b *component) setActive(active bool) bool {
 	prev := b.active
 	b.active = active
 	return prev
 }
 
-func (b *base) Enabled() bool { return b.enabled }
-func (b *base) setEnabled(enabled bool) bool {
+func (b *component) Enabled() bool { return b.enabled }
+func (b *component) setEnabled(enabled bool) bool {
 	prev := b.enabled
 	b.enabled = enabled
 	return prev
 }
 
-func (b *base) Parent() Object { return b.parent }
-func (b *base) setParent(p Object) {
+func (b *component) Parent() Object { return b.parent }
+func (b *component) setParent(p Object) {
 	if b.parent == p {
 		return
 	}
 	b.parent = p
 }
 
-func (b *base) setName(n string) { b.name = n }
-func (b *base) Name() string     { return b.name }
-func (b *base) String() string   { return b.Name() }
+func (b *component) setName(n string) { b.name = n }
+func (b *component) Name() string     { return b.name }
+func (b *component) String() string   { return b.Name() }
 
-func (o *base) Destroy() {
+func (o *component) Destroy() {
 	if o.parent != nil {
 		o.parent.detach(o)
 	}

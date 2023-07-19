@@ -10,15 +10,15 @@ import (
 
 // Cube mesh, textured
 type Cube struct {
-	mesh.Component
+	*mesh.Static
 	Size float32
 }
 
 // NewCube creates a new textured cube mesh with a given size
 func NewCube(size float32) *Cube {
 	cube := &Cube{
-		Component: mesh.New(mesh.Deferred, nil),
-		Size:      size,
+		Static: mesh.New(mesh.Deferred, nil),
+		Size:   size,
 	}
 	cube.generate()
 	return cube
@@ -98,5 +98,5 @@ func (c *Cube) generate() {
 
 	key := object.Key("cube", c)
 	mesh := vertex.NewTriangles(key, vertices, indices)
-	c.SetMesh(mesh)
+	c.SetVertices(mesh)
 }

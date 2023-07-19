@@ -16,7 +16,7 @@ type Pass interface {
 }
 
 type Args struct {
-	Camera    *camera.T
+	Camera    *camera.Camera
 	Transform mat4.T
 	MVP       mat4.T
 	Viewport  render.Screen

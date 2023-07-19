@@ -11,7 +11,7 @@ import (
 
 type SampleTool struct {
 	object.Object
-	Box *box.T
+	Box *box.Mesh
 
 	Reselect func()
 }

@@ -25,7 +25,7 @@ type Mover struct {
 
 	target transform.T
 
-	Lines *lines.T
+	Lines *lines.Mesh
 	X     *cone.Cone
 	Xb    *cylinder.Cylinder
 	Y     *cone.Cone
@@ -80,7 +80,7 @@ func NewMover() *Mover {
 
 		// X Arrow Cone
 		X: object.Builder(
-			cone.Object(cone.Args{
+			cone.NewObject(cone.Args{
 				Mat:      mat,
 				Radius:   radius,
 				Height:   height,
@@ -93,7 +93,7 @@ func NewMover() *Mover {
 			Create(),
 
 		// X Arrow Body
-		Xb: object.Builder(cylinder.Object(cylinder.Args{
+		Xb: object.Builder(cylinder.NewObject(cylinder.Args{
 			Mat:      mat,
 			Radius:   bodyRadius,
 			Height:   1,
@@ -106,7 +106,7 @@ func NewMover() *Mover {
 			Create(),
 
 		// Y Arrow Cone
-		Y: object.Builder(cone.Object(cone.Args{
+		Y: object.Builder(cone.NewObject(cone.Args{
 			Mat:      mat,
 			Radius:   radius,
 			Height:   height,
@@ -118,7 +118,7 @@ func NewMover() *Mover {
 			Create(),
 
 		// Y Arrow body
-		Yb: object.Builder(cylinder.Object(cylinder.Args{
+		Yb: object.Builder(cylinder.NewObject(cylinder.Args{
 			Mat:      mat,
 			Radius:   bodyRadius,
 			Height:   1,
@@ -130,7 +130,7 @@ func NewMover() *Mover {
 			Create(),
 
 		// Z Arrow Cone
-		Z: object.Builder(cone.Object(cone.Args{
+		Z: object.Builder(cone.NewObject(cone.Args{
 			Mat:      mat,
 			Radius:   radius,
 			Height:   height,
@@ -143,7 +143,7 @@ func NewMover() *Mover {
 			Create(),
 
 		// Z Arrow Body
-		Zb: object.Builder(cylinder.Object(cylinder.Args{
+		Zb: object.Builder(cylinder.NewObject(cylinder.Args{
 			Mat:      mat,
 			Radius:   bodyRadius,
 			Height:   1,
@@ -155,7 +155,7 @@ func NewMover() *Mover {
 			Create(),
 
 		// XY Plane
-		XY: object.Builder(plane.Object(plane.Args{
+		XY: object.Builder(plane.NewObject(plane.Args{
 			Mat:   mat,
 			Size:  side,
 			Color: color.Blue.WithAlpha(planeAlpha),
@@ -165,7 +165,7 @@ func NewMover() *Mover {
 			Create(),
 
 		// XZ Plane
-		XZ: object.Builder(plane.Object(plane.Args{
+		XZ: object.Builder(plane.NewObject(plane.Args{
 			Mat:   mat,
 			Size:  side,
 			Color: color.Green.WithAlpha(planeAlpha),
@@ -175,7 +175,7 @@ func NewMover() *Mover {
 			Create(),
 
 		// YZ Plane
-		YZ: object.Builder(plane.Object(plane.Args{
+		YZ: object.Builder(plane.NewObject(plane.Args{
 			Mat:   mat,
 			Size:  side,
 			Color: color.Red.WithAlpha(planeAlpha),

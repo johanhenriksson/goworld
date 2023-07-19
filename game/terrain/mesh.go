@@ -11,7 +11,7 @@ import (
 )
 
 type Mesh struct {
-	mesh.Dynamic[vertex.T, uint16]
+	*mesh.Dynamic[vertex.T, uint16]
 	Tile *Tile
 }
 

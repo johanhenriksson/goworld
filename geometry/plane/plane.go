@@ -14,7 +14,7 @@ type Plane struct {
 	*Mesh
 }
 
-func Object(args Args) *Plane {
+func NewObject(args Args) *Plane {
 	return object.New("Plane", &Plane{
 		Mesh: New(args),
 	})
@@ -22,7 +22,7 @@ func Object(args Args) *Plane {
 
 // Plane is a colored, one segment, one-sided 3D plane
 type Mesh struct {
-	mesh.Component
+	*mesh.Static
 	Args
 }
 
@@ -34,8 +34,8 @@ type Args struct {
 
 func New(args Args) *Mesh {
 	plane := object.NewComponent(&Mesh{
-		Component: mesh.New(mesh.Forward, args.Mat),
-		Args:      args,
+		Static: mesh.New(mesh.Forward, args.Mat),
+		Args:   args,
 	})
 	plane.generate()
 	return plane
@@ -65,5 +65,5 @@ func (p *Mesh) generate() {
 
 	key := object.Key("plane", p)
 	mesh := vertex.NewTriangles(key, vertices, indices)
-	p.SetMesh(mesh)
+	p.SetVertices(mesh)
 }

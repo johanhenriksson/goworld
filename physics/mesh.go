@@ -92,9 +92,12 @@ func (m *Mesh) destroy() {
 }
 
 func (m *Mesh) OnEnable() {
-	if mesh := object.Get[mesh.Component](m); mesh != nil {
-		m.SetMeshData(mesh.Mesh())
+	if mesh := object.Get[mesh.Mesh](m); mesh != nil {
+		m.SetMeshData(mesh.Vertices())
 		log.Println("added mesh data from", m.Parent().Name())
+
+		// subscribe to mesh data changes ?
+		// or should we assign the collision mesh separately
 	} else {
 		log.Println("no mesh found for collider :(", m.Parent().Name())
 	}

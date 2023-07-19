@@ -16,7 +16,7 @@ type Cylinder struct {
 	Mesh *Mesh
 }
 
-func Object(args Args) *Cylinder {
+func NewObject(args Args) *Cylinder {
 	return &Cylinder{
 		RigidBody: physics.NewRigidBody("Cylinder", 0),
 		Mesh:      New(args),
@@ -25,7 +25,7 @@ func Object(args Args) *Cylinder {
 
 // A Cylinder is a forward rendered colored cyllinder mesh
 type Mesh struct {
-	mesh.Component
+	*mesh.Static
 	Args
 }
 
@@ -39,8 +39,8 @@ type Args struct {
 
 func New(args Args) *Mesh {
 	cyllinder := object.NewComponent(&Mesh{
-		Component: mesh.New(mesh.Forward, args.Mat),
-		Args:      args,
+		Static: mesh.New(mesh.Forward, args.Mat),
+		Args:   args,
 	})
 	// this should not run on the main thread
 	cyllinder.generate()
@@ -100,5 +100,5 @@ func (c *Mesh) generate() {
 
 	key := object.Key("cyllinder", c)
 	mesh := vertex.NewTriangles(key, data, []uint16{})
-	c.SetMesh(mesh)
+	c.SetVertices(mesh)
 }

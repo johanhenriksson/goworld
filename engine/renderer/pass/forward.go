@@ -24,7 +24,7 @@ type ForwardPass struct {
 	fbuf    framebuffer.Array
 
 	materials *MaterialSorter
-	meshQuery *object.Query[mesh.Component]
+	meshQuery *object.Query[mesh.Mesh]
 }
 
 func NewForwardPass(
@@ -98,7 +98,7 @@ func NewForwardPass(
 			DepthWrite:   true,
 			CullMode:     vertex.CullBack,
 		}),
-		meshQuery: object.NewQuery[mesh.Component](),
+		meshQuery: object.NewQuery[mesh.Mesh](),
 	}
 }
 
@@ -129,6 +129,6 @@ func (p *ForwardPass) Destroy() {
 	p.materials.Destroy()
 }
 
-func isDrawForward(m mesh.Component) bool {
+func isDrawForward(m mesh.Mesh) bool {
 	return m.Mode() == mesh.Forward
 }

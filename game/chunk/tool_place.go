@@ -14,7 +14,7 @@ import (
 
 type PlaceTool struct {
 	object.Object
-	Box *box.T
+	Box *box.Mesh
 }
 
 var _ editor.Tool = &PlaceTool{}

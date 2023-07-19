@@ -15,7 +15,7 @@ type Cone struct {
 	*Mesh
 }
 
-func Object(args Args) *Cone {
+func NewObject(args Args) *Cone {
 	return object.New("Cone", &Cone{
 		Mesh: New(args),
 	})
@@ -23,7 +23,7 @@ func Object(args Args) *Cone {
 
 // A Cone is a forward rendered colored cone mesh
 type Mesh struct {
-	mesh.Component
+	*mesh.Static
 	Args
 }
 
@@ -37,8 +37,8 @@ type Args struct {
 
 func New(args Args) *Mesh {
 	cone := object.NewComponent(&Mesh{
-		Component: mesh.New(mesh.Forward, args.Mat),
-		Args:      args,
+		Static: mesh.New(mesh.Forward, args.Mat),
+		Args:   args,
 	})
 	cone.generate()
 	return cone
@@ -80,5 +80,5 @@ func (c *Mesh) generate() {
 
 	key := object.Key("cone", c)
 	mesh := vertex.NewTriangles(key, data, []uint16{})
-	c.SetMesh(mesh)
+	c.SetVertices(mesh)
 }

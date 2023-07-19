@@ -12,7 +12,7 @@ import (
 
 type ReplaceTool struct {
 	object.Object
-	Box *box.T
+	Box *box.Mesh
 }
 
 var _ editor.Tool = &ReplaceTool{}

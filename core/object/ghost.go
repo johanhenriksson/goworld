@@ -3,21 +3,21 @@ package object
 import "github.com/johanhenriksson/goworld/core/transform"
 
 type ghost struct {
-	group
+	object
 	target Component
 }
 
-func Ghost(object Component) Object {
+func Ghost(obj Component) Object {
 	return &ghost{
-		group: group{
-			base: base{
+		object: object{
+			component: component{
 				id:      ID(),
-				name:    "Ghost:" + object.Name(),
+				name:    "Ghost:" + obj.Name(),
 				enabled: true,
 			},
 			transform: transform.Identity(),
 		},
-		target: object,
+		target: obj,
 	}
 }
 

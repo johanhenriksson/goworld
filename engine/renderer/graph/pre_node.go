@@ -27,14 +27,14 @@ type PreNode interface {
 
 type preNode struct {
 	*node
-	cameraQuery  *object.Query[*camera.T]
+	cameraQuery  *object.Query[*camera.Camera]
 	predrawQuery *object.Query[PreDrawable]
 }
 
 func newPreNode(app vulkan.App) PreNode {
 	return &preNode{
 		node:         newNode(app, "Pre", nil),
-		cameraQuery:  object.NewQuery[*camera.T](),
+		cameraQuery:  object.NewQuery[*camera.Camera](),
 		predrawQuery: object.NewQuery[PreDrawable](),
 	}
 }

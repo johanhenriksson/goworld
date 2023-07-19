@@ -9,9 +9,9 @@ import (
 	"github.com/johanhenriksson/goworld/render/vertex"
 )
 
-// T is a vertex colored cube mesh
-type T struct {
-	mesh.Component
+// Mesh is a vertex colored cube mesh
+type Mesh struct {
+	*mesh.Static
 	Args
 }
 
@@ -22,16 +22,16 @@ type Args struct {
 }
 
 // New creates a vertex colored cube mesh with a given size
-func New(args Args) *T {
-	cube := object.NewComponent(&T{
-		Component: mesh.New(mesh.Forward, args.Mat),
-		Args:      args,
+func New(args Args) *Mesh {
+	cube := object.NewComponent(&Mesh{
+		Static: mesh.New(mesh.Forward, args.Mat),
+		Args:   args,
 	})
 	cube.generate()
 	return cube
 }
 
-func (c *T) generate() {
+func (c *Mesh) generate() {
 	s := c.Size / 2
 	co := c.Color.Vec4()
 	vertices := []vertex.C{
@@ -82,5 +82,5 @@ func (c *T) generate() {
 
 	key := object.Key("cube", c)
 	mesh := vertex.NewTriangles(key, vertices, indices)
-	c.SetMesh(mesh)
+	c.SetVertices(mesh)
 }

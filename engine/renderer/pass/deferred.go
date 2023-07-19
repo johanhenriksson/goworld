@@ -57,7 +57,7 @@ type deferred struct {
 
 	materials *MaterialSorter
 
-	meshQuery  *object.Query[mesh.Component]
+	meshQuery  *object.Query[mesh.Mesh]
 	lightQuery *object.Query[light.T]
 }
 
@@ -205,7 +205,7 @@ func NewDeferredPass(
 				DepthWrite:   true,
 			}),
 
-		meshQuery:  object.NewQuery[mesh.Component](),
+		meshQuery:  object.NewQuery[mesh.Mesh](),
 		lightQuery: object.NewQuery[light.T](),
 	}
 }
@@ -333,12 +333,12 @@ func (p *deferred) Destroy() {
 	p.light.Destroy()
 }
 
-func isDrawDeferred(m mesh.Component) bool {
+func isDrawDeferred(m mesh.Mesh) bool {
 	return m.Mode() == mesh.Deferred
 }
 
-func frustumCulled(frustum *shape.Frustum) func(mesh.Component) bool {
-	return func(m mesh.Component) bool {
+func frustumCulled(frustum *shape.Frustum) func(mesh.Mesh) bool {
+	return func(m mesh.Mesh) bool {
 		bounds := m.BoundingSphere()
 		return frustum.IntersectsSphere(&bounds)
 	}

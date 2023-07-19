@@ -63,7 +63,7 @@ func loadNode(doc *gltf.Document, node *gltf.Node) object.Component {
 	return obj
 }
 
-func loadPrimitive(doc *gltf.Document, name string, primitive *gltf.Primitive) mesh.Component {
+func loadPrimitive(doc *gltf.Document, name string, primitive *gltf.Primitive) mesh.Mesh {
 	kind := mapPrimitiveType(primitive.Mode)
 
 	// create interleaved buffers
@@ -88,7 +88,7 @@ func loadPrimitive(doc *gltf.Document, name string, primitive *gltf.Primitive) m
 
 	// create mesh component
 	mesh := mesh.NewPrimitiveMesh(kind, mesh.Deferred, nil)
-	mesh.SetMesh(gmesh)
+	mesh.SetVertices(gmesh)
 	return mesh
 }
 

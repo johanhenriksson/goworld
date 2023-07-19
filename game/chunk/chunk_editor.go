@@ -54,7 +54,7 @@ type edit struct {
 
 	xp, yp, zp int
 
-	BoundingBox *box.T
+	BoundingBox *box.Mesh
 	shape       physics.Shape
 	render      renderer.T
 }
@@ -103,7 +103,7 @@ func NewEditor(ctx *editor.Context, mesh *Mesh) Editor {
 		shape: physics.NewBox(dimensions.Scaled(0.5)),
 
 		// X Construction Plane
-		XPlane: object.Builder(plane.Object(plane.Args{
+		XPlane: object.Builder(plane.NewObject(plane.Args{
 			Size:  float32(chk.Sx),
 			Color: color.Red.WithAlpha(0.25),
 		})).
@@ -113,7 +113,7 @@ func NewEditor(ctx *editor.Context, mesh *Mesh) Editor {
 			Create(),
 
 		// Y Construction Plane
-		YPlane: object.Builder(plane.Object(plane.Args{
+		YPlane: object.Builder(plane.NewObject(plane.Args{
 			Size:  float32(chk.Sy),
 			Color: color.Green.WithAlpha(0.25),
 		})).
@@ -122,7 +122,7 @@ func NewEditor(ctx *editor.Context, mesh *Mesh) Editor {
 			Create(),
 
 		// Z Construction Plane
-		ZPlane: object.Builder(plane.Object(plane.Args{
+		ZPlane: object.Builder(plane.NewObject(plane.Args{
 			Size:  float32(chk.Sz),
 			Color: color.Blue.WithAlpha(0.25),
 		})).

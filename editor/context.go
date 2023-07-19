@@ -8,7 +8,7 @@ import (
 
 type Context struct {
 	Render renderer.T
-	Camera *camera.T
+	Camera *camera.Camera
 	Root   object.Component
 	Scene  object.Object
 }
