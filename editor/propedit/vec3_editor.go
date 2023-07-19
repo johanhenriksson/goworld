@@ -37,6 +37,7 @@ func Vec3(key string, props Vec3Props) node.T {
 						if props.OnChange != nil {
 							props.OnChange(vec3.New(x, props.Value.Y, props.Value.Z))
 						}
+						props.Value.X = x
 					},
 				}),
 				Float("y", FloatProps{
@@ -46,6 +47,7 @@ func Vec3(key string, props Vec3Props) node.T {
 						if props.OnChange != nil {
 							props.OnChange(vec3.New(props.Value.X, y, props.Value.Z))
 						}
+						props.Value.Y = y
 					},
 				}),
 				Float("z", FloatProps{
@@ -55,6 +57,7 @@ func Vec3(key string, props Vec3Props) node.T {
 						if props.OnChange != nil {
 							props.OnChange(vec3.New(props.Value.X, props.Value.Y, z))
 						}
+						props.Value.Z = z
 					},
 				}),
 			},

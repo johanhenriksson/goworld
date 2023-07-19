@@ -36,16 +36,20 @@ func String(key string, props StringProps) node.T {
 		onChange := func(newText string) {
 			setValid(validate(newText))
 			setText(newText)
+			text = newText
+			valid = validate(newText)
 		}
 
 		revert := func() {
 			setText(value)
 			setValid(true)
+			text = value
+			valid = true
 		}
 
 		updateValue := func() {
 			if validate(text) {
-				// if its a valid float, run the onchange callback
+				// if its valid, run the onchange callback
 				if props.OnChange != nil && text != props.Value {
 					props.OnChange(text)
 				}
