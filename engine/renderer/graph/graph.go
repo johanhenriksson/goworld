@@ -1,6 +1,8 @@
 package graph
 
 import (
+	"log"
+
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/render/vulkan"
 
@@ -89,6 +91,7 @@ func (g *graph) Draw(scene object.Object, time, delta float32) {
 	// prepare
 	args, err := g.pre.Prepare(scene, time, delta)
 	if err != nil {
+		log.Println("Render preparation error:", err)
 		g.Recreate()
 		return
 	}

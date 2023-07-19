@@ -13,7 +13,6 @@ import (
 	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
-var ErrNoCamera = errors.New("no active camera")
 var ErrRecreate = errors.New("recreate renderer")
 
 type PreDrawable interface {
@@ -47,12 +46,6 @@ func (n *preNode) Prepare(scene object.Object, time, delta float32) (*render.Arg
 		Scale:  n.app.Scale(),
 	}
 
-	// find the first active camera
-	camera, cameraExists := n.cameraQuery.Reset().First(scene)
-	if !cameraExists {
-		return nil, ErrNoCamera
-	}
-
 	// aquire next frame
 	context, err := n.app.Aquire()
 	if err != nil {
@@ -65,23 +58,27 @@ func (n *preNode) Prepare(scene object.Object, time, delta float32) (*render.Arg
 
 	// create render arguments
 	args := render.Args{
-		Time:       time,
-		Delta:      delta,
-		Context:    context,
-		Viewport:   screen,
-		Near:       camera.Near,
-		Far:        camera.Far,
-		Fov:        camera.Fov,
-		Projection: camera.Proj,
-		View:       camera.View,
-		ViewInv:    camera.ViewInv,
-		VP:         camera.ViewProj,
-		VPInv:      camera.ViewProjInv,
-		MVP:        camera.ViewProj,
-		Position:   camera.Transform().WorldPosition(),
-		Clear:      camera.Clear,
-		Forward:    camera.Transform().Forward(),
-		Transform:  mat4.Ident(),
+		Time:      time,
+		Delta:     delta,
+		Context:   context,
+		Viewport:  screen,
+		Transform: mat4.Ident(),
+	}
+
+	// find the first active camera
+	if camera, exists := n.cameraQuery.Reset().First(scene); exists {
+		args.Near = camera.Near
+		args.Far = camera.Far
+		args.Fov = camera.Fov
+		args.Projection = camera.Proj
+		args.View = camera.View
+		args.ViewInv = camera.ViewInv
+		args.VP = camera.ViewProj
+		args.VPInv = camera.ViewProjInv
+		args.MVP = camera.ViewProj
+		args.Position = camera.Transform().WorldPosition()
+		args.Clear = camera.Clear
+		args.Forward = camera.Transform().Forward()
 	}
 
 	// execute pre-draw pass
