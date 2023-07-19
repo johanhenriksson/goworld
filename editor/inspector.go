@@ -24,7 +24,7 @@ func InspectorGUI(target object.Component, extraNodes ...node.T) gui.Fragment {
 func Inspector(target object.Component, extraNodes []node.T) node.T {
 	title := "Component: "
 	if _, isObject := target.(object.Object); isObject {
-		title = "Object"
+		title = "Object: "
 	}
 
 	key := object.Key("inspector", target)

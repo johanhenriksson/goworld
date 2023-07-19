@@ -164,7 +164,7 @@ func (p *shadowpass) createShadowmap(light light.T) Shadowmap {
 func (p *shadowpass) Record(cmds command.Recorder, args render.Args, scene object.Component) {
 	lights := p.lightQuery.
 		Reset().
-		Where(func(lit light.T) bool { return lit.Type() == light.Directional && lit.Shadows() }).
+		Where(func(lit light.T) bool { return lit.Type() == light.TypeDirectional && lit.CastShadows() }).
 		Collect(scene)
 
 	for _, light := range lights {

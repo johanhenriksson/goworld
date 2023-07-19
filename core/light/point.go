@@ -14,30 +14,40 @@ type PointArgs struct {
 	Intensity   float32
 }
 
-type pointlight struct {
+type Point struct {
 	object.Component
 
-	PointArgs
+	Attenuation Attenuation
+
+	Color     *object.Property[color.T]
+	Range     *object.Property[float32]
+	Intensity *object.Property[float32]
 }
 
-func NewPoint(args PointArgs) T {
-	return object.NewComponent(&pointlight{
-		PointArgs: args,
+var _ T = &Point{}
+
+func NewPoint(args PointArgs) *Point {
+	return object.NewComponent(&Point{
+		Attenuation: args.Attenuation,
+
+		Color:     object.NewProperty(args.Color),
+		Range:     object.NewProperty(args.Range),
+		Intensity: object.NewProperty(args.Intensity),
 	})
 }
 
-func (lit *pointlight) Name() string        { return "PointLight" }
-func (lit *pointlight) Type() Type          { return Point }
-func (lit *pointlight) Shadows() bool       { return false }
-func (lit *pointlight) Cascades() []Cascade { return nil }
+func (lit *Point) Name() string        { return "PointLight" }
+func (lit *Point) Type() Type          { return TypePoint }
+func (lit *Point) CastShadows() bool   { return false }
+func (lit *Point) Cascades() []Cascade { return nil }
 
-func (lit *pointlight) LightDescriptor(args render.Args, _ int) Descriptor {
+func (lit *Point) LightDescriptor(args render.Args, _ int) Descriptor {
 	return Descriptor{
-		Type:        Point,
+		Type:        TypePoint,
 		Position:    vec4.Extend(lit.Transform().WorldPosition(), 0),
-		Color:       lit.Color,
-		Intensity:   lit.Intensity,
-		Range:       lit.Range,
+		Color:       lit.Color.Get(),
+		Intensity:   lit.Intensity.Get(),
+		Range:       lit.Range.Get(),
 		Attenuation: lit.Attenuation,
 	}
 }

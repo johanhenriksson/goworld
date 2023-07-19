@@ -12,7 +12,7 @@ type T interface {
 	object.Component
 
 	Type() Type
-	Shadows() bool
+	CastShadows() bool
 	LightDescriptor(args render.Args, cascade int) Descriptor
 	Cascades() []Cascade
 }

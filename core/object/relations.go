@@ -36,6 +36,9 @@ func Components(object Component) []Component {
 // Attach a child component/object to a parent object
 // If the object already has a parent, it will be detached first.
 func Attach(parent Object, child Component) {
+	if child == nil {
+		panic("attaching nil child")
+	}
 	Detach(child)
 	child.setParent(parent)
 	parent.attach(child)

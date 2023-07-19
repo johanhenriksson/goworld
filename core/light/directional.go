@@ -25,23 +25,31 @@ type Cascade struct {
 	FarSplit  float32
 }
 
-type dirlight struct {
+type Directional struct {
 	object.Component
-	args     DirectionalArgs
 	cascades []Cascade
+
+	Color     *object.Property[color.T]
+	Intensity *object.Property[float32]
+	Shadows   *object.Property[bool]
 }
 
-func NewDirectional(args DirectionalArgs) T {
-	return object.NewComponent(&dirlight{
-		args:     args,
+var _ T = &Directional{}
+
+func NewDirectional(args DirectionalArgs) *Directional {
+	return object.NewComponent(&Directional{
 		cascades: make([]Cascade, args.Cascades),
+
+		Color:     object.NewProperty(args.Color),
+		Intensity: object.NewProperty(args.Intensity),
+		Shadows:   object.NewProperty(args.Shadows),
 	})
 }
 
-func (lit *dirlight) Name() string        { return "DirectionalLight" }
-func (lit *dirlight) Type() Type          { return Directional }
-func (lit *dirlight) Shadows() bool       { return lit.args.Shadows }
-func (lit *dirlight) Cascades() []Cascade { return lit.cascades }
+func (lit *Directional) Name() string        { return "DirectionalLight" }
+func (lit *Directional) Type() Type          { return TypeDirectional }
+func (lit *Directional) CastShadows() bool   { return lit.Shadows.Get() }
+func (lit *Directional) Cascades() []Cascade { return lit.cascades }
 
 func farSplitDist(cascade, cascades int, near, far float32) float32 {
 	cascadeSplitLambda := float32(0.90)
@@ -68,31 +76,31 @@ func nearSplitDist(cascade, cascades int, near, far float32) float32 {
 	return farSplitDist(cascade-1, cascades, near, far)
 }
 
-func (lit *dirlight) PreDraw(args render.Args, scene object.Object) error {
+func (lit *Directional) PreDraw(args render.Args, scene object.Object) error {
 	lit.updateCascades(args)
 	return nil
 }
 
-func (lit *dirlight) LightDescriptor(args render.Args, cascade int) Descriptor {
+func (lit *Directional) LightDescriptor(args render.Args, cascade int) Descriptor {
 	ldir := lit.Transform().Forward()
 	return Descriptor{
-		Type:       Directional,
+		Type:       TypeDirectional,
 		Position:   vec4.Extend(ldir, 0),
-		Color:      lit.args.Color,
-		Intensity:  lit.args.Intensity,
+		Color:      lit.Color.Get(),
+		Intensity:  lit.Intensity.Get(),
 		View:       lit.cascades[cascade].View,
 		Projection: lit.cascades[cascade].Proj,
 		ViewProj:   lit.cascades[cascade].ViewProj,
 	}
 }
 
-func (lit *dirlight) updateCascades(args render.Args) {
-	for i := 0; i < lit.args.Cascades; i++ {
-		lit.cascades[i] = lit.calculateCascade(args, i, lit.args.Cascades)
+func (lit *Directional) updateCascades(args render.Args) {
+	for i, _ := range lit.cascades {
+		lit.cascades[i] = lit.calculateCascade(args, i, len(lit.cascades))
 	}
 }
 
-func (lit *dirlight) calculateCascade(args render.Args, cascade, cascades int) Cascade {
+func (lit *Directional) calculateCascade(args render.Args, cascade, cascades int) Cascade {
 	texSize := float32(2048)
 
 	frustumCorners := []vec3.T{

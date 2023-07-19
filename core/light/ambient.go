@@ -6,29 +6,31 @@ import (
 	"github.com/johanhenriksson/goworld/render/color"
 )
 
-type ambient struct {
+type Ambient struct {
 	object.Component
 	Color     color.T
 	Intensity float32
 }
 
-func (lit *ambient) LightDescriptor(args render.Args, _ int) Descriptor {
+var _ T = &Ambient{}
+
+func NewAmbient(clr color.T, intensity float32) T {
+	return object.NewComponent(&Ambient{
+		Color:     clr,
+		Intensity: intensity,
+	})
+}
+
+func (lit *Ambient) LightDescriptor(args render.Args, _ int) Descriptor {
 	return Descriptor{
-		Type:      Ambient,
+		Type:      TypeAmbient,
 		Color:     lit.Color,
 		Intensity: lit.Intensity,
 	}
 }
 
-func (lit *ambient) Shadows() bool { return false }
-func (lit *ambient) Type() Type {
-	return Ambient
+func (lit *Ambient) CastShadows() bool { return false }
+func (lit *Ambient) Type() Type {
+	return TypeAmbient
 }
-func (lit *ambient) Cascades() []Cascade { return nil }
-
-func NewAmbient(clr color.T, intensity float32) T {
-	return object.NewComponent(&ambient{
-		Color:     clr,
-		Intensity: intensity,
-	})
-}
+func (lit *Ambient) Cascades() []Cascade { return nil }

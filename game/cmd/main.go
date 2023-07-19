@@ -21,7 +21,7 @@ import (
 
 func main() {
 	defer func() {
-		log.Println("Clean exit")
+		log.Println("exited main defer")
 	}()
 
 	engine.Run(engine.Args{

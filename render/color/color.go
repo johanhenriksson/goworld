@@ -64,9 +64,17 @@ func (c T) RGBA() color.RGBA {
 	}
 }
 
+func FromVec3(v vec3.T) T {
+	return RGB(v.X, v.Y, v.Z)
+}
+
 // Vec3 returns a vec3 containing the RGB components of the color
 func (c T) Vec3() vec3.T {
 	return vec3.New(c.R, c.G, c.B)
+}
+
+func FromVec4(v vec4.T) T {
+	return RGBA(v.X, v.Y, v.Z, v.W)
 }
 
 // Vec4 returns a vec4 containing the RGBA components of the color

@@ -276,7 +276,7 @@ func (p *deferred) DrawLight(cmds command.Recorder, args render.Args, lit light.
 	quad := p.app.Meshes().Fetch(p.quad)
 	desc := lit.LightDescriptor(args, 0)
 
-	if lit.Shadows() {
+	if lit.CastShadows() {
 		dirlight := uniform.Light{}
 		for cascadeIndex, cascade := range lit.Cascades() {
 			textureIndex := textureIndexOffset + cascadeIndex
