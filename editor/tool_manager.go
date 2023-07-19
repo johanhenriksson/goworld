@@ -27,7 +27,7 @@ type Action struct {
 type ToolManager interface {
 	object.Component
 
-	Select(*ObjectEditor)
+	Select(*EditorGhost)
 	SelectTool(Tool)
 	MoveTool(object.Component)
 	Tool() Tool
@@ -36,7 +36,7 @@ type ToolManager interface {
 type toolmgr struct {
 	object.Object
 	scene    object.Object
-	selected []*ObjectEditor
+	selected []*EditorGhost
 	tool     Tool
 	camera   mat4.T
 	viewport render.Screen
@@ -51,7 +51,7 @@ func NewToolManager() ToolManager {
 			Active(false).
 			Create(),
 
-		selected: make([]*ObjectEditor, 0, 16),
+		selected: make([]*EditorGhost, 0, 16),
 	})
 }
 
@@ -94,7 +94,7 @@ func (m *toolmgr) MouseEvent(e mouse.Event) {
 			return
 		}
 
-		if object := object.GetInParents[*ObjectEditor](hit.Shape); object != nil {
+		if object := object.GetInParents[*EditorGhost](hit.Shape); object != nil {
 			// todo: pass physics hit info instead
 			m.setSelect(e, object)
 		} else {
@@ -148,11 +148,11 @@ func (m *toolmgr) SelectTool(tool Tool) {
 	}
 }
 
-func (m *toolmgr) Select(obj *ObjectEditor) {
+func (m *toolmgr) Select(obj *EditorGhost) {
 	m.setSelect(mouse.NopEvent(), obj)
 }
 
-func (m *toolmgr) setSelect(e mouse.Event, component *ObjectEditor) bool {
+func (m *toolmgr) setSelect(e mouse.Event, component *EditorGhost) bool {
 	// todo: detect if the object has been deleted
 	// otherwise CanDeselect() will make it impossible to select another object
 
@@ -180,7 +180,7 @@ func (m *toolmgr) setSelect(e mouse.Event, component *ObjectEditor) bool {
 		group := component
 		_, ok := component.Target().(object.Object)
 		if !ok {
-			group, ok = component.Parent().(*ObjectEditor)
+			group, ok = component.Parent().(*EditorGhost)
 			if !ok {
 				return true
 			}
@@ -193,7 +193,7 @@ func (m *toolmgr) setSelect(e mouse.Event, component *ObjectEditor) bool {
 
 		// select child component editors
 		for _, child := range group.Children() {
-			if childEdit, ok := child.(*ObjectEditor); ok {
+			if childEdit, ok := child.(*EditorGhost); ok {
 				if _, isObject := childEdit.target.(object.Object); isObject {
 					continue
 				}

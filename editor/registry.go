@@ -30,10 +30,10 @@ func Register[K object.Component, E T](obj K, constructor func(*Context, K) E) {
 }
 
 func ConstructEditors(ctx *Context, current object.Component, target object.Component) object.Component {
-	var editor *ObjectEditor
+	var editor *EditorGhost
 
 	if current != nil {
-		editor = current.(*ObjectEditor)
+		editor = current.(*EditorGhost)
 		if editor.target != target {
 			panic("unexpected editor target")
 		}
@@ -46,15 +46,15 @@ func ConstructEditors(ctx *Context, current object.Component, target object.Comp
 		} else {
 			log.Println("creating object editor for", target.Name(), "of type", t.Name())
 		}
-		editor = NewObjectEditor(
+		editor = NewEditorGhost(
 			target,
 			customEditor,
 		)
 	}
 
-	existingEditors := map[object.Component]*ObjectEditor{}
+	existingEditors := map[object.Component]*EditorGhost{}
 	for _, child := range editor.Children() {
-		childEdit, isEdit := child.(*ObjectEditor)
+		childEdit, isEdit := child.(*EditorGhost)
 		if !isEdit {
 			continue
 		}

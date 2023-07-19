@@ -42,6 +42,7 @@ func (e *MeshEditor) Actions() []editor.Action {
 }
 
 func (e *MeshEditor) Update(scene object.Component, dt float32) {
+	// todo: replace with an event
 	mesh := e.target.Vertices()
 	if mesh != e.mesh {
 		e.shape.SetMeshData(mesh)

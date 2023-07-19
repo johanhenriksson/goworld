@@ -25,7 +25,6 @@ type BoxEditor struct {
 
 func NewBoxEditor(ctx *editor.Context, box *physics.Box) *BoxEditor {
 	shape := physics.NewBox(box.Extents.Get())
-	value := "hello"
 
 	return object.New("BoxEditor", &BoxEditor{
 		target: box,
@@ -33,17 +32,11 @@ func NewBoxEditor(ctx *editor.Context, box *physics.Box) *BoxEditor {
 
 		GUI: editor.InspectorGUI(
 			box,
-			propedit.Vec3Field("size", "Collider Size", propedit.Vec3Props{
+			propedit.Vec3Field("extents", "Extents", propedit.Vec3Props{
 				Value: box.Extents.Get(),
 				OnChange: func(t vec3.T) {
 					box.Extents.Set(t)
 					shape.Extents.Set(t)
-				},
-			}),
-			propedit.StringField("text", "Test Text", propedit.StringProps{
-				Value: value,
-				OnChange: func(t string) {
-					value = t
 				},
 			}),
 		),
