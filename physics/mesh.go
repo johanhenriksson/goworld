@@ -31,9 +31,7 @@ var _ mesh.UpdateHandler = &Mesh{}
 
 func NewMesh() *Mesh {
 	shape := object.NewComponent(&Mesh{
-		shapeBase: shapeBase{
-			kind: MeshShape,
-		},
+		shapeBase: newShapeBase(MeshShape),
 	})
 
 	runtime.SetFinalizer(shape, func(m *Mesh) {

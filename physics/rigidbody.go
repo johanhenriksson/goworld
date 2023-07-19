@@ -83,6 +83,13 @@ func (b *RigidBody) OnEnable() {
 			log.Println("rigidbody", b.Parent().Name(), ": no shape")
 			return
 		}
+
+		b.Shape.OnChange().Subscribe(b, func(s Shape) {
+			if b.handle == nil {
+				return
+			}
+			C.goRigidBodySetShape(b.handle, s.shape())
+		})
 	}
 
 	b.handle = C.goCreateRigidBody((*C.char)(unsafe.Pointer(b)), C.goReal(b.mass), b.Shape.shape())
@@ -99,7 +106,10 @@ func (b *RigidBody) OnEnable() {
 
 func (b *RigidBody) OnDisable() {
 	b.destroy()
-	b.Shape = nil
+	if b.Shape != nil {
+		b.Shape.OnChange().Unsubscribe(b)
+		b.Shape = nil
+	}
 	b.world = nil
 }
 

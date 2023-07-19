@@ -13,6 +13,7 @@ import (
 	"runtime"
 	"unsafe"
 
+	"github.com/johanhenriksson/goworld/core/events"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/math/vec3"
 )
@@ -21,6 +22,8 @@ type Shape interface {
 	object.Component
 
 	Type() ShapeType
+
+	OnChange() *events.Event[Shape]
 
 	shape() C.goShapeHandle
 }
@@ -36,12 +39,24 @@ const (
 )
 
 type shapeBase struct {
-	kind   ShapeType
-	handle C.goShapeHandle
+	kind    ShapeType
+	handle  C.goShapeHandle
+	changed *events.Event[Shape]
+}
+
+func newShapeBase(kind ShapeType) shapeBase {
+	return shapeBase{
+		kind:    kind,
+		changed: events.New[Shape](),
+	}
 }
 
 func (s *shapeBase) Type() ShapeType {
 	return s.kind
+}
+
+func (s *shapeBase) OnChange() *events.Event[Shape] {
+	return s.changed
 }
 
 func (s *shapeBase) shape() C.goShapeHandle {
@@ -61,8 +76,7 @@ func restoreShape(ptr unsafe.Pointer) Shape {
 	case MeshShape:
 		return (*Mesh)(ptr)
 	default:
-		fmt.Println("invalid shape kind: %d", base.kind)
-		return nil
+		panic(fmt.Sprintf("invalid shape kind: %d", base.kind))
 	}
 }
 
@@ -73,24 +87,41 @@ func restoreShape(ptr unsafe.Pointer) Shape {
 type Box struct {
 	shapeBase
 	object.Component
-	size vec3.T
+
+	Extents *object.Property[vec3.T]
 }
 
 var _ Shape = &Box{}
 
 func NewBox(size vec3.T) *Box {
 	box := object.NewComponent(&Box{
-		shapeBase: shapeBase{
-			kind: BoxShape,
-		},
-		size: size,
+		shapeBase: newShapeBase(BoxShape),
+		Extents:   object.NewProperty(size),
 	})
-	box.handle = C.goNewBoxShape((*C.char)(unsafe.Pointer(box)), vec3ptr(&size))
+
+	// resize shape when extents are modified
+	box.Extents.OnChange().Subscribe(box, box.resize)
+
+	// trigger initial resize
+	box.resize(size)
 
 	runtime.SetFinalizer(box, func(b *Box) {
-		C.goDeleteShape(b.shape())
+		b.destroy()
 	})
 	return box
+}
+
+func (b *Box) resize(size vec3.T) {
+	b.destroy()
+	b.handle = C.goNewBoxShape((*C.char)(unsafe.Pointer(b)), vec3ptr(&size))
+	b.OnChange().Emit(b)
+}
+
+func (b *Box) destroy() {
+	if b.handle != nil {
+		C.goDeleteShape(b.handle)
+		b.handle = nil
+	}
 }
 
 func (b *Box) Name() string {
@@ -98,11 +129,7 @@ func (b *Box) Name() string {
 }
 
 func (b *Box) String() string {
-	return fmt.Sprintf("Box[Size=%s]", b.size)
-}
-
-func (b *Box) Size() vec3.T {
-	return b.size
+	return fmt.Sprintf("Box[Size=%s]", b.Extents.Get())
 }
 
 //
@@ -112,27 +139,49 @@ func (b *Box) Size() vec3.T {
 type Capsule struct {
 	shapeBase
 	object.Component
-	height float32
-	radius float32
+
+	Radius *object.Property[float32]
+	Height *object.Property[float32]
 }
 
 var _ = &Capsule{}
 
 func NewCapsule(height, radius float32) *Capsule {
 	capsule := object.NewComponent(&Capsule{
-		shapeBase: shapeBase{
-			kind: CapsuleShape,
-		},
-		radius: radius,
-		height: height,
+		shapeBase: newShapeBase(CapsuleShape),
+		Radius:    object.NewProperty(radius),
+		Height:    object.NewProperty(height),
 	})
-	capsule.handle = C.goNewCapsuleShape((*C.char)(unsafe.Pointer(capsule)), C.float(radius), C.float(height))
+
+	capsule.Radius.OnChange().Subscribe(capsule, func(radius float32) {
+		capsule.resize(radius, capsule.Height.Get())
+	})
+	capsule.Height.OnChange().Subscribe(capsule, func(height float32) {
+		capsule.resize(capsule.Radius.Get(), height)
+	})
+
+	// trigger initial resize
+	capsule.resize(radius, height)
+
 	runtime.SetFinalizer(capsule, func(c *Capsule) {
-		C.goDeleteShape(c.shape())
+		c.destroy()
 	})
 	return capsule
 }
 
+func (c *Capsule) resize(radius, height float32) {
+	c.destroy()
+	c.handle = C.goNewCapsuleShape((*C.char)(unsafe.Pointer(c)), C.float(radius), C.float(height))
+	c.OnChange().Emit(c)
+}
+
+func (c *Capsule) destroy() {
+	if c.handle != nil {
+		C.goDeleteShape(c.handle)
+		c.handle = nil
+	}
+}
+
 func (c *Capsule) String() string {
-	return fmt.Sprintf("Capsule[Height=%.2f,Radius=%.2f]", c.height, c.radius)
+	return fmt.Sprintf("Capsule[Height=%.2f,Radius=%.2f]", c.Height.Get(), c.Radius.Get())
 }

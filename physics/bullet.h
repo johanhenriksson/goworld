@@ -95,6 +95,7 @@ extern void goDeleteRigidBody(goRigidBodyHandle body);
 
 extern void goRigidBodyGetState(goRigidBodyHandle body, goRigidBodyState* state);
 extern void goRigidBodySetState(goRigidBodyHandle body, goRigidBodyState* state);
+extern void goRigidBodySetShape(goRigidBodyHandle objectPtr, goShapeHandle shapePtr);
 
 /* Collision Shape definition */
 
