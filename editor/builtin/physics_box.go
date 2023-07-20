@@ -1,8 +1,6 @@
 package builtin
 
 import (
-	"log"
-
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/editor"
 	"github.com/johanhenriksson/goworld/editor/propedit"
@@ -45,14 +43,6 @@ func NewBoxEditor(ctx *editor.Context, box *physics.Box) *BoxEditor {
 
 func (e *BoxEditor) Bounds() physics.Shape {
 	return e.shape
-}
-
-func (e *BoxEditor) OnEnable() {
-	log.Println("ENABLE PHYSICS BOX EDITOR FOR", e.target.Parent().Name())
-}
-
-func (e *BoxEditor) OnDisable() {
-	log.Println("DISABLE PHYSICS BOX EDITOR FOR", e.target.Parent().Name())
 }
 
 func (e *BoxEditor) Actions() []editor.Action {

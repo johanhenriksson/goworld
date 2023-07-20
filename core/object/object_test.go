@@ -1,13 +1,13 @@
 package object_test
 
 import (
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
+
 	"fmt"
 	"testing"
 
 	"github.com/johanhenriksson/goworld/core/object"
-
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 )
 
 type A struct {

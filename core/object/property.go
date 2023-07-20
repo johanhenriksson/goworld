@@ -7,16 +7,22 @@ import (
 	"github.com/johanhenriksson/goworld/core/events"
 )
 
-type PropType interface{}
+type PropValue interface{}
 
-type Property[T PropType] struct {
+type GenericProp interface {
+	Type() reflect.Type
+	GetAny() any
+	SetAny(any)
+}
+
+type Property[T PropValue] struct {
 	value   T
 	def     T
 	kind    reflect.Type
 	changed *events.Event[T]
 }
 
-func NewProperty[T PropType](def T) *Property[T] {
+func NewProperty[T PropValue](def T) *Property[T] {
 	var empty T
 	return &Property[T]{
 		value:   def,
@@ -30,9 +36,19 @@ func (p *Property[T]) Get() T {
 	return p.value
 }
 
+func (p *Property[T]) GetAny() any {
+	return p.value
+}
+
 func (p *Property[T]) Set(value T) {
 	p.value = value
 	p.changed.Emit(value)
+}
+
+func (p *Property[T]) SetAny(value any) {
+	if cast, ok := value.(T); ok {
+		p.Set(cast)
+	}
 }
 
 func (p *Property[T]) String() string {
@@ -45,4 +61,42 @@ func (p *Property[T]) Type() reflect.Type {
 
 func (p *Property[T]) OnChange() *events.Event[T] {
 	return p.changed
+}
+
+type PropInfo struct {
+	GenericProp
+	Key  string
+	Name string
+}
+
+func Properties(target Component) []PropInfo {
+	t := reflect.TypeOf(target).Elem()
+	v := reflect.ValueOf(target).Elem()
+
+	properties := make([]PropInfo, 0, t.NumField())
+	for i := 0; i < t.NumField(); i++ {
+		field := t.Field(i)
+		if field.Anonymous {
+			// anonymous fields are not considered
+			continue
+		}
+		if !field.IsExported() {
+			// only exported fields can be properties
+			continue
+		}
+
+		value := v.Field(i)
+		if prop, isProp := value.Interface().(GenericProp); isProp {
+			// todo: tags
+
+			properties = append(properties, PropInfo{
+				GenericProp: prop,
+
+				Key:  field.Name,
+				Name: field.Name,
+			})
+		}
+	}
+
+	return properties
 }

@@ -11,22 +11,13 @@ func init() {
 }
 
 type WorldEditor struct {
-	object.Component
-	target *physics.World
+	*editor.ComponentEditor
 }
 
 func NewWorldEditor(ctx *editor.Context, world *physics.World) *WorldEditor {
 	return object.NewComponent(&WorldEditor{
-		target: world,
+		ComponentEditor: editor.NewComponentEditor(world),
 	})
-}
-
-func (e *WorldEditor) Actions() []editor.Action {
-	return nil
-}
-
-func (e *WorldEditor) Bounds() physics.Shape {
-	return nil
 }
 
 func (e *WorldEditor) Update(scene object.Component, dt float32) {

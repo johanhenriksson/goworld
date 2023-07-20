@@ -3,8 +3,18 @@ package propedit
 import (
 	"strconv"
 
+	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/gui/node"
 )
+
+func init() {
+	Register[float32](func(key, name string, prop object.GenericProp) node.T {
+		return FloatField(key, name, FloatProps{
+			Value:    prop.GetAny().(float32),
+			OnChange: func(f float32) { prop.SetAny(f) },
+		})
+	})
+}
 
 type FloatProps struct {
 	Label    string

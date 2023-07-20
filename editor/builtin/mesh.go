@@ -1,8 +1,6 @@
 package builtin
 
 import (
-	"log"
-
 	"github.com/johanhenriksson/goworld/core/mesh"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/editor"
@@ -31,10 +29,6 @@ func NewMeshEditor(ctx *editor.Context, mesh mesh.Mesh) *MeshEditor {
 
 func (e *MeshEditor) Bounds() physics.Shape {
 	return e.shape
-}
-
-func (e *MeshEditor) OnEnable() {
-	log.Println("ENABLE MESH EDITOR FOR", e.target.Parent().Name())
 }
 
 func (e *MeshEditor) Actions() []editor.Action {
