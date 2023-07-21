@@ -152,7 +152,7 @@ func (m *MaterialSorter) DrawCamera(cmds command.Recorder, args render.Args, cam
 		})
 
 		for i, msh := range matMeshes {
-			vkmesh, meshReady := m.app.Meshes().TryFetch(msh.Vertices())
+			vkmesh, meshReady := m.app.Meshes().TryFetch(msh.Mesh().Get())
 			if !meshReady {
 				continue
 			}

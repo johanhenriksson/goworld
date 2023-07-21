@@ -30,8 +30,6 @@ type RigidBody struct {
 	Shape Shape
 }
 
-var _ object.Object = &RigidBody{}
-
 type rigidbodyState struct {
 	position vec3.T
 	rotation quat.T
@@ -76,60 +74,70 @@ func (b *RigidBody) pushState() {
 }
 
 func (b *RigidBody) OnEnable() {
-	log.Println("Enable Rigidbody", b.Name())
 	if b.Shape == nil {
 		b.Shape = object.Get[Shape](b)
 		if b.Shape == nil {
-			log.Println("rigidbody", b.Parent().Name(), ": no shape")
+			log.Println("Rigidbody", b.Parent().Name(), ": no shape in siblings")
 			return
 		}
 
 		b.Shape.OnChange().Subscribe(b, func(s Shape) {
 			if b.handle == nil {
-				return
+				panic("rigidbody shape set to nil")
 			}
 			C.goRigidBodySetShape(b.handle, s.shape())
 		})
 	}
 
-	b.handle = C.goCreateRigidBody((*C.char)(unsafe.Pointer(b)), C.goReal(b.mass), b.Shape.shape())
+	if b.handle == nil {
+		b.handle = C.goCreateRigidBody((*C.char)(unsafe.Pointer(b)), C.goReal(b.mass), b.Shape.shape())
+	}
+
+	// update physics transforms
 	b.pushState()
 
 	b.world = object.GetInParents[*World](b)
 	if b.world != nil {
 		b.world.addRigidBody(b)
-		log.Println("Rigidbody", b.Name(), "added to physics world", b.world.Parent().Name())
 	} else {
-		log.Println("Rigidbody", b.Name(), ": No physics world in parents")
+		log.Println("Rigidbody", b.Name(), ": no physics world in parents")
 	}
 }
 
 func (b *RigidBody) OnDisable() {
-	b.destroy()
-	if b.Shape != nil {
-		b.Shape.OnChange().Unsubscribe(b)
-		b.Shape = nil
-	}
-	b.world = nil
+	b.detach()
 }
 
-func (b *RigidBody) destroy() {
+func (b *RigidBody) detach() {
 	if b.world != nil {
 		b.world.removeRigidBody(b)
 		b.world = nil
 	}
+}
+
+func (b *RigidBody) destroy() {
+	b.detach()
+	if b.Shape != nil {
+		b.Shape.OnChange().Unsubscribe(b)
+		b.Shape = nil
+	}
 	if b.handle != nil {
-		log.Println("destroy rigidbody", b)
 		C.goDeleteRigidBody(b.handle)
 		b.handle = nil
 	}
 }
 
+func (b *RigidBody) Kinematic() bool {
+	return b.mass <= 0
+}
+
 func (b *RigidBody) Transform() transform.T {
-	if b.mass == 0 {
+	if b.Kinematic() {
+		// kinematic rigidbodies behave like normal objects
 		return b.Object.Transform()
+	} else {
+		// non-kinematic rigidbodies are free floating and do not consider their parent transforms
+		b.transform.Recalculate(nil)
+		return b.transform
 	}
-	// floating object
-	b.transform.Recalculate(nil)
-	return b.transform
 }

@@ -23,16 +23,23 @@ type Mesh struct {
 	shapeBase
 	object.Component
 	meshHandle C.goTriangleMeshHandle
-	data       vertex.Mesh
+
+	Mesh *object.Property[vertex.Mesh]
 }
 
 var _ Shape = &Mesh{}
-var _ mesh.UpdateHandler = &Mesh{}
 
 func NewMesh() *Mesh {
 	shape := object.NewComponent(&Mesh{
 		shapeBase: newShapeBase(MeshShape),
+
+		Mesh: object.NewProperty[vertex.Mesh](nil),
 	})
+
+	// refresh physics mesh when the mesh property is changed
+	// unsub to old mesh?
+	// subscribe to new mesh?
+	shape.Mesh.OnChange.Subscribe(shape, shape.refresh)
 
 	runtime.SetFinalizer(shape, func(m *Mesh) {
 		m.destroy()
@@ -41,7 +48,7 @@ func NewMesh() *Mesh {
 	return shape
 }
 
-func (m *Mesh) SetMeshData(mesh vertex.Mesh) {
+func (m *Mesh) refresh(mesh vertex.Mesh) {
 	// delete any existing physics mesh
 	m.destroy()
 
@@ -74,11 +81,6 @@ func (m *Mesh) SetMeshData(mesh vertex.Mesh) {
 		unsafe.Pointer(indexPtr), C.int(indexCount), C.int(indexStride))
 
 	m.handle = C.goNewTriangleMeshShape((*C.char)(unsafe.Pointer(m)), m.meshHandle)
-	m.data = mesh
-}
-
-func (m *Mesh) MeshData() vertex.Mesh {
-	return m.data
 }
 
 func (m *Mesh) destroy() {
@@ -92,20 +94,16 @@ func (m *Mesh) destroy() {
 }
 
 func (m *Mesh) OnEnable() {
+	log.Println("enable mesh", m.Parent().Name())
+	if m.Mesh.Get() != nil {
+		// we already have a mesh handle
+		return
+	}
 	if mesh := object.Get[mesh.Mesh](m); mesh != nil {
-		m.SetMeshData(mesh.Vertices())
 		log.Println("added mesh data from", m.Parent().Name())
-
-		// subscribe to mesh data changes ?
-		// or should we assign the collision mesh separately
+		m.Mesh.Set(mesh.Mesh().Get())
+		// subscribe?
 	} else {
 		log.Println("no mesh found for collider :(", m.Parent().Name())
 	}
-}
-
-func (m *Mesh) OnMeshUpdate(mesh vertex.Mesh) {
-	// todo: OnCollisionMeshUpdate ?
-	// we might not want to use the actual mesh...
-	log.Println("physics mesh: mesh update")
-	m.SetMeshData(mesh)
 }

@@ -27,7 +27,7 @@ func New(args Args) *Mesh {
 		Args:   args,
 	})
 	b.lineMesh = vertex.NewLines(object.Key("lines", b), []vertex.C{}, []uint16{})
-	b.SetVertices(b.lineMesh)
+	b.VertexData.Set(b.lineMesh)
 	b.Refresh()
 	return b
 }

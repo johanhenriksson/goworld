@@ -15,7 +15,6 @@ import (
 type Mesh interface {
 	object.Component
 
-	Vertices() vertex.Mesh
 	Mode() DrawMode
 	CastShadows() bool
 	Material() *material.Def
@@ -24,13 +23,14 @@ type Mesh interface {
 	Texture(string) texture.Ref
 
 	BoundingSphere() shape.Sphere
+
+	Mesh() *object.Property[vertex.Mesh]
 }
 
 // mesh base
 type Static struct {
 	object.Component
 
-	data  vertex.Mesh
 	mode  DrawMode
 	mat   *material.Def
 	matId uint64
@@ -40,6 +40,8 @@ type Static struct {
 	// bounding radius
 	center vec3.T
 	radius float32
+
+	VertexData *object.Property[vertex.Mesh]
 }
 
 // New creates a new mesh component
@@ -59,6 +61,18 @@ func NewPrimitiveMesh(primitive vertex.Primitive, mode DrawMode, mat *material.D
 		mat:      mat,
 		matId:    material.Hash(mat),
 		textures: make(map[string]texture.Ref),
+
+		VertexData: object.NewProperty[vertex.Mesh](nil),
+	})
+	m.VertexData.OnChange.Subscribe(m, func(data vertex.Mesh) {
+		// todo: remove debug log
+		log.Println("mesh", m, ": trigger mesh update event")
+
+		// refresh bounding sphere
+		min := data.Min()
+		max := data.Max()
+		m.radius = math.Max(min.Length(), max.Length())
+		m.center = max.Sub(min).Scaled(0.5)
 	})
 	return m
 }
@@ -67,26 +81,7 @@ func (m *Static) Name() string {
 	return "Mesh"
 }
 
-func (m *Static) Vertices() vertex.Mesh {
-	return m.data
-}
-
-func (m *Static) SetVertices(data vertex.Mesh) {
-	m.data = data
-
-	// refresh AABB
-	min := data.Min()
-	max := data.Max()
-	m.radius = math.Max(min.Length(), max.Length())
-	m.center = max.Sub(min).Scaled(0.5)
-
-	log.Println("mesh", m, ": trigger mesh update event")
-
-	// raise a mesh update event
-	for _, handler := range object.GetAll[UpdateHandler](m) {
-		handler.OnMeshUpdate(data)
-	}
-}
+func (m *Static) Mesh() *object.Property[vertex.Mesh] { return m.VertexData }
 
 func (m *Static) Texture(slot string) texture.Ref {
 	return m.textures[slot]

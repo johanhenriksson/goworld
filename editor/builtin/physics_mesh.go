@@ -19,10 +19,18 @@ type PhysicsMeshEditor struct {
 }
 
 func NewPhysicsMeshEditor(ctx *editor.Context, mesh *physics.Mesh) *PhysicsMeshEditor {
-	return object.New("MeshEditor", &PhysicsMeshEditor{
+	editor := object.New("MeshEditor", &PhysicsMeshEditor{
 		target: mesh,
 		shape:  physics.NewMesh(),
 	})
+
+	// grab reference to mesh shape & subscribe to changes
+	editor.shape.Mesh.Set(mesh.Mesh.Get())
+	mesh.Mesh.OnChange.Subscribe(editor, func(m vertex.Mesh) {
+		editor.shape.Mesh.Set(m)
+	})
+
+	return editor
 }
 
 func (e *PhysicsMeshEditor) Bounds() physics.Shape {
@@ -31,13 +39,4 @@ func (e *PhysicsMeshEditor) Bounds() physics.Shape {
 
 func (e *PhysicsMeshEditor) Actions() []editor.Action {
 	return nil
-}
-
-func (e *PhysicsMeshEditor) Update(scene object.Component, dt float32) {
-	mesh := e.target.MeshData()
-	if mesh != e.mesh {
-		e.shape.SetMeshData(mesh)
-		e.mesh = mesh
-	}
-	e.target.Update(scene, dt)
 }

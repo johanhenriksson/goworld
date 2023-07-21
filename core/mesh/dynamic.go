@@ -32,7 +32,7 @@ func NewDynamic[V vertex.Vertex, I vertex.Index](name string, mode DrawMode, mat
 		updated: make(chan Data[V, I], 2),
 	}
 	m.meshdata = vertex.NewTriangles(object.Key(name, m), []V{}, []I{})
-	m.SetVertices(m.meshdata)
+	m.VertexData.Set(m.meshdata)
 	m.RefreshSync()
 
 	return m
@@ -54,7 +54,7 @@ func (m *Dynamic[V, I]) RefreshSync() {
 	log.Println("mesh", m, ": blocking refresh")
 	data := m.refresh()
 	m.meshdata.Update(data.Vertices, data.Indices)
-	m.SetVertices(m.meshdata)
+	m.VertexData.Set(m.meshdata)
 }
 
 func (m *Dynamic[V, I]) Update(scene object.Component, dt float32) {
@@ -62,7 +62,7 @@ func (m *Dynamic[V, I]) Update(scene object.Component, dt float32) {
 	select {
 	case data := <-m.updated:
 		m.meshdata.Update(data.Vertices, data.Indices)
-		m.SetVertices(m.meshdata)
+		m.VertexData.Set(m.meshdata)
 	default:
 	}
 }

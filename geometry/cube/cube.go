@@ -82,5 +82,5 @@ func (c *Mesh) generate() {
 
 	key := object.Key("cube", c)
 	mesh := vertex.NewTriangles(key, vertices, indices)
-	c.SetVertices(mesh)
+	c.VertexData.Set(mesh)
 }

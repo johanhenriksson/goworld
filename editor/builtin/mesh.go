@@ -21,10 +21,17 @@ type MeshEditor struct {
 }
 
 func NewMeshEditor(ctx *editor.Context, mesh mesh.Mesh) *MeshEditor {
-	return object.New("MeshEditor", &MeshEditor{
+	editor := object.New("MeshEditor", &MeshEditor{
 		target: mesh,
 		shape:  physics.NewMesh(),
 	})
+
+	// propagate mesh updates to the editor collider shape
+	mesh.Mesh().OnChange.Subscribe(editor, func(m vertex.Mesh) {
+		editor.shape.Mesh.Set(m)
+	})
+
+	return editor
 }
 
 func (e *MeshEditor) Bounds() physics.Shape {
@@ -33,14 +40,4 @@ func (e *MeshEditor) Bounds() physics.Shape {
 
 func (e *MeshEditor) Actions() []editor.Action {
 	return nil
-}
-
-func (e *MeshEditor) Update(scene object.Component, dt float32) {
-	// todo: replace with an event
-	mesh := e.target.Vertices()
-	if mesh != e.mesh {
-		e.shape.SetMeshData(mesh)
-		e.mesh = mesh
-	}
-	e.target.Update(scene, dt)
 }

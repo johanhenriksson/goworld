@@ -69,5 +69,5 @@ func (b *Mesh) compute() {
 		2, 6,
 		3, 7,
 	})
-	b.SetVertices(mesh)
+	b.VertexData.Set(mesh)
 }

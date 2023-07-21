@@ -100,7 +100,7 @@ func NewBox(size vec3.T) *Box {
 	})
 
 	// resize shape when extents are modified
-	box.Extents.OnChange().Subscribe(box, box.resize)
+	box.Extents.OnChange.Subscribe(box, box.resize)
 
 	// trigger initial resize
 	box.resize(size)
@@ -153,10 +153,10 @@ func NewCapsule(height, radius float32) *Capsule {
 		Height:    object.NewProperty(height),
 	})
 
-	capsule.Radius.OnChange().Subscribe(capsule, func(radius float32) {
+	capsule.Radius.OnChange.Subscribe(capsule, func(radius float32) {
 		capsule.resize(radius, capsule.Height.Get())
 	})
-	capsule.Height.OnChange().Subscribe(capsule, func(height float32) {
+	capsule.Height.OnChange.Subscribe(capsule, func(height float32) {
 		capsule.resize(capsule.Radius.Get(), height)
 	})
 

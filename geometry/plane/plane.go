@@ -65,5 +65,5 @@ func (p *Mesh) generate() {
 
 	key := object.Key("plane", p)
 	mesh := vertex.NewTriangles(key, vertices, indices)
-	p.SetVertices(mesh)
+	p.VertexData.Set(mesh)
 }

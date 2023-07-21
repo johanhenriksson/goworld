@@ -16,19 +16,21 @@ type GenericProp interface {
 }
 
 type Property[T PropValue] struct {
-	value   T
-	def     T
-	kind    reflect.Type
-	changed *events.Event[T]
+	value T
+	def   T
+	kind  reflect.Type
+
+	OnChange *events.Event[T]
 }
 
 func NewProperty[T PropValue](def T) *Property[T] {
 	var empty T
 	return &Property[T]{
-		value:   def,
-		def:     def,
-		kind:    reflect.TypeOf(empty),
-		changed: events.New[T](),
+		value: def,
+		def:   def,
+		kind:  reflect.TypeOf(empty),
+
+		OnChange: events.New[T](),
 	}
 }
 
@@ -42,7 +44,7 @@ func (p *Property[T]) GetAny() any {
 
 func (p *Property[T]) Set(value T) {
 	p.value = value
-	p.changed.Emit(value)
+	p.OnChange.Emit(value)
 }
 
 func (p *Property[T]) SetAny(value any) {
@@ -57,10 +59,6 @@ func (p *Property[T]) String() string {
 
 func (p *Property[T]) Type() reflect.Type {
 	return p.kind
-}
-
-func (p *Property[T]) OnChange() *events.Event[T] {
-	return p.changed
 }
 
 type PropInfo struct {
