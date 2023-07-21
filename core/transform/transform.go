@@ -37,6 +37,8 @@ type T interface {
 	WorldPosition() vec3.T
 	SetWorldPosition(vec3.T)
 
+	WorldScale() vec3.T
+
 	WorldRotation() quat.T
 	SetWorldRotation(quat.T)
 }
@@ -46,6 +48,10 @@ type transform struct {
 	position vec3.T
 	scale    vec3.T
 	rotation quat.T
+
+	wposition vec3.T
+	wscale    vec3.T
+	wrotation quat.T
 
 	matrix  mat4.T
 	right   vec3.T
@@ -63,6 +69,7 @@ func New(position vec3.T, rotation quat.T, scale vec3.T) T {
 		position: position,
 		rotation: rotation,
 		scale:    scale,
+		dirty:    true,
 	}
 	t.Recalculate(nil)
 	return t
@@ -80,11 +87,11 @@ func (t *transform) Recalculate(parent T) {
 	scale := t.scale
 
 	if parent != nil {
-		scale = scale.Mul(parent.Scale())
+		scale = scale.Mul(parent.WorldScale())
 
-		rotation = rotation.Mul(parent.Rotation())
+		rotation = rotation.Mul(parent.WorldRotation())
 
-		position = parent.Rotation().Rotate(parent.Scale().Mul(position))
+		position = parent.WorldRotation().Rotate(parent.WorldScale().Mul(position))
 		position = parent.WorldPosition().Add(position)
 	} else if !t.dirty {
 		// no parent, no change -> nothing to do
@@ -110,6 +117,11 @@ func (t *transform) Recalculate(parent T) {
 		z.X, z.Y, z.Z, 0,
 		p.X, p.Y, p.Z, 1,
 	}
+
+	// save world transforms
+	t.wposition = position
+	t.wscale = scale
+	t.wrotation = rotation
 
 	// mark as clean
 	t.dirty = false
@@ -148,7 +160,7 @@ func (t *transform) UnprojectDir(dir vec3.T) vec3.T {
 }
 
 func (t *transform) WorldPosition() vec3.T {
-	return t.matrix.Origin()
+	return t.wposition
 }
 
 func (t *transform) SetWorldPosition(wp vec3.T) {
@@ -158,9 +170,12 @@ func (t *transform) SetWorldPosition(wp vec3.T) {
 	t.dirty = true
 }
 
+func (t *transform) WorldScale() vec3.T {
+	return t.wscale
+}
+
 func (t *transform) WorldRotation() quat.T {
-	// todo: implement me
-	return t.rotation
+	return t.wrotation
 }
 
 func (t *transform) SetWorldRotation(rot quat.T) {

@@ -31,6 +31,7 @@ func newTransform(position vec3.T, rotation quat.T, scale vec3.T) *Transform {
 		position: position,
 		rotation: rotation,
 		scale:    scale,
+		dirty:    true,
 	}
 	t.Recalculate(nil)
 	return t
@@ -106,6 +107,8 @@ func (t *Transform) UnprojectDir(dir vec3.T) vec3.T {
 
 func (t *Transform) WorldPosition() vec3.T       { return t.position }
 func (t *Transform) SetWorldPosition(pos vec3.T) { t.position = pos; t.dirty = true }
+
+func (t *Transform) WorldScale() vec3.T { return t.scale }
 
 func (t *Transform) WorldRotation() quat.T       { return t.rotation }
 func (t *Transform) SetWorldRotation(rot quat.T) { t.rotation = rot; t.dirty = true }
