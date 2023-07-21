@@ -5,22 +5,20 @@ import (
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/math"
 	"github.com/johanhenriksson/goworld/math/vec3"
-	"github.com/johanhenriksson/goworld/physics"
 	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/vertex"
 )
 
 type Cylinder struct {
-	*physics.RigidBody
+	object.Object
 	Mesh *Mesh
 }
 
 func NewObject(args Args) *Cylinder {
-	return &Cylinder{
-		RigidBody: physics.NewRigidBody("Cylinder", 0),
-		Mesh:      New(args),
-	}
+	return object.New("Cyllinder", &Cylinder{
+		Mesh: New(args),
+	})
 }
 
 // A Cylinder is a forward rendered colored cyllinder mesh

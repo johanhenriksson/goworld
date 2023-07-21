@@ -4,8 +4,6 @@ import (
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/core/transform"
-	"github.com/johanhenriksson/goworld/geometry/cone"
-	"github.com/johanhenriksson/goworld/geometry/cylinder"
 	"github.com/johanhenriksson/goworld/geometry/lines"
 	"github.com/johanhenriksson/goworld/geometry/plane"
 	"github.com/johanhenriksson/goworld/math/mat4"
@@ -26,15 +24,13 @@ type Mover struct {
 	target transform.T
 
 	Lines *lines.Mesh
-	X     *cone.Cone
-	Xb    *cylinder.Cylinder
-	Y     *cone.Cone
-	Yb    *cylinder.Cylinder
-	Z     *cone.Cone
-	Zb    *cylinder.Cylinder
-	XY    *plane.Plane
-	XZ    *plane.Plane
-	YZ    *plane.Plane
+	X     *Arrow
+	Y     *Arrow
+	Z     *Arrow
+
+	XY *plane.Plane
+	XZ *plane.Plane
+	YZ *plane.Plane
 
 	// screen size scaling factor
 	size float32
@@ -56,11 +52,7 @@ var _ Gizmo = &Mover{}
 
 // NewMover creates a new mover gizmo
 func NewMover() *Mover {
-	radius := float32(0.1)
-	bodyRadius := radius / 4
-	height := float32(0.35)
 	side := float32(0.2)
-	segments := 32
 	planeAlpha := float32(0.3)
 
 	s := side / 2
@@ -76,82 +68,16 @@ func NewMover() *Mover {
 	g := object.New("Mover Gizmo", &Mover{
 		size:        0.12,
 		sensitivity: 6,
-		hoverScale:  vec3.New(1.2, 1.2, 1.2),
+		hoverScale:  vec3.New(1.1, 1.1, 1.1),
 
-		// X Arrow Cone
-		X: object.Builder(
-			cone.NewObject(cone.Args{
-				Mat:      mat,
-				Radius:   radius,
-				Height:   height,
-				Segments: segments,
-				Color:    color.Red,
-			})).
-			Position(vec3.UnitX).
+		X: object.Builder(NewArrow(color.Red)).
 			Rotation(quat.Euler(0, 0, 270)).
-			Attach(physics.NewBox(vec3.New(2*radius, height, 2*radius))).
 			Create(),
 
-		// X Arrow Body
-		Xb: object.Builder(cylinder.NewObject(cylinder.Args{
-			Mat:      mat,
-			Radius:   bodyRadius,
-			Height:   1,
-			Segments: segments,
-			Color:    color.Red,
-		})).
-			Position(vec3.New(0.5, 0, 0)).
-			Rotation(quat.Euler(0, 0, 270)).
-			Attach(physics.NewBox(vec3.New(2*radius, 1, 2*radius))).
-			Create(),
+		Y: NewArrow(color.Green),
 
-		// Y Arrow Cone
-		Y: object.Builder(cone.NewObject(cone.Args{
-			Mat:      mat,
-			Radius:   radius,
-			Height:   height,
-			Segments: segments,
-			Color:    color.Green,
-		})).
-			Position(vec3.UnitY).
-			Attach(physics.NewBox(vec3.New(2*radius, height, 2*radius))).
-			Create(),
-
-		// Y Arrow body
-		Yb: object.Builder(cylinder.NewObject(cylinder.Args{
-			Mat:      mat,
-			Radius:   bodyRadius,
-			Height:   1,
-			Segments: segments,
-			Color:    color.Green,
-		})).
-			Position(vec3.New(0, 0.5, 0)).
-			Attach(physics.NewBox(vec3.New(2*radius, 1, 2*radius))).
-			Create(),
-
-		// Z Arrow Cone
-		Z: object.Builder(cone.NewObject(cone.Args{
-			Mat:      mat,
-			Radius:   radius,
-			Height:   height,
-			Segments: segments,
-			Color:    color.Blue,
-		})).
-			Position(vec3.UnitZ).
-			Rotation(quat.Euler(90, 180, 0)).
-			Attach(physics.NewBox(vec3.New(2*radius, height, 2*radius))).
-			Create(),
-
-		// Z Arrow Body
-		Zb: object.Builder(cylinder.NewObject(cylinder.Args{
-			Mat:      mat,
-			Radius:   bodyRadius,
-			Height:   1,
-			Segments: segments,
-		})).
-			Position(vec3.New(0, 0, 0.5)).
-			Rotation(quat.Euler(90, 180, 0)).
-			Attach(physics.NewBox(vec3.New(2*radius, 1, 2*radius))).
+		Z: object.Builder(NewArrow(color.Blue)).
+			Rotation(quat.Euler(90, 0, 0)).
 			Create(),
 
 		// XY Plane
@@ -231,16 +157,10 @@ func (g *Mover) getColliderAxis(collider physics.Shape) vec3.T {
 	axisObj := collider.Parent()
 	switch axisObj {
 	case g.X:
-		fallthrough
-	case g.Xb:
 		return vec3.UnitX
 	case g.Y:
-		fallthrough
-	case g.Yb:
 		return vec3.UnitY
 	case g.Z:
-		fallthrough
-	case g.Zb:
 		return vec3.UnitZ
 	}
 	return vec3.Zero
