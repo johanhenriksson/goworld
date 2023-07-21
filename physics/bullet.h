@@ -105,7 +105,7 @@ extern goShapeHandle goNewBoxShape(char* user, goVector3* size);
 
 extern goShapeHandle goNewCapsuleShape(char* user, goReal radius, goReal height);
 
-extern goShapeHandle goNewCompoundShape(void);
+extern goShapeHandle goNewCompoundShape(char* user);
 
 extern void goAddChildShape(goShapeHandle compoundShape, goShapeHandle childShape, goVector3* childPos,
                             goQuaternion* childOrn);

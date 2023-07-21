@@ -36,6 +36,7 @@ const (
 	CylinderShape = ShapeType(3)
 	CapsuleShape  = ShapeType(4)
 	MeshShape     = ShapeType(5)
+	CompoundShape = ShapeType(6)
 )
 
 type shapeBase struct {
@@ -75,6 +76,8 @@ func restoreShape(ptr unsafe.Pointer) Shape {
 		return (*Capsule)(ptr)
 	case MeshShape:
 		return (*Mesh)(ptr)
+	case CompoundShape:
+		return (*Compound)(ptr)
 	default:
 		panic(fmt.Sprintf("invalid shape kind: %d", base.kind))
 	}

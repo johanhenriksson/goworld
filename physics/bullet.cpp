@@ -205,7 +205,11 @@ goShapeHandle goNewTriangleMeshShape(char* user, goTriangleMeshHandle meshHandle
     return (goShapeHandle)shape;
 }
 
-goShapeHandle goNewCompoundShape() { return (goShapeHandle) new btCompoundShape(); }
+goShapeHandle goNewCompoundShape(char* user) {
+    auto shape = new btCompoundShape();
+    shape->setUserPointer(user);
+    return (goShapeHandle)shape;
+}
 
 void goAddChildShape(goShapeHandle compoundShapeHandle, goShapeHandle childShapeHandle, goVector3* childPos,
                      goQuaternion* childOrn) {
