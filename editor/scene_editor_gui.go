@@ -4,7 +4,6 @@ import (
 	"os"
 
 	"github.com/johanhenriksson/goworld/core/input/mouse"
-	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/engine/renderer"
 	"github.com/johanhenriksson/goworld/gui"
 	"github.com/johanhenriksson/goworld/gui/node"
@@ -107,7 +106,7 @@ func makeSidebar() node.T {
 	})
 }
 
-func SidebarFragment(position gui.FragmentPosition, render node.RenderFunc) object.Component {
+func SidebarFragment(position gui.FragmentPosition, render node.RenderFunc) gui.Fragment {
 	return gui.NewFragment(gui.FragmentArgs{
 		Slot:     "sidebar:content",
 		Position: position,

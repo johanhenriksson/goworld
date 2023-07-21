@@ -16,7 +16,7 @@ func NewGUI(e *edit, target *Mesh) gui.Fragment {
 		Slot:     "sidebar:content",
 		Position: gui.FragmentLast,
 		Render: func() node.T {
-			return editor.Inspector(target, []node.T{
+			return editor.Inspector(target,
 				// extend the default inspector with a color picker palette
 				palette.New("palette", palette.Props{
 					Palette: color.DefaultPalette,
@@ -24,7 +24,7 @@ func NewGUI(e *edit, target *Mesh) gui.Fragment {
 						e.SelectColor(clr)
 					},
 				}),
-			})
+			)
 		},
 	})
 }

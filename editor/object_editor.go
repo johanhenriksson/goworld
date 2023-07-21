@@ -5,6 +5,7 @@ import (
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/editor/propedit"
 	"github.com/johanhenriksson/goworld/gui"
+	"github.com/johanhenriksson/goworld/gui/node"
 	"github.com/johanhenriksson/goworld/physics"
 )
 
@@ -17,10 +18,12 @@ type ObjectEditor struct {
 func NewObjectEditor(target object.Object) *ObjectEditor {
 	return object.New("ObjectEditor", &ObjectEditor{
 		target: target,
-		GUI: InspectorGUI(
-			target,
-			propedit.Transform("transform", target.Transform()),
-		),
+		GUI: SidebarFragment(gui.FragmentLast, func() node.T {
+			return Inspector(
+				target,
+				propedit.Transform("transform", target.Transform()),
+			)
+		}),
 	})
 }
 
