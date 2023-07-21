@@ -264,9 +264,13 @@ func (g *Mover) DragEnd(e mouse.Event) {
 func (g *Mover) DragMove(e mouse.Event) {
 	if e.Action() == mouse.Move {
 		cursor := g.viewport.NormalizeCursor(e.Position())
+		axisLen := g.screenAxis.Length()
+		if axisLen == 0 {
+			return
+		}
 
 		delta := g.start.Sub(cursor)
-		mag := -1 * g.sensitivity * g.scale * vec2.Dot(delta, g.screenAxis) / g.screenAxis.Length()
+		mag := -1 * g.sensitivity * g.scale * vec2.Dot(delta, g.screenAxis) / axisLen
 		g.start = cursor
 		pos := g.Transform().Position().Add(g.axis.Scaled(mag))
 		g.Transform().SetPosition(pos)
