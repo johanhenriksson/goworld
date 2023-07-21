@@ -19,7 +19,7 @@ type PhysicsMeshEditor struct {
 }
 
 func NewPhysicsMeshEditor(ctx *editor.Context, mesh *physics.Mesh) *PhysicsMeshEditor {
-	editor := object.New("MeshEditor", &PhysicsMeshEditor{
+	editor := object.New("PhysicsMeshEditor", &PhysicsMeshEditor{
 		target: mesh,
 		shape:  physics.NewMesh(),
 	})

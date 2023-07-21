@@ -12,11 +12,13 @@ func init() {
 
 type WorldEditor struct {
 	*editor.ComponentEditor
+	target *physics.World
 }
 
 func NewWorldEditor(ctx *editor.Context, world *physics.World) *WorldEditor {
 	return object.NewComponent(&WorldEditor{
 		ComponentEditor: editor.NewComponentEditor(world),
+		target:          world,
 	})
 }
 

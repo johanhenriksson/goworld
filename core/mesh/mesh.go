@@ -1,8 +1,6 @@
 package mesh
 
 import (
-	"log"
-
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/math"
 	"github.com/johanhenriksson/goworld/math/shape"
@@ -22,8 +20,11 @@ type Mesh interface {
 
 	Texture(string) texture.Ref
 
+	// Bounding sphere used for view frustum culling
 	BoundingSphere() shape.Sphere
 
+	// returns the VertexData property
+	// this is kinda ugly - but other components might need to subscribe to changes ?
 	Mesh() *object.Property[vertex.Mesh]
 }
 
@@ -65,9 +66,6 @@ func NewPrimitiveMesh(primitive vertex.Primitive, mode DrawMode, mat *material.D
 		VertexData: object.NewProperty[vertex.Mesh](nil),
 	})
 	m.VertexData.OnChange.Subscribe(m, func(data vertex.Mesh) {
-		// todo: remove debug log
-		log.Println("mesh", m, ": trigger mesh update event")
-
 		// refresh bounding sphere
 		min := data.Min()
 		max := data.Max()

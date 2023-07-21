@@ -1,6 +1,8 @@
 package editor
 
 import (
+	"log"
+
 	"github.com/johanhenriksson/goworld/core/input/keys"
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/core/object"
@@ -77,30 +79,37 @@ func (m *toolmgr) MouseEvent(e mouse.Event) {
 		return
 	}
 
+	// calculate a ray going into the screen
+	near := vpi.TransformPoint(vec3.New(cursor.X, cursor.Y, 0))
+	far := vpi.TransformPoint(vec3.New(cursor.X, cursor.Y, 1))
+
+	world := object.GetInParents[*physics.World](m)
+	if world == nil {
+		return
+	}
+
+	hit, _ := world.Raycast(near, far)
+	if hit.Shape == nil {
+		return
+	}
+
+	editor := object.GetInParents[*EditorGhost](hit.Shape)
+
 	// if nothing is selected, or CanDeselect() is true,
 	// look for something else to select.
 	if e.Button() == mouse.Button1 && e.Action() == mouse.Release {
-		// calculate a ray going into the screen
-		near := vpi.TransformPoint(vec3.New(cursor.X, cursor.Y, 0))
-		far := vpi.TransformPoint(vec3.New(cursor.X, cursor.Y, 1))
-
-		world := object.GetInParents[*physics.World](m)
-		if world == nil {
-			return
-		}
-
-		hit, _ := world.Raycast(near, far)
-		if hit.Shape == nil {
-			return
-		}
-
-		if object := object.GetInParents[*EditorGhost](hit.Shape); object != nil {
-			// todo: pass physics hit info instead
-			m.setSelect(e, object)
+		if editor != nil {
+			// todo: pass physics hit info
+			m.setSelect(e, editor)
 		} else {
 			// deselect
 			m.setSelect(e, nil)
 		}
+	}
+
+	if editor != nil && e.Action() == mouse.Move {
+		point := editor.Transform().Unproject(hit.Point)
+		log.Println("hover", editor.Name(), point)
 	}
 }
 
@@ -169,7 +178,7 @@ func (m *toolmgr) setSelect(e mouse.Event, component *EditorGhost) bool {
 		// deselect object
 		for _, editor := range m.selected {
 			if !editor.Deselect(e) {
-				return false
+				log.Println("editor", editor.Name(), "attempted to abort deselection")
 			}
 		}
 		m.selected = m.selected[0:]

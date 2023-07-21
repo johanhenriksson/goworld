@@ -25,7 +25,7 @@ type BoxEditor struct {
 func NewBoxEditor(ctx *editor.Context, box *physics.Box) *BoxEditor {
 	shape := physics.NewBox(box.Extents.Get())
 
-	return object.New("BoxEditor", &BoxEditor{
+	return object.New("PhysicsBoxEditor", &BoxEditor{
 		target: box,
 		shape:  shape,
 
