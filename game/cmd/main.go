@@ -43,11 +43,10 @@ func main() {
 				for z := 0; z < 3; z++ {
 					chonk := chunk.Generate(boxgen, 1, 100*x, 100*z)
 					object.Builder(physics.NewRigidBody("Box", 5)).
-						Attach(physics.NewBox(vec3.New(0.5, 0.5, 0.5))).
 						Position(vec3.New(20+3*float32(x), 30, 15+3*float32(z))).
 						Attach(object.Builder(object.Empty("ChunkMesh")).
 							Attach(chunk.NewMesh(chonk)).
-							Position(vec3.New(-0.5, -0.5, -0.5)).
+							Attach(physics.NewMesh()).
 							Create()).
 						Parent(scene).
 						Create()

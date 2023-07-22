@@ -108,8 +108,8 @@ func (m *toolmgr) MouseEvent(e mouse.Event) {
 	}
 
 	if editor != nil && e.Action() == mouse.Move {
-		point := editor.Transform().Unproject(hit.Point)
-		log.Println("hover", editor.Name(), point)
+		// point := editor.Transform().Unproject(hit.Point)
+		// log.Println("hover", editor.Name(), point)
 	}
 }
 

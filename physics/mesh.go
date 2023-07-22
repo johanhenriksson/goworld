@@ -13,6 +13,8 @@ import (
 type Mesh struct {
 	shapeBase
 	object.Component
+
+	collision  vertex.Mesh
 	meshHandle meshHandle
 
 	Mesh *object.Property[vertex.Mesh]
@@ -40,12 +42,16 @@ func NewMesh() *Mesh {
 }
 
 func (m *Mesh) refresh(mesh vertex.Mesh) {
+	// todo: if its the same mesh, dont do anything
+
 	// delete any existing physics mesh
 	m.destroy()
 
-	m.meshHandle = mesh_new(
-		mesh.VertexData(), mesh.IndexData(),
-		mesh.VertexSize(), mesh.IndexSize())
+	// generate an optmized collision mesh from the given mesh
+	m.collision = vertex.CollisionMesh(mesh)
+	log.Println("computed collision mesh of", m.collision.VertexCount(), "vertices [", m.collision.IndexCount(), "], down from", mesh.VertexCount(), "[", mesh.IndexCount(), "]")
+
+	m.meshHandle = mesh_new(m.collision)
 
 	m.handle = shape_new_triangle_mesh(unsafe.Pointer(m), m.meshHandle)
 }

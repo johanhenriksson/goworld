@@ -9,16 +9,18 @@ import (
 type Mesh interface {
 	Key() string
 	Version() int
-	Indices() int
-	Vertices() int
 	Primitive() Primitive
 	Pointers() Pointers
+	VertexCount() int
 	VertexData() any
+	VertexSize() int
+	IndexCount() int
 	IndexData() any
 	IndexSize() int
-	VertexSize() int
 	Min() vec3.T
 	Max() vec3.T
+
+	Positions(func(vec3.T))
 }
 
 type Vertex interface {
@@ -31,6 +33,8 @@ type Index interface {
 
 type MutableMesh[V Vertex, I Index] interface {
 	Mesh
+	Vertices() []V
+	Indices() []I
 	Update(vertices []V, indices []I)
 }
 
@@ -47,19 +51,30 @@ type mesh[V Vertex, I Index] struct {
 	max        vec3.T
 }
 
+var _ Mesh = &mesh[P, uint8]{}
+
 func (m *mesh[V, I]) Key() string          { return m.key }
 func (m *mesh[V, I]) Version() int         { return m.version }
-func (m *mesh[V, I]) IndexData() any       { return m.indices }
-func (m *mesh[V, I]) VertexData() any      { return m.vertices }
-func (m *mesh[V, I]) IndexSize() int       { return m.indexsize }
 func (m *mesh[V, I]) Primitive() Primitive { return m.primitive }
 func (m *mesh[V, I]) Pointers() Pointers   { return m.pointers }
-func (m *mesh[V, I]) Indices() int         { return len(m.indices) }
-func (m *mesh[V, I]) Vertices() int        { return len(m.vertices) }
+func (m *mesh[V, I]) Vertices() []V        { return m.vertices }
+func (m *mesh[V, I]) VertexData() any      { return m.vertices }
 func (m *mesh[V, I]) VertexSize() int      { return m.vertexsize }
+func (m *mesh[V, I]) VertexCount() int     { return len(m.vertices) }
+func (m *mesh[V, I]) Indices() []I         { return m.indices }
+func (m *mesh[V, I]) IndexData() any       { return m.indices }
+func (m *mesh[V, I]) IndexSize() int       { return m.indexsize }
+func (m *mesh[V, I]) IndexCount() int      { return len(m.indices) }
 func (m *mesh[V, I]) String() string       { return m.key }
 func (m *mesh[V, I]) Min() vec3.T          { return m.min }
 func (m *mesh[V, I]) Max() vec3.T          { return m.max }
+
+func (m *mesh[V, I]) Positions(iter func(vec3.T)) {
+	for _, index := range m.indices {
+		vertex := m.vertices[index]
+		iter(vertex.Position())
+	}
+}
 
 func (m *mesh[V, I]) Update(vertices []V, indices []I) {
 	if len(indices) == 0 {

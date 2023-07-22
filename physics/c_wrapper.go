@@ -14,6 +14,7 @@ import (
 
 	"github.com/johanhenriksson/goworld/math/quat"
 	"github.com/johanhenriksson/goworld/math/vec3"
+	"github.com/johanhenriksson/goworld/render/vertex"
 )
 
 //
@@ -233,8 +234,8 @@ func shape_delete(shape *shapeHandle) {
 
 type meshHandle C.goTriangleMeshHandle
 
-func mesh_new(vertices, indices any, vertexStride, indexStride int) meshHandle {
-	vertexArray := reflect.ValueOf(vertices)
+func mesh_new(mesh vertex.Mesh) meshHandle {
+	vertexArray := reflect.ValueOf(mesh.VertexData())
 	if vertexArray.Kind() != reflect.Slice {
 		panic("vertex data is not a slice")
 	}
@@ -244,7 +245,7 @@ func mesh_new(vertices, indices any, vertexStride, indexStride int) meshHandle {
 	vertexPtr := vertexArray.Index(0).UnsafeAddr()
 	vertexCount := vertexArray.Len()
 
-	indexArray := reflect.ValueOf(indices)
+	indexArray := reflect.ValueOf(mesh.IndexData())
 	if indexArray.Kind() != reflect.Slice {
 		panic("index data is not a slice")
 	}
@@ -255,8 +256,8 @@ func mesh_new(vertices, indices any, vertexStride, indexStride int) meshHandle {
 	indexCount := indexArray.Len()
 
 	handle := C.goNewTriangleMesh(
-		unsafe.Pointer(vertexPtr), C.int(vertexCount), C.int(vertexStride),
-		unsafe.Pointer(indexPtr), C.int(indexCount), C.int(indexStride))
+		unsafe.Pointer(vertexPtr), C.int(vertexCount), C.int(mesh.VertexSize()),
+		unsafe.Pointer(indexPtr), C.int(indexCount), C.int(mesh.IndexSize()))
 	return meshHandle(handle)
 }
 

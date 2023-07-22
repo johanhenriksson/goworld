@@ -7,6 +7,13 @@ import (
 	"github.com/johanhenriksson/goworld/render/color"
 )
 
+// P - Position only vertex
+type P struct {
+	vec3.T `vtx:"position,float,3"`
+}
+
+func (v P) Position() vec3.T { return v.T }
+
 // C - Colored Vertex
 type C struct {
 	P vec3.T `vtx:"position,float,3"`

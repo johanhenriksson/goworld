@@ -29,7 +29,7 @@ func (m *meshes) Instantiate(mesh vertex.Mesh, callback func(Mesh)) {
 
 	cached = &vkMesh{
 		key:      mesh.Key(),
-		elements: mesh.Indices(),
+		elements: mesh.IndexCount(),
 		idxType:  core1_0.IndexTypeUInt16,
 	}
 	if cached.elements == 0 {
@@ -39,10 +39,10 @@ func (m *meshes) Instantiate(mesh vertex.Mesh, callback func(Mesh)) {
 	}
 
 	m.worker.Queue(func(cmd command.Buffer) {
-		vtxSize := mesh.VertexSize() * mesh.Vertices()
+		vtxSize := mesh.VertexSize() * mesh.VertexCount()
 		vtxStage = buffer.NewShared(m.device, vtxSize)
 
-		idxSize := mesh.IndexSize() * mesh.Indices()
+		idxSize := mesh.IndexSize() * mesh.IndexCount()
 		idxStage = buffer.NewShared(m.device, idxSize)
 
 		vtxStage.Write(0, mesh.VertexData())

@@ -55,7 +55,6 @@ type edit struct {
 	xp, yp, zp int
 
 	BoundingBox *box.Mesh
-	shape       physics.Shape
 	render      renderer.T
 }
 
@@ -100,8 +99,6 @@ func NewEditor(ctx *editor.Context, mesh *Mesh) Editor {
 			Color: color.White,
 		}),
 
-		shape: physics.NewBox(dimensions.Scaled(0.5)),
-
 		// X Construction Plane
 		XPlane: object.Builder(plane.NewObject(plane.Args{
 			Size:  float32(chk.Sx),
@@ -143,7 +140,7 @@ func (e *edit) Name() string {
 }
 
 func (e *edit) Bounds() physics.Shape {
-	return e.shape
+	return nil
 }
 
 func (e *edit) Update(scene object.Component, dt float32) {
