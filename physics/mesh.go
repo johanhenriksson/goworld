@@ -1,16 +1,7 @@
 package physics
 
-/*
-#cgo CXXFLAGS: -std=c++11 -I/usr/local/include/bullet
-#cgo CFLAGS: -I/usr/local/include/bullet
-#cgo LDFLAGS: -lstdc++ -L/usr/local/lib -lBulletDynamics -lBulletCollision -lLinearMath -lBullet3Common
-#include "bullet.h"
-*/
-import "C"
-
 import (
 	"log"
-	"reflect"
 	"runtime"
 	"unsafe"
 
@@ -22,7 +13,7 @@ import (
 type Mesh struct {
 	shapeBase
 	object.Component
-	meshHandle C.goTriangleMeshHandle
+	meshHandle meshHandle
 
 	Mesh *object.Property[vertex.Mesh]
 }
@@ -52,44 +43,22 @@ func (m *Mesh) refresh(mesh vertex.Mesh) {
 	// delete any existing physics mesh
 	m.destroy()
 
-	vertices := mesh.VertexData()
-	vertexArray := reflect.ValueOf(vertices)
-	if vertexArray.Kind() != reflect.Slice {
-		panic("vertex data is not a slice")
-	}
-	if vertexArray.Len() < 1 {
-		panic("vertex data is empty")
-	}
-	vertexPtr := vertexArray.Index(0).UnsafeAddr()
-	vertexStride := mesh.VertexSize()
-	vertexCount := vertexArray.Len()
+	m.meshHandle = mesh_new(
+		mesh.VertexData(), mesh.IndexData(),
+		mesh.VertexSize(), mesh.IndexSize())
 
-	indices := mesh.IndexData()
-	indexArray := reflect.ValueOf(indices)
-	if indexArray.Kind() != reflect.Slice {
-		panic("index data is not a slice")
-	}
-	if indexArray.Len() < 1 {
-		panic("index data is empty")
-	}
-	indexPtr := indexArray.Index(0).UnsafeAddr()
-	indexStride := mesh.IndexSize()
-	indexCount := indexArray.Len()
-
-	m.meshHandle = C.goNewTriangleMesh(
-		unsafe.Pointer(vertexPtr), C.int(vertexCount), C.int(vertexStride),
-		unsafe.Pointer(indexPtr), C.int(indexCount), C.int(indexStride))
-
-	m.handle = C.goNewTriangleMeshShape((*C.char)(unsafe.Pointer(m)), m.meshHandle)
+	m.handle = shape_new_triangle_mesh(unsafe.Pointer(m), m.meshHandle)
 }
 
 func (m *Mesh) destroy() {
 	// todo: delete mesh handle
+	if m.meshHandle != nil {
+		mesh_delete(&m.meshHandle)
+	}
 
 	// delete shape
 	if m.handle != nil {
-		C.goDeleteShape(m.handle)
-		m.handle = nil
+		shape_delete(&m.handle)
 	}
 }
 

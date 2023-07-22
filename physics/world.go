@@ -1,13 +1,5 @@
 package physics
 
-/*
-#cgo CXXFLAGS: -std=c++11 -I/usr/local/include/bullet
-#cgo CFLAGS: -I/usr/local/include/bullet
-#cgo LDFLAGS: -lstdc++ -L/usr/local/lib -lBulletDynamics -lBulletCollision -lLinearMath -lBullet3Common
-#include "bullet.h"
-*/
-import "C"
-
 import (
 	"runtime"
 
@@ -22,19 +14,19 @@ type Object interface {
 
 type World struct {
 	object.Component
-	handle C.goDynamicsWorldHandle
+	handle worldHandle
 	debug  bool
 
 	objects []Object
 }
 
 func NewWorld() *World {
-	handle := C.goCreateDynamicsWorld()
+	handle := world_new()
 	world := object.NewComponent(&World{
 		handle: handle,
 	})
 	runtime.SetFinalizer(world, func(w *World) {
-		C.goDeleteDynamicsWorld(w.handle)
+		world_delete(&world.handle)
 	})
 	return world
 }
@@ -47,14 +39,14 @@ func (w *World) OnEnable() {
 }
 
 func (w *World) SetGravity(gravity vec3.T) {
-	C.goSetGravity(w.handle, vec3ptr(&gravity))
+	world_gravity_set(w.handle, gravity)
 }
 
 func (w *World) step(timestep float32) {
 	for _, obj := range w.objects {
 		obj.pushState()
 	}
-	C.goStepSimulation(w.handle, (C.goReal)(timestep))
+	world_step_simulation(w.handle, timestep)
 	for _, obj := range w.objects {
 		obj.pullState()
 	}
@@ -77,39 +69,39 @@ func (w *World) removeObject(obj Object) bool {
 
 func (w *World) addRigidBody(body *RigidBody) {
 	if w.addObject(body) {
-		C.goAddRigidBody(w.handle, body.handle)
+		world_add_rigidbody(w.handle, body.handle)
 	}
 }
 
 func (w *World) removeRigidBody(body *RigidBody) {
 	if w.removeObject(body) {
-		C.goRemoveRigidBody(w.handle, body.handle)
+		world_remove_rigidbody(w.handle, body.handle)
 	}
 }
 
 func (w *World) AddCharacter(character *Character) {
 	if w.addObject(character) {
-		C.goAddCharacter(w.handle, character.handle)
+		world_add_character(w.handle, character.handle)
 	}
 }
 
 func (w *World) RemoveCharacter(character *Character) {
 	if w.removeObject(character) {
-		C.goRemoveCharacter(w.handle, character.handle)
+		world_remove_character(w.handle, character.handle)
 	}
 }
 
 func (w *World) Debug(enabled bool) {
 	if enabled {
-		enableDebug(w)
+		world_debug_enable(w)
 	} else {
-		disableDebug(w)
+		world_debug_disable(w)
 	}
 	w.debug = enabled
 }
 
 func (w *World) DebugDraw() {
 	if w.handle != nil {
-		C.goDebugDraw(w.handle)
+		world_debug_draw(w.handle)
 	}
 }

@@ -205,6 +205,12 @@ goShapeHandle goNewTriangleMeshShape(char* user, goTriangleMeshHandle meshHandle
     return (goShapeHandle)shape;
 }
 
+void goDeleteTriangleMesh(goTriangleMeshHandle handle) {
+    auto mesh = reinterpret_cast<btTriangleMesh*>(handle);
+    btAssert(mesh);
+    delete mesh;
+}
+
 goShapeHandle goNewCompoundShape(char* user) {
     auto shape = new btCompoundShape();
     shape->setUserPointer(user);

@@ -1,13 +1,5 @@
 package physics
 
-/*
-#cgo CXXFLAGS: -std=c++11 -I/usr/local/include/bullet
-#cgo CFLAGS: -I/usr/local/include/bullet
-#cgo LDFLAGS: -lstdc++ -L/usr/local/lib -lBulletDynamics -lBulletCollision -lLinearMath -lBullet3Common
-#include "bullet.h"
-*/
-import "C"
-
 import (
 	"log"
 	"runtime"
@@ -15,8 +7,6 @@ import (
 
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/core/transform"
-	"github.com/johanhenriksson/goworld/math/quat"
-	"github.com/johanhenriksson/goworld/math/vec3"
 )
 
 type RigidBody struct {
@@ -24,16 +14,10 @@ type RigidBody struct {
 	transform *Transform
 
 	world  *World
-	handle C.goRigidBodyHandle
+	handle rigidbodyHandle
 	mass   float32
 
 	Shape Shape
-}
-
-type rigidbodyState struct {
-	position vec3.T
-	rotation quat.T
-	mass     float32
 }
 
 func NewRigidBody(name string, mass float32) *RigidBody {
@@ -54,8 +38,7 @@ func (b *RigidBody) pullState() {
 	if b.mass == 0 {
 		return
 	}
-	state := rigidbodyState{}
-	C.goRigidBodyGetState(b.handle, (*C.goRigidBodyState)(unsafe.Pointer(&state)))
+	state := rigidbody_state_pull(b.handle)
 	b.Transform().SetWorldPosition(state.position)
 	b.Transform().SetWorldRotation(state.rotation)
 }
@@ -64,13 +47,10 @@ func (b *RigidBody) pushState() {
 	if b.handle == nil {
 		return
 	}
-	// rigidbodies can only be attached to floating objects
-	// thus, we dont need to use WorldPosition/WorldRotation
-	state := rigidbodyState{
-		position: b.Transform().WorldPosition(),
-		rotation: b.Transform().WorldRotation(),
-	}
-	C.goRigidBodySetState(b.handle, (*C.goRigidBodyState)(unsafe.Pointer(&state)))
+	rigidbody_state_push(b.handle,
+		b.Transform().WorldPosition(),
+		b.Transform().WorldRotation(),
+	)
 }
 
 func (b *RigidBody) OnEnable() {
@@ -85,12 +65,12 @@ func (b *RigidBody) OnEnable() {
 			if b.handle == nil {
 				panic("rigidbody shape set to nil")
 			}
-			C.goRigidBodySetShape(b.handle, s.shape())
+			rigidbody_shape_set(b.handle, s.shape())
 		})
 	}
 
 	if b.handle == nil {
-		b.handle = C.goCreateRigidBody((*C.char)(unsafe.Pointer(b)), C.goReal(b.mass), b.Shape.shape())
+		b.handle = rigidbody_new(unsafe.Pointer(b), b.mass, b.Shape.shape())
 	}
 
 	// update physics transforms
@@ -122,8 +102,7 @@ func (b *RigidBody) destroy() {
 		b.Shape = nil
 	}
 	if b.handle != nil {
-		C.goDeleteRigidBody(b.handle)
-		b.handle = nil
+		rigidbody_delete(&b.handle)
 	}
 }
 

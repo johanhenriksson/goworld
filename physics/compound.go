@@ -1,12 +1,5 @@
 package physics
 
-/*
-#cgo CXXFLAGS: -std=c++11 -I/usr/local/include/bullet
-#cgo CFLAGS: -I/usr/local/include/bullet
-#cgo LDFLAGS: -lstdc++ -L/usr/local/lib -lBulletDynamics -lBulletCollision -lLinearMath -lBullet3Common
-#include "bullet.h"
-*/
-import "C"
 import (
 	"runtime"
 	"unsafe"
@@ -27,7 +20,7 @@ func NewCompound() *Compound {
 		shapeBase: newShapeBase(CompoundShape),
 	})
 
-	cmp.handle = C.goNewCompoundShape((*C.char)(unsafe.Pointer(cmp)))
+	cmp.handle = shape_new_compound(unsafe.Pointer(cmp))
 
 	runtime.SetFinalizer(cmp, func(c *Compound) {
 		c.destroy()
@@ -41,7 +34,7 @@ func (c *Compound) OnEnable() {
 	for _, shape := range c.shapes {
 		pos := c.Transform().Unproject(shape.Transform().WorldPosition())
 		rot := quat.Ident()
-		C.goAddChildShape(c.handle, shape.shape(), vec3ptr(&pos), quatPtr(&rot))
+		compound_add_child(c.handle, shape.shape(), pos, rot)
 	}
 	c.OnChange().Emit(c)
 }
@@ -49,7 +42,6 @@ func (c *Compound) OnEnable() {
 func (c *Compound) destroy() {
 	c.shapes = nil
 	if c.handle != nil {
-		C.goDeleteShape(c.handle)
-		c.handle = nil
+		shape_delete(&c.handle)
 	}
 }

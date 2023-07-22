@@ -120,6 +120,8 @@ extern void goAddVertex(goShapeHandle convexHull, goReal x, goReal y, goReal z);
 extern goTriangleMeshHandle goNewTriangleMesh(void* vertex_ptr, int vertex_count, int vertex_stride, void* index_ptr,
                                               int index_count, int index_stride);
 
+extern void goDeleteTriangleMesh(goTriangleMeshHandle handle);
+
 extern goShapeHandle goNewTriangleMeshShape(char* user, goTriangleMeshHandle);
 
 extern void goSetScaling(goShapeHandle shape, goVector3* scaling);
