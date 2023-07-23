@@ -17,6 +17,8 @@ type Arrow struct {
 	Head      *cone.Cone
 	Body      *cylinder.Cylinder
 	Collider  *physics.Compound
+
+	Hover *object.Property[bool]
 }
 
 func NewArrow(clr color.T) *Arrow {
@@ -36,8 +38,10 @@ func NewArrow(clr color.T) *Arrow {
 		DepthWrite:   true,
 	}
 
-	return object.New("Arrow", &Arrow{
+	arrow := object.New("Arrow", &Arrow{
+		Hover:     object.NewProperty(false),
 		Rigidbody: physics.NewRigidBody(0),
+		Collider:  physics.NewCompound(),
 
 		Head: object.Builder(cone.NewObject(cone.Args{
 			Mat:      mat,
@@ -57,9 +61,16 @@ func NewArrow(clr color.T) *Arrow {
 			Color:    clr,
 		})).
 			Position(vec3.New(0, bodyHeight*0.5, 0)).
-			Attach(physics.NewBox(vec3.New(bodyRadius, bodyHeight*0.5, bodyRadius))).
 			Create(),
-
-		Collider: physics.NewCompound(),
 	})
+
+	// arrow.Hover.OnChange.Subscribe(func(b bool) {
+	// 	scale := vec3.One
+	// 	if b {
+	// 		scale = vec3.New(1.2, 1.2, 1.2)
+	// 	}
+	// 	arrow.Head.Transform().SetScale(scale)
+	// })
+
+	return arrow
 }

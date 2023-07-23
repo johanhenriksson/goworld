@@ -143,9 +143,7 @@ func (g *Mover) Target() transform.T {
 }
 
 func (g *Mover) SetTarget(t transform.T) {
-	if t != nil {
-		g.Transform().SetPosition(t.WorldPosition())
-	}
+	g.Transform().SetParent(t)
 	g.target = t
 }
 
@@ -192,8 +190,7 @@ func (g *Mover) DragMove(e mouse.Event) {
 		delta := g.start.Sub(cursor)
 		mag := -1 * g.sensitivity * g.scale * vec2.Dot(delta, g.screenAxis) / axisLen
 		g.start = cursor
-		pos := g.Transform().Position().Add(g.axis.Scaled(mag))
-		g.Transform().SetPosition(pos)
+		pos := g.Transform().WorldPosition().Add(g.axis.Scaled(mag))
 
 		if g.target != nil {
 			g.target.SetWorldPosition(pos)
@@ -207,24 +204,23 @@ func (g *Mover) Hover(hovering bool, shape physics.Shape) {
 		axis := g.getColliderAxis(shape)
 		switch axis {
 		case vec3.UnitX:
-			g.X.Transform().SetScale(g.hoverScale)
-			g.Y.Transform().SetScale(vec3.One)
-			g.Z.Transform().SetScale(vec3.One)
+			g.X.Hover.Set(true)
+			g.Y.Hover.Set(false)
+			g.Z.Hover.Set(false)
 		case vec3.UnitY:
-			g.X.Transform().SetScale(vec3.One)
-			g.Y.Transform().SetScale(g.hoverScale)
-			g.Z.Transform().SetScale(vec3.One)
+			g.X.Hover.Set(false)
+			g.Y.Hover.Set(true)
+			g.Z.Hover.Set(false)
 		case vec3.UnitZ:
-			g.X.Transform().SetScale(vec3.One)
-			g.Y.Transform().SetScale(vec3.One)
-			g.Z.Transform().SetScale(g.hoverScale)
+			g.X.Hover.Set(false)
+			g.Y.Hover.Set(false)
+			g.Z.Hover.Set(true)
 		}
 	}
 	if !hovering {
-		// reset scaling
-		g.X.Transform().SetScale(vec3.One)
-		g.Y.Transform().SetScale(vec3.One)
-		g.Z.Transform().SetScale(vec3.One)
+		g.X.Hover.Set(false)
+		g.Y.Hover.Set(false)
+		g.Z.Hover.Set(false)
 	}
 }
 
@@ -247,7 +243,8 @@ func (g *Mover) Update(scene object.Component, dt float32) {
 	squeeze := g.proj.TransformPoint(vec3.New(1, 0, dist))
 	f := g.size / squeeze.X
 	g.scale = f
-	g.Transform().SetScale(vec3.New(f, f, f))
+	g.Transform().SetWorldScale(vec3.New(f, f, f))
+	g.Transform().SetWorldRotation(quat.Ident())
 }
 
 func (g *Mover) Dragging() bool          { return g.dragging }

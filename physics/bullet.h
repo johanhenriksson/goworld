@@ -107,8 +107,11 @@ extern goShapeHandle goNewCapsuleShape(char* user, goReal radius, goReal height)
 
 extern goShapeHandle goNewCompoundShape(char* user);
 
-extern void goAddChildShape(goShapeHandle compoundShape, goShapeHandle childShape, goVector3* childPos,
-                            goQuaternion* childOrn);
+extern void goAddChildShape(goShapeHandle compoundShape, goShapeHandle childShape, goVector3* pos, goQuaternion* rot);
+
+extern void goUpdateChildShape(goShapeHandle compoundShape, int index, goVector3* pos, goQuaternion* rot);
+
+extern void goRemoveChildShape(goShapeHandle compoundShape, goShapeHandle childShape);
 
 extern void goDeleteShape(goShapeHandle shape);
 

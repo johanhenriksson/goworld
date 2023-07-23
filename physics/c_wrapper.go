@@ -219,8 +219,20 @@ func shape_new_compound(ptr unsafe.Pointer) shapeHandle {
 	return shapeHandle(handle)
 }
 
+func shape_scaling_set(shape shapeHandle, scale vec3.T) {
+	C.goSetScaling(shape, vec3ptr(&scale))
+}
+
 func compound_add_child(shape, child shapeHandle, position vec3.T, rotation quat.T) {
 	C.goAddChildShape(shape, child, vec3ptr(&position), quatPtr(&rotation))
+}
+
+func compound_update_child(shape shapeHandle, index int, position vec3.T, rotation quat.T) {
+	C.goUpdateChildShape(shape, C.int(index), vec3ptr(&position), quatPtr(&rotation))
+}
+
+func compound_remove_child(shape, child shapeHandle) {
+	C.goRemoveChildShape(shape, child)
 }
 
 func shape_delete(shape *shapeHandle) {

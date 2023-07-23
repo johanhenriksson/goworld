@@ -14,11 +14,13 @@ type ComponentEditor struct {
 	GUI    gui.Fragment
 }
 
+var _ T = &ComponentEditor{}
+
 func NewComponentEditor(target object.Component) *ComponentEditor {
 	props := object.Properties(target)
 	editors := make([]node.T, 0, len(props))
 	return object.New("ComponentEditor", &ComponentEditor{
-		Object: object.Ghost("Ghost:"+target.Name(), target.Transform()),
+		Object: object.Ghost(target.Name(), target.Transform()),
 		target: target,
 
 		GUI: SidebarFragment(gui.FragmentLast, func() node.T {

@@ -40,7 +40,7 @@ func NewEditor(render renderer.T, workspace object.Object) *Editor {
 		gui.FragmentFirst,
 		func() node.T {
 			return ObjectList("scene-graph", ObjectListProps{
-				Scene:       object.Root(workspace),
+				Scene:       workspace,
 				EditorRoot:  editor,
 				ToolManager: editor.Tools,
 			})

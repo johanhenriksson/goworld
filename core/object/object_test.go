@@ -94,5 +94,46 @@ var _ = Describe("Object", func() {
 			target.Transform().SetScale(vec3.New(2, 2, 2))
 			Expect(triggered).To(BeTrue())
 		})
+
+		It("maintains heirarchical properties", func() {
+			target1 := object.Builder(object.Empty("target1")).Position(vec3.One).Create()
+			target2 := object.Builder(object.Empty("target2")).Position(vec3.One).Create()
+			object.Attach(target1, target2)
+
+			ghost1 := object.Ghost("ghost1", target1.Transform())
+			ghost2 := object.Ghost("ghost2", target2.Transform())
+			object.Attach(ghost1, ghost2)
+
+			// simulate a component attached to target1/ghost1
+			ghostc := object.Ghost("ghostc", target1.Transform())
+			object.Attach(ghost1, ghostc)
+
+			// validate transform
+			Expect(target1.Transform().WorldPosition()).To(Equal(vec3.New(1, 1, 1)))
+			Expect(target2.Transform().WorldPosition()).To(Equal(vec3.New(2, 2, 2)))
+			Expect(ghost1.Transform().WorldPosition()).To(Equal(target1.Transform().WorldPosition()))
+			Expect(ghost2.Transform().WorldPosition()).To(Equal(target2.Transform().WorldPosition()))
+
+			triggerTarget := false
+			target2.Transform().OnChange().Subscribe(func(t transform.T) {
+				triggerTarget = true
+			})
+			triggerGhost := false
+			ghost2.Transform().OnChange().Subscribe(func(t transform.T) {
+				triggerGhost = true
+			})
+
+			// modifying component transform
+			ghostc.Transform().SetPosition(vec3.Zero)
+
+			// should update everything:
+			Expect(target1.Transform().WorldPosition()).To(Equal(vec3.New(0, 0, 0)))
+			Expect(target2.Transform().WorldPosition()).To(Equal(vec3.New(1, 1, 1)))
+			Expect(ghost1.Transform().WorldPosition()).To(Equal(target1.Transform().WorldPosition()))
+			Expect(ghost2.Transform().WorldPosition()).To(Equal(target2.Transform().WorldPosition()))
+
+			Expect(triggerTarget).To(BeTrue())
+			Expect(triggerGhost).To(BeTrue())
+		})
 	})
 })

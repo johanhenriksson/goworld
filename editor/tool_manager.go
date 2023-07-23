@@ -222,6 +222,6 @@ func (m *toolmgr) PreDraw(args render.Args, scene object.Object) error {
 }
 
 func (m *toolmgr) MoveTool(obj object.Component) {
-	m.Mover.SetTarget(obj.Transform())
 	m.SelectTool(m.Mover)
+	m.Mover.SetTarget(obj.Transform())
 }

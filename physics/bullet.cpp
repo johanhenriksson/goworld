@@ -130,6 +130,16 @@ void goRigidBodySetShape(goRigidBodyHandle objectPtr, goShapeHandle shapePtr) {
     btAssert(shape);
 
     body->setCollisionShape(shape);
+
+    btVector3 localInertia(0, 0, 0);
+    if (body->getMass() != 0.0) {
+        shape->calculateLocalInertia(body->getMass(), localInertia);
+    }
+    body->setMassProps(body->getMass(), localInertia);
+    body->updateInertiaTensor();
+
+    // Update the AABB for broadphase.
+    // dynamicsWorld->updateSingleAabb(rigidBody);
 }
 
 void goRigidBodySetState(goRigidBodyHandle object, goRigidBodyState* state) {
@@ -217,20 +227,48 @@ goShapeHandle goNewCompoundShape(char* user) {
     return (goShapeHandle)shape;
 }
 
-void goAddChildShape(goShapeHandle compoundShapeHandle, goShapeHandle childShapeHandle, goVector3* childPos,
-                     goQuaternion* childOrn) {
+void goAddChildShape(goShapeHandle compoundShapeHandle, goShapeHandle childShapeHandle, goVector3* pos,
+                     goQuaternion* rot) {
     btCollisionShape* colShape = reinterpret_cast<btCollisionShape*>(compoundShapeHandle);
     btAssert(colShape->getShapeType() == COMPOUND_SHAPE_PROXYTYPE);
-
     btCompoundShape* compoundShape = reinterpret_cast<btCompoundShape*>(colShape);
-
     btCollisionShape* childShape = reinterpret_cast<btCollisionShape*>(childShapeHandle);
 
     btTransform localTrans;
     localTrans.setIdentity();
-    localTrans.setOrigin(vec3FromGo(childPos));
-    localTrans.setRotation(quatFromGo(childOrn));
+    localTrans.setOrigin(vec3FromGo(pos));
+    localTrans.setRotation(quatFromGo(rot));
     compoundShape->addChildShape(localTrans, childShape);
+}
+
+void goUpdateChildShape(goShapeHandle compoundShapeHandle, int index, goVector3* pos, goQuaternion* rot) {
+    btCollisionShape* colShape = reinterpret_cast<btCollisionShape*>(compoundShapeHandle);
+    btAssert(colShape->getShapeType() == COMPOUND_SHAPE_PROXYTYPE);
+    btCompoundShape* compoundShape = reinterpret_cast<btCompoundShape*>(colShape);
+
+    btTransform localTrans;
+    localTrans.setIdentity();
+    localTrans.setOrigin(vec3FromGo(pos));
+    localTrans.setRotation(quatFromGo(rot));
+    compoundShape->updateChildTransform(index, localTrans);
+}
+
+void goUpdateChildShape(goShapeHandle compoundShapeHandle, goShapeHandle childShapeHandle) {
+    btCollisionShape* colShape = reinterpret_cast<btCollisionShape*>(compoundShapeHandle);
+    btAssert(colShape->getShapeType() == COMPOUND_SHAPE_PROXYTYPE);
+    btCompoundShape* compoundShape = reinterpret_cast<btCompoundShape*>(colShape);
+    btCollisionShape* childShape = reinterpret_cast<btCollisionShape*>(childShapeHandle);
+
+    compoundShape->removeChildShape(childShape);
+}
+
+void goRemoveChildShape(goShapeHandle compoundShapeHandle, goShapeHandle childShapeHandle) {
+    btCollisionShape* colShape = reinterpret_cast<btCollisionShape*>(compoundShapeHandle);
+    btAssert(colShape->getShapeType() == COMPOUND_SHAPE_PROXYTYPE);
+    btCompoundShape* compoundShape = reinterpret_cast<btCompoundShape*>(colShape);
+    btCollisionShape* childShape = reinterpret_cast<btCollisionShape*>(childShapeHandle);
+
+    compoundShape->removeChildShape(childShape);
 }
 
 void goAddVertex(goShapeHandle cshape, goReal x, goReal y, goReal z) {
@@ -250,7 +288,6 @@ void goDeleteShape(goShapeHandle cshape) {
 void goSetScaling(goShapeHandle cshape, goVector3* cscaling) {
     btCollisionShape* shape = reinterpret_cast<btCollisionShape*>(cshape);
     btAssert(shape);
-
     shape->setLocalScaling(vec3FromGo(cscaling));
 }
 

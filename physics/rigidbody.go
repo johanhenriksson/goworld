@@ -68,6 +68,7 @@ func (b *RigidBody) OnEnable() {
 		}
 		rigidbody_shape_set(b.handle, s.shape())
 	})
+
 	if b.handle == nil {
 		b.handle = rigidbody_new(unsafe.Pointer(b), b.mass, b.Shape.shape())
 	}
@@ -81,8 +82,14 @@ func (b *RigidBody) OnEnable() {
 
 		// detach object transform from parent
 		if !b.Kinematic() {
+			wpos := b.Transform().WorldPosition()
+			wrot := b.Transform().WorldRotation()
+			wscl := b.Transform().WorldScale()
 			b.tfparent = b.Transform().Parent()
 			b.Transform().SetParent(nil)
+			b.Transform().SetWorldPosition(wpos)
+			b.Transform().SetWorldRotation(wrot)
+			b.Transform().SetWorldScale(wscl)
 		}
 	} else {
 		log.Println("Rigidbody", b.Name(), ": no physics world in parents")
@@ -94,7 +101,13 @@ func (b *RigidBody) OnDisable() {
 	// b.Shape.OnChange().Unsubscribe(b)
 	if b.tfparent != nil {
 		// re-attach transform to parent
+		wpos := b.Transform().WorldPosition()
+		wrot := b.Transform().WorldRotation()
+		wscl := b.Transform().WorldScale()
 		b.Transform().SetParent(b.tfparent)
+		b.Transform().SetWorldPosition(wpos)
+		b.Transform().SetWorldRotation(wrot)
+		b.Transform().SetWorldScale(wscl)
 	}
 }
 

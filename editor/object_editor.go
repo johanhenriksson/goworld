@@ -1,8 +1,6 @@
 package editor
 
 import (
-	"log"
-
 	"github.com/johanhenriksson/goworld/core/input/keys"
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/core/object"
@@ -17,9 +15,11 @@ type ObjectEditor struct {
 	GUI    gui.Fragment
 }
 
+var _ T = &ObjectEditor{}
+
 func NewObjectEditor(target object.Object) *ObjectEditor {
 	return object.New("ObjectEditor", &ObjectEditor{
-		Object: object.Ghost("Ghost:"+target.Name(), target.Transform()),
+		Object: object.Ghost(target.Name(), target.Transform()),
 		target: target,
 
 		GUI: SidebarFragment(gui.FragmentLast, func() node.T {
@@ -34,13 +34,11 @@ func NewObjectEditor(target object.Object) *ObjectEditor {
 func (e *ObjectEditor) Target() object.Component { return e.target }
 
 func (e *ObjectEditor) Select(ev mouse.Event) {
-	log.Println("enable gui", e.target.Name())
 	object.Enable(e.GUI)
 }
 
 func (e *ObjectEditor) Deselect(ev mouse.Event) bool {
 	// todo: check with editor if we can deselect?
-	log.Println("disable gui", e.target.Name())
 	object.Disable(e.GUI)
 	return true
 }

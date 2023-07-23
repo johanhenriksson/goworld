@@ -16,17 +16,21 @@ func init() {
 
 type PhysicsMeshEditor struct {
 	object.Object
-	target *physics.Mesh
-	shape  *physics.Mesh
-	mesh   vertex.Mesh
+	mesh vertex.Mesh
 
-	GUI gui.Fragment
+	target *physics.Mesh
+	Shape  *physics.Mesh
+	Body   *physics.RigidBody
+	GUI    gui.Fragment
 }
 
 func NewPhysicsMeshEditor(ctx *editor.Context, mesh *physics.Mesh) *PhysicsMeshEditor {
 	editor := object.New("PhysicsMeshEditor", &PhysicsMeshEditor{
+		Object: object.Ghost(mesh.Name(), mesh.Transform()),
 		target: mesh,
-		shape:  physics.NewMesh(),
+
+		Shape: physics.NewMesh(),
+		Body:  physics.NewRigidBody(0),
 
 		GUI: editor.SidebarFragment(gui.FragmentLast, func() node.T {
 			return editor.Inspector(
@@ -36,9 +40,9 @@ func NewPhysicsMeshEditor(ctx *editor.Context, mesh *physics.Mesh) *PhysicsMeshE
 	})
 
 	// grab reference to mesh shape & subscribe to changes
-	editor.shape.Mesh.Set(mesh.Mesh.Get())
+	editor.Shape.Mesh.Set(mesh.Mesh.Get())
 	mesh.Mesh.OnChange.Subscribe(func(m vertex.Mesh) {
-		editor.shape.Mesh.Set(m)
+		editor.Shape.Mesh.Set(m)
 	})
 
 	return editor

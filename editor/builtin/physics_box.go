@@ -7,6 +7,7 @@ import (
 	"github.com/johanhenriksson/goworld/editor/propedit"
 	"github.com/johanhenriksson/goworld/gui"
 	"github.com/johanhenriksson/goworld/gui/node"
+	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/physics"
 )
 
@@ -26,7 +27,7 @@ type BoxEditor struct {
 
 func NewBoxEditor(ctx *editor.Context, box *physics.Box) *BoxEditor {
 	editor := object.New("PhysicsBoxEditor", &BoxEditor{
-		Object: object.Ghost("Ghost:"+box.Name(), box.Transform()),
+		Object: object.Ghost(box.Name(), box.Transform()),
 		target: box,
 
 		Shape: physics.NewBox(box.Extents.Get()),
@@ -43,9 +44,9 @@ func NewBoxEditor(ctx *editor.Context, box *physics.Box) *BoxEditor {
 		}),
 	})
 
-	box.OnChange().Subscribe(func(s physics.Shape) {
-		// manually apply the local scaling factor
-		editor.Shape.Extents.Set(box.Extents.Get()) // .Mul(box.Transform().Scale()))
+	// keep properties in sync
+	box.Extents.OnChange.Subscribe(func(vec3.T) {
+		editor.Shape.Extents.Set(box.Extents.Get())
 	})
 
 	return editor

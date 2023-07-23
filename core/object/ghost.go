@@ -9,7 +9,7 @@ type ghost struct {
 
 func Ghost(name string, target transform.T) Object {
 	ghost := &ghost{
-		object: emptyObject(name),
+		object: emptyObject("Ghost:" + name),
 		target: target,
 	}
 	ghost.transform = target
