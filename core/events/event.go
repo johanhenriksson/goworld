@@ -5,25 +5,26 @@ type Data any
 type Handler[T Data] func(T)
 
 type Event[T Data] struct {
-	callbacks map[any]Handler[T]
+	callbacks []Handler[T]
 }
 
 func New[T Data]() *Event[T] {
-	return &Event[T]{
-		callbacks: make(map[any]Handler[T]),
-	}
+	return &Event[T]{}
 }
 
 func (e *Event[T]) Emit(event T) {
 	for _, callback := range e.callbacks {
-		callback(event)
+		if callback != nil {
+			callback(event)
+		}
 	}
 }
 
-func (e *Event[T]) Subscribe(subscriber any, handler Handler[T]) {
-	e.callbacks[subscriber] = handler
-}
-
-func (e *Event[T]) Unsubscribe(subscriber any) {
-	delete(e.callbacks, subscriber)
+func (e *Event[T]) Subscribe(handler Handler[T]) func() {
+	id := len(e.callbacks)
+	e.callbacks = append(e.callbacks, handler)
+	return func() {
+		// unsub
+		e.callbacks[id] = nil
+	}
 }

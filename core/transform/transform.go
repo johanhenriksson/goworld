@@ -66,6 +66,7 @@ type transform struct {
 	dirty   bool
 	parent  T
 	changed *events.Event[T]
+	unsub   func()
 }
 
 // NewTransform creates a new 3D transform
@@ -101,16 +102,17 @@ func (t *transform) SetParent(parent T) {
 	// todo: we might want to maintain world transform when attaching/detaching
 
 	// detach from previous parent (if any)
-	if t.parent != nil {
+	if t.unsub != nil {
 		// unsub
-		t.parent.OnChange().Unsubscribe(t)
+		t.unsub()
+		t.unsub = nil
 	}
 
 	t.parent = parent
 
 	// attach to new parent (if any)
 	if t.parent != nil {
-		t.parent.OnChange().Subscribe(t, func(parent T) {
+		t.unsub = t.parent.OnChange().Subscribe(func(parent T) {
 			// mark as dirty on parent change
 			t.invalidate()
 		})

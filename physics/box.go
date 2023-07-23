@@ -29,7 +29,7 @@ func NewBox(size vec3.T) *Box {
 	})
 
 	// resize shape when extents are modified
-	box.Extents.OnChange.Subscribe(box, box.resize)
+	box.Extents.OnChange.Subscribe(box.resize)
 
 	// trigger initial resize
 	box.resize(size)

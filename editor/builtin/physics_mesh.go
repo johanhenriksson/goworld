@@ -36,7 +36,7 @@ func NewPhysicsMeshEditor(ctx *editor.Context, mesh *physics.Mesh) *PhysicsMeshE
 
 	// grab reference to mesh shape & subscribe to changes
 	editor.shape.Mesh.Set(mesh.Mesh.Get())
-	mesh.Mesh.OnChange.Subscribe(editor, func(m vertex.Mesh) {
+	mesh.Mesh.OnChange.Subscribe(func(m vertex.Mesh) {
 		editor.shape.Mesh.Set(m)
 	})
 

@@ -54,20 +54,20 @@ func (b *RigidBody) pushState() {
 
 func (b *RigidBody) OnEnable() {
 	if b.Shape == nil {
+		// todo: maybe warn if there are multiple?
 		b.Shape = object.Get[Shape](b)
 		if b.Shape == nil {
 			log.Println("Rigidbody", b.Parent().Name(), ": no shape in siblings")
 			return
 		}
-
-		b.Shape.OnChange().Subscribe(b, func(s Shape) {
-			if b.handle == nil {
-				panic("rigidbody shape set to nil")
-			}
-			rigidbody_shape_set(b.handle, s.shape())
-		})
 	}
 
+	b.Shape.OnChange().Subscribe(func(s Shape) {
+		if b.handle == nil {
+			panic("rigidbody shape set to nil")
+		}
+		rigidbody_shape_set(b.handle, s.shape())
+	})
 	if b.handle == nil {
 		b.handle = rigidbody_new(unsafe.Pointer(b), b.mass, b.Shape.shape())
 	}
@@ -91,6 +91,7 @@ func (b *RigidBody) OnEnable() {
 
 func (b *RigidBody) OnDisable() {
 	b.detach()
+	// b.Shape.OnChange().Unsubscribe(b)
 	if b.tfparent != nil {
 		// re-attach transform to parent
 		b.Transform().SetParent(b.tfparent)
@@ -107,7 +108,7 @@ func (b *RigidBody) detach() {
 func (b *RigidBody) destroy() {
 	b.detach()
 	if b.Shape != nil {
-		b.Shape.OnChange().Unsubscribe(b)
+		// b.Shape.OnChange().Unsubscribe(b)
 		b.Shape = nil
 	}
 	if b.handle != nil {

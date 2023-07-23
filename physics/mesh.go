@@ -22,8 +22,9 @@ type Mesh struct {
 
 var _ Shape = &Mesh{}
 
+var emptyMesh = vertex.NewTriangles[vertex.P, uint32]("emptyMeshCollider", []vertex.P{{}}, []uint32{0, 0, 0})
 func NewMesh() *Mesh {
-	shape := object.NewComponent(&Mesh{
+	mesh := object.NewComponent(&Mesh{
 		shapeBase: newShapeBase(MeshShape),
 
 		Mesh: object.NewProperty[vertex.Mesh](nil),
@@ -32,13 +33,17 @@ func NewMesh() *Mesh {
 	// refresh physics mesh when the mesh property is changed
 	// unsub to old mesh?
 	// subscribe to new mesh?
-	shape.Mesh.OnChange.Subscribe(shape, shape.refresh)
+	mesh.Mesh.OnChange.Subscribe(mesh.refresh)
 
-	runtime.SetFinalizer(shape, func(m *Mesh) {
+	// initialize with the empty mesh
+	mesh.meshHandle = mesh_new(emptyMesh)
+	mesh.handle = shape_new_triangle_mesh(unsafe.Pointer(mesh), mesh.meshHandle)
+
+	runtime.SetFinalizer(mesh, func(m *Mesh) {
 		m.destroy()
 	})
 
-	return shape
+	return mesh
 }
 
 func (m *Mesh) Name() string {

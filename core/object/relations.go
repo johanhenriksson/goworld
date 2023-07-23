@@ -1,6 +1,6 @@
 package object
 
-// Returns all the children of an objects, both components and child objects
+// Returns all the children of an object. Returns the empty slice if the object is a component.
 func Children(object Component) []Component {
 	if group, ok := object.(Object); ok {
 		return group.Children()

@@ -65,7 +65,7 @@ func NewPrimitiveMesh(primitive vertex.Primitive, mode DrawMode, mat *material.D
 
 		VertexData: object.NewProperty[vertex.Mesh](nil),
 	})
-	m.VertexData.OnChange.Subscribe(m, func(data vertex.Mesh) {
+	m.VertexData.OnChange.Subscribe(func(data vertex.Mesh) {
 		// refresh bounding sphere
 		min := data.Min()
 		max := data.Max()
