@@ -29,6 +29,9 @@ func NewCompound() *Compound {
 	return cmp
 }
 
+func (c *Compound) Name() string {
+	return "CompoundShape"
+}
 func (c *Compound) OnEnable() {
 	c.shapes = object.GetAllInChildren[Shape](c)
 	for _, shape := range c.shapes {

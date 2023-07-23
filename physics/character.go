@@ -36,8 +36,8 @@ func (c *Character) pullState() {
 	// pull physics state
 	state := character_state_pull(c.handle)
 
-	c.Transform().SetPosition(state.position)
-	c.Transform().SetRotation(state.rotation)
+	c.Transform().SetWorldPosition(state.position)
+	c.Transform().SetWorldRotation(state.rotation)
 	c.grounded = state.grounded
 }
 

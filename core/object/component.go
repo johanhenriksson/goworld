@@ -128,13 +128,8 @@ func (b *component) setEnabled(enabled bool) bool {
 	return prev
 }
 
-func (b *component) Parent() Object { return b.parent }
-func (b *component) setParent(p Object) {
-	if b.parent == p {
-		return
-	}
-	b.parent = p
-}
+func (b *component) Parent() Object     { return b.parent }
+func (b *component) setParent(p Object) { b.parent = p }
 
 func (b *component) setName(n string) { b.name = n }
 func (b *component) Name() string     { return b.name }

@@ -41,6 +41,10 @@ func NewCapsule(height, radius float32) *Capsule {
 	return capsule
 }
 
+func (c *Capsule) Name() string {
+	return "CapsuleShape"
+}
+
 func (c *Capsule) resize(radius, height float32) {
 	c.destroy()
 	c.handle = shape_new_capsule(unsafe.Pointer(c), radius, height)

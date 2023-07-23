@@ -5,6 +5,7 @@ import (
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/math"
 	"github.com/johanhenriksson/goworld/math/vec3"
+	"github.com/johanhenriksson/goworld/physics"
 	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/vertex"
@@ -13,11 +14,13 @@ import (
 type Cone struct {
 	object.Object
 	*Mesh
+	Collider *physics.Mesh
 }
 
 func NewObject(args Args) *Cone {
 	return object.New("Cone", &Cone{
-		Mesh: New(args),
+		Mesh:     New(args),
+		Collider: physics.NewMesh(),
 	})
 }
 

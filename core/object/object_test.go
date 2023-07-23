@@ -1,6 +1,7 @@
 package object_test
 
 import (
+	. "github.com/johanhenriksson/goworld/test"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
@@ -8,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/johanhenriksson/goworld/core/object"
+	"github.com/johanhenriksson/goworld/math/vec3"
 )
 
 type A struct {
@@ -67,5 +69,16 @@ var _ = Describe("Object", func() {
 		b := object.NewComponent(&B{})
 		key := object.Key("hello", b)
 		Expect(key).To(Equal(fmt.Sprintf("hello-%x", b.ID())))
+	})
+
+	Context("ghost object", func() {
+		It("follows the target object", func() {
+			target := object.Empty("target")
+			ghost := object.Ghost("ghost", target.Transform())
+
+			pos := vec3.New(10, 20, 30)
+			target.Transform().SetPosition(pos)
+			Expect(ghost.Transform().WorldPosition()).To(BeApproxVec3(pos))
+		})
 	})
 })

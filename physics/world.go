@@ -32,7 +32,14 @@ func NewWorld() *World {
 }
 
 func (w *World) Update(scene object.Component, dt float32) {
-	w.step(dt)
+	// todo: optimize using bullet's MotionState
+	for _, obj := range w.objects {
+		obj.pushState()
+	}
+	world_step_simulation(w.handle, dt)
+	for _, obj := range w.objects {
+		obj.pullState()
+	}
 }
 
 func (w *World) OnEnable() {
@@ -40,16 +47,6 @@ func (w *World) OnEnable() {
 
 func (w *World) SetGravity(gravity vec3.T) {
 	world_gravity_set(w.handle, gravity)
-}
-
-func (w *World) step(timestep float32) {
-	for _, obj := range w.objects {
-		obj.pushState()
-	}
-	world_step_simulation(w.handle, timestep)
-	for _, obj := range w.objects {
-		obj.pullState()
-	}
 }
 
 func (w *World) addObject(obj Object) bool {

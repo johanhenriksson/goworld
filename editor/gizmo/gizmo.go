@@ -31,8 +31,8 @@ func HandleMouse(m Gizmo, e mouse.Event) {
 	vpi = vpi.Invert()
 	cursor := m.Viewport().NormalizeCursor(e.Position())
 
-	near := vpi.TransformPoint(vec3.New(cursor.X, cursor.Y, 1))
-	far := vpi.TransformPoint(vec3.New(cursor.X, cursor.Y, 0))
+	near := vpi.TransformPoint(vec3.New(cursor.X, cursor.Y, 0))
+	far := vpi.TransformPoint(vec3.New(cursor.X, cursor.Y, 1))
 
 	world := object.GetInParents[*physics.World](m)
 	hit, ok := world.Raycast(near, far)

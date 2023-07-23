@@ -12,10 +12,11 @@ import (
 )
 
 type Arrow struct {
-	*physics.RigidBody
-	Head     *cone.Cone
-	Body     *cylinder.Cylinder
-	Collider *physics.Compound
+	object.Object
+	Rigidbody *physics.RigidBody
+	Head      *cone.Cone
+	Body      *cylinder.Cylinder
+	Collider  *physics.Compound
 }
 
 func NewArrow(clr color.T) *Arrow {
@@ -36,7 +37,7 @@ func NewArrow(clr color.T) *Arrow {
 	}
 
 	return object.New("Arrow", &Arrow{
-		RigidBody: physics.NewRigidBody("Arrow", 0),
+		Rigidbody: physics.NewRigidBody(0),
 
 		Head: object.Builder(cone.NewObject(cone.Args{
 			Mat:      mat,
@@ -46,7 +47,6 @@ func NewArrow(clr color.T) *Arrow {
 			Color:    clr,
 		})).
 			Position(vec3.UnitY).
-			Attach(physics.NewBox(vec3.New(coneRadius, coneHeight, coneRadius))).
 			Create(),
 
 		Body: object.Builder(cylinder.NewObject(cylinder.Args{

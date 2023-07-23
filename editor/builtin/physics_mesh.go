@@ -3,6 +3,8 @@ package builtin
 import (
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/editor"
+	"github.com/johanhenriksson/goworld/gui"
+	"github.com/johanhenriksson/goworld/gui/node"
 	"github.com/johanhenriksson/goworld/physics"
 	"github.com/johanhenriksson/goworld/render/vertex"
 )
@@ -16,12 +18,20 @@ type PhysicsMeshEditor struct {
 	target *physics.Mesh
 	shape  *physics.Mesh
 	mesh   vertex.Mesh
+
+	GUI gui.Fragment
 }
 
 func NewPhysicsMeshEditor(ctx *editor.Context, mesh *physics.Mesh) *PhysicsMeshEditor {
 	editor := object.New("PhysicsMeshEditor", &PhysicsMeshEditor{
 		target: mesh,
 		shape:  physics.NewMesh(),
+
+		GUI: editor.SidebarFragment(gui.FragmentLast, func() node.T {
+			return editor.Inspector(
+				mesh,
+			)
+		}),
 	})
 
 	// grab reference to mesh shape & subscribe to changes

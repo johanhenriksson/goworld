@@ -29,12 +29,17 @@ type object struct {
 	children  []Component
 }
 
-// Empty creates a new, empty object.
-func Empty(name string) Object {
-	return &object{
+func emptyObject(name string) object {
+	return object{
 		component: emptyComponent(name),
 		transform: transform.Identity(),
 	}
+}
+
+// Empty creates a new, empty object.
+func Empty(name string) Object {
+	obj := emptyObject(name)
+	return &obj
 }
 
 func New[K Object](name string, obj K) K {
@@ -109,14 +114,25 @@ func New[K Object](name string, obj K) K {
 }
 
 func (g *object) Transform() transform.T {
-	// todo: rewrite/refactor
-	var pt transform.T = nil
-	if g.parent != nil {
-		pt = g.parent.Transform()
-	}
-	g.transform.Recalculate(pt)
-
 	return g.transform
+}
+
+func (o *object) setParent(parent Object) {
+	// check for cycles
+	ancestor := parent
+	for ancestor != nil {
+		if ancestor.ID() == o.ID() {
+			panic("cyclical object hierarchies are not allowed")
+		}
+		ancestor = ancestor.Parent()
+	}
+
+	o.component.setParent(parent)
+	if parent != nil {
+		o.transform.SetParent(parent.Transform())
+	} else {
+		o.transform.SetParent(nil)
+	}
 }
 
 func (g *object) Update(scene Component, dt float32) {

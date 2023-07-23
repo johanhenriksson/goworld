@@ -18,6 +18,7 @@ type EditorGhost struct {
 
 	Editor T
 	Body   *physics.RigidBody
+	Bounds physics.Shape
 }
 
 func NewEditorGhost(target object.Component, editor T) *EditorGhost {
@@ -35,19 +36,19 @@ func NewEditorGhost(target object.Component, editor T) *EditorGhost {
 	// collider for object picking
 	var body *physics.RigidBody
 	if editor.Bounds() != nil {
-		body = physics.NewRigidBody("Collider:"+target.Name(), 0)
-		object.Attach(body, editor.Bounds())
+		body = physics.NewRigidBody(0)
 	}
 
 	return object.New("Ghost", &EditorGhost{
-		Object: object.Ghost(target),
+		Object: object.Ghost("Ghost:"+target.Name(), target.Transform()),
 		target: target,
 
 		Editor: editor,
 
 		// the bounds rigidbody must be held outside the editor object, so that it is not
 		// disabled along with the editor on deselection. this prevents re-selection
-		Body: body,
+		Body:   body,
+		Bounds: editor.Bounds(),
 	})
 }
 

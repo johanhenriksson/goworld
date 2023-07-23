@@ -4,23 +4,37 @@ import "github.com/johanhenriksson/goworld/core/transform"
 
 type ghost struct {
 	object
-	target Component
+	target transform.T
 }
 
-func Ghost(obj Component) Object {
-	return &ghost{
-		object: object{
-			component: component{
-				id:      ID(),
-				name:    "Ghost:" + obj.Name(),
-				enabled: true,
-			},
-			transform: transform.Identity(),
-		},
-		target: obj,
+func Ghost(name string, target transform.T) Object {
+	ghost := &ghost{
+		object: emptyObject(name),
+		target: target,
 	}
+	ghost.transform.SetParent(target)
+	return ghost
 }
 
-func (g *ghost) Transform() transform.T {
-	return g.target.Transform()
+func (g *ghost) setParent(parent Object) {
+	g.component.setParent(parent)
+	// do not modify transform hierarchy
+}
+
+type float struct {
+	object
+}
+
+// Floating objects are not part of the transform heirarchy
+func Float(name string) Object {
+	float := &float{
+		object: emptyObject(name),
+	}
+	float.transform.SetParent(nil)
+	return float
+}
+
+func (f *float) setParent(parent Object) {
+	f.component.setParent(parent)
+	// do not modify transform hierarchy
 }

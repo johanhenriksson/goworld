@@ -41,6 +41,9 @@ func NewMesh() *Mesh {
 	return shape
 }
 
+func (m *Mesh) Name() string {
+	return "MeshShape"
+}
 func (m *Mesh) refresh(mesh vertex.Mesh) {
 	// todo: if its the same mesh, dont do anything
 
@@ -54,6 +57,7 @@ func (m *Mesh) refresh(mesh vertex.Mesh) {
 	m.meshHandle = mesh_new(m.collision)
 
 	m.handle = shape_new_triangle_mesh(unsafe.Pointer(m), m.meshHandle)
+	// todo: convex hull option
 }
 
 func (m *Mesh) destroy() {

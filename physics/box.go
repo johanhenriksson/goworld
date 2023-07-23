@@ -53,7 +53,7 @@ func (b *Box) destroy() {
 }
 
 func (b *Box) Name() string {
-	return "BoxCollider"
+	return "BoxShape"
 }
 
 func (b *Box) String() string {
