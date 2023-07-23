@@ -37,15 +37,17 @@ func HandleMouse(m Gizmo, e mouse.Event) {
 	world := object.GetInParents[*physics.World](m)
 	hit, ok := world.Raycast(near, far)
 
+	// problem: this consumes all mouse events when a gizmo is active
+
 	if m.Dragging() {
-		if e.Action() == mouse.Release {
+		if e.Action() == mouse.Release && e.Button() == mouse.Button1 {
 			m.DragEnd(e)
 			e.Consume()
 		} else {
 			m.DragMove(e)
 			e.Consume()
 		}
-	} else if e.Action() == mouse.Press {
+	} else if e.Action() == mouse.Press && e.Button() == mouse.Button1 {
 		if ok {
 			m.DragStart(e, hit.Shape)
 			e.Consume()
