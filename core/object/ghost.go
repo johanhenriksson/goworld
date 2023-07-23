@@ -12,7 +12,7 @@ func Ghost(name string, target transform.T) Object {
 		object: emptyObject(name),
 		target: target,
 	}
-	ghost.transform.SetParent(target)
+	ghost.transform = target
 	return ghost
 }
 

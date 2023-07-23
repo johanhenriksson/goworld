@@ -29,10 +29,10 @@ func ObjectList(key string, props ObjectListProps) node.T {
 			ObjectListEntry("scene", ObjectListEntryProps{
 				Object: props.Scene,
 				OnSelect: func(obj object.Component) {
-					if !object.Is[*EditorGhost](obj) {
+					if !object.Is[T](obj) {
 						// look up an editor instead
 						var hit bool
-						obj, hit = object.NewQuery[*EditorGhost]().Where(func(e *EditorGhost) bool {
+						obj, hit = object.NewQuery[T]().Where(func(e T) bool {
 							return e.Target() == obj
 						}).First(props.EditorRoot)
 						if !hit {
@@ -41,7 +41,7 @@ func ObjectList(key string, props ObjectListProps) node.T {
 					}
 
 					// check if we found something selectable
-					if selectable, ok := obj.(*EditorGhost); ok {
+					if selectable, ok := obj.(T); ok {
 						props.ToolManager.Select(selectable)
 					}
 				},

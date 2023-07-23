@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/johanhenriksson/goworld/core/object"
+	"github.com/johanhenriksson/goworld/core/transform"
 	"github.com/johanhenriksson/goworld/math/vec3"
 )
 
@@ -79,6 +80,19 @@ var _ = Describe("Object", func() {
 			pos := vec3.New(10, 20, 30)
 			target.Transform().SetPosition(pos)
 			Expect(ghost.Transform().WorldPosition()).To(BeApproxVec3(pos))
+		})
+
+		It("propagates events", func() {
+			target := object.Empty("target")
+			ghost := object.Ghost("ghost", target.Transform())
+
+			triggered := false
+			ghost.Transform().OnChange().Subscribe(func(t transform.T) {
+				triggered = true
+			})
+
+			target.Transform().SetScale(vec3.New(2, 2, 2))
+			Expect(triggered).To(BeTrue())
 		})
 	})
 })

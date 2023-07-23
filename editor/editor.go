@@ -1,15 +1,16 @@
 package editor
 
 import (
+	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/core/object"
-	"github.com/johanhenriksson/goworld/physics"
 )
 
 type T interface {
-	object.Component
+	object.Object
+	Target() object.Component
 
-	// EditorGUI(object.T) node.T
+	Select(ev mouse.Event)
+	Deselect(ev mouse.Event) bool
+
 	Actions() []Action
-
-	Bounds() physics.Shape
 }

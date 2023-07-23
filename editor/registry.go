@@ -4,6 +4,7 @@ import (
 	"log"
 	"reflect"
 
+	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/core/object"
 )
 
@@ -30,35 +31,40 @@ func Register[K object.Component, E T](obj K, constructor func(*Context, K) E) {
 }
 
 func ConstructEditors(ctx *Context, current object.Component, target object.Component) object.Component {
-	var editor *EditorGhost
+	var editor T
 
 	if current != nil {
-		editor = current.(*EditorGhost)
-		if editor.target != target {
+		editor = current.(T)
+		if editor.Target() != target {
 			panic("unexpected editor target")
 		}
 	} else {
 		t := typeOf(target)
-		var customEditor T
 		if construct, exists := editors[t]; exists {
 			log.Println("creating custom editor for", target.Name(), "of type", t.Name())
-			customEditor = construct(ctx, target)
+			editor = construct(ctx, target)
 		} else {
-			log.Println("creating object editor for", target.Name(), "of type", t.Name())
+			log.Println("creating default editor for", target.Name(), "of type", t.Name())
+			if obj, isObject := target.(object.Object); isObject {
+				// use default object editor
+				editor = NewObjectEditor(obj)
+			} else {
+				// use default component editor
+				editor = NewComponentEditor(target)
+			}
 		}
-		editor = NewEditorGhost(
-			target,
-			customEditor,
-		)
+
+		// start deselected
+		editor.Deselect(mouse.NopEvent())
 	}
 
-	existingEditors := map[object.Component]*EditorGhost{}
+	existingEditors := map[object.Component]T{}
 	for _, child := range editor.Children() {
-		childEdit, isEdit := child.(*EditorGhost)
+		childEdit, isEdit := child.(T)
 		if !isEdit {
 			continue
 		}
-		existingEditors[childEdit.target] = childEdit
+		existingEditors[childEdit.Target()] = childEdit
 	}
 
 	for _, child := range object.Children(target) {
@@ -74,7 +80,7 @@ func ConstructEditors(ctx *Context, current object.Component, target object.Comp
 
 	// any remaining editor is no longer used
 	for _, childEdit := range existingEditors {
-		log.Println("deleting unused editor for", childEdit.target.Name())
+		log.Println("deleting unused editor for", childEdit.Target().Name())
 		object.Detach(childEdit)
 	}
 

@@ -29,7 +29,7 @@ type Action struct {
 type ToolManager interface {
 	object.Component
 
-	Select(*EditorGhost)
+	Select(T)
 	SelectTool(Tool)
 	MoveTool(object.Component)
 	Tool() Tool
@@ -38,7 +38,7 @@ type ToolManager interface {
 type toolmgr struct {
 	object.Object
 	scene    object.Object
-	selected []*EditorGhost
+	selected []T
 	tool     Tool
 	camera   mat4.T
 	viewport render.Screen
@@ -53,7 +53,7 @@ func NewToolManager() ToolManager {
 			Active(false).
 			Create(),
 
-		selected: make([]*EditorGhost, 0, 16),
+		selected: make([]T, 0, 16),
 	})
 }
 
@@ -93,7 +93,7 @@ func (m *toolmgr) MouseEvent(e mouse.Event) {
 		return
 	}
 
-	editor := object.GetInParents[*EditorGhost](hit.Shape)
+	editor := object.GetInParents[T](hit.Shape)
 
 	// if nothing is selected, or CanDeselect() is true,
 	// look for something else to select.
@@ -157,11 +157,11 @@ func (m *toolmgr) SelectTool(tool Tool) {
 	}
 }
 
-func (m *toolmgr) Select(obj *EditorGhost) {
+func (m *toolmgr) Select(obj T) {
 	m.setSelect(mouse.NopEvent(), obj)
 }
 
-func (m *toolmgr) setSelect(e mouse.Event, component *EditorGhost) bool {
+func (m *toolmgr) setSelect(e mouse.Event, component T) bool {
 	// todo: detect if the object has been deleted
 	// otherwise CanDeselect() will make it impossible to select another object
 
@@ -189,7 +189,7 @@ func (m *toolmgr) setSelect(e mouse.Event, component *EditorGhost) bool {
 		group := component
 		_, ok := component.Target().(object.Object)
 		if !ok {
-			group, ok = component.Parent().(*EditorGhost)
+			group, ok = component.Parent().(T)
 			if !ok {
 				return true
 			}
@@ -202,8 +202,8 @@ func (m *toolmgr) setSelect(e mouse.Event, component *EditorGhost) bool {
 
 		// select child component editors
 		for _, child := range group.Children() {
-			if childEdit, ok := child.(*EditorGhost); ok {
-				if _, isObject := childEdit.target.(object.Object); isObject {
+			if childEdit, ok := child.(T); ok {
+				if _, isObject := childEdit.Target().(object.Object); isObject {
 					continue
 				}
 				childEdit.Select(e)

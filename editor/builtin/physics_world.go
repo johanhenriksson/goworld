@@ -16,6 +16,7 @@ type WorldEditor struct {
 }
 
 func NewWorldEditor(ctx *editor.Context, world *physics.World) *WorldEditor {
+	world.Debug(true)
 	return object.NewComponent(&WorldEditor{
 		ComponentEditor: editor.NewComponentEditor(world),
 		target:          world,
@@ -23,5 +24,5 @@ func NewWorldEditor(ctx *editor.Context, world *physics.World) *WorldEditor {
 }
 
 func (e *WorldEditor) Update(scene object.Component, dt float32) {
-	// e.target.DebugDraw()
+	e.target.DebugDraw()
 }

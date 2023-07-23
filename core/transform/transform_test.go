@@ -17,7 +17,46 @@ func TestLabel(t *testing.T) {
 	RunSpecs(t, "Transform Suite")
 }
 
-var _ = Describe("", func() {
+var _ = Describe("events", func() {
+	It("fires OnChange events", func() {
+		t := transform.Identity()
+		triggered := false
+		t.OnChange().Subscribe(func(t transform.T) {
+			triggered = true
+			Expect(t.WorldScale()).To(Equal(vec3.New(2, 2, 2)))
+		})
+		t.SetScale(vec3.New(2, 2, 2))
+		Expect(triggered).To(BeTrue())
+	})
+
+	It("propagates OnChange events to children", func() {
+		parent := transform.Identity()
+		child := transform.Identity()
+		child.SetParent(parent)
+
+		triggered := false
+		child.OnChange().Subscribe(func(t transform.T) {
+			triggered = true
+			Expect(t.WorldPosition()).To(Equal(vec3.One))
+		})
+		parent.SetPosition(vec3.One)
+		Expect(triggered).To(BeTrue())
+	})
+})
+
+var _ = Describe("geometry", func() {
+	It("properly unprojects the origin", func() {
+		t := transform.New(vec3.Zero, quat.Ident(), vec3.One)
+		p := t.Unproject(vec3.Zero)
+		Expect(p).To(BeApproxVec3(vec3.Zero))
+
+		t2 := transform.New(vec3.One, quat.Ident(), vec3.One)
+		p2 := t2.Unproject(vec3.One)
+		Expect(p2).To(BeApproxVec3(vec3.Zero))
+	})
+})
+
+var _ = Describe("transform hierarchy", func() {
 	It("initializes properly", func() {
 		t := transform.Identity()
 		Expect(t.Forward()).To(Equal(vec3.UnitZ))

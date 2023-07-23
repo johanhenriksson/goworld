@@ -1,6 +1,7 @@
 package builtin
 
 import (
+	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/editor"
 	"github.com/johanhenriksson/goworld/gui"
@@ -43,8 +44,16 @@ func NewPhysicsMeshEditor(ctx *editor.Context, mesh *physics.Mesh) *PhysicsMeshE
 	return editor
 }
 
-func (e *PhysicsMeshEditor) Bounds() physics.Shape {
-	return e.shape
+func (e *PhysicsMeshEditor) Target() object.Component { return e.target }
+
+func (e *PhysicsMeshEditor) Select(ev mouse.Event) {
+	object.Enable(e.GUI)
+}
+
+func (e *PhysicsMeshEditor) Deselect(ev mouse.Event) bool {
+	// todo: check with editor if we can deselect?
+	object.Disable(e.GUI)
+	return true
 }
 
 func (e *PhysicsMeshEditor) Actions() []editor.Action {

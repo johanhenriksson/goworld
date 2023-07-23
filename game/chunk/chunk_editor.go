@@ -21,7 +21,8 @@ import (
 )
 
 type Editor interface {
-	editor.T
+	object.Component
+	// editor.T
 
 	SelectedColor() color.T
 	GetVoxel(x, y, z int) voxel.T
@@ -58,10 +59,10 @@ type edit struct {
 	render      renderer.T
 }
 
-var _ editor.T = &edit{}
+// var _ editor.T = &edit{}
 
 func init() {
-	editor.Register(&Mesh{}, NewEditor)
+	// editor.Register(&Mesh{}, NewEditor)
 }
 
 // NewEditor creates a new chunk editor
