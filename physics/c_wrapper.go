@@ -209,6 +209,11 @@ func shape_new_capsule(ptr unsafe.Pointer, radius, height float32) shapeHandle {
 	return shapeHandle(handle)
 }
 
+func shape_new_sphere(ptr unsafe.Pointer, radius float32) shapeHandle {
+	handle := C.goNewSphereShape((*C.char)(ptr), C.float(radius))
+	return shapeHandle(handle)
+}
+
 func shape_new_triangle_mesh(ptr unsafe.Pointer, mesh meshHandle) shapeHandle {
 	handle := C.goNewTriangleMeshShape((*C.char)(ptr), mesh)
 	return shapeHandle(handle)
