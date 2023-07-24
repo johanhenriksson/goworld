@@ -2,6 +2,7 @@ package physics
 
 import (
 	"fmt"
+	"reflect"
 	"unsafe"
 
 	"github.com/johanhenriksson/goworld/core/events"
@@ -10,8 +11,6 @@ import (
 
 type Shape interface {
 	object.Component
-
-	Type() ShapeType
 
 	OnChange() *events.Event[Shape]
 
@@ -29,37 +28,19 @@ const (
 	CompoundShape = ShapeType(6)
 )
 
-type shapeBase struct {
-	kind    ShapeType
-	handle  shapeHandle
-	changed *events.Event[Shape]
-}
-
-func newShapeBase(kind ShapeType) shapeBase {
-	return shapeBase{
-		kind:    kind,
-		changed: events.New[Shape](),
-	}
-}
-
-func (s *shapeBase) Type() ShapeType {
-	return s.kind
-}
-
-func (s *shapeBase) OnChange() *events.Event[Shape] {
-	return s.changed
-}
-
-func (s *shapeBase) shape() shapeHandle {
-	return s.handle
+// validates that a shape can be restored from a physics user pointer
+func checkShape(shape Shape) bool {
+	ptr := reflect.ValueOf(shape).Elem().UnsafeAddr()
+	restoreShape(unsafe.Pointer(ptr))
+	return true
 }
 
 func restoreShape(ptr unsafe.Pointer) Shape {
 	if ptr == unsafe.Pointer(uintptr(0)) {
 		panic("shape pointer is nil")
 	}
-	base := (*shapeBase)(ptr)
-	switch base.kind {
+	kind := *(*ShapeType)(ptr)
+	switch kind {
 	case BoxShape:
 		return (*Box)(ptr)
 	case CapsuleShape:
@@ -69,7 +50,7 @@ func restoreShape(ptr unsafe.Pointer) Shape {
 	case CompoundShape:
 		return (*Compound)(ptr)
 	default:
-		panic(fmt.Sprintf("invalid shape kind: %d", base.kind))
+		panic(fmt.Sprintf("invalid shape kind: %d", kind))
 	}
 }
 
@@ -78,7 +59,7 @@ func Shapes(cmp object.Component) []Shape {
 	group, isGroup := cmp.(object.Object)
 	if !isGroup {
 		if cmp.Parent() == nil {
-			// nothing more to do
+			return nil
 		} else {
 			group = cmp.Parent()
 		}

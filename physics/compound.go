@@ -2,7 +2,6 @@ package physics
 
 import (
 	"log"
-	"runtime"
 	"unsafe"
 
 	"github.com/johanhenriksson/goworld/core/object"
@@ -12,12 +11,10 @@ import (
 )
 
 type Compound struct {
-	shapeBase
-	object.Component
+	kind ShapeType
+	*Collider
 
-	compound bool
-	shapes   []*childShape
-	unsubTf  func()
+	shapes []*childShape
 }
 
 type childShape struct {
@@ -28,65 +25,38 @@ type childShape struct {
 	unsub    func()
 }
 
+var _ = checkShape(NewCompound())
+
 func NewCompound() *Compound {
 	cmp := object.NewComponent(&Compound{
-		shapeBase: newShapeBase(CompoundShape),
+		kind: CompoundShape,
 	})
-
-	cmp.handle = shape_new_compound(unsafe.Pointer(cmp))
-
-	runtime.SetFinalizer(cmp, func(c *Compound) {
-		c.destroy()
-	})
-
+	cmp.Collider = newCollider(cmp)
 	return cmp
 }
 
-func (c *Compound) Name() string {
-	return "CompoundShape"
+func (c *Compound) colliderCreate() shapeHandle {
+	return shape_new_compound(unsafe.Pointer(c))
 }
 
-func (c *Compound) Update(scene object.Component, dt float32) {
-	// log.Println("compound world scale", c.Transform().WorldScale().Scaled(1.2))
-	// shape_scaling_set(c.handle, c.Transform().WorldScale())
-}
-
-func (c *Compound) scale() vec3.T {
-	if c.compound {
-		return c.Transform().Scale()
+func (c *Compound) colliderDestroy() {
+	for _, shape := range c.shapes {
+		shape.unsub()
 	}
-	return c.Transform().WorldScale()
+	c.shapes = nil
 }
 
-func (c *Compound) OnEnable() {
-	c.compound = object.Get[*RigidBody](c) == nil && hasParentShape(c.Parent().Parent())
-	c.refresh()
-
-	// react to scale changes
-	lastScale := c.scale()
-	shape_scaling_set(c.handle, lastScale)
-	c.OnChange().Emit(c)
-
-	c.unsubTf = c.Transform().OnChange().Subscribe(func(t transform.T) {
-		newScale := c.scale()
-		if newScale != lastScale {
-			lastScale = newScale
-			shape_scaling_set(c.handle, newScale)
-			c.OnChange().Emit(c)
-			// raising OnChange is technically not required since we dont recreate the shape
-		}
-	})
+func (c *Compound) colliderIsCompound() bool {
+	return object.Get[*RigidBody](c) == nil && hasParentShape(c.Parent().Parent())
 }
 
-func (c *Compound) refresh() {
-	log.Println("refresh compound shape", c.Parent().Name())
-	c.destroy()
-	c.handle = shape_new_compound(unsafe.Pointer(c))
+func (cmp *Compound) OnEnable() {
+	cmp.Collider.OnEnable()
 
 	// find all shapes that should be combined into the compound mesh
 	// todo: also subscribe to attach/detach events on all relevant child objects
-	shapes := Shapes(c)
-	c.shapes = c.shapes[:0]
+	shapes := Shapes(cmp)
+	cmp.shapes = cmp.shapes[:0]
 	for i, shape := range shapes {
 		if shape.shape() == nil {
 			panic("child shape is nil")
@@ -96,30 +66,30 @@ func (c *Compound) refresh() {
 		child := &childShape{
 			Shape:    shape,
 			index:    i,
-			localPos: shape.Transform().Position().Mul(c.scale()),
+			localPos: shape.Transform().Position().Mul(cmp.scale()),
 			localRot: shape.Transform().Rotation(),
 		}
-		c.shapes = append(c.shapes, child)
+		cmp.shapes = append(cmp.shapes, child)
 
 		// shape_scaling_set(shape.shape(), localScale)
-		compound_add_child(c.handle, shape.shape(), child.localPos, child.localRot)
+		compound_add_child(cmp.handle, shape.shape(), child.localPos, child.localRot)
 		log.Println("add compound child", shape.Parent().Name(), child.localPos)
 
 		// child shape changes should trigger a complete recreation of the compound shape
 		unsubShape := shape.OnChange().Subscribe(func(s Shape) {
-			c.refresh()
+			cmp.refresh()
 		})
 
 		// adjust scale & local position on transform changes
 		unsubTf := shape.Transform().OnChange().Subscribe(func(t transform.T) {
-			newPos := t.Position().Mul(c.scale())
+			newPos := t.Position().Mul(cmp.scale())
 			newRot := t.Rotation()
 
 			if !newPos.ApproxEqual(child.localPos) || !newRot.ApproxEqual(child.localRot) {
-				compound_update_child(c.handle, child.index, newPos, newRot)
+				compound_update_child(cmp.handle, child.index, newPos, newRot)
 				child.localPos = newPos
 				child.localRot = newRot
-				c.OnChange().Emit(c)
+				cmp.OnChange().Emit(cmp)
 			}
 		})
 
@@ -128,15 +98,8 @@ func (c *Compound) refresh() {
 			unsubTf()
 		}
 	}
-	c.OnChange().Emit(c)
 }
 
-func (c *Compound) destroy() {
-	for _, shape := range c.shapes {
-		shape.unsub()
-	}
-	c.shapes = nil
-	if c.handle != nil {
-		shape_delete(&c.handle)
-	}
+func (c *Compound) Name() string {
+	return "CompoundShape"
 }
