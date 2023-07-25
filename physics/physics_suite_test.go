@@ -1,40 +1,104 @@
-package physics_test
+package physics
 
 import (
-	"log"
-	"testing"
-
-	"github.com/johanhenriksson/goworld/math/vec3"
-	"github.com/johanhenriksson/goworld/physics"
-
+	. "github.com/johanhenriksson/goworld/test"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+
+	"testing"
+
+	"github.com/johanhenriksson/goworld/core/object"
+	"github.com/johanhenriksson/goworld/math/vec3"
 )
 
 func TestPhysics(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Physics Suite")
+	RunSpecs(t, "physics")
 }
 
-var _ = Describe("physics tests", func() {
-	It("creates a new dynamics world", func() {
-		world := physics.NewWorld()
-		world.SetGravity(vec3.New(0, -10, 0))
+var _ = Describe("general physics tests", func() {
+	var (
+		scene object.Object
+		world *World
+	)
 
-		boxShape := physics.NewBox(vec3.One)
-		box := physics.NewRigidBody(10, boxShape)
-		// box.SetPosition(vec3.New(0, 2, 0))
-		world.AddRigidBody(box)
+	BeforeEach(func() {
+		scene = object.Scene()
+		world = NewWorld()
+		object.Attach(scene, world)
+	})
 
-		groundShape := physics.NewBox(vec3.New(100, 1, 100))
-		ground := physics.NewRigidBody(0, groundShape)
-		ground.SetPosition(vec3.New(0, -5, 0))
-		world.AddRigidBody(ground)
+	Context("rigidbody dynamics", func() {
+		var (
+			body *RigidBody
+			box  *Box
+			obj  object.Object
+		)
 
-		steps := 100
-		for i := 0; i < steps; i++ {
-			world.Step(float32(1) / 60)
-			log.Println(box.Position())
-		}
+		BeforeEach(func() {
+			body = NewRigidBody(1)
+			box = NewBox(vec3.One)
+			obj = object.Builder(object.Empty("physics object")).
+				Attach(body).
+				Attach(box).
+				Parent(scene).
+				Create()
+		})
+
+		It("connects and obejcts to the physics world", func() {
+			Expect(body.world).To(Equal(world))
+			Expect(body.shape).To(Equal(box))
+		})
+
+		It("simulates rigidbody movement", func() {
+			// ... run simulation ...
+			world.Update(scene, 0.1)
+
+			Expect(obj.Transform().Position().Y).To(BeNumerically("<", 0), "the box should have fallen")
+		})
+
+		It("returns correct raycast results", func() {
+			// raycast towards the origin should hit the box
+			hit, ok := world.Raycast(vec3.New(0, 5, 0), vec3.Zero)
+			Expect(ok).To(BeTrue())
+			Expect(hit.Point).To(BeApproxVec3(vec3.New(0, 1, 0)))
+		})
+	})
+
+	Context("kinematic rigidbodies", func() {
+		var (
+			body *RigidBody
+			box  *Box
+			obj  object.Object
+		)
+
+		BeforeEach(func() {
+			body = NewRigidBody(0)
+			box = NewBox(vec3.One)
+			obj = object.Builder(object.Empty("physics object")).
+				Attach(body).
+				Attach(box).
+				Parent(scene).
+				Create()
+		})
+
+		It("connects and obejcts to the physics world", func() {
+			Expect(body.world).To(Equal(world))
+			Expect(body.shape).To(Equal(box))
+		})
+
+		It("kinematic rigidbodies do not move", func() {
+			// ... run simulation ...
+			world.Update(scene, 0.1)
+
+			Expect(obj.Transform().Position().Y).To(BeNumerically("~", 0), "the box should not have fallen")
+		})
+
+		It("returns correct raycast results", func() {
+			// raycast towards the origin should hit the box
+			hit, ok := world.Raycast(vec3.New(0, 5, 0), vec3.Zero)
+			Expect(ok).To(BeTrue())
+			Expect(hit.Point).To(BeApproxVec3(vec3.New(0, 1, 0)))
+		})
 	})
 })
