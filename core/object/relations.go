@@ -152,14 +152,11 @@ func GetAll[K Component](self Component) []K {
 	return results
 }
 
-// Gets a reference to a component of type K on the same object as the component/object specified, or any parent of the object.
+// Gets the first reference to a component of type K in any parent of the object/component.
+// For component targets, sibling components will be returned.
 func GetInParents[K Component](self Component) K {
 	var empty K
-	group, ok := self.(Object)
-	if !ok {
-		group = self.Parent()
-	}
-
+	group := self.Parent()
 	for group != nil {
 		if hit, ok := group.(K); ok {
 			return hit
@@ -178,12 +175,10 @@ func GetInParents[K Component](self Component) K {
 	return empty
 }
 
-// Gets references to all components of type K on the same object as the component/object specified, or any parent of the object.
+// Gets references to all components of type K in any parent of the object/component.
+// For component targets, sibling components will be returned.
 func GetAllInParents[K Component](self Component) []K {
-	group, ok := self.(Object)
-	if !ok {
-		group = self.Parent()
-	}
+	group := self.Parent()
 	var results []K
 	for group != nil {
 		if hit, ok := group.(K); ok {
