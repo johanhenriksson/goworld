@@ -46,10 +46,6 @@ func NewGraph(app vulkan.App) T {
 		forward := g.Node(pass.NewForwardPass(app, target, gbuffer))
 		forward.After(deferred, core1_0.PipelineStageTopOfPipe)
 
-		// at this point we are done writing to the gbuffer, so we may copy it.
-		gbufferCopy := g.Node(pass.NewGBufferCopyPass(gbuffer))
-		gbufferCopy.After(forward, core1_0.PipelineStageTopOfPipe)
-
 		lines := g.Node(pass.NewLinePass(app, target))
 		lines.After(forward, core1_0.PipelineStageTopOfPipe)
 
