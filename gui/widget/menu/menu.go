@@ -92,9 +92,21 @@ func Item(key string, props ItemProps) node.T {
 			}
 		}
 
-		var items []node.T
+		items := make([]node.T, 0, len(props.Items)+1)
 		if open {
-			items = util.Map(props.Items, func(item ItemProps) node.T {
+			items = append(items, rect.New("menu-exit", rect.Props{
+				Style: rect.Style{
+					Position: style.Absolute{
+						Left: style.Px(-2000),
+						Top:  style.Px(-2000),
+					},
+					Width:  style.Px(5000),
+					Height: style.Px(5000),
+				},
+				OnMouseUp:   func(e mouse.Event) { setOpen(false) },
+				OnMouseDown: func(e mouse.Event) { setOpen(false) },
+			}))
+			items = append(items, util.Map(props.Items, func(item ItemProps) node.T {
 				return Item(item.Key, ItemProps{
 					Key:      item.Key,
 					Title:    item.Title,
@@ -104,7 +116,7 @@ func Item(key string, props ItemProps) node.T {
 					Close:    close,
 					OpenDown: false,
 				})
-			})
+			})...)
 		}
 
 		itemPos := style.Absolute{
