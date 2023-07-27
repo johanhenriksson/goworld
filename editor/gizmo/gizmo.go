@@ -4,7 +4,6 @@ import (
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/math/mat4"
-	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/physics"
 	"github.com/johanhenriksson/goworld/render"
 )
@@ -26,18 +25,8 @@ type Gizmo interface {
 }
 
 // Implements mouse dragging behaviour for Gizmos. Move to editor.ToolManager?
-func HandleMouse(m Gizmo, e mouse.Event) {
-	vpi := m.Camera()
-	vpi = vpi.Invert()
-	cursor := m.Viewport().NormalizeCursor(e.Position())
-
-	near := vpi.TransformPoint(vec3.New(cursor.X, cursor.Y, 0))
-	far := vpi.TransformPoint(vec3.New(cursor.X, cursor.Y, 1))
-
-	world := object.GetInParents[*physics.World](m)
-	hit, ok := world.Raycast(near, far)
-
-	// problem: this consumes all mouse events when a gizmo is active
+func HandleMouse(m Gizmo, e mouse.Event, hit physics.RaycastHit) {
+	ok := hit.Shape != nil
 
 	if m.Dragging() {
 		if e.Action() == mouse.Release && e.Button() == mouse.Button1 {

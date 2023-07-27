@@ -145,6 +145,9 @@ func (g *Mover) Target() transform.T {
 func (g *Mover) SetTarget(t transform.T) {
 	g.Transform().SetParent(t)
 	g.target = t
+	if t == nil {
+		g.DragEnd(mouse.NopEvent())
+	}
 }
 
 func (g *Mover) CanDeselect() bool {
@@ -251,6 +254,6 @@ func (g *Mover) Dragging() bool          { return g.dragging }
 func (g *Mover) Viewport() render.Screen { return g.viewport }
 func (g *Mover) Camera() mat4.T          { return g.vp }
 
-func (m *Mover) MouseEvent(e mouse.Event) {
-	HandleMouse(m, e)
+func (m *Mover) ToolMouseEvent(e mouse.Event, hover physics.RaycastHit) {
+	HandleMouse(m, e, hover)
 }

@@ -15,8 +15,8 @@ import (
 
 type Tool interface {
 	object.Component
-	mouse.Handler
 	CanDeselect() bool
+	ToolMouseEvent(e mouse.Event, hover physics.RaycastHit)
 }
 
 type Action struct {
@@ -55,9 +55,6 @@ func NewToolManager() ToolManager {
 			Active(false).
 			Create(),
 
-		// Separate physics world for editor tools
-		Physics: physics.NewWorld(),
-
 		selected: make([]T, 0, 16),
 	})
 }
@@ -70,20 +67,6 @@ func (m *toolmgr) MouseEvent(e mouse.Event) {
 	vpi := m.camera.Invert()
 	cursor := m.viewport.NormalizeCursor(e.Position())
 
-	if m.tool != nil {
-		// we have a tool selected.
-		// pass on the mouse event
-		m.tool.MouseEvent(e)
-		if e.Handled() {
-			return
-		}
-	}
-
-	canReselect := m.selected == nil || m.tool == nil || m.tool.CanDeselect()
-	if !canReselect {
-		return
-	}
-
 	// calculate a ray going into the screen
 	near := vpi.TransformPoint(vec3.New(cursor.X, cursor.Y, 0))
 	far := vpi.TransformPoint(vec3.New(cursor.X, cursor.Y, 1))
@@ -92,9 +75,22 @@ func (m *toolmgr) MouseEvent(e mouse.Event) {
 	if world == nil {
 		return
 	}
-
 	hit, _ := world.Raycast(near, far)
+
+	if m.tool != nil {
+		// pass on the mouse event
+		m.tool.ToolMouseEvent(e, hit)
+		if e.Handled() {
+			return
+		}
+	}
+
 	if hit.Shape == nil {
+		return
+	}
+
+	canReselect := m.selected == nil || m.tool == nil || m.tool.CanDeselect()
+	if !canReselect {
 		return
 	}
 
@@ -110,11 +106,6 @@ func (m *toolmgr) MouseEvent(e mouse.Event) {
 			// deselect
 			m.setSelect(e, nil)
 		}
-	}
-
-	if editor != nil && e.Action() == mouse.Move {
-		// point := editor.Transform().Unproject(hit.Point)
-		// log.Println("hover", editor.Name(), point)
 	}
 }
 
