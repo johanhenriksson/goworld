@@ -64,9 +64,9 @@ func (w *World) removeObject(obj Object) bool {
 	return false
 }
 
-func (w *World) addRigidBody(body *RigidBody) {
+func (w *World) addRigidBody(body *RigidBody, layer, mask Mask) {
 	if w.addObject(body) {
-		world_add_rigidbody(w.handle, body.handle)
+		world_add_rigidbody(w.handle, body.handle, layer, mask)
 	}
 }
 

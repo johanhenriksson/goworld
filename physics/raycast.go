@@ -10,8 +10,8 @@ type RaycastHit struct {
 	Normal vec3.T
 }
 
-func (w *World) Raycast(from, to vec3.T) (hit RaycastHit, exists bool) {
-	result, didHit := world_raycast(w.handle, from, to)
+func (w *World) Raycast(from, to vec3.T, mask Mask) (hit RaycastHit, exists bool) {
+	result, didHit := world_raycast(w.handle, from, to, mask)
 	if didHit {
 		exists = true
 		hit = RaycastHit{

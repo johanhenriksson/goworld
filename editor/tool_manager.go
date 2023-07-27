@@ -19,6 +19,8 @@ type Tool interface {
 	ToolMouseEvent(e mouse.Event, hover physics.RaycastHit)
 }
 
+const ToolLayer = physics.Mask(2)
+
 type Action struct {
 	Name     string
 	Key      keys.Code
@@ -75,7 +77,7 @@ func (m *toolmgr) MouseEvent(e mouse.Event) {
 	if world == nil {
 		return
 	}
-	hit, _ := world.Raycast(near, far)
+	hit, _ := world.Raycast(near, far, 1)
 
 	if m.tool != nil {
 		// pass on the mouse event

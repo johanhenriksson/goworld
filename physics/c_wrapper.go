@@ -59,8 +59,8 @@ func world_delete(world *worldHandle) {
 	*world = nil
 }
 
-func world_add_rigidbody(world worldHandle, body rigidbodyHandle) {
-	C.goAddRigidBody(world, body)
+func world_add_rigidbody(world worldHandle, body rigidbodyHandle, group, mask Mask) {
+	C.goAddRigidBody(world, body, C.int(group), C.int(mask))
 }
 
 func world_remove_rigidbody(world worldHandle, body rigidbodyHandle) {
@@ -101,8 +101,8 @@ type raycastResult struct {
 	normal vec3.T
 }
 
-func world_raycast(world worldHandle, from, to vec3.T) (result raycastResult, hit bool) {
-	hits := C.goRayCast(world, vec3ptr(&from), vec3ptr(&to), (*C.goRayCastResult)(unsafe.Pointer(&result)))
+func world_raycast(world worldHandle, from, to vec3.T, mask Mask) (result raycastResult, hit bool) {
+	hits := C.goRayCast(world, vec3ptr(&from), vec3ptr(&to), C.int(mask), (*C.goRayCastResult)(unsafe.Pointer(&result)))
 	if hits > 0 {
 		hit = true
 	}

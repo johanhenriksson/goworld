@@ -18,12 +18,18 @@ type RigidBody struct {
 	tfparent transform.T
 	shape    Shape
 
+	Layer *object.Property[Mask]
+	Mask  *object.Property[Mask]
+
 	shunsub func()
 }
 
 func NewRigidBody(mass float32) *RigidBody {
 	body := object.NewComponent(&RigidBody{
 		mass: mass,
+
+		Layer: object.NewProperty(Mask(1)),
+		Mask:  object.NewProperty(All),
 	})
 	runtime.SetFinalizer(body, func(b *RigidBody) {
 		b.destroy()
@@ -82,7 +88,7 @@ func (b *RigidBody) OnEnable() {
 
 	b.world = object.GetInParents[*World](b)
 	if b.world != nil {
-		b.world.addRigidBody(b)
+		b.world.addRigidBody(b, b.Layer.Get(), b.Mask.Get())
 
 		// detach object transform from parent
 		if !b.Kinematic() {

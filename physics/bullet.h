@@ -77,7 +77,7 @@ extern void goDeleteDynamicsWorld(goDynamicsWorldHandle world);
 
 extern void goStepSimulation(goDynamicsWorldHandle, goReal timeStep);
 
-extern void goAddRigidBody(goDynamicsWorldHandle world, goRigidBodyHandle object);
+extern void goAddRigidBody(goDynamicsWorldHandle world, goRigidBodyHandle object, int group, int mask);
 
 extern void goRemoveRigidBody(goDynamicsWorldHandle world, goRigidBodyHandle object);
 
@@ -137,7 +137,8 @@ typedef struct goRayCastResult {
     goVector3 normal;
 } goRayCastResult;
 
-extern int goRayCast(goDynamicsWorldHandle world, goVector3* rayStart, goVector3* rayEnd, goRayCastResult* res);
+extern int goRayCast(goDynamicsWorldHandle world, goVector3* rayStart, goVector3* rayEnd, int mask,
+                     goRayCastResult* res);
 
 // debugging
 

@@ -63,13 +63,13 @@ void goStepSimulation(goDynamicsWorldHandle world, goReal timeStep) {
     dynamicsWorld->stepSimulation(timeStep);
 }
 
-void goAddRigidBody(goDynamicsWorldHandle world, goRigidBodyHandle object) {
+void goAddRigidBody(goDynamicsWorldHandle world, goRigidBodyHandle object, int group, int mask) {
     btDynamicsWorld* dynamicsWorld = reinterpret_cast<btDynamicsWorld*>(world);
     btAssert(dynamicsWorld);
     btRigidBody* body = reinterpret_cast<btRigidBody*>(object);
     btAssert(body);
 
-    dynamicsWorld->addRigidBody(body);
+    dynamicsWorld->addRigidBody(body, group, mask);
 }
 
 void goRemoveRigidBody(goDynamicsWorldHandle world, goRigidBodyHandle object) {
@@ -325,13 +325,14 @@ void goDebugDraw(goDynamicsWorldHandle world) {
     dynamicsWorld->debugDrawWorld();
 }
 
-int goRayCast(goDynamicsWorldHandle world, goVector3* rayStart, goVector3* rayEnd, goRayCastResult* res) {
+int goRayCast(goDynamicsWorldHandle world, goVector3* rayStart, goVector3* rayEnd, int mask, goRayCastResult* res) {
     btDynamicsWorld* dynamicsWorld = reinterpret_cast<btDynamicsWorld*>(world);
     btAssert(dynamicsWorld);
 
     auto from = vec3FromGo(rayStart);
     auto to = vec3FromGo(rayEnd);
     auto callback = btCollisionWorld::ClosestRayResultCallback(from, to);
+    callback.m_collisionFilterMask = mask;
 
     dynamicsWorld->rayTest(from, to, callback);
 

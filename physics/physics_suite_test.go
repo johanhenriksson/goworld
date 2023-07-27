@@ -45,7 +45,7 @@ var _ = Describe("general physics tests", func() {
 				Create()
 		})
 
-		It("connects and obejcts to the physics world", func() {
+		It("connects and objects to the physics world", func() {
 			Expect(body.world).To(Equal(world))
 			Expect(body.shape).To(Equal(box))
 		})
@@ -59,7 +59,7 @@ var _ = Describe("general physics tests", func() {
 
 		It("returns correct raycast results", func() {
 			// raycast towards the origin should hit the box
-			hit, ok := world.Raycast(vec3.New(0, 5, 0), vec3.Zero)
+			hit, ok := world.Raycast(vec3.New(0, 5, 0), vec3.Zero, All)
 			Expect(ok).To(BeTrue())
 			Expect(hit.Point).To(BeApproxVec3(vec3.New(0, 1, 0)))
 		})
@@ -82,7 +82,7 @@ var _ = Describe("general physics tests", func() {
 				Create()
 		})
 
-		It("connects and obejcts to the physics world", func() {
+		It("connects and objects to the physics world", func() {
 			Expect(body.world).To(Equal(world))
 			Expect(body.shape).To(Equal(box))
 		})
@@ -96,7 +96,7 @@ var _ = Describe("general physics tests", func() {
 
 		It("returns correct raycast results", func() {
 			// raycast towards the origin should hit the box
-			hit, ok := world.Raycast(vec3.New(0, 5, 0), vec3.Zero)
+			hit, ok := world.Raycast(vec3.New(0, 5, 0), vec3.Zero, All)
 			Expect(ok).To(BeTrue())
 			Expect(hit.Point).To(BeApproxVec3(vec3.New(0, 1, 0)))
 		})
