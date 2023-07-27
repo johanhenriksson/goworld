@@ -45,6 +45,8 @@ type toolmgr struct {
 
 	// built-in tools
 	Mover *gizmo.Mover
+
+	Physics *physics.World
 }
 
 func NewToolManager() ToolManager {
@@ -52,6 +54,9 @@ func NewToolManager() ToolManager {
 		Mover: object.Builder(gizmo.NewMover()).
 			Active(false).
 			Create(),
+
+		// Separate physics world for editor tools
+		Physics: physics.NewWorld(),
 
 		selected: make([]T, 0, 16),
 	})
