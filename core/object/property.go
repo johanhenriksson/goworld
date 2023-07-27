@@ -23,9 +23,11 @@ type Property[T PropValue] struct {
 	OnChange *events.Event[T]
 }
 
-func NewProperty[T PropValue](def T) *Property[T] {
+var _ GenericProp = &Property[int]{}
+
+func NewProperty[T PropValue](def T) Property[T] {
 	var empty T
-	return &Property[T]{
+	return Property[T]{
 		value: def,
 		def:   def,
 		kind:  reflect.TypeOf(empty),
@@ -84,7 +86,8 @@ func Properties(target Component) []PropInfo {
 		}
 
 		value := v.Field(i)
-		if prop, isProp := value.Interface().(GenericProp); isProp {
+
+		if prop, isProp := value.Addr().Interface().(GenericProp); isProp {
 			// todo: tags
 
 			properties = append(properties, PropInfo{

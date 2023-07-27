@@ -18,8 +18,8 @@ type RigidBody struct {
 	tfparent transform.T
 	shape    Shape
 
-	Layer *object.Property[Mask]
-	Mask  *object.Property[Mask]
+	Layer object.Property[Mask]
+	Mask  object.Property[Mask]
 
 	shunsub func()
 }

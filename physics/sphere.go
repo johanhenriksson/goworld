@@ -9,7 +9,8 @@ import (
 type Sphere struct {
 	kind ShapeType
 	*Collider
-	Radius *object.Property[float32]
+
+	Radius object.Property[float32]
 }
 
 func NewSphere() *Sphere {

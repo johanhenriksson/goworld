@@ -11,8 +11,8 @@ type Capsule struct {
 	kind ShapeType
 	*Collider
 
-	Radius *object.Property[float32]
-	Height *object.Property[float32]
+	Radius object.Property[float32]
+	Height object.Property[float32]
 }
 
 var _ = checkShape(NewCapsule(1, 1))

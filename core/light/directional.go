@@ -29,9 +29,9 @@ type Directional struct {
 	object.Component
 	cascades []Cascade
 
-	Color     *object.Property[color.T]
-	Intensity *object.Property[float32]
-	Shadows   *object.Property[bool]
+	Color     object.Property[color.T]
+	Intensity object.Property[float32]
+	Shadows   object.Property[bool]
 }
 
 var _ T = &Directional{}

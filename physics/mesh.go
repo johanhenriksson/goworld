@@ -16,7 +16,7 @@ type Mesh struct {
 	meshHandle meshHandle
 	unsub      func()
 
-	Mesh *object.Property[vertex.Mesh]
+	Mesh object.Property[vertex.Mesh]
 }
 
 var _ = checkShape(NewMesh())

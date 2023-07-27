@@ -12,7 +12,7 @@ type Box struct {
 	kind ShapeType
 	*Collider
 
-	Extents *object.Property[vec3.T]
+	Extents object.Property[vec3.T]
 }
 
 var _ = checkShape(NewBox(vec3.Zero))

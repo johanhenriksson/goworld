@@ -42,7 +42,7 @@ type Static struct {
 	center vec3.T
 	radius float32
 
-	VertexData *object.Property[vertex.Mesh]
+	VertexData object.Property[vertex.Mesh]
 }
 
 // New creates a new mesh component
@@ -79,7 +79,7 @@ func (m *Static) Name() string {
 	return "Mesh"
 }
 
-func (m *Static) Mesh() *object.Property[vertex.Mesh] { return m.VertexData }
+func (m *Static) Mesh() *object.Property[vertex.Mesh] { return &m.VertexData }
 
 func (m *Static) Texture(slot string) texture.Ref {
 	return m.textures[slot]

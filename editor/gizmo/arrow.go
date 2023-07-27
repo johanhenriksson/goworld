@@ -18,7 +18,7 @@ type Arrow struct {
 	Body      *cylinder.Cylinder
 	Collider  *physics.Compound
 
-	Hover *object.Property[bool]
+	Hover object.Property[bool]
 }
 
 func NewArrow(clr color.T) *Arrow {

@@ -19,9 +19,9 @@ type Point struct {
 
 	Attenuation Attenuation
 
-	Color     *object.Property[color.T]
-	Range     *object.Property[float32]
-	Intensity *object.Property[float32]
+	Color     object.Property[color.T]
+	Range     object.Property[float32]
+	Intensity object.Property[float32]
 }
 
 var _ T = &Point{}
