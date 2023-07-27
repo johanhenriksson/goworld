@@ -28,13 +28,14 @@ type T interface {
 type Props struct {
 	Style    Style
 	Text     string
-	OnClick  mouse.Callback
 	OnChange ChangeCallback
 	OnBlur   func()
 
-	OnKeyUp   keys.Callback
-	OnKeyDown keys.Callback
-	OnKeyChar keys.Callback
+	OnMouseUp   mouse.Callback
+	OnMouseDown mouse.Callback
+	OnKeyUp     keys.Callback
+	OnKeyDown   keys.Callback
+	OnKeyChar   keys.Callback
 }
 
 type label struct {
@@ -341,11 +342,12 @@ func (l *label) MouseEvent(e mouse.Event) {
 			l.props.Style.Apply(l, l.state)
 		}
 
-		// click event
-		// todo: separate into mouse down/up?
-		if e.Action() == mouse.Press && l.props.OnClick != nil {
-			l.props.OnClick(e)
-			e.Consume()
+		// button events
+		if e.Action() == mouse.Press && l.props.OnMouseDown != nil {
+			l.props.OnMouseDown(e)
+		}
+		if e.Action() == mouse.Release && l.props.OnMouseUp != nil {
+			l.props.OnMouseUp(e)
 		}
 
 		// take input keyboard focus

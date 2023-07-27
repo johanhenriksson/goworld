@@ -32,8 +32,10 @@ func render(props Props) node.T {
 		OnMouseUp: func(e mouse.Event) {
 			// grab input focus
 			// ... but how?
+			e.Consume()
 		},
 		OnMouseDown: func(e mouse.Event) {
+			e.Consume()
 		},
 		Children: []node.T{
 			label.New("input", label.Props{

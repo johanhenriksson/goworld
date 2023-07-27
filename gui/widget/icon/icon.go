@@ -17,16 +17,18 @@ const (
 )
 
 type IconProps struct {
-	Icon    Icon
-	Size    int
-	Color   color.T
-	OnClick func(mouse.Event)
+	Icon        Icon
+	Size        int
+	Color       color.T
+	OnMouseUp   func(mouse.Event)
+	OnMouseDown func(mouse.Event)
 }
 
 func New(key string, props IconProps) node.T {
 	return label.New(key, label.Props{
-		Text:    string(props.Icon),
-		OnClick: props.OnClick,
+		Text:        string(props.Icon),
+		OnMouseUp:   props.OnMouseUp,
+		OnMouseDown: props.OnMouseDown,
 		Style: label.Style{
 			Color: props.Color,
 			Font: style.Font{

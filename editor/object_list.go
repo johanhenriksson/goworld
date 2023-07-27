@@ -87,7 +87,7 @@ func ObjectListEntry(key string, props ObjectListEntryProps) node.T {
 							Icon:  ico,
 							Color: clr,
 							Size:  18,
-							OnClick: func(e mouse.Event) {
+							OnMouseDown: func(e mouse.Event) {
 								setOpen(!open)
 							},
 						})),
@@ -98,7 +98,7 @@ func ObjectListEntry(key string, props ObjectListEntryProps) node.T {
 						})),
 						label.New("title", label.Props{
 							Text: obj.Name(),
-							OnClick: func(e mouse.Event) {
+							OnMouseDown: func(e mouse.Event) {
 								if props.OnSelect != nil {
 									props.OnSelect(obj)
 								}

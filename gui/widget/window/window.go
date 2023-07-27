@@ -36,7 +36,9 @@ func render(props Props) node.T {
 	}
 
 	return rect.New("window", rect.Props{
-		OnMouseDown: func(e mouse.Event) {},
+		OnMouseDown: func(e mouse.Event) {
+			e.Consume()
+		},
 		Style: rect.Style{
 			Position: cssPos,
 			MaxWidth: props.Style.MaxWidth,
@@ -44,19 +46,22 @@ func render(props Props) node.T {
 		},
 		Children: []node.T{
 			rect.New("titlebar", rect.Props{
-				Style: TitlebarStyle,
+				Style:     TitlebarStyle,
+				OnMouseUp: func(e mouse.Event) { e.Consume() },
 				OnMouseDown: func(e mouse.Event) {
 					if !props.Floating {
 						return
 					}
 					offset := e.Position().Sub(position)
 					setDragOffset(offset)
+					e.Consume()
 				},
 				OnMouseDrag: func(e mouse.Event) {
 					if !props.Floating {
 						return
 					}
 					setPosition(e.Position().Sub(dragOffset))
+					e.Consume()
 				},
 				Children: []node.T{
 					label.New("title", label.Props{

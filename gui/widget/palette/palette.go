@@ -38,6 +38,7 @@ func render(props Props) node.T {
 				if props.OnPick != nil {
 					props.OnPick(c)
 				}
+				e.Consume()
 			},
 		})
 	})

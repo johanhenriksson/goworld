@@ -254,7 +254,6 @@ func (f *rect) MouseEvent(e mouse.Event) {
 
 			if f.props.OnMouseDown != nil {
 				f.props.OnMouseDown(e)
-				e.Consume()
 			}
 		}
 		if e.Action() == mouse.Release {
@@ -263,7 +262,6 @@ func (f *rect) MouseEvent(e mouse.Event) {
 
 			if f.props.OnMouseUp != nil {
 				f.props.OnMouseUp(e)
-				e.Consume()
 			}
 		}
 

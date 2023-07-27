@@ -134,21 +134,25 @@ func Item(key string, props ItemProps) node.T {
 					Children: []node.T{
 						label.New("title", label.Props{
 							Text: props.Title,
-							OnClick: func(e mouse.Event) {
-								if len(props.Items) > 0 {
-									// open submenu
-									setOpen(!open)
-								} else {
-									if props.OnClick != nil {
-										props.OnClick(e)
-									}
-									close()
-								}
-							},
 							Style: label.Style{
 								Color: props.Style.TextColor,
 							},
 						}),
+					},
+					OnMouseUp: func(e mouse.Event) {
+						e.Consume()
+					},
+					OnMouseDown: func(e mouse.Event) {
+						if len(props.Items) > 0 {
+							// open submenu
+							setOpen(!open)
+						} else {
+							if props.OnClick != nil {
+								props.OnClick(e)
+							}
+							close()
+						}
+						e.Consume()
 					},
 				}),
 				rect.New(props.Key+"-items", rect.Props{
