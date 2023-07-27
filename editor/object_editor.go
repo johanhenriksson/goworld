@@ -52,5 +52,24 @@ func (e *ObjectEditor) Actions() []Action {
 				mgr.MoveTool(e.target)
 			},
 		},
+		{
+			Name: "Select Parent",
+			Key:  keys.U,
+			Callback: func(mgr ToolManager) {
+				parent := e.target.Parent()
+				if parent == nil {
+					return
+				}
+
+				editor, hit := object.NewQuery[T]().Where(func(e T) bool {
+					return e.Target() == parent
+				}).First(object.Root(e))
+				if !hit {
+					return
+				}
+
+				mgr.Select(editor)
+			},
+		},
 	}
 }
