@@ -1,7 +1,6 @@
 package physics
 
 import (
-	"log"
 	"runtime"
 
 	"github.com/johanhenriksson/goworld/core/events"
@@ -10,17 +9,13 @@ import (
 	"github.com/johanhenriksson/goworld/math/vec3"
 )
 
-func defaultCompoundCheck(c object.Component) bool {
-	return hasParentShape(c.Parent()) || hasParentShape(c.Parent().Parent())
-}
-
 type Collider struct {
 	object.Component
 	colliderImpl
 
 	handle    shapeHandle
 	changed   *events.Event[Shape]
-	compound  bool
+	scaled    bool
 	lastScale vec3.T
 
 	unsubTf func()
@@ -28,21 +23,22 @@ type Collider struct {
 
 type colliderImpl interface {
 	colliderCreate() shapeHandle
+	colliderRefresh()
 	colliderDestroy()
 	colliderIsCompound() bool
 }
 
 var _ Shape = &Collider{}
 
-func newCollider(impl colliderImpl) *Collider {
+func newCollider(impl colliderImpl, scaled bool) *Collider {
 	col := object.NewComponent(&Collider{
 		colliderImpl: impl,
 		changed:      events.New[Shape](),
-		lastScale:    vec3.One,
+		scaled:       scaled,
 	})
 
-	// trigger initial resize
-	col.refresh()
+	// create initial handle
+	col.handle = col.colliderCreate()
 
 	runtime.SetFinalizer(col, func(b *Collider) {
 		b.destroy()
@@ -50,33 +46,33 @@ func newCollider(impl colliderImpl) *Collider {
 	return col
 }
 
-func (s *Collider) OnChange() *events.Event[Shape] {
-	return s.changed
+func (c *Collider) OnChange() *events.Event[Shape] {
+	return c.changed
 }
 
-func (s *Collider) shape() shapeHandle {
-	return s.handle
+func (c *Collider) shape() shapeHandle {
+	return c.handle
 }
 
-func (b *Collider) scale() vec3.T {
-	if b.compound {
-		return b.Transform().Scale()
+func (c *Collider) scale() vec3.T {
+	if c.scaled {
+		return c.Transform().WorldScale()
 	}
-	return b.Transform().WorldScale()
+	return vec3.One
 }
 
 func (c *Collider) OnEnable() {
-	// check if the collider is part of a compound shape.
-	// if it is, it should be scaled according to its local scale factor
-	c.compound = c.colliderIsCompound()
-	log.Println("collider", c.Parent().Name(), "is compound:", c.compound)
-
+	// subscribe to transform updates so that we may react to scale changes
+	if c.unsubTf != nil {
+		panic("should not be subscribed")
+	}
 	c.unsubTf = c.Transform().OnChange().Subscribe(c.transformRefresh)
 	c.transformRefresh(c.Transform())
 }
 
-func (b *Collider) OnDisable() {
-	b.unsubTf()
+func (c *Collider) OnDisable() {
+	c.unsubTf()
+	c.unsubTf = nil
 }
 
 func (c *Collider) transformRefresh(t transform.T) {
@@ -85,7 +81,6 @@ func (c *Collider) transformRefresh(t transform.T) {
 		return
 	}
 
-	log.Println("collider scale update", c.Parent().Name(), ":", newScale)
 	c.lastScale = newScale
 	shape_scaling_set(c.handle, newScale)
 
@@ -93,16 +88,17 @@ func (c *Collider) transformRefresh(t transform.T) {
 	c.OnChange().Emit(c)
 }
 
-func (b *Collider) refresh() {
-	b.destroy()
-	b.handle = b.colliderCreate()
-	shape_scaling_set(b.handle, b.scale())
-	b.OnChange().Emit(b)
+func (c *Collider) refresh() {
+	c.destroy()
+	c.handle = c.colliderCreate()
+	c.colliderRefresh()
+	shape_scaling_set(c.handle, c.scale())
+	c.OnChange().Emit(c)
 }
 
-func (b *Collider) destroy() {
-	b.colliderDestroy()
-	if b.handle != nil {
-		shape_delete(&b.handle)
+func (c *Collider) destroy() {
+	c.colliderDestroy()
+	if c.handle != nil {
+		shape_delete(&c.handle)
 	}
 }

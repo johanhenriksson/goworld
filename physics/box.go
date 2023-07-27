@@ -22,7 +22,7 @@ func NewBox(size vec3.T) *Box {
 		kind:    BoxShape,
 		Extents: object.NewProperty(size),
 	})
-	box.Collider = newCollider(box)
+	box.Collider = newCollider(box, true)
 
 	// resize shape when extents are modified
 	box.Extents.OnChange.Subscribe(func(t vec3.T) {
@@ -44,8 +44,5 @@ func (b *Box) colliderCreate() shapeHandle {
 	return shape_new_box(unsafe.Pointer(b), b.Extents.Get())
 }
 
-func (b *Box) colliderIsCompound() bool {
-	return defaultCompoundCheck(b)
-}
-
+func (b *Box) colliderRefresh() {}
 func (b *Box) colliderDestroy() {}

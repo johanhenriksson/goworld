@@ -23,7 +23,7 @@ func NewCapsule(height, radius float32) *Capsule {
 		Radius: object.NewProperty(radius),
 		Height: object.NewProperty(height),
 	})
-	capsule.Collider = newCollider(capsule)
+	capsule.Collider = newCollider(capsule, true)
 
 	capsule.Radius.OnChange.Subscribe(func(radius float32) {
 		capsule.refresh()
@@ -47,8 +47,5 @@ func (c *Capsule) colliderCreate() shapeHandle {
 	return shape_new_capsule(unsafe.Pointer(c), c.Radius.Get(), c.Height.Get())
 }
 
-func (c *Capsule) colliderIsCompound() bool {
-	return defaultCompoundCheck(c)
-}
-
+func (c *Capsule) colliderRefresh() {}
 func (c *Capsule) colliderDestroy() {}

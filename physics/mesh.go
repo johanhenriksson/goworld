@@ -1,7 +1,6 @@
 package physics
 
 import (
-	"log"
 	"unsafe"
 
 	"github.com/johanhenriksson/goworld/core/mesh"
@@ -30,7 +29,7 @@ func NewMesh() *Mesh {
 		Mesh: object.NewProperty[vertex.Mesh](nil),
 	})
 
-	mesh.Collider = newCollider(mesh)
+	mesh.Collider = newCollider(mesh, true)
 
 	// refresh physics mesh when the mesh property is changed
 	// unsub to old mesh?
@@ -55,13 +54,12 @@ func (m *Mesh) colliderCreate() shapeHandle {
 	return shape_new_triangle_mesh(unsafe.Pointer(m), m.meshHandle)
 }
 
+func (m *Mesh) colliderRefresh() {}
+
 func (m *Mesh) colliderDestroy() {
 	if m.meshHandle != nil {
 		mesh_delete(&m.meshHandle)
 	}
-}
-func (m *Mesh) colliderIsCompound() bool {
-	return defaultCompoundCheck(m)
 }
 
 func (m *Mesh) Name() string {
@@ -71,13 +69,9 @@ func (m *Mesh) Name() string {
 func (m *Mesh) OnEnable() {
 	if m.Mesh.Get() == nil {
 		if mesh := object.Get[mesh.Mesh](m); mesh != nil {
-			log.Println("added mesh data from", m.Parent().Name())
 			m.Mesh.Set(mesh.Mesh().Get())
 			// subscribe?
-		} else {
-			log.Println("no mesh found for collider :(", m.Parent().Name())
 		}
 	}
-
 	m.Collider.OnEnable()
 }

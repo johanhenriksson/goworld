@@ -16,8 +16,9 @@ type RigidBody struct {
 	handle   rigidbodyHandle
 	mass     float32
 	tfparent transform.T
+	shape    Shape
 
-	Shape Shape
+	shunsub func()
 }
 
 func NewRigidBody(mass float32) *RigidBody {
@@ -53,16 +54,19 @@ func (b *RigidBody) pushState() {
 }
 
 func (b *RigidBody) OnEnable() {
-	if b.Shape == nil {
+	if b.shape == nil {
 		// todo: maybe warn if there are multiple?
-		b.Shape = object.Get[Shape](b)
-		if b.Shape == nil {
+		b.shape = object.Get[Shape](b)
+		if b.shape == nil {
 			log.Println("Rigidbody", b.Parent().Name(), ": no shape in siblings")
 			return
 		}
 	}
 
-	b.Shape.OnChange().Subscribe(func(s Shape) {
+	if b.shunsub != nil {
+		b.shunsub()
+	}
+	b.shunsub = b.shape.OnChange().Subscribe(func(s Shape) {
 		if b.handle == nil {
 			panic("rigidbody shape set to nil")
 		}
@@ -70,7 +74,7 @@ func (b *RigidBody) OnEnable() {
 	})
 
 	if b.handle == nil {
-		b.handle = rigidbody_new(unsafe.Pointer(b), b.mass, b.Shape.shape())
+		b.handle = rigidbody_new(unsafe.Pointer(b), b.mass, b.shape.shape())
 	}
 
 	// update physics transforms
@@ -120,9 +124,9 @@ func (b *RigidBody) detach() {
 
 func (b *RigidBody) destroy() {
 	b.detach()
-	if b.Shape != nil {
+	if b.shape != nil {
 		// b.Shape.OnChange().Unsubscribe(b)
-		b.Shape = nil
+		b.shape = nil
 	}
 	if b.handle != nil {
 		rigidbody_delete(&b.handle)

@@ -1,7 +1,6 @@
 package physics
 
 import (
-	"log"
 	"unsafe"
 
 	"github.com/johanhenriksson/goworld/core/object"
@@ -31,7 +30,7 @@ func NewCompound() *Compound {
 	cmp := object.NewComponent(&Compound{
 		kind: CompoundShape,
 	})
-	cmp.Collider = newCollider(cmp)
+	cmp.Collider = newCollider(cmp, false)
 	return cmp
 }
 
@@ -46,17 +45,16 @@ func (c *Compound) colliderDestroy() {
 	c.shapes = nil
 }
 
-func (c *Compound) colliderIsCompound() bool {
-	return object.Get[*RigidBody](c) == nil && hasParentShape(c.Parent().Parent())
+func (c *Compound) OnEnable() {
+	c.Collider.OnEnable()
+	c.colliderRefresh()
 }
 
-func (cmp *Compound) OnEnable() {
-	cmp.Collider.OnEnable()
-
+func (c *Compound) colliderRefresh() {
 	// find all shapes that should be combined into the compound mesh
 	// todo: also subscribe to attach/detach events on all relevant child objects
-	shapes := Shapes(cmp)
-	cmp.shapes = cmp.shapes[:0]
+	shapes := Shapes(c)
+	c.shapes = c.shapes[:0]
 	for i, shape := range shapes {
 		if shape.shape() == nil {
 			panic("child shape is nil")
@@ -66,30 +64,29 @@ func (cmp *Compound) OnEnable() {
 		child := &childShape{
 			Shape:    shape,
 			index:    i,
-			localPos: shape.Transform().Position().Mul(cmp.scale()),
+			localPos: shape.Transform().Position().Mul(c.Transform().WorldScale()),
 			localRot: shape.Transform().Rotation(),
 		}
-		cmp.shapes = append(cmp.shapes, child)
+		c.shapes = append(c.shapes, child)
 
-		// shape_scaling_set(shape.shape(), localScale)
-		compound_add_child(cmp.handle, shape.shape(), child.localPos, child.localRot)
-		log.Println("add compound child", shape.Parent().Name(), child.localPos)
+		compound_add_child(c.handle, shape.shape(), child.localPos, child.localRot)
 
 		// child shape changes should trigger a complete recreation of the compound shape
 		unsubShape := shape.OnChange().Subscribe(func(s Shape) {
-			cmp.refresh()
+			c.refresh()
 		})
 
 		// adjust scale & local position on transform changes
 		unsubTf := shape.Transform().OnChange().Subscribe(func(t transform.T) {
-			newPos := t.Position().Mul(cmp.scale())
+			scale := c.Transform().WorldScale()
+			newPos := t.Position().Mul(scale)
 			newRot := t.Rotation()
 
 			if !newPos.ApproxEqual(child.localPos) || !newRot.ApproxEqual(child.localRot) {
-				compound_update_child(cmp.handle, child.index, newPos, newRot)
+				compound_update_child(c.handle, child.index, newPos, newRot)
 				child.localPos = newPos
 				child.localRot = newRot
-				cmp.OnChange().Emit(cmp)
+				c.OnChange().Emit(c)
 			}
 		})
 
@@ -98,6 +95,14 @@ func (cmp *Compound) OnEnable() {
 			unsubTf()
 		}
 	}
+}
+
+func (c *Compound) OnDisable() {
+	for _, shape := range c.shapes {
+		shape.unsub()
+	}
+	c.shapes = nil
+	c.Collider.OnDisable()
 }
 
 func (c *Compound) Name() string {
