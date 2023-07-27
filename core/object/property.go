@@ -20,7 +20,7 @@ type Property[T PropValue] struct {
 	def   T
 	kind  reflect.Type
 
-	OnChange *events.Event[T]
+	OnChange events.Event[T]
 }
 
 var _ GenericProp = &Property[int]{}
@@ -31,8 +31,6 @@ func NewProperty[T PropValue](def T) Property[T] {
 		value: def,
 		def:   def,
 		kind:  reflect.TypeOf(empty),
-
-		OnChange: events.New[T](),
 	}
 }
 

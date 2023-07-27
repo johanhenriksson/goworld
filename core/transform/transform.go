@@ -65,7 +65,7 @@ type transform struct {
 	inv     *mat4.T
 	dirty   bool
 	parent  T
-	changed *events.Event[T]
+	changed events.Event[T]
 	unsub   func()
 }
 
@@ -77,7 +77,6 @@ func New(position vec3.T, rotation quat.T, scale vec3.T) T {
 		rotation: rotation,
 		scale:    scale,
 		dirty:    true,
-		changed:  events.New[T](),
 	}
 	t.refresh()
 	return t
@@ -122,7 +121,7 @@ func (t *transform) SetParent(parent T) {
 }
 
 func (t *transform) OnChange() *events.Event[T] {
-	return t.changed
+	return &t.changed
 }
 
 func (t *transform) invalidate() {

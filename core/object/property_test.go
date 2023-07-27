@@ -13,30 +13,40 @@ type WithProp struct {
 }
 
 var _ = Describe("Properties", func() {
+	var obj *WithProp
+	BeforeEach(func() {
+		obj = object.NewComponent(&WithProp{
+			Prop: object.NewProperty(1337),
+		})
+	})
+
 	Context("basics", func() {
 		It("stores data", func() {
-			cmp := object.NewComponent(&WithProp{
-				Prop: object.NewProperty(1337),
-			})
-			Expect(cmp.Prop.Get()).To(Equal(1337), "wrong default value")
+			Expect(obj.Prop.Get()).To(Equal(1337), "wrong default value")
 
-			cmp.Prop.Set(42)
-			Expect(cmp.Prop.Get()).To(Equal(42), "setter should update stored value")
+			obj.Prop.Set(42)
+			Expect(obj.Prop.Get()).To(Equal(42), "setter should update stored value")
+		})
+
+		It("raises an OnChanged event", func() {
+			var event int
+			obj.Prop.OnChange.Subscribe(func(i int) {
+				event = i
+			})
+
+			obj.Prop.Set(42)
+			Expect(event).To(Equal(42))
 		})
 	})
 
 	Context("generic property functions", func() {
 		It("collects and modifies generic properties", func() {
-			cmp := object.NewComponent(&WithProp{
-				Prop: object.NewProperty(1337),
-			})
-
-			props := object.Properties(cmp)
+			props := object.Properties(obj)
 			Expect(props).To(HaveLen(1))
 
 			props[0].SetAny(12)
 
-			Expect(cmp.Prop.Get()).To(Equal(12))
+			Expect(obj.Prop.Get()).To(Equal(12))
 		})
 	})
 })

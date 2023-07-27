@@ -14,7 +14,7 @@ type Collider struct {
 	colliderImpl
 
 	handle    shapeHandle
-	changed   *events.Event[Shape]
+	changed   events.Event[Shape]
 	scaled    bool
 	lastScale vec3.T
 
@@ -33,7 +33,6 @@ var _ Shape = &Collider{}
 func newCollider(impl colliderImpl, scaled bool) *Collider {
 	col := object.NewComponent(&Collider{
 		colliderImpl: impl,
-		changed:      events.New[Shape](),
 		scaled:       scaled,
 	})
 
@@ -47,7 +46,7 @@ func newCollider(impl colliderImpl, scaled bool) *Collider {
 }
 
 func (c *Collider) OnChange() *events.Event[Shape] {
-	return c.changed
+	return &c.changed
 }
 
 func (c *Collider) shape() shapeHandle {

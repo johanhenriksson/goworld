@@ -8,11 +8,11 @@ type Event[T Data] struct {
 	callbacks []Handler[T]
 }
 
-func New[T Data]() *Event[T] {
-	return &Event[T]{}
+func New[T Data]() Event[T] {
+	return Event[T]{}
 }
 
-func (e *Event[T]) Emit(event T) {
+func (e Event[T]) Emit(event T) {
 	for _, callback := range e.callbacks {
 		if callback != nil {
 			callback(event)
