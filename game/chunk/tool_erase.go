@@ -7,6 +7,7 @@ import (
 	"github.com/johanhenriksson/goworld/game/voxel"
 	"github.com/johanhenriksson/goworld/geometry/box"
 	"github.com/johanhenriksson/goworld/math/vec3"
+	"github.com/johanhenriksson/goworld/physics"
 	"github.com/johanhenriksson/goworld/render/color"
 )
 
@@ -48,23 +49,26 @@ func (pt *EraseTool) CanDeselect() bool {
 	return false
 }
 
-func (pt *EraseTool) MouseEvent(ev mouse.Event) {
+func (pt *EraseTool) ToolMouseEvent(ev mouse.Event, hover physics.RaycastHit) {
+	if hover.Shape == nil {
+		return
+	}
+
 	editor := object.GetInParents[Editor](pt)
 	if editor == nil {
 		// hm?
 		return
 	}
 
+	pos := editor.Transform().Unproject(hover.Point)
+	norm := editor.Transform().UnprojectDir(hover.Normal)
+
 	if ev.Action() == mouse.Move {
-		if exists, pos, normal := editor.CursorPositionNormal(ev.Position()); exists {
-			pt.Hover(editor, pos, normal)
-		}
+		pt.Hover(editor, pos, norm)
 	}
 
 	if ev.Action() == mouse.Press && ev.Button() == mouse.Button1 {
-		if exists, pos, normal := editor.CursorPositionNormal(ev.Position()); exists {
-			pt.Use(editor, pos, normal)
-			ev.Consume()
-		}
+		pt.Use(editor, pos, norm)
+		ev.Consume()
 	}
 }

@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"github.com/johanhenriksson/goworld/core/input/keys"
+	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/editor"
 	"github.com/johanhenriksson/goworld/engine/renderer"
@@ -22,7 +23,7 @@ import (
 
 type Editor interface {
 	object.Component
-	// editor.T
+	editor.T
 
 	SelectedColor() color.T
 	GetVoxel(x, y, z int) voxel.T
@@ -53,6 +54,8 @@ type edit struct {
 	YPlane *plane.Plane
 	ZPlane *plane.Plane
 
+	GUI gui.Fragment
+
 	xp, yp, zp int
 
 	BoundingBox *box.Mesh
@@ -62,7 +65,7 @@ type edit struct {
 // var _ editor.T = &edit{}
 
 func init() {
-	// editor.Register(&Mesh{}, NewEditor)
+	editor.Register(&Mesh{}, NewEditor)
 }
 
 // NewEditor creates a new chunk editor
@@ -130,14 +133,29 @@ func NewEditor(ctx *editor.Context, mesh *Mesh) Editor {
 			Create(),
 	})
 
-	object.Attach(e, NewGUI(e, mesh))
-	object.Attach(e, NewMenu(e))
+	gui := NewGUI(e, mesh)
+	e.GUI = gui
+	object.Attach(e, gui)
+
+	// object.Attach(e, NewMenu(e))
 
 	return e
 }
 
 func (e *edit) Name() string {
 	return "Chunk"
+}
+
+func (e *edit) Target() object.Component { return e.mesh }
+
+func (e *edit) Select(ev mouse.Event) {
+	object.Enable(e.GUI)
+}
+
+func (e *edit) Deselect(ev mouse.Event) bool {
+	// todo: check with editor if we can deselect?
+	object.Disable(e.GUI)
+	return true
 }
 
 func (e *edit) Bounds() physics.Shape {
