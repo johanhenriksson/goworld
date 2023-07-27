@@ -64,13 +64,15 @@ func NewArrow(clr color.T) *Arrow {
 			Create(),
 	})
 
-	// arrow.Hover.OnChange.Subscribe(func(b bool) {
-	// 	scale := vec3.One
-	// 	if b {
-	// 		scale = vec3.New(1.2, 1.2, 1.2)
-	// 	}
-	// 	arrow.Head.Transform().SetScale(scale)
-	// })
+	arrow.Rigidbody.Layer.Set(2)
+
+	arrow.Hover.OnChange.Subscribe(func(b bool) {
+		scale := vec3.One
+		if b {
+			scale = vec3.New(1.2, 1.2, 1.2)
+		}
+		arrow.Head.Transform().SetScale(scale)
+	})
 
 	return arrow
 }

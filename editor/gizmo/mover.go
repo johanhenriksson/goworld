@@ -6,6 +6,7 @@ import (
 	"github.com/johanhenriksson/goworld/core/transform"
 	"github.com/johanhenriksson/goworld/geometry/lines"
 	"github.com/johanhenriksson/goworld/geometry/plane"
+	"github.com/johanhenriksson/goworld/math"
 	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/math/quat"
 	"github.com/johanhenriksson/goworld/math/vec2"
@@ -41,7 +42,7 @@ type Mover struct {
 	start       vec2.T
 	viewport    render.Screen
 	vp          mat4.T
-	proj        mat4.T
+	fov         float32
 	scale       float32
 	sensitivity float32
 	dragging    bool
@@ -66,7 +67,7 @@ func NewMover() *Mover {
 	}
 
 	g := object.New("Mover Gizmo", &Mover{
-		size:        0.12,
+		size:        0.08,
 		sensitivity: 6,
 		hoverScale:  vec3.New(1.1, 1.1, 1.1),
 
@@ -229,7 +230,7 @@ func (g *Mover) Hover(hovering bool, shape physics.Shape) {
 
 func (g *Mover) PreDraw(args render.Args, scene object.Object) error {
 	g.eye = args.Position
-	g.proj = args.Projection
+	g.fov = args.Fov
 	g.vp = args.VP
 	g.viewport = args.Viewport
 	return nil
@@ -241,10 +242,10 @@ func (g *Mover) Update(scene object.Component, dt float32) {
 	// the gizmo should be displayed at the same size irrespectively of its distance to the camera.
 	// we can undo the effects of perspective projection by measuring how much a vector would be "squeezed"
 	// at the current distance form the camera, and then applying a scaling factor to counteract it.
+	distance := vec3.Distance(g.eye, g.Transform().WorldPosition())
+	worldSize := (2 * math.Tan(math.DegToRad(g.fov)/2.0)) * distance
+	f := g.size * worldSize
 
-	dist := vec3.Distance(g.Transform().WorldPosition(), g.eye)
-	squeeze := g.proj.TransformPoint(vec3.New(1, 0, dist))
-	f := g.size / squeeze.X
 	g.scale = f
 	g.Transform().SetWorldScale(vec3.New(f, f, f))
 	g.Transform().SetWorldRotation(quat.Ident())
