@@ -14,6 +14,7 @@ type Mesh struct {
 
 	collision  vertex.Mesh
 	meshHandle meshHandle
+	unsub      func()
 
 	Mesh *object.Property[vertex.Mesh]
 }
@@ -32,8 +33,6 @@ func NewMesh() *Mesh {
 	mesh.Collider = newCollider(mesh, true)
 
 	// refresh physics mesh when the mesh property is changed
-	// unsub to old mesh?
-	// subscribe to new mesh?
 	mesh.Mesh.OnChange.Subscribe(func(m vertex.Mesh) {
 		mesh.refresh()
 	})
@@ -70,8 +69,22 @@ func (m *Mesh) OnEnable() {
 	if m.Mesh.Get() == nil {
 		if mesh := object.Get[mesh.Mesh](m); mesh != nil {
 			m.Mesh.Set(mesh.Mesh().Get())
-			// subscribe?
+			if m.unsub != nil {
+				m.unsub()
+				m.unsub = nil
+			}
+			m.unsub = mesh.Mesh().OnChange.Subscribe(func(update vertex.Mesh) {
+				m.Mesh.Set(update)
+			})
 		}
 	}
 	m.Collider.OnEnable()
+}
+
+func (m *Mesh) OnDisable() {
+	if m.unsub != nil {
+		m.unsub()
+		m.unsub = nil
+	}
+	m.Collider.OnDisable()
 }
