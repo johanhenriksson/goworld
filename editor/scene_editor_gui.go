@@ -4,7 +4,6 @@ import (
 	"os"
 
 	"github.com/johanhenriksson/goworld/core/input/mouse"
-	"github.com/johanhenriksson/goworld/engine/renderer"
 	"github.com/johanhenriksson/goworld/gui"
 	"github.com/johanhenriksson/goworld/gui/node"
 	"github.com/johanhenriksson/goworld/gui/style"
@@ -15,7 +14,7 @@ import (
 	"github.com/johanhenriksson/goworld/render/texture"
 )
 
-func MakeGUI(render renderer.T) gui.Manager {
+func MakeGUI() gui.Manager {
 	return gui.New(func() node.T {
 		return rect.New("gui", rect.Props{
 			Children: []node.T{

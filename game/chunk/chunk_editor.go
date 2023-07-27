@@ -7,7 +7,6 @@ import (
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/editor"
-	"github.com/johanhenriksson/goworld/engine/renderer"
 	"github.com/johanhenriksson/goworld/game/voxel"
 	"github.com/johanhenriksson/goworld/geometry/box"
 	"github.com/johanhenriksson/goworld/geometry/plane"
@@ -15,7 +14,6 @@ import (
 	"github.com/johanhenriksson/goworld/gui/node"
 	"github.com/johanhenriksson/goworld/gui/widget/window/modal"
 	"github.com/johanhenriksson/goworld/math/quat"
-	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/physics"
 	"github.com/johanhenriksson/goworld/render/color"
@@ -31,8 +29,6 @@ type Editor interface {
 	SelectColor(color.T)
 	Recalculate()
 	InBounds(p vec3.T) bool
-
-	CursorPositionNormal(cursor vec2.T) (bool, vec3.T, vec3.T)
 }
 
 // Editor base struct
@@ -59,7 +55,6 @@ type edit struct {
 	xp, yp, zp int
 
 	BoundingBox *box.Mesh
-	render      renderer.T
 }
 
 // var _ editor.T = &edit{}
@@ -95,8 +90,7 @@ func NewEditor(ctx *editor.Context, mesh *Mesh) Editor {
 			Active(false).
 			Create(),
 
-		render: ctx.Render,
-		color:  color.Red,
+		color: color.Red,
 
 		BoundingBox: box.New(box.Args{
 			Size:  dimensions,
@@ -181,32 +175,6 @@ func (e *edit) SelectColor(c color.T) {
 
 func (e *edit) SelectedColor() color.T {
 	return e.color
-}
-
-// sample world position at current mouse coords
-func (e *edit) CursorPositionNormal(cursor vec2.T) (bool, vec3.T, vec3.T) {
-	// compute normalized screen position
-	screenPos := cursor.Div(e.Camera.Viewport.Size())
-
-	viewPosition, positionExists := e.render.GBuffer().SamplePosition(screenPos)
-	if !positionExists {
-		return false, vec3.Zero, vec3.Zero
-	}
-
-	viewNormal, normalExists := e.render.GBuffer().SampleNormal(screenPos)
-	if !normalExists {
-		return false, vec3.Zero, vec3.Zero
-	}
-
-	viewInv := e.Camera.ViewInv
-	normal := viewInv.TransformDir(viewNormal)
-	position := viewInv.TransformPoint(viewPosition)
-
-	// transform world coords into object space
-	position = e.Transform().Unproject(position)
-	normal = e.Transform().UnprojectDir(normal)
-
-	return true, position, normal
 }
 
 func (e *edit) InBounds(p vec3.T) bool {

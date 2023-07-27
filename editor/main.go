@@ -4,7 +4,6 @@ import (
 	"github.com/johanhenriksson/goworld/core/input/keys"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/engine"
-	"github.com/johanhenriksson/goworld/engine/renderer"
 	"github.com/johanhenriksson/goworld/gui"
 	"github.com/johanhenriksson/goworld/gui/node"
 	"github.com/johanhenriksson/goworld/math/quat"
@@ -21,19 +20,17 @@ type Editor struct {
 
 	editors   object.Component
 	workspace object.Object
-	render    renderer.T
 }
 
-func NewEditor(render renderer.T, workspace object.Object) *Editor {
+func NewEditor(workspace object.Object) *Editor {
 	editor := object.New("Editor", &Editor{
-		GUI:   MakeGUI(render),
+		GUI:   MakeGUI(),
 		Tools: NewToolManager(),
 		World: physics.NewWorld(),
 
 		Player:    NewPlayer(vec3.New(0, 25, -11), quat.Euler(-10, 30, 0)),
 		editors:   nil,
 		workspace: workspace,
-		render:    render,
 	})
 
 	object.Attach(editor, SidebarFragment(
@@ -56,7 +53,6 @@ func (e *Editor) Update(scene object.Component, dt float32) {
 
 	context := &Context{
 		Camera: e.Player.Camera.Camera,
-		Render: e.render,
 		Root:   scene,
 		Scene:  e.workspace,
 	}
@@ -67,12 +63,12 @@ func (e *Editor) Update(scene object.Component, dt float32) {
 }
 
 func Scene(f engine.SceneFunc) engine.SceneFunc {
-	return func(render renderer.T, scene object.Object) {
+	return func(scene object.Object) {
 		// create subscene in a child object
 		workspace := object.Empty("Workspace")
-		f(render, workspace)
+		f(workspace)
 
-		editorScene := NewEditorScene(render, workspace)
+		editorScene := NewEditorScene(workspace)
 		object.Attach(scene, editorScene)
 	}
 }
@@ -85,10 +81,10 @@ type EditorScene struct {
 	playing bool
 }
 
-func NewEditorScene(render renderer.T, workspace object.Object) *EditorScene {
+func NewEditorScene(workspace object.Object) *EditorScene {
 	return object.New("EditorScene", &EditorScene{
 		Object:    object.Scene(),
-		Editor:    NewEditor(render, workspace),
+		Editor:    NewEditor(workspace),
 		Workspace: workspace,
 	})
 }

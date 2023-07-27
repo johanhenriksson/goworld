@@ -9,7 +9,6 @@ import (
 	"github.com/johanhenriksson/goworld/editor"
 	_ "github.com/johanhenriksson/goworld/editor/builtin"
 	"github.com/johanhenriksson/goworld/engine"
-	"github.com/johanhenriksson/goworld/engine/renderer"
 	"github.com/johanhenriksson/goworld/game/chunk"
 	"github.com/johanhenriksson/goworld/game/player"
 	"github.com/johanhenriksson/goworld/game/terrain"
@@ -29,7 +28,7 @@ func main() {
 		Height: 1200,
 		Title:  "goworld",
 	},
-		editor.Scene(func(r renderer.T, scene object.Object) {
+		editor.Scene(func(scene object.Object) {
 			world := physics.NewWorld()
 			object.Attach(scene, world)
 

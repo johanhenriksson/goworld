@@ -10,7 +10,7 @@ import (
 	"github.com/johanhenriksson/goworld/render/vulkan"
 )
 
-type SceneFunc func(renderer.T, object.Object)
+type SceneFunc func(object.Object)
 type RendererFunc func(vulkan.App) renderer.T
 
 type Args struct {
@@ -54,7 +54,7 @@ func Run(args Args, scenefuncs ...SceneFunc) {
 	scene := object.Empty("Scene")
 	wnd.SetInputHandler(scene)
 	for _, scenefunc := range scenefuncs {
-		scenefunc(renderer, scene)
+		scenefunc(scene)
 	}
 
 	object.Attach(scene, NewStatsGUI())
