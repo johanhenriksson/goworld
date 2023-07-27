@@ -41,6 +41,8 @@ func restoreShape(ptr unsafe.Pointer) Shape {
 	}
 	kind := *(*ShapeType)(ptr)
 	switch kind {
+	case SphereShape:
+		return (*Sphere)(ptr)
 	case BoxShape:
 		return (*Box)(ptr)
 	case CapsuleShape:

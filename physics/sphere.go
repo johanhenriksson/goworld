@@ -13,12 +13,22 @@ type Sphere struct {
 	Radius object.Property[float32]
 }
 
-func NewSphere() *Sphere {
+func init() {
+	checkShape(NewSphere(1))
+}
+
+func NewSphere(radius float32) *Sphere {
 	sphere := &Sphere{
 		kind:   SphereShape,
-		Radius: object.NewProperty[float32](1),
+		Radius: object.NewProperty[float32](radius),
 	}
 	sphere.Collider = newCollider(sphere, true)
+
+	// resize shape when radius is modified
+	sphere.Radius.OnChange.Subscribe(func(t float32) {
+		sphere.refresh()
+	})
+
 	return sphere
 }
 
