@@ -31,7 +31,7 @@ func NewArrow(clr color.T) *Arrow {
 	segments := 32
 
 	mat := &material.Def{
-		Shader:       "color_f",
+		Shader:       "forward/color",
 		Subpass:      "forward",
 		VertexFormat: vertex.C{},
 		DepthTest:    true,

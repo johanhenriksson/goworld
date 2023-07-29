@@ -59,7 +59,7 @@ func NewMover() *Mover {
 	s := side / 2
 
 	mat := &material.Def{
-		Shader:       "color_f",
+		Shader:       "forward/color",
 		Subpass:      "forward",
 		VertexFormat: vertex.C{},
 		DepthTest:    true,
