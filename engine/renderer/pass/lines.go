@@ -40,6 +40,7 @@ func NewLinePass(app vulkan.App, target RenderTarget, depth RenderTarget) *LineP
 				StoreOp:       core1_0.AttachmentStoreOpStore,
 				InitialLayout: core1_0.ImageLayoutShaderReadOnlyOptimal,
 				FinalLayout:   core1_0.ImageLayoutShaderReadOnlyOptimal,
+				Blend:         attachment.BlendMix,
 			},
 		},
 		DepthAttachment: &attachment.Depth{

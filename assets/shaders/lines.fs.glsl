@@ -7,7 +7,16 @@ layout (location = 0) in vec3 color;
 
 layout (location = 0) out vec4 outColor;
 
+float FogDensity = 0.04;
+
 void main() 
 {
-	outColor = vec4(color, 1.0);
+	float depth = gl_FragCoord.z / gl_FragCoord.w - 0.2;
+  
+    // Calculate the fog factor
+    float fogFactor = exp(-depth * FogDensity);
+    fogFactor = clamp(fogFactor, 0.0, 1.0);
+
+
+	outColor = vec4(color, fogFactor);
 }
