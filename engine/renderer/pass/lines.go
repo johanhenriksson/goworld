@@ -62,6 +62,8 @@ func NewLinePass(app vulkan.App, target RenderTarget) *LinePass {
 		panic(err)
 	}
 
+	lineShape.Debug.Setup(app.Frames())
+
 	return &LinePass{
 		app:  app,
 		pass: pass,
@@ -90,11 +92,8 @@ func (p *LinePass) Record(cmds command.Recorder, args render.Args, scene object.
 	p.materials.Draw(cmds, args, lines)
 
 	// debug lines
-	if lineShape.Debug.Count() > 0 {
-		lineShape.Debug.Refresh()
-		p.materials.Draw(cmds, args, []mesh.Mesh{lineShape.Debug})
-		lineShape.Debug.Clear()
-	}
+	debug := lineShape.Debug.Fetch()
+	p.materials.Draw(cmds, args, []mesh.Mesh{debug})
 
 	cmds.Record(func(cmd command.Buffer) {
 		cmd.CmdEndRenderPass()
