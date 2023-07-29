@@ -13,17 +13,21 @@ import (
 
 type EraseTool struct {
 	object.Object
-	Box *box.Mesh
+	Box object.Object
 }
 
 var _ editor.Tool = &EraseTool{}
 
 func NewEraseTool() *EraseTool {
+	padding := float32(0.05)
 	return object.New("Erase Tool", &EraseTool{
-		Box: box.New(box.Args{
-			Size:  vec3.One,
-			Color: color.Red,
-		}),
+		Box: object.Builder(object.Empty("Box")).
+			Attach(box.New(box.Args{
+				Size:  vec3.One.Scaled(1 + padding),
+				Color: color.Red,
+			})).
+			Position(vec3.New(-padding/2, -padding/2, -padding/2)).
+			Create(),
 	})
 }
 

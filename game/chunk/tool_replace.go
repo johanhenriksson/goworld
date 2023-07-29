@@ -13,17 +13,21 @@ import (
 
 type ReplaceTool struct {
 	object.Object
-	Box *box.Mesh
+	Box object.Object
 }
 
 var _ editor.Tool = &ReplaceTool{}
 
 func NewReplaceTool() *ReplaceTool {
+	padding := float32(0.05)
 	return object.New("Replace Tool", &ReplaceTool{
-		Box: box.New(box.Args{
-			Size:  vec3.One,
-			Color: color.Yellow,
-		}),
+		Box: object.Builder(object.Empty("Box")).
+			Attach(box.New(box.Args{
+				Size:  vec3.One.Scaled(1 + padding),
+				Color: color.Yellow,
+			})).
+			Position(vec3.New(-padding/2, -padding/2, -padding/2)).
+			Create(),
 	})
 }
 

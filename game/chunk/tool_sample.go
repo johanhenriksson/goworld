@@ -12,7 +12,7 @@ import (
 
 type SampleTool struct {
 	object.Object
-	Box *box.Mesh
+	Box object.Object
 
 	Reselect func()
 }
@@ -20,11 +20,15 @@ type SampleTool struct {
 var _ editor.Tool = &SampleTool{}
 
 func NewSampleTool() *SampleTool {
+	padding := float32(0.05)
 	return object.New("Sample Tool", &SampleTool{
-		Box: box.New(box.Args{
-			Size:  vec3.One,
-			Color: color.Purple,
-		}),
+		Box: object.Builder(object.Empty("Box")).
+			Attach(box.New(box.Args{
+				Size:  vec3.One.Scaled(1 + padding),
+				Color: color.Purple,
+			})).
+			Position(vec3.New(-padding/2, -padding/2, -padding/2)).
+			Create(),
 	})
 }
 

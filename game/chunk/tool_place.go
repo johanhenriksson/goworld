@@ -15,17 +15,21 @@ import (
 
 type PlaceTool struct {
 	object.Object
-	Box *box.Mesh
+	Box object.Object
 }
 
 var _ editor.Tool = &PlaceTool{}
 
 func NewPlaceTool() *PlaceTool {
+	padding := float32(0.05)
 	return object.New("Place Tool", &PlaceTool{
-		Box: box.New(box.Args{
-			Size:  vec3.One,
-			Color: color.Blue,
-		}),
+		Box: object.Builder(object.Empty("Box")).
+			Attach(box.New(box.Args{
+				Size:  vec3.One.Scaled(1 + padding),
+				Color: color.Blue,
+			})).
+			Position(vec3.New(-padding/2, -padding/2, -padding/2)).
+			Create(),
 	})
 }
 
