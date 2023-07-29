@@ -49,7 +49,7 @@ void main() {
     graded *= ssao;
 
     // gamma correction
-    vec3 corrected = graded; // pow(graded, vec3(1/gamma));
+    vec3 corrected = pow(graded, vec3(1/gamma));
 
     // return
     color = vec4(corrected, 1);

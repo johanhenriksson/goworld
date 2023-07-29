@@ -58,7 +58,7 @@ void main()
 	// gbuffer diffuse
 	color0 = color_0 * (1 - occlusion_0);
 
-	// gbuffer position
+	// gbuffer view space position
 	position0 = (mv * vec4(position.xyz, 1.0)).xyz;
 
 	// gbuffer view space normal

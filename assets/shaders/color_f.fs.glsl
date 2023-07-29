@@ -22,9 +22,11 @@ layout (location = 2) in vec3 position0;
 layout (location = 3) in vec3 wnormal;
 
 // Return Output
-layout (location = 0) out vec4 diffuse;
+layout (location = 0) out vec4 fragColor;
 layout (location = 1) out vec4 normal;
 layout (location = 2) out vec4 position;
+
+float gamma = 2.2;
 
 void main() 
 {
@@ -32,8 +34,11 @@ void main()
     vec3 surfaceToLight = -lightDir;
     float contrib = max(dot(surfaceToLight, wnormal), 0.2);
 
-    diffuse = vec4(color0.rgb * contrib, color0.a);
+    // gamma correct & write fragment
+	vec3 linearColor = pow(color0.rgb, vec3(gamma));
+    fragColor = vec4(linearColor * contrib, color0.a);
 
+    // update gbuffer
     vec4 pack_normal = vec4((normal0 + 1.0) / 2.0, 1);
     normal = pack_normal;
 

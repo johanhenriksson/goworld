@@ -241,7 +241,11 @@ void main() {
 	} 
 
 	vec3 lightColor = light.Color.rgb * light.Intensity * contrib * shadow * occlusion;
-	lightColor *= diffuseColor;
+
+	// linearize gbuffer diffuse
+	vec3 linearDiffuse = pow(diffuseColor, vec3(2.2));
+
+	lightColor *= linearDiffuse;
 
 	// lightColor *= mix(1, ssao, ssao_amount);
 
