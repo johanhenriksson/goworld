@@ -1,23 +1,26 @@
-#version 330 core
+#version 450 core
 
-layout(location=0) out vec4 out_ssao;
+// Input: Texture coords
+layout (location = 0) in vec2 texcoord0;
 
-in vec2 texcoord0;
+// Return Output
+layout (location = 0) out vec4 out_ssao;
 
-uniform mat4 projection;
+layout (std140, binding = 0) uniform Params {
+    mat4 Proj;
+    vec3 Kernel[32];
+} params;
 
-uniform sampler2D tex_position; // position gbuffer
-uniform sampler2D tex_normal; // normal gbuffer
-uniform sampler2D tex_noise; // noise texture
-
-uniform vec3 samples[32];
+layout (binding = 1) uniform sampler2D tex_position; // position gbuffer
+layout (binding = 2) uniform sampler2D tex_normal; // normal gbuffer
+layout (binding = 3) uniform sampler2D tex_noise; // noise texture
 
 // parameters (you'd probably want to use them as uniforms to more easily tweak the effect)
-uniform int kernel_size = 32;
-uniform float radius = 0.4;
-uniform float bias = 0.025;
-uniform float power = 1.2;
-uniform int scale = 1;
+int kernel_size = 32;
+float radius = 0.4;
+float bias = 0.025;
+float power = 1.2;
+int scale = 1;
 
 
 void main()
@@ -41,12 +44,12 @@ void main()
     for(int i = 0; i < kernel_size; ++i)
     {
         // get sample position
-        vec3 sample = TBN * samples[i]; // from tangent to view-space
-        sample = fragPos + sample * radius; 
+        vec3 sampleVec = TBN * params.Kernel[i]; // from tangent to view-space
+        sampleVec = fragPos + sampleVec * radius; 
         
         // project sample position (to sample texture) (to get position on screen/texture)
-        vec4 offset = vec4(sample, 1.0);
-        offset = projection * offset; // from view to clip-space
+        vec4 offset = vec4(sampleVec, 1.0);
+        offset = params.Proj * offset; // from view to clip-space
         offset.xyz /= offset.w; // perspective divide, clip -> NDC
         offset.xyz = offset.xyz * 0.5 + 0.5; // transform to range 0.0 - 1.0
         
@@ -55,7 +58,7 @@ void main()
 
         // range check & accumulate
         float rangeCheck = smoothstep(0.0, 1.0, radius / abs(fragPos.z - sampleDepth));
-        if (sampleDepth <= sample.z - bias) {
+        if (sampleDepth <= sampleVec.z - bias) {
             occlusion += 1.0 * rangeCheck;
         }
     }

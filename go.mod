@@ -1,6 +1,6 @@
 module github.com/johanhenriksson/goworld
 
-go 1.18
+go 1.20
 
 require (
 	github.com/go-gl/glfw/v3.3/glfw v0.0.0-20211213063430-748e38ca8aec

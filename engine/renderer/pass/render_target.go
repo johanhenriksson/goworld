@@ -25,18 +25,23 @@ type renderTarget struct {
 func NewRenderTarget(device device.T, width, height, frames int, outputFormat, depthFormat core1_0.Format) (RenderTarget, error) {
 	var err error
 	outputs := make([]image.T, frames)
-	depths := make([]image.T, frames)
 	for i := 0; i < frames; i++ {
 		outputs[i], err = image.New2D(device, "output", width, height, outputFormat,
 			core1_0.ImageUsageSampled|core1_0.ImageUsageColorAttachment|core1_0.ImageUsageInputAttachment)
 		if err != nil {
 			return nil, err
 		}
+	}
 
-		depths[i], err = image.New2D(device, "depth", width, height, depthFormat,
-			core1_0.ImageUsageSampled|core1_0.ImageUsageDepthStencilAttachment|core1_0.ImageUsageInputAttachment)
-		if err != nil {
-			return nil, err
+	var depths []image.T
+	if depthFormat != core1_0.FormatUndefined {
+		depths = make([]image.T, frames)
+		for i := 0; i < frames; i++ {
+			depths[i], err = image.New2D(device, "depth", width, height, depthFormat,
+				core1_0.ImageUsageSampled|core1_0.ImageUsageDepthStencilAttachment|core1_0.ImageUsageInputAttachment)
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 

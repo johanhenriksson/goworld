@@ -55,6 +55,10 @@ func (d *UniformArray[K]) Set(index int, data K) {
 	d.buffer.Set(index, data)
 }
 
+func (d *UniformArray[K]) SetRange(offset int, data []K) {
+	d.buffer.SetRange(offset, data)
+}
+
 func (d *UniformArray[K]) write() {
 	d.set.Write(core1_0.WriteDescriptorSet{
 		DstBinding:      d.binding,
