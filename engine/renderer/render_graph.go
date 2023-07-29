@@ -15,7 +15,6 @@ import (
 
 type T interface {
 	Draw(scene object.Object, time, delta float32)
-	GBuffer() pass.GeometryBuffer
 	Recreate()
 	Screenshot()
 	Destroy()
@@ -25,9 +24,6 @@ type rgraph struct {
 	graph.T
 	app vulkan.App
 
-	// temporary reference
-	// get rid of it once the editor no longer needs it
-	gbuffer pass.GeometryBuffer
 }
 
 func NewGraph(app vulkan.App) T {
@@ -35,8 +31,6 @@ func NewGraph(app vulkan.App) T {
 		app: app,
 	}
 	r.T = graph.New(app, func(g graph.T, target pass.RenderTarget, gbuffer pass.GeometryBuffer) {
-		r.gbuffer = gbuffer
-
 		shadows := pass.NewShadowPass(app)
 		shadowNode := g.Node(shadows)
 
@@ -74,13 +68,8 @@ func (r *rgraph) Screenshot() {
 	}
 }
 
-func (r *rgraph) GBuffer() pass.GeometryBuffer {
-	return r.gbuffer
-}
-
 func (r *rgraph) Destroy() {
 	if r.T != nil {
 		r.T.Destroy()
 	}
-	r.gbuffer = nil
 }
