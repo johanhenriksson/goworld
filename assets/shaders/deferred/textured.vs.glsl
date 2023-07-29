@@ -2,35 +2,30 @@
 
 #extension GL_ARB_separate_shader_objects : enable
 #extension GL_ARB_shading_language_420pack : enable
+#extension GL_EXT_nonuniform_qualifier : enable
 #extension GL_GOOGLE_include_directive : enable
 
-#include "lib/uniforms.glsl"
-#include "lib/vertex.glsl"
+#include "../lib/uniforms.glsl"
+#include "../lib/vertex.glsl"
 
 // Attributes
 layout (location = 0) in vec3 position;
 layout (location = 1) in vec3 normal;
-layout (location = 2) in vec4 color_0;
-
-// Varyings
-layout (location = 4) out vec3 wnormal;
+layout (location = 2) in vec2 texcoord_0;
 
 void main() 
 {
-	mat4 m = ssbo.objects[gl_InstanceIndex].model;
-	mat4 mv = camera.View * m;
+	objectIndex = gl_InstanceIndex;
+	mat4 mv = camera.View * ssbo.objects[objectIndex].model;
 
-	// gbuffer diffuse
-	color0 = color_0.rgba;
+	// textures
+	color0.xy = texcoord_0;
 
 	// gbuffer position
-	position0 = (mv * vec4(position.xyz, 1.0)).xyz;
+	position0 = (mv * vec4(position, 1)).xyz;
 
-	// gbuffer view space normal
+	// gbuffer normal
 	normal0 = normalize((mv * vec4(normal, 0.0)).xyz);
-
-	// world normal
-	wnormal = normalize((m * vec4(normal, 0.0)).xyz);
 
 	// vertex clip space position
 	gl_Position = camera.Proj * vec4(position0, 1);

@@ -14,7 +14,7 @@ type Mesh struct {
 
 func NewMesh(chunk *T) *Mesh {
 	msh := mesh.NewDynamic("Chunk", mesh.Deferred, &material.Def{
-		Shader:       "voxels",
+		Shader:       "game/voxels",
 		Subpass:      "geometry",
 		VertexFormat: voxel.Vertex{},
 		DepthTest:    true,

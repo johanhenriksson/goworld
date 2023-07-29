@@ -18,5 +18,5 @@
     "Objects": 1,
     "Textures": 2
   },
-  "Textures": ["heightmap", "diffuse"]
+  "Textures": ["diffuse"]
 }

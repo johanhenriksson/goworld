@@ -13,7 +13,6 @@ out gl_PerVertex
 	vec4 gl_Position;   
 };
 
-
 void main() 
 {
 	texcoord = texcoord_0;

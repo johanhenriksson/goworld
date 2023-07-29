@@ -17,7 +17,7 @@ type Mesh struct {
 
 func NewMesh(tile *Tile) *Mesh {
 	msh := mesh.NewDynamic("Terrain", mesh.Deferred, &material.Def{
-		Shader:       "game/terrain",
+		Shader:       "deferred/textured",
 		Subpass:      "geometry",
 		VertexFormat: vertex.T{},
 		DepthTest:    true,
