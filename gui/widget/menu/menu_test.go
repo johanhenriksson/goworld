@@ -1,19 +1,20 @@
 package menu_test
 
 import (
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
+
 	"testing"
 
 	"github.com/johanhenriksson/goworld/gui/node"
 	"github.com/johanhenriksson/goworld/gui/widget/menu"
 	"github.com/johanhenriksson/goworld/gui/widget/rect"
 	"github.com/johanhenriksson/goworld/render/color"
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 )
 
-func TestButton(t *testing.T) {
+func TestMenu(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Menu Widget Suite")
+	RunSpecs(t, "gui/widget/menu")
 }
 
 var _ = Describe("Menu widget", func() {

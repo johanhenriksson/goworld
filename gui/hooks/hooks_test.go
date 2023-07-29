@@ -1,10 +1,18 @@
 package hooks_test
 
 import (
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
+
 	"testing"
 
 	"github.com/johanhenriksson/goworld/gui/hooks"
 )
+
+func TestHooks(t *testing.T) {
+	RegisterFailHandler(Fail)
+	RunSpecs(t, "gui/hooks")
+}
 
 func SomeComponent() (string, func()) {
 	title, setTitle := hooks.UseState("hello!")
@@ -14,21 +22,19 @@ func SomeComponent() (string, func()) {
 	return title, click
 }
 
-func TestHooks(t *testing.T) {
-	state := hooks.State{}
-	hooks.Enable(&state)
-	output, click := SomeComponent()
-	hooks.Disable()
-	if output != "hello!" {
-		t.Error("unexpected return value")
-	}
+var _ = Describe("hooks", func() {
+	It("updates and maintains state", func() {
+		state := hooks.State{}
+		hooks.Enable(&state)
+		output, click := SomeComponent()
+		hooks.Disable()
+		Expect(output).To(Equal("hello!"))
 
-	click()
+		click()
 
-	hooks.Enable(&state)
-	output, _ = SomeComponent()
-	hooks.Disable()
-	if output != "clicked" {
-		t.Error("expected state to be updated")
-	}
-}
+		hooks.Enable(&state)
+		output, _ = SomeComponent()
+		hooks.Disable()
+		Expect(output).To(Equal("clicked"))
+	})
+})

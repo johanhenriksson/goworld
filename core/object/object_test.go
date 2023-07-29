@@ -32,9 +32,9 @@ func NewA() *A {
 	})
 }
 
-func TestObject2(t *testing.T) {
+func TestObject(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Object2 Suite")
+	RunSpecs(t, "core/object")
 }
 
 var _ = Describe("Object", func() {

@@ -1,4 +1,4 @@
-package allocator_test
+package style_test
 
 import (
 	"testing"
@@ -7,7 +7,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func TestAllocator(t *testing.T) {
+func TestStyle(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "render/cache/allocator")
+	RunSpecs(t, "gui/style")
 }

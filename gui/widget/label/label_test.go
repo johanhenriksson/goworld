@@ -1,16 +1,17 @@
 package label
 
 import (
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
+
 	"testing"
 
 	"github.com/johanhenriksson/goworld/core/input/keys"
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 )
 
 func TestLabel(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Label Suite")
+	RunSpecs(t, "gui/widget/label")
 }
 
 var _ = Describe("", func() {

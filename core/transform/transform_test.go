@@ -12,9 +12,9 @@ import (
 	"github.com/johanhenriksson/goworld/math/vec3"
 )
 
-func TestLabel(t *testing.T) {
+func TestTransform(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Transform Suite")
+	RunSpecs(t, "core/transform")
 }
 
 var _ = Describe("events", func() {

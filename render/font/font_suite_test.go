@@ -11,7 +11,7 @@ import (
 
 func TestFont(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "render/font suite")
+	RunSpecs(t, "render/font")
 }
 
 var _ = Describe("font utils", func() {

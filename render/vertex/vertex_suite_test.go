@@ -1,17 +1,18 @@
 package vertex_test
 
 import (
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
+
 	"testing"
 
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render/vertex"
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 )
 
 func TestVertex(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Vertex Suite")
+	RunSpecs(t, "render/vertex")
 }
 
 var _ = Describe("Optimize", func() {

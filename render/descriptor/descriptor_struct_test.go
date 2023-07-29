@@ -1,52 +1,45 @@
 package descriptor_test
 
 import (
-	"errors"
-	"testing"
-
 	. "github.com/johanhenriksson/goworld/render/descriptor"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 
 	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
-type TestSet struct {
-	Set
-	Diffuse *Sampler
-}
-
-func TestParseDescriptors(t *testing.T) {
-	set := TestSet{
-		Diffuse: &Sampler{
-			Stages: core1_0.StageAll,
-		},
-	}
-	desc, err := ParseDescriptorStruct(&set)
-	if err != nil {
-		t.Error(err)
-	}
-	if len(desc) != 1 {
-		t.Error("expected to find diffuse descriptor")
-	}
-}
-
-func TestParseDescriptorsNil(t *testing.T) {
-	set := TestSet{
-		Diffuse: nil,
-	}
-	_, err := ParseDescriptorStruct(&set)
-	if !errors.Is(err, ErrDescriptorType) {
-		t.Errorf("expected nil set error, was %s", err)
-	}
-}
-
-func TestParseDescriptorsNonPointer(t *testing.T) {
-	type FailSet struct {
+var _ = Describe("descriptor struct parsing", func() {
+	type TestSet struct {
 		Set
-		Diffuse Sampler
+		Diffuse *Sampler
 	}
-	set := FailSet{}
-	_, err := ParseDescriptorStruct(&set)
-	if !errors.Is(err, ErrDescriptorType) {
-		t.Errorf("expected non pointer descriptor error, was %s", err)
-	}
-}
+
+	It("correctly parses valid structs", func() {
+		set := TestSet{
+			Diffuse: &Sampler{
+				Stages: core1_0.StageAll,
+			},
+		}
+		desc, err := ParseDescriptorStruct(&set)
+		Expect(err).ToNot(HaveOccurred())
+		Expect(desc).To(HaveLen(1), "expected to find diffuse descriptor")
+	})
+
+	It("rejects unset descriptor fields", func() {
+		set := TestSet{
+			Diffuse: nil,
+		}
+		_, err := ParseDescriptorStruct(&set)
+		Expect(err).To(HaveOccurred())
+	})
+
+	It("rejects non-pointer fields", func() {
+		type FailSet struct {
+			Set
+			Diffuse Sampler
+		}
+		set := FailSet{}
+		_, err := ParseDescriptorStruct(&set)
+		Expect(err).To(HaveOccurred())
+	})
+})

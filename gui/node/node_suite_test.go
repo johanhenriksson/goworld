@@ -16,7 +16,7 @@ type props struct {
 
 func TestNode(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Node Suite")
+	RunSpecs(t, "gui/node")
 }
 
 var _ = Describe("reconcile nodes", func() {
