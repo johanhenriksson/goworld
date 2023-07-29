@@ -1,12 +1,17 @@
-#version 330
+#version 450
 
-in vec2 texcoord0;
-layout(location=0) out vec4 color;
+#extension GL_ARB_separate_shader_objects : enable
+#extension GL_ARB_shading_language_420pack : enable
 
-uniform sampler2D tex_input; // source image
-uniform sampler2D tex_lut; // color lookup table
-uniform sampler2D tex_ssao;
-uniform float gamma = 2.2;
+layout(location = 0) in vec2 texcoord0;
+
+layout(location = 0) out vec4 color;
+
+layout(binding = 0) uniform sampler2D tex_input; // source image
+layout(binding = 1) uniform sampler2D tex_ssao;
+layout(binding = 2) uniform sampler2D tex_lut; // color lookup table
+
+float gamma = 2.2;
 
 #define MAXCOLOR 15.0 
 #define COLORS 16.0
@@ -37,7 +42,6 @@ void main() {
     // get input color
     vec3 src = texture(tex_input, texcoord0.xy).rgb;
 
-
     // color grading
     vec3 graded = lookup_color(tex_lut, src);
 
@@ -45,8 +49,10 @@ void main() {
     graded *= ssao;
 
     // gamma correction
-    vec3 corrected = pow(graded, vec3(1/gamma));
+    vec3 corrected = graded; // pow(graded, vec3(1/gamma));
 
     // return
     color = vec4(corrected, 1);
+
+    // color = vec4(ssao,ssao,ssao,1);
 }

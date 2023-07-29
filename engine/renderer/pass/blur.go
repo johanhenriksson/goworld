@@ -127,6 +127,10 @@ func (p *BlurPass) Name() string {
 	return "Blur"
 }
 
+func (p *BlurPass) Target() RenderTarget {
+	return p.target
+}
+
 func (p *BlurPass) Destroy() {
 	for _, tex := range p.tex {
 		tex.Destroy()

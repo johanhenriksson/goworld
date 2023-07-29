@@ -47,6 +47,7 @@ type GeometryDescriptors struct {
 }
 
 type deferred struct {
+	target  RenderTarget
 	gbuffer GeometryBuffer
 	quad    vertex.Mesh
 	app     vulkan.App
@@ -186,6 +187,7 @@ func NewDeferredPass(
 	app.Textures().Fetch(color.White)
 
 	return &deferred{
+		target:  target,
 		gbuffer: gbuffer,
 		app:     app,
 		quad:    quad,

@@ -45,11 +45,12 @@ type GuiDrawable interface {
 }
 
 type GuiPass struct {
-	app  vulkan.App
-	mat  []material.Instance[*UIDescriptors2]
-	pass renderpass.T
-	fbuf framebuffer.Array
-	quad quad.T
+	app    vulkan.App
+	target RenderTarget
+	mat    []material.Instance[*UIDescriptors2]
+	pass   renderpass.T
+	fbuf   framebuffer.Array
+	quad   quad.T
 
 	textures []cache.SamplerCache
 	quads    []*widget.QuadBuffer
@@ -127,6 +128,7 @@ func NewGuiPass(app vulkan.App, target RenderTarget) *GuiPass {
 
 	return &GuiPass{
 		app:      app,
+		target:   target,
 		mat:      mat,
 		pass:     pass,
 		fbuf:     fbufs,

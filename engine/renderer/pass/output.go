@@ -35,6 +35,8 @@ type OutputPass struct {
 	pass  renderpass.T
 }
 
+var _ Pass = &OutputPass{}
+
 type OutputDescriptors struct {
 	descriptor.Set
 	Output *descriptor.Sampler
@@ -92,12 +94,8 @@ func NewOutputPass(app vulkan.App, source RenderTarget) *OutputPass {
 	p.desc = p.material.InstantiateMany(app.Pool(), frames)
 	p.tex = make([]texture.T, frames)
 	for i := range p.tex {
-		outIdx := i
-		if len(p.source.Output()) == 1 {
-			outIdx = 0
-		}
 		key := fmt.Sprintf("gbuffer-output-%d", i)
-		p.tex[i], err = texture.FromImage(app.Device(), key, p.source.Output()[outIdx], texture.Args{
+		p.tex[i], err = texture.FromImage(app.Device(), key, p.source.Output()[i], texture.Args{
 			Filter: core1_0.FilterNearest,
 			Wrap:   core1_0.SamplerAddressModeClampToEdge,
 		})
@@ -116,8 +114,8 @@ func (p *OutputPass) Record(cmds command.Recorder, args render.Args, scene objec
 	quad := p.app.Meshes().Fetch(p.quad)
 
 	cmds.Record(func(cmd command.Buffer) {
-		cmd.CmdBeginRenderPass(p.pass, p.fbufs[ctx.Index%len(p.fbufs)])
-		p.desc[ctx.Index%len(p.desc)].Bind(cmd)
+		cmd.CmdBeginRenderPass(p.pass, p.fbufs[ctx.Index])
+		p.desc[ctx.Index].Bind(cmd)
 		quad.Draw(cmd, 0)
 		cmd.CmdEndRenderPass()
 	})

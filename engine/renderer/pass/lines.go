@@ -20,13 +20,14 @@ import (
 
 type LinePass struct {
 	app       vulkan.App
+	target    RenderTarget
 	pass      renderpass.T
 	fbuf      framebuffer.Array
 	materials *MaterialSorter
 	meshQuery *object.Query[mesh.Mesh]
 }
 
-func NewLinePass(app vulkan.App, target RenderTarget) *LinePass {
+func NewLinePass(app vulkan.App, target RenderTarget, depth RenderTarget) *LinePass {
 	log.Println("create line pass")
 
 	pass := renderpass.New(app.Device(), renderpass.Args{
@@ -42,7 +43,7 @@ func NewLinePass(app vulkan.App, target RenderTarget) *LinePass {
 			},
 		},
 		DepthAttachment: &attachment.Depth{
-			Image:         attachment.FromImageArray(target.Depth()),
+			Image:         attachment.FromImageArray(depth.Depth()),
 			LoadOp:        core1_0.AttachmentLoadOpLoad,
 			InitialLayout: core1_0.ImageLayoutShaderReadOnlyOptimal,
 			FinalLayout:   core1_0.ImageLayoutDepthStencilAttachmentOptimal,
@@ -65,9 +66,10 @@ func NewLinePass(app vulkan.App, target RenderTarget) *LinePass {
 	lineShape.Debug.Setup(app.Frames())
 
 	return &LinePass{
-		app:  app,
-		pass: pass,
-		fbuf: fbufs,
+		app:    app,
+		target: target,
+		pass:   pass,
+		fbuf:   fbufs,
 		materials: NewMaterialSorter(app, pass,
 			&material.Def{
 				Shader:       "lines",

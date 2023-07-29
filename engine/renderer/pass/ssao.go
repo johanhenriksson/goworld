@@ -165,8 +165,6 @@ func NewAmbientOcclusionPass(app vulkan.App, gbuffer GeometryBuffer) *AmbientOcc
 			panic(err)
 		}
 		p.desc[i].Descriptors().Normal.Set(p.normal[i])
-
-		p.desc[i].Descriptors().Noise.Set(app.Textures().Fetch(p.noise))
 	}
 
 	return p
@@ -176,12 +174,10 @@ func (p *AmbientOcclusionPass) Record(cmds command.Recorder, args render.Args, s
 	ctx := args.Context
 	quad := p.app.Meshes().Fetch(p.quad)
 
-	// refresh noise
-	p.app.Textures().Fetch(p.noise)
-
 	cmds.Record(func(cmd command.Buffer) {
 		cmd.CmdBeginRenderPass(p.pass, p.fbuf[ctx.Index])
 		p.desc[ctx.Index].Bind(cmd)
+		p.desc[ctx.Index].Descriptors().Noise.Set(p.app.Textures().Fetch(p.noise))
 		p.desc[ctx.Index].Descriptors().Params.Set(AmbientOcclusionParams{
 			Projection: args.Projection,
 			Kernel:     p.kernel,

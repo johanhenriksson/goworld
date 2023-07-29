@@ -18,6 +18,7 @@ import (
 const ForwardSubpass = renderpass.Name("forward")
 
 type ForwardPass struct {
+	target  RenderTarget
 	gbuffer GeometryBuffer
 	app     vulkan.App
 	pass    renderpass.T
@@ -26,6 +27,8 @@ type ForwardPass struct {
 	materials *MaterialSorter
 	meshQuery *object.Query[mesh.Mesh]
 }
+
+var _ Pass = &ForwardPass{}
 
 func NewForwardPass(
 	app vulkan.App,
@@ -85,6 +88,7 @@ func NewForwardPass(
 	}
 
 	return &ForwardPass{
+		target:  target,
 		gbuffer: gbuffer,
 		app:     app,
 		pass:    pass,

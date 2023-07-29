@@ -23,7 +23,6 @@ type T interface {
 type rgraph struct {
 	graph.T
 	app vulkan.App
-
 }
 
 func NewGraph(app vulkan.App) T {
@@ -40,13 +39,25 @@ func NewGraph(app vulkan.App) T {
 		forward := g.Node(pass.NewForwardPass(app, target, gbuffer))
 		forward.After(deferred, core1_0.PipelineStageTopOfPipe)
 
-		lines := g.Node(pass.NewLinePass(app, target))
-		lines.After(forward, core1_0.PipelineStageTopOfPipe)
+		ssaoPass := pass.NewAmbientOcclusionPass(app, gbuffer)
+		ssao := g.Node(ssaoPass)
+		ssao.After(forward, core1_0.PipelineStageTopOfPipe)
 
-		gui := g.Node(pass.NewGuiPass(app, target))
+		blurPass := pass.NewBlurPass(app, ssaoPass.Target)
+		blur := g.Node(blurPass)
+		blur.After(ssao, core1_0.PipelineStageTopOfPipe)
+
+		postPass := pass.NewPostProcessPass(app, target, blurPass.Target())
+		post := g.Node(postPass)
+		post.After(blur, core1_0.PipelineStageTopOfPipe)
+
+		lines := g.Node(pass.NewLinePass(app, postPass.Target(), target))
+		lines.After(post, core1_0.PipelineStageTopOfPipe)
+
+		gui := g.Node(pass.NewGuiPass(app, postPass.Target()))
 		gui.After(lines, core1_0.PipelineStageTopOfPipe)
 
-		output := g.Node(pass.NewOutputPass(app, target))
+		output := g.Node(pass.NewOutputPass(app, postPass.Target()))
 		output.After(gui, core1_0.PipelineStageTopOfPipe)
 
 		// editor forward
@@ -58,7 +69,8 @@ func NewGraph(app vulkan.App) T {
 func (r *rgraph) Screenshot() {
 	idx := 0
 	r.app.Device().WaitIdle()
-	ss, err := upload.DownloadImage(r.app.Device(), r.app.Worker(idx), r.app.Surfaces()[idx])
+	source := r.app.Surfaces()[idx]
+	ss, err := upload.DownloadImage(r.app.Device(), r.app.Worker(idx), source)
 	if err != nil {
 		panic(err)
 	}

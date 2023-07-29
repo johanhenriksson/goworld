@@ -1,0 +1,17 @@
+{
+  "Inputs": {
+    "position": {
+      "Index": 0,
+      "Type": "float"
+    },
+    "texcoord_0": {
+      "Index": 1,
+      "Type": "float"
+    }
+  },
+  "Bindings": {
+    "Input": 0,
+    "SSAO": 1,
+    "LUT": 2
+  }
+}
