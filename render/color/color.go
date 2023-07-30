@@ -3,7 +3,6 @@ package color
 import (
 	"fmt"
 	"image/color"
-	"strconv"
 
 	"github.com/johanhenriksson/goworld/math/byte4"
 	"github.com/johanhenriksson/goworld/math/vec3"
@@ -94,13 +93,24 @@ func (c T) String() string {
 	return fmt.Sprintf("(R:%.2f G:%.2f B:%.2f A:%.2f)", c.R, c.G, c.B, c.A)
 }
 
+var hexDigits = []byte("0123456789abcdef")
+
 func (c T) Hex() string {
-	bytes := make([]byte, 7)
 	rgba := c.Byte4()
+	bytes := make([]byte, 9)
 	bytes[0] = '#'
-	strconv.AppendUint(bytes[1:], uint64(rgba.X), 16)
-	strconv.AppendUint(bytes[3:], uint64(rgba.X), 16)
-	strconv.AppendUint(bytes[5:], uint64(rgba.X), 16)
+	bytes[1] = hexDigits[rgba.X>>4]
+	bytes[2] = hexDigits[rgba.X&0x0F]
+	bytes[3] = hexDigits[rgba.Y>>4]
+	bytes[4] = hexDigits[rgba.Y&0x0F]
+	bytes[5] = hexDigits[rgba.Z>>4]
+	bytes[6] = hexDigits[rgba.Z&0x0F]
+	if c.A < 1 {
+		bytes[7] = hexDigits[rgba.W>>4]
+		bytes[8] = hexDigits[rgba.W&0x0F]
+	} else {
+		bytes = bytes[:7]
+	}
 	return string(bytes)
 }
 
@@ -129,6 +139,9 @@ func Hex(s string) T {
 
 	c := T{A: 1}
 	switch len(s) {
+	case 9:
+		c.A = float32(hexToByte(s[7])<<4+hexToByte(s[8])) / 255
+		fallthrough
 	case 7:
 		c.R = float32(hexToByte(s[1])<<4+hexToByte(s[2])) / 255
 		c.G = float32(hexToByte(s[3])<<4+hexToByte(s[4])) / 255
