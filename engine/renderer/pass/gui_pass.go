@@ -22,19 +22,14 @@ import (
 	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
-type UIDescriptors struct {
+type GuiDescriptors struct {
 	descriptor.Set
-	Textures *descriptor.SamplerArray
-}
-
-type UIDescriptors2 struct {
-	descriptor.Set
-	Config   *descriptor.Uniform[UIConfig]
+	Config   *descriptor.Uniform[GuiConfig]
 	Quads    *descriptor.Storage[widget.Quad]
 	Textures *descriptor.SamplerArray
 }
 
-type UIConfig struct {
+type GuiConfig struct {
 	Resolution vec2.T
 	ZMax       float32
 }
@@ -47,7 +42,7 @@ type GuiDrawable interface {
 type GuiPass struct {
 	app    vulkan.App
 	target RenderTarget
-	mat    []material.Instance[*UIDescriptors2]
+	mat    []material.Instance[*GuiDescriptors]
 	pass   renderpass.T
 	fbuf   framebuffer.Array
 	quad   quad.T
@@ -98,8 +93,8 @@ func NewGuiPass(app vulkan.App, target RenderTarget) *GuiPass {
 		Pointers:   vertex.ParsePointers(vertex.UI{}),
 		DepthTest:  true,
 		DepthWrite: true,
-	}, &UIDescriptors2{
-		Config: &descriptor.Uniform[UIConfig]{
+	}, &GuiDescriptors{
+		Config: &descriptor.Uniform[GuiConfig]{
 			Stages: core1_0.StageVertex,
 		},
 		Quads: &descriptor.Storage[widget.Quad]{
@@ -148,7 +143,7 @@ func (p *GuiPass) Record(cmds command.Recorder, args render.Args, scene object.C
 
 	mesh := p.app.Meshes().Fetch(p.quad.Mesh())
 
-	textures := p.textures[args.Context.Index] // cache.NewSamplerCache(p.app.Textures(), mat.Descriptors().Textures)
+	textures := p.textures[args.Context.Index]
 
 	uiArgs := widget.DrawArgs{
 		Time:     args.Time,
@@ -163,7 +158,8 @@ func (p *GuiPass) Record(cmds command.Recorder, args render.Args, scene object.C
 		},
 	}
 
-	qb := p.quads[args.Context.Index] // widget.NewQuadBuffer(1000)
+	// clear quad buffer
+	qb := p.quads[args.Context.Index]
 	qb.Reset()
 
 	// query scene for gui managers
@@ -188,17 +184,18 @@ func (p *GuiPass) Record(cmds command.Recorder, args render.Args, scene object.C
 		zmax = math.Max(zmax, quad.ZIndex)
 	}
 
+	// update config uniform
+	mat.Descriptors().Config.Set(GuiConfig{
+		Resolution: size,
+		ZMax:       zmax,
+	})
+
 	// draw everything in a single batch
 	cmds.Record(func(cmd command.Buffer) {
 		cmd.CmdBeginRenderPass(p.pass, p.fbuf[args.Context.Index])
 		mat.Bind(cmd)
 		mesh.DrawInstanced(cmd, 0, len(qb.Data))
 		cmd.CmdEndRenderPass()
-	})
-
-	mat.Descriptors().Config.Set(UIConfig{
-		Resolution: size,
-		ZMax:       zmax,
 	})
 }
 
