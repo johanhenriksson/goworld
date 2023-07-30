@@ -113,13 +113,6 @@ func NewMover() *Mover {
 
 		// Lines
 		Lines: lines.New(lines.Args{
-			Mat: &material.Def{
-				Shader:       "lines",
-				Subpass:      "output",
-				VertexFormat: vertex.C{},
-				Primitive:    vertex.Lines,
-				DepthTest:    false,
-			},
 			Lines: []lines.Line{
 				// xz lines
 				lines.L(vec3.New(side, 0, 0), vec3.New(side, 0, side), color.Green),

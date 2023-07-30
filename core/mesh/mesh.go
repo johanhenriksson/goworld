@@ -51,8 +51,8 @@ func New(mode DrawMode, mat *material.Def) *Static {
 }
 
 // NewLines creates a new line mesh component
-func NewLines(mat *material.Def) *Static {
-	return NewPrimitiveMesh(vertex.Lines, Lines, mat)
+func NewLines() *Static {
+	return NewPrimitiveMesh(vertex.Lines, Lines, nil)
 }
 
 // NewPrimitiveMesh creates a new mesh composed of a given GL primitive
