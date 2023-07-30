@@ -23,7 +23,7 @@ func NewEye() *ArcballCamera {
 	distance := float32(10)
 	return object.Builder(object.New("Arcball", &ArcballCamera{
 		Camera: object.Builder(camera.NewObject(camera.Args{
-			Fov:   60,
+			Fov:   58,
 			Near:  0.1,
 			Far:   100,
 			Clear: color.Black,

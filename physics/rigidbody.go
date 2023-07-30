@@ -131,7 +131,7 @@ func (b *RigidBody) detach() {
 func (b *RigidBody) destroy() {
 	b.detach()
 	if b.shape != nil {
-		// b.Shape.OnChange().Unsubscribe(b)
+		b.shunsub()
 		b.shape = nil
 	}
 	if b.handle != nil {

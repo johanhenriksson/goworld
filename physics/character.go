@@ -5,6 +5,7 @@ import (
 	"runtime"
 
 	"github.com/johanhenriksson/goworld/core/object"
+	"github.com/johanhenriksson/goworld/core/transform"
 	"github.com/johanhenriksson/goworld/math/vec3"
 )
 
@@ -16,6 +17,7 @@ type Character struct {
 	step     float32
 	world    *World
 	grounded bool
+	tfparent transform.T
 }
 
 func NewCharacter(height, radius, stepHeight float32) *Character {
@@ -67,6 +69,15 @@ func (c *Character) Grounded() bool {
 func (c *Character) OnEnable() {
 	if c.world = object.GetInParents[*World](c); c.world != nil {
 		c.world.AddCharacter(c)
+
+		wpos := c.Transform().WorldPosition()
+		wrot := c.Transform().WorldRotation()
+		wscl := c.Transform().WorldScale()
+		c.tfparent = c.Transform().Parent()
+		c.Transform().SetParent(nil)
+		c.Transform().SetWorldPosition(wpos)
+		c.Transform().SetWorldRotation(wrot)
+		c.Transform().SetWorldScale(wscl)
 	} else {
 		log.Println("Character", c.Name(), ": No physics world in parents")
 	}
@@ -76,5 +87,13 @@ func (c *Character) OnDisable() {
 	if c.world != nil {
 		c.world.RemoveCharacter(c)
 		c.world = nil
+
+		wpos := c.Transform().WorldPosition()
+		wrot := c.Transform().WorldRotation()
+		wscl := c.Transform().WorldScale()
+		c.Transform().SetParent(c.tfparent)
+		c.Transform().SetWorldPosition(wpos)
+		c.Transform().SetWorldRotation(wrot)
+		c.Transform().SetWorldScale(wscl)
 	}
 }

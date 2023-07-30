@@ -4,17 +4,21 @@ import (
 	"github.com/johanhenriksson/goworld/core/input/keys"
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/core/object"
+	"github.com/johanhenriksson/goworld/geometry/cube"
 	"github.com/johanhenriksson/goworld/math/quat"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/physics"
+	"github.com/johanhenriksson/goworld/render/color"
 )
 
 type T struct {
 	object.Object
 	Character *physics.Character
 	Camera    *ArcballCamera
-	Speed     float32
-	TurnRate  float32
+	Model     object.Object
+
+	Speed    float32
+	TurnRate float32
 
 	keys     keys.State
 	mouse    mouse.State
@@ -22,13 +26,23 @@ type T struct {
 }
 
 func New() *T {
+	model := cube.New(cube.Args{
+		Size: 1,
+	})
+	model.SetTexture("diffuse", color.White)
+
 	return object.New("Player", &T{
-		Character: physics.NewCharacter(1.8, 0.5, 0.2),
+		Character: physics.NewCharacter(1, 0.5, 0.2),
 		Camera:    NewEye(),
-		Speed:     7,
-		TurnRate:  40,
-		keys:      keys.NewState(),
-		mouse:     mouse.NewState(),
+		Model: object.Builder(object.Empty("Model")).
+			Scale(vec3.New(1, 2, 1)).
+			Attach(model).
+			Create(),
+
+		Speed:    7,
+		TurnRate: 40,
+		keys:     keys.NewState(),
+		mouse:    mouse.NewState(),
 	})
 }
 
@@ -83,6 +97,13 @@ func (p *T) Update(scene object.Component, dt float32) {
 
 	if p.Character.Grounded() {
 		p.velocity = dir.Scaled(p.Speed)
+	} else {
+		// the player is allowed some air acceleration
+		// ensure the total velocity does not exceed the maximum speed
+		p.velocity = p.velocity.Add(dir.Scaled(0.016 * p.Speed))
+		if p.velocity.Length() > p.Speed {
+			p.velocity = p.velocity.Normalized().Scaled(p.Speed)
+		}
 	}
 	p.Character.Move(p.velocity)
 }

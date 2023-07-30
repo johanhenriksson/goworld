@@ -27,7 +27,7 @@ type Player struct {
 func NewPlayer(position vec3.T, rotation quat.T) *Player {
 	p := object.Builder(object.New("Player", &Player{
 		Camera: object.Builder(camera.NewObject(camera.Args{
-			Fov:   50.0,
+			Fov:   58.0,
 			Near:  0.1,
 			Far:   500,
 			Clear: color.Hex("#eddaab"),
