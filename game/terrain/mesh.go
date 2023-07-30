@@ -16,13 +16,11 @@ type Mesh struct {
 }
 
 func NewMesh(tile *Tile) *Mesh {
-	msh := mesh.NewDynamic("Terrain", mesh.Deferred, &material.Def{
-		Shader:       "deferred/textured",
-		VertexFormat: vertex.T{},
-		DepthTest:    true,
-		DepthWrite:   true,
-		CullMode:     vertex.CullBack,
-	}, TileVertexGenerator(tile))
+	msh := mesh.NewDynamic(
+		"Terrain",
+		material.StandardDeferred(),
+		TileVertexGenerator(tile),
+	)
 	msh.SetTexture("diffuse", texture.Checker)
 	return &Mesh{
 		Dynamic: msh,
@@ -64,8 +62,8 @@ func TileVertexGenerator(tile *Tile) mesh.Generator[vertex.T, uint16] {
 			origin := vec3.New(float32(x), root.Height, float32(z))
 
 			norm := vec3.Zero
-			samples := len(normSamples) - 1
-			for i := 0; i < samples; i++ {
+			samples := 0
+			for i := 0; i < 8; i++ {
 				ao := normSamples[i]
 				ap, ok := getPoint(x+ao.X, z+ao.Y)
 				if !ok {
@@ -81,6 +79,7 @@ func TileVertexGenerator(tile *Tile) mesh.Generator[vertex.T, uint16] {
 				b := vec3.New(float32(x+bo.X), bp.Height, float32(z+bo.Y)).Sub(origin)
 
 				norm = norm.Add(vec3.Cross(a, b).Normalized())
+				samples++
 			}
 
 			norm = norm.Scaled(float32(1) / float32(samples))

@@ -67,17 +67,11 @@ func NewLinePass(app vulkan.App, target RenderTarget, depth RenderTarget) *LineP
 	lineShape.Debug.Setup(app.Frames())
 
 	return &LinePass{
-		app:    app,
-		target: target,
-		pass:   pass,
-		fbuf:   fbufs,
-		materials: NewMaterialSorter(app, pass,
-			&material.Def{
-				Shader:       "lines",
-				VertexFormat: vertex.C{},
-				Primitive:    vertex.Lines,
-				DepthTest:    true,
-			}),
+		app:       app,
+		target:    target,
+		pass:      pass,
+		fbuf:      fbufs,
+		materials: NewMaterialSorter(app, pass, material.Lines()),
 		meshQuery: object.NewQuery[mesh.Mesh](),
 	}
 }
@@ -113,5 +107,5 @@ func (p *LinePass) Destroy() {
 }
 
 func isDrawLines(m mesh.Mesh) bool {
-	return m.Mode() == mesh.Lines
+	return m.Primitive() == vertex.Lines
 }

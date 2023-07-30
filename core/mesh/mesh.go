@@ -13,7 +13,7 @@ import (
 type Mesh interface {
 	object.Component
 
-	Mode() DrawMode
+	Primitive() vertex.Primitive
 	CastShadows() bool
 	Material() *material.Def
 	MaterialID() uint64
@@ -32,9 +32,10 @@ type Mesh interface {
 type Static struct {
 	object.Component
 
-	mode  DrawMode
-	mat   *material.Def
-	matId uint64
+	primitive vertex.Primitive
+	shadows   bool
+	mat       *material.Def
+	matId     uint64
 
 	textures map[string]texture.Ref
 
@@ -46,22 +47,23 @@ type Static struct {
 }
 
 // New creates a new mesh component
-func New(mode DrawMode, mat *material.Def) *Static {
-	return NewPrimitiveMesh(vertex.Triangles, mode, mat)
+func New(mat *material.Def) *Static {
+	return NewPrimitiveMesh(vertex.Triangles, mat)
 }
 
 // NewLines creates a new line mesh component
 func NewLines() *Static {
-	return NewPrimitiveMesh(vertex.Lines, Lines, nil)
+	return NewPrimitiveMesh(vertex.Lines, nil)
 }
 
 // NewPrimitiveMesh creates a new mesh composed of a given GL primitive
-func NewPrimitiveMesh(primitive vertex.Primitive, mode DrawMode, mat *material.Def) *Static {
+func NewPrimitiveMesh(primitive vertex.Primitive, mat *material.Def) *Static {
 	m := object.NewComponent(&Static{
-		mode:     mode,
-		mat:      mat,
-		matId:    material.Hash(mat),
-		textures: make(map[string]texture.Ref),
+		mat:       mat,
+		matId:     material.Hash(mat),
+		textures:  make(map[string]texture.Ref),
+		primitive: primitive,
+		shadows:   true,
 
 		VertexData: object.NewProperty[vertex.Mesh](nil),
 	})
@@ -79,6 +81,7 @@ func (m *Static) Name() string {
 	return "Mesh"
 }
 
+func (m *Static) Primitive() vertex.Primitive         { return m.primitive }
 func (m *Static) Mesh() *object.Property[vertex.Mesh] { return &m.VertexData }
 
 func (m *Static) Texture(slot string) texture.Ref {
@@ -90,11 +93,7 @@ func (m *Static) SetTexture(slot string, ref texture.Ref) {
 }
 
 func (m *Static) CastShadows() bool {
-	return m.mode != Lines
-}
-
-func (m *Static) Mode() DrawMode {
-	return m.mode
+	return m.primitive == vertex.Triangles && m.shadows
 }
 
 func (m *Static) Material() *material.Def {

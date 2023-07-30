@@ -33,8 +33,11 @@ type Args struct {
 }
 
 func New(args Args) *Mesh {
+	if args.Mat == nil {
+		args.Mat = material.ColoredForward()
+	}
 	plane := object.NewComponent(&Mesh{
-		Static: mesh.New(mesh.Forward, args.Mat),
+		Static: mesh.New(args.Mat),
 		Args:   args,
 	})
 	plane.generate()

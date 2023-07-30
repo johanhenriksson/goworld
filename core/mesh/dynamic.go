@@ -24,9 +24,9 @@ type Dynamic[V vertex.Vertex, I vertex.Index] struct {
 	meshdata vertex.MutableMesh[V, I]
 }
 
-func NewDynamic[V vertex.Vertex, I vertex.Index](name string, mode DrawMode, mat *material.Def, fn Generator[V, I]) *Dynamic[V, I] {
+func NewDynamic[V vertex.Vertex, I vertex.Index](name string, mat *material.Def, fn Generator[V, I]) *Dynamic[V, I] {
 	m := &Dynamic[V, I]{
-		Static:  New(mode, mat),
+		Static:  New(mat),
 		name:    name,
 		refresh: fn,
 		updated: make(chan Data[V, I], 2),

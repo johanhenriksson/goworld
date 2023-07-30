@@ -2,7 +2,6 @@ package material
 
 import (
 	"github.com/johanhenriksson/goworld/engine/renderer/uniform" // illegal import
-	"github.com/johanhenriksson/goworld/render/cache"
 	"github.com/johanhenriksson/goworld/render/descriptor"
 	"github.com/johanhenriksson/goworld/render/device"
 	"github.com/johanhenriksson/goworld/render/renderpass"
@@ -13,9 +12,12 @@ import (
 	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
-type Ref interface {
-	cache.Key
-}
+type Pass string
+
+const (
+	Deferred = Pass("deferred")
+	Forward  = Pass("forward")
+)
 
 type Standard Instance[*Descriptors]
 
@@ -28,6 +30,7 @@ type Descriptors struct {
 
 type Def struct {
 	Shader       string
+	Pass         Pass
 	VertexFormat any
 	DepthTest    bool
 	DepthWrite   bool

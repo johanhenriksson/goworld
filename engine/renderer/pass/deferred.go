@@ -194,14 +194,7 @@ func NewDeferredPass(
 		shadows: shadows,
 		fbuf:    fbuf,
 
-		materials: NewMaterialSorter(
-			app, pass,
-			&material.Def{
-				Shader:       "deferred/textured",
-				VertexFormat: vertex.T{},
-				DepthTest:    true,
-				DepthWrite:   true,
-			}),
+		materials: NewMaterialSorter(app, pass, material.StandardDeferred()),
 
 		meshQuery:  object.NewQuery[mesh.Mesh](),
 		lightQuery: object.NewQuery[light.T](),
@@ -332,7 +325,10 @@ func (p *deferred) Destroy() {
 }
 
 func isDrawDeferred(m mesh.Mesh) bool {
-	return m.Mode() == mesh.Deferred
+	if mat := m.Material(); mat != nil {
+		return mat.Pass == material.Deferred
+	}
+	return false
 }
 
 func frustumCulled(frustum *shape.Frustum) func(mesh.Mesh) bool {

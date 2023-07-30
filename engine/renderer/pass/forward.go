@@ -9,7 +9,6 @@ import (
 	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/renderpass"
 	"github.com/johanhenriksson/goworld/render/renderpass/attachment"
-	"github.com/johanhenriksson/goworld/render/vertex"
 	"github.com/johanhenriksson/goworld/render/vulkan"
 
 	"github.com/vkngwrapper/core/v2/core1_0"
@@ -92,13 +91,7 @@ func NewForwardPass(
 		pass:    pass,
 		fbuf:    fbuf,
 
-		materials: NewMaterialSorter(app, pass, &material.Def{
-			Shader:       "forward/color",
-			VertexFormat: vertex.C{},
-			DepthTest:    true,
-			DepthWrite:   true,
-			CullMode:     vertex.CullBack,
-		}),
+		materials: NewMaterialSorter(app, pass, material.ColoredForward()),
 		meshQuery: object.NewQuery[mesh.Mesh](),
 	}
 }
@@ -131,5 +124,8 @@ func (p *ForwardPass) Destroy() {
 }
 
 func isDrawForward(m mesh.Mesh) bool {
-	return m.Mode() == mesh.Forward
+	if mat := m.Material(); mat != nil {
+		return mat.Pass == material.Forward
+	}
+	return false
 }

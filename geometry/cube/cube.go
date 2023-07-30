@@ -23,8 +23,11 @@ type Args struct {
 
 // New creates a vertex colored cube mesh with a given size
 func New(args Args) *Mesh {
+	if args.Mat == nil {
+		args.Mat = material.ColoredForward()
+	}
 	cube := object.NewComponent(&Mesh{
-		Static: mesh.New(mesh.Deferred, args.Mat),
+		Static: mesh.New(args.Mat),
 		Args:   args,
 	})
 	cube.SetTexture("diffuse", texture.Checker)

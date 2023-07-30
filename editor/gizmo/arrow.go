@@ -8,7 +8,6 @@ import (
 	"github.com/johanhenriksson/goworld/physics"
 	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/material"
-	"github.com/johanhenriksson/goworld/render/vertex"
 )
 
 type Arrow struct {
@@ -30,20 +29,13 @@ func NewArrow(clr color.T) *Arrow {
 	bodyHeight := 0.67 * height
 	segments := 32
 
-	mat := &material.Def{
-		Shader:       "forward/color",
-		VertexFormat: vertex.C{},
-		DepthTest:    true,
-		DepthWrite:   true,
-	}
-
 	arrow := object.New("Arrow", &Arrow{
 		Hover:     object.NewProperty(false),
 		Rigidbody: physics.NewRigidBody(0),
 		Collider:  physics.NewCompound(),
 
 		Head: object.Builder(cone.NewObject(cone.Args{
-			Mat:      mat,
+			Mat:      material.ColoredForward(),
 			Radius:   coneRadius,
 			Height:   coneHeight,
 			Segments: segments,
@@ -53,7 +45,7 @@ func NewArrow(clr color.T) *Arrow {
 			Create(),
 
 		Body: object.Builder(cylinder.NewObject(cylinder.Args{
-			Mat:      mat,
+			Mat:      material.ColoredForward(),
 			Radius:   bodyRadius,
 			Height:   bodyHeight,
 			Segments: segments,

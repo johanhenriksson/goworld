@@ -15,7 +15,6 @@ import (
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/material"
-	"github.com/johanhenriksson/goworld/render/vertex"
 )
 
 // Mover Gizmo can be used to reposition objects in the 3D scene.
@@ -58,13 +57,6 @@ func NewMover() *Mover {
 
 	s := side / 2
 
-	mat := &material.Def{
-		Shader:       "forward/color",
-		VertexFormat: vertex.C{},
-		DepthTest:    true,
-		DepthWrite:   true,
-	}
-
 	g := object.New("Mover Gizmo", &Mover{
 		size:        0.08,
 		sensitivity: 6,
@@ -82,7 +74,7 @@ func NewMover() *Mover {
 
 		// XY Plane
 		XY: object.Builder(plane.NewObject(plane.Args{
-			Mat:   mat,
+			Mat:   material.ColoredForward(),
 			Size:  side,
 			Color: color.Blue.WithAlpha(planeAlpha),
 		})).
@@ -92,7 +84,7 @@ func NewMover() *Mover {
 
 		// XZ Plane
 		XZ: object.Builder(plane.NewObject(plane.Args{
-			Mat:   mat,
+			Mat:   material.ColoredForward(),
 			Size:  side,
 			Color: color.Green.WithAlpha(planeAlpha),
 		})).
@@ -102,7 +94,7 @@ func NewMover() *Mover {
 
 		// YZ Plane
 		YZ: object.Builder(plane.NewObject(plane.Args{
-			Mat:   mat,
+			Mat:   material.ColoredForward(),
 			Size:  side,
 			Color: color.Red.WithAlpha(planeAlpha),
 		})).

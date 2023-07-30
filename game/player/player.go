@@ -9,6 +9,7 @@ import (
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/physics"
 	"github.com/johanhenriksson/goworld/render/color"
+	"github.com/johanhenriksson/goworld/render/material"
 )
 
 type T struct {
@@ -28,6 +29,7 @@ type T struct {
 func New() *T {
 	model := cube.New(cube.Args{
 		Size: 1,
+		Mat:  material.StandardDeferred(),
 	})
 	model.SetTexture("diffuse", color.White)
 

@@ -19,6 +19,7 @@ import (
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/physics"
 	"github.com/johanhenriksson/goworld/render/color"
+	"github.com/johanhenriksson/goworld/render/material"
 )
 
 func main() {
@@ -42,7 +43,10 @@ func main() {
 			// physics boxes
 			for x := 0; x < 3; x++ {
 				for z := 0; z < 3; z++ {
-					box := cube.New(cube.Args{Size: 1})
+					box := cube.New(cube.Args{
+						Size: 1,
+						Mat:  material.StandardDeferred(),
+					})
 					box.SetTexture("diffuse", random.Choice(color.DefaultPalette))
 
 					object.Builder(object.Empty("Box")).
