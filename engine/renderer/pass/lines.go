@@ -51,7 +51,7 @@ func NewLinePass(app vulkan.App, target RenderTarget, depth RenderTarget) *LineP
 		},
 		Subpasses: []renderpass.Subpass{
 			{
-				Name:  OutputSubpass,
+				Name:  MainSubpass,
 				Depth: true,
 
 				ColorAttachments: []attachment.Name{OutputAttachment},
@@ -74,7 +74,6 @@ func NewLinePass(app vulkan.App, target RenderTarget, depth RenderTarget) *LineP
 		materials: NewMaterialSorter(app, pass,
 			&material.Def{
 				Shader:       "lines",
-				Subpass:      OutputSubpass,
 				VertexFormat: vertex.C{},
 				Primitive:    vertex.Lines,
 				DepthTest:    true,

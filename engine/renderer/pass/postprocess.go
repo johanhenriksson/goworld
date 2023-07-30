@@ -75,7 +75,7 @@ func NewPostProcessPass(app vulkan.App, input RenderTarget, ssao RenderTarget) *
 		},
 		Subpasses: []renderpass.Subpass{
 			{
-				Name:             OutputSubpass,
+				Name:             MainSubpass,
 				ColorAttachments: []attachment.Name{OutputAttachment},
 			},
 		},

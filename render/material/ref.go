@@ -28,7 +28,6 @@ type Descriptors struct {
 
 type Def struct {
 	Shader       string
-	Subpass      renderpass.Name
 	VertexFormat any
 	DepthTest    bool
 	DepthWrite   bool
@@ -63,7 +62,7 @@ func FromDef(dev device.T, pool descriptor.Pool, rpass renderpass.T, def *Def) T
 		Args{
 			Shader:     shader.New(dev, def.Shader),
 			Pass:       rpass,
-			Subpass:    def.Subpass,
+			Subpass:    renderpass.Name("main"),
 			Pointers:   pointers,
 			DepthTest:  def.DepthTest,
 			DepthWrite: def.DepthWrite,

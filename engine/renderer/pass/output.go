@@ -21,8 +21,6 @@ import (
 	"github.com/vkngwrapper/extensions/v2/khr_swapchain"
 )
 
-const OutputSubpass = renderpass.Name("output")
-
 type OutputPass struct {
 	app      vulkan.App
 	material material.T[*OutputDescriptors]
@@ -63,7 +61,7 @@ func NewOutputPass(app vulkan.App, source RenderTarget) *OutputPass {
 		},
 		Subpasses: []renderpass.Subpass{
 			{
-				Name:             OutputSubpass,
+				Name:             MainSubpass,
 				ColorAttachments: []attachment.Name{OutputAttachment},
 			},
 		},

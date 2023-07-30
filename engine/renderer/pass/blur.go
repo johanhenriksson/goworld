@@ -62,7 +62,7 @@ func NewBlurPass(app vulkan.App, input RenderTarget) *BlurPass {
 		},
 		Subpasses: []renderpass.Subpass{
 			{
-				Name:             OutputSubpass,
+				Name:             MainSubpass,
 				ColorAttachments: []attachment.Name{OutputAttachment},
 			},
 		},

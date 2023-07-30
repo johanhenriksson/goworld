@@ -6,8 +6,11 @@ import (
 	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/command"
+	"github.com/johanhenriksson/goworld/render/renderpass"
 	"github.com/johanhenriksson/goworld/render/swapchain"
 )
+
+const MainSubpass = renderpass.Name("main")
 
 type Pass interface {
 	Name() string

@@ -63,14 +63,14 @@ func NewShadowPass(app vulkan.App) Shadow {
 		},
 		Subpasses: []renderpass.Subpass{
 			{
-				Name:  GeometrySubpass,
+				Name:  MainSubpass,
 				Depth: true,
 			},
 		},
 		Dependencies: []renderpass.SubpassDependency{
 			{
 				Src:   renderpass.ExternalSubpass,
-				Dst:   GeometrySubpass,
+				Dst:   MainSubpass,
 				Flags: core1_0.DependencyByRegion,
 
 				// External passes must finish reading depth textures in fragment shaders
@@ -82,7 +82,7 @@ func NewShadowPass(app vulkan.App) Shadow {
 				DstAccessMask: core1_0.AccessDepthStencilAttachmentWrite,
 			},
 			{
-				Src:   GeometrySubpass,
+				Src:   MainSubpass,
 				Dst:   renderpass.ExternalSubpass,
 				Flags: core1_0.DependencyByRegion,
 
@@ -139,7 +139,6 @@ func (p *shadowpass) createShadowmap(light light.T) Shadowmap {
 		// cheating a bit by creating entire materials for each light, fix it later.
 		mats := NewMaterialSorter(p.app, p.pass, &material.Def{
 			Shader:       "shadow",
-			Subpass:      GeometrySubpass,
 			VertexFormat: voxel.Vertex{},
 			DepthTest:    true,
 			DepthWrite:   true,

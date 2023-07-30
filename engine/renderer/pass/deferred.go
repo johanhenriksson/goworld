@@ -23,10 +23,7 @@ import (
 	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
-const (
-	LightingSubpass renderpass.Name = "lighting"
-	GeometrySubpass renderpass.Name = "geometry"
-)
+const LightingSubpass renderpass.Name = "lighting"
 
 const (
 	DiffuseAttachment  attachment.Name = "diffuse"
@@ -114,7 +111,7 @@ func NewDeferredPass(
 		},
 		Subpasses: []renderpass.Subpass{
 			{
-				Name:  GeometrySubpass,
+				Name:  MainSubpass,
 				Depth: true,
 
 				ColorAttachments: []attachment.Name{DiffuseAttachment, NormalsAttachment, PositionAttachment},
@@ -129,7 +126,7 @@ func NewDeferredPass(
 		Dependencies: []renderpass.SubpassDependency{
 			{
 				Src:   renderpass.ExternalSubpass,
-				Dst:   GeometrySubpass,
+				Dst:   MainSubpass,
 				Flags: core1_0.DependencyByRegion,
 
 				// Color & depth attachments must be unused
@@ -146,7 +143,7 @@ func NewDeferredPass(
 				DstAccessMask: core1_0.AccessColorAttachmentWrite | core1_0.AccessDepthStencilAttachmentWrite,
 			},
 			{
-				Src:   GeometrySubpass,
+				Src:   MainSubpass,
 				Dst:   LightingSubpass,
 				Flags: core1_0.DependencyByRegion,
 				// todo: consider that shadow maps should be ready before we read them in the fragment shader
@@ -201,7 +198,6 @@ func NewDeferredPass(
 			app, pass,
 			&material.Def{
 				Shader:       "deferred/textured",
-				Subpass:      GeometrySubpass,
 				VertexFormat: vertex.T{},
 				DepthTest:    true,
 				DepthWrite:   true,

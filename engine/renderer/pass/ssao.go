@@ -81,7 +81,7 @@ func NewAmbientOcclusionPass(app vulkan.App, gbuffer GeometryBuffer) *AmbientOcc
 		},
 		Subpasses: []renderpass.Subpass{
 			{
-				Name:  OutputSubpass,
+				Name:  MainSubpass,
 				Depth: false,
 
 				ColorAttachments: []attachment.Name{OutputAttachment},

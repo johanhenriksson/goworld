@@ -91,7 +91,7 @@ func (m *MaterialSorter) Load(def *material.Def) bool {
 		material.Args{
 			Shader:     shader,
 			Pass:       m.pass,
-			Subpass:    def.Subpass,
+			Subpass:    MainSubpass,
 			Pointers:   pointers,
 			DepthTest:  def.DepthTest,
 			DepthWrite: def.DepthWrite,
@@ -143,6 +143,7 @@ func (m *MaterialSorter) DrawCamera(cmds command.Recorder, args render.Args, cam
 		meshGroups[matId] = append(meshGroups[matId], msh)
 	}
 
+	// iterate the sorted material groups
 	for matId, objects := range meshGroups {
 		mat := m.cache[matId][args.Context.Index]
 		mat.Instance.Descriptors().Camera.Set(camera)

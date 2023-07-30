@@ -15,8 +15,6 @@ import (
 	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
-const ForwardSubpass = renderpass.Name("forward")
-
 type ForwardPass struct {
 	target  RenderTarget
 	gbuffer GeometryBuffer
@@ -74,7 +72,7 @@ func NewForwardPass(
 		},
 		Subpasses: []renderpass.Subpass{
 			{
-				Name:  ForwardSubpass,
+				Name:  MainSubpass,
 				Depth: true,
 
 				ColorAttachments: []attachment.Name{OutputAttachment, NormalsAttachment, PositionAttachment},
@@ -96,7 +94,6 @@ func NewForwardPass(
 
 		materials: NewMaterialSorter(app, pass, &material.Def{
 			Shader:       "forward/color",
-			Subpass:      ForwardSubpass,
 			VertexFormat: vertex.C{},
 			DepthTest:    true,
 			DepthWrite:   true,

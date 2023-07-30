@@ -84,7 +84,7 @@ func NewGuiPass(app vulkan.App, target RenderTarget) *GuiPass {
 		},
 		Subpasses: []renderpass.Subpass{
 			{
-				Name:  OutputSubpass,
+				Name:  MainSubpass,
 				Depth: true,
 
 				ColorAttachments: []attachment.Name{OutputAttachment},
