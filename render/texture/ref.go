@@ -4,6 +4,8 @@ import (
 	"github.com/johanhenriksson/goworld/render/image"
 )
 
+var Checker = PathRef("textures/uv_checker.png")
+
 type Ref interface {
 	Key() string
 	Version() int

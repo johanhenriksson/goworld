@@ -12,7 +12,10 @@ import (
 	"github.com/johanhenriksson/goworld/game/chunk"
 	"github.com/johanhenriksson/goworld/game/player"
 	"github.com/johanhenriksson/goworld/game/terrain"
+	"github.com/johanhenriksson/goworld/geometry/cone"
+	"github.com/johanhenriksson/goworld/geometry/cube"
 	"github.com/johanhenriksson/goworld/math/quat"
+	"github.com/johanhenriksson/goworld/math/random"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/physics"
 	"github.com/johanhenriksson/goworld/render/color"
@@ -32,27 +35,61 @@ func main() {
 			world := physics.NewWorld()
 			object.Attach(scene, world)
 
-			// generator := chunk.ExampleWorldgen(4, 123123)
+			generator := chunk.ExampleWorldgen(4, 123123)
 			// chonk := chunk.NewWorld(4, generator, 40)
 			// object.Attach(scene, chonk)
 
 			// physics boxes
-			boxgen := chunk.NewRandomGen()
 			for x := 0; x < 3; x++ {
 				for z := 0; z < 3; z++ {
-					chonk := chunk.Generate(boxgen, 1, 100*x, 100*z)
+					box := cube.New(cube.Args{Size: 1})
+					box.SetTexture("diffuse", random.Choice(color.DefaultPalette))
+
 					object.Builder(object.Empty("Box")).
 						Position(vec3.New(20+3*float32(x), 30, 15+3*float32(z))).
-						Attach(physics.NewCompound()).
 						Attach(physics.NewRigidBody(5)).
-						Attach(object.Builder(object.Empty("ChunkMesh")).
-							Attach(chunk.NewMesh(chonk)).
-							Attach(physics.NewMesh()).
-							Create()).
+						Attach(physics.NewBox(vec3.One)).
+						Attach(box).
 						Parent(scene).
 						Create()
 				}
 			}
+
+			object.Builder(object.Empty("Box")).
+				Position(vec3.New(14, 14, 14)).
+				Attach(physics.NewRigidBody(0)).
+				Attach(chunk.NewMesh(chunk.Generate(generator, 4, 0, 0))).
+				Attach(physics.NewMesh()).
+				Parent(scene).
+				Create()
+
+			object.Builder(object.Empty("ParentyParent")).
+				Position(vec3.New(10, 15, 10)).
+				Attach(physics.NewRigidBody(1)).
+				Attach(physics.NewCompound()).
+				Attach(physics.NewSphere(1)).
+				Attach(
+					object.Builder(cone.NewObject(cone.Args{
+						Segments: 4,
+						Height:   1,
+						Radius:   0.25,
+						Color:    color.Purple,
+					})).
+						Position(vec3.New(-2, 0, 0)).
+						Create(),
+				).
+				Attach(
+					object.Builder(cone.NewObject(cone.Args{
+						Segments: 4,
+						Height:   1,
+						Radius:   0.25,
+						Color:    color.Purple,
+					})).
+						Position(vec3.New(2, 0, 0)).
+						Create(),
+				).
+				Parent(scene).
+				Create()
 
 			// character
 			char := player.New()
@@ -73,7 +110,7 @@ func main() {
 				Create()
 
 			// directional light
-			rot := float32(-40)
+			rot := float32(40)
 			object.Attach(
 				scene,
 				object.Builder(object.Empty("Sun")).
@@ -84,8 +121,9 @@ func main() {
 						Cascades:  4,
 					})).
 					Position(vec3.New(1, 2, 3)).
+					Rotation(quat.Euler(rot, 0, 0)).
 					Attach(script.New(func(scene, self object.Component, dt float32) {
-						rot -= dt
+						rot -= 0.5 * dt
 						self.Parent().Transform().SetRotation(quat.Euler(rot, 0, 0))
 					})).
 					Create())

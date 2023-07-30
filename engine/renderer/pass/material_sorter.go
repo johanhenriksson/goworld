@@ -143,7 +143,7 @@ func (m *MaterialSorter) DrawCamera(cmds command.Recorder, args render.Args, cam
 		meshGroups[matId] = append(meshGroups[matId], msh)
 	}
 
-	for matId, matMeshes := range meshGroups {
+	for matId, objects := range meshGroups {
 		mat := m.cache[matId][args.Context.Index]
 		mat.Instance.Descriptors().Camera.Set(camera)
 
@@ -151,7 +151,7 @@ func (m *MaterialSorter) DrawCamera(cmds command.Recorder, args render.Args, cam
 			mat.Instance.Bind(cmd)
 		})
 
-		for i, msh := range matMeshes {
+		for i, msh := range objects {
 			vkmesh, meshReady := m.app.Meshes().TryFetch(msh.Mesh().Get())
 			if !meshReady {
 				continue
@@ -180,7 +180,7 @@ func (m *MaterialSorter) DrawCamera(cmds command.Recorder, args render.Args, cam
 			})
 		}
 
-		mat.Instance.Descriptors().Objects.SetRange(0, mat.Objects[:len(matMeshes)])
+		mat.Instance.Descriptors().Objects.SetRange(0, mat.Objects[:len(objects)])
 		mat.Textures.UpdateDescriptors()
 	}
 }

@@ -41,7 +41,7 @@ func (b *Box) String() string {
 }
 
 func (b *Box) colliderCreate() shapeHandle {
-	return shape_new_box(unsafe.Pointer(b), b.Extents.Get())
+	return shape_new_box(unsafe.Pointer(b), b.Extents.Get().Scaled(0.5))
 }
 
 func (b *Box) colliderRefresh() {}
