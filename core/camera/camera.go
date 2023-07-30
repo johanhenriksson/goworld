@@ -63,10 +63,12 @@ func (cam *Camera) Unproject(pos vec3.T) vec3.T {
 	return cam.ViewProjInv.TransformPoint(pos)
 }
 
-func (cam *Camera) PreDraw(args render.Args, scene object.Object) error {
+func (cam *Camera) RenderArgs(screen render.Screen) render.Args {
+	// todo: passing the global viewport allows the camera to modify the actual render viewport
+
 	// update view & view-projection matrices
-	cam.Viewport = args.Viewport
-	cam.Aspect = float32(args.Viewport.Width) / float32(args.Viewport.Height)
+	cam.Viewport = screen
+	cam.Aspect = float32(cam.Viewport.Width) / float32(cam.Viewport.Height)
 	cam.Proj = mat4.Perspective(cam.Fov, cam.Aspect, cam.Near, cam.Far)
 
 	// calculate the view matrix.
@@ -82,5 +84,19 @@ func (cam *Camera) PreDraw(args render.Args, scene object.Object) error {
 	cam.ViewProj = cam.Proj.Mul(&cam.View)
 	cam.ViewProjInv = cam.ViewProj.Invert()
 
-	return nil
+	return render.Args{
+		Viewport:   cam.Viewport,
+		Near:       cam.Near,
+		Far:        cam.Far,
+		Fov:        cam.Fov,
+		Projection: cam.Proj,
+		View:       cam.View,
+		ViewInv:    cam.ViewInv,
+		VP:         cam.ViewProj,
+		VPInv:      cam.ViewProjInv,
+		MVP:        cam.ViewProj,
+		Clear:      cam.Clear,
+		Position:   cam.Transform().WorldPosition(),
+		Forward:    cam.Transform().Forward(),
+	}
 }

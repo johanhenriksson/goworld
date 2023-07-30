@@ -57,29 +57,20 @@ func (n *preNode) Prepare(scene object.Object, time, delta float32) (*render.Arg
 	n.app.Textures().Tick()
 
 	// create render arguments
-	args := render.Args{
-		Time:      time,
-		Delta:     delta,
-		Context:   context,
-		Viewport:  screen,
-		Transform: mat4.Ident(),
-	}
+	args := render.Args{}
 
 	// find the first active camera
 	if camera, exists := n.cameraQuery.Reset().First(scene); exists {
-		args.Near = camera.Near
-		args.Far = camera.Far
-		args.Fov = camera.Fov
-		args.Projection = camera.Proj
-		args.View = camera.View
-		args.ViewInv = camera.ViewInv
-		args.VP = camera.ViewProj
-		args.VPInv = camera.ViewProjInv
-		args.MVP = camera.ViewProj
-		args.Position = camera.Transform().WorldPosition()
-		args.Clear = camera.Clear
-		args.Forward = camera.Transform().Forward()
+		args = camera.RenderArgs(screen)
+	} else {
+		args.Viewport = screen
 	}
+
+	// fill in time & swapchain context
+	args.Time = time
+	args.Delta = delta
+	args.Context = context
+	args.Transform = mat4.Ident()
 
 	// execute pre-draw pass
 	objects := n.predrawQuery.Reset().Collect(scene)
