@@ -38,6 +38,14 @@ func TestObject(t *testing.T) {
 }
 
 var _ = Describe("Object", func() {
+	It("generates proper string keys", func() {
+		a := object.Empty("a")
+		key := object.Key("hello", a)
+		Expect(key[:5]).To(Equal("hello"))
+		Expect(key[5]).To(Equal(byte('-')))
+		Expect(key[6:]).To(Equal(fmt.Sprintf("%02x", a.ID())))
+	})
+
 	It("attaches & detaches children", func() {
 		a := object.Empty("A")
 		b := object.Empty("B")

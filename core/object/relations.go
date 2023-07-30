@@ -120,8 +120,14 @@ func Get[K Component](self Component) K {
 	if group == nil {
 		return empty
 	}
+	if !group.Enabled() {
+		return empty
+	}
 	for _, child := range group.Children() {
 		if child == self {
+			continue
+		}
+		if !child.Enabled() {
 			continue
 		}
 		if hit, ok := child.(K); ok {
@@ -140,11 +146,17 @@ func GetAll[K Component](self Component) []K {
 	if group == nil {
 		return nil
 	}
+	if !group.Enabled() {
+		return nil
+	}
 	var results []K
 	if hit, ok := group.(K); ok {
 		results = append(results, hit)
 	}
 	for _, child := range group.Children() {
+		if !child.Enabled() {
+			continue
+		}
 		if hit, ok := child.(K); ok {
 			results = append(results, hit)
 		}
@@ -158,11 +170,17 @@ func GetInParents[K Component](self Component) K {
 	var empty K
 	group := self.Parent()
 	for group != nil {
+		if !group.Enabled() {
+			return empty
+		}
 		if hit, ok := group.(K); ok {
 			return hit
 		}
 		for _, child := range group.Children() {
 			if child == self {
+				continue
+			}
+			if !child.Enabled() {
 				continue
 			}
 			if hit, ok := child.(K); ok {
@@ -181,11 +199,17 @@ func GetAllInParents[K Component](self Component) []K {
 	group := self.Parent()
 	var results []K
 	for group != nil {
+		if !group.Enabled() {
+			return nil
+		}
 		if hit, ok := group.(K); ok {
 			results = append(results, hit)
 		}
 		for _, child := range group.Children() {
 			if child == self {
+				continue
+			}
+			if !child.Enabled() {
 				continue
 			}
 			if hit, ok := child.(K); ok {
@@ -207,6 +231,9 @@ func GetInChildren[K Component](self Component) K {
 	if group == nil {
 		return empty
 	}
+	if !group.Enabled() {
+		return empty
+	}
 
 	todo := []Object{group}
 
@@ -216,6 +243,9 @@ func GetInChildren[K Component](self Component) K {
 
 		for _, child := range group.Children() {
 			if child == self {
+				continue
+			}
+			if !child.Enabled() {
 				continue
 			}
 			if hit, ok := child.(K); ok {
@@ -239,6 +269,9 @@ func GetAllInChildren[K Component](self Component) []K {
 	if group == nil {
 		return nil
 	}
+	if !group.Enabled() {
+		return nil
+	}
 
 	todo := []Object{group}
 	var results []K
@@ -249,6 +282,9 @@ func GetAllInChildren[K Component](self Component) []K {
 
 		for _, child := range group.Children() {
 			if child == self {
+				continue
+			}
+			if !child.Enabled() {
 				continue
 			}
 			if hit, ok := child.(K); ok {
