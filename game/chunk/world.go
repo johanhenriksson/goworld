@@ -10,6 +10,7 @@ import (
 	"github.com/johanhenriksson/goworld/geometry/box"
 	"github.com/johanhenriksson/goworld/math"
 	"github.com/johanhenriksson/goworld/math/vec3"
+	"github.com/johanhenriksson/goworld/physics"
 	"github.com/johanhenriksson/goworld/render/color"
 )
 
@@ -43,22 +44,14 @@ func (c *World) Update(scene object.Component, dt float32) {
 	// update chunks
 	c.Object.Update(scene, dt)
 
-	// find the active camera
-	root := object.Root(scene)
-	cam := object.GetInChildren[*camera.Camera](root)
-	if cam == nil {
-		return
-	}
-
-	pos := cam.Transform().WorldPosition()
-	pos.Y = 0
-
 	// insert any new chunks
 	select {
 	case chk := <-c.ready:
 		key := fmt.Sprintf("Chunk:%d,%d", chk.Cx, chk.Cz)
 		chonk := object.Builder(object.Empty(key)).
 			Attach(NewMesh(chk)).
+			Attach(physics.NewRigidBody(0)).
+			Attach(physics.NewMesh()).
 			Attach(box.New(box.Args{
 				Size:  vec3.NewI(c.size, c.size, c.size),
 				Color: color.Purple,
@@ -69,6 +62,17 @@ func (c *World) Update(scene object.Component, dt float32) {
 		c.active[key] = chonk
 	default:
 	}
+
+	// find the active camera
+	root := object.Root(scene)
+	cam := object.GetInChildren[*camera.Camera](root)
+	if cam == nil {
+		log.Println("chunk world: no active camera")
+		return
+	}
+
+	pos := cam.Transform().WorldPosition()
+	pos.Y = 0
 
 	// destroy chunks that are too far away
 	for key, chunk := range c.active {
