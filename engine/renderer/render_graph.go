@@ -2,6 +2,7 @@ package renderer
 
 import (
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/johanhenriksson/goworld/core/object"
@@ -70,7 +71,7 @@ func (r *rgraph) Screenshot() {
 	idx := 0
 	r.app.Device().WaitIdle()
 	source := r.app.Surfaces()[idx]
-	ss, err := upload.DownloadImage(r.app.Device(), r.app.Worker(idx), source)
+	ss, err := upload.DownloadImage(r.app.Device(), r.app.Transferer(), source)
 	if err != nil {
 		panic(err)
 	}
@@ -78,6 +79,7 @@ func (r *rgraph) Screenshot() {
 	if err := upload.SavePng(ss, filename); err != nil {
 		panic(err)
 	}
+	log.Println("saved screenshot", filename)
 }
 
 func (r *rgraph) Destroy() {

@@ -28,6 +28,12 @@ func newContext(dev device.T, index int) *Context {
 	}
 }
 
+func DummyContext() *Context {
+	return &Context{
+		inFlight: &gosync.Mutex{},
+	}
+}
+
 func (c *Context) Destroy() {
 	if c.ImageAvailable != nil {
 		c.ImageAvailable.Destroy()

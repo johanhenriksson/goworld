@@ -112,7 +112,7 @@ func DownloadImageAsync(dev device.T, worker command.Worker, src image.T) (<-cha
 		cmd.CmdCopyImage(src, core1_0.ImageLayoutTransferSrcOptimal, dst, core1_0.ImageLayoutTransferDstOptimal, core1_0.ImageAspectColor)
 		cmd.CmdImageBarrier(
 			core1_0.PipelineStageTransfer,
-			core1_0.PipelineStageFragmentShader,
+			core1_0.PipelineStageBottomOfPipe,
 			src,
 			core1_0.ImageLayoutTransferSrcOptimal,
 			core1_0.ImageLayoutColorAttachmentOptimal,

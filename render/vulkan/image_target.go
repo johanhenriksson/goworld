@@ -14,10 +14,19 @@ type imageTarget struct {
 	context *swapchain.Context
 }
 
-func NewImageTarget(backend T, img image.T) App {
+func NewImageTarget(backend T, width, height int) App {
+	buffer, err := image.New2D(
+		backend.Device(), "rendertarget",
+		width, height,
+		image.FormatRGBA8Unorm,
+		core1_0.ImageUsageColorAttachment|core1_0.ImageUsageTransferSrc)
+	if err != nil {
+		panic(err)
+	}
 	return &imageTarget{
-		T:     backend,
-		image: img,
+		T:       backend,
+		image:   buffer,
+		context: swapchain.DummyContext(),
 	}
 }
 
@@ -29,6 +38,7 @@ func (i *imageTarget) Surfaces() []image.T           { return []image.T{i.image}
 func (i *imageTarget) SurfaceFormat() core1_0.Format { return i.image.Format() }
 
 func (i *imageTarget) Aquire() (*swapchain.Context, error) {
+	i.context.Aquire()
 	return i.context, nil
 }
 

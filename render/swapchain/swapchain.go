@@ -183,14 +183,12 @@ func (s *swapchain) Aquire() (*Context, error) {
 }
 
 func (s *swapchain) Present(worker command.Worker, ctx *Context) {
-	var waits []core1_0.Semaphore
-	if ctx.RenderComplete != nil {
-		waits = []core1_0.Semaphore{ctx.RenderComplete.Ptr()}
+	if ctx.RenderComplete == nil {
+		panic("context has no RenderComplete semaphore")
 	}
-
 	worker.Invoke(func() {
 		s.ext.QueuePresent(worker.Ptr(), khr_swapchain.PresentInfo{
-			WaitSemaphores: waits,
+			WaitSemaphores: []core1_0.Semaphore{ctx.RenderComplete.Ptr()},
 			Swapchains:     []khr_swapchain.Swapchain{s.Ptr()},
 			ImageIndices:   []int{ctx.image},
 		})
