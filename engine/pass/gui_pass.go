@@ -41,7 +41,7 @@ type GuiDrawable interface {
 
 type GuiPass struct {
 	app    vulkan.App
-	target RenderTarget
+	target vulkan.Target
 	mat    []material.Instance[*GuiDescriptors]
 	pass   renderpass.T
 	fbuf   framebuffer.Array
@@ -54,13 +54,13 @@ type GuiPass struct {
 
 var _ Pass = &GuiPass{}
 
-func NewGuiPass(app vulkan.App, target RenderTarget) *GuiPass {
+func NewGuiPass(app vulkan.App, target vulkan.Target) *GuiPass {
 	pass := renderpass.New(app.Device(), renderpass.Args{
 		Name: "GUI",
 		ColorAttachments: []attachment.Color{
 			{
 				Name:          OutputAttachment,
-				Image:         attachment.FromImageArray(target.Output()),
+				Image:         attachment.FromImageArray(target.Surfaces()),
 				LoadOp:        core1_0.AttachmentLoadOpLoad,
 				StoreOp:       core1_0.AttachmentStoreOpStore,
 				InitialLayout: core1_0.ImageLayoutShaderReadOnlyOptimal,
@@ -69,7 +69,7 @@ func NewGuiPass(app vulkan.App, target RenderTarget) *GuiPass {
 			},
 		},
 		DepthAttachment: &attachment.Depth{
-			Image:          attachment.NewImage("depth", app.Device().GetDepthFormat(), core1_0.ImageUsageDepthStencilAttachment|core1_0.ImageUsageInputAttachment),
+			Image:          attachment.NewImage("gui-depth", app.Device().GetDepthFormat(), core1_0.ImageUsageDepthStencilAttachment|core1_0.ImageUsageInputAttachment),
 			LoadOp:         core1_0.AttachmentLoadOpClear,
 			StoreOp:        core1_0.AttachmentStoreOpDontCare,
 			StencilLoadOp:  core1_0.AttachmentLoadOpClear,

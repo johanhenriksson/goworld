@@ -22,9 +22,9 @@ type PostProcessPass struct {
 	LUT texture.Ref
 
 	app    vulkan.App
-	target RenderTarget
-	input  RenderTarget
-	ssao   RenderTarget
+	target vulkan.Target
+	input  vulkan.Target
+	ssao   vulkan.Target
 
 	quad  vertex.Mesh
 	mat   material.T[*PostProcessDescriptors]
@@ -45,7 +45,7 @@ type PostProcessDescriptors struct {
 	LUT   *descriptor.Sampler
 }
 
-func NewPostProcessPass(app vulkan.App, input RenderTarget, ssao RenderTarget) *PostProcessPass {
+func NewPostProcessPass(app vulkan.App, input vulkan.Target, ssao vulkan.Target) *PostProcessPass {
 	var err error
 	p := &PostProcessPass{
 		LUT: texture.PathRef("textures/color_grading/none.png"),
@@ -55,8 +55,8 @@ func NewPostProcessPass(app vulkan.App, input RenderTarget, ssao RenderTarget) *
 		ssao:  ssao,
 	}
 
-	p.target, err = NewRenderTarget(app.Device(), input.Width(), input.Height(), input.Frames(),
-		core1_0.FormatR8G8B8A8UnsignedNormalized, 0)
+	p.target, err = vulkan.NewColorTarget(app.Device(), "postprocess-output", input.Width(), input.Height(), input.Frames(), input.Scale(),
+		core1_0.FormatR8G8B8A8UnsignedNormalized)
 	if err != nil {
 		panic(err)
 	}
@@ -68,7 +68,7 @@ func NewPostProcessPass(app vulkan.App, input RenderTarget, ssao RenderTarget) *
 		ColorAttachments: []attachment.Color{
 			{
 				Name:        OutputAttachment,
-				Image:       attachment.FromImageArray(p.target.Output()),
+				Image:       attachment.FromImageArray(p.target.Surfaces()),
 				LoadOp:      core1_0.AttachmentLoadOpDontCare,
 				FinalLayout: core1_0.ImageLayoutShaderReadOnlyOptimal,
 			},
@@ -113,7 +113,7 @@ func NewPostProcessPass(app vulkan.App, input RenderTarget, ssao RenderTarget) *
 	p.ssaoTex = make([]texture.T, frames)
 	for i := 0; i < input.Frames(); i++ {
 		inputKey := fmt.Sprintf("post-input-%d", i)
-		p.inputTex[i], err = texture.FromImage(app.Device(), inputKey, p.input.Output()[i], texture.Args{
+		p.inputTex[i], err = texture.FromImage(app.Device(), inputKey, p.input.Surfaces()[i], texture.Args{
 			Filter: core1_0.FilterNearest,
 			Wrap:   core1_0.SamplerAddressModeClampToEdge,
 		})
@@ -124,7 +124,7 @@ func NewPostProcessPass(app vulkan.App, input RenderTarget, ssao RenderTarget) *
 		p.desc[i].Descriptors().Input.Set(p.inputTex[i])
 
 		ssaoKey := fmt.Sprintf("post-ssao-%d", i)
-		p.ssaoTex[i], err = texture.FromImage(app.Device(), ssaoKey, p.ssao.Output()[i], texture.Args{
+		p.ssaoTex[i], err = texture.FromImage(app.Device(), ssaoKey, p.ssao.Surfaces()[i], texture.Args{
 			Filter: core1_0.FilterLinear,
 			Wrap:   core1_0.SamplerAddressModeClampToEdge,
 		})
@@ -162,7 +162,7 @@ func (p *PostProcessPass) Name() string {
 	return "PostProcess"
 }
 
-func (p *PostProcessPass) Target() RenderTarget {
+func (p *PostProcessPass) Target() vulkan.Target {
 	return p.target
 }
 

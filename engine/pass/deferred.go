@@ -44,7 +44,7 @@ type GeometryDescriptors struct {
 }
 
 type deferred struct {
-	target  RenderTarget
+	target  vulkan.Target
 	gbuffer GeometryBuffer
 	quad    vertex.Mesh
 	app     vulkan.App
@@ -61,7 +61,8 @@ type deferred struct {
 
 func NewDeferredPass(
 	app vulkan.App,
-	target RenderTarget,
+	target vulkan.Target,
+	depth vulkan.Target,
 	gbuffer GeometryBuffer,
 	shadows Shadow,
 ) Deferred {
@@ -70,7 +71,7 @@ func NewDeferredPass(
 		ColorAttachments: []attachment.Color{
 			{
 				Name:          OutputAttachment,
-				Image:         attachment.FromImageArray(target.Output()),
+				Image:         attachment.FromImageArray(target.Surfaces()),
 				Samples:       0,
 				LoadOp:        core1_0.AttachmentLoadOpClear,
 				StoreOp:       core1_0.AttachmentStoreOpStore,
@@ -106,7 +107,7 @@ func NewDeferredPass(
 			StencilLoadOp: core1_0.AttachmentLoadOpClear,
 			StoreOp:       core1_0.AttachmentStoreOpStore,
 			FinalLayout:   core1_0.ImageLayoutShaderReadOnlyOptimal,
-			Image:         attachment.FromImageArray(target.Depth()),
+			Image:         attachment.FromImageArray(depth.Surfaces()),
 			ClearDepth:    1,
 		},
 		Subpasses: []renderpass.Subpass{
@@ -179,7 +180,7 @@ func NewDeferredPass(
 
 	quad := vertex.ScreenQuad("geometry-pass-quad")
 
-	lightsh := NewLightShader(app, pass, target, gbuffer)
+	lightsh := NewLightShader(app, pass, depth, gbuffer)
 
 	app.Textures().Fetch(color.White)
 
