@@ -11,10 +11,12 @@ import (
 // Instantiates the default render graph
 func Default(app vulkan.App, target vulkan.Target) T {
 	return New(app, target, func(g T, output vulkan.Target) []Resource {
+		depth, err := vulkan.NewDepthTarget(app.Device(), "main-depth", target.Width(), target.Height(), target.Frames(), target.Scale())
+
 		// create off-screen render buffer
-		offscreen, err := pass.NewRenderTarget(app.Device(),
-			output.Width(), output.Height(), output.Frames(),
-			image.FormatRGBA8Unorm, app.Device().GetDepthFormat())
+		offscreen, err := vulkan.NewColorTarget(app.Device(), "offscreen",
+			output.Width(), output.Height(), output.Frames(), output.Scale(),
+			image.FormatRGBA8Unorm)
 		if err != nil {
 			panic(err)
 		}
@@ -28,10 +30,10 @@ func Default(app vulkan.App, target vulkan.Target) T {
 		shadows := pass.NewShadowPass(app, output)
 		shadowNode := g.Node(shadows)
 
-		deferred := g.Node(pass.NewDeferredPass(app, offscreen, gbuffer, shadows))
+		deferred := g.Node(pass.NewDeferredPass(app, offscreen, depth, gbuffer, shadows))
 		deferred.After(shadowNode, core1_0.PipelineStageTopOfPipe)
 
-		forward := g.Node(pass.NewForwardPass(app, offscreen, gbuffer))
+		forward := g.Node(pass.NewForwardPass(app, offscreen, depth, gbuffer))
 		forward.After(deferred, core1_0.PipelineStageTopOfPipe)
 
 		ssaoPass := pass.NewAmbientOcclusionPass(app, output, gbuffer)
@@ -46,7 +48,7 @@ func Default(app vulkan.App, target vulkan.Target) T {
 		post := g.Node(postPass)
 		post.After(blur, core1_0.PipelineStageTopOfPipe)
 
-		lines := g.Node(pass.NewLinePass(app, postPass.Target(), offscreen))
+		lines := g.Node(pass.NewLinePass(app, postPass.Target(), depth))
 		lines.After(post, core1_0.PipelineStageTopOfPipe)
 
 		gui := g.Node(pass.NewGuiPass(app, postPass.Target()))
@@ -59,8 +61,9 @@ func Default(app vulkan.App, target vulkan.Target) T {
 		// editor lines
 
 		return []Resource{
-			gbuffer,
+			depth,
 			offscreen,
+			gbuffer,
 		}
 	})
 }

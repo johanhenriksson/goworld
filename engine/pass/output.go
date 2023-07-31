@@ -24,7 +24,7 @@ import (
 type OutputPass struct {
 	app      vulkan.App
 	material material.T[*OutputDescriptors]
-	source   RenderTarget
+	source   vulkan.Target
 
 	quad  vertex.Mesh
 	desc  []material.Instance[*OutputDescriptors]
@@ -40,7 +40,7 @@ type OutputDescriptors struct {
 	Output *descriptor.Sampler
 }
 
-func NewOutputPass(app vulkan.App, target vulkan.Target, source RenderTarget) *OutputPass {
+func NewOutputPass(app vulkan.App, target vulkan.Target, source vulkan.Target) *OutputPass {
 	log.Println("create output pass")
 	p := &OutputPass{
 		app:    app,
@@ -93,7 +93,7 @@ func NewOutputPass(app vulkan.App, target vulkan.Target, source RenderTarget) *O
 	p.tex = make([]texture.T, frames)
 	for i := range p.tex {
 		key := fmt.Sprintf("gbuffer-output-%d", i)
-		p.tex[i], err = texture.FromImage(app.Device(), key, p.source.Output()[i], texture.Args{
+		p.tex[i], err = texture.FromImage(app.Device(), key, p.source.Surfaces()[i], texture.Args{
 			Filter: core1_0.FilterNearest,
 			Wrap:   core1_0.SamplerAddressModeClampToEdge,
 		})

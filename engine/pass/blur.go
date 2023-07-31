@@ -21,9 +21,9 @@ import (
 
 type BlurPass struct {
 	app      vulkan.App
-	target   RenderTarget
+	target   vulkan.Target
 	material material.T[*BlurDescriptors]
-	input    RenderTarget
+	input    vulkan.Target
 
 	quad  vertex.Mesh
 	desc  []material.Instance[*BlurDescriptors]
@@ -39,7 +39,7 @@ type BlurDescriptors struct {
 	Input *descriptor.Sampler
 }
 
-func NewBlurPass(app vulkan.App, input RenderTarget) *BlurPass {
+func NewBlurPass(app vulkan.App, input vulkan.Target) *BlurPass {
 	p := &BlurPass{
 		app:   app,
 		input: input,
@@ -47,7 +47,8 @@ func NewBlurPass(app vulkan.App, input RenderTarget) *BlurPass {
 	frames := input.Frames()
 
 	var err error
-	p.target, err = NewRenderTarget(app.Device(), input.Width(), input.Height(), frames, input.Output()[0].Format(), 0)
+	// todo: optimize to single-channel texture
+	p.target, err = vulkan.NewColorTarget(app.Device(), "blur-output", input.Width(), input.Height(), frames, input.Scale(), input.SurfaceFormat())
 
 	p.quad = vertex.ScreenQuad("blur-pass-quad")
 
@@ -56,7 +57,7 @@ func NewBlurPass(app vulkan.App, input RenderTarget) *BlurPass {
 		ColorAttachments: []attachment.Color{
 			{
 				Name:        OutputAttachment,
-				Image:       attachment.FromImageArray(p.target.Output()),
+				Image:       attachment.FromImageArray(p.target.Surfaces()),
 				LoadOp:      core1_0.AttachmentLoadOpDontCare,
 				FinalLayout: core1_0.ImageLayoutShaderReadOnlyOptimal,
 			},
@@ -92,12 +93,8 @@ func NewBlurPass(app vulkan.App, input RenderTarget) *BlurPass {
 	p.desc = p.material.InstantiateMany(app.Pool(), frames)
 	p.tex = make([]texture.T, frames)
 	for i := range p.tex {
-		outIdx := i
-		if len(p.input.Output()) == 1 {
-			outIdx = 0
-		}
 		key := fmt.Sprintf("blur-%d", i)
-		p.tex[i], err = texture.FromImage(app.Device(), key, p.input.Output()[outIdx], texture.Args{
+		p.tex[i], err = texture.FromImage(app.Device(), key, p.input.Surfaces()[i], texture.Args{
 			Filter: core1_0.FilterNearest,
 			Wrap:   core1_0.SamplerAddressModeClampToEdge,
 		})
@@ -127,7 +124,7 @@ func (p *BlurPass) Name() string {
 	return "Blur"
 }
 
-func (p *BlurPass) Target() RenderTarget {
+func (p *BlurPass) Target() vulkan.Target {
 	return p.target
 }
 
