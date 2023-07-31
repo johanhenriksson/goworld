@@ -28,13 +28,12 @@ import (
 const SSAOSamples = 32
 
 type AmbientOcclusionPass struct {
-	app    vulkan.App
-	Target vulkan.Target
-	pass   renderpass.T
-	fbuf   framebuffer.Array
-	mat    material.T[*AmbientOcclusionDescriptors]
-	desc   []material.Instance[*AmbientOcclusionDescriptors]
-	quad   vertex.Mesh
+	app  vulkan.App
+	pass renderpass.T
+	fbuf framebuffer.Array
+	mat  material.T[*AmbientOcclusionDescriptors]
+	desc []material.Instance[*AmbientOcclusionDescriptors]
+	quad vertex.Mesh
 
 	position []texture.T
 	normal   []texture.T
@@ -63,18 +62,12 @@ func NewAmbientOcclusionPass(app vulkan.App, target vulkan.Target, gbuffer Geome
 		app: app,
 	}
 
-	// todo: optimize to single-channel texture
-	p.Target, err = vulkan.NewColorTarget(app.Device(), "ssao-output", target.Width()/2, target.Height()/2, target.Frames(), target.Scale(), core1_0.FormatR8G8B8A8UnsignedNormalized)
-	if err != nil {
-		panic(err)
-	}
-
 	p.pass = renderpass.New(app.Device(), renderpass.Args{
 		Name: "AmbientOcclusion",
 		ColorAttachments: []attachment.Color{
 			{
 				Name:        OutputAttachment,
-				Image:       attachment.FromImageArray(p.Target.Surfaces()),
+				Image:       attachment.FromImageArray(target.Surfaces()),
 				LoadOp:      core1_0.AttachmentLoadOpDontCare,
 				StoreOp:     core1_0.AttachmentStoreOpStore,
 				FinalLayout: core1_0.ImageLayoutShaderReadOnlyOptimal,
@@ -114,7 +107,7 @@ func NewAmbientOcclusionPass(app vulkan.App, target vulkan.Target, gbuffer Geome
 			},
 		})
 
-	p.fbuf, err = framebuffer.NewArray(target.Frames(), app.Device(), "ssao", p.Target.Width(), p.Target.Height(), p.pass)
+	p.fbuf, err = framebuffer.NewArray(target.Frames(), app.Device(), "ssao", target.Width(), target.Height(), p.pass)
 	if err != nil {
 		panic(err)
 	}
@@ -196,7 +189,6 @@ func (p *AmbientOcclusionPass) Destroy() {
 		p.normal[i].Destroy()
 	}
 	p.mat.Destroy()
-	p.Target.Destroy()
 }
 
 func (p *AmbientOcclusionPass) Name() string {

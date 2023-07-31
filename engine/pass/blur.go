@@ -21,7 +21,6 @@ import (
 
 type BlurPass struct {
 	app      vulkan.App
-	target   vulkan.Target
 	material material.T[*BlurDescriptors]
 	input    vulkan.Target
 
@@ -39,16 +38,12 @@ type BlurDescriptors struct {
 	Input *descriptor.Sampler
 }
 
-func NewBlurPass(app vulkan.App, input vulkan.Target) *BlurPass {
+func NewBlurPass(app vulkan.App, output vulkan.Target, input vulkan.Target) *BlurPass {
 	p := &BlurPass{
 		app:   app,
 		input: input,
 	}
 	frames := input.Frames()
-
-	var err error
-	// todo: optimize to single-channel texture
-	p.target, err = vulkan.NewColorTarget(app.Device(), "blur-output", input.Width(), input.Height(), frames, input.Scale(), input.SurfaceFormat())
 
 	p.quad = vertex.ScreenQuad("blur-pass-quad")
 
@@ -57,7 +52,7 @@ func NewBlurPass(app vulkan.App, input vulkan.Target) *BlurPass {
 		ColorAttachments: []attachment.Color{
 			{
 				Name:        OutputAttachment,
-				Image:       attachment.FromImageArray(p.target.Surfaces()),
+				Image:       attachment.FromImageArray(output.Surfaces()),
 				LoadOp:      core1_0.AttachmentLoadOpDontCare,
 				FinalLayout: core1_0.ImageLayoutShaderReadOnlyOptimal,
 			},
@@ -85,7 +80,8 @@ func NewBlurPass(app vulkan.App, input vulkan.Target) *BlurPass {
 			},
 		})
 
-	p.fbufs, err = framebuffer.NewArray(frames, app.Device(), "blur", p.target.Width(), p.target.Height(), p.pass)
+	var err error
+	p.fbufs, err = framebuffer.NewArray(frames, app.Device(), "blur", output.Width(), output.Height(), p.pass)
 	if err != nil {
 		panic(err)
 	}
@@ -124,15 +120,10 @@ func (p *BlurPass) Name() string {
 	return "Blur"
 }
 
-func (p *BlurPass) Target() vulkan.Target {
-	return p.target
-}
-
 func (p *BlurPass) Destroy() {
 	for _, tex := range p.tex {
 		tex.Destroy()
 	}
-	p.target.Destroy()
 	p.fbufs.Destroy()
 	p.pass.Destroy()
 	p.material.Destroy()

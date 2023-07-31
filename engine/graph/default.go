@@ -11,18 +11,20 @@ import (
 // Instantiates the default render graph
 func Default(app vulkan.App, target vulkan.Target) T {
 	return New(app, target, func(g T, output vulkan.Target) []Resource {
-		depth, err := vulkan.NewDepthTarget(app.Device(), "main-depth", target.Width(), target.Height(), target.Frames(), target.Scale())
+		size := output.Size()
 
-		// create off-screen render buffer
-		offscreen, err := vulkan.NewColorTarget(app.Device(), "offscreen",
-			output.Width(), output.Height(), output.Frames(), output.Scale(),
-			image.FormatRGBA8Unorm)
-		if err != nil {
-			panic(err)
-		}
+		//
+		// main render pass
+		//
+
+		// allocate main depth buffer
+		depth := vulkan.NewDepthTarget(app.Device(), "main-depth", size)
+
+		// main off-screen color buffer
+		offscreen := vulkan.NewColorTarget(app.Device(), "main-color", image.FormatRGBA8Unorm, size)
 
 		// create geometry buffer
-		gbuffer, err := pass.NewGbuffer(app.Device(), output.Width(), output.Height(), output.Frames())
+		gbuffer, err := pass.NewGbuffer(app.Device(), size)
 		if err != nil {
 			panic(err)
 		}
@@ -36,34 +38,53 @@ func Default(app vulkan.App, target vulkan.Target) T {
 		forward := g.Node(pass.NewForwardPass(app, offscreen, depth, gbuffer))
 		forward.After(deferred, core1_0.PipelineStageTopOfPipe)
 
-		ssaoPass := pass.NewAmbientOcclusionPass(app, output, gbuffer)
-		ssao := g.Node(ssaoPass)
+		//
+		// post processing
+		//
+
+		// allocate SSAO output buffer
+		ssaoFormat := core1_0.FormatR8G8B8A8UnsignedNormalized
+		ssaoOutput := vulkan.NewColorTarget(app.Device(), "ssao-output", ssaoFormat, vulkan.TargetSize{
+			Width:  size.Width / 2,
+			Height: size.Height / 2,
+			Frames: size.Frames,
+			Scale:  size.Scale,
+		})
+
+		// create SSAO pass
+		ssao := g.Node(pass.NewAmbientOcclusionPass(app, ssaoOutput, gbuffer))
 		ssao.After(forward, core1_0.PipelineStageTopOfPipe)
 
-		blurPass := pass.NewBlurPass(app, ssaoPass.Target)
-		blur := g.Node(blurPass)
+		// SSAO blur pass
+		blurOutput := vulkan.NewColorTarget(app.Device(), "blur-output", ssaoOutput.SurfaceFormat(), ssaoOutput.Size())
+		blur := g.Node(pass.NewBlurPass(app, blurOutput, ssaoOutput))
 		blur.After(ssao, core1_0.PipelineStageTopOfPipe)
 
-		postPass := pass.NewPostProcessPass(app, offscreen, blurPass.Target())
-		post := g.Node(postPass)
+		// post process pass
+		composition := vulkan.NewColorTarget(app.Device(), "composition", offscreen.SurfaceFormat(), offscreen.Size())
+		post := g.Node(pass.NewPostProcessPass(app, composition, offscreen, blurOutput))
 		post.After(blur, core1_0.PipelineStageTopOfPipe)
 
-		lines := g.Node(pass.NewLinePass(app, postPass.Target(), depth))
+		//
+		// final image composition
+		//
+
+		lines := g.Node(pass.NewLinePass(app, composition, depth))
 		lines.After(post, core1_0.PipelineStageTopOfPipe)
 
-		gui := g.Node(pass.NewGuiPass(app, postPass.Target()))
+		gui := g.Node(pass.NewGuiPass(app, composition))
 		gui.After(lines, core1_0.PipelineStageTopOfPipe)
 
-		outputPass := g.Node(pass.NewOutputPass(app, output, postPass.Target()))
+		outputPass := g.Node(pass.NewOutputPass(app, output, composition))
 		outputPass.After(gui, core1_0.PipelineStageTopOfPipe)
-
-		// editor forward
-		// editor lines
 
 		return []Resource{
 			depth,
 			offscreen,
 			gbuffer,
+			ssaoOutput,
+			blurOutput,
+			composition,
 		}
 	})
 }
