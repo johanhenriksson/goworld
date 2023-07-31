@@ -1,11 +1,7 @@
 package pass
 
 import (
-	"github.com/johanhenriksson/goworld/core/light"
 	"github.com/johanhenriksson/goworld/engine/uniform"
-	"github.com/johanhenriksson/goworld/math/mat4"
-	"github.com/johanhenriksson/goworld/math/vec4"
-	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/descriptor"
 	"github.com/johanhenriksson/goworld/render/image"
@@ -31,14 +27,7 @@ type LightDescriptors struct {
 }
 
 type LightConst struct {
-	ViewProj    mat4.T
-	Color       color.T
-	Position    vec4.T
-	Type        light.Type
-	Index       uint32
-	Range       float32
-	Intensity   float32
-	Attenuation light.Attenuation
+	Count uint32
 }
 
 type LightShader interface {
@@ -95,7 +84,7 @@ func NewLightShader(app vulkan.App, pass renderpass.T, depth vulkan.Target, gbuf
 			},
 			Shadow: &descriptor.SamplerArray{
 				Stages: core1_0.StageFragment,
-				Count:  16,
+				Count:  32,
 			},
 		})
 

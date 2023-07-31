@@ -3,29 +3,10 @@
 #extension GL_ARB_separate_shader_objects : enable
 #extension GL_ARB_shading_language_420pack : enable
 
+#include "lib/uniforms.glsl"
+
 // Attributes
 layout (location = 0) in vec3 position;
-
-// Uniforms
-layout (binding = 0) uniform Camera {
-	mat4 Proj;
-	mat4 View;
-	mat4 ViewProj;
-	mat4 ProjInv;
-	mat4 ViewInv;
-	mat4 ViewProjInv;
-	vec3 Eye;
-	vec3 Forward;
-} camera;
-
-struct ObjectData{
-	mat4 model;
-	uint textures[4];
-};
-
-layout (binding = 1) readonly buffer ObjectBuffer {
-	ObjectData objects[];
-} ssbo;
 
 out gl_PerVertex 
 {

@@ -235,11 +235,6 @@ func (p *deferred) Record(cmds command.Recorder, args render.Args, scene object.
 	// lighting subpass
 	//
 
-	cmds.Record(func(cmd command.Buffer) {
-		cmd.CmdNextSubpass()
-		p.light.Bind(cmd, args.Context.Index)
-	})
-
 	lightDesc := p.light.Descriptors(args.Context.Index)
 	lightDesc.Camera.Set(camera)
 
@@ -247,67 +242,72 @@ func (p *deferred) Record(cmds command.Recorder, args render.Args, scene object.
 	white := p.app.Textures().Fetch(color.White)
 	lightDesc.Shadow.Set(0, white)
 	ambient := light.NewAmbient(color.White, 0.33)
-	p.DrawLight(cmds, args, ambient, 0, 0)
+	p.UpdateLight(cmds, args, ambient, 0, 0)
 
+	// todo: perform frustum culling on light volumes
 	lights := p.lightQuery.
 		Reset().
 		Collect(scene)
 	for index, lit := range lights {
 		lightIndex := index + 1
-		if err := p.DrawLight(cmds, args, lit, lightIndex, 5*lightIndex); err != nil {
+		if err := p.UpdateLight(cmds, args, lit, lightIndex, 5*lightIndex); err != nil {
 			fmt.Printf("light draw error in object %s: %s\n", lit.Name(), err)
 		}
 	}
 
+	quad := p.app.Meshes().Fetch(p.quad)
 	cmds.Record(func(cmd command.Buffer) {
+		cmd.CmdNextSubpass()
+		p.light.Bind(cmd, args.Context.Index)
+
+		cmd.CmdPushConstant(core1_0.StageFragment, 0, &LightConst{
+			Count: uint32(len(lights) + 1),
+		})
+		quad.Draw(cmd, 0)
+
 		cmd.CmdEndRenderPass()
 	})
 }
 
-func (p *deferred) DrawLight(cmds command.Recorder, args render.Args, lit light.T, lightIndex, textureIndexOffset int) error {
-	quad := p.app.Meshes().Fetch(p.quad)
+func (p *deferred) UpdateLight(cmds command.Recorder, args render.Args, lit light.T, lightIndex, textureIndexOffset int) error {
 	desc := lit.LightDescriptor(args, 0)
 
-	if lit.CastShadows() {
-		dirlight := uniform.Light{}
+	entry := uniform.Light{
+		Type:      desc.Type,
+		Color:     desc.Color,
+		Position:  desc.Position,
+		Intensity: desc.Intensity,
+	}
+
+	switch lit.(type) {
+	case *light.Point:
+		entry.Attenuation = desc.Attenuation
+		entry.Range = desc.Range
+
+	case *light.Directional:
 		for cascadeIndex, cascade := range lit.Cascades() {
 			textureIndex := textureIndexOffset + cascadeIndex
 
-			shadowtex := p.shadows.Shadowmap(lit, cascadeIndex)
-			if shadowtex == nil {
-				// no shadowmap available - disable the light until its available
+			if shadowtex := p.shadows.Shadowmap(lit, cascadeIndex); shadowtex != nil {
+				p.light.Descriptors(args.Context.Index).Shadow.Set(textureIndex, shadowtex)
+			} else {
+				// no shadowmap available - disable shadows until its available
 				log.Println("missing cascade shadowmap", cascadeIndex)
-				return nil
+				textureIndex = 0
 			}
-			p.light.Descriptors(args.Context.Index).Shadow.Set(textureIndex, shadowtex)
 
-			dirlight.ViewProj[cascadeIndex] = cascade.ViewProj
-			dirlight.Distance[cascadeIndex] = cascade.FarSplit
-			dirlight.Shadowmap[cascadeIndex] = uint32(textureIndex)
+			entry.ViewProj[cascadeIndex] = cascade.ViewProj
+			entry.Distance[cascadeIndex] = cascade.FarSplit
+			entry.Shadowmap[cascadeIndex] = uint32(textureIndex)
 		}
 
-		p.light.Descriptors(args.Context.Index).Lights.Set(lightIndex, dirlight)
-	} else {
+	default:
 		// shadows are disabled - use a blank white texture as shadowmap
 		blank := p.app.Textures().Fetch(color.White)
 		p.light.Descriptors(args.Context.Index).Shadow.Set(lightIndex, blank)
 	}
 
-	cmds.Record(func(cmd command.Buffer) {
-		push := &LightConst{
-			ViewProj:    desc.ViewProj,
-			Color:       desc.Color,
-			Position:    desc.Position,
-			Type:        desc.Type,
-			Index:       uint32(lightIndex),
-			Range:       desc.Range,
-			Intensity:   desc.Intensity,
-			Attenuation: desc.Attenuation,
-		}
-		cmd.CmdPushConstant(core1_0.StageFragment, 0, push)
-
-		quad.Draw(cmd, 0)
-	})
+	p.light.Descriptors(args.Context.Index).Lights.Set(lightIndex, entry)
 
 	return nil
 }
