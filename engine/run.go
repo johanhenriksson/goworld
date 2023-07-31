@@ -6,12 +6,12 @@ import (
 	"time"
 
 	"github.com/johanhenriksson/goworld/core/object"
-	"github.com/johanhenriksson/goworld/engine/renderer"
+	"github.com/johanhenriksson/goworld/engine/graph"
 	"github.com/johanhenriksson/goworld/render/vulkan"
 )
 
 type SceneFunc func(object.Object)
-type RendererFunc func(vulkan.App, vulkan.Target) renderer.T
+type RendererFunc func(vulkan.App, vulkan.Target) graph.T
 
 type Args struct {
 	Title    string
@@ -31,7 +31,7 @@ func Run(args Args, scenefuncs ...SceneFunc) {
 	defer backend.Destroy()
 
 	if args.Renderer == nil {
-		args.Renderer = renderer.NewGraph
+		args.Renderer = graph.Default
 	}
 
 	// create a window

@@ -1,7 +1,7 @@
 package material
 
 import (
-	"github.com/johanhenriksson/goworld/engine/renderer/uniform" // illegal import
+	"github.com/johanhenriksson/goworld/engine/uniform" // illegal import
 	"github.com/johanhenriksson/goworld/render/descriptor"
 	"github.com/johanhenriksson/goworld/render/device"
 	"github.com/johanhenriksson/goworld/render/renderpass"

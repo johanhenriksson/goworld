@@ -7,8 +7,7 @@ import (
 	"github.com/johanhenriksson/goworld/core/light"
 	"github.com/johanhenriksson/goworld/core/mesh"
 	"github.com/johanhenriksson/goworld/core/object"
-	"github.com/johanhenriksson/goworld/engine/renderer/uniform"
-	"github.com/johanhenriksson/goworld/game/voxel"
+	"github.com/johanhenriksson/goworld/engine/uniform"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/framebuffer"
@@ -141,7 +140,7 @@ func (p *shadowpass) createShadowmap(light light.T) Shadowmap {
 		// cheating a bit by creating entire materials for each light, fix it later.
 		mats := NewMaterialSorter(p.app, p.target, p.pass, &material.Def{
 			Shader:       "shadow",
-			VertexFormat: voxel.Vertex{},
+			VertexFormat: vertex.T{},
 			DepthTest:    true,
 			DepthWrite:   true,
 		})

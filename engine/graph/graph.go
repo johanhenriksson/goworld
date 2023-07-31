@@ -1,9 +1,12 @@
 package graph
 
 import (
+	"fmt"
 	"log"
+	"time"
 
 	"github.com/johanhenriksson/goworld/core/object"
+	"github.com/johanhenriksson/goworld/render/upload"
 	"github.com/johanhenriksson/goworld/render/vulkan"
 
 	"github.com/vkngwrapper/core/v2/core1_0"
@@ -14,11 +17,11 @@ type NodeFunc func(T, vulkan.Target) []Resource
 // The render graph is responsible for synchronization between
 // different render nodes.
 type T interface {
-	Backend() vulkan.App
 	Node(pass NodePass) Node
 	Recreate()
 	Draw(scene object.Object, time, delta float32)
 	Destroy()
+	Screenshot()
 }
 
 type Resource interface {
@@ -46,10 +49,6 @@ func New(app vulkan.App, output vulkan.Target, init NodeFunc) T {
 	}
 	g.Recreate()
 	return g
-}
-
-func (g *graph) Backend() vulkan.App {
-	return g.app
 }
 
 func (g *graph) Recreate() {
@@ -130,6 +129,22 @@ func (g *graph) Draw(scene object.Object, time, delta float32) {
 		}
 	}
 	g.post.Draw(worker, *args, scene)
+}
+
+func (g *graph) Screenshot() {
+	idx := 0
+	g.app.Device().WaitIdle()
+	source := g.target.Surfaces()[idx]
+	ss, err := upload.DownloadImage(g.app.Device(), g.app.Transferer(), source)
+	if err != nil {
+		panic(err)
+	}
+
+	filename := fmt.Sprintf("Screenshot-%s.png", time.Now().Format("2006-01-02_15-04-05"))
+	if err := upload.SavePng(ss, filename); err != nil {
+		panic(err)
+	}
+	log.Println("saved screenshot", filename)
 }
 
 func (g *graph) Destroy() {
