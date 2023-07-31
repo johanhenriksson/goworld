@@ -180,7 +180,7 @@ func NewDeferredPass(
 
 	quad := vertex.ScreenQuad("geometry-pass-quad")
 
-	lightsh := NewLightShader(app, pass, depth, gbuffer)
+	lightsh := NewLightShader(app, pass, gbuffer)
 
 	app.Textures().Fetch(color.White)
 

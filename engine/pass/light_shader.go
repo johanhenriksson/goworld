@@ -20,7 +20,6 @@ type LightDescriptors struct {
 	Diffuse  *descriptor.InputAttachment
 	Normal   *descriptor.InputAttachment
 	Position *descriptor.InputAttachment
-	Depth    *descriptor.InputAttachment
 	Camera   *descriptor.Uniform[uniform.Camera]
 	Lights   *descriptor.Storage[uniform.Light]
 	Shadow   *descriptor.SamplerArray
@@ -43,10 +42,9 @@ type lightShader struct {
 	diffuseViews  []image.View
 	normalViews   []image.View
 	positionViews []image.View
-	depthViews    []image.View
 }
 
-func NewLightShader(app vulkan.App, pass renderpass.T, depth vulkan.Target, gbuffer GeometryBuffer) LightShader {
+func NewLightShader(app vulkan.App, pass renderpass.T, gbuffer GeometryBuffer) LightShader {
 	mat := material.New(
 		app.Device(),
 		material.Args{
@@ -72,9 +70,6 @@ func NewLightShader(app vulkan.App, pass renderpass.T, depth vulkan.Target, gbuf
 			Position: &descriptor.InputAttachment{
 				Stages: core1_0.StageFragment,
 			},
-			Depth: &descriptor.InputAttachment{
-				Stages: core1_0.StageFragment,
-			},
 			Camera: &descriptor.Uniform[uniform.Camera]{
 				Stages: core1_0.StageFragment,
 			},
@@ -88,24 +83,21 @@ func NewLightShader(app vulkan.App, pass renderpass.T, depth vulkan.Target, gbuf
 			},
 		})
 
-	frames := depth.Frames()
+	frames := gbuffer.Frames()
 	lightsh := mat.InstantiateMany(app.Pool(), frames)
 
 	diffuseViews := make([]image.View, frames)
 	normalViews := make([]image.View, frames)
 	positionViews := make([]image.View, frames)
-	depthViews := make([]image.View, frames)
 	for i := 0; i < frames; i++ {
 		diffuseViews[i], _ = gbuffer.Diffuse()[i].View(gbuffer.Diffuse()[i].Format(), core1_0.ImageAspectColor)
 		normalViews[i], _ = gbuffer.Normal()[i].View(gbuffer.Normal()[i].Format(), core1_0.ImageAspectColor)
 		positionViews[i], _ = gbuffer.Position()[i].View(gbuffer.Position()[i].Format(), core1_0.ImageAspectColor)
-		depthViews[i], _ = depth.Surfaces()[i].View(depth.SurfaceFormat(), core1_0.ImageAspectDepth)
 
 		lightDesc := lightsh[i].Descriptors()
 		lightDesc.Diffuse.Set(diffuseViews[i])
 		lightDesc.Normal.Set(normalViews[i])
 		lightDesc.Position.Set(positionViews[i])
-		lightDesc.Depth.Set(depthViews[i])
 	}
 
 	return &lightShader{
@@ -115,7 +107,6 @@ func NewLightShader(app vulkan.App, pass renderpass.T, depth vulkan.Target, gbuf
 		diffuseViews:  diffuseViews,
 		normalViews:   normalViews,
 		positionViews: positionViews,
-		depthViews:    depthViews,
 	}
 }
 
@@ -135,9 +126,6 @@ func (ls *lightShader) Destroy() {
 		view.Destroy()
 	}
 	for _, view := range ls.positionViews {
-		view.Destroy()
-	}
-	for _, view := range ls.depthViews {
 		view.Destroy()
 	}
 }

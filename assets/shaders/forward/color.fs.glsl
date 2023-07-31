@@ -2,13 +2,11 @@
 #extension GL_GOOGLE_include_directive : enable
 
 #include "../lib/common.glsl"
-#include "../lib/uniforms.glsl"
+#include "../lib/material.glsl"
 #include "../lib/fragment.glsl"
 
 // Varying
 layout (location = 4) in vec3 wnormal;
-
-float gamma = 2.2;
 
 void main() 
 {

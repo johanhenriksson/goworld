@@ -2,7 +2,7 @@
 #extension GL_GOOGLE_include_directive : enable
 
 #include "../lib/common.glsl"
-#include "../lib/uniforms.glsl"
+#include "../lib/material.glsl"
 #include "../lib/fragment.glsl"
 
 void main() 

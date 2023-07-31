@@ -6,12 +6,11 @@
     }
   },
   "Bindings": {
-    "Diffuse": 0,
-    "Normal": 1,
-    "Position": 2,
-    "Depth": 3,
-    "Camera": 4,
-    "Lights": 5,
-    "Shadow": 6
+    "Camera": 0,
+    "Lights": 1,
+    "Diffuse": 2,
+    "Normal": 3,
+    "Position": 4,
+    "Shadow": 5
   }
 }
