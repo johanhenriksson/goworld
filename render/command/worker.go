@@ -35,11 +35,11 @@ type worker struct {
 	work   *ThreadWorker
 }
 
-func NewWorker(device device.T, queueFlags core1_0.QueueFlags, queueIndex int) Worker {
+func NewWorker(device device.T, name string, queueFlags core1_0.QueueFlags, queueIndex int) Worker {
 	pool := NewPool(device, core1_0.CommandPoolCreateTransient, queueIndex)
 	queue := device.GetQueue(queueIndex, queueFlags)
 
-	name := fmt.Sprintf("Worker:%d", queueIndex)
+	name = fmt.Sprintf("%s:%d:%x", name, queueIndex, queue.Handle())
 	device.SetDebugObjectName(driver.VulkanHandle(queue.Handle()), core1_0.ObjectTypeQueue, name)
 
 	return &worker{

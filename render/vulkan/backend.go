@@ -53,13 +53,13 @@ func New(appName string, deviceIndex int) T {
 	}
 
 	// transfer worker
-	transfer := command.NewWorker(device, core1_0.QueueTransfer|core1_0.QueueGraphics, 0)
+	transfer := command.NewWorker(device, "xfer", core1_0.QueueTransfer|core1_0.QueueGraphics, 0)
 
 	// per frame graphics workers
 	workerCount := 1 // frames
 	workers := make([]command.Worker, workerCount)
 	for i := range workers {
-		workers[i] = command.NewWorker(device, core1_0.QueueGraphics, i+1)
+		workers[i] = command.NewWorker(device, fmt.Sprintf("frame%d", i), core1_0.QueueGraphics, i+1)
 	}
 
 	// init caches
@@ -121,6 +121,9 @@ func (b *backend) Flush() {
 }
 
 func (b *backend) Destroy() {
+	// flush any pending work
+	b.Flush()
+
 	// clean up caches
 	b.pool.Destroy()
 	b.meshes.Destroy()
