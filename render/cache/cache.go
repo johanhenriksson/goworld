@@ -185,11 +185,21 @@ func (c *cache[K, V]) Tick() {
 }
 
 func (c *cache[K, V]) Destroy() {
+	c.lock.Lock()
+	defer c.lock.Unlock()
+
+	// flush any pending work
 	c.worker.Flush()
+
+	// destroy all the data in the cache
 	for _, line := range c.data {
-		if line.available {
-			c.backend.Delete(line.value)
+		// if the cache line is pending creation, we must wait for it to complete
+		// before destroying it. failing to do so may cause a segfault
+		if !line.available {
+			<-line.wait
 		}
+		c.backend.Delete(line.value)
 	}
+
 	c.backend.Destroy()
 }
