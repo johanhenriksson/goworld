@@ -43,7 +43,7 @@ func Default(app vulkan.App, target vulkan.Target) T {
 		//
 
 		// allocate SSAO output buffer
-		ssaoFormat := core1_0.FormatR8G8B8A8UnsignedNormalized
+		ssaoFormat := core1_0.FormatR16SignedFloat
 		ssaoOutput := vulkan.NewColorTarget(app.Device(), "ssao-output", ssaoFormat, vulkan.TargetSize{
 			Width:  size.Width / 2,
 			Height: size.Height / 2,

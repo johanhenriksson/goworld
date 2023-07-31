@@ -9,6 +9,7 @@ import (
 	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/math/random"
 	"github.com/johanhenriksson/goworld/math/vec3"
+	"github.com/johanhenriksson/goworld/math/vec4"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/descriptor"
@@ -140,7 +141,7 @@ func NewAmbientOcclusionPass(app vulkan.App, target vulkan.Target, gbuffer Geome
 	for i := 0; i < target.Frames(); i++ {
 		posKey := fmt.Sprintf("ssao-position-%d", i)
 		p.position[i], err = texture.FromImage(app.Device(), posKey, gbuffer.Position()[i], texture.Args{
-			Filter: core1_0.FilterLinear,
+			Filter: core1_0.FilterNearest,
 			Wrap:   core1_0.SamplerAddressModeClampToEdge,
 		})
 		if err != nil {
@@ -151,7 +152,7 @@ func NewAmbientOcclusionPass(app vulkan.App, target vulkan.Target, gbuffer Geome
 
 		normKey := fmt.Sprintf("ssao-normal-%d", i)
 		p.normal[i], err = texture.FromImage(app.Device(), normKey, gbuffer.Normal()[i], texture.Args{
-			Filter: core1_0.FilterLinear,
+			Filter: core1_0.FilterNearest,
 			Wrap:   core1_0.SamplerAddressModeClampToEdge,
 		})
 		if err != nil {
@@ -214,29 +215,29 @@ func (n *HemisphereNoise) Key() string  { return n.key }
 func (n *HemisphereNoise) Version() int { return 1 }
 
 func (n *HemisphereNoise) ImageData() *image.Data {
-	buffer := make([]vec3.T, 4*n.Width*n.Height)
+	buffer := make([]vec4.T, 4*n.Width*n.Height)
 	for i := range buffer {
-		buffer[i] = vec3.Random(
-			vec3.New(-1, -1, 0),
-			vec3.New(1, 1, 0),
+		buffer[i] = vec4.Random(
+			vec4.New(-1, -1, 0, 0),
+			vec4.New(1, 1, 0, 0),
 		).Normalized()
 	}
 
 	// cast to byte array
 	ptr := (*byte)(unsafe.Pointer(&buffer[0]))
-	bytes := unsafe.Slice(ptr, int(unsafe.Sizeof(vec3.T{}))*len(buffer))
+	bytes := unsafe.Slice(ptr, int(unsafe.Sizeof(vec4.T{}))*len(buffer))
 
 	return &image.Data{
 		Width:  n.Width,
 		Height: n.Height,
-		Format: image.FormatRGBA8Unorm,
+		Format: core1_0.FormatR32G32B32A32SignedFloat,
 		Buffer: bytes,
 	}
 }
 
 func (n *HemisphereNoise) TextureArgs() texture.Args {
 	return texture.Args{
-		Filter: core1_0.FilterLinear,
+		Filter: core1_0.FilterNearest,
 		Wrap:   core1_0.SamplerAddressModeRepeat,
 	}
 }

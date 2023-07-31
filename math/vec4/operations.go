@@ -2,6 +2,7 @@ package vec4
 
 import (
 	"github.com/johanhenriksson/goworld/math"
+	"github.com/johanhenriksson/goworld/math/random"
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/math/vec3"
 )
@@ -24,6 +25,16 @@ func Extend2(v vec2.T, z, w float32) T {
 // Dot returns the dot product of two vectors.
 func Dot(a, b T) float32 {
 	return a.X*b.X + a.Y*b.Y + a.Z*b.Z + a.W*b.W
+}
+
+// Random vector, not normalized.
+func Random(min, max T) T {
+	return T{
+		random.Range(min.X, max.X),
+		random.Range(min.Y, max.Y),
+		random.Range(min.Z, max.Z),
+		random.Range(min.W, max.W),
+	}
 }
 
 func Min(a, b T) T {
