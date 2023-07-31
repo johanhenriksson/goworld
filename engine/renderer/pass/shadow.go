@@ -29,9 +29,10 @@ type Shadow interface {
 }
 
 type shadowpass struct {
-	app  vulkan.App
-	pass renderpass.T
-	size int
+	app    vulkan.App
+	target vulkan.Target
+	pass   renderpass.T
+	size   int
 
 	// should be replaced with a proper cache that will evict unused maps
 	shadowmaps map[light.T]Shadowmap
@@ -50,7 +51,7 @@ type Cascade struct {
 	Mats    *MaterialSorter
 }
 
-func NewShadowPass(app vulkan.App) Shadow {
+func NewShadowPass(app vulkan.App, target vulkan.Target) Shadow {
 	pass := renderpass.New(app.Device(), renderpass.Args{
 		Name: "Shadow",
 		DepthAttachment: &attachment.Depth{
@@ -99,6 +100,7 @@ func NewShadowPass(app vulkan.App) Shadow {
 
 	return &shadowpass{
 		app:        app,
+		target:     target,
 		pass:       pass,
 		shadowmaps: make(map[light.T]Shadowmap),
 		size:       2048,
@@ -137,7 +139,7 @@ func (p *shadowpass) createShadowmap(light light.T) Shadowmap {
 
 		// each light cascade needs its own shadow materials - or rather, their own descriptors
 		// cheating a bit by creating entire materials for each light, fix it later.
-		mats := NewMaterialSorter(p.app, p.pass, &material.Def{
+		mats := NewMaterialSorter(p.app, p.target, p.pass, &material.Def{
 			Shader:       "shadow",
 			VertexFormat: voxel.Vertex{},
 			DepthTest:    true,

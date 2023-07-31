@@ -87,6 +87,7 @@ func NewGuiPass(app vulkan.App, target RenderTarget) *GuiPass {
 		},
 	})
 
+	frames := target.Frames()
 	mat := material.New(app.Device(), material.Args{
 		Pass:       pass,
 		Shader:     app.Shaders().Fetch(shader.NewRef("ui_quad")),
@@ -105,18 +106,18 @@ func NewGuiPass(app vulkan.App, target RenderTarget) *GuiPass {
 			Stages: core1_0.StageFragment,
 			Count:  1000,
 		},
-	}).InstantiateMany(app.Pool(), app.Frames())
+	}).InstantiateMany(app.Pool(), target.Frames())
 
 	mesh := quad.New("gui-quad", quad.Props{Size: vec2.One})
 
-	fbufs, err := framebuffer.NewArray(app.Frames(), app.Device(), "gui", app.Width(), app.Height(), pass)
+	fbufs, err := framebuffer.NewArray(frames, app.Device(), "gui", target.Width(), target.Height(), pass)
 	if err != nil {
 		panic(err)
 	}
 
-	textures := make([]cache.SamplerCache, app.Frames())
-	quads := make([]*widget.QuadBuffer, app.Frames())
-	for i := 0; i < app.Frames(); i++ {
+	textures := make([]cache.SamplerCache, frames)
+	quads := make([]*widget.QuadBuffer, frames)
+	for i := 0; i < frames; i++ {
 		textures[i] = cache.NewSamplerCache(app.Textures(), mat[i].Descriptors().Textures)
 		quads[i] = widget.NewQuadBuffer(10000)
 	}

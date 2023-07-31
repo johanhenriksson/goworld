@@ -4,68 +4,62 @@ import (
 	"log"
 
 	"github.com/johanhenriksson/goworld/core/object"
-	"github.com/johanhenriksson/goworld/engine/renderer/pass"
-	"github.com/johanhenriksson/goworld/render/image"
 	"github.com/johanhenriksson/goworld/render/vulkan"
 
 	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
-type NodeFunc func(T, pass.RenderTarget, pass.GeometryBuffer)
+type NodeFunc func(T, vulkan.Target) []Resource
 
 // The render graph is responsible for synchronization between
 // different render nodes.
 type T interface {
+	Backend() vulkan.App
 	Node(pass NodePass) Node
 	Recreate()
 	Draw(scene object.Object, time, delta float32)
 	Destroy()
 }
 
-type graph struct {
-	app   vulkan.App
-	pre   PreNode
-	post  Node
-	nodes []Node
-	todo  map[Node]bool
-	init  NodeFunc
-
-	target  pass.RenderTarget
-	gbuffer pass.GeometryBuffer
+type Resource interface {
+	Destroy()
 }
 
-func New(app vulkan.App, init NodeFunc) T {
+type graph struct {
+	app       vulkan.App
+	target    vulkan.Target
+	pre       PreNode
+	post      Node
+	nodes     []Node
+	todo      map[Node]bool
+	init      NodeFunc
+	resources []Resource
+}
+
+func New(app vulkan.App, output vulkan.Target, init NodeFunc) T {
 	g := &graph{
-		app:   app,
-		nodes: make([]Node, 0, 16),
-		todo:  make(map[Node]bool, 16),
-		init:  init,
+		app:    app,
+		target: output,
+		nodes:  make([]Node, 0, 16),
+		todo:   make(map[Node]bool, 16),
+		init:   init,
 	}
 	g.Recreate()
 	return g
 }
 
-func (g *graph) Recreate() {
-	var err error
+func (g *graph) Backend() vulkan.App {
+	return g.app
+}
 
+func (g *graph) Recreate() {
 	g.Destroy()
 	g.app.Pool().Recreate()
 
-	g.target, err = pass.NewRenderTarget(g.app.Device(),
-		g.app.Width(), g.app.Height(), g.app.Frames(),
-		image.FormatRGBA8Unorm, g.app.Device().GetDepthFormat())
-	if err != nil {
-		panic(err)
-	}
+	g.resources = g.init(g, g.target)
 
-	g.gbuffer, err = pass.NewGbuffer(g.app.Device(), g.app.Width(), g.app.Height(), g.app.Frames())
-	if err != nil {
-		panic(err)
-	}
-
-	g.init(g, g.target, g.gbuffer)
-	g.pre = newPreNode(g.app)
-	g.post = newPostNode(g.app)
+	g.pre = newPreNode(g.app, g.target)
+	g.post = newPostNode(g.app, g.target)
 	g.connect()
 }
 
@@ -140,14 +134,10 @@ func (g *graph) Draw(scene object.Object, time, delta float32) {
 
 func (g *graph) Destroy() {
 	g.app.Flush()
-	if g.gbuffer != nil {
-		g.gbuffer.Destroy()
-		g.gbuffer = nil
+	for _, resource := range g.resources {
+		resource.Destroy()
 	}
-	if g.target != nil {
-		g.target.Destroy()
-		g.target = nil
-	}
+	g.resources = nil
 	if g.pre != nil {
 		g.pre.Destroy()
 		g.pre = nil

@@ -99,13 +99,14 @@ func NewLightShader(app vulkan.App, pass renderpass.T, target RenderTarget, gbuf
 			},
 		})
 
-	lightsh := mat.InstantiateMany(app.Pool(), app.Frames())
+	frames := target.Frames()
+	lightsh := mat.InstantiateMany(app.Pool(), frames)
 
-	diffuseViews := make([]image.View, app.Frames())
-	normalViews := make([]image.View, app.Frames())
-	positionViews := make([]image.View, app.Frames())
-	depthViews := make([]image.View, app.Frames())
-	for i := 0; i < app.Frames(); i++ {
+	diffuseViews := make([]image.View, frames)
+	normalViews := make([]image.View, frames)
+	positionViews := make([]image.View, frames)
+	depthViews := make([]image.View, frames)
+	for i := 0; i < frames; i++ {
 		diffuseViews[i], _ = gbuffer.Diffuse()[i].View(gbuffer.Diffuse()[i].Format(), core1_0.ImageAspectColor)
 		normalViews[i], _ = gbuffer.Normal()[i].View(gbuffer.Normal()[i].Format(), core1_0.ImageAspectColor)
 		positionViews[i], _ = gbuffer.Position()[i].View(gbuffer.Position()[i].Format(), core1_0.ImageAspectColor)

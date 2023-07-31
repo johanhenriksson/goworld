@@ -12,11 +12,10 @@ import (
 	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
-type T interface {
+type App interface {
 	Instance() instance.T
 	Device() device.T
 	Destroy()
-	Window(WindowArgs) (Window, error)
 
 	Worker(int) command.Worker
 	Transferer() command.Worker
@@ -30,10 +29,8 @@ type T interface {
 
 type backend struct {
 	appName  string
-	frames   int
 	instance instance.T
 	device   device.T
-	windows  []Window
 
 	transfer command.Worker
 	workers  []command.Worker
@@ -44,8 +41,7 @@ type backend struct {
 	shaders  cache.ShaderCache
 }
 
-func New(appName string, deviceIndex int) T {
-	frames := 3
+func New(appName string, deviceIndex int) App {
 	instance := instance.New(appName)
 	device, err := device.New(instance, instance.EnumeratePhysicalDevices()[0])
 	if err != nil {
@@ -71,8 +67,6 @@ func New(appName string, deviceIndex int) T {
 
 	return &backend{
 		appName: appName,
-		frames:  frames,
-		windows: []Window{},
 
 		device:   device,
 		instance: instance,
@@ -87,7 +81,6 @@ func New(appName string, deviceIndex int) T {
 
 func (b *backend) Instance() instance.T { return b.instance }
 func (b *backend) Device() device.T     { return b.device }
-func (b *backend) Frames() int          { return b.frames }
 
 func (b *backend) Pool() descriptor.Pool        { return b.pool }
 func (b *backend) Meshes() cache.MeshCache      { return b.meshes }
@@ -100,16 +93,6 @@ func (b *backend) Transferer() command.Worker {
 
 func (b *backend) Worker(frame int) command.Worker {
 	return b.workers[frame%len(b.workers)]
-}
-
-func (b *backend) Window(args WindowArgs) (Window, error) {
-	args.Frames = b.frames
-	w, err := NewWindow(b, args)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create window: %w", err)
-	}
-	b.windows = append(b.windows, w)
-	return w, nil
 }
 
 func (b *backend) Flush() {
@@ -137,9 +120,6 @@ func (b *backend) Destroy() {
 	}
 	b.workers = nil
 
-	for _, wnd := range b.windows {
-		wnd.Destroy()
-	}
 	if b.device != nil {
 		b.device.Destroy()
 		b.device = nil
