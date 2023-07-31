@@ -79,7 +79,7 @@ func NewForwardPass(
 		},
 	})
 
-	fbuf, err := framebuffer.NewArray(app.Frames(), app.Device(), "forward", app.Width(), app.Height(), pass)
+	fbuf, err := framebuffer.NewArray(target.Frames(), app.Device(), "forward", target.Width(), target.Height(), pass)
 	if err != nil {
 		panic(err)
 	}
@@ -91,7 +91,7 @@ func NewForwardPass(
 		pass:    pass,
 		fbuf:    fbuf,
 
-		materials: NewMaterialSorter(app, pass, material.ColoredForward()),
+		materials: NewMaterialSorter(app, target, pass, material.ColoredForward()),
 		meshQuery: object.NewQuery[mesh.Mesh](),
 	}
 }

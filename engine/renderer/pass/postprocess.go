@@ -55,7 +55,7 @@ func NewPostProcessPass(app vulkan.App, input RenderTarget, ssao RenderTarget) *
 		ssao:  ssao,
 	}
 
-	p.target, err = NewRenderTarget(app.Device(), app.Width(), app.Height(), app.Frames(),
+	p.target, err = NewRenderTarget(app.Device(), input.Width(), input.Height(), input.Frames(),
 		core1_0.FormatR8G8B8A8UnsignedNormalized, 0)
 	if err != nil {
 		panic(err)
@@ -102,7 +102,7 @@ func NewPostProcessPass(app vulkan.App, input RenderTarget, ssao RenderTarget) *
 			},
 		})
 
-	frames := app.Frames()
+	frames := input.Frames()
 	p.fbufs, err = framebuffer.NewArray(frames, app.Device(), "blur", p.target.Width(), p.target.Height(), p.pass)
 	if err != nil {
 		panic(err)
@@ -111,7 +111,7 @@ func NewPostProcessPass(app vulkan.App, input RenderTarget, ssao RenderTarget) *
 	p.desc = p.mat.InstantiateMany(app.Pool(), frames)
 	p.inputTex = make([]texture.T, frames)
 	p.ssaoTex = make([]texture.T, frames)
-	for i := 0; i < app.Frames(); i++ {
+	for i := 0; i < input.Frames(); i++ {
 		inputKey := fmt.Sprintf("post-input-%d", i)
 		p.inputTex[i], err = texture.FromImage(app.Device(), inputKey, p.input.Output()[i], texture.Args{
 			Filter: core1_0.FilterNearest,

@@ -27,13 +27,15 @@ type PreNode interface {
 
 type preNode struct {
 	*node
+	target       vulkan.Target
 	cameraQuery  *object.Query[*camera.Camera]
 	predrawQuery *object.Query[PreDrawable]
 }
 
-func newPreNode(app vulkan.App) PreNode {
+func newPreNode(app vulkan.App, target vulkan.Target) PreNode {
 	return &preNode{
 		node:         newNode(app, "Pre", nil),
+		target:       target,
 		cameraQuery:  object.NewQuery[*camera.Camera](),
 		predrawQuery: object.NewQuery[PreDrawable](),
 	}
@@ -41,13 +43,13 @@ func newPreNode(app vulkan.App) PreNode {
 
 func (n *preNode) Prepare(scene object.Object, time, delta float32) (*render.Args, error) {
 	screen := render.Screen{
-		Width:  n.app.Width(),
-		Height: n.app.Height(),
-		Scale:  n.app.Scale(),
+		Width:  n.target.Width(),
+		Height: n.target.Height(),
+		Scale:  n.target.Scale(),
 	}
 
 	// aquire next frame
-	context, err := n.app.Aquire()
+	context, err := n.target.Aquire()
 	if err != nil {
 		return nil, ErrRecreate
 	}

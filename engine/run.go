@@ -11,7 +11,7 @@ import (
 )
 
 type SceneFunc func(object.Object)
-type RendererFunc func(vulkan.App) renderer.T
+type RendererFunc func(vulkan.App, vulkan.Target) renderer.T
 
 type Args struct {
 	Title    string
@@ -35,17 +35,19 @@ func Run(args Args, scenefuncs ...SceneFunc) {
 	}
 
 	// create a window
-	wnd, err := backend.Window(vulkan.WindowArgs{
+	wnd, err := vulkan.NewWindow(backend, vulkan.WindowArgs{
 		Title:  args.Title,
 		Width:  args.Width,
 		Height: args.Height,
+		Frames: 3,
 	})
 	if err != nil {
 		panic(err)
 	}
+	defer wnd.Destroy()
 
 	// create renderer
-	renderer := args.Renderer(wnd)
+	renderer := args.Renderer(backend, wnd)
 	defer func() {
 		renderer.Destroy()
 	}()

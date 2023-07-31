@@ -172,7 +172,7 @@ func NewDeferredPass(
 		},
 	})
 
-	fbuf, err := framebuffer.NewArray(app.Frames(), app.Device(), "deferred", app.Width(), app.Height(), pass)
+	fbuf, err := framebuffer.NewArray(target.Frames(), app.Device(), "deferred", target.Width(), target.Height(), pass)
 	if err != nil {
 		panic(err)
 	}
@@ -194,7 +194,7 @@ func NewDeferredPass(
 		shadows: shadows,
 		fbuf:    fbuf,
 
-		materials: NewMaterialSorter(app, pass, material.StandardDeferred()),
+		materials: NewMaterialSorter(app, target, pass, material.StandardDeferred()),
 
 		meshQuery:  object.NewQuery[mesh.Mesh](),
 		lightQuery: object.NewQuery[light.T](),

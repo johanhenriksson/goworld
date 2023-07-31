@@ -57,13 +57,13 @@ type AmbientOcclusionDescriptors struct {
 	Params   *descriptor.Uniform[AmbientOcclusionParams]
 }
 
-func NewAmbientOcclusionPass(app vulkan.App, gbuffer GeometryBuffer) *AmbientOcclusionPass {
+func NewAmbientOcclusionPass(app vulkan.App, target vulkan.Target, gbuffer GeometryBuffer) *AmbientOcclusionPass {
 	var err error
 	p := &AmbientOcclusionPass{
 		app: app,
 	}
 
-	p.Target, err = NewRenderTarget(app.Device(), app.Width()/2, app.Height()/2, app.Frames(), core1_0.FormatR8G8B8A8UnsignedNormalized, 0)
+	p.Target, err = NewRenderTarget(app.Device(), target.Width()/2, target.Height()/2, target.Frames(), core1_0.FormatR8G8B8A8UnsignedNormalized, 0)
 	if err != nil {
 		panic(err)
 	}
@@ -113,7 +113,7 @@ func NewAmbientOcclusionPass(app vulkan.App, gbuffer GeometryBuffer) *AmbientOcc
 			},
 		})
 
-	p.fbuf, err = framebuffer.NewArray(app.Frames(), app.Device(), "ssao", p.Target.Width(), p.Target.Height(), p.pass)
+	p.fbuf, err = framebuffer.NewArray(target.Frames(), app.Device(), "ssao", p.Target.Width(), p.Target.Height(), p.pass)
 	if err != nil {
 		panic(err)
 	}
@@ -140,10 +140,10 @@ func NewAmbientOcclusionPass(app vulkan.App, gbuffer GeometryBuffer) *AmbientOcc
 		p.kernel[i] = sample
 	}
 
-	p.desc = p.mat.InstantiateMany(app.Pool(), app.Frames())
-	p.position = make([]texture.T, app.Frames())
-	p.normal = make([]texture.T, app.Frames())
-	for i := 0; i < app.Frames(); i++ {
+	p.desc = p.mat.InstantiateMany(app.Pool(), target.Frames())
+	p.position = make([]texture.T, target.Frames())
+	p.normal = make([]texture.T, target.Frames())
+	for i := 0; i < target.Frames(); i++ {
 		posKey := fmt.Sprintf("ssao-position-%d", i)
 		p.position[i], err = texture.FromImage(app.Device(), posKey, gbuffer.Position()[i], texture.Args{
 			Filter: core1_0.FilterLinear,
@@ -190,8 +190,7 @@ func (p *AmbientOcclusionPass) Record(cmds command.Recorder, args render.Args, s
 func (p *AmbientOcclusionPass) Destroy() {
 	p.pass.Destroy()
 	p.fbuf.Destroy()
-	for i := 0; i < p.app.Frames(); i++ {
-
+	for i := 0; i < len(p.position); i++ {
 		p.position[i].Destroy()
 		p.normal[i].Destroy()
 	}

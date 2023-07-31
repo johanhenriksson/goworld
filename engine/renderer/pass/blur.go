@@ -44,9 +44,10 @@ func NewBlurPass(app vulkan.App, input RenderTarget) *BlurPass {
 		app:   app,
 		input: input,
 	}
+	frames := input.Frames()
 
 	var err error
-	p.target, err = NewRenderTarget(app.Device(), input.Width(), input.Height(), app.Frames(), input.Output()[0].Format(), 0)
+	p.target, err = NewRenderTarget(app.Device(), input.Width(), input.Height(), frames, input.Output()[0].Format(), 0)
 
 	p.quad = vertex.ScreenQuad("blur-pass-quad")
 
@@ -83,7 +84,6 @@ func NewBlurPass(app vulkan.App, input RenderTarget) *BlurPass {
 			},
 		})
 
-	frames := app.Frames()
 	p.fbufs, err = framebuffer.NewArray(frames, app.Device(), "blur", p.target.Width(), p.target.Height(), p.pass)
 	if err != nil {
 		panic(err)

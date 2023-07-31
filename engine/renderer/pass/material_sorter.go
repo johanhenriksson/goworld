@@ -23,6 +23,7 @@ type MaterialSorter struct {
 	cache      map[uint64][]*MaterialData
 	defaultMat *material.Def
 	app        vulkan.App
+	target     vulkan.Target
 	pass       renderpass.T
 }
 
@@ -32,9 +33,10 @@ type MaterialData struct {
 	Textures cache.SamplerCache
 }
 
-func NewMaterialSorter(app vulkan.App, pass renderpass.T, defaultMat *material.Def) *MaterialSorter {
+func NewMaterialSorter(app vulkan.App, target vulkan.Target, pass renderpass.T, defaultMat *material.Def) *MaterialSorter {
 	ms := &MaterialSorter{
 		app:        app,
+		target:     target,
 		pass:       pass,
 		defaultMat: defaultMat,
 		cache:      map[uint64][]*MaterialData{},
@@ -101,8 +103,8 @@ func (m *MaterialSorter) Load(def *material.Def) bool {
 		},
 		desc)
 
-	m.cache[id] = make([]*MaterialData, m.app.Frames())
-	for frame := 0; frame < m.app.Frames(); frame++ {
+	m.cache[id] = make([]*MaterialData, m.target.Frames())
+	for frame := 0; frame < m.target.Frames(); frame++ {
 		instance := mat.Instantiate(m.app.Pool())
 		m.cache[id][frame] = &MaterialData{
 			Instance: instance,

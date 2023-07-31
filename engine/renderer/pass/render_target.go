@@ -1,17 +1,26 @@
 package pass
 
 import (
+	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/device"
 	"github.com/johanhenriksson/goworld/render/image"
+	"github.com/johanhenriksson/goworld/render/swapchain"
 	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
 type RenderTarget interface {
 	Destroy()
+	Frames() int
 	Width() int
 	Height() int
 	Output() []image.T
 	Depth() []image.T
+
+	Scale() float32
+	Surfaces() []image.T
+	SurfaceFormat() core1_0.Format
+	Aquire() (*swapchain.Context, error)
+	Present(command.Worker, *swapchain.Context)
 }
 
 // renderTarget holds color and/or depth textures to render to.
@@ -53,8 +62,10 @@ func NewRenderTarget(device device.T, width, height, frames int, outputFormat, d
 	}, nil
 }
 
-func (r *renderTarget) Width() int  { return r.width }
-func (r *renderTarget) Height() int { return r.height }
+func (r *renderTarget) Frames() int    { return len(r.output) }
+func (r *renderTarget) Width() int     { return r.width }
+func (r *renderTarget) Height() int    { return r.height }
+func (r *renderTarget) Scale() float32 { return 1 }
 
 func (r *renderTarget) Output() []image.T {
 	return r.output
@@ -75,3 +86,12 @@ func (r *renderTarget) Destroy() {
 	}
 	r.depth = nil
 }
+
+func (i *renderTarget) Surfaces() []image.T           { return i.output }
+func (i *renderTarget) SurfaceFormat() core1_0.Format { return i.output[0].Format() }
+
+func (i *renderTarget) Aquire() (*swapchain.Context, error) {
+	return nil, nil
+}
+
+func (b *renderTarget) Present(command.Worker, *swapchain.Context) {}

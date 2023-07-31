@@ -59,19 +59,19 @@ func NewLinePass(app vulkan.App, target RenderTarget, depth RenderTarget) *LineP
 		},
 	})
 
-	fbufs, err := framebuffer.NewArray(app.Frames(), app.Device(), "lines", app.Width(), app.Height(), pass)
+	fbufs, err := framebuffer.NewArray(target.Frames(), app.Device(), "lines", target.Width(), target.Height(), pass)
 	if err != nil {
 		panic(err)
 	}
 
-	lineShape.Debug.Setup(app.Frames())
+	lineShape.Debug.Setup(target.Frames())
 
 	return &LinePass{
 		app:       app,
 		target:    target,
 		pass:      pass,
 		fbuf:      fbufs,
-		materials: NewMaterialSorter(app, pass, material.Lines()),
+		materials: NewMaterialSorter(app, target, pass, material.Lines()),
 		meshQuery: object.NewQuery[mesh.Mesh](),
 	}
 }

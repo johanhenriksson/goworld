@@ -40,7 +40,7 @@ type OutputDescriptors struct {
 	Output *descriptor.Sampler
 }
 
-func NewOutputPass(app vulkan.App, source RenderTarget) *OutputPass {
+func NewOutputPass(app vulkan.App, target vulkan.Target, source RenderTarget) *OutputPass {
 	log.Println("create output pass")
 	p := &OutputPass{
 		app:    app,
@@ -54,7 +54,7 @@ func NewOutputPass(app vulkan.App, source RenderTarget) *OutputPass {
 		ColorAttachments: []attachment.Color{
 			{
 				Name:        OutputAttachment,
-				Image:       attachment.FromImageArray(app.Surfaces()),
+				Image:       attachment.FromImageArray(target.Surfaces()),
 				LoadOp:      core1_0.AttachmentLoadOpClear, // clearing avoids displaying garbage on the very first frame
 				FinalLayout: khr_swapchain.ImageLayoutPresentSrc,
 			},
@@ -82,9 +82,9 @@ func NewOutputPass(app vulkan.App, source RenderTarget) *OutputPass {
 			},
 		})
 
-	frames := app.Frames()
+	frames := target.Frames()
 	var err error
-	p.fbufs, err = framebuffer.NewArray(frames, app.Device(), "output", app.Width(), app.Height(), p.pass)
+	p.fbufs, err = framebuffer.NewArray(frames, app.Device(), "output", target.Width(), target.Height(), p.pass)
 	if err != nil {
 		panic(err)
 	}

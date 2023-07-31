@@ -22,7 +22,7 @@ import (
 type ResizeHandler func(width, height int)
 
 type Window interface {
-	App
+	Target
 
 	Title() string
 	SetTitle(string)
@@ -32,7 +32,6 @@ type Window interface {
 	Destroy()
 
 	SetInputHandler(input.Handler)
-	// SetResizeHandler(ResizeHandler)
 
 	Swapchain() swapchain.T
 }
@@ -49,7 +48,6 @@ type WindowArgs struct {
 }
 
 type window struct {
-	T
 	wnd   *glfw.Window
 	mouse mouse.MouseWrapper
 
@@ -61,7 +59,7 @@ type window struct {
 	surface       khr_surface.Surface
 }
 
-func NewWindow(backend T, args WindowArgs) (Window, error) {
+func NewWindow(backend App, args WindowArgs) (Window, error) {
 	// window creation hints.
 	glfw.WindowHint(glfw.ClientAPI, glfw.NoAPI)
 
@@ -103,7 +101,6 @@ func NewWindow(backend T, args WindowArgs) (Window, error) {
 	swap := swapchain.New(backend.Device(), args.Frames, width, height, surface, surfaceFormat[0])
 
 	window := &window{
-		T:       backend,
 		wnd:     wnd,
 		title:   args.Title,
 		width:   width,

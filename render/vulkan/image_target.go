@@ -9,12 +9,11 @@ import (
 )
 
 type imageTarget struct {
-	T
 	image   image.T
 	context *swapchain.Context
 }
 
-func NewImageTarget(backend T, width, height int) App {
+func NewImageTarget(backend App, width, height int) Target {
 	buffer, err := image.New2D(
 		backend.Device(), "rendertarget",
 		width, height,
@@ -24,7 +23,6 @@ func NewImageTarget(backend T, width, height int) App {
 		panic(err)
 	}
 	return &imageTarget{
-		T:       backend,
 		image:   buffer,
 		context: swapchain.DummyContext(),
 	}

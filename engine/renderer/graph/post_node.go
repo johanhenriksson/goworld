@@ -10,11 +10,13 @@ import (
 
 type postNode struct {
 	*node
+	target vulkan.Target
 }
 
-func newPostNode(app vulkan.App) Node {
+func newPostNode(app vulkan.App, target vulkan.Target) Node {
 	return &postNode{
-		node: newNode(app, "Post", nil),
+		node:   newNode(app, "Post", nil),
+		target: target,
 	}
 }
 
@@ -34,7 +36,7 @@ func (n *postNode) Draw(worker command.Worker, args render.Args, scene object.Co
 	})
 
 	// present
-	n.app.Present(worker, args.Context)
+	n.target.Present(worker, args.Context)
 
 	// flush ensures all commands are submitted before we start rendering the next frame. otherwise, frame submissions may overlap.
 	// todo: perhaps its possible to do this at a later stage? e.g. we could run update loop etc while waiting
