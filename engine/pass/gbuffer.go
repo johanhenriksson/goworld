@@ -4,6 +4,7 @@ import (
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/render/device"
 	"github.com/johanhenriksson/goworld/render/image"
+	"github.com/johanhenriksson/goworld/render/vulkan"
 
 	"github.com/vkngwrapper/core/v2/core1_0"
 )
@@ -21,10 +22,8 @@ type gbuffer struct {
 	position []image.T
 }
 
-func NewGbuffer(
-	device device.T,
-	width, height, frames int,
-) (GeometryBuffer, error) {
+func NewGbuffer(device device.T, size vulkan.TargetSize) (GeometryBuffer, error) {
+	frames, width, height := size.Frames, size.Width, size.Height
 	diffuseFmt := core1_0.FormatR8G8B8A8UnsignedNormalized
 	normalFmt := core1_0.FormatR8G8B8A8UnsignedNormalized
 	positionFmt := core1_0.FormatR16G16B16A16SignedFloat

@@ -21,10 +21,9 @@ import (
 type PostProcessPass struct {
 	LUT texture.Ref
 
-	app    vulkan.App
-	target vulkan.Target
-	input  vulkan.Target
-	ssao   vulkan.Target
+	app   vulkan.App
+	input vulkan.Target
+	ssao  vulkan.Target
 
 	quad  vertex.Mesh
 	mat   material.T[*PostProcessDescriptors]
@@ -45,7 +44,7 @@ type PostProcessDescriptors struct {
 	LUT   *descriptor.Sampler
 }
 
-func NewPostProcessPass(app vulkan.App, input vulkan.Target, ssao vulkan.Target) *PostProcessPass {
+func NewPostProcessPass(app vulkan.App, target vulkan.Target, input vulkan.Target, ssao vulkan.Target) *PostProcessPass {
 	var err error
 	p := &PostProcessPass{
 		LUT: texture.PathRef("textures/color_grading/none.png"),
@@ -55,12 +54,6 @@ func NewPostProcessPass(app vulkan.App, input vulkan.Target, ssao vulkan.Target)
 		ssao:  ssao,
 	}
 
-	p.target, err = vulkan.NewColorTarget(app.Device(), "postprocess-output", input.Width(), input.Height(), input.Frames(), input.Scale(),
-		core1_0.FormatR8G8B8A8UnsignedNormalized)
-	if err != nil {
-		panic(err)
-	}
-
 	p.quad = vertex.ScreenQuad("blur-pass-quad")
 
 	p.pass = renderpass.New(app.Device(), renderpass.Args{
@@ -68,7 +61,7 @@ func NewPostProcessPass(app vulkan.App, input vulkan.Target, ssao vulkan.Target)
 		ColorAttachments: []attachment.Color{
 			{
 				Name:        OutputAttachment,
-				Image:       attachment.FromImageArray(p.target.Surfaces()),
+				Image:       attachment.FromImageArray(target.Surfaces()),
 				LoadOp:      core1_0.AttachmentLoadOpDontCare,
 				FinalLayout: core1_0.ImageLayoutShaderReadOnlyOptimal,
 			},
@@ -103,7 +96,7 @@ func NewPostProcessPass(app vulkan.App, input vulkan.Target, ssao vulkan.Target)
 		})
 
 	frames := input.Frames()
-	p.fbufs, err = framebuffer.NewArray(frames, app.Device(), "blur", p.target.Width(), p.target.Height(), p.pass)
+	p.fbufs, err = framebuffer.NewArray(frames, app.Device(), "blur", target.Width(), target.Height(), p.pass)
 	if err != nil {
 		panic(err)
 	}
@@ -160,10 +153,6 @@ func (p *PostProcessPass) Record(cmds command.Recorder, args render.Args, scene 
 
 func (p *PostProcessPass) Name() string {
 	return "PostProcess"
-}
-
-func (p *PostProcessPass) Target() vulkan.Target {
-	return p.target
 }
 
 func (p *PostProcessPass) Destroy() {

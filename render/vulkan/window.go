@@ -130,6 +130,15 @@ func (w *window) Poll() {
 	glfw.PollEvents()
 }
 
+func (w *window) Size() TargetSize {
+	return TargetSize{
+		Width:  w.width,
+		Height: w.height,
+		Frames: w.frames,
+		Scale:  w.scale,
+	}
+}
+
 func (w *window) Width() int        { return w.width }
 func (w *window) Height() int       { return w.height }
 func (w *window) Frames() int       { return w.frames }
