@@ -29,6 +29,7 @@ func (d *Storage[K]) Initialize(device device.T) {
 	}
 
 	d.buffer = buffer.NewArray[K](device, buffer.Args{
+		Key:    d.String(),
 		Size:   d.Size,
 		Usage:  core1_0.BufferUsageStorageBuffer,
 		Memory: core1_0.MemoryPropertyDeviceLocal | core1_0.MemoryPropertyHostVisible,

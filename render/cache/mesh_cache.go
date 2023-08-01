@@ -40,10 +40,10 @@ func (m *meshes) Instantiate(mesh vertex.Mesh, callback func(Mesh)) {
 
 	m.worker.Queue(func(cmd command.Buffer) {
 		vtxSize := mesh.VertexSize() * mesh.VertexCount()
-		vtxStage = buffer.NewShared(m.device, vtxSize)
+		vtxStage = buffer.NewShared(m.device, "staging:vertex", vtxSize)
 
 		idxSize := mesh.IndexSize() * mesh.IndexCount()
-		idxStage = buffer.NewShared(m.device, idxSize)
+		idxStage = buffer.NewShared(m.device, "staging:index", idxSize)
 
 		vtxStage.Write(0, mesh.VertexData())
 		vtxStage.Flush()
@@ -51,8 +51,8 @@ func (m *meshes) Instantiate(mesh vertex.Mesh, callback func(Mesh)) {
 		idxStage.Flush()
 
 		// allocate buffers
-		cached.vertices = buffer.NewRemote(m.device, vtxSize, core1_0.BufferUsageVertexBuffer)
-		cached.indices = buffer.NewRemote(m.device, idxSize, core1_0.BufferUsageIndexBuffer)
+		cached.vertices = buffer.NewRemote(m.device, mesh.Key()+":vertex", vtxSize, core1_0.BufferUsageVertexBuffer)
+		cached.indices = buffer.NewRemote(m.device, mesh.Key()+":index", idxSize, core1_0.BufferUsageIndexBuffer)
 
 		cmd.CmdCopyBuffer(vtxStage, cached.vertices, core1_0.BufferCopy{
 			Size: vtxSize,

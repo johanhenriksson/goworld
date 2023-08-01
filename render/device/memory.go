@@ -7,6 +7,7 @@ import (
 
 	"github.com/johanhenriksson/goworld/util"
 	"github.com/vkngwrapper/core/v2/core1_0"
+	"github.com/vkngwrapper/core/v2/driver"
 )
 
 type Memory interface {
@@ -30,7 +31,7 @@ type memory struct {
 	mapPtr unsafe.Pointer
 }
 
-func alloc(device T, req core1_0.MemoryRequirements, flags core1_0.MemoryPropertyFlags) Memory {
+func alloc(device T, key string, req core1_0.MemoryRequirements, flags core1_0.MemoryPropertyFlags) Memory {
 	typeIdx := device.GetMemoryTypeIndex(req.MemoryTypeBits, flags)
 
 	align := int(device.GetLimits().NonCoherentAtomSize)
@@ -42,6 +43,11 @@ func alloc(device T, req core1_0.MemoryRequirements, flags core1_0.MemoryPropert
 	})
 	if err != nil {
 		panic(fmt.Sprintf("failed to allocate %d bytes of memory: %s", req.Size, err))
+	}
+
+	if key != "" {
+		device.SetDebugObjectName(driver.VulkanHandle(ptr.Handle()),
+			core1_0.ObjectTypeDeviceMemory, key)
 	}
 
 	return &memory{

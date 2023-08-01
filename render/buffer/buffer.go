@@ -4,6 +4,7 @@ import (
 	"github.com/johanhenriksson/goworld/render/device"
 
 	"github.com/vkngwrapper/core/v2/core1_0"
+	"github.com/vkngwrapper/core/v2/driver"
 )
 
 type T interface {
@@ -25,6 +26,7 @@ type T interface {
 }
 
 type Args struct {
+	Key    string
 	Size   int
 	Usage  core1_0.BufferUsageFlags
 	Memory core1_0.MemoryPropertyFlags
@@ -54,9 +56,14 @@ func New(device device.T, args Args) T {
 		panic(err)
 	}
 
+	if args.Key != "" {
+		device.SetDebugObjectName(driver.VulkanHandle(ptr.Handle()),
+			core1_0.ObjectTypeBuffer, args.Key)
+	}
+
 	memreq := ptr.MemoryRequirements()
 
-	mem := device.Allocate(*memreq, args.Memory)
+	mem := device.Allocate(args.Key, *memreq, args.Memory)
 	ptr.BindBufferMemory(mem.Ptr(), 0)
 
 	return &buffer{
@@ -67,32 +74,18 @@ func New(device device.T, args Args) T {
 	}
 }
 
-func NewUniform(device device.T, size int) T {
+func NewShared(device device.T, key string, size int) T {
 	return New(device, Args{
-		Size:   size,
-		Usage:  core1_0.BufferUsageTransferDst | core1_0.BufferUsageUniformBuffer,
-		Memory: core1_0.MemoryPropertyHostVisible,
-	})
-}
-
-func NewStorage(device device.T, size int) T {
-	return New(device, Args{
-		Size:   size,
-		Usage:  core1_0.BufferUsageTransferDst | core1_0.BufferUsageStorageBuffer,
-		Memory: core1_0.MemoryPropertyDeviceLocal | core1_0.MemoryPropertyHostVisible | core1_0.MemoryPropertyHostCoherent,
-	})
-}
-
-func NewShared(device device.T, size int) T {
-	return New(device, Args{
+		Key:    key,
 		Size:   size,
 		Usage:  core1_0.BufferUsageTransferSrc | core1_0.BufferUsageTransferDst,
 		Memory: core1_0.MemoryPropertyHostVisible | core1_0.MemoryPropertyHostCoherent,
 	})
 }
 
-func NewRemote(device device.T, size int, flags core1_0.BufferUsageFlags) T {
+func NewRemote(device device.T, key string, size int, flags core1_0.BufferUsageFlags) T {
 	return New(device, Args{
+		Key:    key,
 		Size:   size,
 		Usage:  core1_0.BufferUsageTransferDst | flags,
 		Memory: core1_0.MemoryPropertyDeviceLocal,

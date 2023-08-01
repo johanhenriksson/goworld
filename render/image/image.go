@@ -107,7 +107,7 @@ func New(device device.T, args Args) (T, error) {
 
 	memreq := ptr.MemoryRequirements()
 
-	mem := device.Allocate(core1_0.MemoryRequirements{
+	mem := device.Allocate(args.Key, core1_0.MemoryRequirements{
 		Size:           int(memreq.Size),
 		Alignment:      int(memreq.Alignment),
 		MemoryTypeBits: memreq.MemoryTypeBits,

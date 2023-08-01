@@ -26,6 +26,7 @@ func (d *UniformArray[K]) Initialize(device device.T) {
 		panic("descriptor must be bound first")
 	}
 	d.buffer = buffer.NewArray[K](device, buffer.Args{
+		Key:    d.String(),
 		Size:   d.Size,
 		Usage:  core1_0.BufferUsageUniformBuffer,
 		Memory: core1_0.MemoryPropertyDeviceLocal | core1_0.MemoryPropertyHostVisible,

@@ -31,7 +31,7 @@ func NewTextureSync(dev device.T, worker command.Worker, key string, img *osimag
 	}
 
 	// allocate staging buffer
-	stage := buffer.NewShared(dev, len(img.Pix))
+	stage := buffer.NewShared(dev, "staging:texture", len(img.Pix))
 
 	// write to staging buffer
 	stage.Write(0, img.Pix)

@@ -49,7 +49,7 @@ func (t *textures) Instantiate(ref texture.Ref, callback func(texture.T)) {
 		}
 
 		// allocate staging buffer
-		stage = buffer.NewShared(t.device, len(img.Buffer))
+		stage = buffer.NewShared(t.device, "staging:texture", len(img.Buffer))
 
 		// write to staging buffer
 		stage.Write(0, img.Buffer)

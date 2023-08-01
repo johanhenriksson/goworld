@@ -21,7 +21,7 @@ type T interface {
 	Resource[core1_0.Device]
 
 	Physical() core1_0.PhysicalDevice
-	Allocate(core1_0.MemoryRequirements, core1_0.MemoryPropertyFlags) Memory
+	Allocate(key string, req core1_0.MemoryRequirements, flags core1_0.MemoryPropertyFlags) Memory
 	GetQueue(queueIndex int, flags core1_0.QueueFlags) core1_0.Queue
 	GetQueueFamilyIndex(flags core1_0.QueueFlags) int
 	GetDepthFormat() core1_0.Format
@@ -182,11 +182,11 @@ func (d *device) GetLimits() *core1_0.PhysicalDeviceLimits {
 	return d.limits
 }
 
-func (d *device) Allocate(req core1_0.MemoryRequirements, flags core1_0.MemoryPropertyFlags) Memory {
+func (d *device) Allocate(key string, req core1_0.MemoryRequirements, flags core1_0.MemoryPropertyFlags) Memory {
 	if req.Size == 0 {
 		panic("allocating 0 bytes of memory")
 	}
-	return alloc(d, req, flags)
+	return alloc(d, key, req, flags)
 }
 
 func (d *device) Destroy() {
