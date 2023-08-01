@@ -18,6 +18,19 @@ func StandardDeferred() *Def {
 	}
 }
 
+func StandardForward() *Def {
+	return &Def{
+		Pass:         Forward,
+		Shader:       "forward/textured",
+		VertexFormat: vertex.T{},
+		DepthTest:    true,
+		DepthWrite:   true,
+		DepthClamp:   false,
+		Primitive:    vertex.Triangles,
+		CullMode:     vertex.CullBack,
+	}
+}
+
 func ColoredForward() *Def {
 	return &Def{
 		Pass:         Forward,
