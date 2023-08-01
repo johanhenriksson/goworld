@@ -1,17 +1,21 @@
 # goworld
 
-Yet another attempt at building a basic 3D engine from scratch, this time in Go. The goal is to create a engine capable of producing _some_ kind of _passable_ graphics with a coherent art style. So far, the style is based around colored voxels.
+An attempt at building a basic 3D engine from scratch in Go using Vulkan. The goal is to create a engine capable of producing _some_ kind of _passable_ graphics with a coherent art style.
 
 **Features:**
 
+- Basic scene editor
 - Voxel world/editor demo
-- Deferred Rendering Pipeline
-- 3D Physics Engine via Bullet SDK
-- Directional Lights
-- Directional Shadows
+- Unified Rendering Pipeline (Forward/Deferred)
+- 3D Physics Engine integration via Bullet SDK
+  - Character controller
+  - Rigidbody dynamics
+  - Basic shape colliders (box, sphere, cylinder, capsule)
+  - Mesh colliders
+- Directional Lights (w/ shadows)
 - Point Lights
 - TrueType Font Rendering
-- React-like UI including a flexbox layout engine
+- React-like UI with a flexbox layout engine & css-like styling
 - Custom ergonomic 3D math library derived from mathgl and go3d
 - Screen-Space Ambient Occlusion (HBAO)
 - Color Grading with Lookup Tables

@@ -58,7 +58,7 @@ func NewMover() *Mover {
 	s := side / 2
 
 	g := object.New("Mover Gizmo", &Mover{
-		size:        0.08,
+		size:        0.1,
 		sensitivity: 6,
 		hoverScale:  vec3.New(1.1, 1.1, 1.1),
 

@@ -118,6 +118,10 @@ func NewWindow(backend App, args WindowArgs) (Window, error) {
 
 	// set resize callback
 	wnd.SetFramebufferSizeCallback(func(w *glfw.Window, width, height int) {
+		// update window scaling
+		monitor := GetCurrentMonitor(wnd)
+		window.scale, _ = monitor.GetContentScale()
+
 		window.width = width
 		window.height = height
 		window.swap.Resize(width, height)

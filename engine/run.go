@@ -48,9 +48,7 @@ func Run(args Args, scenefuncs ...SceneFunc) {
 
 	// create renderer
 	renderer := args.Renderer(backend, wnd)
-	defer func() {
-		renderer.Destroy()
-	}()
+	defer renderer.Destroy()
 
 	// create scene
 	scene := object.Empty("Scene")

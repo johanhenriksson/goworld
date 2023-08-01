@@ -44,7 +44,7 @@ func NewEditor(workspace object.Object) *Editor {
 		},
 	))
 
-	editor.World.Debug(true)
+	// editor.World.Debug(true)
 	return editor
 }
 
