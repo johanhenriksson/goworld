@@ -4,9 +4,6 @@ package light
 type Type int32
 
 const (
-	// AmbientLight is the background light applied to everything.
-	TypeAmbient Type = 0
-
 	// PointLight is a normal light casting rays in all directions.
 	TypePoint Type = 1
 

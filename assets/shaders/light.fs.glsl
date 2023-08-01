@@ -8,6 +8,8 @@
 //
 
 layout (std430, binding = 1) readonly buffer LightBuffer {
+	LightSettings settings;
+	float[LIGHT_PADDING] _padding;
 	Light item[];
 } lights;
 
@@ -49,9 +51,10 @@ void main() {
 	vec3 normal = getWorldNormal(viewNormal);
 
 	// accumulate lighting
-	vec3 lightColor = vec3(0);
-	for(int i = 0; i < push.Count; i++) {
-		lightColor += calculateLightColor(lights.item[i], position, normal, viewPos.z, occlusion);
+	vec3 lightColor = ambientLight(lights.settings);
+	int lightCount = lights.settings.Count;
+	for(int i = 0; i < lightCount; i++) {
+		lightColor += calculateLightColor(lights.item[i], position, normal, viewPos.z, occlusion, lights.settings);
 	}
 
 	// linearize gbuffer diffuse

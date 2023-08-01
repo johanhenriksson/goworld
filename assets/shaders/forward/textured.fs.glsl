@@ -18,10 +18,10 @@ void main()
 	uint texture0 = objects.item[objectIndex].textures[0];
 	vec4 albedo = texture(Textures[texture0], texcoord0);
 
-	int lightCount = 4;
-	vec3 lightColor = vec3(0);
+	int lightCount = lights.settings.Count;
+	vec3 lightColor = ambientLight(lights.settings);
 	for(int i = 0; i < lightCount; i++) {
-		lightColor += calculateLightColor(lights.item[i], wposition, wnormal, position0.z, 1);
+		lightColor += calculateLightColor(lights.item[i], wposition, wnormal, position0.z, 1, lights.settings);
 	}
 
     // gamma correct & write fragment

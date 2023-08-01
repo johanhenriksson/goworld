@@ -10,6 +10,8 @@ layout (binding = 1) readonly buffer ObjectBuffer {
 } objects;
 
 layout (binding = 2) readonly buffer LightBuffer {
+	LightSettings settings;
+	float[LIGHT_PADDING] _padding;
 	Light item[];
 } lights;
 

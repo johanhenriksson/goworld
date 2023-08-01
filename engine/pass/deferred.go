@@ -244,15 +244,10 @@ func (p *deferred) Record(cmds command.Recorder, args render.Args, scene object.
 	// lighting subpass
 	//
 
+	p.light.Descriptors(args.Context.Index).Camera.Set(camera)
+
 	lightbuf := p.lightbufs[args.Context.Index]
 	lightbuf.Reset()
-
-	lightDesc := p.light.Descriptors(args.Context.Index)
-	lightDesc.Camera.Set(camera)
-
-	// ambient lights use a plain white texture as their shadow map
-	ambient := light.NewAmbient(color.White, 0.33)
-	lightbuf.Store(args, ambient)
 
 	// todo: perform frustum culling on light volumes
 	lights := p.lightQuery.Reset().Collect(scene)

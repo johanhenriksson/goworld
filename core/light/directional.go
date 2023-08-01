@@ -32,18 +32,25 @@ type Directional struct {
 	Color     object.Property[color.T]
 	Intensity object.Property[float32]
 	Shadows   object.Property[bool]
+
+	CascadeLambda object.Property[float32]
+	CascadeBlend  object.Property[float32]
 }
 
 var _ T = &Directional{}
 
 func NewDirectional(args DirectionalArgs) *Directional {
-	return object.NewComponent(&Directional{
+	lit := object.NewComponent(&Directional{
 		cascades: make([]Cascade, args.Cascades),
 
 		Color:     object.NewProperty(args.Color),
 		Intensity: object.NewProperty(args.Intensity),
 		Shadows:   object.NewProperty(args.Shadows),
+
+		CascadeLambda: object.NewProperty[float32](0.9),
+		CascadeBlend:  object.NewProperty[float32](3.0),
 	})
+	return lit
 }
 
 func (lit *Directional) Name() string        { return "DirectionalLight" }
@@ -51,8 +58,7 @@ func (lit *Directional) Type() Type          { return TypeDirectional }
 func (lit *Directional) CastShadows() bool   { return lit.Shadows.Get() }
 func (lit *Directional) Cascades() []Cascade { return lit.cascades }
 
-func farSplitDist(cascade, cascades int, near, far float32) float32 {
-	cascadeSplitLambda := float32(0.90)
+func farSplitDist(cascade, cascades int, near, far, splitLambda float32) float32 {
 	clipRange := far - near
 	minZ := near
 	maxZ := near + clipRange
@@ -65,15 +71,15 @@ func farSplitDist(cascade, cascades int, near, far float32) float32 {
 	p := (float32(cascade) + 1) / float32(cascades)
 	log := minZ * math.Pow(ratio, p)
 	uniform := minZ + rnge*p
-	d := cascadeSplitLambda*(log-uniform) + uniform
+	d := splitLambda*(log-uniform) + uniform
 	return (d - near) / clipRange
 }
 
-func nearSplitDist(cascade, cascades int, near, far float32) float32 {
+func nearSplitDist(cascade, cascades int, near, far, splitLambda float32) float32 {
 	if cascade == 0 {
 		return 0
 	}
-	return farSplitDist(cascade-1, cascades, near, far)
+	return farSplitDist(cascade-1, cascades, near, far, splitLambda)
 }
 
 func (lit *Directional) PreDraw(args render.Args, scene object.Object) error {
@@ -88,6 +94,7 @@ func (lit *Directional) LightDescriptor(args render.Args, cascade int) Descripto
 		Position:   vec4.Extend(ldir, 0),
 		Color:      lit.Color.Get(),
 		Intensity:  lit.Intensity.Get(),
+		Range:      lit.CascadeBlend.Get(),
 		View:       lit.cascades[cascade].View,
 		Projection: lit.cascades[cascade].Proj,
 		ViewProj:   lit.cascades[cascade].ViewProj,
@@ -120,8 +127,8 @@ func (lit *Directional) calculateCascade(args render.Args, cascade, cascades int
 	}
 
 	// squash
-	nearSplit := nearSplitDist(cascade, cascades, args.Near, args.Far)
-	farSplit := farSplitDist(cascade, cascades, args.Near, args.Far)
+	nearSplit := nearSplitDist(cascade, cascades, args.Near, args.Far, lit.CascadeLambda.Get())
+	farSplit := farSplitDist(cascade, cascades, args.Near, args.Far, lit.CascadeLambda.Get())
 	for i := 0; i < 4; i++ {
 		dist := frustumCorners[i+4].Sub(frustumCorners[i])
 		frustumCorners[i] = frustumCorners[i].Add(dist.Scaled(nearSplit))

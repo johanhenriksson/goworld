@@ -1,13 +1,6 @@
 
 const bool DEBUG_CASCADES = false;
 
-// these should be parameters
-const float shadow_power = 60;
-const float shadow_bias = 0.005;
-const float sample_radius = 1;
-const float normal_offset = 0.1;
-const int shadow_samples = 1;
-
 // transforms ndc -> depth texture space
 const mat4 biasMat = mat4( 
 	0.5, 0.0, 0.0, 0.0,
@@ -26,7 +19,7 @@ float sampleShadowmap(sampler2D shadowmap, mat4 viewProj, vec3 position, float b
 	float shadow = 1.0;
 	if (shadowCoord.z > -1.0 && shadowCoord.z < 1.0 && shadowCoord.w > 0) {
 		float dist = texture(shadowmap, shadowCoord.st).r;
-		float actual = exp(shadow_power * shadowCoord.z - bias) / exp(shadow_power);
+		float actual = exp(SHADOW_POWER * shadowCoord.z - bias) / exp(SHADOW_POWER);
 
 		if (dist < actual) {
 			shadow = 0;
@@ -35,9 +28,9 @@ float sampleShadowmap(sampler2D shadowmap, mat4 viewProj, vec3 position, float b
 	return shadow;
 }
 
-float sampleShadowmapPCF(sampler2D shadowmap, mat4 viewProj, vec3 position, float bias, int numSamples, float sampleRadius) {
-	if (numSamples <= 0) {
-		return sampleShadowmap(shadowmap, viewProj, position, bias);
+float sampleShadowmapPCF(sampler2D shadowmap, mat4 viewProj, vec3 position, LightSettings settings) {
+	if (settings.ShadowSamples <= 0) {
+		return sampleShadowmap(shadowmap, viewProj, position, settings.ShadowBias);
 	}
 
 	vec4 shadowCoord = biasMat * viewProj * vec4(position, 1);
@@ -47,12 +40,13 @@ float sampleShadowmapPCF(sampler2D shadowmap, mat4 viewProj, vec3 position, floa
     if (shadowCoord.z > -1.0 && shadowCoord.z < 1.0 && shadowCoord.w > 0) {
         vec2 shadowMapSize = textureSize(shadowmap, 0).xy;
         vec2 texelSize = 1.0 / shadowMapSize;
-        float actual = exp(shadow_power * (shadowCoord.z - bias)) / exp(shadow_power);
+        float actual = exp(SHADOW_POWER * (shadowCoord.z - settings.ShadowBias)) / exp(SHADOW_POWER);
 
         float count = 0.0;
+        int numSamples = settings.ShadowSamples;
         for (int x = -numSamples; x <= numSamples; ++x) {
             for (int y = -numSamples; y <= numSamples; ++y) {
-                vec2 offset = vec2(float(x), float(y)) * texelSize * sampleRadius;
+                vec2 offset = vec2(float(x), float(y)) * texelSize * settings.ShadowSampleRadius;
                 float dist = texture(shadowmap, shadowCoord.st + offset).r;
 
                 // Compare the difference between exponential depth values
@@ -67,7 +61,7 @@ float sampleShadowmapPCF(sampler2D shadowmap, mat4 viewProj, vec3 position, floa
     return shadow;
 }
 
-float blendCascades(Light light, vec3 position, float depth, float bias, float blendRange, int numSamples, float sampleRadius) {
+float blendCascades(Light light, vec3 position, float depth, float blendRange, LightSettings settings) {
     // determine the cascade index
     int cascadeIndex = 0;
     for (int i = 0; i < SHADOW_CASCADES; ++i) {
@@ -76,19 +70,20 @@ float blendCascades(Light light, vec3 position, float depth, float bias, float b
             break;
         }
     }
-    sampleRadius *= cascadeIndex + 1;
+    float sampleRadius = settings.ShadowSampleRadius * (cascadeIndex + 1);
 
-    float shadowCurrent = sampleShadowmapPCF(SHADOWMAP_SAMPLER[light.Shadowmap[cascadeIndex]], light.ViewProj[cascadeIndex], position, shadow_bias, numSamples, sampleRadius);
+    float shadowCurrent = sampleShadowmapPCF(SHADOWMAP_SAMPLER[light.Shadowmap[cascadeIndex]], light.ViewProj[cascadeIndex], position, settings);
 
     // sample previous cascade
-    if (cascadeIndex > 0) {
+    if (cascadeIndex > 0 && blendRange > 0) {
         // 4. Blend shadow results
         float cascadeStart = light.Distance[cascadeIndex - 1];
         float cascadeEnd = light.Distance[cascadeIndex];
+        blendRange *= cascadeIndex;
         float blendFactor = smoothstep(cascadeStart, cascadeStart + blendRange, depth);
 
         if (blendFactor > 0) {
-			float shadowPrev = sampleShadowmapPCF(SHADOWMAP_SAMPLER[light.Shadowmap[cascadeIndex - 1]], light.ViewProj[cascadeIndex - 1], position, shadow_bias, numSamples-1, sampleRadius);
+			float shadowPrev = sampleShadowmapPCF(SHADOWMAP_SAMPLER[light.Shadowmap[cascadeIndex - 1]], light.ViewProj[cascadeIndex - 1], position, settings);
 			return mix(shadowPrev, shadowCurrent, blendFactor);
         }
     }
@@ -115,22 +110,23 @@ float calculatePointLightContrib(Light light, vec3 surfaceToLight, float distanc
 	return normalCoef * attenuation;
 }
 
-vec3 calculateLightColor(Light light, vec3 position, vec3 normal, float depth, float occlusion) {
+vec3 ambientLight(LightSettings settings) {
+	return settings.AmbientColor.rgb * settings.AmbientIntensity;
+}
+
+vec3 calculateLightColor(Light light, vec3 position, vec3 normal, float depth, float occlusion, LightSettings settings) {
 	float contrib = 0.0;
 	float shadow = 1.0;
-	if (light.Type == AMBIENT_LIGHT) {
-		contrib = 1;
-	}
-	else if (light.Type == DIRECTIONAL_LIGHT) {
+	if (light.Type == DIRECTIONAL_LIGHT) {
 		// directional lights store the direction in the position uniform
 		// i.e. the light coming from the position, shining towards the origin
 		vec3 lightDir = normalize(light.Position.xyz);
 		vec3 surfaceToLight = -lightDir;
 		contrib = max(dot(surfaceToLight, normal), 0.0);
 
-		float bias = shadow_bias * max(0.0, 1.0 - dot(normal, lightDir));
-		position += normal * normal_offset;
-		shadow = blendCascades(light, position, depth, bias, 2, shadow_samples, sample_radius);
+		float bias = settings.ShadowBias * max(0.0, 1.0 - dot(normal, lightDir));
+		position += normal * settings.NormalOffset;
+		shadow = blendCascades(light, position, depth, light.Range, settings);
 
 		if (DEBUG_CASCADES) {
 			int index = -1;

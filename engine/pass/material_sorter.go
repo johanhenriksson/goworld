@@ -6,7 +6,6 @@ import (
 	"github.com/johanhenriksson/goworld/engine/uniform"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/cache"
-	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/descriptor"
 	"github.com/johanhenriksson/goworld/render/material"
@@ -166,16 +165,11 @@ func (m *MaterialSorter) DrawCamera(cmds command.Recorder, args render.Args, cam
 		})
 
 		if len(lights) > 0 {
-			// ambient lights use a plain white texture as their shadow map
+			// how to get ambient light info?
 			mat.Lights.Reset()
-			ambient := light.NewAmbient(color.White, 0.33)
-			mat.Lights.Store(args, ambient)
-
-			// todo: perform frustum culling on light volumes
 			for _, lit := range lights {
 				mat.Lights.Store(args, lit)
 			}
-
 			mat.Lights.Flush()
 		}
 
