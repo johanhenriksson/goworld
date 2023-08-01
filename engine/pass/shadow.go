@@ -16,8 +16,8 @@ import (
 	"github.com/johanhenriksson/goworld/render/renderpass/attachment"
 	"github.com/johanhenriksson/goworld/render/texture"
 	"github.com/johanhenriksson/goworld/render/vertex"
-
 	"github.com/johanhenriksson/goworld/render/vulkan"
+
 	"github.com/vkngwrapper/core/v2/core1_0"
 )
 

@@ -1,15 +1,13 @@
 package pass
 
 import (
-	"fmt"
-	"log"
-
 	"github.com/johanhenriksson/goworld/core/light"
 	"github.com/johanhenriksson/goworld/core/mesh"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/engine/uniform"
 	"github.com/johanhenriksson/goworld/math/shape"
 	"github.com/johanhenriksson/goworld/render"
+	"github.com/johanhenriksson/goworld/render/cache"
 	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/descriptor"
@@ -53,7 +51,9 @@ type deferred struct {
 	fbuf    framebuffer.Array
 	shadows Shadow
 
-	materials *MaterialSorter
+	materials  *MaterialSorter
+	shadowmaps []cache.SamplerCache
+	lightbufs  []*LightBuffer
 
 	meshQuery  *object.Query[mesh.Mesh]
 	lightQuery *object.Query[light.T]
@@ -182,6 +182,13 @@ func NewDeferredPass(
 
 	lightsh := NewLightShader(app, pass, gbuffer)
 
+	lightbufs := make([]*LightBuffer, target.Frames())
+	shadowmaps := make([]cache.SamplerCache, target.Frames())
+	for i := range lightbufs {
+		shadowmaps[i] = cache.NewSamplerCache(app.Textures(), lightsh.Descriptors(i).Shadow)
+		lightbufs[i] = NewLightBuffer(lightsh.Descriptors(i).Lights, shadowmaps[i], shadows.Shadowmap)
+	}
+
 	app.Textures().Fetch(color.White)
 
 	return &deferred{
@@ -195,7 +202,9 @@ func NewDeferredPass(
 		shadows: shadows,
 		fbuf:    fbuf,
 
-		materials: NewMaterialSorter(app, target, pass, material.StandardDeferred()),
+		materials:  NewMaterialSorter(app, target, pass, material.StandardDeferred()),
+		shadowmaps: shadowmaps,
+		lightbufs:  lightbufs,
 
 		meshQuery:  object.NewQuery[mesh.Mesh](),
 		lightQuery: object.NewQuery[light.T](),
@@ -235,25 +244,25 @@ func (p *deferred) Record(cmds command.Recorder, args render.Args, scene object.
 	// lighting subpass
 	//
 
+	lightbuf := p.lightbufs[args.Context.Index]
+	lightbuf.Reset()
+
 	lightDesc := p.light.Descriptors(args.Context.Index)
 	lightDesc.Camera.Set(camera)
 
 	// ambient lights use a plain white texture as their shadow map
-	white := p.app.Textures().Fetch(color.White)
-	lightDesc.Shadow.Set(0, white)
 	ambient := light.NewAmbient(color.White, 0.33)
-	p.UpdateLight(cmds, args, ambient, 0, 0)
+	lightbuf.Store(args, ambient)
 
 	// todo: perform frustum culling on light volumes
 	lights := p.lightQuery.
 		Reset().
 		Collect(scene)
-	for index, lit := range lights {
-		lightIndex := index + 1
-		if err := p.UpdateLight(cmds, args, lit, lightIndex, 5*lightIndex); err != nil {
-			fmt.Printf("light draw error in object %s: %s\n", lit.Name(), err)
-		}
+	for _, lit := range lights {
+		lightbuf.Store(args, lit)
 	}
+
+	lightbuf.Flush()
 
 	quad := p.app.Meshes().Fetch(p.quad)
 	cmds.Record(func(cmd command.Buffer) {
@@ -261,55 +270,12 @@ func (p *deferred) Record(cmds command.Recorder, args render.Args, scene object.
 		p.light.Bind(cmd, args.Context.Index)
 
 		cmd.CmdPushConstant(core1_0.StageFragment, 0, &LightConst{
-			Count: uint32(len(lights) + 1),
+			Count: uint32(lightbuf.Count()),
 		})
 		quad.Draw(cmd, 0)
 
 		cmd.CmdEndRenderPass()
 	})
-}
-
-func (p *deferred) UpdateLight(cmds command.Recorder, args render.Args, lit light.T, lightIndex, textureIndexOffset int) error {
-	desc := lit.LightDescriptor(args, 0)
-
-	entry := uniform.Light{
-		Type:      desc.Type,
-		Color:     desc.Color,
-		Position:  desc.Position,
-		Intensity: desc.Intensity,
-	}
-
-	switch lit.(type) {
-	case *light.Point:
-		entry.Attenuation = desc.Attenuation
-		entry.Range = desc.Range
-
-	case *light.Directional:
-		for cascadeIndex, cascade := range lit.Cascades() {
-			textureIndex := textureIndexOffset + cascadeIndex
-
-			if shadowtex := p.shadows.Shadowmap(lit, cascadeIndex); shadowtex != nil {
-				p.light.Descriptors(args.Context.Index).Shadow.Set(textureIndex, shadowtex)
-			} else {
-				// no shadowmap available - disable shadows until its available
-				log.Println("missing cascade shadowmap", cascadeIndex)
-				textureIndex = 0
-			}
-
-			entry.ViewProj[cascadeIndex] = cascade.ViewProj
-			entry.Distance[cascadeIndex] = cascade.FarSplit
-			entry.Shadowmap[cascadeIndex] = uint32(textureIndex)
-		}
-
-	default:
-		// shadows are disabled - use a blank white texture as shadowmap
-		blank := p.app.Textures().Fetch(color.White)
-		p.light.Descriptors(args.Context.Index).Shadow.Set(lightIndex, blank)
-	}
-
-	p.light.Descriptors(args.Context.Index).Lights.Set(lightIndex, entry)
-
-	return nil
 }
 
 func (p *deferred) Name() string {
@@ -319,10 +285,20 @@ func (p *deferred) Name() string {
 func (p *deferred) Destroy() {
 	// destroy subpasses
 	p.materials.Destroy()
+	p.materials = nil
+
+	for _, cache := range p.shadowmaps {
+		cache.Destroy()
+	}
+	p.shadowmaps = nil
+	p.lightbufs = nil
 
 	p.fbuf.Destroy()
+	p.fbuf = nil
 	p.pass.Destroy()
+	p.pass = nil
 	p.light.Destroy()
+	p.light = nil
 }
 
 func isDrawDeferred(m mesh.Mesh) bool {
