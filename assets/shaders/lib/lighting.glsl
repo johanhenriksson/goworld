@@ -1,9 +1,4 @@
 
-#define AMBIENT_LIGHT 0
-#define POINT_LIGHT 1
-#define DIRECTIONAL_LIGHT 2
-
-const int SHADOW_CASCADES = 4;
 const bool DEBUG_CASCADES = false;
 
 // these should be parameters
@@ -20,51 +15,6 @@ const mat4 biasMat = mat4(
 	0.0, 0.0, 1.0, 0.0,
 	0.5, 0.5, 0.0, 1.0 
 );
-
-//
-// Lighting uniforms
-//
-
-struct Attenuation {
-	float Constant;
-	float Linear;
-	float Quadratic;
-};
-
-struct Light {
-	mat4 ViewProj[SHADOW_CASCADES];
-	int Shadowmap[SHADOW_CASCADES];
-	float Distance[SHADOW_CASCADES];
-
-	vec4 Color;
-	vec4 Position;
-	int Type;
-	float Intensity;
-	float Range;
-	Attenuation Attenuation;
-};
-
-layout (std430, binding = 1) readonly buffer LightBuffer {
-	Light lights[];
-} ssbo;
-
-// the variable-sized array must have the largest binding id :(
-layout (binding = 5) uniform sampler2D[] shadowmaps;
-
-//
-// Push constants
-//
-
-// the shader expects the number of in-use lights as a push constant
-layout(push_constant) uniform constants {
-	int Count;
-} push;
-
-//
-// Fragment output
-//
-
-layout (location = 0) out vec4 color;
 
 //
 // Lighting functions
@@ -128,7 +78,7 @@ float blendCascades(Light light, vec3 position, float depth, float bias, float b
     }
     sampleRadius *= cascadeIndex + 1;
 
-    float shadowCurrent = sampleShadowmapPCF(shadowmaps[light.Shadowmap[cascadeIndex]], light.ViewProj[cascadeIndex], position, shadow_bias, numSamples, sampleRadius);
+    float shadowCurrent = sampleShadowmapPCF(SHADOWMAP_SAMPLER[light.Shadowmap[cascadeIndex]], light.ViewProj[cascadeIndex], position, shadow_bias, numSamples, sampleRadius);
 
     // sample previous cascade
     if (cascadeIndex > 0) {
@@ -138,7 +88,7 @@ float blendCascades(Light light, vec3 position, float depth, float bias, float b
         float blendFactor = smoothstep(cascadeStart, cascadeStart + blendRange, depth);
 
         if (blendFactor > 0) {
-			float shadowPrev = sampleShadowmapPCF(shadowmaps[light.Shadowmap[cascadeIndex - 1]], light.ViewProj[cascadeIndex - 1], position, shadow_bias, numSamples-1, sampleRadius);
+			float shadowPrev = sampleShadowmapPCF(SHADOWMAP_SAMPLER[light.Shadowmap[cascadeIndex - 1]], light.ViewProj[cascadeIndex - 1], position, shadow_bias, numSamples-1, sampleRadius);
 			return mix(shadowPrev, shadowCurrent, blendFactor);
         }
     }

@@ -6,6 +6,32 @@ const float gamma = 2.2;
 
 #include "camera.glsl"
 
+#define AMBIENT_LIGHT 0
+#define POINT_LIGHT 1
+#define DIRECTIONAL_LIGHT 2
+
+const int SHADOW_CASCADES = 4;
+
+struct Attenuation {
+	float Constant;
+	float Linear;
+	float Quadratic;
+};
+
+struct Light {
+	mat4 ViewProj[SHADOW_CASCADES];
+	int Shadowmap[SHADOW_CASCADES];
+	float Distance[SHADOW_CASCADES];
+
+	vec4 Color;
+	vec4 Position;
+	int Type;
+	float Intensity;
+	float Range;
+	Attenuation Attenuation;
+};
+
+
 vec3 unpack_normal(vec3 packed_normal) {
 	return normalize(2.0 * packed_normal - 1);
 }

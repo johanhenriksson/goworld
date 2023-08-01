@@ -12,17 +12,19 @@ layout (location = 2) in vec4 color_0;
 
 // Varyings
 layout (location = 4) out vec3 wnormal;
+layout (location = 5) out vec3 wposition;
 
 void main() 
 {
-	mat4 m = ssbo.objects[gl_InstanceIndex].model;
+	mat4 m = objects.item[gl_InstanceIndex].model;
 	mat4 mv = camera.View * m;
 
 	// gbuffer diffuse
 	color0 = color_0.rgba;
 
-	// gbuffer position
+	// gbuffer view position
 	position0 = (mv * vec4(position.xyz, 1.0)).xyz;
+	wposition = (m * vec4(position.xyz, 1.0)).xyz;
 
 	// gbuffer view space normal
 	normal0 = normalize((mv * vec4(normal, 0.0)).xyz);

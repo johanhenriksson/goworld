@@ -202,7 +202,7 @@ func NewDeferredPass(
 		shadows: shadows,
 		fbuf:    fbuf,
 
-		materials:  NewMaterialSorter(app, target, pass, material.StandardDeferred()),
+		materials:  NewMaterialSorter(app, target, pass, shadows.Shadowmap, material.StandardDeferred()),
 		shadowmaps: shadowmaps,
 		lightbufs:  lightbufs,
 
@@ -238,7 +238,7 @@ func (p *deferred) Record(cmds command.Recorder, args render.Args, scene object.
 		Where(isDrawDeferred).
 		Where(frustumCulled(&frustum)).
 		Collect(scene)
-	p.materials.Draw(cmds, args, objects)
+	p.materials.Draw(cmds, args, objects, nil)
 
 	//
 	// lighting subpass
@@ -255,9 +255,7 @@ func (p *deferred) Record(cmds command.Recorder, args render.Args, scene object.
 	lightbuf.Store(args, ambient)
 
 	// todo: perform frustum culling on light volumes
-	lights := p.lightQuery.
-		Reset().
-		Collect(scene)
+	lights := p.lightQuery.Reset().Collect(scene)
 	for _, lit := range lights {
 		lightbuf.Store(args, lit)
 	}

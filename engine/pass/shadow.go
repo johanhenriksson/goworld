@@ -138,7 +138,7 @@ func (p *shadowpass) createShadowmap(light light.T) Shadowmap {
 
 		// each light cascade needs its own shadow materials - or rather, their own descriptors
 		// cheating a bit by creating entire materials for each light, fix it later.
-		mats := NewMaterialSorter(p.app, p.target, p.pass, &material.Def{
+		mats := NewMaterialSorter(p.app, p.target, p.pass, p.Shadowmap, &material.Def{
 			Shader:       "shadow",
 			VertexFormat: vertex.T{},
 			DepthTest:    true,
@@ -196,7 +196,7 @@ func (p *shadowpass) Record(cmds command.Recorder, args render.Args, scene objec
 				Reset().
 				Where(isDrawDeferred).
 				Collect(scene)
-			cascade.Mats.DrawCamera(cmds, args, camera, meshes)
+			cascade.Mats.DrawCamera(cmds, args, camera, meshes, nil)
 
 			cmds.Record(func(cmd command.Buffer) {
 				cmd.CmdEndRenderPass()

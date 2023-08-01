@@ -13,7 +13,7 @@ layout (location = 2) in vec2 texcoord_0;
 void main() 
 {
 	objectIndex = gl_InstanceIndex;
-	mat4 mv = camera.View * ssbo.objects[objectIndex].model;
+	mat4 mv = camera.View * objects.item[objectIndex].model;
 
 	// textures
 	color0.xy = texcoord_0;

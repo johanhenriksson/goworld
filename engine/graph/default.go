@@ -35,7 +35,7 @@ func Default(app vulkan.App, target vulkan.Target) T {
 		deferred := g.Node(pass.NewDeferredPass(app, offscreen, depth, gbuffer, shadows))
 		deferred.After(shadowNode, core1_0.PipelineStageTopOfPipe)
 
-		forward := g.Node(pass.NewForwardPass(app, offscreen, depth, gbuffer))
+		forward := g.Node(pass.NewForwardPass(app, offscreen, depth, gbuffer, shadows))
 		forward.After(deferred, core1_0.PipelineStageTopOfPipe)
 
 		//

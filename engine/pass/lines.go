@@ -71,7 +71,7 @@ func NewLinePass(app vulkan.App, target vulkan.Target, depth vulkan.Target) *Lin
 		target:    target,
 		pass:      pass,
 		fbuf:      fbufs,
-		materials: NewMaterialSorter(app, target, pass, material.Lines()),
+		materials: NewMaterialSorter(app, target, pass, nil, material.Lines()),
 		meshQuery: object.NewQuery[mesh.Mesh](),
 	}
 }
@@ -85,11 +85,11 @@ func (p *LinePass) Record(cmds command.Recorder, args render.Args, scene object.
 		Reset().
 		Where(isDrawLines).
 		Collect(scene)
-	p.materials.Draw(cmds, args, lines)
+	p.materials.Draw(cmds, args, lines, nil)
 
 	// debug lines
 	debug := lineShape.Debug.Fetch()
-	p.materials.Draw(cmds, args, []mesh.Mesh{debug})
+	p.materials.Draw(cmds, args, []mesh.Mesh{debug}, nil)
 
 	cmds.Record(func(cmd command.Buffer) {
 		cmd.CmdEndRenderPass()

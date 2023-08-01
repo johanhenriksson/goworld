@@ -6,7 +6,11 @@ struct ObjectData{
 };
 
 layout (binding = 1) readonly buffer ObjectBuffer {
-	ObjectData objects[];
-} ssbo;
+	ObjectData item[];
+} objects;
 
-layout (binding = 2) uniform sampler2D[] Textures;
+layout (binding = 2) readonly buffer LightBuffer {
+	Light item[];
+} lights;
+
+layout (binding = 3) uniform sampler2D[] Textures;

@@ -1,10 +1,12 @@
 package pass
 
 import (
+	"github.com/johanhenriksson/goworld/core/light"
 	"github.com/johanhenriksson/goworld/core/mesh"
 	"github.com/johanhenriksson/goworld/engine/uniform"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/cache"
+	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/descriptor"
 	"github.com/johanhenriksson/goworld/render/material"
@@ -25,21 +27,24 @@ type MaterialSorter struct {
 	app        vulkan.App
 	target     vulkan.Target
 	pass       renderpass.T
+	lookup     ShadowmapLookupFn
 }
 
 type MaterialData struct {
 	Instance material.Instance[*material.Descriptors]
 	Objects  []uniform.Object
+	Lights   *LightBuffer
 	Textures cache.SamplerCache
 }
 
-func NewMaterialSorter(app vulkan.App, target vulkan.Target, pass renderpass.T, defaultMat *material.Def) *MaterialSorter {
+func NewMaterialSorter(app vulkan.App, target vulkan.Target, pass renderpass.T, lookup ShadowmapLookupFn, defaultMat *material.Def) *MaterialSorter {
 	ms := &MaterialSorter{
 		app:        app,
 		target:     target,
 		pass:       pass,
 		defaultMat: defaultMat,
 		cache:      map[uint64][]*MaterialData{},
+		lookup:     lookup,
 
 		TransformFn: func(d *material.Def) *material.Def { return d },
 	}
@@ -70,6 +75,10 @@ func (m *MaterialSorter) Load(def *material.Def) bool {
 		Objects: &descriptor.Storage[uniform.Object]{
 			Stages: core1_0.StageAll,
 			Size:   2000,
+		},
+		Lights: &descriptor.Storage[uniform.Light]{
+			Stages: core1_0.StageAll,
+			Size:   256,
 		},
 		Textures: &descriptor.SamplerArray{
 			Stages: core1_0.StageFragment,
@@ -106,10 +115,12 @@ func (m *MaterialSorter) Load(def *material.Def) bool {
 	m.cache[id] = make([]*MaterialData, m.target.Frames())
 	for frame := 0; frame < m.target.Frames(); frame++ {
 		instance := mat.Instantiate(m.app.Pool())
+		textures := cache.NewSamplerCache(m.app.Textures(), instance.Descriptors().Textures)
 		m.cache[id][frame] = &MaterialData{
 			Instance: instance,
 			Objects:  make([]uniform.Object, instance.Descriptors().Objects.Size),
-			Textures: cache.NewSamplerCache(m.app.Textures(), instance.Descriptors().Textures),
+			Textures: textures,
+			Lights:   NewLightBuffer(instance.Descriptors().Lights, textures, m.lookup),
 		}
 	}
 
@@ -117,7 +128,7 @@ func (m *MaterialSorter) Load(def *material.Def) bool {
 	return true
 }
 
-func (m *MaterialSorter) Draw(cmds command.Recorder, args render.Args, meshes []mesh.Mesh) {
+func (m *MaterialSorter) Draw(cmds command.Recorder, args render.Args, meshes []mesh.Mesh, lights []light.T) {
 	camera := uniform.Camera{
 		Proj:        args.Projection,
 		View:        args.View,
@@ -128,10 +139,10 @@ func (m *MaterialSorter) Draw(cmds command.Recorder, args render.Args, meshes []
 		Eye:         args.Position,
 		Forward:     args.Forward,
 	}
-	m.DrawCamera(cmds, args, camera, meshes)
+	m.DrawCamera(cmds, args, camera, meshes, lights)
 }
 
-func (m *MaterialSorter) DrawCamera(cmds command.Recorder, args render.Args, camera uniform.Camera, meshes []mesh.Mesh) {
+func (m *MaterialSorter) DrawCamera(cmds command.Recorder, args render.Args, camera uniform.Camera, meshes []mesh.Mesh, lights []light.T) {
 	// sort meshes by material
 	meshGroups := map[uint64][]mesh.Mesh{}
 	for _, msh := range meshes {
@@ -153,6 +164,20 @@ func (m *MaterialSorter) DrawCamera(cmds command.Recorder, args render.Args, cam
 		cmds.Record(func(cmd command.Buffer) {
 			mat.Instance.Bind(cmd)
 		})
+
+		if len(lights) > 0 {
+			// ambient lights use a plain white texture as their shadow map
+			mat.Lights.Reset()
+			ambient := light.NewAmbient(color.White, 0.33)
+			mat.Lights.Store(args, ambient)
+
+			// todo: perform frustum culling on light volumes
+			for _, lit := range lights {
+				mat.Lights.Store(args, lit)
+			}
+
+			mat.Lights.Flush()
+		}
 
 		for i, msh := range objects {
 			vkmesh, meshReady := m.app.Meshes().TryFetch(msh.Mesh().Get())

@@ -25,6 +25,7 @@ type Descriptors struct {
 	descriptor.Set
 	Camera   *descriptor.Uniform[uniform.Camera]
 	Objects  *descriptor.Storage[uniform.Object]
+	Lights   *descriptor.Storage[uniform.Light]
 	Textures *descriptor.SamplerArray
 }
 

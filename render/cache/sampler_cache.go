@@ -32,6 +32,9 @@ type SamplerHandle struct {
 type SamplerCache interface {
 	T[texture.Ref, *SamplerHandle]
 
+	// Assign a handle to a texture directly
+	Assign(texture.T) *SamplerHandle
+
 	// Writes descriptor updates to the backing Sampler Array.
 	UpdateDescriptors()
 }
@@ -74,7 +77,11 @@ func (s *samplers) nextID() int {
 	return id
 }
 
-func (s *samplers) assignHandle(ref texture.Ref) *SamplerHandle {
+type Keyed interface {
+	Key() string
+}
+
+func (s *samplers) assignHandle(ref Keyed) *SamplerHandle {
 	if handle, exists := s.reverse[ref.Key()]; exists {
 		// reset the age of the existing handle, if we have one
 		handle.age = 0
@@ -100,6 +107,12 @@ func (s *samplers) TryFetch(ref texture.Ref) (*SamplerHandle, bool) {
 func (s *samplers) Fetch(ref texture.Ref) *SamplerHandle {
 	handle := s.assignHandle(ref)
 	handle.Texture = s.textures.Fetch(ref)
+	return handle
+}
+
+func (s *samplers) Assign(tex texture.T) *SamplerHandle {
+	handle := s.assignHandle(tex)
+	handle.Texture = tex
 	return handle
 }
 

@@ -12,7 +12,7 @@ layout (location = 2) in vec3 color_0;
 
 void main() 
 {
-	mat4 mv = camera.View * ssbo.objects[gl_InstanceIndex].model;
+	mat4 mv = camera.View * objects.item[gl_InstanceIndex].model;
 
 	// gbuffer diffuse
 	color0 = vec4(color_0, 1);

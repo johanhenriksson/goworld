@@ -1,6 +1,7 @@
 package pass
 
 import (
+	"github.com/johanhenriksson/goworld/core/light"
 	"github.com/johanhenriksson/goworld/core/mesh"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/render"
@@ -21,8 +22,9 @@ type ForwardPass struct {
 	pass    renderpass.T
 	fbuf    framebuffer.Array
 
-	materials *MaterialSorter
-	meshQuery *object.Query[mesh.Mesh]
+	materials  *MaterialSorter
+	meshQuery  *object.Query[mesh.Mesh]
+	lightQuery *object.Query[light.T]
 }
 
 var _ Pass = &ForwardPass{}
@@ -32,6 +34,7 @@ func NewForwardPass(
 	target vulkan.Target,
 	depth vulkan.Target,
 	gbuffer GeometryBuffer,
+	shadows Shadow,
 ) *ForwardPass {
 	pass := renderpass.New(app.Device(), renderpass.Args{
 		Name: "Forward",
@@ -92,8 +95,9 @@ func NewForwardPass(
 		pass:    pass,
 		fbuf:    fbuf,
 
-		materials: NewMaterialSorter(app, target, pass, material.ColoredForward()),
-		meshQuery: object.NewQuery[mesh.Mesh](),
+		materials:  NewMaterialSorter(app, target, pass, shadows.Shadowmap, material.ColoredForward()),
+		meshQuery:  object.NewQuery[mesh.Mesh](),
+		lightQuery: object.NewQuery[light.T](),
 	}
 }
 
@@ -103,11 +107,13 @@ func (p *ForwardPass) Record(cmds command.Recorder, args render.Args, scene obje
 		Where(isDrawForward).
 		Collect(scene)
 
+	lights := p.lightQuery.Reset().Collect(scene)
+
 	cmds.Record(func(cmd command.Buffer) {
 		cmd.CmdBeginRenderPass(p.pass, p.fbuf[args.Context.Index])
 	})
 
-	p.materials.Draw(cmds, args, forwardMeshes)
+	p.materials.Draw(cmds, args, forwardMeshes, lights)
 
 	cmds.Record(func(cmd command.Buffer) {
 		cmd.CmdEndRenderPass()
