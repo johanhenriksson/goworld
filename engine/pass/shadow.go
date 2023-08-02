@@ -194,7 +194,7 @@ func (p *shadowpass) Record(cmds command.Recorder, args render.Args, scene objec
 			// todo: filter only meshes that cast shadows
 			meshes := p.meshQuery.
 				Reset().
-				Where(isDrawDeferred).
+				Where(castsShadows).
 				Collect(scene)
 			cascade.Mats.DrawCamera(cmds, args, camera, meshes, nil)
 
@@ -203,6 +203,10 @@ func (p *shadowpass) Record(cmds command.Recorder, args render.Args, scene objec
 			})
 		}
 	}
+}
+
+func castsShadows(m mesh.Mesh) bool {
+	return m.Primitive() == vertex.Triangles
 }
 
 func (p *shadowpass) Shadowmap(light light.T, cascade int) texture.T {

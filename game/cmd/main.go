@@ -36,9 +36,9 @@ func main() {
 			world := physics.NewWorld()
 			object.Attach(scene, world)
 
-			generator := chunk.ExampleWorldgen(4, 123123)
-			// chonk := chunk.NewWorld(4, generator, 40)
-			// object.Attach(scene, chonk)
+			generator := chunk.ExampleWorldgen(4, 16)
+			chonk := chunk.NewWorld(16, generator, 128)
+			object.Attach(scene, chonk)
 
 			// physics boxes
 			for x := 0; x < 3; x++ {
@@ -77,7 +77,7 @@ func main() {
 						Segments: 4,
 						Height:   1,
 						Radius:   0.25,
-						Color:    color.Purple,
+						Color:    color.White,
 					})).
 						Position(vec3.New(-2, 0, 0)).
 						Create(),
@@ -87,7 +87,7 @@ func main() {
 						Segments: 4,
 						Height:   1,
 						Radius:   0.25,
-						Color:    color.Purple,
+						Color:    color.White,
 					})).
 						Position(vec3.New(2, 0, 0)).
 						Create(),
@@ -97,7 +97,7 @@ func main() {
 
 			// character
 			char := player.New()
-			char.Transform().SetPosition(vec3.New(5, 16, 5))
+			char.Transform().SetPosition(vec3.New(5, 32, 5))
 			object.Attach(scene, char)
 
 			m := terrain.NewMap(64, 3)
@@ -119,8 +119,8 @@ func main() {
 				scene,
 				object.Builder(object.Empty("Sun")).
 					Attach(light.NewDirectional(light.DirectionalArgs{
-						Intensity: 1.5,
-						Color:     color.RGB(0.9*0.973, 0.9*0.945, 0.9*0.776),
+						Intensity: 1.3,
+						Color:     color.RGB(1, 1, 1),
 						Shadows:   true,
 						Cascades:  4,
 					})).

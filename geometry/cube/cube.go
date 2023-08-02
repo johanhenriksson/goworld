@@ -10,6 +10,17 @@ import (
 	"github.com/johanhenriksson/goworld/render/vertex"
 )
 
+type Object struct {
+	object.Object
+	Mesh *Mesh
+}
+
+func NewObject(args Args) *Object {
+	return object.New("Cube", &Object{
+		Mesh: New(args),
+	})
+}
+
 // Mesh is a vertex colored cube mesh
 type Mesh struct {
 	*mesh.Static

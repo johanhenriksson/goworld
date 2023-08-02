@@ -7,6 +7,7 @@ import (
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/render"
+	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/vulkan"
 
@@ -53,6 +54,9 @@ func (n *preNode) Prepare(scene object.Object, time, delta float32) (*render.Arg
 	if err != nil {
 		return nil, ErrRecreate
 	}
+
+	// ensure the default white texture is always available
+	n.app.Textures().Fetch(color.White)
 
 	// cache ticks
 	n.app.Meshes().Tick()

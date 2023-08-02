@@ -59,6 +59,7 @@ type cache[K Key, V Value] struct {
 	worker  *command.ThreadWorker
 	lock    *sync.RWMutex
 	maxAge  int
+	async   bool
 }
 
 func New[K Key, V Value](backend Backend[K, V]) T[K, V] {
@@ -68,6 +69,7 @@ func New[K Key, V Value](backend Backend[K, V]) T[K, V] {
 		worker:  command.NewThreadWorker(backend.Name(), 100, false),
 		lock:    &sync.RWMutex{},
 		maxAge:  100,
+		async:   false,
 	}
 	return c
 }
@@ -131,12 +133,15 @@ func (c *cache[K, V]) fetch(key K) *line[V] {
 }
 
 func (c *cache[K, V]) TryFetch(key K) (V, bool) {
-	var empty V
+	if !c.async {
+		return c.Fetch(key), true
+	}
 
 	ln := c.fetch(key)
 
 	// not available yet - return nothing
 	if !ln.available {
+		var empty V
 		return empty, false
 	}
 
