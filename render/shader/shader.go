@@ -47,7 +47,7 @@ type shader struct {
 
 func New(device device.T, path string) T {
 	// todo: inputs & descriptors should be obtained from SPIR-V reflection
-	details, err := ReadDetails(fmt.Sprintf("assets/shaders/%s.json", path))
+	details, err := ReadDetails(fmt.Sprintf("shaders/%s.json", path))
 	if err != nil {
 		panic(fmt.Sprintf("failed to load shader details: %s", err))
 	}
@@ -58,8 +58,8 @@ func New(device device.T, path string) T {
 	}
 
 	modules := []Module{
-		NewModule(device, fmt.Sprintf("assets/shaders/%s.vs.glsl", path), StageVertex),
-		NewModule(device, fmt.Sprintf("assets/shaders/%s.fs.glsl", path), StageFragment),
+		NewModule(device, fmt.Sprintf("shaders/%s.vs.glsl", path), StageVertex),
+		NewModule(device, fmt.Sprintf("shaders/%s.fs.glsl", path), StageFragment),
 	}
 
 	return &shader{

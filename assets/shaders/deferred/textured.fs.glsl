@@ -1,9 +1,9 @@
 #version 450
 #extension GL_GOOGLE_include_directive : enable
 
-#include "../lib/common.glsl"
-#include "../lib/material.glsl"
-#include "../lib/fragment.glsl"
+#include "lib/common.glsl"
+#include "lib/material.glsl"
+#include "lib/fragment.glsl"
 
 void main() 
 {

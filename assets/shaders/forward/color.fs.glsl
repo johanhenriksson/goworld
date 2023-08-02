@@ -1,12 +1,12 @@
 #version 450
 #extension GL_GOOGLE_include_directive : enable
 
-#include "../lib/common.glsl"
-#include "../lib/material.glsl"
-#include "../lib/fragment.glsl"
+#include "lib/common.glsl"
+#include "lib/material.glsl"
+#include "lib/fragment.glsl"
 
 #define SHADOWMAP_SAMPLER Textures
-#include "../lib/lighting.glsl"
+#include "lib/lighting.glsl"
 
 // Varying
 layout (location = 4) in vec3 wnormal;

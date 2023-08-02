@@ -1,9 +1,9 @@
 #version 450
 #extension GL_GOOGLE_include_directive : enable
 
-#include "../lib/common.glsl"
-#include "../lib/material.glsl"
-#include "../lib/vertex.glsl"
+#include "lib/common.glsl"
+#include "lib/material.glsl"
+#include "lib/vertex.glsl"
 
 // Attributes
 layout (location = 0) in vec3 position;

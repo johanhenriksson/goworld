@@ -4,11 +4,13 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"io"
 	"log"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"unsafe"
+
+	"github.com/johanhenriksson/goworld/assets"
 )
 
 var ErrCompileFailed = errors.New("shader compilation error")
@@ -26,16 +28,15 @@ func sliceUint32(data []byte) []uint32 {
 
 func LoadOrCompile(path string, stage ShaderStage) ([]byte, error) {
 	spvPath := fmt.Sprintf("%s.spv", path)
-	fp, err := os.Open(spvPath)
+	source, err := assets.ReadAll(spvPath)
 	if errors.Is(err, os.ErrNotExist) {
 		return Compile(path, stage)
 	}
 	if err != nil {
 		return nil, err
 	}
-	defer fp.Close()
 	log.Println("loading shader", path)
-	return io.ReadAll(fp)
+	return source, nil
 }
 
 func Compile(path string, stage ShaderStage) ([]byte, error) {
@@ -48,12 +49,28 @@ func Compile(path string, stage ShaderStage) ([]byte, error) {
 	case StageCompute:
 		stageflag = "-fshader-stage=compute"
 	}
-	// check for glslc
+
+	source, err := assets.ReadAll(path)
+	if err != nil {
+		return nil, err
+	}
+
+	// todo: check for glslc
+	includePath := filepath.Join(assets.Path, "shaders")
 	bytecode := &bytes.Buffer{}
 	errors := &bytes.Buffer{}
-	cmd := exec.Command("glslc", stageflag, "-o", "-", "-O", path)
+	args := []string{
+		stageflag,
+		"-O",              // optimize SPIR-V
+		"-I", includePath, // include path
+		"-o", "-", // output file: standard out
+		"-", // input file: standard in
+	}
+	cmd := exec.Command("glslc", args...)
+	cmd.Stdin = bytes.NewBuffer(source)
 	cmd.Stdout = bytecode
 	cmd.Stderr = errors
+	cmd.Dir = assets.Path
 
 	if err := cmd.Run(); err != nil {
 		if errors.Len() > 0 {

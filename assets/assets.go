@@ -9,15 +9,15 @@ import (
 )
 
 var vfs fs.FS
+var Path string
 
 func init() {
 	cwd, err := os.Getwd()
 	if err != nil {
 		panic(err)
 	}
-	assetRoot := FindFileInParents("assets", cwd)
-	vfs = os.DirFS(assetRoot)
-
+	Path = FindFileInParents("assets", cwd)
+	vfs = os.DirFS(Path)
 }
 
 func Open(fileName string) (fs.File, error) {
