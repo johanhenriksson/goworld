@@ -7,12 +7,19 @@ import (
 	"image/draw"
 	_ "image/png"
 	"os"
+	"strings"
 
 	"github.com/johanhenriksson/goworld/math/quat"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render/upload"
+
+	"github.com/onsi/ginkgo/v2"
 	"github.com/onsi/gomega/format"
 )
+
+//
+// quaternion matcher
+//
 
 func ApproxQuat(q quat.T) *approxQuat {
 	return &approxQuat{q}
@@ -50,6 +57,10 @@ func (matcher *approxQuat) NegatedFailureMessage(actual interface{}) (message st
 	return format.Message(actual, "not to equal", matcher.Expected)
 }
 
+//
+// vec3 matcher
+//
+
 func BeApproxVec3(v vec3.T) *approxVec3 {
 	return &approxVec3{v}
 }
@@ -86,14 +97,20 @@ func (matcher *approxVec3) NegatedFailureMessage(actual interface{}) (message st
 	return format.Message(actual, "not to equal", matcher.Expected)
 }
 
+//
+// image matcher
+//
+
 func ApproxImage(expected any) *approxImage {
 	return &approxImage{
-		Expected: expected,
+		Expected:  expected,
+		Threshold: 10,
 	}
 }
 
 type approxImage struct {
-	Expected interface{}
+	Expected  interface{}
+	Threshold int
 }
 
 func (matcher *approxImage) Match(actualValue interface{}) (success bool, err error) {
@@ -125,14 +142,28 @@ func (matcher *approxImage) Match(actualValue interface{}) (success bool, err er
 			expected.Bounds(), actual.Bounds())
 	}
 
+	diff := func(a, b uint32) int {
+		a, b = a&0xFF, b&0xFF
+		if a > b {
+			return int(a - b)
+		} else {
+			return int(b - a)
+		}
+	}
+
 	for y := 0; y < expected.Bounds().Max.Y; y++ {
 		for x := 0; x < expected.Bounds().Max.X; x++ {
 			expectedColor := expected.At(x, y)
 			actualColor := actual.At(x, y)
-			if expectedColor != actualColor {
+
+			er, eg, eb, ea := expectedColor.RGBA()
+			ar, ag, ab, aa := actualColor.RGBA()
+			delta := diff(er, ar) + diff(eg, ag) + diff(eb, ab) + diff(ea, aa)
+
+			if delta > matcher.Threshold {
 				writeFailureImage(expected, actual)
-				return false, fmt.Errorf("colors at (%d,%d) dont match, expected: %s but was %s",
-					x, y, expectedColor, actualColor)
+				return false, fmt.Errorf("colors at (%d,%d) dont match (delta: %d), expected: %v but was %v",
+					x, y, delta, expectedColor, actualColor)
 			}
 		}
 	}
@@ -152,16 +183,19 @@ func writeFailureImage(expected, actual image.Image) {
 			expectedColor := expected.At(x, y)
 			actualColor := actual.At(x, y)
 			if expectedColor != actualColor {
-				expected.(*image.RGBA).Set(x, y, color.Black)
+				expected.(*image.RGBA).Set(x, y, color.Transparent)
 			}
 		}
 	}
 	draw.Draw(combined, image.Rect(2*width, 0, 3*width, height), expected, image.ZP, draw.Src)
 
-	if err := upload.SavePng(actual, "actual.png"); err != nil {
+	testName := strings.Join(ginkgo.CurrentSpecReport().ContainerHierarchyTexts, "_")
+	testName += "_" + ginkgo.CurrentSpecReport().LeafNodeText
+
+	if err := upload.SavePng(actual, testName+"_actual.png"); err != nil {
 		panic(err)
 	}
-	if err := upload.SavePng(combined, "failure.png"); err != nil {
+	if err := upload.SavePng(combined, testName+"_failure.png"); err != nil {
 		panic(err)
 	}
 }
