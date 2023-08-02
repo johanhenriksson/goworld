@@ -9,6 +9,7 @@ import (
 	"github.com/johanhenriksson/goworld/render/pipeline"
 	"github.com/johanhenriksson/goworld/render/renderpass"
 	"github.com/johanhenriksson/goworld/render/shader"
+	"github.com/johanhenriksson/goworld/render/texture"
 	"github.com/johanhenriksson/goworld/render/vertex"
 	"github.com/johanhenriksson/goworld/util"
 )
@@ -16,7 +17,7 @@ import (
 // Materials combine pipelines and descriptors into a common unit.
 type T[D descriptor.Set] interface {
 	Destroy()
-	TextureSlots() []string
+	TextureSlots() []texture.Slot
 	Bind(cmd command.Buffer)
 	Instantiate(descriptor.Pool) Instance[D]
 	InstantiateMany(descriptor.Pool, int) []Instance[D]
@@ -104,7 +105,7 @@ func (m *material[D]) Bind(cmd command.Buffer) {
 	cmd.CmdBindGraphicsPipeline(m.pipe)
 }
 
-func (m *material[D]) TextureSlots() []string {
+func (m *material[D]) TextureSlots() []texture.Slot {
 	return m.shader.Textures()
 }
 

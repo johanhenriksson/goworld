@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 
 	"github.com/johanhenriksson/goworld/assets"
+	"github.com/johanhenriksson/goworld/render/texture"
 	"github.com/johanhenriksson/goworld/render/types"
 )
 
@@ -15,7 +16,7 @@ type InputDetails struct {
 type Details struct {
 	Inputs   map[string]InputDetails
 	Bindings map[string]int
-	Textures []string
+	Textures []texture.Slot
 }
 
 func (d *Details) ParseInputs() (Inputs, error) {

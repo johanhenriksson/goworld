@@ -14,7 +14,7 @@ import (
 	"github.com/johanhenriksson/goworld/physics"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/color"
-	"github.com/johanhenriksson/goworld/render/material"
+	"github.com/johanhenriksson/goworld/render/texture"
 )
 
 // Mover Gizmo can be used to reposition objects in the 3D scene.
@@ -58,7 +58,7 @@ func NewMover() *Mover {
 	s := side / 2
 
 	g := object.New("Mover Gizmo", &Mover{
-		size:        0.1,
+		size:        0.4,
 		sensitivity: 6,
 		hoverScale:  vec3.New(1.1, 1.1, 1.1),
 
@@ -74,32 +74,29 @@ func NewMover() *Mover {
 
 		// XY Plane
 		XY: object.Builder(plane.NewObject(plane.Args{
-			Mat:   material.ColoredForward(),
-			Size:  side,
-			Color: color.Blue.WithAlpha(planeAlpha),
+			Size: side,
 		})).
-			Position(vec3.New(s, s, 0)).
+			Position(vec3.New(s, s, -0.03)).
 			Rotation(quat.Euler(90, 0, 0)).
+			Texture(texture.Diffuse, color.Blue.WithAlpha(planeAlpha)).
 			Create(),
 
 		// XZ Plane
 		XZ: object.Builder(plane.NewObject(plane.Args{
-			Mat:   material.ColoredForward(),
-			Size:  side,
-			Color: color.Green.WithAlpha(planeAlpha),
+			Size: side,
 		})).
 			Rotation(quat.Euler(0, 90, 0)).
-			Position(vec3.New(s, 0, s)).
+			Position(vec3.New(s, -0.03, s)).
+			Texture(texture.Diffuse, color.Green.WithAlpha(planeAlpha)).
 			Create(),
 
 		// YZ Plane
 		YZ: object.Builder(plane.NewObject(plane.Args{
-			Mat:   material.ColoredForward(),
-			Size:  side,
-			Color: color.Red.WithAlpha(planeAlpha),
+			Size: side,
 		})).
-			Position(vec3.New(0, s, s)).
+			Position(vec3.New(-0.03, s, s)).
 			Rotation(quat.Euler(0, 0, 90)).
+			Texture(texture.Diffuse, color.Red.WithAlpha(planeAlpha)).
 			Create(),
 
 		// Lines

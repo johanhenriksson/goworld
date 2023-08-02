@@ -17,6 +17,7 @@ import (
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/physics"
 	"github.com/johanhenriksson/goworld/render/color"
+	"github.com/johanhenriksson/goworld/render/texture"
 )
 
 type Editor interface {
@@ -68,6 +69,7 @@ func NewEditor(ctx *editor.Context, mesh *Mesh) Editor {
 	chk := mesh.Chunk
 	dimensions := vec3.NewI(chk.Sx, chk.Sy, chk.Sz)
 	center := dimensions.Scaled(0.5)
+	constructionPlaneAlpha := float32(0.33)
 
 	e := object.New("ChunkEditor", &edit{
 		Context: ctx,
@@ -99,30 +101,30 @@ func NewEditor(ctx *editor.Context, mesh *Mesh) Editor {
 
 		// X Construction Plane
 		XPlane: object.Builder(plane.NewObject(plane.Args{
-			Size:  float32(chk.Sx),
-			Color: color.Red.WithAlpha(0.25),
+			Size: float32(chk.Sx),
 		})).
 			Position(center.WithX(0)).
 			Rotation(quat.Euler(-90, 0, 90)).
+			Texture(texture.Diffuse, color.Red.WithAlpha(constructionPlaneAlpha)).
 			Active(false).
 			Create(),
 
 		// Y Construction Plane
 		YPlane: object.Builder(plane.NewObject(plane.Args{
-			Size:  float32(chk.Sy),
-			Color: color.Green.WithAlpha(0.25),
+			Size: float32(chk.Sy),
 		})).
 			Position(center.WithY(0)).
+			Texture(texture.Diffuse, color.Green.WithAlpha(constructionPlaneAlpha)).
 			Active(false).
 			Create(),
 
 		// Z Construction Plane
 		ZPlane: object.Builder(plane.NewObject(plane.Args{
-			Size:  float32(chk.Sz),
-			Color: color.Blue.WithAlpha(0.25),
+			Size: float32(chk.Sz),
 		})).
 			Position(center.WithZ(0)).
 			Rotation(quat.Euler(-90, 0, 0)).
+			Texture(texture.Diffuse, color.Blue.WithAlpha(constructionPlaneAlpha)).
 			Active(false).
 			Create(),
 	})

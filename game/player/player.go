@@ -10,6 +10,7 @@ import (
 	"github.com/johanhenriksson/goworld/physics"
 	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/material"
+	"github.com/johanhenriksson/goworld/render/texture"
 )
 
 type T struct {
@@ -31,7 +32,7 @@ func New() *T {
 		Size: 1,
 		Mat:  material.StandardDeferred(),
 	})
-	model.SetTexture("diffuse", color.White)
+	model.SetTexture(texture.Diffuse, color.White)
 
 	return object.New("Player", &T{
 		Character: physics.NewCharacter(1, 0.5, 0.2),

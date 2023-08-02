@@ -21,7 +21,7 @@ func NewMesh(tile *Tile) *Mesh {
 		material.StandardDeferred(),
 		TileVertexGenerator(tile),
 	)
-	msh.SetTexture("diffuse", texture.Checker)
+	msh.SetTexture(texture.Diffuse, texture.Checker)
 	return &Mesh{
 		Dynamic: msh,
 		Tile:    tile,

@@ -3,6 +3,7 @@ package object
 import (
 	"github.com/johanhenriksson/goworld/math/quat"
 	"github.com/johanhenriksson/goworld/math/vec3"
+	"github.com/johanhenriksson/goworld/render/texture"
 )
 
 // Builder API for game objects
@@ -62,6 +63,18 @@ func (b *builder[K]) Scale(s vec3.T) *builder[K] {
 // Active sets the objects active flag.
 func (b *builder[K]) Active(active bool) *builder[K] {
 	b.active = active
+	return b
+}
+
+func (b *builder[K]) Texture(slot texture.Slot, ref texture.Ref) *builder[K] {
+	type Textured interface {
+		SetTexture(slot texture.Slot, ref texture.Ref)
+	}
+	if textured, ok := any(b.object).(Textured); ok {
+		textured.SetTexture(slot, ref)
+	} else {
+		// todo: raise a warning if its not possible?
+	}
 	return b
 }
 

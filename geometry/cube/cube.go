@@ -12,7 +12,7 @@ import (
 
 type Object struct {
 	object.Object
-	Mesh *Mesh
+	*Mesh
 }
 
 func NewObject(args Args) *Object {
@@ -41,7 +41,7 @@ func New(args Args) *Mesh {
 		Static: mesh.New(args.Mat),
 		Args:   args,
 	})
-	cube.SetTexture("diffuse", texture.Checker)
+	cube.SetTexture(texture.Diffuse, texture.Checker)
 	cube.generate()
 	return cube
 }
