@@ -8,21 +8,61 @@ import (
 	"github.com/johanhenriksson/goworld/core/light"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/engine"
+	"github.com/johanhenriksson/goworld/engine/graph"
+	"github.com/johanhenriksson/goworld/engine/pass"
 	"github.com/johanhenriksson/goworld/geometry/cube"
 	"github.com/johanhenriksson/goworld/geometry/plane"
 	"github.com/johanhenriksson/goworld/math/quat"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render/color"
+	"github.com/johanhenriksson/goworld/render/image"
 	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/texture"
+	"github.com/johanhenriksson/goworld/render/vulkan"
+
+	"github.com/vkngwrapper/core/v2/core1_0"
 )
+
+func ForwardGraph(app vulkan.App, target vulkan.Target) graph.T {
+	return graph.New(app, target, func(g graph.T, output vulkan.Target) []graph.Resource {
+		size := output.Size()
+
+		// allocate main depth buffer
+		depth := vulkan.NewDepthTarget(app.Device(), "main-depth", size)
+
+		// main off-screen color buffer
+		offscreen := vulkan.NewColorTarget(app.Device(), "main-color", image.FormatRGBA8Unorm, size)
+
+		// create geometry buffer
+		gbuffer, err := pass.NewGbuffer(app.Device(), size)
+		if err != nil {
+			panic(err)
+		}
+
+		shadows := pass.NewShadowPass(app, output)
+		shadowNode := g.Node(shadows)
+
+		forward := g.Node(pass.NewForwardPass(app, offscreen, depth, gbuffer, shadows))
+		forward.After(shadowNode, core1_0.PipelineStageTopOfPipe)
+
+		outputPass := g.Node(pass.NewOutputPass(app, output, offscreen))
+		outputPass.After(forward, core1_0.PipelineStageTopOfPipe)
+
+		return []graph.Resource{
+			depth,
+			offscreen,
+			gbuffer,
+		}
+	})
+}
 
 var _ = Describe("forward renderer", Label("e2e"), func() {
 	It("renders correctly", func() {
 		img := engine.Frame(engine.Args{
-			Width:  512,
-			Height: 512,
-			Title:  "goworld",
+			Width:    512,
+			Height:   512,
+			Title:    "goworld",
+			Renderer: ForwardGraph,
 		},
 			func(scene object.Object) {
 				object.Builder(object.Empty("Camera")).
