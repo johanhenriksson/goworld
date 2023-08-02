@@ -21,4 +21,13 @@ tasks:
 
   test:
     cmds:
-      - ginkgo ./...
+      - ginkgo --label-filter=!e2e ./...
+
+  test-e2e:
+    cmds:
+      - ginkgo --label-filter=e2e test/...
+    env:
+      # required to for large ssaos on macos
+      MVK_CONFIG_USE_METAL_ARGUMENT_BUFFERS: 1
+      # enable synchronization validation
+      VK_LAYER_ENABLES: VK_VALIDATION_FEATURE_ENABLE_SYNCHRONIZATION_VALIDATION_EXT

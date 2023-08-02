@@ -6,8 +6,12 @@ import (
 )
 
 func init() {
-	s := int64(time.Now().Nanosecond())
-	rand.Seed(s)
+	seed := time.Now().Nanosecond()
+	Seed(seed)
+}
+
+func Seed(seed int) {
+	rand.Seed(int64(seed))
 }
 
 func Range(min, max float32) float32 {

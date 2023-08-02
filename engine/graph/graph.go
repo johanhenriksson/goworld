@@ -2,6 +2,7 @@ package graph
 
 import (
 	"fmt"
+	"image"
 	"log"
 	"time"
 
@@ -21,6 +22,7 @@ type T interface {
 	Recreate()
 	Draw(scene object.Object, time, delta float32)
 	Destroy()
+	Screengrab() *image.RGBA
 	Screenshot()
 }
 
@@ -131,7 +133,7 @@ func (g *graph) Draw(scene object.Object, time, delta float32) {
 	g.post.Draw(worker, *args, scene)
 }
 
-func (g *graph) Screenshot() {
+func (g *graph) Screengrab() *image.RGBA {
 	idx := 0
 	g.app.Device().WaitIdle()
 	source := g.target.Surfaces()[idx]
@@ -139,9 +141,13 @@ func (g *graph) Screenshot() {
 	if err != nil {
 		panic(err)
 	}
+	return ss
+}
 
+func (g *graph) Screenshot() {
+	img := g.Screengrab()
 	filename := fmt.Sprintf("Screenshot-%s.png", time.Now().Format("2006-01-02_15-04-05"))
-	if err := upload.SavePng(ss, filename); err != nil {
+	if err := upload.SavePng(img, filename); err != nil {
 		panic(err)
 	}
 	log.Println("saved screenshot", filename)
