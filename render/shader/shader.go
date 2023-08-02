@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/johanhenriksson/goworld/render/device"
+	"github.com/johanhenriksson/goworld/render/texture"
 	"github.com/johanhenriksson/goworld/render/types"
 )
 
@@ -34,7 +35,7 @@ type T interface {
 	Destroy()
 	Input(name string) (int, types.Type, bool)
 	Descriptor(name string) (int, bool)
-	Textures() []string
+	Textures() []texture.Slot
 }
 
 type shader struct {
@@ -42,7 +43,7 @@ type shader struct {
 	modules  []Module
 	inputs   Inputs
 	bindings Bindings
-	textures []string
+	textures []texture.Slot
 }
 
 func New(device device.T, path string) T {
@@ -91,7 +92,7 @@ func (s *shader) Input(name string) (int, types.Type, bool) {
 	return s.inputs.Input(name)
 }
 
-func (s *shader) Textures() []string {
+func (s *shader) Textures() []texture.Slot {
 	return s.textures
 }
 

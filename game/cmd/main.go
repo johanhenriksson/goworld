@@ -20,6 +20,7 @@ import (
 	"github.com/johanhenriksson/goworld/physics"
 	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/material"
+	"github.com/johanhenriksson/goworld/render/texture"
 )
 
 func main() {
@@ -47,7 +48,7 @@ func main() {
 						Size: 1,
 						Mat:  material.StandardDeferred(),
 					})
-					box.SetTexture("diffuse", random.Choice(color.DefaultPalette))
+					box.SetTexture(texture.Diffuse, random.Choice(color.DefaultPalette))
 
 					object.Builder(object.Empty("Box")).
 						Position(vec3.New(20+3*float32(x), 30, 15+3*float32(z))).

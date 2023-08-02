@@ -18,7 +18,7 @@ type Cylinder struct {
 }
 
 func NewObject(args Args) *Cylinder {
-	return object.New("Cyllinder", &Cylinder{
+	return object.New("Cylinder", &Cylinder{
 		Mesh:     New(args),
 		Collider: physics.NewMesh(),
 	})
@@ -92,17 +92,17 @@ func (c *Mesh) generate() {
 		n := vec3.Cross(nv1, nv2)
 
 		// side face 1
-		data[o+6] = vertex.C{P: topLeft, N: n, C: color}
+		data[o+6] = vertex.C{P: topRight, N: n, C: color}
 		data[o+7] = vertex.C{P: bottomLeft, N: n, C: color}
-		data[o+8] = vertex.C{P: topRight, N: n, C: color}
+		data[o+8] = vertex.C{P: topLeft, N: n, C: color}
 
 		// side face 2
-		data[o+9] = vertex.C{P: topRight, N: n, C: color}
+		data[o+9] = vertex.C{P: bottomRight, N: n, C: color}
 		data[o+10] = vertex.C{P: bottomLeft, N: n, C: color}
-		data[o+11] = vertex.C{P: bottomRight, N: n, C: color}
+		data[o+11] = vertex.C{P: topRight, N: n, C: color}
 	}
 
-	key := object.Key("cyllinder", c)
+	key := object.Key("cylinder", c)
 	mesh := vertex.NewTriangles(key, data, []uint16{})
 	c.VertexData.Set(mesh)
 }

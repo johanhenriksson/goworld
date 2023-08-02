@@ -83,20 +83,20 @@ var _ = Describe("forward renderer", Label("e2e"), func() {
 					Create()
 
 				object.Builder(plane.NewObject(plane.Args{
-					Size:  5,
-					Color: color.White,
+					Size: 5,
 				})).
 					Parent(scene).
+					Texture(texture.Diffuse, color.White).
 					Create()
 
-				c := object.Builder(cube.NewObject(cube.Args{
+				object.Builder(cube.NewObject(cube.Args{
 					Size: 1,
 					Mat:  material.StandardForward(),
 				})).
 					Position(vec3.New(0, 0.5, 0)).
+					Texture(texture.Diffuse, texture.Checker).
 					Parent(scene).
 					Create()
-				c.Mesh.SetTexture("diffuse", texture.Checker)
 
 				// directional light
 				rot := float32(45)

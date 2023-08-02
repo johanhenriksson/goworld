@@ -18,7 +18,7 @@ type Mesh interface {
 	Material() *material.Def
 	MaterialID() uint64
 
-	Texture(string) texture.Ref
+	Texture(texture.Slot) texture.Ref
 
 	// Bounding sphere used for view frustum culling
 	BoundingSphere() shape.Sphere
@@ -37,7 +37,7 @@ type Static struct {
 	mat       *material.Def
 	matId     uint64
 
-	textures map[string]texture.Ref
+	textures map[texture.Slot]texture.Ref
 
 	// bounding radius
 	center vec3.T
@@ -61,7 +61,7 @@ func NewPrimitiveMesh(primitive vertex.Primitive, mat *material.Def) *Static {
 	m := object.NewComponent(&Static{
 		mat:       mat,
 		matId:     material.Hash(mat),
-		textures:  make(map[string]texture.Ref),
+		textures:  make(map[texture.Slot]texture.Ref),
 		primitive: primitive,
 		shadows:   true,
 
@@ -84,11 +84,11 @@ func (m *Static) Name() string {
 func (m *Static) Primitive() vertex.Primitive         { return m.primitive }
 func (m *Static) Mesh() *object.Property[vertex.Mesh] { return &m.VertexData }
 
-func (m *Static) Texture(slot string) texture.Ref {
+func (m *Static) Texture(slot texture.Slot) texture.Ref {
 	return m.textures[slot]
 }
 
-func (m *Static) SetTexture(slot string, ref texture.Ref) {
+func (m *Static) SetTexture(slot texture.Slot, ref texture.Ref) {
 	m.textures[slot] = ref
 }
 
