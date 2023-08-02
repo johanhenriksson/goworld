@@ -16,7 +16,8 @@ layout (location = 5) out vec3 wposition;
 
 void main() 
 {
-	mat4 m = objects.item[gl_InstanceIndex].model;
+	objectIndex = gl_InstanceIndex;
+	mat4 m = objects.item[objectIndex].model;
 	mat4 mv = camera.View * m;
 
 	// gbuffer diffuse
