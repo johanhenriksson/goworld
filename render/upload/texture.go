@@ -160,7 +160,7 @@ func DownloadImage(dev device.T, worker command.Worker, src image.T) (*osimage.R
 	return <-img, nil
 }
 
-func SavePng(img *osimage.RGBA, filename string) error {
+func SavePng(img osimage.Image, filename string) error {
 	out, err := os.Create(filename)
 	if err != nil {
 		return nil
