@@ -6,7 +6,6 @@ import (
 	"github.com/johanhenriksson/goworld/render/descriptor"
 	"github.com/johanhenriksson/goworld/render/image"
 	"github.com/johanhenriksson/goworld/render/material"
-	"github.com/johanhenriksson/goworld/render/pipeline"
 	"github.com/johanhenriksson/goworld/render/renderpass"
 	"github.com/johanhenriksson/goworld/render/shader"
 	"github.com/johanhenriksson/goworld/render/vertex"
@@ -23,10 +22,6 @@ type LightDescriptors struct {
 	Camera   *descriptor.Uniform[uniform.Camera]
 	Lights   *descriptor.Storage[uniform.Light]
 	Shadow   *descriptor.SamplerArray
-}
-
-type LightConst struct {
-	Count uint32
 }
 
 type LightShader interface {
@@ -48,16 +43,10 @@ func NewLightShader(app vulkan.App, pass renderpass.T, gbuffer GeometryBuffer) L
 	mat := material.New(
 		app.Device(),
 		material.Args{
-			Shader:   app.Shaders().Fetch(shader.NewRef("light")),
-			Pass:     pass,
-			Subpass:  LightingSubpass,
-			Pointers: vertex.ParsePointers(vertex.T{}),
-			Constants: []pipeline.PushConstant{
-				{
-					Stages: core1_0.StageFragment,
-					Type:   LightConst{},
-				},
-			},
+			Shader:    app.Shaders().Fetch(shader.NewRef("light")),
+			Pass:      pass,
+			Subpass:   LightingSubpass,
+			Pointers:  vertex.ParsePointers(vertex.T{}),
 			DepthTest: true,
 		},
 		&LightDescriptors{

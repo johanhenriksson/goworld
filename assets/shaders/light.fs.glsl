@@ -24,15 +24,6 @@ layout (binding = 5) uniform sampler2D[] shadowmaps;
 #include "lib/lighting.glsl"
 
 //
-// Push constants
-//
-
-// the shader expects the number of in-use lights as a push constant
-layout(push_constant) uniform constants {
-	int Count;
-} push;
-
-//
 // Fragment output
 //
 

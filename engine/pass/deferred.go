@@ -262,9 +262,6 @@ func (p *deferred) Record(cmds command.Recorder, args render.Args, scene object.
 		cmd.CmdNextSubpass()
 		p.light.Bind(cmd, args.Context.Index)
 
-		cmd.CmdPushConstant(core1_0.StageFragment, 0, &LightConst{
-			Count: uint32(lightbuf.Count()),
-		})
 		quad.Draw(cmd, 0)
 
 		cmd.CmdEndRenderPass()
