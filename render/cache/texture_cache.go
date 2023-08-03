@@ -34,12 +34,6 @@ func (t *textures) Instantiate(ref texture.Ref, callback func(texture.T)) {
 
 		// args & defaults
 		args := ref.TextureArgs()
-		if args.Filter == 0 {
-			args.Filter = core1_0.FilterLinear
-		}
-		if args.Wrap == 0 {
-			args.Wrap = core1_0.SamplerAddressModeClampToEdge
-		}
 
 		// allocate texture
 		var err error
