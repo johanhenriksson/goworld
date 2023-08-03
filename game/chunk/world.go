@@ -22,7 +22,13 @@ type World struct {
 
 	lock   *sync.Mutex
 	active map[string]object.Component
-	ready  chan *T
+	ready  chan chunkSpawn
+}
+
+type chunkSpawn struct {
+	Chunk    *T
+	Key      string
+	Position vec3.T
 }
 
 // Builds a world of chunks around the active camera as it moves around
@@ -32,7 +38,7 @@ func NewWorld(size int, generator Generator, distance float32) *World {
 		generator: generator,
 		distance:  distance,
 		active:    make(map[string]object.Component, 100),
-		ready:     make(chan *T, 100),
+		ready:     make(chan chunkSpawn, 100),
 		lock:      &sync.Mutex{},
 	})
 }
@@ -46,20 +52,19 @@ func (c *World) Update(scene object.Component, dt float32) {
 
 	// insert any new chunks
 	select {
-	case chk := <-c.ready:
-		key := fmt.Sprintf("Chunk:%d,%d", chk.Cx, chk.Cz)
-		chonk := object.Builder(object.Empty(key)).
-			Attach(NewMesh(chk)).
+	case spawn := <-c.ready:
+		chonk := object.Builder(object.Empty(spawn.Key)).
+			Attach(NewMesh(spawn.Chunk)).
 			Attach(physics.NewRigidBody(0)).
 			Attach(physics.NewMesh()).
 			Attach(box.New(box.Args{
 				Size:  vec3.NewI(c.size, c.size, c.size),
 				Color: color.Purple,
 			})).
-			Position(vec3.NewI(chk.Cx*c.size, 0, chk.Cz*c.size)).
+			Position(spawn.Position).
 			Parent(c).
 			Create()
-		c.active[key] = chonk
+		c.active[spawn.Key] = chonk
 	default:
 	}
 
@@ -122,7 +127,11 @@ func (c *World) Update(scene object.Component, dt float32) {
 					c.lock.Unlock()
 
 					chunkData := Generate(c.generator, c.size, ix, iz)
-					c.ready <- chunkData
+					c.ready <- chunkSpawn{
+						Chunk:    chunkData,
+						Key:      key,
+						Position: p,
+					}
 				}
 			}
 		}
