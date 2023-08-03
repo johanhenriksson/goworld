@@ -70,12 +70,12 @@ func (b *LightBuffer) Store(args render.Args, lit light.T) {
 		Color:     desc.Color,
 		Position:  desc.Position,
 		Intensity: desc.Intensity,
+		Range:     desc.Range,
 	}
 
 	switch lit.(type) {
 	case *light.Point:
 		entry.Attenuation = desc.Attenuation
-		entry.Range = desc.Range
 
 	case *light.Directional:
 		for cascadeIndex, cascade := range lit.Cascades() {
