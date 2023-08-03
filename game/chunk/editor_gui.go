@@ -1,6 +1,8 @@
 package chunk
 
 import (
+	"fmt"
+
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/editor"
@@ -57,7 +59,7 @@ func NewMenu(editor *edit) gui.Fragment {
 							eye := editor.Camera.Transform().WorldPosition()
 							offset := editor.Camera.Transform().Forward().Scaled(3)
 							object.Builder(object.Empty("New Chunk")).
-								Attach(NewMesh(New(8, 0, 0))).
+								Attach(NewMesh(New(fmt.Sprintf("chk%d", object.ID()), 8))).
 								Position(eye.Add(offset)).
 								Parent(editor.Context.Scene).
 								Create()

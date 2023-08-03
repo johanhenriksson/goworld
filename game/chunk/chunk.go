@@ -3,6 +3,7 @@ package chunk
 import (
 	"encoding/gob"
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/johanhenriksson/goworld/game/voxel"
@@ -10,21 +11,17 @@ import (
 
 // Chunk is the smallest individually renderable unit of voxel geometry
 type T struct {
-	Cx, Cz     int
-	Ox, Oy, Oz int
+	Key        string
 	Sx, Sy, Sz int
 	Data       voxel.Array
 	Light      *LightVolume
 }
 
-func New(size, cx, cz int) *T {
+// New creates a new voxel data chunk
+func New(key string, size int) *T {
 	return &T{
 		Data:  make(voxel.Array, size*size*size),
 		Light: NewLightVolume(size, size+1, size),
-		Cx:    cx,
-		Cz:    cz,
-		Ox:    cx * size,
-		Oz:    cz * size,
 		Sx:    size,
 		Sy:    size,
 		Sz:    size,
@@ -39,12 +36,9 @@ func (c *T) Clear() {
 	c.Light.Clear()
 }
 
-/*
-Returns the slice offset for a given set of coordinates, as
-
-	well as a bool indicating whether the position is within bounds.
-	If the point is out of bounds, zero is returned
-*/
+// Returns the slice offset for a given set of coordinates, as
+// well as a bool indicating whether the position is within bounds.
+// If the point is out of bounds, zero is returned
 func (c *T) offset(x, y, z int) (int, bool) {
 	if x < 0 || x >= c.Sx || y < 0 || y >= c.Sy || z < 0 || z >= c.Sz {
 		return 0, false
@@ -53,11 +47,8 @@ func (c *T) offset(x, y, z int) (int, bool) {
 	return pos, true
 }
 
-/*
-Returns a pointer to the voxel defintion at the given position.
-
-	If the space is empty, nil is returned
-*/
+// Returns a pointer to the voxel defintion at the given position.
+// If the space is empty, the Empty voxel is returned
 func (c *T) At(x, y, z int) voxel.T {
 	pos, ok := c.offset(x, y, z)
 	if !ok {
@@ -88,7 +79,7 @@ func (c *T) Free(x, y, z int) bool {
 
 // Write the chunk to disk
 func (c *T) Write(path string) error {
-	filepath := fmt.Sprintf("%s/c_%d_%d.bin", path, c.Cx, c.Cz)
+	filepath := fmt.Sprintf("%s/chunk_%s.bin", path, c.Key)
 	file, err := os.Create(filepath)
 	if err != nil {
 		return err
@@ -97,15 +88,15 @@ func (c *T) Write(path string) error {
 	encoder := gob.NewEncoder(file)
 	err = encoder.Encode(c)
 	if err == nil {
-		fmt.Printf("Wrote chunk %d,%d to disk\n", c.Cx, c.Cz)
+		log.Println("Wrote chunk", c.Key, "to disk")
 	} else {
-		fmt.Printf("Error writing chunk %d,%d: %s\n", c.Cx, c.Cz, err)
+		log.Println("Error writing chunk", c.Key, ":", err)
 	}
 	return err
 }
 
-func Load(path string, cx, cz int) (*T, error) {
-	filepath := fmt.Sprintf("%s/c_%d_%d.bin", path, cx, cz)
+func Load(path string, key string) (*T, error) {
+	filepath := fmt.Sprintf("%s/chunk_%s.bin", path, key)
 	file, err := os.Open(filepath)
 	if err != nil {
 		return nil, err
@@ -118,6 +109,6 @@ func Load(path string, cx, cz int) (*T, error) {
 	if err != nil {
 		return nil, err
 	}
-	fmt.Printf("Read chunk %d,%d from disk\n", chunk.Cx, chunk.Cz)
+	log.Printf("Read chunk", key, "from disk")
 	return chunk, nil
 }

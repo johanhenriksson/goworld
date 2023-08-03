@@ -51,14 +51,15 @@ type edit struct {
 	YPlane *plane.Plane
 	ZPlane *plane.Plane
 
-	GUI gui.Fragment
+	GUI  gui.Fragment
+	Menu gui.Fragment
 
 	xp, yp, zp int
 
 	BoundingBox *box.Mesh
 }
 
-// var _ editor.T = &edit{}
+var _ editor.T = &edit{}
 
 func init() {
 	editor.Register(&Mesh{}, NewEditor)
@@ -129,11 +130,11 @@ func NewEditor(ctx *editor.Context, mesh *Mesh) Editor {
 			Create(),
 	})
 
-	gui := NewGUI(e, mesh)
-	e.GUI = gui
-	object.Attach(e, gui)
+	e.GUI = NewGUI(e, mesh)
+	object.Attach(e, e.GUI)
 
-	// object.Attach(e, NewMenu(e))
+	e.Menu = NewMenu(e)
+	object.Attach(e, e.Menu)
 
 	return e
 }
@@ -146,11 +147,13 @@ func (e *edit) Target() object.Component { return e.mesh }
 
 func (e *edit) Select(ev mouse.Event) {
 	object.Enable(e.GUI)
+	object.Enable(e.Menu)
 }
 
 func (e *edit) Deselect(ev mouse.Event) bool {
 	// todo: check with editor if we can deselect?
 	object.Disable(e.GUI)
+	object.Disable(e.Menu)
 	return true
 }
 

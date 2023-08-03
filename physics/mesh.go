@@ -43,7 +43,7 @@ func NewMesh() *Mesh {
 func (m *Mesh) colliderCreate() shapeHandle {
 	// generate an optmized collision mesh from the given mesh
 	mesh := m.Mesh.Get()
-	if mesh == nil {
+	if mesh == nil || mesh.IndexCount() == 0 {
 		mesh = emptyMesh
 	}
 
