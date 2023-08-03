@@ -10,6 +10,8 @@ import (
 )
 
 type GeometryBuffer interface {
+	Width() int
+	Height() int
 	Frames() int
 	Diffuse() []image.T
 	Normal() []image.T
@@ -21,6 +23,8 @@ type gbuffer struct {
 	diffuse  []image.T
 	normal   []image.T
 	position []image.T
+	width    int
+	height   int
 }
 
 func NewGbuffer(device device.T, size vulkan.TargetSize) (GeometryBuffer, error) {
@@ -56,9 +60,13 @@ func NewGbuffer(device device.T, size vulkan.TargetSize) (GeometryBuffer, error)
 		diffuse:  diffuses,
 		normal:   normals,
 		position: positions,
+		width:    width,
+		height:   height,
 	}, nil
 }
 
+func (b *gbuffer) Width() int          { return b.width }
+func (b *gbuffer) Height() int         { return b.height }
 func (b *gbuffer) Frames() int         { return len(b.diffuse) }
 func (b *gbuffer) Diffuse() []image.T  { return b.diffuse }
 func (b *gbuffer) Normal() []image.T   { return b.normal }

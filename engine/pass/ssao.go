@@ -36,9 +36,10 @@ type AmbientOcclusionPass struct {
 	desc []material.Instance[*AmbientOcclusionDescriptors]
 	quad vertex.Mesh
 
+	scale    float32
 	position []texture.T
 	normal   []texture.T
-	kernel   [SSAOSamples]vec3.T
+	kernel   [SSAOSamples]vec4.T
 	noise    *HemisphereNoise
 }
 
@@ -46,7 +47,12 @@ var _ Pass = &AmbientOcclusionPass{}
 
 type AmbientOcclusionParams struct {
 	Projection mat4.T
-	Kernel     [SSAOSamples]vec3.T
+	Kernel     [SSAOSamples]vec4.T
+	Samples    int32
+	Scale      float32
+	Radius     float32
+	Bias       float32
+	Power      float32
 }
 
 type AmbientOcclusionDescriptors struct {
@@ -60,7 +66,8 @@ type AmbientOcclusionDescriptors struct {
 func NewAmbientOcclusionPass(app vulkan.App, target vulkan.Target, gbuffer GeometryBuffer) *AmbientOcclusionPass {
 	var err error
 	p := &AmbientOcclusionPass{
-		app: app,
+		app:   app,
+		scale: float32(gbuffer.Width()) / float32(target.Width()),
 	}
 
 	p.pass = renderpass.New(app.Device(), renderpass.Args{
@@ -119,7 +126,7 @@ func NewAmbientOcclusionPass(app vulkan.App, target vulkan.Target, gbuffer Geome
 	p.noise = NewHemisphereNoise(4, 4)
 
 	// create sampler kernel
-	p.kernel = [SSAOSamples]vec3.T{}
+	p.kernel = [SSAOSamples]vec4.T{}
 	for i := 0; i < len(p.kernel); i++ {
 		sample := vec3.Random(
 			vec3.New(-1, 0, -1),
@@ -132,8 +139,10 @@ func NewAmbientOcclusionPass(app vulkan.App, target vulkan.Target, gbuffer Geome
 		scale = math.Lerp(0.1, 1.0, scale*scale)
 		sample = sample.Scaled(scale)
 
-		p.kernel[i] = sample
+		p.kernel[i] = vec4.Extend(sample, 0)
 	}
+
+	// todo: if we shuffle the kernel, it would be ok to use fewer samples
 
 	p.desc = p.mat.InstantiateMany(app.Pool(), target.Frames())
 	p.position = make([]texture.T, target.Frames())
@@ -176,6 +185,11 @@ func (p *AmbientOcclusionPass) Record(cmds command.Recorder, args render.Args, s
 		p.desc[ctx.Index].Descriptors().Params.Set(AmbientOcclusionParams{
 			Projection: args.Projection,
 			Kernel:     p.kernel,
+			Samples:    32,
+			Scale:      p.scale,
+			Radius:     0.4,
+			Bias:       0.02,
+			Power:      1.2,
 		})
 		quad.Draw(cmd, 0)
 		cmd.CmdEndRenderPass()
@@ -217,10 +231,10 @@ func (n *HemisphereNoise) Version() int { return 1 }
 func (n *HemisphereNoise) ImageData() *image.Data {
 	buffer := make([]vec4.T, 4*n.Width*n.Height)
 	for i := range buffer {
-		buffer[i] = vec4.Random(
-			vec4.New(-1, -1, 0, 0),
-			vec4.New(1, 1, 0, 0),
-		).Normalized()
+		buffer[i] = vec4.Extend(vec3.Random(
+			vec3.New(-1, -1, 0),
+			vec3.New(1, 1, 0),
+		).Normalized(), 0)
 	}
 
 	// cast to byte array
