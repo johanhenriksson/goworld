@@ -20,17 +20,25 @@ int kernel_size = 32;
 float radius = 0.4;
 float bias = 0.025;
 float power = 1.2;
-int scale = 1;
+int scale = 2;
 
 
 void main()
 {
-    vec2 noiseScale = vec2(textureSize(tex_position, 0)) / 4.0 / scale;
+    vec2 noiseSize = vec2(textureSize(tex_noise, 0));
+    vec2 outputSize = vec2(textureSize(tex_position, 0)) / scale;
+    vec2 noiseScale = outputSize / noiseSize;
 
     // get input vectors from gbuffer & noise texture
     vec3 fragPos = texture(tex_position, texcoord0).xyz;
     vec3 normalEncoded = texture(tex_normal, texcoord0).xyz; // normals [0,1]
     vec3 normal = normalize(2.0 * normalEncoded - 1); // normals [-1,1] 
+
+    // discard gbuffer entries without normal data
+    if (normalEncoded == vec3(0)) {
+        out_ssao = vec4(1);
+        return;
+    }
 
     vec3 randomVec = texture(tex_noise, texcoord0 * noiseScale).xyz;
 
