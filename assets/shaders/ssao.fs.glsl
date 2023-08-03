@@ -1,4 +1,9 @@
 #version 450 core
+#extension GL_GOOGLE_include_directive : enable
+
+#include "lib/common.glsl"
+
+#define KERNEL_SIZE 32
 
 // Input: Texture coords
 layout (location = 0) in vec2 texcoord0;
@@ -7,32 +12,29 @@ layout (location = 0) in vec2 texcoord0;
 layout (location = 0) out vec4 out_ssao;
 
 layout (std140, binding = 0) uniform Params {
-    mat4 Proj;
-    vec3 Kernel[32];
-} params;
+    mat4 Projection;
+    vec4 Kernel[KERNEL_SIZE];
+    int Samples;
+    float Scale;
+    float Radius;
+    float Bias;
+    float Power;
+};
 
 layout (binding = 1) uniform sampler2D tex_position; // position gbuffer
 layout (binding = 2) uniform sampler2D tex_normal; // normal gbuffer
 layout (binding = 3) uniform sampler2D tex_noise; // noise texture
 
-// parameters (you'd probably want to use them as uniforms to more easily tweak the effect)
-int kernel_size = 32;
-float radius = 0.4;
-float bias = 0.025;
-float power = 1.2;
-int scale = 2;
-
-
 void main()
 {
     vec2 noiseSize = vec2(textureSize(tex_noise, 0));
-    vec2 outputSize = vec2(textureSize(tex_position, 0)) / scale;
+    vec2 outputSize = vec2(textureSize(tex_position, 0)) / Scale;
     vec2 noiseScale = outputSize / noiseSize;
 
     // get input vectors from gbuffer & noise texture
     vec3 fragPos = texture(tex_position, texcoord0).xyz;
-    vec3 normalEncoded = texture(tex_normal, texcoord0).xyz; // normals [0,1]
-    vec3 normal = normalize(2.0 * normalEncoded - 1); // normals [-1,1] 
+    vec3 normalEncoded = texture(tex_normal, texcoord0).xyz;
+    vec3 normal = unpack_normal(normalEncoded);
 
     // discard gbuffer entries without normal data
     if (normalEncoded == vec3(0)) {
@@ -49,15 +51,15 @@ void main()
 
     // iterate over the sample kernel and calculate occlusion factor
     float occlusion = 0.0;
-    for(int i = 0; i < kernel_size; ++i)
+    for(int i = 0; i < Samples; ++i)
     {
         // get sample position
-        vec3 sampleVec = TBN * params.Kernel[i]; // from tangent to view-space
-        sampleVec = fragPos + sampleVec * radius; 
+        vec3 sampleVec = TBN * Kernel[i].xyz; // from tangent to view-space
+        sampleVec = fragPos + sampleVec * Radius; 
         
         // project sample position (to sample texture) (to get position on screen/texture)
         vec4 offset = vec4(sampleVec, 1.0);
-        offset = params.Proj * offset; // from view to clip-space
+        offset = Projection * offset; // from view to clip-space
         offset.xyz /= offset.w; // perspective divide, clip -> NDC
         offset.xyz = offset.xyz * 0.5 + 0.5; // transform to range 0.0 - 1.0
         
@@ -65,13 +67,11 @@ void main()
         float sampleDepth = texture(tex_position, offset.xy).z;
 
         // range check & accumulate
-        float rangeCheck = smoothstep(0.0, 1.0, radius / abs(fragPos.z - sampleDepth));
-        if (sampleDepth <= sampleVec.z - bias) {
-            occlusion += 1.0 * rangeCheck;
-        }
+        float rangeCheck = smoothstep(0.0, 1.0, Radius / abs(fragPos.z - sampleDepth));
+        occlusion += (sampleDepth <= sampleVec.z - Bias ? 1.0 : 0.0) * rangeCheck;
     }
-    occlusion = 1.0 - (occlusion / kernel_size);
-    occlusion = pow(occlusion, power);
+    occlusion = 1.0 - (occlusion / Samples);
+    occlusion = pow(occlusion, Power);
     
     out_ssao = vec4(vec3(occlusion), 1);
 }
