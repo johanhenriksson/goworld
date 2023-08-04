@@ -128,10 +128,23 @@ func NewAmbientOcclusionPass(app vulkan.App, target vulkan.Target, gbuffer Geome
 	// create sampler kernel
 	p.kernel = [SSAOSamples]vec4.T{}
 	for i := 0; i < len(p.kernel); i++ {
-		sample := vec3.Random(
-			vec3.New(-1, 0, -1),
-			vec3.New(1, 1, 1),
-		).Normalized().Scaled(random.Range(0, 1))
+		var sample vec3.T
+		for {
+			sample = vec3.Random(
+				vec3.New(-1, 0, -1),
+				vec3.New(1, 1, 1),
+			)
+			if sample.LengthSqr() > 1 {
+				continue
+			}
+			sample = sample.Normalized()
+			if vec3.Dot(sample, vec3.Up) < 0.5 {
+				continue
+			}
+
+			sample = sample.Scaled(random.Range(0, 1))
+			break
+		}
 
 		// we dont want a uniform sample distribution
 		// push samples closer to the origin
@@ -187,9 +200,9 @@ func (p *AmbientOcclusionPass) Record(cmds command.Recorder, args render.Args, s
 			Kernel:     p.kernel,
 			Samples:    32,
 			Scale:      p.scale,
-			Radius:     0.4,
-			Bias:       0.02,
-			Power:      1.2,
+			Radius:     0.7,
+			Bias:       0.03,
+			Power:      1.1,
 		})
 		quad.Draw(cmd, 0)
 		cmd.CmdEndRenderPass()
