@@ -31,7 +31,7 @@ func NewGbuffer(device device.T, size vulkan.TargetSize) (GeometryBuffer, error)
 	frames, width, height := size.Frames, size.Width, size.Height
 	diffuseFmt := core1_0.FormatR8G8B8A8UnsignedNormalized
 	normalFmt := core1_0.FormatR8G8B8A8UnsignedNormalized
-	positionFmt := core1_0.FormatR16G16B16A16SignedFloat
+	positionFmt := core1_0.FormatR32G32B32A32SignedFloat
 	usage := core1_0.ImageUsageSampled | core1_0.ImageUsageColorAttachment | core1_0.ImageUsageInputAttachment
 
 	var err error
