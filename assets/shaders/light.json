@@ -3,6 +3,10 @@
     "position": {
       "Index": 0,
       "Type": "float"
+    },
+    "texcoord_0": {
+      "Index": 1,
+      "Type": "float"
     }
   },
   "Bindings": {

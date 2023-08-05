@@ -138,7 +138,7 @@ func (p *shadowpass) createShadowmap(light light.T) Shadowmap {
 
 		// each light cascade needs its own shadow materials - or rather, their own descriptors
 		// cheating a bit by creating entire materials for each light, fix it later.
-		mats := NewMaterialSorter(p.app, p.target, p.pass, p.Shadowmap, &material.Def{
+		mats := NewMaterialSorter(p.app, p.target.Frames(), p.pass, p.Shadowmap, &material.Def{
 			Shader:       "shadow",
 			VertexFormat: vertex.T{},
 			DepthTest:    true,

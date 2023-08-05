@@ -13,15 +13,17 @@ layout (std430, binding = 1) readonly buffer LightBuffer {
 	Light item[];
 } lights;
 
-layout (input_attachment_index = 0, binding = 2) uniform subpassInput tex_diffuse;
-layout (input_attachment_index = 1, binding = 3) uniform subpassInput tex_normal;
-layout (input_attachment_index = 2, binding = 4) uniform subpassInput tex_position;
+layout (binding = 2) uniform sampler2D tex_diffuse;
+layout (binding = 3) uniform sampler2D tex_normal;
+layout (binding = 4) uniform sampler2D tex_position;
 
 // the variable-sized array must have the largest binding id
 #define SHADOWMAP_SAMPLER shadowmaps
 layout (binding = 5) uniform sampler2D[] shadowmaps;
 
 #include "lib/lighting.glsl"
+
+layout (location = 0) in vec2 v_texcoord0;
 
 //
 // Fragment output
@@ -31,10 +33,10 @@ layout (location = 0) out vec4 color;
 
 void main() {
 	// unpack data from geometry buffer
-	vec3 viewPos = subpassLoad(tex_position).xyz;
-	vec3 viewNormal = unpack_normal(subpassLoad(tex_normal).xyz);
+	vec3 viewPos = texture(tex_position, v_texcoord0).xyz;
+	vec3 viewNormal = unpack_normal(texture(tex_normal, v_texcoord0).xyz);
 
-	vec4 gcolor = subpassLoad(tex_diffuse);
+	vec4 gcolor = texture(tex_diffuse, v_texcoord0);
 	vec3 diffuseColor = gcolor.rgb;
 	float occlusion = gcolor.a;
 

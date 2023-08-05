@@ -4,10 +4,10 @@ import (
 	"github.com/johanhenriksson/goworld/engine/uniform"
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/descriptor"
-	"github.com/johanhenriksson/goworld/render/image"
 	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/renderpass"
 	"github.com/johanhenriksson/goworld/render/shader"
+	"github.com/johanhenriksson/goworld/render/texture"
 	"github.com/johanhenriksson/goworld/render/vertex"
 	"github.com/johanhenriksson/goworld/render/vulkan"
 
@@ -16,9 +16,9 @@ import (
 
 type LightDescriptors struct {
 	descriptor.Set
-	Diffuse  *descriptor.InputAttachment
-	Normal   *descriptor.InputAttachment
-	Position *descriptor.InputAttachment
+	Diffuse  *descriptor.Sampler
+	Normal   *descriptor.Sampler
+	Position *descriptor.Sampler
 	Camera   *descriptor.Uniform[uniform.Camera]
 	Lights   *descriptor.Storage[uniform.Light]
 	Shadow   *descriptor.SamplerArray
@@ -34,9 +34,9 @@ type lightShader struct {
 	mat       material.T[*LightDescriptors]
 	instances []material.Instance[*LightDescriptors]
 
-	diffuseViews  []image.View
-	normalViews   []image.View
-	positionViews []image.View
+	diffuseTex  []texture.T
+	normalTex   []texture.T
+	positionTex []texture.T
 }
 
 func NewLightShader(app vulkan.App, pass renderpass.T, gbuffer GeometryBuffer) LightShader {
@@ -47,16 +47,16 @@ func NewLightShader(app vulkan.App, pass renderpass.T, gbuffer GeometryBuffer) L
 			Pass:      pass,
 			Subpass:   LightingSubpass,
 			Pointers:  vertex.ParsePointers(vertex.T{}),
-			DepthTest: true,
+			DepthTest: false,
 		},
 		&LightDescriptors{
-			Diffuse: &descriptor.InputAttachment{
+			Diffuse: &descriptor.Sampler{
 				Stages: core1_0.StageFragment,
 			},
-			Normal: &descriptor.InputAttachment{
+			Normal: &descriptor.Sampler{
 				Stages: core1_0.StageFragment,
 			},
-			Position: &descriptor.InputAttachment{
+			Position: &descriptor.Sampler{
 				Stages: core1_0.StageFragment,
 			},
 			Camera: &descriptor.Uniform[uniform.Camera]{
@@ -75,27 +75,37 @@ func NewLightShader(app vulkan.App, pass renderpass.T, gbuffer GeometryBuffer) L
 	frames := gbuffer.Frames()
 	lightsh := mat.InstantiateMany(app.Pool(), frames)
 
-	diffuseViews := make([]image.View, frames)
-	normalViews := make([]image.View, frames)
-	positionViews := make([]image.View, frames)
+	var err error
+	diffuseTex := make([]texture.T, frames)
+	normalTex := make([]texture.T, frames)
+	positionTex := make([]texture.T, frames)
 	for i := 0; i < frames; i++ {
-		diffuseViews[i], _ = gbuffer.Diffuse()[i].View(gbuffer.Diffuse()[i].Format(), core1_0.ImageAspectColor)
-		normalViews[i], _ = gbuffer.Normal()[i].View(gbuffer.Normal()[i].Format(), core1_0.ImageAspectColor)
-		positionViews[i], _ = gbuffer.Position()[i].View(gbuffer.Position()[i].Format(), core1_0.ImageAspectColor)
+		diffuseTex[i], err = texture.FromImage(app.Device(), "deferred-diffuse", gbuffer.Diffuse()[i], texture.Args{})
+		if err != nil {
+			panic(err)
+		}
+		normalTex[i], err = texture.FromImage(app.Device(), "deferred-normal", gbuffer.Normal()[i], texture.Args{})
+		if err != nil {
+			panic(err)
+		}
+		positionTex[i], err = texture.FromImage(app.Device(), "deferred-position", gbuffer.Position()[i], texture.Args{})
+		if err != nil {
+			panic(err)
+		}
 
 		lightDesc := lightsh[i].Descriptors()
-		lightDesc.Diffuse.Set(diffuseViews[i])
-		lightDesc.Normal.Set(normalViews[i])
-		lightDesc.Position.Set(positionViews[i])
+		lightDesc.Diffuse.Set(diffuseTex[i])
+		lightDesc.Normal.Set(normalTex[i])
+		lightDesc.Position.Set(positionTex[i])
 	}
 
 	return &lightShader{
 		mat:       mat,
 		instances: lightsh,
 
-		diffuseViews:  diffuseViews,
-		normalViews:   normalViews,
-		positionViews: positionViews,
+		diffuseTex:  diffuseTex,
+		normalTex:   normalTex,
+		positionTex: positionTex,
 	}
 }
 
@@ -107,14 +117,14 @@ func (ls *lightShader) Descriptors(frame int) *LightDescriptors {
 }
 
 func (ls *lightShader) Destroy() {
+	for _, view := range ls.diffuseTex {
+		view.Destroy()
+	}
+	for _, view := range ls.normalTex {
+		view.Destroy()
+	}
+	for _, view := range ls.positionTex {
+		view.Destroy()
+	}
 	ls.mat.Destroy()
-	for _, view := range ls.diffuseViews {
-		view.Destroy()
-	}
-	for _, view := range ls.normalViews {
-		view.Destroy()
-	}
-	for _, view := range ls.positionViews {
-		view.Destroy()
-	}
 }

@@ -48,6 +48,7 @@ func NewForwardPass(
 
 				Image: attachment.FromImageArray(target.Surfaces()),
 			},
+			// todo: move to depth pre-pass
 			{
 				Name:        NormalsAttachment,
 				LoadOp:      core1_0.AttachmentLoadOpLoad,
@@ -95,7 +96,7 @@ func NewForwardPass(
 		pass:    pass,
 		fbuf:    fbuf,
 
-		materials:  NewMaterialSorter(app, target, pass, shadows.Shadowmap, material.StandardForward()),
+		materials:  NewMaterialSorter(app, target.Frames(), pass, shadows.Shadowmap, material.StandardForward()),
 		meshQuery:  object.NewQuery[mesh.Mesh](),
 		lightQuery: object.NewQuery[light.T](),
 	}

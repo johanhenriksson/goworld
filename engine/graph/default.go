@@ -32,11 +32,18 @@ func Default(app vulkan.App, target vulkan.Target) T {
 		shadows := pass.NewShadowPass(app, output)
 		shadowNode := g.Node(shadows)
 
-		deferred := g.Node(pass.NewDeferredPass(app, offscreen, depth, gbuffer, shadows))
-		deferred.After(shadowNode, core1_0.PipelineStageTopOfPipe)
+		// todo: depth pre-pass (forward)
+
+		deferredGeometry := g.Node(pass.NewDeferredGeometryPass(app, depth, gbuffer))
+
+		// todo: perform ssao pass here
+
+		deferredLighting := g.Node(pass.NewDeferredLightingPass(app, offscreen, gbuffer, shadows))
+		deferredLighting.After(shadowNode, core1_0.PipelineStageTopOfPipe)
+		deferredLighting.After(deferredGeometry, core1_0.PipelineStageTopOfPipe)
 
 		forward := g.Node(pass.NewForwardPass(app, offscreen, depth, gbuffer, shadows))
-		forward.After(deferred, core1_0.PipelineStageTopOfPipe)
+		forward.After(deferredLighting, core1_0.PipelineStageTopOfPipe)
 
 		//
 		// post processing
