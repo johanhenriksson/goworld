@@ -4,6 +4,9 @@
 #extension GL_ARB_shading_language_420pack : enable
 
 layout (location = 0) in vec3 inPos;
+layout (location = 1) in vec2 texcoord_0;
+
+layout (location = 0) out vec2 v_texcoord0;
 
 out gl_PerVertex 
 {
@@ -13,5 +16,6 @@ out gl_PerVertex
 
 void main() 
 {
+	v_texcoord0 = texcoord_0;
 	gl_Position = vec4(inPos, 1);
 }
