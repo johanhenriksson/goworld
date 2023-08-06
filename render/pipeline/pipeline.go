@@ -12,6 +12,7 @@ import (
 	"github.com/johanhenriksson/goworld/util"
 
 	"github.com/vkngwrapper/core/v2/core1_0"
+	"github.com/vkngwrapper/core/v2/driver"
 )
 
 type T interface {
@@ -29,7 +30,7 @@ type pipeline struct {
 
 func New(device device.T, args Args) T {
 	args.defaults()
-	log.Println("creating pipeline")
+	log.Println("creating pipeline", args.Key)
 
 	// todo: pipeline cache
 	// could probably be controlled a global setting?
@@ -184,6 +185,10 @@ func New(device device.T, args Args) T {
 	}
 	if result != core1_0.VKSuccess {
 		panic("failed to create pipeline")
+	}
+
+	if args.Key != "" {
+		device.SetDebugObjectName(driver.VulkanHandle(ptrs[0].Handle()), core1_0.ObjectTypePipeline, args.Key)
 	}
 
 	return &pipeline{

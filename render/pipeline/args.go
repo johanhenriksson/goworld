@@ -11,6 +11,7 @@ import (
 )
 
 type Args struct {
+	Key      string
 	Pass     renderpass.T
 	Subpass  renderpass.Name
 	Layout   Layout
