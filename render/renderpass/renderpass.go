@@ -20,6 +20,7 @@ type T interface {
 	Attachments() []attachment.T
 	Subpass(name Name) Subpass
 	Clear() []core1_0.ClearValue
+	Name() string
 }
 
 type renderpass struct {
@@ -31,6 +32,7 @@ type renderpass struct {
 	depth       attachment.T
 	indices     map[attachment.Name]int
 	clear       []core1_0.ClearValue
+	name        string
 }
 
 func New(device device.T, args Args) T {
@@ -155,11 +157,13 @@ func New(device device.T, args Args) T {
 		passIndices: subpassIndices,
 		subpasses:   args.Subpasses,
 		clear:       clear,
+		name:        args.Name,
 	}
 }
 
 func (r *renderpass) Ptr() core1_0.RenderPass { return r.ptr }
 func (r *renderpass) Depth() attachment.T     { return r.depth }
+func (r *renderpass) Name() string            { return r.name }
 
 func (r *renderpass) Attachment(name attachment.Name) attachment.T {
 	if name == attachment.DepthName {

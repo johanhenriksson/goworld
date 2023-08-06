@@ -1,6 +1,7 @@
 package material
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/johanhenriksson/goworld/render/command"
@@ -79,7 +80,9 @@ func New[D descriptor.Set](device device.T, args Args, descriptors D) T[D] {
 	// ... this could be cached ...
 	layout := pipeline.NewLayout(device, []descriptor.SetLayout{descLayout}, args.Constants)
 
+	pipelineName := fmt.Sprintf("%s/%s", args.Pass.Name(), args.Shader.Name())
 	pipe := pipeline.New(device, pipeline.Args{
+		Key:      pipelineName,
 		Layout:   layout,
 		Pass:     args.Pass,
 		Subpass:  args.Subpass,
