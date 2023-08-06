@@ -105,7 +105,7 @@ func NewLightShader(app vulkan.App, pass renderpass.T, gbuffer GeometryBuffer, o
 			panic(err)
 		}
 		occlusionTex[i], err = texture.FromImage(app.Device(), "deferred-ssao", occlusion.Surfaces()[i], texture.Args{
-			Filter: core1_0.FilterLinear,
+			Filter: core1_0.FilterNearest,
 		})
 		if err != nil {
 			panic(err)

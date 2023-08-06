@@ -39,15 +39,21 @@ vec3 lookup_color(sampler2D lut, vec3 clr) {
 }
 
 void main() {
-    // get input color
-    vec3 src = texture(tex_input, texcoord0.xy).rgb;
+    // todo: expose as uniform setting
+    float exposure = 1.0;
 
-    // color grading
-    vec3 graded = lookup_color(tex_lut, src);
+    // get input color
+    vec3 hdrColor = texture(tex_input, texcoord0.xy).rgb;
+
+    // exposure tone mapping
+    vec3 mapped = vec3(1.0) - exp(-hdrColor * exposure);
 
     // gamma correction
-    vec3 corrected = pow(graded, vec3(1/gamma));
+    vec3 corrected = pow(mapped, vec3(1/gamma));
+
+    // color grading
+    vec3 graded = lookup_color(tex_lut, corrected);
 
     // return
-    color = vec4(corrected, 1);
+    color = vec4(graded, 1);
 }
