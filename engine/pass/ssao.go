@@ -201,8 +201,8 @@ func (p *AmbientOcclusionPass) Record(cmds command.Recorder, args render.Args, s
 			Samples:    32,
 			Scale:      p.scale,
 			Radius:     0.7,
-			Bias:       0.03,
-			Power:      1.1,
+			Bias:       0.02,
+			Power:      2.6,
 		})
 		quad.Draw(cmd, 0)
 		cmd.CmdEndRenderPass()

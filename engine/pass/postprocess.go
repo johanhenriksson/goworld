@@ -23,7 +23,6 @@ type PostProcessPass struct {
 
 	app   vulkan.App
 	input vulkan.Target
-	ssao  vulkan.Target
 
 	quad  vertex.Mesh
 	mat   material.T[*PostProcessDescriptors]
@@ -32,7 +31,6 @@ type PostProcessPass struct {
 	pass  renderpass.T
 
 	inputTex []texture.T
-	ssaoTex  []texture.T
 }
 
 var _ Pass = &PostProcessPass{}
@@ -40,18 +38,16 @@ var _ Pass = &PostProcessPass{}
 type PostProcessDescriptors struct {
 	descriptor.Set
 	Input *descriptor.Sampler
-	SSAO  *descriptor.Sampler
 	LUT   *descriptor.Sampler
 }
 
-func NewPostProcessPass(app vulkan.App, target vulkan.Target, input vulkan.Target, ssao vulkan.Target) *PostProcessPass {
+func NewPostProcessPass(app vulkan.App, target vulkan.Target, input vulkan.Target) *PostProcessPass {
 	var err error
 	p := &PostProcessPass{
 		LUT: texture.PathRef("textures/color_grading/none.png"),
 
 		app:   app,
 		input: input,
-		ssao:  ssao,
 	}
 
 	p.quad = vertex.ScreenQuad("blur-pass-quad")
@@ -87,9 +83,6 @@ func NewPostProcessPass(app vulkan.App, target vulkan.Target, input vulkan.Targe
 			Input: &descriptor.Sampler{
 				Stages: core1_0.StageFragment,
 			},
-			SSAO: &descriptor.Sampler{
-				Stages: core1_0.StageFragment,
-			},
 			LUT: &descriptor.Sampler{
 				Stages: core1_0.StageFragment,
 			},
@@ -103,7 +96,6 @@ func NewPostProcessPass(app vulkan.App, target vulkan.Target, input vulkan.Targe
 
 	p.desc = p.mat.InstantiateMany(app.Pool(), frames)
 	p.inputTex = make([]texture.T, frames)
-	p.ssaoTex = make([]texture.T, frames)
 	for i := 0; i < input.Frames(); i++ {
 		inputKey := fmt.Sprintf("post-input-%d", i)
 		p.inputTex[i], err = texture.FromImage(app.Device(), inputKey, p.input.Surfaces()[i], texture.Args{
@@ -115,18 +107,6 @@ func NewPostProcessPass(app vulkan.App, target vulkan.Target, input vulkan.Targe
 			panic(err)
 		}
 		p.desc[i].Descriptors().Input.Set(p.inputTex[i])
-
-		ssaoKey := fmt.Sprintf("post-ssao-%d", i)
-		p.ssaoTex[i], err = texture.FromImage(app.Device(), ssaoKey, p.ssao.Surfaces()[i], texture.Args{
-			Filter: core1_0.FilterLinear,
-			Wrap:   core1_0.SamplerAddressModeClampToEdge,
-		})
-		if err != nil {
-			// todo: clean up
-			panic(err)
-		}
-		p.desc[i].Descriptors().SSAO.Set(p.ssaoTex[i])
-
 	}
 
 	return p
@@ -157,9 +137,6 @@ func (p *PostProcessPass) Name() string {
 
 func (p *PostProcessPass) Destroy() {
 	for _, tex := range p.inputTex {
-		tex.Destroy()
-	}
-	for _, tex := range p.ssaoTex {
 		tex.Destroy()
 	}
 	p.fbufs.Destroy()

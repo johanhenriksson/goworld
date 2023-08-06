@@ -16,12 +16,13 @@ import (
 
 type LightDescriptors struct {
 	descriptor.Set
-	Diffuse  *descriptor.Sampler
-	Normal   *descriptor.Sampler
-	Position *descriptor.Sampler
-	Camera   *descriptor.Uniform[uniform.Camera]
-	Lights   *descriptor.Storage[uniform.Light]
-	Shadow   *descriptor.SamplerArray
+	Camera    *descriptor.Uniform[uniform.Camera]
+	Lights    *descriptor.Storage[uniform.Light]
+	Diffuse   *descriptor.Sampler
+	Normal    *descriptor.Sampler
+	Position  *descriptor.Sampler
+	Occlusion *descriptor.Sampler
+	Shadow    *descriptor.SamplerArray
 }
 
 type LightShader interface {
@@ -34,12 +35,13 @@ type lightShader struct {
 	mat       material.T[*LightDescriptors]
 	instances []material.Instance[*LightDescriptors]
 
-	diffuseTex  []texture.T
-	normalTex   []texture.T
-	positionTex []texture.T
+	diffuseTex   []texture.T
+	normalTex    []texture.T
+	positionTex  []texture.T
+	occlusionTex []texture.T
 }
 
-func NewLightShader(app vulkan.App, pass renderpass.T, gbuffer GeometryBuffer) LightShader {
+func NewLightShader(app vulkan.App, pass renderpass.T, gbuffer GeometryBuffer, occlusion vulkan.Target) LightShader {
 	mat := material.New(
 		app.Device(),
 		material.Args{
@@ -50,6 +52,13 @@ func NewLightShader(app vulkan.App, pass renderpass.T, gbuffer GeometryBuffer) L
 			DepthTest: false,
 		},
 		&LightDescriptors{
+			Camera: &descriptor.Uniform[uniform.Camera]{
+				Stages: core1_0.StageFragment,
+			},
+			Lights: &descriptor.Storage[uniform.Light]{
+				Stages: core1_0.StageFragment,
+				Size:   256,
+			},
 			Diffuse: &descriptor.Sampler{
 				Stages: core1_0.StageFragment,
 			},
@@ -59,12 +68,8 @@ func NewLightShader(app vulkan.App, pass renderpass.T, gbuffer GeometryBuffer) L
 			Position: &descriptor.Sampler{
 				Stages: core1_0.StageFragment,
 			},
-			Camera: &descriptor.Uniform[uniform.Camera]{
+			Occlusion: &descriptor.Sampler{
 				Stages: core1_0.StageFragment,
-			},
-			Lights: &descriptor.Storage[uniform.Light]{
-				Stages: core1_0.StageFragment,
-				Size:   256,
 			},
 			Shadow: &descriptor.SamplerArray{
 				Stages: core1_0.StageFragment,
@@ -79,16 +84,29 @@ func NewLightShader(app vulkan.App, pass renderpass.T, gbuffer GeometryBuffer) L
 	diffuseTex := make([]texture.T, frames)
 	normalTex := make([]texture.T, frames)
 	positionTex := make([]texture.T, frames)
+	occlusionTex := make([]texture.T, frames)
 	for i := 0; i < frames; i++ {
-		diffuseTex[i], err = texture.FromImage(app.Device(), "deferred-diffuse", gbuffer.Diffuse()[i], texture.Args{})
+		diffuseTex[i], err = texture.FromImage(app.Device(), "deferred-diffuse", gbuffer.Diffuse()[i], texture.Args{
+			Filter: core1_0.FilterNearest,
+		})
 		if err != nil {
 			panic(err)
 		}
-		normalTex[i], err = texture.FromImage(app.Device(), "deferred-normal", gbuffer.Normal()[i], texture.Args{})
+		normalTex[i], err = texture.FromImage(app.Device(), "deferred-normal", gbuffer.Normal()[i], texture.Args{
+			Filter: core1_0.FilterNearest,
+		})
 		if err != nil {
 			panic(err)
 		}
-		positionTex[i], err = texture.FromImage(app.Device(), "deferred-position", gbuffer.Position()[i], texture.Args{})
+		positionTex[i], err = texture.FromImage(app.Device(), "deferred-position", gbuffer.Position()[i], texture.Args{
+			Filter: core1_0.FilterNearest,
+		})
+		if err != nil {
+			panic(err)
+		}
+		occlusionTex[i], err = texture.FromImage(app.Device(), "deferred-ssao", occlusion.Surfaces()[i], texture.Args{
+			Filter: core1_0.FilterLinear,
+		})
 		if err != nil {
 			panic(err)
 		}
@@ -97,15 +115,17 @@ func NewLightShader(app vulkan.App, pass renderpass.T, gbuffer GeometryBuffer) L
 		lightDesc.Diffuse.Set(diffuseTex[i])
 		lightDesc.Normal.Set(normalTex[i])
 		lightDesc.Position.Set(positionTex[i])
+		lightDesc.Occlusion.Set(occlusionTex[i])
 	}
 
 	return &lightShader{
 		mat:       mat,
 		instances: lightsh,
 
-		diffuseTex:  diffuseTex,
-		normalTex:   normalTex,
-		positionTex: positionTex,
+		diffuseTex:   diffuseTex,
+		normalTex:    normalTex,
+		positionTex:  positionTex,
+		occlusionTex: occlusionTex,
 	}
 }
 
@@ -124,6 +144,9 @@ func (ls *lightShader) Destroy() {
 		view.Destroy()
 	}
 	for _, view := range ls.positionTex {
+		view.Destroy()
+	}
+	for _, view := range ls.occlusionTex {
 		view.Destroy()
 	}
 	ls.mat.Destroy()

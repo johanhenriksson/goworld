@@ -22,6 +22,7 @@ const LightingSubpass renderpass.Name = "lighting"
 type DeferredLightPass struct {
 	target     vulkan.Target
 	gbuffer    GeometryBuffer
+	ssao       vulkan.Target
 	quad       vertex.Mesh
 	app        vulkan.App
 	pass       renderpass.T
@@ -38,6 +39,7 @@ func NewDeferredLightingPass(
 	target vulkan.Target,
 	gbuffer GeometryBuffer,
 	shadows Shadow,
+	occlusion vulkan.Target,
 ) *DeferredLightPass {
 	pass := renderpass.New(app.Device(), renderpass.Args{
 		Name: "Deferred Lighting",
@@ -70,7 +72,7 @@ func NewDeferredLightingPass(
 
 	quad := vertex.ScreenQuad("geometry-pass-quad")
 
-	lightsh := NewLightShader(app, pass, gbuffer)
+	lightsh := NewLightShader(app, pass, gbuffer, occlusion)
 
 	lightbufs := make([]*LightBuffer, target.Frames())
 	shadowmaps := make([]cache.SamplerCache, target.Frames())

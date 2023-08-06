@@ -11,8 +11,7 @@ layout(location = 0) in vec2 texcoord0;
 layout(location = 0) out vec4 color;
 
 layout(binding = 0) uniform sampler2D tex_input; // source image
-layout(binding = 1) uniform sampler2D tex_ssao; // screen-space ambient occlusion map
-layout(binding = 2) uniform sampler2D tex_lut; // color lookup table
+layout(binding = 1) uniform sampler2D tex_lut; // color lookup table
 
 #define MAXCOLOR 15.0 
 #define COLORS 16.0
@@ -46,14 +45,9 @@ void main() {
     // color grading
     vec3 graded = lookup_color(tex_lut, src);
 
-    float ssao = texture(tex_ssao, texcoord0.xy).r;
-    graded *= ssao;
-
     // gamma correction
     vec3 corrected = pow(graded, vec3(1/gamma));
 
     // return
     color = vec4(corrected, 1);
-
-    // color = vec4(ssao,ssao,ssao,1);
 }
