@@ -63,7 +63,7 @@ func New(appName string, deviceIndex int) App {
 	textures := cache.NewTextureCache(device, transfer)
 	shaders := cache.NewShaderCache(device)
 
-	pool := descriptor.NewPool(device, DefaultDescriptorPools)
+	pool := descriptor.NewPool(device, 1000, DefaultDescriptorPools)
 
 	return &backend{
 		appName: appName,
