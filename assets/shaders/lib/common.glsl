@@ -25,7 +25,7 @@ struct Light {
 
 	vec4 Color;                      // 16 -> 112
 	vec4 Position; 					 // 16 -> 128
-	int Type; 						 // 4  -> 132
+	uint Type; 						 // 4  -> 132
 	float Intensity; 				 // 4  -> 136
 	float Range; 					 // 4  -> 140
 	Attenuation Attenuation; 		 // 12 -> 152

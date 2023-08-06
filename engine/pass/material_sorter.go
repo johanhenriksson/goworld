@@ -4,6 +4,8 @@ import (
 	"github.com/johanhenriksson/goworld/core/light"
 	"github.com/johanhenriksson/goworld/core/mesh"
 	"github.com/johanhenriksson/goworld/engine/uniform"
+	"github.com/johanhenriksson/goworld/math/vec2"
+	"github.com/johanhenriksson/goworld/math/vec4"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/cache"
 	"github.com/johanhenriksson/goworld/render/command"
@@ -30,10 +32,16 @@ type MaterialSorter struct {
 }
 
 type MaterialData struct {
+	// shared between deferred & forward rendering:
+
 	Instance material.Instance[*material.Descriptors]
 	Objects  []uniform.Object
-	Lights   *LightBuffer
 	Textures cache.SamplerCache
+
+	// extra data needed for forward rendering:
+
+	Lights  *LightBuffer
+	Shadows *ShadowCache
 }
 
 func NewMaterialSorter(app vulkan.App, frames int, pass renderpass.T, lookup ShadowmapLookupFn, defaultMat *material.Def) *MaterialSorter {
@@ -56,6 +64,7 @@ func (m *MaterialSorter) Destroy() {
 		mat[0].Instance.Material().Destroy()
 		// todo: destroy more
 	}
+	m.cache = nil
 }
 
 func (m *MaterialSorter) Load(def *material.Def) bool {
@@ -120,7 +129,8 @@ func (m *MaterialSorter) Load(def *material.Def) bool {
 			Instance: instance,
 			Objects:  make([]uniform.Object, instance.Descriptors().Objects.Size),
 			Textures: textures,
-			Lights:   NewLightBuffer(instance.Descriptors().Lights, textures, m.lookup),
+			Lights:   NewLightBuffer(),
+			Shadows:  NewShadowCache(textures, m.lookup),
 		}
 	}
 
@@ -136,8 +146,9 @@ func (m *MaterialSorter) Draw(cmds command.Recorder, args render.Args, meshes []
 		ProjInv:     args.Projection.Invert(),
 		ViewInv:     args.View.Invert(),
 		ViewProjInv: args.VP.Invert(),
-		Eye:         args.Position,
-		Forward:     args.Forward,
+		Eye:         vec4.Extend(args.Position, 0),
+		Forward:     vec4.Extend(args.Forward, 0),
+		Viewport:    vec2.NewI(args.Viewport.Width, args.Viewport.Height),
 	}
 	m.DrawCamera(cmds, args, camera, meshes, lights)
 }
@@ -169,9 +180,9 @@ func (m *MaterialSorter) DrawCamera(cmds command.Recorder, args render.Args, cam
 			// how to get ambient light info?
 			mat.Lights.Reset()
 			for _, lit := range lights {
-				mat.Lights.Store(args, lit)
+				mat.Lights.Store(lit.LightData(mat.Shadows))
 			}
-			mat.Lights.Flush()
+			mat.Lights.Flush(mat.Instance.Descriptors().Lights)
 		}
 
 		for i, msh := range objects {
@@ -204,6 +215,6 @@ func (m *MaterialSorter) DrawCamera(cmds command.Recorder, args render.Args, cam
 		}
 
 		mat.Instance.Descriptors().Objects.SetRange(0, mat.Objects[:len(objects)])
-		mat.Textures.UpdateDescriptors()
+		mat.Textures.Flush()
 	}
 }

@@ -2,6 +2,7 @@ package light
 
 import (
 	"github.com/johanhenriksson/goworld/core/object"
+	"github.com/johanhenriksson/goworld/engine/uniform"
 	"github.com/johanhenriksson/goworld/math"
 	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/math/vec3"
@@ -53,10 +54,9 @@ func NewDirectional(args DirectionalArgs) *Directional {
 	return lit
 }
 
-func (lit *Directional) Name() string        { return "DirectionalLight" }
-func (lit *Directional) Type() Type          { return TypeDirectional }
-func (lit *Directional) CastShadows() bool   { return lit.Shadows.Get() }
-func (lit *Directional) Cascades() []Cascade { return lit.cascades }
+func (lit *Directional) Name() string      { return "DirectionalLight" }
+func (lit *Directional) Type() Type        { return TypeDirectional }
+func (lit *Directional) CastShadows() bool { return lit.Shadows.Get() }
 
 func farSplitDist(cascade, cascades int, near, far, splitLambda float32) float32 {
 	clipRange := far - near
@@ -83,28 +83,11 @@ func nearSplitDist(cascade, cascades int, near, far, splitLambda float32) float3
 }
 
 func (lit *Directional) PreDraw(args render.Args, scene object.Object) error {
-	lit.updateCascades(args)
-	return nil
-}
-
-func (lit *Directional) LightDescriptor(args render.Args, cascade int) Descriptor {
-	ldir := lit.Transform().Forward()
-	return Descriptor{
-		Type:       TypeDirectional,
-		Position:   vec4.Extend(ldir, 0),
-		Color:      lit.Color.Get(),
-		Intensity:  lit.Intensity.Get(),
-		Range:      lit.CascadeBlend.Get(),
-		View:       lit.cascades[cascade].View,
-		Projection: lit.cascades[cascade].Proj,
-		ViewProj:   lit.cascades[cascade].ViewProj,
-	}
-}
-
-func (lit *Directional) updateCascades(args render.Args) {
+	// update cascades
 	for i, _ := range lit.cascades {
 		lit.cascades[i] = lit.calculateCascade(args, i, len(lit.cascades))
 	}
+	return nil
 }
 
 func (lit *Directional) calculateCascade(args render.Args, cascade, cascades int) Cascade {
@@ -178,5 +161,44 @@ func (lit *Directional) calculateCascade(args render.Args, cascade, cascades int
 		ViewProj:  lvp,
 		NearSplit: nearSplit * args.Far,
 		FarSplit:  farSplit * args.Far,
+	}
+}
+
+func (lit *Directional) LightData(shadowmaps ShadowmapStore) uniform.Light {
+	ldir := lit.Transform().Forward()
+	entry := uniform.Light{
+		Type:      uint32(TypeDirectional),
+		Position:  vec4.Extend(ldir, 0),
+		Color:     lit.Color.Get(),
+		Intensity: lit.Intensity.Get(),
+		Range:     lit.CascadeBlend.Get(),
+	}
+
+	for cascadeIndex, cascade := range lit.cascades {
+		entry.ViewProj[cascadeIndex] = cascade.ViewProj
+		entry.Distance[cascadeIndex] = cascade.FarSplit
+		if handle, exists := shadowmaps.Lookup(lit, cascadeIndex); exists {
+			entry.Shadowmap[cascadeIndex] = uint32(handle)
+		}
+	}
+
+	return entry
+}
+
+func (lit *Directional) Shadowmaps() int {
+	return len(lit.cascades)
+}
+
+func (lit *Directional) ShadowProjection(mapIndex int) uniform.Camera {
+	cascade := lit.cascades[mapIndex]
+	return uniform.Camera{
+		Proj:        cascade.Proj,
+		View:        cascade.View,
+		ViewProj:    cascade.ViewProj,
+		ProjInv:     cascade.Proj.Invert(),
+		ViewInv:     cascade.View.Invert(),
+		ViewProjInv: cascade.ViewProj.Invert(),
+		Eye:         vec4.Extend(lit.Transform().Position(), 0),
+		Forward:     vec4.Extend(lit.Transform().Forward(), 0),
 	}
 }

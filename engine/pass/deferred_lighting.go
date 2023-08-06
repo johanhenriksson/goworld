@@ -4,6 +4,8 @@ import (
 	"github.com/johanhenriksson/goworld/core/light"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/engine/uniform"
+	"github.com/johanhenriksson/goworld/math/vec2"
+	"github.com/johanhenriksson/goworld/math/vec4"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/cache"
 	"github.com/johanhenriksson/goworld/render/color"
@@ -28,8 +30,8 @@ type DeferredLightPass struct {
 	pass       renderpass.T
 	light      LightShader
 	fbuf       framebuffer.Array
-	shadows    Shadow
-	shadowmaps []cache.SamplerCache
+	samplers   []cache.SamplerCache
+	shadows    []*ShadowCache
 	lightbufs  []*LightBuffer
 	lightQuery *object.Query[light.T]
 }
@@ -74,11 +76,13 @@ func NewDeferredLightingPass(
 
 	lightsh := NewLightShader(app, pass, gbuffer, occlusion)
 
+	samplers := make([]cache.SamplerCache, target.Frames())
 	lightbufs := make([]*LightBuffer, target.Frames())
-	shadowmaps := make([]cache.SamplerCache, target.Frames())
+	shadowmaps := make([]*ShadowCache, target.Frames())
 	for i := range lightbufs {
-		shadowmaps[i] = cache.NewSamplerCache(app.Textures(), lightsh.Descriptors(i).Shadow)
-		lightbufs[i] = NewLightBuffer(lightsh.Descriptors(i).Lights, shadowmaps[i], shadows.Shadowmap)
+		samplers[i] = cache.NewSamplerCache(app.Textures(), lightsh.Descriptors(i).Shadow)
+		shadowmaps[i] = NewShadowCache(samplers[i], shadows.Shadowmap)
+		lightbufs[i] = NewLightBuffer()
 	}
 
 	return &DeferredLightPass{
@@ -88,9 +92,8 @@ func NewDeferredLightingPass(
 		quad:       quad,
 		light:      lightsh,
 		pass:       pass,
-		shadows:    shadows,
 		fbuf:       fbuf,
-		shadowmaps: shadowmaps,
+		shadows:    shadowmaps,
 		lightbufs:  lightbufs,
 		lightQuery: object.NewQuery[light.T](),
 	}
@@ -104,22 +107,26 @@ func (p *DeferredLightPass) Record(cmds command.Recorder, args render.Args, scen
 		ProjInv:     args.Projection.Invert(),
 		ViewInv:     args.View.Invert(),
 		ViewProjInv: args.VP.Invert(),
-		Eye:         args.Position,
-		Forward:     args.Forward,
+		Eye:         vec4.Extend(args.Position, 0),
+		Forward:     vec4.Extend(args.Forward, 0),
+		Viewport:    vec2.NewI(args.Viewport.Width, args.Viewport.Height),
 	}
 
-	p.light.Descriptors(args.Context.Index).Camera.Set(camera)
+	desc := p.light.Descriptors(args.Context.Index)
+	desc.Camera.Set(camera)
 
 	lightbuf := p.lightbufs[args.Context.Index]
+	shadows := p.shadows[args.Context.Index]
 	lightbuf.Reset()
 
 	// todo: perform frustum culling on light volumes
 	lights := p.lightQuery.Reset().Collect(scene)
 	for _, lit := range lights {
-		lightbuf.Store(args, lit)
+		lightbuf.Store(lit.LightData(shadows))
 	}
 
-	lightbuf.Flush()
+	lightbuf.Flush(desc.Lights)
+	shadows.Flush()
 
 	quad := p.app.Meshes().Fetch(p.quad)
 	cmds.Record(func(cmd command.Buffer) {
@@ -138,10 +145,10 @@ func (p *DeferredLightPass) Name() string {
 }
 
 func (p *DeferredLightPass) Destroy() {
-	for _, cache := range p.shadowmaps {
+	for _, cache := range p.samplers {
 		cache.Destroy()
 	}
-	p.shadowmaps = nil
+	p.samplers = nil
 	p.lightbufs = nil
 
 	p.fbuf.Destroy()

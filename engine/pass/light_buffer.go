@@ -1,12 +1,10 @@
 package pass
 
 import (
-	"log"
 	"unsafe"
 
 	"github.com/johanhenriksson/goworld/core/light"
 	"github.com/johanhenriksson/goworld/engine/uniform"
-	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/cache"
 	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/descriptor"
@@ -16,20 +14,13 @@ import (
 type ShadowmapLookupFn func(light.T, int) texture.T
 
 type LightBuffer struct {
-	lights       *descriptor.Storage[uniform.Light]
-	shadows      cache.SamplerCache
-	buffer       []uniform.Light
-	settings     uniform.LightSettings
-	lookupShadow ShadowmapLookupFn
-	next         int
+	buffer   []uniform.Light
+	settings uniform.LightSettings
 }
 
-func NewLightBuffer(lights *descriptor.Storage[uniform.Light], shadowCache cache.SamplerCache, lookup ShadowmapLookupFn) *LightBuffer {
+func NewLightBuffer() *LightBuffer {
 	return &LightBuffer{
-		lights:       lights,
-		shadows:      shadowCache,
-		buffer:       make([]uniform.Light, lights.Size),
-		lookupShadow: lookup,
+		buffer: make([]uniform.Light, 1, 100),
 
 		// default lighting settings
 		settings: uniform.LightSettings{
@@ -41,58 +32,51 @@ func NewLightBuffer(lights *descriptor.Storage[uniform.Light], shadowCache cache
 			ShadowSamples:      1,
 			NormalOffset:       0.1,
 		},
-		next: 1,
 	}
 }
 
-func (b *LightBuffer) Flush() {
+func (b *LightBuffer) Flush(desc *descriptor.Storage[uniform.Light]) {
 	// settings is stored in the first element of the buffer
-	b.settings.Count = int32(b.next - 1)
+	// it excludes the first element containing the light settings
+	b.settings.Count = int32(len(b.buffer) - 1)
 	b.buffer[0] = *(*uniform.Light)(unsafe.Pointer(&b.settings))
-
-	b.lights.SetRange(0, b.buffer[:b.next])
-	b.shadows.UpdateDescriptors()
+	desc.SetRange(0, b.buffer)
 }
 
 func (b *LightBuffer) Reset() {
-	b.next = 1
+	b.buffer = b.buffer[:1]
 }
 
-func (b *LightBuffer) Count() int {
-	return b.next
+func (b *LightBuffer) Store(light uniform.Light) {
+	b.buffer = append(b.buffer, light)
 }
 
-func (b *LightBuffer) Store(args render.Args, lit light.T) {
-	desc := lit.LightDescriptor(args, 0)
+type ShadowCache struct {
+	samplers cache.SamplerCache
+	lookup   ShadowmapLookupFn
+	shared   bool
+}
 
-	entry := uniform.Light{
-		Type:      desc.Type,
-		Color:     desc.Color,
-		Position:  desc.Position,
-		Intensity: desc.Intensity,
-		Range:     desc.Range,
+var _ light.ShadowmapStore = &ShadowCache{}
+
+func NewShadowCache(samplers cache.SamplerCache, lookup ShadowmapLookupFn) *ShadowCache {
+	return &ShadowCache{
+		samplers: samplers,
+		lookup:   lookup,
+		shared:   true,
 	}
+}
 
-	switch lit.(type) {
-	case *light.Point:
-		entry.Attenuation = desc.Attenuation
-
-	case *light.Directional:
-		for cascadeIndex, cascade := range lit.Cascades() {
-			entry.ViewProj[cascadeIndex] = cascade.ViewProj
-			entry.Distance[cascadeIndex] = cascade.FarSplit
-
-			if shadowtex := b.lookupShadow(lit, cascadeIndex); shadowtex != nil {
-				handle := b.shadows.Assign(shadowtex)
-				entry.Shadowmap[cascadeIndex] = uint32(handle.ID)
-			} else {
-				// no shadowmap available - disable shadows until its available
-				log.Println("missing cascade shadowmap", cascadeIndex)
-				entry.Shadowmap[cascadeIndex] = 0
-			}
-		}
+func (s *ShadowCache) Lookup(lit light.T, cascade int) (int, bool) {
+	if shadowtex := s.lookup(lit, cascade); shadowtex != nil {
+		handle := s.samplers.Assign(shadowtex)
+		return handle.ID, true
 	}
+	// no shadowmap available
+	return 0, false
+}
 
-	b.buffer[b.next] = entry
-	b.next++
+// Flush the underlying sampler cache
+func (s *ShadowCache) Flush() {
+	s.samplers.Flush()
 }

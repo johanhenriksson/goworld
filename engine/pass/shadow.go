@@ -7,7 +7,6 @@ import (
 	"github.com/johanhenriksson/goworld/core/light"
 	"github.com/johanhenriksson/goworld/core/mesh"
 	"github.com/johanhenriksson/goworld/core/object"
-	"github.com/johanhenriksson/goworld/engine/uniform"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/framebuffer"
@@ -116,7 +115,7 @@ func (p *shadowpass) Name() string {
 func (p *shadowpass) createShadowmap(light light.T) Shadowmap {
 	log.Println("creating shadowmap for", light.Name())
 
-	cascades := make([]Cascade, len(light.Cascades()))
+	cascades := make([]Cascade, light.Shadowmaps())
 	for i := range cascades {
 		key := fmt.Sprintf("%s-%d", object.Key("light", light), i)
 		fbuf, err := framebuffer.New(p.app.Device(), key, p.size, p.size, p.pass)
@@ -174,17 +173,7 @@ func (p *shadowpass) Record(cmds command.Recorder, args render.Args, scene objec
 		}
 
 		for index, cascade := range shadowmap.Cascades {
-			lightDesc := light.LightDescriptor(args, index)
-			camera := uniform.Camera{
-				Proj:        lightDesc.Projection,
-				View:        lightDesc.View,
-				ViewProj:    lightDesc.ViewProj,
-				ProjInv:     lightDesc.Projection.Invert(),
-				ViewInv:     lightDesc.View.Invert(),
-				ViewProjInv: lightDesc.ViewProj.Invert(),
-				Eye:         light.Transform().Position(),
-				Forward:     light.Transform().Forward(),
-			}
+			camera := light.ShadowProjection(index)
 
 			frame := cascade.Frame
 			cmds.Record(func(cmd command.Buffer) {

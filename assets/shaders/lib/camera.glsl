@@ -5,6 +5,7 @@ layout (binding = 0) uniform Camera {
 	mat4 ProjInv;
 	mat4 ViewInv;
 	mat4 ViewProjInv;
-	vec3 Eye;
-	vec3 Forward;
+	vec4 Eye;
+	vec4 Forward;
+	vec2 Viewport;
 } camera;
