@@ -34,7 +34,7 @@ func NewLightBuffer(lights *descriptor.Storage[uniform.Light], shadowCache cache
 		// default lighting settings
 		settings: uniform.LightSettings{
 			AmbientColor:     color.White,
-			AmbientIntensity: 0.33,
+			AmbientIntensity: 0.4,
 
 			ShadowBias:         0.005,
 			ShadowSampleRadius: 1,

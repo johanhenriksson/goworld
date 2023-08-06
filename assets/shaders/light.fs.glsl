@@ -16,10 +16,11 @@ layout (std430, binding = 1) readonly buffer LightBuffer {
 layout (binding = 2) uniform sampler2D tex_diffuse;
 layout (binding = 3) uniform sampler2D tex_normal;
 layout (binding = 4) uniform sampler2D tex_position;
+layout (binding = 5) uniform sampler2D tex_occlusion;
 
 // the variable-sized array must have the largest binding id
 #define SHADOWMAP_SAMPLER shadowmaps
-layout (binding = 5) uniform sampler2D[] shadowmaps;
+layout (binding = 6) uniform sampler2D[] shadowmaps;
 
 #include "lib/lighting.glsl"
 
@@ -43,11 +44,13 @@ void main() {
 	vec3 position = getWorldPosition(viewPos);
 	vec3 normal = getWorldNormal(viewNormal);
 
+	float ssao = texture(tex_occlusion, v_texcoord0).r;
+
 	// accumulate lighting
-	vec3 lightColor = ambientLight(lights.settings);
+	vec3 lightColor = ambientLight(lights.settings, occlusion * ssao);
 	int lightCount = lights.settings.Count;
 	for(int i = 0; i < lightCount; i++) {
-		lightColor += calculateLightColor(lights.item[i], position, normal, viewPos.z, occlusion, lights.settings);
+		lightColor += calculateLightColor(lights.item[i], position, normal, viewPos.z, lights.settings);
 	}
 
 	// linearize gbuffer diffuse

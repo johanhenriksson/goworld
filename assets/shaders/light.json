@@ -15,6 +15,7 @@
     "Diffuse": 2,
     "Normal": 3,
     "Position": 4,
-    "Shadow": 5
+    "Occlusion": 5,
+    "Shadow": 6
   }
 }

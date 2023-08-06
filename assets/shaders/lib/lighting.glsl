@@ -110,11 +110,11 @@ float calculatePointLightContrib(Light light, vec3 surfaceToLight, float distanc
 	return normalCoef * attenuation;
 }
 
-vec3 ambientLight(LightSettings settings) {
-	return settings.AmbientColor.rgb * settings.AmbientIntensity;
+vec3 ambientLight(LightSettings settings, float occlusion) {
+	return settings.AmbientColor.rgb * settings.AmbientIntensity * occlusion;
 }
 
-vec3 calculateLightColor(Light light, vec3 position, vec3 normal, float depth, float occlusion, LightSettings settings) {
+vec3 calculateLightColor(Light light, vec3 position, vec3 normal, float depth, LightSettings settings) {
 	float contrib = 0.0;
 	float shadow = 1.0;
 	if (light.Type == DIRECTIONAL_LIGHT) {
@@ -147,5 +147,5 @@ vec3 calculateLightColor(Light light, vec3 position, vec3 normal, float depth, f
 		contrib = calculatePointLightContrib(light, surfaceToLight, distanceToLight, normal);
 	} 
 
-	return light.Color.rgb * light.Intensity * contrib * shadow * occlusion;
+	return light.Color.rgb * light.Intensity * contrib * shadow;
 }
