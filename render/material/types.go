@@ -1,6 +1,10 @@
 package material
 
-import "github.com/johanhenriksson/goworld/render/vertex"
+import (
+	"github.com/johanhenriksson/goworld/render/vertex"
+
+	"github.com/vkngwrapper/core/v2/core1_0"
+)
 
 // todo: this is rather implementation specific and likely
 // does not belong in the render package
@@ -12,7 +16,6 @@ func StandardDeferred() *Def {
 		VertexFormat: vertex.T{},
 		DepthTest:    true,
 		DepthWrite:   true,
-		DepthClamp:   false,
 		Primitive:    vertex.Triangles,
 		CullMode:     vertex.CullBack,
 	}
@@ -25,7 +28,7 @@ func StandardForward() *Def {
 		VertexFormat: vertex.T{},
 		DepthTest:    true,
 		DepthWrite:   true,
-		DepthClamp:   false,
+		DepthFunc:    core1_0.CompareOpLessOrEqual,
 		Primitive:    vertex.Triangles,
 		CullMode:     vertex.CullBack,
 	}
@@ -38,7 +41,7 @@ func ColoredForward() *Def {
 		VertexFormat: vertex.C{},
 		DepthTest:    true,
 		DepthWrite:   true,
-		DepthClamp:   false,
+		DepthFunc:    core1_0.CompareOpLessOrEqual,
 		Primitive:    vertex.Triangles,
 		CullMode:     vertex.CullBack,
 	}
@@ -52,7 +55,7 @@ func Lines() *Def {
 		Primitive:    vertex.Lines,
 		DepthTest:    true,
 		DepthWrite:   false,
-		DepthClamp:   false,
+		DepthFunc:    core1_0.CompareOpLessOrEqual,
 		CullMode:     vertex.CullNone,
 	}
 }

@@ -36,6 +36,7 @@ type Def struct {
 	DepthTest    bool
 	DepthWrite   bool
 	DepthClamp   bool
+	DepthFunc    core1_0.CompareOp
 	Primitive    vertex.Primitive
 	CullMode     vertex.CullMode
 }
@@ -71,6 +72,7 @@ func FromDef(dev device.T, pool descriptor.Pool, rpass renderpass.T, def *Def) T
 			DepthTest:  def.DepthTest,
 			DepthWrite: def.DepthWrite,
 			DepthClamp: def.DepthClamp,
+			DepthFunc:  def.DepthFunc,
 			Primitive:  def.Primitive,
 			CullMode:   def.CullMode,
 		},

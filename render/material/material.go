@@ -12,6 +12,8 @@ import (
 	"github.com/johanhenriksson/goworld/render/texture"
 	"github.com/johanhenriksson/goworld/render/vertex"
 	"github.com/johanhenriksson/goworld/util"
+
+	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
 // Materials combine pipelines and descriptors into a common unit.
@@ -44,6 +46,7 @@ type Args struct {
 	DepthClamp bool
 	DepthBias  float32
 	DepthSlope float32
+	DepthFunc  core1_0.CompareOp
 	CullMode   vertex.CullMode
 }
 
@@ -87,6 +90,7 @@ func New[D descriptor.Set](device device.T, args Args, descriptors D) T[D] {
 		DepthTest:  args.DepthTest,
 		DepthWrite: args.DepthWrite,
 		DepthClamp: args.DepthClamp,
+		DepthFunc:  args.DepthFunc,
 		CullMode:   args.CullMode,
 	})
 
