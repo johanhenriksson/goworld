@@ -2,7 +2,6 @@ package graph
 
 import (
 	"github.com/johanhenriksson/goworld/engine/pass"
-	"github.com/johanhenriksson/goworld/render/image"
 	"github.com/johanhenriksson/goworld/render/vulkan"
 
 	"github.com/vkngwrapper/core/v2/core1_0"
@@ -21,7 +20,7 @@ func Default(app vulkan.App, target vulkan.Target) T {
 		depth := vulkan.NewDepthTarget(app.Device(), "main-depth", size)
 
 		// main off-screen color buffer
-		offscreen := vulkan.NewColorTarget(app.Device(), "main-color", image.FormatRGBA8Unorm, size)
+		hdrBuffer := vulkan.NewColorTarget(app.Device(), "main-color", core1_0.FormatR16G16B16A16SignedFloat, size)
 
 		// create geometry buffer
 		gbuffer, err := pass.NewGbuffer(app.Device(), size)
@@ -58,11 +57,11 @@ func Default(app vulkan.App, target vulkan.Target) T {
 		blur := g.Node(pass.NewBlurPass(app, blurOutput, ssaoOutput))
 		blur.After(ssao, core1_0.PipelineStageTopOfPipe)
 
-		deferredLighting := g.Node(pass.NewDeferredLightingPass(app, offscreen, gbuffer, shadows, blurOutput))
+		deferredLighting := g.Node(pass.NewDeferredLightingPass(app, hdrBuffer, gbuffer, shadows, blurOutput))
 		deferredLighting.After(shadowNode, core1_0.PipelineStageTopOfPipe)
 		deferredLighting.After(blur, core1_0.PipelineStageTopOfPipe)
 
-		forward := g.Node(pass.NewForwardPass(app, offscreen, depth, gbuffer, shadows))
+		forward := g.Node(pass.NewForwardPass(app, hdrBuffer, depth, gbuffer, shadows))
 		forward.After(deferredLighting, core1_0.PipelineStageTopOfPipe)
 
 		//
@@ -70,8 +69,8 @@ func Default(app vulkan.App, target vulkan.Target) T {
 		//
 
 		// post process pass
-		composition := vulkan.NewColorTarget(app.Device(), "composition", offscreen.SurfaceFormat(), offscreen.Size())
-		post := g.Node(pass.NewPostProcessPass(app, composition, offscreen))
+		composition := vulkan.NewColorTarget(app.Device(), "composition", hdrBuffer.SurfaceFormat(), hdrBuffer.Size())
+		post := g.Node(pass.NewPostProcessPass(app, composition, hdrBuffer))
 		post.After(forward, core1_0.PipelineStageTopOfPipe)
 
 		lines := g.Node(pass.NewLinePass(app, composition, depth))
@@ -85,7 +84,7 @@ func Default(app vulkan.App, target vulkan.Target) T {
 
 		return []Resource{
 			depth,
-			offscreen,
+			hdrBuffer,
 			gbuffer,
 			ssaoOutput,
 			blurOutput,

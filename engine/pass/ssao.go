@@ -200,7 +200,7 @@ func (p *AmbientOcclusionPass) Record(cmds command.Recorder, args render.Args, s
 			Kernel:     p.kernel,
 			Samples:    32,
 			Scale:      p.scale,
-			Radius:     0.7,
+			Radius:     0.4,
 			Bias:       0.02,
 			Power:      2.6,
 		})
