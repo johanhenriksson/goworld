@@ -71,7 +71,7 @@ func NewLinePass(app vulkan.App, target vulkan.Target, depth vulkan.Target) *Lin
 		target:    target,
 		pass:      pass,
 		fbuf:      fbufs,
-		materials: NewMaterialSorter(app, target.Frames(), pass, nil, material.Lines()),
+		materials: NewMaterialSorter(app, target.Frames(), pass, nil, material.Lines(), nil),
 		meshQuery: object.NewQuery[mesh.Mesh](),
 	}
 }

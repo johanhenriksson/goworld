@@ -76,7 +76,7 @@ func NewForwardPass(
 		pass:   pass,
 		fbuf:   fbuf,
 
-		materials:  NewMaterialSorter(app, target.Frames(), pass, shadows.Shadowmap, material.StandardForward()),
+		materials:  NewMaterialSorter(app, target.Frames(), pass, shadows.Shadowmap, material.StandardForward(), nil),
 		meshQuery:  object.NewQuery[mesh.Mesh](),
 		lightQuery: object.NewQuery[light.T](),
 	}

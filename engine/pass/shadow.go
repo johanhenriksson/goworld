@@ -142,14 +142,14 @@ func (p *shadowpass) createShadowmap(light light.T) Shadowmap {
 			VertexFormat: vertex.T{},
 			DepthTest:    true,
 			DepthWrite:   true,
-		})
-		mats.TransformFn = func(d *material.Def) *material.Def {
-			shadowMat := *d
-			shadowMat.Shader = "shadow"
-			shadowMat.CullMode = vertex.CullFront
-			shadowMat.DepthClamp = true
-			return &shadowMat
-		}
+		},
+			func(d *material.Def) *material.Def {
+				shadowMat := *d
+				shadowMat.Shader = "shadow"
+				shadowMat.CullMode = vertex.CullFront
+				shadowMat.DepthClamp = true
+				return &shadowMat
+			})
 		cascades[i].Mats = mats
 	}
 
@@ -185,7 +185,7 @@ func (p *shadowpass) Record(cmds command.Recorder, args render.Args, scene objec
 				Reset().
 				Where(castsShadows).
 				Collect(scene)
-			cascade.Mats.DrawCamera(cmds, args, camera, meshes, nil)
+			cascade.Mats.DrawCamera(cmds, args.Context.Index, camera, meshes, nil)
 
 			cmds.Record(func(cmd command.Buffer) {
 				cmd.CmdEndRenderPass()
