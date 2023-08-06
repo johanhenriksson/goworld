@@ -51,26 +51,25 @@ func NewDeferredGeometryPass(
 			},
 			{
 				Name:        NormalsAttachment,
-				LoadOp:      core1_0.AttachmentLoadOpClear,
+				LoadOp:      core1_0.AttachmentLoadOpLoad,
 				StoreOp:     core1_0.AttachmentStoreOpStore,
 				FinalLayout: core1_0.ImageLayoutShaderReadOnlyOptimal,
 				Image:       attachment.FromImageArray(gbuffer.Normal()),
 			},
 			{
 				Name:        PositionAttachment,
-				LoadOp:      core1_0.AttachmentLoadOpClear,
+				LoadOp:      core1_0.AttachmentLoadOpLoad,
 				StoreOp:     core1_0.AttachmentStoreOpStore,
 				FinalLayout: core1_0.ImageLayoutShaderReadOnlyOptimal,
 				Image:       attachment.FromImageArray(gbuffer.Position()),
 			},
 		},
 		DepthAttachment: &attachment.Depth{
-			LoadOp:        core1_0.AttachmentLoadOpClear,
-			StencilLoadOp: core1_0.AttachmentLoadOpClear,
+			LoadOp:        core1_0.AttachmentLoadOpLoad,
+			StencilLoadOp: core1_0.AttachmentLoadOpLoad,
 			StoreOp:       core1_0.AttachmentStoreOpStore,
 			FinalLayout:   core1_0.ImageLayoutShaderReadOnlyOptimal,
 			Image:         attachment.FromImageArray(depth.Surfaces()),
-			ClearDepth:    1,
 		},
 		Subpasses: []renderpass.Subpass{
 			{
