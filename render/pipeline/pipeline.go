@@ -42,6 +42,10 @@ func New(device device.T, args Args) T {
 		}
 	})
 
+	log.Println("  depth test:", args.DepthTest)
+	log.Println("  depth func:", args.DepthFunc)
+	log.Println("  depth write:", args.DepthWrite)
+
 	log.Println("  attributes", args.Pointers)
 	attrs := pointersToVertexAttributes(args.Pointers, 0)
 
