@@ -66,7 +66,7 @@ func Default(app vulkan.App, target vulkan.Target) T {
 		deferredLighting.After(blur, core1_0.PipelineStageTopOfPipe)
 
 		// forward pass
-		forward := g.Node(pass.NewForwardPass(app, hdrBuffer, depth, gbuffer, shadows))
+		forward := g.Node(pass.NewForwardPass(app, hdrBuffer, depth, shadows))
 		forward.After(deferredLighting, core1_0.PipelineStageTopOfPipe)
 
 		//

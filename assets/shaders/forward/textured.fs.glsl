@@ -27,8 +27,4 @@ void main()
     // gamma correct & write fragment
 	vec3 linearColor = pow(albedo.rgb, vec3(gamma));
     diffuse = vec4(linearColor * lightColor, albedo.a);
-
-    // update gbuffer
-    normal = pack_normal(normal0);
-    position = vec4(position0, 1);
 }
