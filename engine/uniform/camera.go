@@ -2,7 +2,8 @@ package uniform
 
 import (
 	"github.com/johanhenriksson/goworld/math/mat4"
-	"github.com/johanhenriksson/goworld/math/vec3"
+	"github.com/johanhenriksson/goworld/math/vec2"
+	"github.com/johanhenriksson/goworld/math/vec4"
 )
 
 type Camera struct {
@@ -12,7 +13,7 @@ type Camera struct {
 	ProjInv     mat4.T
 	ViewInv     mat4.T
 	ViewProjInv mat4.T
-	Eye         vec3.T
-	pad0        float32
-	Forward     vec3.T
+	Eye         vec4.T
+	Forward     vec4.T
+	Viewport    vec2.T
 }

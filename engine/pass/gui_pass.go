@@ -172,7 +172,7 @@ func (p *GuiPass) Record(cmds command.Recorder, args render.Args, scene object.C
 	}
 
 	// update sampler cache
-	textures.UpdateDescriptors()
+	textures.Flush()
 
 	// todo: collect and depth sort
 

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"unsafe"
 
-	"github.com/johanhenriksson/goworld/core/light"
 	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/math/vec4"
 	"github.com/johanhenriksson/goworld/render/color"
@@ -16,10 +15,16 @@ type Light struct {
 	Distance    [4]float32
 	Color       color.T
 	Position    vec4.T
-	Type        light.Type
+	Type        uint32
 	Intensity   float32
 	Range       float32
-	Attenuation light.Attenuation
+	Attenuation Attenuation
+}
+
+type Attenuation struct {
+	Constant  float32
+	Linear    float32
+	Quadratic float32
 }
 
 type LightSettings struct {

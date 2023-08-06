@@ -36,7 +36,7 @@ type SamplerCache interface {
 	Assign(texture.T) *SamplerHandle
 
 	// Writes descriptor updates to the backing Sampler Array.
-	UpdateDescriptors()
+	Flush()
 }
 
 func NewSamplerCache(textures TextureCache, desc *descriptor.SamplerArray) SamplerCache {
@@ -116,7 +116,7 @@ func (s *samplers) Assign(tex texture.T) *SamplerHandle {
 	return handle
 }
 
-func (s *samplers) UpdateDescriptors() {
+func (s *samplers) Flush() {
 	s.Tick()
 
 	for _, handle := range s.reverse {

@@ -1,7 +1,7 @@
 package light
 
 // Type indicates which kind of light. Point, Directional etc
-type Type int32
+type Type uint32
 
 const (
 	// PointLight is a normal light casting rays in all directions.
