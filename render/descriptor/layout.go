@@ -17,6 +17,7 @@ type Map map[string]Descriptor
 type SetLayout interface {
 	device.Resource[core1_0.DescriptorSetLayout]
 	Name() string
+	Counts() map[core1_0.DescriptorType]int
 	VariableCount() int
 }
 
@@ -33,6 +34,7 @@ type layout[S Set] struct {
 	set       S
 	allocated []Descriptor
 	maxCount  int
+	counts    map[core1_0.DescriptorType]int
 }
 
 func New[S Set](device device.T, set S, shader shader.T) SetLayoutTyped[S] {
@@ -46,12 +48,14 @@ func New[S Set](device device.T, set S, shader shader.T) SetLayoutTyped[S] {
 	createFlags := core1_0.DescriptorSetLayoutCreateFlags(0)
 	bindings := make([]core1_0.DescriptorSetLayoutBinding, 0, len(descriptors))
 	bindFlags := make([]ext_descriptor_indexing.DescriptorBindingFlags, 0, len(descriptors))
+	counts := make(map[core1_0.DescriptorType]int)
 	for name, descriptor := range descriptors {
 		index, exists := shader.Descriptor(name)
 		if !exists {
 			panic("unresolved descriptor")
 		}
-		bindings = append(bindings, descriptor.LayoutBinding(index))
+		binding := descriptor.LayoutBinding(index)
+		bindings = append(bindings, binding)
 		flags := descriptor.BindingFlags()
 		bindFlags = append(bindFlags, flags)
 
@@ -59,10 +63,13 @@ func New[S Set](device device.T, set S, shader shader.T) SetLayoutTyped[S] {
 			createFlags |= ext_descriptor_indexing.DescriptorSetLayoutCreateUpdateAfterBindPool
 		}
 
-		log.Printf("  %s -> %s\n", name, descriptor)
 		if variable, ok := descriptor.(VariableDescriptor); ok {
 			maxCount = variable.MaxCount()
-			log.Println("descriptor", name, "is of variable length", maxCount)
+			log.Printf("  %s -> %s x0-%d\n", name, descriptor, maxCount)
+			counts[binding.DescriptorType] = maxCount
+		} else {
+			log.Printf("  %s -> %s x%d\n", name, descriptor, binding.DescriptorCount)
+			counts[binding.DescriptorType] = binding.DescriptorCount
 		}
 	}
 
@@ -89,6 +96,7 @@ func New[S Set](device device.T, set S, shader shader.T) SetLayoutTyped[S] {
 		ptr:      ptr,
 		set:      set,
 		maxCount: maxCount,
+		counts:   counts,
 	}
 }
 
@@ -98,6 +106,10 @@ func (d *layout[S]) Name() string {
 
 func (d *layout[S]) Ptr() core1_0.DescriptorSetLayout {
 	return d.ptr
+}
+
+func (d *layout[S]) Counts() map[core1_0.DescriptorType]int {
+	return d.counts
 }
 
 func (d *layout[S]) VariableCount() int {

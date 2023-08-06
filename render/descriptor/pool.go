@@ -1,6 +1,8 @@
 package descriptor
 
 import (
+	"log"
+
 	"github.com/johanhenriksson/goworld/render/device"
 
 	"github.com/vkngwrapper/core/v2/common"
@@ -21,14 +23,18 @@ type pool struct {
 	device  device.T
 	sizes   []core1_0.DescriptorPoolSize
 	maxSets int
+
+	allocatedSets   int
+	allocatedCounts map[core1_0.DescriptorType]int
 }
 
-func NewPool(device device.T, sizes []core1_0.DescriptorPoolSize) Pool {
+func NewPool(device device.T, sets int, sizes []core1_0.DescriptorPoolSize) Pool {
 	p := &pool{
-		device:  device,
-		ptr:     nil,
-		sizes:   sizes,
-		maxSets: 100,
+		device:          device,
+		ptr:             nil,
+		sizes:           sizes,
+		maxSets:         sets,
+		allocatedCounts: make(map[core1_0.DescriptorType]int),
 	}
 	p.Recreate()
 	return p
@@ -79,6 +85,8 @@ func (p *pool) Allocate(layout SetLayout) Set {
 
 	ptr, r, err := p.device.Ptr().AllocateDescriptorSets(info)
 	if err != nil {
+		log.Println("allocated sets:", p.allocatedSets, "/", p.maxSets)
+		log.Println("allocated counts:", p.allocatedCounts)
 		panic(err)
 	}
 	if r != core1_0.VKSuccess {
@@ -92,6 +100,12 @@ func (p *pool) Allocate(layout SetLayout) Set {
 		driver.VulkanHandle(ptr[0].Handle()),
 		core1_0.ObjectTypeDescriptorSet,
 		layout.Name())
+
+	p.allocatedSets++
+	for kind, count := range layout.Counts() {
+		current, _ := p.allocatedCounts[kind]
+		p.allocatedCounts[kind] = current + count
+	}
 
 	return &set{
 		device: p.device,
