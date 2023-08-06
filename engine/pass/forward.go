@@ -16,11 +16,10 @@ import (
 )
 
 type ForwardPass struct {
-	target  vulkan.Target
-	gbuffer GeometryBuffer
-	app     vulkan.App
-	pass    renderpass.T
-	fbuf    framebuffer.Array
+	target vulkan.Target
+	app    vulkan.App
+	pass   renderpass.T
+	fbuf   framebuffer.Array
 
 	materials  *MaterialSorter
 	meshQuery  *object.Query[mesh.Mesh]
@@ -33,7 +32,6 @@ func NewForwardPass(
 	app vulkan.App,
 	target vulkan.Target,
 	depth vulkan.Target,
-	gbuffer GeometryBuffer,
 	shadows Shadow,
 ) *ForwardPass {
 	pass := renderpass.New(app.Device(), renderpass.Args{
@@ -47,23 +45,6 @@ func NewForwardPass(
 				Blend:       attachment.BlendMultiply,
 
 				Image: attachment.FromImageArray(target.Surfaces()),
-			},
-			// todo: move to depth pre-pass
-			{
-				Name:        NormalsAttachment,
-				LoadOp:      core1_0.AttachmentLoadOpLoad,
-				StoreOp:     core1_0.AttachmentStoreOpStore,
-				FinalLayout: core1_0.ImageLayoutShaderReadOnlyOptimal,
-
-				Image: attachment.FromImageArray(gbuffer.Normal()),
-			},
-			{
-				Name:        PositionAttachment,
-				LoadOp:      core1_0.AttachmentLoadOpLoad,
-				StoreOp:     core1_0.AttachmentStoreOpStore,
-				FinalLayout: core1_0.ImageLayoutShaderReadOnlyOptimal,
-
-				Image: attachment.FromImageArray(gbuffer.Position()),
 			},
 		},
 		DepthAttachment: &attachment.Depth{
@@ -79,7 +60,7 @@ func NewForwardPass(
 				Name:  MainSubpass,
 				Depth: true,
 
-				ColorAttachments: []attachment.Name{OutputAttachment, NormalsAttachment, PositionAttachment},
+				ColorAttachments: []attachment.Name{OutputAttachment},
 			},
 		},
 	})
@@ -90,11 +71,10 @@ func NewForwardPass(
 	}
 
 	return &ForwardPass{
-		target:  target,
-		gbuffer: gbuffer,
-		app:     app,
-		pass:    pass,
-		fbuf:    fbuf,
+		target: target,
+		app:    app,
+		pass:   pass,
+		fbuf:   fbuf,
 
 		materials:  NewMaterialSorter(app, target.Frames(), pass, shadows.Shadowmap, material.StandardForward()),
 		meshQuery:  object.NewQuery[mesh.Mesh](),
