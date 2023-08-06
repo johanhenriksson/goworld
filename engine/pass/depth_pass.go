@@ -82,16 +82,16 @@ func NewDepthPass(
 		DepthTest:    true,
 		DepthWrite:   true,
 		DepthFunc:    core1_0.CompareOpLess,
-	})
-	mats.TransformFn = func(d *material.Def) *material.Def {
-		shadowMat := *d
-		shadowMat.Shader = "depth"
-		shadowMat.CullMode = vertex.CullBack
-		shadowMat.DepthTest = true
-		shadowMat.DepthWrite = true
-		shadowMat.DepthFunc = core1_0.CompareOpLess
-		return &shadowMat
-	}
+	},
+		func(d *material.Def) *material.Def {
+			shadowMat := *d
+			shadowMat.Shader = "depth"
+			shadowMat.CullMode = vertex.CullBack
+			shadowMat.DepthTest = true
+			shadowMat.DepthWrite = true
+			shadowMat.DepthFunc = core1_0.CompareOpLess
+			return &shadowMat
+		})
 
 	return &DepthPass{
 		gbuffer: gbuffer,

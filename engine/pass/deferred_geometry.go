@@ -95,7 +95,7 @@ func NewDeferredGeometryPass(
 
 		fbuf: fbuf,
 
-		materials: NewMaterialSorter(app, gbuffer.Frames(), pass, nil, material.StandardDeferred()),
+		materials: NewMaterialSorter(app, gbuffer.Frames(), pass, nil, material.StandardDeferred(), nil),
 		meshQuery: object.NewQuery[mesh.Mesh](),
 	}
 }
