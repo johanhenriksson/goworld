@@ -16,7 +16,7 @@ import (
 
 type LineMatData struct {
 	Instance material.Instance[*DepthDescriptors]
-	Objects  []uniform.Object
+	Objects  *ObjectBuffer
 }
 
 type LineMaterialMaker struct {
@@ -78,7 +78,7 @@ func (m *LineMaterialMaker) Instantiate(def *material.Def, count int) []*LineMat
 		instance := mat.Instantiate(m.app.Pool())
 		instances[i] = &LineMatData{
 			Instance: instance,
-			Objects:  make([]uniform.Object, 0, instance.Descriptors().Objects.Size),
+			Objects:  NewObjectBuffer(desc.Objects.Size),
 		}
 	}
 
@@ -97,14 +97,14 @@ func (m *LineMaterialMaker) Draw(cmds command.Recorder, camera uniform.Camera, g
 		mat.Instance.Bind(cmd)
 	})
 
-	mat.Objects = mat.Objects[:0]
+	mat.Objects.Reset()
 	for i, msh := range group.Meshes {
 		vkmesh, meshReady := m.app.Meshes().TryFetch(msh.Mesh().Get())
 		if !meshReady {
 			continue
 		}
 
-		mat.Objects = append(mat.Objects, uniform.Object{
+		mat.Objects.Store(uniform.Object{
 			Model: msh.Transform().Matrix(),
 		})
 
@@ -114,5 +114,5 @@ func (m *LineMaterialMaker) Draw(cmds command.Recorder, camera uniform.Camera, g
 		})
 	}
 
-	mat.Instance.Descriptors().Objects.SetRange(0, mat.Objects)
+	mat.Objects.Flush(mat.Instance.Descriptors().Objects)
 }
