@@ -37,16 +37,16 @@ type MaterialData struct {
 
 func NewMaterialSorter(app vulkan.App, frames int, pass renderpass.T, lookup ShadowmapLookupFn, defaultMat *material.Def, transform MaterialTransform) *MaterialSorter {
 	maker := &StdMaterialMaker{
-		app:    app,
-		lookup: lookup,
+		app:       app,
+		pass:      pass,
+		lookup:    lookup,
+		transform: transform,
 	}
-	ms := &MaterialSorter{
+	return &MaterialSorter{
 		app:   app,
-		cache: NewMaterialCache[*MaterialData](app, frames, pass, maker, defaultMat, transform),
+		cache: NewMaterialCache[*MaterialData](app, frames, pass, maker, defaultMat),
 		maker: maker,
 	}
-	ms.cache.Load(defaultMat)
-	return ms
 }
 
 func (m *MaterialSorter) Destroy() {
@@ -69,23 +69,32 @@ func (m *MaterialSorter) Draw(cmds command.Recorder, args render.Args, meshes []
 	m.DrawCamera(cmds, args.Context.Index, camera, meshes, lights)
 }
 
+type MeshGroup[T any] struct {
+	Material T
+	Meshes   []mesh.Mesh
+}
+
 func (m *MaterialSorter) DrawCamera(cmds command.Recorder, frame int, camera uniform.Camera, meshes []mesh.Mesh, lights []light.T) {
 	// sort meshes by material
-	meshGroups := map[uint64][]mesh.Mesh{}
+	meshGroups := map[uint64]*MeshGroup[*MaterialData]{}
 	for _, msh := range meshes {
-		matId := msh.MaterialID()
-		if !m.cache.Exists(matId) {
-			// initialize material
-			if !m.cache.Load(msh.Material()) {
-				continue
-			}
+		mat, ready := m.cache.Get(msh, frame)
+		if !ready {
+			continue
 		}
-		meshGroups[matId] = append(meshGroups[matId], msh)
+		group, exists := meshGroups[msh.MaterialID()]
+		if !exists {
+			group = &MeshGroup[*MaterialData]{
+				Material: mat,
+				Meshes:   make([]mesh.Mesh, 0, 32),
+			}
+			meshGroups[msh.MaterialID()] = group
+		}
+		group.Meshes = append(group.Meshes, msh)
 	}
 
 	// iterate the sorted material groups
-	for matId, objects := range meshGroups {
-		mat := m.cache.Get(matId, frame)
-		m.maker.Draw(cmds, mat, camera, objects, lights)
+	for _, group := range meshGroups {
+		m.maker.Draw(cmds, camera, group, lights)
 	}
 }
