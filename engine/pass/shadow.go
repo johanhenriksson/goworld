@@ -10,7 +10,6 @@ import (
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/framebuffer"
-	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/renderpass"
 	"github.com/johanhenriksson/goworld/render/renderpass/attachment"
 	"github.com/johanhenriksson/goworld/render/texture"
@@ -46,7 +45,7 @@ type Shadowmap struct {
 type Cascade struct {
 	Texture texture.T
 	Frame   framebuffer.T
-	Mats    *MaterialSorter
+	Mats    *MeshSorter[*ShadowMatData]
 }
 
 func NewShadowPass(app vulkan.App, target vulkan.Target) Shadow {
@@ -137,19 +136,7 @@ func (p *shadowpass) createShadowmap(light light.T) Shadowmap {
 
 		// each light cascade needs its own shadow materials - or rather, their own descriptors
 		// cheating a bit by creating entire materials for each light, fix it later.
-		mats := NewMaterialSorter(p.app, p.target.Frames(), p.pass, p.Shadowmap, &material.Def{
-			Shader:       "shadow",
-			VertexFormat: vertex.T{},
-			DepthTest:    true,
-			DepthWrite:   true,
-		},
-			func(d *material.Def) *material.Def {
-				shadowMat := *d
-				shadowMat.Shader = "shadow"
-				shadowMat.CullMode = vertex.CullFront
-				shadowMat.DepthClamp = true
-				return &shadowMat
-			})
+		mats := NewMeshSorter(p.app, p.target.Frames(), NewShadowMaterialMaker(p.app, p.pass))
 		cascades[i].Mats = mats
 	}
 

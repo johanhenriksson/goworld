@@ -7,54 +7,35 @@ import (
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/math/vec4"
 	"github.com/johanhenriksson/goworld/render"
-	"github.com/johanhenriksson/goworld/render/cache"
 	"github.com/johanhenriksson/goworld/render/command"
-	"github.com/johanhenriksson/goworld/render/material"
-	"github.com/johanhenriksson/goworld/render/renderpass"
 	"github.com/johanhenriksson/goworld/render/vulkan"
 )
 
-type MaterialTransform func(*material.Def) *material.Def
-
-type MaterialSorter struct {
-	cache *MaterialCache[*MaterialData]
-	maker MaterialMaker[*MaterialData]
+type MeshSorter[T any] struct {
+	cache *MaterialCache[T]
+	maker MaterialMaker[T]
 	app   vulkan.App
 }
 
-type MaterialData struct {
-	// shared between deferred & forward rendering:
-
-	Instance material.Instance[*material.Descriptors]
-	Objects  []uniform.Object
-	Textures cache.SamplerCache
-
-	// extra data needed for forward rendering:
-
-	Lights  *LightBuffer
-	Shadows *ShadowCache
+type MeshGroup[T any] struct {
+	Material T
+	Meshes   []mesh.Mesh
 }
 
-func NewMaterialSorter(app vulkan.App, frames int, pass renderpass.T, lookup ShadowmapLookupFn, defaultMat *material.Def, transform MaterialTransform) *MaterialSorter {
-	maker := &StdMaterialMaker{
-		app:       app,
-		pass:      pass,
-		lookup:    lookup,
-		transform: transform,
-	}
-	return &MaterialSorter{
+func NewMeshSorter[T any](app vulkan.App, frames int, maker MaterialMaker[T]) *MeshSorter[T] {
+	return &MeshSorter[T]{
 		app:   app,
-		cache: NewMaterialCache[*MaterialData](app, frames, pass, maker, defaultMat),
+		cache: NewMaterialCache[T](app, frames, maker),
 		maker: maker,
 	}
 }
 
-func (m *MaterialSorter) Destroy() {
+func (m *MeshSorter[T]) Destroy() {
 	m.cache.Destroy()
 	m.cache = nil
 }
 
-func (m *MaterialSorter) Draw(cmds command.Recorder, args render.Args, meshes []mesh.Mesh, lights []light.T) {
+func (m *MeshSorter[T]) Draw(cmds command.Recorder, args render.Args, meshes []mesh.Mesh, lights []light.T) {
 	camera := uniform.Camera{
 		Proj:        args.Projection,
 		View:        args.View,
@@ -69,14 +50,9 @@ func (m *MaterialSorter) Draw(cmds command.Recorder, args render.Args, meshes []
 	m.DrawCamera(cmds, args.Context.Index, camera, meshes, lights)
 }
 
-type MeshGroup[T any] struct {
-	Material T
-	Meshes   []mesh.Mesh
-}
-
-func (m *MaterialSorter) DrawCamera(cmds command.Recorder, frame int, camera uniform.Camera, meshes []mesh.Mesh, lights []light.T) {
+func (m *MeshSorter[T]) DrawCamera(cmds command.Recorder, frame int, camera uniform.Camera, meshes []mesh.Mesh, lights []light.T) {
 	// sort meshes by material
-	meshGroups := map[uint64]*MeshGroup[*MaterialData]{}
+	meshGroups := map[uint64]*MeshGroup[T]{}
 	for _, msh := range meshes {
 		mat, ready := m.cache.Get(msh, frame)
 		if !ready {
@@ -84,7 +60,7 @@ func (m *MaterialSorter) DrawCamera(cmds command.Recorder, frame int, camera uni
 		}
 		group, exists := meshGroups[msh.MaterialID()]
 		if !exists {
-			group = &MeshGroup[*MaterialData]{
+			group = &MeshGroup[T]{
 				Material: mat,
 				Meshes:   make([]mesh.Mesh, 0, 32),
 			}
