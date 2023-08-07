@@ -31,6 +31,9 @@ void main() {
 	vec3 normal = getWorldNormal(viewNormal);
 
 	float ssao = texture(tex_occlusion, in_texcoord).r;
+	if (ssao == 0) {
+		ssao = 1;
+	}
 
 	// accumulate lighting
 	vec3 lightColor = ambientLight(lights.settings, occlusion * ssao);

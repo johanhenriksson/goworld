@@ -33,6 +33,10 @@ func DeferredGraph(app vulkan.App, target vulkan.Target) graph.T {
 		// main off-screen color buffer
 		offscreen := vulkan.NewColorTarget(app.Device(), "main-color", image.FormatRGBA8Unorm, size)
 
+		empty := vulkan.NewColorTarget(app.Device(), "main-color", image.FormatRGBA8Unorm, vulkan.TargetSize{
+			Width: 1, Height: 1, Frames: 1, Scale: 1,
+		})
+
 		// create geometry buffer
 		gbuffer, err := pass.NewGbuffer(app.Device(), size)
 		if err != nil {
@@ -42,11 +46,16 @@ func DeferredGraph(app vulkan.App, target vulkan.Target) graph.T {
 		shadows := pass.NewShadowPass(app, output)
 		shadowNode := g.Node(shadows)
 
-		deferred := g.Node(pass.NewDeferredPass(app, offscreen, depth, gbuffer, shadows))
-		deferred.After(shadowNode, core1_0.PipelineStageTopOfPipe)
+		// deferred geometry
+		deferredGeometry := g.Node(pass.NewDeferredGeometryPass(app, depth, gbuffer))
+
+		// deferred lighting
+		deferredLighting := g.Node(pass.NewDeferredLightingPass(app, offscreen, gbuffer, shadows, empty))
+		deferredLighting.After(shadowNode, core1_0.PipelineStageTopOfPipe)
+		deferredLighting.After(deferredGeometry, core1_0.PipelineStageTopOfPipe)
 
 		outputPass := g.Node(pass.NewOutputPass(app, output, offscreen))
-		outputPass.After(deferred, core1_0.PipelineStageTopOfPipe)
+		outputPass.After(deferredLighting, core1_0.PipelineStageTopOfPipe)
 
 		return []graph.Resource{
 			depth,

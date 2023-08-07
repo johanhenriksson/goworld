@@ -10,10 +10,6 @@ STORAGE_BUFFER(1, Object, objects)
 LIGHT_BUFFER(2, lights)
 SAMPLER_ARRAY(3, textures)
 
-// Varying
-layout (location = 4) in vec3 wnormal;
-layout (location = 5) in vec3 wposition;
-
 void main() 
 {
 	vec2 texcoord0 = in_color.xy;
@@ -23,7 +19,7 @@ void main()
 	int lightCount = lights.settings.Count;
 	vec3 lightColor = ambientLight(lights.settings, 1);
 	for(int i = 0; i < lightCount; i++) {
-		lightColor += calculateLightColor(lights.item[i], wposition, wnormal, position0.z, lights.settings);
+		lightColor += calculateLightColor(lights.item[i], in_world_position, in_world_normal, in_view_position.z, lights.settings);
 	}
 
     // gamma correct & write fragment

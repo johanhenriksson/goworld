@@ -182,7 +182,7 @@ func writeFailureImage(expected, actual image.Image) {
 		for x := 0; x < expected.Bounds().Max.X; x++ {
 			expectedColor := expected.At(x, y)
 			actualColor := actual.At(x, y)
-			if expectedColor != actualColor {
+			if expectedColor == actualColor {
 				expected.(*image.RGBA).Set(x, y, color.Transparent)
 			}
 		}

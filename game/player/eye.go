@@ -32,7 +32,7 @@ func NewEye() *ArcballCamera {
 			Create(),
 		Distance: distance,
 	})).
-		Position(vec3.New(0, 1.2, 0)).
+		Position(vec3.New(0, 0.8, 0)).
 		Rotation(quat.Euler(30, 45, 0)).
 		Create()
 }

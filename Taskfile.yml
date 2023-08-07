@@ -21,7 +21,7 @@ tasks:
 
   test:
     cmds:
-      - ginkgo --label-filter=!e2e ./...
+      - ginkgo --label-filter=!e2e -p ./...
 
   test-e2e:
     cmds:

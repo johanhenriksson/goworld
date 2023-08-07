@@ -39,10 +39,14 @@ func ForwardGraph(app vulkan.App, target vulkan.Target) graph.T {
 			panic(err)
 		}
 
+		// depth pre-pass
+		depthPass := g.Node(pass.NewDepthPass(app, depth, gbuffer))
+
 		shadows := pass.NewShadowPass(app, output)
 		shadowNode := g.Node(shadows)
 
-		forward := g.Node(pass.NewForwardPass(app, offscreen, depth, gbuffer, shadows))
+		forward := g.Node(pass.NewForwardPass(app, offscreen, depth, shadows))
+		forward.After(depthPass, core1_0.PipelineStageTopOfPipe)
 		forward.After(shadowNode, core1_0.PipelineStageTopOfPipe)
 
 		outputPass := g.Node(pass.NewOutputPass(app, output, offscreen))
