@@ -2,28 +2,30 @@
 #extension GL_GOOGLE_include_directive : enable
 
 #include "lib/common.glsl"
-#include "lib/material.glsl"
-#include "lib/vertex.glsl"
+#include "lib/deferred_vertex.glsl"
+
+CAMERA(0, camera)
+OBJECT_BUFFER(1, objects)
 
 // Attributes
-layout (location = 0) in vec3 position;
-layout (location = 1) in vec3 normal;
-layout (location = 2) in vec3 color_0;
+IN(0, vec3, position)
+IN(1, vec3, normal)
+IN(2, vec4, color)
 
 void main() 
 {
-	objectIndex = gl_InstanceIndex;
-	mat4 mv = camera.View * objects.item[objectIndex].model;
+	out_object = gl_InstanceIndex;
+	mat4 mv = camera.View * objects.item[out_object].model;
 
 	// gbuffer diffuse
-	color0 = vec4(color_0, 1);
+	out_color = vec4(in_color, 1);
 
 	// gbuffer position
-	position0 = (mv * vec4(position.xyz, 1.0)).xyz;
+	out_position = (mv * vec4(in_position.xyz, 1.0)).xyz;
 
 	// gbuffer view space normal
-	normal0 = normalize((mv * vec4(normal, 0.0)).xyz);
+	out_normal = normalize((mv * vec4(in_normal, 0.0)).xyz);
 
 	// vertex clip space position
-	gl_Position = camera.Proj * vec4(position0, 1);
+	gl_Position = camera.Proj * vec4(out_position, 1);
 }

@@ -2,37 +2,32 @@
 #extension GL_GOOGLE_include_directive : enable
 
 #include "lib/common.glsl"
-#include "lib/material.glsl"
-#include "lib/vertex.glsl"
+#include "lib/forward_vertex.glsl"
+
+CAMERA(0, camera)
+STORAGE_BUFFER(1, Object, objects)
 
 // Attributes
-layout (location = 0) in vec3 position;
-layout (location = 1) in vec3 normal;
-layout (location = 2) in vec4 color_0;
-
-// Varyings
-layout (location = 4) out vec3 wnormal;
-layout (location = 5) out vec3 wposition;
+IN(0, vec3, position)
+IN(1, vec3, normal)
+IN(2, vec4, color)
 
 void main() 
 {
-	objectIndex = gl_InstanceIndex;
-	mat4 m = objects.item[objectIndex].model;
+	out_object = gl_InstanceIndex;
+	mat4 m = objects.item[out_object].model;
 	mat4 mv = camera.View * m;
 
 	// gbuffer diffuse
-	color0 = color_0.rgba;
+	out_color = in_color.rgba;
 
 	// gbuffer view position
-	position0 = (mv * vec4(position.xyz, 1.0)).xyz;
-	wposition = (m * vec4(position.xyz, 1.0)).xyz;
-
-	// gbuffer view space normal
-	normal0 = normalize((mv * vec4(normal, 0.0)).xyz);
+	out_view_position = (mv * vec4(in_position.xyz, 1.0)).xyz;
+	out_world_position = (m * vec4(in_position.xyz, 1.0)).xyz;
 
 	// world normal
-	wnormal = normalize((m * vec4(normal, 0.0)).xyz);
+	out_world_normal = normalize((m * vec4(in_normal, 0.0)).xyz);
 
 	// vertex clip space position
-	gl_Position = camera.Proj * vec4(position0, 1);
+	gl_Position = camera.Proj * vec4(out_view_position, 1);
 }

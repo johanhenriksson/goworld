@@ -1,17 +1,13 @@
 #version 450
+#extension GL_GOOGLE_include_directive : enable
 
-#extension GL_ARB_separate_shader_objects : enable
-#extension GL_ARB_shading_language_420pack : enable
+#include "lib/common.glsl"
 
-layout (binding = 0) uniform sampler2D diffuse;
-
-layout (location = 0) in vec2 texcoord;
-
-// Return Output
-layout (location = 0) out vec4 outFragColor;
+IN(0, vec2, texcoord)
+OUT(0, vec4, color)
+SAMPLER(0, diffuse)
 
 void main() 
 {
-	vec3 color = texture(diffuse, texcoord).rgb;
-	outFragColor = vec4(color, 1.0);
+	out_color = vec4(texture(tex_diffuse, in_texcoord).rgb, 1);
 }

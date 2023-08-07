@@ -2,11 +2,13 @@
 #extension GL_GOOGLE_include_directive : enable
 
 #include "lib/common.glsl"
-#include "lib/material.glsl"
-#include "lib/fragment.glsl"
-
-#define SHADOWMAP_SAMPLER Textures
 #include "lib/lighting.glsl"
+#include "lib/forward_fragment.glsl"
+
+CAMERA(0, camera)
+STORAGE_BUFFER(1, Object, objects)
+LIGHT_BUFFER(2, lights)
+SAMPLER_ARRAY(3, textures)
 
 // Varying
 layout (location = 4) in vec3 wnormal;
@@ -14,9 +16,9 @@ layout (location = 5) in vec3 wposition;
 
 void main() 
 {
-	vec2 texcoord0 = color0.xy;
-	uint texture0 = objects.item[objectIndex].textures[0];
-	vec4 albedo = texture(Textures[texture0], texcoord0);
+	vec2 texcoord0 = in_color.xy;
+	uint texture0 = objects.item[in_object].textures[0];
+	vec4 albedo = texture(textures[texture0], texcoord0);
 
 	int lightCount = lights.settings.Count;
 	vec3 lightColor = ambientLight(lights.settings, 1);
@@ -26,5 +28,5 @@ void main()
 
     // gamma correct & write fragment
 	vec3 linearColor = pow(albedo.rgb, vec3(gamma));
-    diffuse = vec4(linearColor * lightColor, albedo.a);
+    out_diffuse = vec4(linearColor * lightColor, albedo.a);
 }

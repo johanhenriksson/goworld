@@ -2,49 +2,35 @@
 #extension GL_GOOGLE_include_directive : enable
 
 #include "lib/common.glsl"
-
-//
-// Lighting uniforms
-//
-
-layout (std430, binding = 1) readonly buffer LightBuffer {
-	LightSettings settings;
-	float[LIGHT_PADDING] _padding;
-	Light item[];
-} lights;
-
-layout (binding = 2) uniform sampler2D tex_diffuse;
-layout (binding = 3) uniform sampler2D tex_normal;
-layout (binding = 4) uniform sampler2D tex_position;
-layout (binding = 5) uniform sampler2D tex_occlusion;
-
-// the variable-sized array must have the largest binding id
-#define SHADOWMAP_SAMPLER shadowmaps
-layout (binding = 6) uniform sampler2D[] shadowmaps;
-
 #include "lib/lighting.glsl"
 
-layout (location = 0) in vec2 v_texcoord0;
+CAMERA(0, camera)
+LIGHT_BUFFER(1, lights)
+SAMPLER(2, diffuse)
+SAMPLER(3, normal)
+SAMPLER(4, position)
+SAMPLER(5, occlusion)
+SAMPLER_ARRAY(6, shadowmaps)
 
-//
-// Fragment output
-//
+IN(0, vec2, texcoord)
+OUT(0, vec4, color)
 
-layout (location = 0) out vec4 color;
+vec3 getWorldPosition(vec3 viewPos); 
+vec3 getWorldNormal(vec3 viewNormal);
 
 void main() {
 	// unpack data from geometry buffer
-	vec3 viewPos = texture(tex_position, v_texcoord0).xyz;
-	vec3 viewNormal = unpack_normal(texture(tex_normal, v_texcoord0).xyz);
+	vec3 viewPos = texture(tex_position, in_texcoord).xyz;
+	vec3 viewNormal = unpack_normal(texture(tex_normal, in_texcoord).xyz);
 
-	vec4 gcolor = texture(tex_diffuse, v_texcoord0);
+	vec4 gcolor = texture(tex_diffuse, in_texcoord);
 	vec3 diffuseColor = gcolor.rgb;
 	float occlusion = gcolor.a;
 
 	vec3 position = getWorldPosition(viewPos);
 	vec3 normal = getWorldNormal(viewNormal);
 
-	float ssao = texture(tex_occlusion, v_texcoord0).r;
+	float ssao = texture(tex_occlusion, in_texcoord).r;
 
 	// accumulate lighting
 	vec3 lightColor = ambientLight(lights.settings, occlusion * ssao);
@@ -57,5 +43,15 @@ void main() {
 	vec3 linearDiffuse = pow(diffuseColor, vec3(2.2));
 
 	// write shaded fragment color
-	color = vec4(lightColor * linearDiffuse, 1);
+	out_color = vec4(lightColor * linearDiffuse, 1);
+}
+
+vec3 getWorldPosition(vec3 viewPos) {
+	vec4 pos_ws = camera.ViewInv * vec4(viewPos, 1);
+	return pos_ws.xyz / pos_ws.w;
+}
+
+vec3 getWorldNormal(vec3 viewNormal) {
+	vec4 worldNormal = camera.ViewInv * vec4(viewNormal, 0);
+	return normalize(worldNormal.xyz);
 }

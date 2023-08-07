@@ -1,12 +1,11 @@
 #version 450
+#extension GL_GOOGLE_include_directive : enable
 
-#extension GL_ARB_separate_shader_objects : enable
-#extension GL_ARB_shading_language_420pack : enable
+#include "lib/common.glsl"
 
-layout (location = 0) in vec3 inPos;
-layout (location = 1) in vec2 texcoord_0;
-
-layout (location = 0) out vec2 texcoord;
+IN(0, vec3, position)
+IN(1, vec2, texcoord)
+OUT(0, vec2, texcoord)
 
 out gl_PerVertex 
 {
@@ -15,6 +14,6 @@ out gl_PerVertex
 
 void main() 
 {
-	texcoord = texcoord_0;
-	gl_Position = vec4(inPos, 1);
+	out_texcoord = in_texcoord;
+	gl_Position = vec4(in_position, 1);
 }

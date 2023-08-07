@@ -2,7 +2,9 @@
 #extension GL_GOOGLE_include_directive : enable
 
 #include "lib/common.glsl"
-#include "lib/material.glsl"
+
+CAMERA(0, camera)
+STORAGE_BUFFER(1, Object, objects)
 
 // Attributes
 layout (location = 0) in vec3 position;

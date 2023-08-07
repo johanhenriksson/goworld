@@ -2,12 +2,11 @@
 #extension GL_GOOGLE_include_directive : enable
 
 #include "lib/common.glsl"
-#include "lib/material.glsl"
-#include "lib/fragment.glsl"
+#include "lib/deferred_fragment.glsl"
 
 void main() 
 {
-	diffuse = vec4(color0.rgb * color0.a, 1);
-	normal = pack_normal(normal0);
-	position = vec4(position0, 1);
+	out_diffuse = vec4(in_color.rgb * in_color.a, 1);
+	out_normal = pack_normal(in_normal);
+	out_position = vec4(in_position, 1);
 }

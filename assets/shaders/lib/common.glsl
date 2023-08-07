@@ -4,44 +4,36 @@
 
 const float gamma = 2.2;
 
-#include "camera.glsl"
-
-#define POINT_LIGHT 1
-#define DIRECTIONAL_LIGHT 2
-
-const int SHADOW_CASCADES = 4;
-const float SHADOW_POWER = 60;
-
-struct Attenuation {
-	float Constant;
-	float Linear;
-	float Quadratic;
+struct Object {
+	mat4 model;
+	uint textures[4];
 };
 
-struct Light {
-	mat4 ViewProj[SHADOW_CASCADES];  // 16 x 4 = 64 -> 64
-	int Shadowmap[SHADOW_CASCADES];  // 4 x 4  = 16 -> 80
-	float Distance[SHADOW_CASCADES]; // 4 x 4  = 16 -> 96
+#define SAMPLER_ARRAY(idx,name) \
+	layout (binding = idx) uniform sampler2D[] name; \
+	float _shadow_texture(uint index, vec2 point) { return texture(name[index], point).r; } \
+	vec2 _shadow_size(uint index) { return textureSize(name[index], 0).xy; }
 
-	vec4 Color;                      // 16 -> 112
-	vec4 Position; 					 // 16 -> 128
-	uint Type; 						 // 4  -> 132
-	float Intensity; 				 // 4  -> 136
-	float Range; 					 // 4  -> 140
-	Attenuation Attenuation; 		 // 12 -> 152
-};
+#define SAMPLER(idx,name) layout (binding = idx) uniform sampler2D tex_ ## name;
 
-struct LightSettings {
-	vec4 AmbientColor;
-	float AmbientIntensity;
-	int Count;
-	int ShadowSamples;
-	float ShadowSampleRadius;
-	float ShadowBias;
-	float NormalOffset;
-};
+#define UNIFORM(idx,name,body) layout (binding = idx) uniform uniform_ ## name body name;
 
-#define LIGHT_PADDING 76
+#define STORAGE_BUFFER(idx,type,name) layout (binding = idx) readonly buffer uniform_ ## name { type item[]; } name;
+
+#define CAMERA(idx,name) layout (binding = idx) uniform Camera { \
+	mat4 Proj; \
+	mat4 View; \
+	mat4 ViewProj; \
+	mat4 ProjInv; \
+	mat4 ViewInv; \
+	mat4 ViewProjInv; \
+	vec4 Eye; \
+	vec4 Forward; \
+	vec2 Viewport; \
+} name;
+
+#define IN(idx,type,name) layout (location = idx) in type in_ ## name;
+#define OUT(idx,type,name) layout (location = idx) out type out_ ## name;
 
 vec3 unpack_normal(vec3 packed_normal) {
 	return normalize(2.0 * packed_normal - 1);
@@ -49,14 +41,4 @@ vec3 unpack_normal(vec3 packed_normal) {
 
 vec4 pack_normal(vec3 normal) {
 	return vec4((normal + 1.0) / 2.0, 1);
-}
-
-vec3 getWorldPosition(vec3 viewPos) {
-	vec4 pos_ws = camera.ViewInv * vec4(viewPos, 1);
-	return pos_ws.xyz / pos_ws.w;
-}
-
-vec3 getWorldNormal(vec3 viewNormal) {
-	vec4 worldNormal = camera.ViewInv * vec4(viewNormal, 0);
-	return normalize(worldNormal.xyz);
 }

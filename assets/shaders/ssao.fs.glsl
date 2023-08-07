@@ -3,14 +3,10 @@
 
 #include "lib/common.glsl"
 
+IN(0, vec2, texcoord)
+OUT(0, float, ssao)
+
 #define KERNEL_SIZE 32
-
-// Input: Texture coords
-layout (location = 0) in vec2 texcoord0;
-
-// Return Output
-layout (location = 0) out vec4 out_ssao;
-
 layout (std140, binding = 0) uniform Params {
     mat4 Projection;
     vec4 Kernel[KERNEL_SIZE];
@@ -21,9 +17,9 @@ layout (std140, binding = 0) uniform Params {
     float Power;
 };
 
-layout (binding = 1) uniform sampler2D tex_position; // position gbuffer
-layout (binding = 2) uniform sampler2D tex_normal; // normal gbuffer
-layout (binding = 3) uniform sampler2D tex_noise; // noise texture
+SAMPLER(1, position)
+SAMPLER(2, normal)
+SAMPLER(3, noise)
 
 void main()
 {
@@ -32,17 +28,17 @@ void main()
     vec2 noiseScale = outputSize / noiseSize;
 
     // get input vectors from gbuffer & noise texture
-    vec3 fragPos = texture(tex_position, texcoord0).xyz;
-    vec3 normalEncoded = texture(tex_normal, texcoord0).xyz;
+    vec3 fragPos = texture(tex_position, in_texcoord).xyz;
+    vec3 normalEncoded = texture(tex_normal, in_texcoord).xyz;
     vec3 normal = unpack_normal(normalEncoded);
 
     // discard gbuffer entries without normal data
     if (normalEncoded == vec3(0)) {
-        out_ssao = vec4(1);
+        out_ssao = 1;
         return;
     }
 
-    vec3 randomVec = texture(tex_noise, texcoord0 * noiseScale).xyz;
+    vec3 randomVec = texture(tex_noise, in_texcoord * noiseScale).xyz;
 
     // create TBN change-of-basis matrix: from tangent-space to view-space
     vec3 tangent = normalize(randomVec - normal * dot(randomVec, normal));
@@ -73,5 +69,5 @@ void main()
     occlusion = 1.0 - (occlusion / Samples);
     occlusion = pow(occlusion, Power);
     
-    out_ssao = vec4(vec3(occlusion), 1);
+    out_ssao = occlusion;
 }

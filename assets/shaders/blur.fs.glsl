@@ -1,13 +1,11 @@
 #version 450
+#extension GL_GOOGLE_include_directive : enable
 
-#extension GL_ARB_separate_shader_objects : enable
-#extension GL_ARB_shading_language_420pack : enable
-  
-layout(location = 0) in vec2 texcoord0;
+#include "lib/common.glsl"
 
-layout(location = 0) out vec4 color;
-  
-layout(binding = 0) uniform sampler2D tex_input;
+IN(0, vec2, texcoord)
+OUT(0, vec4, color)
+SAMPLER(0, input)
 
 void main()
 {             
@@ -18,9 +16,9 @@ void main()
         for (int y = -2; y < 2; ++y) 
         {
             vec2 offset = vec2(float(x), float(y)) * texelSize;
-            result += texture(tex_input, texcoord0 + offset).r;
+            result += texture(tex_input, in_texcoord + offset).r;
         }
     }
     result = result / (4.0 * 4.0);
-    color = vec4(result, result, result, 1);
+    out_color = vec4(result, result, result, 1);
 }
