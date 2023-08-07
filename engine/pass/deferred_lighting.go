@@ -82,7 +82,7 @@ func NewDeferredLightingPass(
 	for i := range lightbufs {
 		samplers[i] = cache.NewSamplerCache(app.Textures(), lightsh.Descriptors(i).Shadow)
 		shadowmaps[i] = NewShadowCache(samplers[i], shadows.Shadowmap)
-		lightbufs[i] = NewLightBuffer()
+		lightbufs[i] = NewLightBuffer(256)
 	}
 
 	return &DeferredLightPass{

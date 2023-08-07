@@ -23,12 +23,13 @@ type ForwardDescriptors struct {
 	Textures *descriptor.SamplerArray
 }
 
+// Material Instance Wrapper - wraps material descriptors in helpers
 type ForwardMatData struct {
 	Instance material.Instance[*ForwardDescriptors]
-	Objects  []uniform.Object
-	Textures cache.SamplerCache
+	Objects  *ObjectBuffer
 	Lights   *LightBuffer
 	Shadows  *ShadowCache
+	Textures cache.SamplerCache
 }
 
 type ForwardMaterialMaker struct {
@@ -101,10 +102,10 @@ func (m *ForwardMaterialMaker) Instantiate(def *material.Def, count int) []*Forw
 		textures := cache.NewSamplerCache(m.app.Textures(), instance.Descriptors().Textures)
 		instances[i] = &ForwardMatData{
 			Instance: instance,
-			Objects:  make([]uniform.Object, 0, instance.Descriptors().Objects.Size),
-			Textures: textures,
-			Lights:   NewLightBuffer(),
+			Objects:  NewObjectBuffer(desc.Objects.Size),
+			Lights:   NewLightBuffer(desc.Lights.Size),
 			Shadows:  NewShadowCache(textures, m.lookup),
+			Textures: textures,
 		}
 	}
 
@@ -132,7 +133,7 @@ func (m *ForwardMaterialMaker) Draw(cmds command.Recorder, camera uniform.Camera
 		mat.Lights.Flush(mat.Instance.Descriptors().Lights)
 	}
 
-	mat.Objects = mat.Objects[:0]
+	mat.Objects.Reset()
 	for i, msh := range group.Meshes {
 		vkmesh, meshReady := m.app.Meshes().TryFetch(msh.Mesh().Get())
 		if !meshReady {
@@ -140,9 +141,9 @@ func (m *ForwardMaterialMaker) Draw(cmds command.Recorder, camera uniform.Camera
 		}
 
 		textures := mat.Instance.Material().TextureSlots()
-		textureIds := AssignMaterialTextures(mat.Textures, msh, textures)
+		textureIds := FetchMaterialTextures(mat.Textures, msh, textures)
 
-		mat.Objects = append(mat.Objects, uniform.Object{
+		mat.Objects.Store(uniform.Object{
 			Model:    msh.Transform().Matrix(),
 			Textures: textureIds,
 		})
@@ -153,6 +154,6 @@ func (m *ForwardMaterialMaker) Draw(cmds command.Recorder, camera uniform.Camera
 		})
 	}
 
-	mat.Instance.Descriptors().Objects.SetRange(0, mat.Objects)
+	mat.Objects.Flush(mat.Instance.Descriptors().Objects)
 	mat.Textures.Flush()
 }

@@ -75,7 +75,7 @@ type MaterialMaker[T any] interface {
 	Draw(cmds command.Recorder, camera uniform.Camera, group *MeshGroup[T], lights []light.T)
 }
 
-func AssignMaterialTextures(samplers cache.SamplerCache, msh mesh.Mesh, slots []texture.Slot) [4]uint32 {
+func FetchMaterialTextures(samplers cache.SamplerCache, msh mesh.Mesh, slots []texture.Slot) [4]uint32 {
 	textureIds := [4]uint32{}
 	for id, slot := range slots {
 		ref := msh.Texture(slot)

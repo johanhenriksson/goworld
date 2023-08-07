@@ -120,7 +120,7 @@ func (m *DeferredMaterialMaker) Draw(cmds command.Recorder, camera uniform.Camer
 		}
 
 		textures := mat.Instance.Material().TextureSlots()
-		textureIds := AssignMaterialTextures(mat.Textures, msh, textures)
+		textureIds := FetchMaterialTextures(mat.Textures, msh, textures)
 
 		mat.Objects = append(mat.Objects, uniform.Object{
 			Model:    msh.Transform().Matrix(),
