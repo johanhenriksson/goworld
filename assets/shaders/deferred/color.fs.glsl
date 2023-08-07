@@ -2,12 +2,13 @@
 #extension GL_GOOGLE_include_directive : enable
 
 #include "lib/common.glsl"
-#include "lib/material.glsl"
-#include "lib/fragment.glsl"
+#include "lib/deferred_fragment.glsl"
+
+STORAGE_BUFFER(1, Object, objects)
 
 void main() 
 {
-	diffuse = color0;
-	normal = pack_normal(normal0);
-	position = vec4(position0, 1);
+	out_diffuse = in_color;
+	out_normal = pack_normal(in_normal);
+	out_position = vec4(in_position, 1);
 }

@@ -1,11 +1,10 @@
 #version 450
+#extension GL_GOOGLE_include_directive : enable
 
-#extension GL_ARB_separate_shader_objects : enable
-#extension GL_ARB_shading_language_420pack : enable
+#include "lib/common.glsl"
 
-layout (location = 0) in vec3 color;
-
-layout (location = 0) out vec4 outColor;
+IN(0, vec3, color)
+OUT(0, vec4, color)
 
 float FogDensity = 0.04;
 
@@ -17,6 +16,5 @@ void main()
     float fogFactor = exp(-depth * FogDensity);
     fogFactor = clamp(fogFactor, 0.0, 1.0);
 
-
-	outColor = vec4(color, fogFactor);
+	out_color = vec4(in_color, fogFactor);
 }

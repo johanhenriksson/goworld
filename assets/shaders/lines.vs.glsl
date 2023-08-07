@@ -1,35 +1,14 @@
 #version 450
+#extension GL_GOOGLE_include_directive : enable
 
-#extension GL_ARB_separate_shader_objects : enable
-#extension GL_ARB_shading_language_420pack : enable
+#include "lib/common.glsl"
 
-layout (binding = 0) uniform Camera {
-	mat4 Proj;
-	mat4 View;
-	mat4 ViewProj;
-	mat4 ProjInv;
-	mat4 ViewInv;
-	mat4 ViewProjInv;
-	vec3 Eye;
-    vec3 Forward;
-} camera;
+CAMERA(0, camera)
+STORAGE_BUFFER(1, Object, objects)
 
-struct ObjectData{
-	mat4 model;
-	uint textures[4];
-};
-
-layout (binding = 1) readonly buffer ObjectBuffer {
-	ObjectData objects[];
-} ssbo;
-
-// including the texture array allows us to use standard materials for the line shader
-layout (binding = 2) uniform sampler2D[] Textures;
-
-layout (location = 0) in vec3 position;
-layout (location = 1) in vec4 color_0;
-
-layout (location = 0) out vec3 color;
+IN(0, vec3, position)
+IN(1, vec4, color)
+OUT(0, vec3, color)
 
 out gl_PerVertex 
 {
@@ -38,8 +17,8 @@ out gl_PerVertex
 
 void main() 
 {
-    color = color_0.rgb;
+    out_color = in_color.rgb;
 
-	mat4 mvp = camera.ViewProj * ssbo.objects[gl_InstanceIndex].model;
-	gl_Position = mvp * vec4(position, 1);
+	mat4 mvp = camera.ViewProj * objects.item[gl_InstanceIndex].model;
+	gl_Position = mvp * vec4(in_position, 1);
 }

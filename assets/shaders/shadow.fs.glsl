@@ -2,15 +2,12 @@
 #extension GL_GOOGLE_include_directive : enable
 
 #include "lib/common.glsl"
+#include "lib/lighting.glsl"
 
-layout (location = 0) in float depth;
-
-layout (location = 0) out vec4 fragColor;
+IN(0, float, depth)
 
 void main() 
 {
-	fragColor = vec4(0);
-
 	// exponential depth
-	gl_FragDepth = exp(SHADOW_POWER * depth) / exp(SHADOW_POWER);
+	gl_FragDepth = exp(SHADOW_POWER * in_depth) / exp(SHADOW_POWER);
 }

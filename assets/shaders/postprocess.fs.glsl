@@ -1,17 +1,12 @@
 #version 450
-
-#extension GL_ARB_separate_shader_objects : enable
-#extension GL_ARB_shading_language_420pack : enable
 #extension GL_GOOGLE_include_directive : enable
 
 #include "lib/common.glsl"
 
-layout(location = 0) in vec2 texcoord0;
-
-layout(location = 0) out vec4 color;
-
-layout(binding = 0) uniform sampler2D tex_input; // source image
-layout(binding = 1) uniform sampler2D tex_lut; // color lookup table
+IN(0, vec2, texcoord)
+OUT(0, vec4, color)
+SAMPLER(0, input)
+SAMPLER(1, lut)
 
 #define MAXCOLOR 15.0 
 #define COLORS 16.0
@@ -43,7 +38,7 @@ void main() {
     float exposure = 1.0;
 
     // get input color
-    vec3 hdrColor = texture(tex_input, texcoord0.xy).rgb;
+    vec3 hdrColor = texture(tex_input, in_texcoord).rgb;
 
     // exposure tone mapping
     vec3 mapped = vec3(1.0) - exp(-hdrColor * exposure);
@@ -55,5 +50,5 @@ void main() {
     vec3 graded = lookup_color(tex_lut, corrected);
 
     // return
-    color = vec4(graded, 1);
+    out_color = vec4(graded, 1);
 }

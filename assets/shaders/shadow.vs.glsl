@@ -2,23 +2,24 @@
 #extension GL_GOOGLE_include_directive : enable
 
 #include "lib/common.glsl"
-#include "lib/material.glsl"
+
+CAMERA(0, camera)
+STORAGE_BUFFER(1, Object, objects)
 
 // Attributes
-layout (location = 0) in vec3 position;
+IN(0, vec3, position)
+OUT(0, float, depth)
 
 out gl_PerVertex 
 {
 	vec4 gl_Position;   
 };
 
-layout (location = 0) out float depth;
-
 void main() 
 {
 	mat4 mvp = camera.ViewProj * objects.item[gl_InstanceIndex].model;
-	gl_Position = mvp * vec4(position, 1);
+	gl_Position = mvp * vec4(in_position, 1);
 
 	// store linear depth
-	depth = gl_Position.z / gl_Position.w;
+	out_depth = gl_Position.z / gl_Position.w;
 }
