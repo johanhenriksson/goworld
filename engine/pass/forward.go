@@ -21,7 +21,7 @@ type ForwardPass struct {
 	pass   renderpass.T
 	fbuf   framebuffer.Array
 
-	materials  *MaterialSorter
+	materials  *MeshSorter[*ForwardMatData]
 	meshQuery  *object.Query[mesh.Mesh]
 	lightQuery *object.Query[light.T]
 }
@@ -76,7 +76,7 @@ func NewForwardPass(
 		pass:   pass,
 		fbuf:   fbuf,
 
-		materials:  NewMaterialSorter(app, target.Frames(), pass, shadows.Shadowmap, material.StandardForward(), nil),
+		materials:  NewMeshSorter(app, target.Frames(), NewForwardMaterialMaker(app, pass, shadows.Shadowmap)),
 		meshQuery:  object.NewQuery[mesh.Mesh](),
 		lightQuery: object.NewQuery[light.T](),
 	}

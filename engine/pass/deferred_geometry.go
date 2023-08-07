@@ -30,7 +30,7 @@ type DeferredGeometryPass struct {
 	pass    renderpass.T
 	fbuf    framebuffer.Array
 
-	materials *MaterialSorter
+	materials *MeshSorter[*DeferredMatData]
 	meshQuery *object.Query[mesh.Mesh]
 }
 
@@ -95,7 +95,7 @@ func NewDeferredGeometryPass(
 
 		fbuf: fbuf,
 
-		materials: NewMaterialSorter(app, gbuffer.Frames(), pass, nil, material.StandardDeferred(), nil),
+		materials: NewMeshSorter(app, gbuffer.Frames(), NewDeferredMaterialMaker(app, pass)),
 		meshQuery: object.NewQuery[mesh.Mesh](),
 	}
 }

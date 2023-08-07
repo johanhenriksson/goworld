@@ -9,7 +9,6 @@ import (
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/framebuffer"
-	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/renderpass"
 	"github.com/johanhenriksson/goworld/render/renderpass/attachment"
 	"github.com/johanhenriksson/goworld/render/vertex"
@@ -23,7 +22,7 @@ type LinePass struct {
 	target    vulkan.Target
 	pass      renderpass.T
 	fbuf      framebuffer.Array
-	materials *MaterialSorter
+	materials *MeshSorter[*LineMatData]
 	meshQuery *object.Query[mesh.Mesh]
 }
 
@@ -71,7 +70,7 @@ func NewLinePass(app vulkan.App, target vulkan.Target, depth vulkan.Target) *Lin
 		target:    target,
 		pass:      pass,
 		fbuf:      fbufs,
-		materials: NewMaterialSorter(app, target.Frames(), pass, nil, material.Lines(), nil),
+		materials: NewMeshSorter(app, target.Frames(), NewLineMaterialMaker(app, pass)),
 		meshQuery: object.NewQuery[mesh.Mesh](),
 	}
 }

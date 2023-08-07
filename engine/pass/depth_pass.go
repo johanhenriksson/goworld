@@ -6,10 +6,8 @@ import (
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/framebuffer"
-	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/renderpass"
 	"github.com/johanhenriksson/goworld/render/renderpass/attachment"
-	"github.com/johanhenriksson/goworld/render/vertex"
 	"github.com/johanhenriksson/goworld/render/vulkan"
 
 	"github.com/vkngwrapper/core/v2/core1_0"
@@ -21,7 +19,7 @@ type DepthPass struct {
 	pass    renderpass.T
 	fbuf    framebuffer.Array
 
-	materials *MaterialSorter
+	materials *MeshSorter[*DepthMatData]
 	meshQuery *object.Query[mesh.Mesh]
 }
 
@@ -76,22 +74,7 @@ func NewDepthPass(
 		panic(err)
 	}
 
-	mats := NewMaterialSorter(app, gbuffer.Frames(), pass, nil, &material.Def{
-		Shader:       "depth",
-		VertexFormat: vertex.T{},
-		DepthTest:    true,
-		DepthWrite:   true,
-		DepthFunc:    core1_0.CompareOpLess,
-	},
-		func(d *material.Def) *material.Def {
-			shadowMat := *d
-			shadowMat.Shader = "depth"
-			shadowMat.CullMode = vertex.CullBack
-			shadowMat.DepthTest = true
-			shadowMat.DepthWrite = true
-			shadowMat.DepthFunc = core1_0.CompareOpLess
-			return &shadowMat
-		})
+	mats := NewMeshSorter(app, gbuffer.Frames(), NewDepthMaterialMaker(app, pass))
 
 	return &DepthPass{
 		gbuffer: gbuffer,
