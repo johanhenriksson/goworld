@@ -14,6 +14,21 @@ const (
 	Forward  = Pass("forward")
 )
 
+type Ref interface {
+	Key() string
+	Version() int
+
+	Shader() string
+	Pass() Pass
+	VertexFormat() any
+	DepthTest() bool
+	DepthWrite() bool
+	DepthClamp() bool
+	DepthFunc() core1_0.CompareOp
+	Primitive() vertex.Primitive
+	CullMode() vertex.CullMode
+}
+
 type Def struct {
 	Shader       string
 	Pass         Pass

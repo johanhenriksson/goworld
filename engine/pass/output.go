@@ -23,11 +23,11 @@ import (
 
 type OutputPass struct {
 	app      vulkan.App
-	material material.T[*OutputDescriptors]
+	material *material.Material[*OutputDescriptors]
 	source   vulkan.Target
 
 	quad  vertex.Mesh
-	desc  []material.Instance[*OutputDescriptors]
+	desc  []*material.Instance[*OutputDescriptors]
 	tex   []texture.T
 	fbufs framebuffer.Array
 	pass  renderpass.T

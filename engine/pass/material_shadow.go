@@ -15,7 +15,7 @@ import (
 )
 
 type ShadowMatData struct {
-	Instance material.Instance[*DepthDescriptors]
+	Instance *material.Instance[*DepthDescriptors]
 	Objects  *ObjectBuffer
 }
 

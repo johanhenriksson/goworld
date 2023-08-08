@@ -21,11 +21,11 @@ import (
 
 type BlurPass struct {
 	app      vulkan.App
-	material material.T[*BlurDescriptors]
+	material *material.Material[*BlurDescriptors]
 	input    vulkan.Target
 
 	quad  vertex.Mesh
-	desc  []material.Instance[*BlurDescriptors]
+	desc  []*material.Instance[*BlurDescriptors]
 	tex   []texture.T
 	fbufs framebuffer.Array
 	pass  renderpass.T

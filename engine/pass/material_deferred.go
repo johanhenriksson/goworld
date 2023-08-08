@@ -23,7 +23,7 @@ type DeferredDescriptors struct {
 }
 
 type DeferredMatData struct {
-	Instance material.Instance[*DeferredDescriptors]
+	Instance *material.Instance[*DeferredDescriptors]
 	Objects  []uniform.Object
 	Textures cache.SamplerCache
 }

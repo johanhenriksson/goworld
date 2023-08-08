@@ -32,8 +32,8 @@ type LightShader interface {
 }
 
 type lightShader struct {
-	mat       material.T[*LightDescriptors]
-	instances []material.Instance[*LightDescriptors]
+	mat       *material.Material[*LightDescriptors]
+	instances []*material.Instance[*LightDescriptors]
 
 	diffuseTex   []texture.T
 	normalTex    []texture.T
