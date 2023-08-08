@@ -27,10 +27,20 @@ func (m *meshes) Instantiate(mesh vertex.Mesh, callback func(Mesh)) {
 	var cached *vkMesh
 	var vtxStage, idxStage buffer.T
 
+	var idxType core1_0.IndexType
+	switch mesh.IndexSize() {
+	case 2:
+		idxType = core1_0.IndexTypeUInt16
+	case 4:
+		idxType = core1_0.IndexTypeUInt32
+	default:
+		panic("illegal index type")
+	}
+
 	cached = &vkMesh{
 		key:      mesh.Key(),
 		elements: mesh.IndexCount(),
-		idxType:  core1_0.IndexTypeUInt16,
+		idxType:  idxType,
 	}
 	if cached.elements == 0 {
 		// special case for empty meshes
