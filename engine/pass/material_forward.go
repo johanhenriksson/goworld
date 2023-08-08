@@ -26,7 +26,7 @@ type ForwardDescriptors struct {
 
 // Material Instance Wrapper - wraps material descriptors in helpers
 type ForwardMatData struct {
-	Instance material.Instance[*ForwardDescriptors]
+	Instance *material.Instance[*ForwardDescriptors]
 	Objects  *ObjectBuffer
 	Lights   *LightBuffer
 	Shadows  *ShadowCache

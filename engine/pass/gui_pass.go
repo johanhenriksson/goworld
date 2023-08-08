@@ -42,7 +42,7 @@ type GuiDrawable interface {
 type GuiPass struct {
 	app    vulkan.App
 	target vulkan.Target
-	mat    []material.Instance[*GuiDescriptors]
+	mat    []*material.Instance[*GuiDescriptors]
 	pass   renderpass.T
 	fbuf   framebuffer.Array
 	quad   quad.T

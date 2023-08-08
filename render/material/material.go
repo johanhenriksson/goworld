@@ -18,15 +18,13 @@ import (
 )
 
 // Materials combine pipelines and descriptors into a common unit.
-type T[D descriptor.Set] interface {
+type T interface {
 	Destroy()
 	TextureSlots() []texture.Slot
 	Bind(cmd command.Buffer)
-	Instantiate(descriptor.Pool) Instance[D]
-	InstantiateMany(descriptor.Pool, int) []Instance[D]
 }
 
-type material[D descriptor.Set] struct {
+type Material[D descriptor.Set] struct {
 	device  device.T
 	dlayout descriptor.SetLayoutTyped[D]
 	shader  shader.T
@@ -36,11 +34,12 @@ type material[D descriptor.Set] struct {
 }
 
 type Args struct {
-	Shader     shader.T
-	Pass       renderpass.T
-	Subpass    renderpass.Name
+	Shader    shader.T
+	Pass      renderpass.T
+	Subpass   renderpass.Name
+	Constants []pipeline.PushConstant
+
 	Pointers   vertex.Pointers
-	Constants  []pipeline.PushConstant
 	Primitive  vertex.Primitive
 	DepthTest  bool
 	DepthWrite bool
@@ -51,7 +50,7 @@ type Args struct {
 	CullMode   vertex.CullMode
 }
 
-func New[D descriptor.Set](device device.T, args Args, descriptors D) T[D] {
+func New[D descriptor.Set](device device.T, args Args, descriptors D) *Material[D] {
 	if device == nil {
 		panic("device is nil")
 	}
@@ -97,7 +96,7 @@ func New[D descriptor.Set](device device.T, args Args, descriptors D) T[D] {
 		CullMode:   args.CullMode,
 	})
 
-	return &material[D]{
+	return &Material[D]{
 		device: device,
 		shader: args.Shader,
 
@@ -108,28 +107,28 @@ func New[D descriptor.Set](device device.T, args Args, descriptors D) T[D] {
 	}
 }
 
-func (m *material[D]) Bind(cmd command.Buffer) {
+func (m *Material[D]) Bind(cmd command.Buffer) {
 	cmd.CmdBindGraphicsPipeline(m.pipe)
 }
 
-func (m *material[D]) TextureSlots() []texture.Slot {
+func (m *Material[D]) TextureSlots() []texture.Slot {
 	return m.shader.Textures()
 }
 
-func (m *material[D]) Destroy() {
+func (m *Material[D]) Destroy() {
 	m.dlayout.Destroy()
 	m.pipe.Destroy()
 	m.layout.Destroy()
 }
 
-func (m *material[D]) Instantiate(pool descriptor.Pool) Instance[D] {
+func (m *Material[D]) Instantiate(pool descriptor.Pool) *Instance[D] {
 	set := m.dlayout.Instantiate(pool)
-	return &instance[D]{
+	return &Instance[D]{
 		material: m,
 		set:      set,
 	}
 }
 
-func (m *material[D]) InstantiateMany(pool descriptor.Pool, n int) []Instance[D] {
-	return util.Map(util.Range(0, n, 1), func(i int) Instance[D] { return m.Instantiate(pool) })
+func (m *Material[D]) InstantiateMany(pool descriptor.Pool, n int) []*Instance[D] {
+	return util.Map(util.Range(0, n, 1), func(i int) *Instance[D] { return m.Instantiate(pool) })
 }

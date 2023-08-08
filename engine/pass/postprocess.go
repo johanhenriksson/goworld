@@ -25,8 +25,8 @@ type PostProcessPass struct {
 	input vulkan.Target
 
 	quad  vertex.Mesh
-	mat   material.T[*PostProcessDescriptors]
-	desc  []material.Instance[*PostProcessDescriptors]
+	mat   *material.Material[*PostProcessDescriptors]
+	desc  []*material.Instance[*PostProcessDescriptors]
 	fbufs framebuffer.Array
 	pass  renderpass.T
 

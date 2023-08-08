@@ -32,8 +32,8 @@ type AmbientOcclusionPass struct {
 	app  vulkan.App
 	pass renderpass.T
 	fbuf framebuffer.Array
-	mat  material.T[*AmbientOcclusionDescriptors]
-	desc []material.Instance[*AmbientOcclusionDescriptors]
+	mat  *material.Material[*AmbientOcclusionDescriptors]
+	desc []*material.Instance[*AmbientOcclusionDescriptors]
 	quad vertex.Mesh
 
 	scale    float32
