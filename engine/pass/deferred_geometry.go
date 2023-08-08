@@ -112,7 +112,9 @@ func (p *DeferredGeometryPass) Record(cmds command.Recorder, args render.Args, s
 		Where(isDrawDeferred).
 		Where(frustumCulled(&frustum)).
 		Collect(scene)
-	p.materials.Draw(cmds, args, objects, nil)
+
+	cam := CameraFromArgs(args)
+	p.materials.Draw(cmds, args.Context.Index, cam, objects, nil)
 
 	cmds.Record(func(cmd command.Buffer) {
 		cmd.CmdEndRenderPass()

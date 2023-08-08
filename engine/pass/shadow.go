@@ -172,7 +172,7 @@ func (p *shadowpass) Record(cmds command.Recorder, args render.Args, scene objec
 				Reset().
 				Where(castsShadows).
 				Collect(scene)
-			cascade.Mats.DrawCamera(cmds, args.Context.Index, camera, meshes, nil)
+			cascade.Mats.Draw(cmds, args.Context.Index, camera, meshes, nil)
 
 			cmds.Record(func(cmd command.Buffer) {
 				cmd.CmdEndRenderPass()

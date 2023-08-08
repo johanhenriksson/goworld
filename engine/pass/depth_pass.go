@@ -88,16 +88,16 @@ func NewDepthPass(
 }
 
 func (p *DepthPass) Record(cmds command.Recorder, args render.Args, scene object.Component) {
-	forwardMeshes := p.meshQuery.
-		Reset().
-		Where(isDrawForward). // todo: dont include transparent objects
-		Collect(scene)
+	// forwardMeshes := p.meshQuery.
+	// 	Reset().
+	// 	Where(isDrawForward). // todo: dont include transparent objects
+	// 	Collect(scene)
 
 	cmds.Record(func(cmd command.Buffer) {
 		cmd.CmdBeginRenderPass(p.pass, p.fbuf[args.Context.Index])
 	})
 
-	p.materials.Draw(cmds, args, forwardMeshes, nil)
+	// p.materials.Draw(cmds, args, forwardMeshes, nil)
 
 	cmds.Record(func(cmd command.Buffer) {
 		cmd.CmdEndRenderPass()

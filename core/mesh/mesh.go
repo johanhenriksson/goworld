@@ -2,7 +2,6 @@ package mesh
 
 import (
 	"github.com/johanhenriksson/goworld/core/object"
-	"github.com/johanhenriksson/goworld/math"
 	"github.com/johanhenriksson/goworld/math/shape"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render/material"
@@ -71,8 +70,8 @@ func NewPrimitiveMesh(primitive vertex.Primitive, mat *material.Def) *Static {
 		// refresh bounding sphere
 		min := data.Min()
 		max := data.Max()
-		m.radius = math.Max(min.Length(), max.Length())
 		m.center = max.Sub(min).Scaled(0.5)
+		m.radius = m.center.Length()
 	})
 	return m
 }
