@@ -23,6 +23,8 @@ func (b *ObjectBuffer) Reset() {
 	b.buffer = b.buffer[:0]
 }
 
-func (b *ObjectBuffer) Store(light uniform.Object) {
+func (b *ObjectBuffer) Store(light uniform.Object) int {
+	index := len(b.buffer)
 	b.buffer = append(b.buffer, light)
+	return index
 }

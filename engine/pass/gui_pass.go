@@ -96,10 +96,10 @@ func NewGuiPass(app vulkan.App, target vulkan.Target) *GuiPass {
 		DepthWrite: true,
 	}, &GuiDescriptors{
 		Config: &descriptor.Uniform[GuiConfig]{
-			Stages: core1_0.StageVertex,
+			Stages: core1_0.StageAll,
 		},
 		Quads: &descriptor.Storage[widget.Quad]{
-			Stages: core1_0.StageVertex,
+			Stages: core1_0.StageAll,
 			Size:   10000,
 		},
 		Textures: &descriptor.SamplerArray{

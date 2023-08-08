@@ -2,6 +2,7 @@ package pass
 
 import (
 	"github.com/johanhenriksson/goworld/core/light"
+	"github.com/johanhenriksson/goworld/core/mesh"
 	"github.com/johanhenriksson/goworld/engine/uniform"
 	"github.com/johanhenriksson/goworld/render/cache"
 	"github.com/johanhenriksson/goworld/render/command"
@@ -38,7 +39,9 @@ type ForwardMaterialMaker struct {
 	lookup ShadowmapLookupFn
 }
 
-func NewForwardMaterialMaker(app vulkan.App, pass renderpass.T, lookup ShadowmapLookupFn) MaterialMaker[*ForwardMatData] {
+var _ MaterialMaker[*ForwardMatData] = &ForwardMaterialMaker{}
+
+func NewForwardMaterialMaker(app vulkan.App, pass renderpass.T, lookup ShadowmapLookupFn) *ForwardMaterialMaker {
 	return &ForwardMaterialMaker{
 		app:    app,
 		pass:   pass,
@@ -116,13 +119,12 @@ func (m *ForwardMaterialMaker) Destroy(mat *ForwardMatData) {
 	mat.Instance.Material().Destroy()
 }
 
-func (m *ForwardMaterialMaker) Draw(cmds command.Recorder, camera uniform.Camera, group *MeshGroup[*ForwardMatData], lights []light.T) {
-	mat := group.Material
+func (m *ForwardMaterialMaker) BeginFrame(mat *ForwardMatData, camera uniform.Camera, lights []light.T) {
 	mat.Instance.Descriptors().Camera.Set(camera)
 
-	cmds.Record(func(cmd command.Buffer) {
-		mat.Instance.Bind(cmd)
-	})
+	// multiple calls to this reset in a single frame will cause weird behaviour
+	// we need to split this function somehow in order to be able to do depth sorting etc
+	mat.Objects.Reset()
 
 	if len(lights) > 0 {
 		// how to get ambient light info?
@@ -132,28 +134,43 @@ func (m *ForwardMaterialMaker) Draw(cmds command.Recorder, camera uniform.Camera
 		}
 		mat.Lights.Flush(mat.Instance.Descriptors().Lights)
 	}
+}
 
-	mat.Objects.Reset()
-	for i, msh := range group.Meshes {
+func (m *ForwardMaterialMaker) PrepareMesh(mat *ForwardMatData, msh mesh.Mesh) int {
+	textures := mat.Instance.Material().TextureSlots()
+	textureIds := AssignMeshTextures(mat.Textures, msh, textures)
+
+	return mat.Objects.Store(uniform.Object{
+		Model:    msh.Transform().Matrix(),
+		Textures: textureIds,
+	})
+}
+
+func (m *ForwardMaterialMaker) EndFrame(mat *ForwardMatData) {
+	mat.Objects.Flush(mat.Instance.Descriptors().Objects)
+	mat.Textures.Flush()
+}
+
+func (m *ForwardMaterialMaker) Draw(cmds command.Recorder, camera uniform.Camera, group *MeshGroup[*ForwardMatData], lights []light.T) {
+	mat := group.Material
+
+	m.BeginFrame(mat, camera, lights)
+
+	cmds.Record(func(cmd command.Buffer) {
+		mat.Instance.Bind(cmd)
+	})
+	for _, msh := range group.Meshes {
 		vkmesh, meshReady := m.app.Meshes().TryFetch(msh.Mesh().Get())
 		if !meshReady {
 			continue
 		}
 
-		textures := mat.Instance.Material().TextureSlots()
-		textureIds := FetchMaterialTextures(mat.Textures, msh, textures)
+		index := m.PrepareMesh(mat, msh)
 
-		mat.Objects.Store(uniform.Object{
-			Model:    msh.Transform().Matrix(),
-			Textures: textureIds,
-		})
-
-		index := i
 		cmds.Record(func(cmd command.Buffer) {
 			vkmesh.Draw(cmd, index)
 		})
 	}
 
-	mat.Objects.Flush(mat.Instance.Descriptors().Objects)
-	mat.Textures.Flush()
+	m.EndFrame(mat)
 }

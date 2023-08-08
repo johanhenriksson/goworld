@@ -84,11 +84,13 @@ func (p *LinePass) Record(cmds command.Recorder, args render.Args, scene object.
 		Reset().
 		Where(isDrawLines).
 		Collect(scene)
-	p.materials.Draw(cmds, args, lines, nil)
+
+	cam := CameraFromArgs(args)
+	p.materials.Draw(cmds, args.Context.Index, cam, lines, nil)
 
 	// debug lines
 	debug := lineShape.Debug.Fetch()
-	p.materials.Draw(cmds, args, []mesh.Mesh{debug}, nil)
+	p.materials.Draw(cmds, args.Context.Index, cam, []mesh.Mesh{debug}, nil)
 
 	cmds.Record(func(cmd command.Buffer) {
 		cmd.CmdEndRenderPass()

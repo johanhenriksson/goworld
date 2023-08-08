@@ -72,10 +72,11 @@ func (m *MaterialCache[T]) Load(def *material.Def) ([]T, bool) {
 type MaterialMaker[T any] interface {
 	Instantiate(mat *material.Def, count int) []T
 	Destroy(T)
+	// Prepare(func(*MeshGroup[T]))
 	Draw(cmds command.Recorder, camera uniform.Camera, group *MeshGroup[T], lights []light.T)
 }
 
-func FetchMaterialTextures(samplers cache.SamplerCache, msh mesh.Mesh, slots []texture.Slot) [4]uint32 {
+func AssignMeshTextures(samplers cache.SamplerCache, msh mesh.Mesh, slots []texture.Slot) [4]uint32 {
 	textureIds := [4]uint32{}
 	for id, slot := range slots {
 		ref := msh.Texture(slot)

@@ -18,6 +18,7 @@ type MeshSorter[T any] struct {
 }
 
 type MeshGroup[T any] struct {
+	MatID    uint64
 	Material T
 	Meshes   []mesh.Mesh
 }
@@ -35,22 +36,7 @@ func (m *MeshSorter[T]) Destroy() {
 	m.cache = nil
 }
 
-func (m *MeshSorter[T]) Draw(cmds command.Recorder, args render.Args, meshes []mesh.Mesh, lights []light.T) {
-	camera := uniform.Camera{
-		Proj:        args.Projection,
-		View:        args.View,
-		ViewProj:    args.VP,
-		ProjInv:     args.Projection.Invert(),
-		ViewInv:     args.View.Invert(),
-		ViewProjInv: args.VP.Invert(),
-		Eye:         vec4.Extend(args.Position, 0),
-		Forward:     vec4.Extend(args.Forward, 0),
-		Viewport:    vec2.NewI(args.Viewport.Width, args.Viewport.Height),
-	}
-	m.DrawCamera(cmds, args.Context.Index, camera, meshes, lights)
-}
-
-func (m *MeshSorter[T]) DrawCamera(cmds command.Recorder, frame int, camera uniform.Camera, meshes []mesh.Mesh, lights []light.T) {
+func (m *MeshSorter[T]) Draw(cmds command.Recorder, frame int, camera uniform.Camera, meshes []mesh.Mesh, lights []light.T) {
 	// sort meshes by material
 	meshGroups := map[uint64]*MeshGroup[T]{}
 	for _, msh := range meshes {
@@ -61,6 +47,7 @@ func (m *MeshSorter[T]) DrawCamera(cmds command.Recorder, frame int, camera unif
 		group, exists := meshGroups[msh.MaterialID()]
 		if !exists {
 			group = &MeshGroup[T]{
+				MatID:    msh.MaterialID(),
 				Material: mat,
 				Meshes:   make([]mesh.Mesh, 0, 32),
 			}
@@ -72,5 +59,19 @@ func (m *MeshSorter[T]) DrawCamera(cmds command.Recorder, frame int, camera unif
 	// iterate the sorted material groups
 	for _, group := range meshGroups {
 		m.maker.Draw(cmds, camera, group, lights)
+	}
+}
+
+func CameraFromArgs(args render.Args) uniform.Camera {
+	return uniform.Camera{
+		Proj:        args.Projection,
+		View:        args.View,
+		ViewProj:    args.VP,
+		ProjInv:     args.Projection.Invert(),
+		ViewInv:     args.View.Invert(),
+		ViewProjInv: args.VP.Invert(),
+		Eye:         vec4.Extend(args.Position, 0),
+		Forward:     vec4.Extend(args.Forward, 0),
+		Viewport:    vec2.NewI(args.Viewport.Width, args.Viewport.Height),
 	}
 }
