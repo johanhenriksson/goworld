@@ -1,26 +1,46 @@
 # goworld
 
-An attempt at building a basic 3D engine from scratch in Go using Vulkan. The goal is to create a engine capable of producing _some_ kind of _passable_ graphics with a coherent art style.
+An attempt at building a basic 3D engine from scratch in Go using Vulkan.
 
-**Features:**
+**Goals**
 
+- Have fun making it
+- Use minimal dependencies
+- Implement modern GPU-driven rendering techniques
+- Ideally leverage Go's concurrency useful ways
+- Run on MacOS/Linux/Windows
+- Create an ergonomic, reactive GUI system
+- Get to a state capable of producing _some_ kind of _passable_ graphics with a coherent art style
+- Experiment with some cool demo scenes
+- Maybe make a game
+
+**Features**
+
+Currently, the following features exist in varying degrees of completeness:
+
+- Classic object/component scene graph
 - Basic scene editor
 - Voxel world/editor demo
 - Unified Rendering Pipeline (Forward/Deferred)
+  - Directional Lights (w/ cascading shadow maps)
+  - Point Lights
+  - Screen-Space Ambient Occlusion (HBAO)
+  - Color Grading with Lookup Tables
 - 3D Physics Engine integration via Bullet SDK
   - Character controller
   - Rigidbody dynamics
   - Basic shape colliders (box, sphere, cylinder, capsule)
   - Mesh colliders
-- Directional Lights (w/ shadows)
-- Point Lights
 - TrueType Font Rendering
 - React-like UI with a flexbox layout engine & css-like styling
+  - Hooks
+  - Portals/fragments
+  - Rect
+  - Image
+  - Button
+  - Textbox
+  - Floating windows
 - Custom ergonomic 3D math library derived from mathgl and go3d
-- Screen-Space Ambient Occlusion (HBAO)
-- Color Grading with Lookup Tables
-
-Tested on OSX 10.10+ and Manjaro Linux. It should _theoretically_ work on Windows.
 
 ![Screenshot from 2023-02-06](docs/img/screenshot230305.png)
 ![Screenshot from 2022-02-27](docs/img/screenshot220227.png)
@@ -32,7 +52,18 @@ Tested on OSX 10.10+ and Manjaro Linux. It should _theoretically_ work on Window
 - Vulkan 1.2
 - MacOS users need MoltenVK.
 
-## Build Bullet SDK
+## Build Instructions
+
+Goworld is developed & tested on MacOS 13. It should be reasonably easy to get it running on Linux or Windows,
+but its not officially supported yet.
+
+### (MacOS) Install MoltenVK
+
+Grab the latest version of MoltenVK.
+
+### Build Bullet SDK
+
+Goworld uses the Bullet SDK for physics. In order to compile from source, you first need to compile Bullet.
 
 ```bash
 # check out bullet3
@@ -56,3 +87,16 @@ cmake . \
 make
 make install
 ```
+
+### Build
+
+Goworld uses Taskfile for convenient building:
+
+- Build:
+  ```
+  $ task build
+  ```
+- Build & run:
+  ```
+  $ task run
+  ```
