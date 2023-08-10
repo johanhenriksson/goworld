@@ -21,7 +21,7 @@ type ForwardPass struct {
 	pass   renderpass.T
 	fbuf   framebuffer.Array
 
-	materials  *DepthSorter
+	materials  ForwardMaterialCache
 	meshQuery  *object.Query[mesh.Mesh]
 	lightQuery *object.Query[light.T]
 }
@@ -76,7 +76,7 @@ func NewForwardPass(
 		pass:   pass,
 		fbuf:   fbuf,
 
-		materials:  NewDepthSorter(app, target.Frames(), NewForwardMaterialMaker(app, pass, shadows.Shadowmap)),
+		materials:  NewForwardMaterialCache(app, pass, target.Frames(), shadows.Shadowmap),
 		meshQuery:  object.NewQuery[mesh.Mesh](),
 		lightQuery: object.NewQuery[light.T](),
 	}
@@ -94,8 +94,8 @@ func (p *ForwardPass) Record(cmds command.Recorder, args render.Args, scene obje
 		cmd.CmdBeginRenderPass(p.pass, p.fbuf[args.Context.Index])
 	})
 
-	cam := CameraFromArgs(args)
-	p.materials.Draw(cmds, args.Context.Index, cam, forwardMeshes, lights)
+	groups := DepthSortGroups(p.materials, args, forwardMeshes)
+	groups.Draw(cmds, args, groups, lights)
 
 	cmds.Record(func(cmd command.Buffer) {
 		cmd.CmdEndRenderPass()
