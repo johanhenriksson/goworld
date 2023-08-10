@@ -33,6 +33,9 @@ type Def struct {
 }
 
 func (d *Def) Hash() ID {
+	if d == nil {
+		return 0
+	}
 	if d.id == 0 {
 		// cache the hash
 		// todo: it might be a problem that this wont ever be invalidated
