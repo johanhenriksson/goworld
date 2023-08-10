@@ -39,10 +39,6 @@ func (g DrawGroups) Draw(cmds command.Recorder, args render.Args, groups []DrawG
 	}
 }
 
-type MatCache interface {
-	TryFetch(*material.Def) ([]Material, bool)
-}
-
 // Sort meshes by material according to depth.
 // Consecutive meshes in the depth order are grouped if they have the same material
 func OrderedGroups(cache MatCache, frame int, meshes []mesh.Mesh) DrawGroups {

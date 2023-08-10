@@ -4,9 +4,12 @@ import (
 	"github.com/johanhenriksson/goworld/core/light"
 	"github.com/johanhenriksson/goworld/core/mesh"
 	"github.com/johanhenriksson/goworld/engine/uniform"
+	"github.com/johanhenriksson/goworld/render/cache"
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/material"
 )
+
+type MatCache cache.T[*material.Def, []Material]
 
 // Material implements render logic for a specific material.
 type Material interface {

@@ -19,7 +19,7 @@ type DepthPass struct {
 	pass    renderpass.T
 	fbuf    framebuffer.Array
 
-	materials *MeshSorter[*DepthMatData]
+	materials MatCache
 	meshQuery *object.Query[mesh.Mesh]
 }
 
@@ -74,15 +74,13 @@ func NewDepthPass(
 		panic(err)
 	}
 
-	mats := NewMeshSorter(app, gbuffer.Frames(), NewDepthMaterialMaker(app, pass))
-
 	return &DepthPass{
 		gbuffer: gbuffer,
 		app:     app,
 		pass:    pass,
 		fbuf:    fbuf,
 
-		materials: mats,
+		materials: NewDepthMaterialCache(app, pass, gbuffer.Frames()),
 		meshQuery: object.NewQuery[mesh.Mesh](),
 	}
 }
