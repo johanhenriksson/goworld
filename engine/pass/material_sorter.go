@@ -8,6 +8,7 @@ import (
 	"github.com/johanhenriksson/goworld/math/vec4"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/command"
+	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/vulkan"
 )
 
@@ -18,7 +19,7 @@ type MeshSorter[T any] struct {
 }
 
 type MeshGroup[T any] struct {
-	MatID    uint64
+	MatID    material.ID
 	Material T
 	Meshes   []mesh.Mesh
 }
@@ -38,7 +39,7 @@ func (m *MeshSorter[T]) Destroy() {
 
 func (m *MeshSorter[T]) Draw(cmds command.Recorder, frame int, camera uniform.Camera, meshes []mesh.Mesh, lights []light.T) {
 	// sort meshes by material
-	meshGroups := map[uint64]*MeshGroup[T]{}
+	meshGroups := map[material.ID]*MeshGroup[T]{}
 	for _, msh := range meshes {
 		mat, ready := m.cache.Get(msh, frame)
 		if !ready {

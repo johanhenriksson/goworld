@@ -15,7 +15,7 @@ type Mesh interface {
 	Primitive() vertex.Primitive
 	CastShadows() bool
 	Material() *material.Def
-	MaterialID() uint64
+	MaterialID() material.ID
 
 	Texture(texture.Slot) texture.Ref
 
@@ -34,7 +34,7 @@ type Static struct {
 	primitive vertex.Primitive
 	shadows   bool
 	mat       *material.Def
-	matId     uint64
+	matId     material.ID
 
 	textures map[texture.Slot]texture.Ref
 
@@ -99,7 +99,7 @@ func (m *Static) Material() *material.Def {
 	return m.mat
 }
 
-func (m *Static) MaterialID() uint64 {
+func (m *Static) MaterialID() material.ID {
 	return m.matId
 }
 
