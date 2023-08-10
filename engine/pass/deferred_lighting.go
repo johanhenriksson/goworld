@@ -3,9 +3,6 @@ package pass
 import (
 	"github.com/johanhenriksson/goworld/core/light"
 	"github.com/johanhenriksson/goworld/core/object"
-	"github.com/johanhenriksson/goworld/engine/uniform"
-	"github.com/johanhenriksson/goworld/math/vec2"
-	"github.com/johanhenriksson/goworld/math/vec4"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/cache"
 	"github.com/johanhenriksson/goworld/render/color"
@@ -22,11 +19,11 @@ import (
 const LightingSubpass renderpass.Name = "lighting"
 
 type DeferredLightPass struct {
+	app        vulkan.App
 	target     vulkan.Target
 	gbuffer    GeometryBuffer
 	ssao       vulkan.Target
 	quad       vertex.Mesh
-	app        vulkan.App
 	pass       renderpass.T
 	light      LightShader
 	fbuf       framebuffer.Array
@@ -100,17 +97,7 @@ func NewDeferredLightingPass(
 }
 
 func (p *DeferredLightPass) Record(cmds command.Recorder, args render.Args, scene object.Component) {
-	camera := uniform.Camera{
-		Proj:        args.Projection,
-		View:        args.View,
-		ViewProj:    args.VP,
-		ProjInv:     args.Projection.Invert(),
-		ViewInv:     args.View.Invert(),
-		ViewProjInv: args.VP.Invert(),
-		Eye:         vec4.Extend(args.Position, 0),
-		Forward:     vec4.Extend(args.Forward, 0),
-		Viewport:    vec2.NewI(args.Viewport.Width, args.Viewport.Height),
-	}
+	camera := CameraFromArgs(args)
 
 	desc := p.light.Descriptors(args.Frame)
 	desc.Camera.Set(camera)
