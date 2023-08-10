@@ -45,7 +45,7 @@ type Shadowmap struct {
 type Cascade struct {
 	Texture texture.T
 	Frame   framebuffer.T
-	Mats    *MeshSorter[*ShadowMatData]
+	Mats    MatCache
 }
 
 func NewShadowPass(app vulkan.App, target vulkan.Target) Shadow {
@@ -136,7 +136,7 @@ func (p *shadowpass) createShadowmap(light light.T) Shadowmap {
 
 		// each light cascade needs its own shadow materials - or rather, their own descriptors
 		// cheating a bit by creating entire materials for each light, fix it later.
-		mats := NewMeshSorter(p.app, p.target.Frames(), NewShadowMaterialMaker(p.app, p.pass))
+		mats := NewShadowMaterialMaker(p.app, p.pass, p.target.Frames())
 		cascades[i].Mats = mats
 	}
 
@@ -172,7 +172,9 @@ func (p *shadowpass) Record(cmds command.Recorder, args render.Args, scene objec
 				Reset().
 				Where(castsShadows).
 				Collect(scene)
-			cascade.Mats.Draw(cmds, args.Context.Index, camera, meshes, nil)
+
+			groups := MaterialGroups(cascade.Mats, args.Context.Index, meshes)
+			groups.Draw(cmds, camera, nil)
 
 			cmds.Record(func(cmd command.Buffer) {
 				cmd.CmdEndRenderPass()

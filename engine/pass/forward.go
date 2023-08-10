@@ -94,8 +94,9 @@ func (p *ForwardPass) Record(cmds command.Recorder, args render.Args, scene obje
 		cmd.CmdBeginRenderPass(p.pass, p.fbuf[args.Context.Index])
 	})
 
-	groups := DepthSortGroups(p.materials, args, forwardMeshes)
-	groups.Draw(cmds, args, groups, lights)
+	cam := CameraFromArgs(args)
+	groups := DepthSortGroups(p.materials, args.Context.Index, cam, forwardMeshes)
+	groups.Draw(cmds, cam, lights)
 
 	cmds.Record(func(cmd command.Buffer) {
 		cmd.CmdEndRenderPass()

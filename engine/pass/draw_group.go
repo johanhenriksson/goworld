@@ -3,7 +3,7 @@ package pass
 import (
 	"github.com/johanhenriksson/goworld/core/light"
 	"github.com/johanhenriksson/goworld/core/mesh"
-	"github.com/johanhenriksson/goworld/render"
+	"github.com/johanhenriksson/goworld/engine/uniform"
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/material"
 )
@@ -16,9 +16,7 @@ type DrawGroup struct {
 
 type DrawGroups []DrawGroup
 
-func (g DrawGroups) Draw(cmds command.Recorder, args render.Args, groups []DrawGroup, lights []light.T) {
-	camera := CameraFromArgs(args)
-
+func (groups DrawGroups) Draw(cmds command.Recorder, camera uniform.Camera, lights []light.T) {
 	for _, group := range groups {
 		// there could be multiple instances of the same material
 		// however, as long as there are no calls in between draws we should be okay
