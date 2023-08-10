@@ -105,12 +105,11 @@ func NewBlurPass(app vulkan.App, output vulkan.Target, input vulkan.Target) *Blu
 }
 
 func (p *BlurPass) Record(cmds command.Recorder, args render.Args, scene object.Component) {
-	ctx := args.Context
 	quad := p.app.Meshes().Fetch(p.quad)
 
 	cmds.Record(func(cmd command.Buffer) {
-		cmd.CmdBeginRenderPass(p.pass, p.fbufs[ctx.Index%len(p.fbufs)])
-		p.desc[ctx.Index%len(p.desc)].Bind(cmd)
+		cmd.CmdBeginRenderPass(p.pass, p.fbufs[args.Frame])
+		p.desc[args.Frame].Bind(cmd)
 		quad.Draw(cmd, 0)
 		cmd.CmdEndRenderPass()
 	})

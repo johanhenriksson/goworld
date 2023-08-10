@@ -112,11 +112,11 @@ func (p *DeferredLightPass) Record(cmds command.Recorder, args render.Args, scen
 		Viewport:    vec2.NewI(args.Viewport.Width, args.Viewport.Height),
 	}
 
-	desc := p.light.Descriptors(args.Context.Index)
+	desc := p.light.Descriptors(args.Frame)
 	desc.Camera.Set(camera)
 
-	lightbuf := p.lightbufs[args.Context.Index]
-	shadows := p.shadows[args.Context.Index]
+	lightbuf := p.lightbufs[args.Frame]
+	shadows := p.shadows[args.Frame]
 	lightbuf.Reset()
 
 	// todo: perform frustum culling on light volumes
@@ -130,9 +130,9 @@ func (p *DeferredLightPass) Record(cmds command.Recorder, args render.Args, scen
 
 	quad := p.app.Meshes().Fetch(p.quad)
 	cmds.Record(func(cmd command.Buffer) {
-		cmd.CmdBeginRenderPass(p.pass, p.fbuf[args.Context.Index])
+		cmd.CmdBeginRenderPass(p.pass, p.fbuf[args.Frame])
 
-		p.light.Bind(cmd, args.Context.Index)
+		p.light.Bind(cmd, args.Frame)
 
 		quad.Draw(cmd, 0)
 

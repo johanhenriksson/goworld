@@ -87,7 +87,7 @@ func (p *ForwardPass) Record(cmds command.Recorder, args render.Args, scene obje
 	lights := p.lightQuery.Reset().Collect(scene)
 
 	cmds.Record(func(cmd command.Buffer) {
-		cmd.CmdBeginRenderPass(p.pass, p.fbuf[args.Context.Index])
+		cmd.CmdBeginRenderPass(p.pass, p.fbuf[args.Frame])
 	})
 
 	// opaque pass
@@ -95,7 +95,7 @@ func (p *ForwardPass) Record(cmds command.Recorder, args render.Args, scene obje
 		Reset().
 		Where(isDrawForward(false)).
 		Collect(scene)
-	groups := MaterialGroups(p.materials, args.Context.Index, opaque)
+	groups := MaterialGroups(p.materials, args.Frame, opaque)
 	groups.Draw(cmds, cam, lights)
 
 	// transparent pass
@@ -104,7 +104,7 @@ func (p *ForwardPass) Record(cmds command.Recorder, args render.Args, scene obje
 		Where(isDrawForward(true)).
 		Where(func(m mesh.Mesh) bool { return m.Material().Transparent }).
 		Collect(scene)
-	groups = DepthSortGroups(p.materials, args.Context.Index, cam, transparent)
+	groups = DepthSortGroups(p.materials, args.Frame, cam, transparent)
 	groups.Draw(cmds, cam, lights)
 
 	cmds.Record(func(cmd command.Buffer) {

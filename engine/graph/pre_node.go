@@ -9,6 +9,7 @@ import (
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/command"
+	"github.com/johanhenriksson/goworld/render/swapchain"
 	"github.com/johanhenriksson/goworld/render/vulkan"
 
 	"github.com/vkngwrapper/core/v2/core1_0"
@@ -21,11 +22,6 @@ type PreDrawable interface {
 	PreDraw(render.Args, object.Object) error
 }
 
-type PreNode interface {
-	Node
-	Prepare(scene object.Object, time, delta float32) (*render.Args, error)
-}
-
 type preNode struct {
 	*node
 	target       vulkan.Target
@@ -33,7 +29,7 @@ type preNode struct {
 	predrawQuery *object.Query[PreDrawable]
 }
 
-func newPreNode(app vulkan.App, target vulkan.Target) PreNode {
+func newPreNode(app vulkan.App, target vulkan.Target) *preNode {
 	return &preNode{
 		node:         newNode(app, "Pre", nil),
 		target:       target,
@@ -42,7 +38,7 @@ func newPreNode(app vulkan.App, target vulkan.Target) PreNode {
 	}
 }
 
-func (n *preNode) Prepare(scene object.Object, time, delta float32) (*render.Args, error) {
+func (n *preNode) Prepare(scene object.Object, time, delta float32) (*render.Args, *swapchain.Context, error) {
 	screen := render.Screen{
 		Width:  n.target.Width(),
 		Height: n.target.Height(),
@@ -52,7 +48,7 @@ func (n *preNode) Prepare(scene object.Object, time, delta float32) (*render.Arg
 	// aquire next frame
 	context, err := n.target.Aquire()
 	if err != nil {
-		return nil, ErrRecreate
+		return nil, nil, ErrRecreate
 	}
 
 	// ensure the default white texture is always available
@@ -73,9 +69,9 @@ func (n *preNode) Prepare(scene object.Object, time, delta float32) (*render.Arg
 	}
 
 	// fill in time & swapchain context
+	args.Frame = context.Index
 	args.Time = time
 	args.Delta = delta
-	args.Context = context
 	args.Transform = mat4.Ident()
 
 	// execute pre-draw pass
@@ -86,10 +82,10 @@ func (n *preNode) Prepare(scene object.Object, time, delta float32) (*render.Arg
 
 	// fire off render start signals
 	var waits []command.Wait
-	if args.Context.ImageAvailable != nil {
+	if context.ImageAvailable != nil {
 		waits = []command.Wait{
 			{
-				Semaphore: args.Context.ImageAvailable,
+				Semaphore: context.ImageAvailable,
 				Mask:      core1_0.PipelineStageColorAttachmentOutput,
 			},
 		}
@@ -102,5 +98,5 @@ func (n *preNode) Prepare(scene object.Object, time, delta float32) (*render.Arg
 		Signal: n.signals(context.Index),
 	})
 
-	return &args, nil
+	return &args, context, nil
 }

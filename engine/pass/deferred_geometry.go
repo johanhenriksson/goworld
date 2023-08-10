@@ -102,7 +102,7 @@ func NewDeferredGeometryPass(
 
 func (p *DeferredGeometryPass) Record(cmds command.Recorder, args render.Args, scene object.Component) {
 	cmds.Record(func(cmd command.Buffer) {
-		cmd.CmdBeginRenderPass(p.pass, p.fbuf[args.Context.Index])
+		cmd.CmdBeginRenderPass(p.pass, p.fbuf[args.Frame])
 	})
 
 	frustum := shape.FrustumFromMatrix(args.VP)
@@ -114,7 +114,7 @@ func (p *DeferredGeometryPass) Record(cmds command.Recorder, args render.Args, s
 		Collect(scene)
 
 	cam := CameraFromArgs(args)
-	groups := MaterialGroups(p.materials, args.Context.Index, objects)
+	groups := MaterialGroups(p.materials, args.Frame, objects)
 	groups.Draw(cmds, cam, nil)
 
 	cmds.Record(func(cmd command.Buffer) {

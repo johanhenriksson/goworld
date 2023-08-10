@@ -108,12 +108,11 @@ func NewOutputPass(app vulkan.App, target vulkan.Target, source vulkan.Target) *
 }
 
 func (p *OutputPass) Record(cmds command.Recorder, args render.Args, scene object.Component) {
-	ctx := args.Context
 	quad := p.app.Meshes().Fetch(p.quad)
 
 	cmds.Record(func(cmd command.Buffer) {
-		cmd.CmdBeginRenderPass(p.pass, p.fbufs[ctx.Index])
-		p.desc[ctx.Index].Bind(cmd)
+		cmd.CmdBeginRenderPass(p.pass, p.fbufs[args.Frame])
+		p.desc[args.Frame].Bind(cmd)
 		quad.Draw(cmd, 0)
 		cmd.CmdEndRenderPass()
 	})

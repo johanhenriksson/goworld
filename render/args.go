@@ -6,12 +6,12 @@ import (
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render/color"
-	"github.com/johanhenriksson/goworld/render/swapchain"
 )
 
 // Args holds the arguments used to perform a draw pass.
 // Includes the various transformation matrices and position of the camera.
 type Args struct {
+	Frame      int
 	Time       float32
 	Delta      float32
 	VP         mat4.T
@@ -28,7 +28,6 @@ type Args struct {
 	Far        float32
 	Viewport   Screen
 	Clear      color.T
-	Context    *swapchain.Context
 }
 
 type Screen struct {

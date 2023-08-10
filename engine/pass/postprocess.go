@@ -113,16 +113,15 @@ func NewPostProcessPass(app vulkan.App, target vulkan.Target, input vulkan.Targe
 }
 
 func (p *PostProcessPass) Record(cmds command.Recorder, args render.Args, scene object.Component) {
-	ctx := args.Context
 	quad := p.app.Meshes().Fetch(p.quad)
 
 	// refresh color lut
 	lutTex := p.app.Textures().Fetch(p.LUT)
 
 	cmds.Record(func(cmd command.Buffer) {
-		cmd.CmdBeginRenderPass(p.pass, p.fbufs[ctx.Index%len(p.fbufs)])
+		cmd.CmdBeginRenderPass(p.pass, p.fbufs[args.Frame])
 
-		desc := p.desc[ctx.Index%len(p.desc)]
+		desc := p.desc[args.Frame]
 		desc.Bind(cmd)
 		desc.Descriptors().LUT.Set(lutTex)
 

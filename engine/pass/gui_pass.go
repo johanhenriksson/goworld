@@ -136,7 +136,7 @@ func NewGuiPass(app vulkan.App, target vulkan.Target) *GuiPass {
 }
 
 func (p *GuiPass) Record(cmds command.Recorder, args render.Args, scene object.Component) {
-	mat := p.mat[args.Context.Index]
+	mat := p.mat[args.Frame]
 
 	size := vec2.NewI(args.Viewport.Width, args.Viewport.Height)
 	scale := args.Viewport.Scale
@@ -144,7 +144,7 @@ func (p *GuiPass) Record(cmds command.Recorder, args render.Args, scene object.C
 
 	mesh := p.app.Meshes().Fetch(p.quad.Mesh())
 
-	textures := p.textures[args.Context.Index]
+	textures := p.textures[args.Frame]
 
 	uiArgs := widget.DrawArgs{
 		Time:     args.Time,
@@ -160,7 +160,7 @@ func (p *GuiPass) Record(cmds command.Recorder, args render.Args, scene object.C
 	}
 
 	// clear quad buffer
-	qb := p.quads[args.Context.Index]
+	qb := p.quads[args.Frame]
 	qb.Reset()
 
 	// query scene for gui managers
@@ -193,7 +193,7 @@ func (p *GuiPass) Record(cmds command.Recorder, args render.Args, scene object.C
 
 	// draw everything in a single batch
 	cmds.Record(func(cmd command.Buffer) {
-		cmd.CmdBeginRenderPass(p.pass, p.fbuf[args.Context.Index])
+		cmd.CmdBeginRenderPass(p.pass, p.fbuf[args.Frame])
 		mat.Bind(cmd)
 		mesh.DrawInstanced(cmd, 0, len(qb.Data))
 		cmd.CmdEndRenderPass()

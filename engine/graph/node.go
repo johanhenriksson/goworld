@@ -181,7 +181,7 @@ func (n *node) Draw(worker command.Worker, args render.Args, scene object.Compon
 
 	worker.Submit(command.SubmitInfo{
 		Marker: n.pass.Name(),
-		Wait:   n.waits(args.Context.Index),
-		Signal: n.signals(args.Context.Index),
+		Wait:   n.waits(args.Frame),
+		Signal: n.signals(args.Frame),
 	})
 }

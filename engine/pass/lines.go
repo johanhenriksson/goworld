@@ -77,7 +77,7 @@ func NewLinePass(app vulkan.App, target vulkan.Target, depth vulkan.Target) *Lin
 
 func (p *LinePass) Record(cmds command.Recorder, args render.Args, scene object.Component) {
 	cmds.Record(func(cmd command.Buffer) {
-		cmd.CmdBeginRenderPass(p.pass, p.fbuf[args.Context.Index])
+		cmd.CmdBeginRenderPass(p.pass, p.fbuf[args.Frame])
 	})
 
 	lines := p.meshQuery.
@@ -90,7 +90,7 @@ func (p *LinePass) Record(cmds command.Recorder, args render.Args, scene object.
 	lines = append(lines, debug)
 
 	cam := CameraFromArgs(args)
-	groups := MaterialGroups(p.materials, args.Context.Index, lines)
+	groups := MaterialGroups(p.materials, args.Frame, lines)
 	groups.Draw(cmds, cam, nil)
 
 	cmds.Record(func(cmd command.Buffer) {

@@ -92,11 +92,11 @@ func (p *DepthPass) Record(cmds command.Recorder, args render.Args, scene object
 		Collect(scene)
 
 	cmds.Record(func(cmd command.Buffer) {
-		cmd.CmdBeginRenderPass(p.pass, p.fbuf[args.Context.Index])
+		cmd.CmdBeginRenderPass(p.pass, p.fbuf[args.Frame])
 	})
 
 	cam := CameraFromArgs(args)
-	groups := MaterialGroups(p.materials, args.Context.Index, opaque)
+	groups := MaterialGroups(p.materials, args.Frame, opaque)
 	groups.Draw(cmds, cam, nil)
 
 	cmds.Record(func(cmd command.Buffer) {

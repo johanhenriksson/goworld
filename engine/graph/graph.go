@@ -33,8 +33,8 @@ type Resource interface {
 type graph struct {
 	app       vulkan.App
 	target    vulkan.Target
-	pre       PreNode
-	post      Node
+	pre       *preNode
+	post      *postNode
 	nodes     []Node
 	todo      map[Node]bool
 	init      NodeFunc
@@ -104,7 +104,7 @@ func (g *graph) Draw(scene object.Object, time, delta float32) {
 	}
 
 	// prepare
-	args, err := g.pre.Prepare(scene, time, delta)
+	args, context, err := g.pre.Prepare(scene, time, delta)
 	if err != nil {
 		log.Println("Render preparation error:", err)
 		g.Recreate()
@@ -112,7 +112,7 @@ func (g *graph) Draw(scene object.Object, time, delta float32) {
 	}
 
 	// select a suitable worker for this frame
-	worker := g.app.Worker(args.Context.Index)
+	worker := g.app.Worker(args.Frame)
 
 	for len(g.todo) > 0 {
 		progress := false
@@ -130,7 +130,8 @@ func (g *graph) Draw(scene object.Object, time, delta float32) {
 			panic("unable to make progress in render graph")
 		}
 	}
-	g.post.Draw(worker, *args, scene)
+
+	g.post.Present(worker, context)
 }
 
 func (g *graph) Screengrab() *image.RGBA {
