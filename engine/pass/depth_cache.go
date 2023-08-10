@@ -34,7 +34,7 @@ func (m *DepthMatCache) Instantiate(def *material.Def, callback func([]Material)
 		def = &material.Def{}
 	}
 
-	desc := &DepthDescriptors{
+	desc := &BasicDescriptors{
 		Camera: &descriptor.Uniform[uniform.Camera]{
 			Stages: core1_0.StageAll,
 		},
@@ -70,11 +70,11 @@ func (m *DepthMatCache) Instantiate(def *material.Def, callback func([]Material)
 	instances := make([]Material, m.frames)
 	for i := range instances {
 		instance := mat.Instantiate(m.app.Pool())
-		instances[i] = &DepthMaterial{
-			id: def.Hash(),
-
+		instances[i] = &BasicMaterial{
+			id:       def.Hash(),
 			Instance: instance,
 			Objects:  NewObjectBuffer(desc.Objects.Size),
+			Meshes:   m.app.Meshes(),
 		}
 	}
 

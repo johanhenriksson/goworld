@@ -13,25 +13,25 @@ import (
 	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
-type ShadowMatCache struct {
+type LineMatCache struct {
 	app    vulkan.App
 	pass   renderpass.T
 	frames int
 }
 
-func NewShadowMaterialMaker(app vulkan.App, pass renderpass.T, frames int) MatCache {
-	return cache.New[*material.Def, []Material](&ShadowMatCache{
+func NewLineMaterialCache(app vulkan.App, pass renderpass.T, frames int) MatCache {
+	return cache.New[*material.Def, []Material](&LineMatCache{
 		app:    app,
 		pass:   pass,
 		frames: frames,
 	})
 }
 
-func (m *ShadowMatCache) Name() string { return "ShadowMaterials" }
+func (m *LineMatCache) Name() string { return "LineMaterials" }
 
-func (m *ShadowMatCache) Instantiate(def *material.Def, callback func([]Material)) {
+func (m *LineMatCache) Instantiate(def *material.Def, callback func([]Material)) {
 	if def == nil {
-		def = &material.Def{}
+		def = material.Lines()
 	}
 
 	desc := &BasicDescriptors{
@@ -48,7 +48,7 @@ func (m *ShadowMatCache) Instantiate(def *material.Def, callback func([]Material
 	pointers := vertex.ParsePointers(def.VertexFormat)
 
 	// fetch shader from cache
-	shader := m.app.Shaders().Fetch(shader.NewRef("shadow"))
+	shader := m.app.Shaders().Fetch(shader.NewRef(def.Shader))
 
 	// create material
 	mat := material.New(
@@ -58,12 +58,12 @@ func (m *ShadowMatCache) Instantiate(def *material.Def, callback func([]Material
 			Pass:       m.pass,
 			Subpass:    MainSubpass,
 			Pointers:   pointers,
-			CullMode:   vertex.CullFront,
-			DepthTest:  true,
-			DepthWrite: true,
-			DepthFunc:  core1_0.CompareOpLess,
-			DepthClamp: true,
+			DepthTest:  def.DepthTest,
+			DepthWrite: def.DepthWrite,
+			DepthClamp: def.DepthClamp,
+			DepthFunc:  def.DepthFunc,
 			Primitive:  def.Primitive,
+			CullMode:   def.CullMode,
 		},
 		desc)
 
@@ -81,9 +81,9 @@ func (m *ShadowMatCache) Instantiate(def *material.Def, callback func([]Material
 	callback(instances)
 }
 
-func (m *ShadowMatCache) Destroy() {
+func (m *LineMatCache) Destroy() {
 }
 
-func (m *ShadowMatCache) Delete(mat []Material) {
+func (m *LineMatCache) Delete(mat []Material) {
 	mat[0].Destroy()
 }
