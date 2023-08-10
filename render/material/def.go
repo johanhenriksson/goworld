@@ -28,6 +28,7 @@ type Def struct {
 	DepthFunc    core1_0.CompareOp
 	Primitive    vertex.Primitive
 	CullMode     vertex.CullMode
+	Transparent  bool
 
 	id ID
 }

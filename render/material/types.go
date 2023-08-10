@@ -31,6 +31,21 @@ func StandardForward() *Def {
 		DepthFunc:    core1_0.CompareOpLessOrEqual,
 		Primitive:    vertex.Triangles,
 		CullMode:     vertex.CullBack,
+		Transparent:  false,
+	}
+}
+
+func TransparentForward() *Def {
+	return &Def{
+		Pass:         Forward,
+		Shader:       "forward/textured",
+		VertexFormat: vertex.T{},
+		DepthTest:    true,
+		DepthWrite:   true,
+		DepthFunc:    core1_0.CompareOpLessOrEqual,
+		Primitive:    vertex.Triangles,
+		CullMode:     vertex.CullBack,
+		Transparent:  true,
 	}
 }
 

@@ -83,19 +83,28 @@ func NewForwardPass(
 }
 
 func (p *ForwardPass) Record(cmds command.Recorder, args render.Args, scene object.Component) {
-	forwardMeshes := p.meshQuery.
-		Reset().
-		Where(isDrawForward).
-		Collect(scene)
-
+	cam := CameraFromArgs(args)
 	lights := p.lightQuery.Reset().Collect(scene)
 
 	cmds.Record(func(cmd command.Buffer) {
 		cmd.CmdBeginRenderPass(p.pass, p.fbuf[args.Context.Index])
 	})
 
-	cam := CameraFromArgs(args)
-	groups := DepthSortGroups(p.materials, args.Context.Index, cam, forwardMeshes)
+	// opaque pass
+	opaque := p.meshQuery.
+		Reset().
+		Where(isDrawForward(false)).
+		Collect(scene)
+	groups := MaterialGroups(p.materials, args.Context.Index, opaque)
+	groups.Draw(cmds, cam, lights)
+
+	// transparent pass
+	transparent := p.meshQuery.
+		Reset().
+		Where(isDrawForward(true)).
+		Where(func(m mesh.Mesh) bool { return m.Material().Transparent }).
+		Collect(scene)
+	groups = DepthSortGroups(p.materials, args.Context.Index, cam, transparent)
 	groups.Draw(cmds, cam, lights)
 
 	cmds.Record(func(cmd command.Buffer) {
@@ -113,9 +122,11 @@ func (p *ForwardPass) Destroy() {
 	p.materials.Destroy()
 }
 
-func isDrawForward(m mesh.Mesh) bool {
-	if mat := m.Material(); mat != nil {
-		return mat.Pass == material.Forward
+func isDrawForward(transparent bool) func(m mesh.Mesh) bool {
+	return func(m mesh.Mesh) bool {
+		if mat := m.Material(); mat != nil {
+			return mat.Pass == material.Forward && m.Material().Transparent == transparent
+		}
+		return false
 	}
-	return false
 }

@@ -184,7 +184,7 @@ func (p *shadowpass) Record(cmds command.Recorder, args render.Args, scene objec
 }
 
 func castsShadows(m mesh.Mesh) bool {
-	return m.Primitive() == vertex.Triangles
+	return m.Primitive() == vertex.Triangles && !m.Material().Transparent
 }
 
 func (p *shadowpass) Shadowmap(light light.T, cascade int) texture.T {
