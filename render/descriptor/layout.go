@@ -127,6 +127,7 @@ func (d *layout[S]) Instantiate(pool Pool) S {
 }
 
 func (d *layout[S]) Destroy() {
+	// todo: allocated sets should probably clean up themselves
 	for _, desc := range d.allocated {
 		desc.Destroy()
 	}

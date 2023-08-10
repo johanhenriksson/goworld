@@ -12,7 +12,7 @@ import (
 )
 
 type MaterialCache[T any] struct {
-	cache  map[uint64][]T
+	cache  map[material.ID][]T
 	app    vulkan.App
 	frames int
 	maker  MaterialMaker[T]
@@ -22,7 +22,7 @@ func NewMaterialCache[T any](app vulkan.App, frames int, maker MaterialMaker[T])
 	ms := &MaterialCache[T]{
 		app:    app,
 		frames: frames,
-		cache:  map[uint64][]T{},
+		cache:  map[material.ID][]T{},
 		maker:  maker,
 	}
 	return ms
@@ -44,7 +44,7 @@ func (m *MaterialCache[T]) Get(msh mesh.Mesh, frame int) (T, bool) {
 	return mat[frame], true
 }
 
-func (m *MaterialCache[T]) Exists(matId uint64) bool {
+func (m *MaterialCache[T]) Exists(matId material.ID) bool {
 	_, exists := m.cache[matId]
 	return exists
 }
