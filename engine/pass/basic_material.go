@@ -10,40 +10,43 @@ import (
 	"github.com/johanhenriksson/goworld/render/material"
 )
 
-type DepthDescriptors struct {
+type BasicDescriptors struct {
 	descriptor.Set
 	Camera  *descriptor.Uniform[uniform.Camera]
 	Objects *descriptor.Storage[uniform.Object]
 }
 
-type DepthMaterial struct {
-	Instance *material.Instance[*DepthDescriptors]
+// Basic Materials only contain camera & object descriptors
+// They can be used for various untextured objects, such
+// as shadow/depth passes and lines.
+type BasicMaterial struct {
+	Instance *material.Instance[*BasicDescriptors]
 	Objects  *ObjectBuffer
 	Meshes   cache.MeshCache
 
 	id material.ID
 }
 
-func (m *DepthMaterial) ID() material.ID {
+func (m *BasicMaterial) ID() material.ID {
 	return m.id
 }
 
-func (m *DepthMaterial) Begin(camera uniform.Camera, lights []light.T) {
+func (m *BasicMaterial) Begin(camera uniform.Camera, lights []light.T) {
 	m.Instance.Descriptors().Camera.Set(camera)
 	m.Objects.Reset()
 }
 
-func (m *DepthMaterial) Bind(cmds command.Recorder) {
+func (m *BasicMaterial) Bind(cmds command.Recorder) {
 	cmds.Record(func(cmd command.Buffer) {
 		m.Instance.Bind(cmd)
 	})
 }
 
-func (m *DepthMaterial) End() {
+func (m *BasicMaterial) End() {
 	m.Objects.Flush(m.Instance.Descriptors().Objects)
 }
 
-func (m *DepthMaterial) Draw(cmds command.Recorder, msh mesh.Mesh) {
+func (m *BasicMaterial) Draw(cmds command.Recorder, msh mesh.Mesh) {
 	vkmesh, meshReady := m.Meshes.TryFetch(msh.Mesh().Get())
 	if !meshReady {
 		return
@@ -58,6 +61,6 @@ func (m *DepthMaterial) Draw(cmds command.Recorder, msh mesh.Mesh) {
 	})
 }
 
-func (m *DepthMaterial) Destroy() {
+func (m *BasicMaterial) Destroy() {
 	m.Instance.Material().Destroy()
 }

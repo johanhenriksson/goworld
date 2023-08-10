@@ -22,7 +22,7 @@ type LinePass struct {
 	target    vulkan.Target
 	pass      renderpass.T
 	fbuf      framebuffer.Array
-	materials *MeshSorter[*LineMatData]
+	materials MatCache
 	meshQuery *object.Query[mesh.Mesh]
 }
 
@@ -70,7 +70,7 @@ func NewLinePass(app vulkan.App, target vulkan.Target, depth vulkan.Target) *Lin
 		target:    target,
 		pass:      pass,
 		fbuf:      fbufs,
-		materials: NewMeshSorter(app, target.Frames(), NewLineMaterialMaker(app, pass)),
+		materials: NewLineMaterialCache(app, pass, target.Frames()),
 		meshQuery: object.NewQuery[mesh.Mesh](),
 	}
 }
@@ -85,12 +85,13 @@ func (p *LinePass) Record(cmds command.Recorder, args render.Args, scene object.
 		Where(isDrawLines).
 		Collect(scene)
 
-	cam := CameraFromArgs(args)
-	p.materials.Draw(cmds, args.Context.Index, cam, lines, nil)
-
 	// debug lines
 	debug := lineShape.Debug.Fetch()
-	p.materials.Draw(cmds, args.Context.Index, cam, []mesh.Mesh{debug}, nil)
+	lines = append(lines, debug)
+
+	cam := CameraFromArgs(args)
+	groups := MaterialGroups(p.materials, args.Context.Index, lines)
+	groups.Draw(cmds, cam, nil)
 
 	cmds.Record(func(cmd command.Buffer) {
 		cmd.CmdEndRenderPass()
