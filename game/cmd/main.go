@@ -46,9 +46,9 @@ func main() {
 				for z := 0; z < 3; z++ {
 					box := cube.New(cube.Args{
 						Size: 1,
-						Mat:  material.StandardDeferred(),
+						Mat:  material.TransparentForward(),
 					})
-					box.SetTexture(texture.Diffuse, random.Choice(color.DefaultPalette))
+					box.SetTexture(texture.Diffuse, random.Choice(color.DefaultPalette).WithAlpha(0.5))
 
 					object.Builder(object.Empty("Box")).
 						Position(vec3.New(20+3*float32(x), 30, 15+3*float32(z))).
