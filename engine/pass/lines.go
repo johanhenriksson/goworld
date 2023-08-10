@@ -22,7 +22,7 @@ type LinePass struct {
 	target    vulkan.Target
 	pass      renderpass.T
 	fbuf      framebuffer.Array
-	materials MatCache
+	materials MaterialCache
 	meshQuery *object.Query[mesh.Mesh]
 }
 

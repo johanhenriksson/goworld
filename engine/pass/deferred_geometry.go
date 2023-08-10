@@ -30,7 +30,7 @@ type DeferredGeometryPass struct {
 	pass    renderpass.T
 	fbuf    framebuffer.Array
 
-	materials *MeshSorter[*DeferredMatData]
+	materials MaterialCache
 	meshQuery *object.Query[mesh.Mesh]
 }
 
@@ -95,7 +95,7 @@ func NewDeferredGeometryPass(
 
 		fbuf: fbuf,
 
-		materials: NewMeshSorter(app, gbuffer.Frames(), NewDeferredMaterialMaker(app, pass)),
+		materials: NewDeferredMaterialCache(app, pass, gbuffer.Frames()),
 		meshQuery: object.NewQuery[mesh.Mesh](),
 	}
 }
@@ -114,7 +114,8 @@ func (p *DeferredGeometryPass) Record(cmds command.Recorder, args render.Args, s
 		Collect(scene)
 
 	cam := CameraFromArgs(args)
-	p.materials.Draw(cmds, args.Context.Index, cam, objects, nil)
+	groups := MaterialGroups(p.materials, args.Context.Index, objects)
+	groups.Draw(cmds, cam, nil)
 
 	cmds.Record(func(cmd command.Buffer) {
 		cmd.CmdEndRenderPass()

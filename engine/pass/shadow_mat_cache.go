@@ -19,7 +19,7 @@ type ShadowMatCache struct {
 	frames int
 }
 
-func NewShadowMaterialMaker(app vulkan.App, pass renderpass.T, frames int) MatCache {
+func NewShadowMaterialMaker(app vulkan.App, pass renderpass.T, frames int) MaterialCache {
 	return cache.New[*material.Def, []Material](&ShadowMatCache{
 		app:    app,
 		pass:   pass,

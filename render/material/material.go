@@ -18,12 +18,6 @@ import (
 )
 
 // Materials combine pipelines and descriptors into a common unit.
-type T interface {
-	Destroy()
-	TextureSlots() []texture.Slot
-	Bind(cmd command.Buffer)
-}
-
 type Material[D descriptor.Set] struct {
 	device  device.T
 	dlayout descriptor.SetLayoutTyped[D]

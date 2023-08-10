@@ -4,12 +4,16 @@ import (
 	"github.com/johanhenriksson/goworld/core/light"
 	"github.com/johanhenriksson/goworld/core/mesh"
 	"github.com/johanhenriksson/goworld/engine/uniform"
+	"github.com/johanhenriksson/goworld/math/vec2"
+	"github.com/johanhenriksson/goworld/math/vec4"
+	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/cache"
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/material"
+	"github.com/johanhenriksson/goworld/render/texture"
 )
 
-type MatCache cache.T[*material.Def, []Material]
+type MaterialCache cache.T[*material.Def, []Material]
 
 // Material implements render logic for a specific material.
 type Material interface {
@@ -33,4 +37,32 @@ type Material interface {
 	// End is called after all draw groups have been processed.
 	// It runs once per frame and is primarily responsible for flushing uniform buffers.
 	End()
+}
+
+func AssignMeshTextures(samplers cache.SamplerCache, msh mesh.Mesh, slots []texture.Slot) [4]uint32 {
+	textureIds := [4]uint32{}
+	for id, slot := range slots {
+		ref := msh.Texture(slot)
+		if ref != nil {
+			handle, exists := samplers.TryFetch(ref)
+			if exists {
+				textureIds[id] = uint32(handle.ID)
+			}
+		}
+	}
+	return textureIds
+}
+
+func CameraFromArgs(args render.Args) uniform.Camera {
+	return uniform.Camera{
+		Proj:        args.Projection,
+		View:        args.View,
+		ViewProj:    args.VP,
+		ProjInv:     args.Projection.Invert(),
+		ViewInv:     args.View.Invert(),
+		ViewProjInv: args.VP.Invert(),
+		Eye:         vec4.Extend(args.Position, 0),
+		Forward:     vec4.Extend(args.Forward, 0),
+		Viewport:    vec2.NewI(args.Viewport.Width, args.Viewport.Height),
+	}
 }

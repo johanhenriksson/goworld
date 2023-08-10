@@ -13,40 +13,34 @@ import (
 	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
-type ForwardMatCache struct {
+type DeferredMatCache struct {
 	app    vulkan.App
 	pass   renderpass.T
-	lookup ShadowmapLookupFn
 	frames int
 }
 
-func NewForwardMaterialCache(app vulkan.App, pass renderpass.T, frames int, lookup ShadowmapLookupFn) MaterialCache {
-	return cache.New[*material.Def, []Material](&ForwardMatCache{
+func NewDeferredMaterialCache(app vulkan.App, pass renderpass.T, frames int) MaterialCache {
+	return cache.New[*material.Def, []Material](&DeferredMatCache{
 		app:    app,
 		pass:   pass,
-		lookup: lookup,
 		frames: frames,
 	})
 }
 
-func (m *ForwardMatCache) Name() string { return "ForwardMaterials" }
+func (m *DeferredMatCache) Name() string { return "DeferredMaterials" }
 
-func (m *ForwardMatCache) Instantiate(def *material.Def, callback func([]Material)) {
+func (m *DeferredMatCache) Instantiate(def *material.Def, callback func([]Material)) {
 	if def == nil {
-		def = material.StandardForward()
+		def = material.StandardDeferred()
 	}
 
-	desc := &ForwardDescriptors{
+	desc := &DeferredDescriptors{
 		Camera: &descriptor.Uniform[uniform.Camera]{
 			Stages: core1_0.StageAll,
 		},
 		Objects: &descriptor.Storage[uniform.Object]{
 			Stages: core1_0.StageAll,
 			Size:   2000,
-		},
-		Lights: &descriptor.Storage[uniform.Light]{
-			Stages: core1_0.StageAll,
-			Size:   256,
 		},
 		Textures: &descriptor.SamplerArray{
 			Stages: core1_0.StageFragment,
@@ -81,13 +75,10 @@ func (m *ForwardMatCache) Instantiate(def *material.Def, callback func([]Materia
 	for i := range instances {
 		instance := mat.Instantiate(m.app.Pool())
 		textures := cache.NewSamplerCache(m.app.Textures(), instance.Descriptors().Textures)
-
-		instances[i] = &ForwardMaterial{
+		instances[i] = &DeferredMaterial{
 			id:       def.Hash(),
 			Instance: instance,
-			Objects:  NewObjectBuffer(desc.Objects.Size),
-			Lights:   NewLightBuffer(desc.Lights.Size),
-			Shadows:  NewShadowCache(textures, m.lookup),
+			Objects:  NewObjectBuffer(instance.Descriptors().Objects.Size),
 			Textures: textures,
 			Meshes:   m.app.Meshes(),
 		}
@@ -96,10 +87,10 @@ func (m *ForwardMatCache) Instantiate(def *material.Def, callback func([]Materia
 	callback(instances)
 }
 
-func (m *ForwardMatCache) Destroy() {
+func (m *DeferredMatCache) Destroy() {
 
 }
 
-func (m *ForwardMatCache) Delete(mat []Material) {
+func (m *DeferredMatCache) Delete(mat []Material) {
 	mat[0].Destroy()
 }
