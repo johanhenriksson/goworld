@@ -39,7 +39,7 @@ func (groups DrawGroups) Draw(cmds command.Recorder, camera uniform.Camera, ligh
 
 // Sort meshes by material according to depth.
 // Consecutive meshes in the depth order are grouped if they have the same material
-func OrderedGroups(cache MatCache, frame int, meshes []mesh.Mesh) DrawGroups {
+func OrderedGroups(cache MaterialCache, frame int, meshes []mesh.Mesh) DrawGroups {
 	groups := make(DrawGroups, 0, 16)
 	var group *DrawGroup
 	for _, msh := range meshes {
@@ -62,7 +62,7 @@ func OrderedGroups(cache MatCache, frame int, meshes []mesh.Mesh) DrawGroups {
 }
 
 // Sort meshes by material
-func MaterialGroups(cache MatCache, frame int, meshes []mesh.Mesh) DrawGroups {
+func MaterialGroups(cache MaterialCache, frame int, meshes []mesh.Mesh) DrawGroups {
 	groups := make(DrawGroups, 0, 16)
 	matGroups := map[material.ID]*DrawGroup{}
 

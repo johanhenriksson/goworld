@@ -19,7 +19,7 @@ type DepthPass struct {
 	pass    renderpass.T
 	fbuf    framebuffer.Array
 
-	materials MatCache
+	materials MaterialCache
 	meshQuery *object.Query[mesh.Mesh]
 }
 

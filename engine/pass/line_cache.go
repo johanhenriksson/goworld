@@ -19,7 +19,7 @@ type LineMatCache struct {
 	frames int
 }
 
-func NewLineMaterialCache(app vulkan.App, pass renderpass.T, frames int) MatCache {
+func NewLineMaterialCache(app vulkan.App, pass renderpass.T, frames int) MaterialCache {
 	return cache.New[*material.Def, []Material](&LineMatCache{
 		app:    app,
 		pass:   pass,

@@ -19,7 +19,7 @@ type DepthMatCache struct {
 	frames int
 }
 
-func NewDepthMaterialCache(app vulkan.App, pass renderpass.T, frames int) MatCache {
+func NewDepthMaterialCache(app vulkan.App, pass renderpass.T, frames int) MaterialCache {
 	return cache.New[*material.Def, []Material](&DepthMatCache{
 		app:    app,
 		pass:   pass,

@@ -45,7 +45,7 @@ type Shadowmap struct {
 type Cascade struct {
 	Texture texture.T
 	Frame   framebuffer.T
-	Mats    MatCache
+	Mats    MaterialCache
 }
 
 func NewShadowPass(app vulkan.App, target vulkan.Target) Shadow {

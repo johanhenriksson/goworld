@@ -8,7 +8,7 @@ import (
 	"github.com/johanhenriksson/goworld/math/vec3"
 )
 
-func DepthSortGroups(cache MatCache, frame int, cam uniform.Camera, meshes []mesh.Mesh) DrawGroups {
+func DepthSortGroups(cache MaterialCache, frame int, cam uniform.Camera, meshes []mesh.Mesh) DrawGroups {
 	eye := cam.Eye.XYZ()
 
 	// perform back-to-front depth sorting

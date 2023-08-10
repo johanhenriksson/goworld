@@ -10,58 +10,43 @@ import (
 	"github.com/johanhenriksson/goworld/render/material"
 )
 
-type ForwardDescriptors struct {
+type DeferredDescriptors struct {
 	descriptor.Set
 	Camera   *descriptor.Uniform[uniform.Camera]
 	Objects  *descriptor.Storage[uniform.Object]
-	Lights   *descriptor.Storage[uniform.Light]
 	Textures *descriptor.SamplerArray
 }
 
-type ForwardMaterial struct {
-	Instance *material.Instance[*ForwardDescriptors]
+type DeferredMaterial struct {
+	Instance *material.Instance[*DeferredDescriptors]
 	Objects  *ObjectBuffer
-	Lights   *LightBuffer
-	Shadows  *ShadowCache
 	Textures cache.SamplerCache
 	Meshes   cache.MeshCache
 
 	id material.ID
 }
 
-func (m *ForwardMaterial) ID() material.ID {
+func (m *DeferredMaterial) ID() material.ID {
 	return m.id
 }
 
-func (m *ForwardMaterial) Begin(camera uniform.Camera, lights []light.T) {
+func (m *DeferredMaterial) Begin(camera uniform.Camera, lights []light.T) {
 	m.Instance.Descriptors().Camera.Set(camera)
-
-	// multiple calls to this reset in a single frame will cause weird behaviour
-	// we need to split this function somehow in order to be able to do depth sorting etc
 	m.Objects.Reset()
-
-	if len(lights) > 0 {
-		// how to get ambient light info?
-		m.Lights.Reset()
-		for _, lit := range lights {
-			m.Lights.Store(lit.LightData(m.Shadows))
-		}
-		m.Lights.Flush(m.Instance.Descriptors().Lights)
-	}
 }
 
-func (m *ForwardMaterial) Bind(cmds command.Recorder) {
+func (m *DeferredMaterial) Bind(cmds command.Recorder) {
 	cmds.Record(func(cmd command.Buffer) {
 		m.Instance.Bind(cmd)
 	})
 }
 
-func (m *ForwardMaterial) End() {
+func (m *DeferredMaterial) End() {
 	m.Objects.Flush(m.Instance.Descriptors().Objects)
 	m.Textures.Flush()
 }
 
-func (m *ForwardMaterial) Draw(cmds command.Recorder, msh mesh.Mesh) {
+func (m *DeferredMaterial) Draw(cmds command.Recorder, msh mesh.Mesh) {
 	vkmesh, meshReady := m.Meshes.TryFetch(msh.Mesh().Get())
 	if !meshReady {
 		return
@@ -80,6 +65,6 @@ func (m *ForwardMaterial) Draw(cmds command.Recorder, msh mesh.Mesh) {
 	})
 }
 
-func (m *ForwardMaterial) Destroy() {
+func (m *DeferredMaterial) Destroy() {
 	m.Instance.Material().Destroy()
 }
