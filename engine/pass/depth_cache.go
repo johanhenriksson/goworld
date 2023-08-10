@@ -13,30 +13,28 @@ import (
 	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
-type ForwardMatCache struct {
+type DepthMatCache struct {
 	app    vulkan.App
 	pass   renderpass.T
-	lookup ShadowmapLookupFn
 	frames int
 }
 
-func NewForwardMaterialCache(app vulkan.App, pass renderpass.T, frames int, lookup ShadowmapLookupFn) MatCache {
-	return cache.New[*material.Def, []Material](&ForwardMatCache{
+func NewDepthMaterialCache(app vulkan.App, pass renderpass.T, frames int) MatCache {
+	return cache.New[*material.Def, []Material](&DepthMatCache{
 		app:    app,
 		pass:   pass,
-		lookup: lookup,
 		frames: frames,
 	})
 }
 
-func (m *ForwardMatCache) Name() string { return "ForwardMaterials" }
+func (m *DepthMatCache) Name() string { return "DepthMaterials" }
 
-func (m *ForwardMatCache) Instantiate(def *material.Def, callback func([]Material)) {
+func (m *DepthMatCache) Instantiate(def *material.Def, callback func([]Material)) {
 	if def == nil {
-		def = material.StandardForward()
+		def = &material.Def{}
 	}
 
-	desc := &ForwardDescriptors{
+	desc := &DepthDescriptors{
 		Camera: &descriptor.Uniform[uniform.Camera]{
 			Stages: core1_0.StageAll,
 		},
@@ -44,21 +42,13 @@ func (m *ForwardMatCache) Instantiate(def *material.Def, callback func([]Materia
 			Stages: core1_0.StageAll,
 			Size:   2000,
 		},
-		Lights: &descriptor.Storage[uniform.Light]{
-			Stages: core1_0.StageAll,
-			Size:   256,
-		},
-		Textures: &descriptor.SamplerArray{
-			Stages: core1_0.StageFragment,
-			Count:  100,
-		},
 	}
 
 	// read vertex pointers from vertex format
 	pointers := vertex.ParsePointers(def.VertexFormat)
 
 	// fetch shader from cache
-	shader := m.app.Shaders().Fetch(shader.NewRef(def.Shader))
+	shader := m.app.Shaders().Fetch(shader.NewRef("depth"))
 
 	// create material
 	mat := material.New(
@@ -68,39 +58,32 @@ func (m *ForwardMatCache) Instantiate(def *material.Def, callback func([]Materia
 			Pass:       m.pass,
 			Subpass:    MainSubpass,
 			Pointers:   pointers,
-			DepthTest:  def.DepthTest,
-			DepthWrite: def.DepthWrite,
+			CullMode:   vertex.CullBack,
+			DepthTest:  true,
+			DepthWrite: true,
+			DepthFunc:  core1_0.CompareOpLess,
 			DepthClamp: def.DepthClamp,
-			DepthFunc:  def.DepthFunc,
 			Primitive:  def.Primitive,
-			CullMode:   def.CullMode,
 		},
 		desc)
 
 	instances := make([]Material, m.frames)
 	for i := range instances {
 		instance := mat.Instantiate(m.app.Pool())
-		textures := cache.NewSamplerCache(m.app.Textures(), instance.Descriptors().Textures)
-
-		instances[i] = &ForwardMaterial{
+		instances[i] = &DepthMaterial{
 			id: def.Hash(),
 
 			Instance: instance,
 			Objects:  NewObjectBuffer(desc.Objects.Size),
-			Lights:   NewLightBuffer(desc.Lights.Size),
-			Shadows:  NewShadowCache(textures, m.lookup),
-			Textures: textures,
-			Meshes:   m.app.Meshes(),
 		}
 	}
 
 	callback(instances)
 }
 
-func (m *ForwardMatCache) Destroy() {
-
+func (m *DepthMatCache) Destroy() {
 }
 
-func (m *ForwardMatCache) Delete(mat []Material) {
+func (m *DepthMatCache) Delete(mat []Material) {
 	mat[0].Destroy()
 }

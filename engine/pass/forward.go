@@ -21,7 +21,7 @@ type ForwardPass struct {
 	pass   renderpass.T
 	fbuf   framebuffer.Array
 
-	materials  ForwardMaterialCache
+	materials  MatCache
 	meshQuery  *object.Query[mesh.Mesh]
 	lightQuery *object.Query[light.T]
 }
