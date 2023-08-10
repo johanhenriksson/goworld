@@ -11,10 +11,6 @@ import (
 
 type ID uint64
 
-func (i ID) Key() string {
-	return strconv.FormatUint(uint64(i), 16)
-}
-
 type Pass string
 
 const (
@@ -32,10 +28,25 @@ type Def struct {
 	DepthFunc    core1_0.CompareOp
 	Primitive    vertex.Primitive
 	CullMode     vertex.CullMode
+
+	id ID
 }
 
 func (d *Def) Hash() ID {
-	return Hash(d)
+	if d.id == 0 {
+		// cache the hash
+		// todo: it might be a problem that this wont ever be invalidated
+		d.id = Hash(d)
+	}
+	return d.id
+}
+
+func (d *Def) Key() string {
+	return strconv.FormatUint(uint64(d.Hash()), 16)
+}
+
+func (d *Def) Version() int {
+	return 1
 }
 
 func Hash(def *Def) ID {
