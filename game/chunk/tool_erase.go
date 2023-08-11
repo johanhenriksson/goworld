@@ -23,10 +23,10 @@ func NewEraseTool() *EraseTool {
 	return object.New("Erase Tool", &EraseTool{
 		Box: object.Builder(object.Empty("Box")).
 			Attach(lines.NewBox(lines.BoxArgs{
-				Size:  vec3.One.Scaled(1 + padding),
-				Color: color.Red,
+				Extents: vec3.One.Scaled(1 + padding),
+				Color:   color.Red,
 			})).
-			Position(vec3.New(-padding/2, -padding/2, -padding/2)).
+			Position(vec3.New(-padding/2+0.5, -padding/2+0.5, -padding/2+0.5)).
 			Create(),
 	})
 }

@@ -24,10 +24,10 @@ func NewSampleTool() *SampleTool {
 	return object.New("Sample Tool", &SampleTool{
 		Box: object.Builder(object.Empty("Box")).
 			Attach(lines.NewBox(lines.BoxArgs{
-				Size:  vec3.One.Scaled(1 + padding),
-				Color: color.Purple,
+				Extents: vec3.One.Scaled(1 + padding),
+				Color:   color.Purple,
 			})).
-			Position(vec3.New(-padding/2, -padding/2, -padding/2)).
+			Position(vec3.New(-padding/2+0.5, -padding/2+0.5, -padding/2+0.5)).
 			Create(),
 	})
 }

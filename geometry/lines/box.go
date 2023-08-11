@@ -17,8 +17,8 @@ type Box struct {
 // If they change, we should recomupte the mesh
 
 type BoxArgs struct {
-	Size  vec3.T
-	Color color.T
+	Extents vec3.T
+	Color   color.T
 }
 
 func NewBox(args BoxArgs) *Box {
@@ -32,21 +32,21 @@ func NewBox(args BoxArgs) *Box {
 
 func (b *Box) compute() {
 	var x, y, z float32
-	w, h, d := b.Size.X, b.Size.Y, b.Size.Z
+	w, h, d := b.Extents.X/2, b.Extents.Y/2, b.Extents.Z/2
 	c := b.Color.Vec4()
 
 	key := object.Key("box", b)
 	mesh := vertex.NewLines(key, []vertex.C{
 		// bottom square
-		{P: vec3.New(x, y, z), C: c},     // 0
-		{P: vec3.New(x+w, y, z), C: c},   // 1
-		{P: vec3.New(x, y, z+d), C: c},   // 2
-		{P: vec3.New(x+w, y, z+d), C: c}, // 3
+		{P: vec3.New(x-w, y-h, z-d), C: c}, // 0
+		{P: vec3.New(x+w, y-h, z-d), C: c}, // 1
+		{P: vec3.New(x-w, y-h, z+d), C: c}, // 2
+		{P: vec3.New(x+w, y-h, z+d), C: c}, // 3
 
 		// top square
-		{P: vec3.New(x, y+h, z), C: c},     // 4
-		{P: vec3.New(x+w, y+h, z), C: c},   // 5
-		{P: vec3.New(x, y+h, z+d), C: c},   // 6
+		{P: vec3.New(x-w, y+h, z-d), C: c}, // 4
+		{P: vec3.New(x+w, y+h, z-d), C: c}, // 5
+		{P: vec3.New(x-w, y+h, z+d), C: c}, // 6
 		{P: vec3.New(x+w, y+h, z+d), C: c}, // 7
 	}, []uint16{
 		// bottom

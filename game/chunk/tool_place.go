@@ -25,10 +25,10 @@ func NewPlaceTool() *PlaceTool {
 	return object.New("Place Tool", &PlaceTool{
 		Box: object.Builder(object.Empty("Box")).
 			Attach(lines.NewBox(lines.BoxArgs{
-				Size:  vec3.One.Scaled(1 + padding),
-				Color: color.Blue,
+				Extents: vec3.One.Scaled(1 + padding),
+				Color:   color.Blue,
 			})).
-			Position(vec3.New(-padding/2, -padding/2, -padding/2)).
+			Position(vec3.New(-padding/2+0.5, -padding/2+0.5, -padding/2+0.5)).
 			Create(),
 	})
 }
