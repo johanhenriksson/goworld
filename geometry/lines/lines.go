@@ -8,7 +8,7 @@ import (
 	"github.com/johanhenriksson/goworld/render/vertex"
 )
 
-type Mesh struct {
+type Lines struct {
 	*mesh.Static
 	Args
 }
@@ -19,8 +19,8 @@ type Args struct {
 	lineMesh vertex.MutableMesh[vertex.C, uint16]
 }
 
-func New(args Args) *Mesh {
-	b := object.NewComponent(&Mesh{
+func New(args Args) *Lines {
+	b := object.NewComponent(&Lines{
 		Static: mesh.NewLines(),
 		Args:   args,
 	})
@@ -30,7 +30,7 @@ func New(args Args) *Mesh {
 	return b
 }
 
-func (li *Mesh) Add(from, to vec3.T, clr color.T) {
+func (li *Lines) Add(from, to vec3.T, clr color.T) {
 	li.Lines = append(li.Lines, Line{
 		Start: from,
 		End:   to,
@@ -38,15 +38,15 @@ func (li *Mesh) Add(from, to vec3.T, clr color.T) {
 	})
 }
 
-func (li *Mesh) Clear() {
+func (li *Lines) Clear() {
 	li.Lines = li.Lines[:0]
 }
 
-func (li *Mesh) Count() int {
+func (li *Lines) Count() int {
 	return len(li.Lines)
 }
 
-func (li *Mesh) Refresh() {
+func (li *Lines) Refresh() {
 	count := len(li.Lines)
 	vertices := make([]vertex.C, 2*count)
 	for i := 0; i < count; i++ {

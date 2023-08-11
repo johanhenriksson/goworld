@@ -23,7 +23,7 @@ type Mover struct {
 
 	target transform.T
 
-	Lines *lines.Mesh
+	Lines *lines.Lines
 	X     *Arrow
 	Y     *Arrow
 	Z     *Arrow

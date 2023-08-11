@@ -11,11 +11,11 @@ var Debug = &DebugLines{}
 type DebugLines struct {
 	enabled bool
 	frame   int
-	meshes  []*Mesh
+	meshes  []*Lines
 }
 
 func (li *DebugLines) Setup(frames int) {
-	li.meshes = make([]*Mesh, frames)
+	li.meshes = make([]*Lines, frames)
 	for i := range li.meshes {
 		li.meshes[i] = New(Args{})
 	}

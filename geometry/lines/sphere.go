@@ -33,7 +33,7 @@ func NewSphere(args SphereArgs) *Sphere {
 func (b *Sphere) compute() {
 	segments := 32
 	angle := 2 * math.Pi / float32(segments)
-	vertices := make([]vertex.C, 0, 128)
+	vertices := make([]vertex.C, 0, 2*3*segments)
 
 	// x ring
 	for i := 0; i < segments; i++ {

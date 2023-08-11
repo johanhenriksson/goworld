@@ -21,6 +21,7 @@ type Mesh interface {
 	Max() vec3.T
 
 	Positions(func(vec3.T))
+	Triangles(iter func(Triangle))
 }
 
 type Vertex interface {
@@ -73,6 +74,16 @@ func (m *mesh[V, I]) Positions(iter func(vec3.T)) {
 	for _, index := range m.indices {
 		vertex := m.vertices[index]
 		iter(vertex.Position())
+	}
+}
+
+func (m *mesh[V, I]) Triangles(iter func(Triangle)) {
+	for i := 0; i+3 < len(m.indices); i += 3 {
+		iter(Triangle{
+			A: m.vertices[m.indices[i+0]].Position(),
+			B: m.vertices[m.indices[i+1]].Position(),
+			C: m.vertices[m.indices[i+2]].Position(),
+		})
 	}
 }
 
