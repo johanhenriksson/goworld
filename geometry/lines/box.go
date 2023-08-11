@@ -10,7 +10,10 @@ import (
 
 type Box struct {
 	*mesh.Static
-	BoxArgs
+	Extents object.Property[vec3.T]
+	Color   object.Property[color.T]
+
+	data vertex.MutableMesh[vertex.C, uint16]
 }
 
 // Args are kinda like props
@@ -24,31 +27,35 @@ type BoxArgs struct {
 func NewBox(args BoxArgs) *Box {
 	b := object.NewComponent(&Box{
 		Static:  mesh.NewLines(),
-		BoxArgs: args,
+		Extents: object.NewProperty(args.Extents),
+		Color:   object.NewProperty(args.Color),
 	})
-	b.compute()
+	b.data = vertex.NewLines[vertex.C, uint16](object.Key("box", b), nil, nil)
+	b.Extents.OnChange.Subscribe(func(vec3.T) { b.refresh() })
+	b.Color.OnChange.Subscribe(func(color.T) { b.refresh() })
+	b.refresh()
 	return b
 }
 
-func (b *Box) compute() {
-	var x, y, z float32
-	w, h, d := b.Extents.X/2, b.Extents.Y/2, b.Extents.Z/2
-	c := b.Color.Vec4()
+func (b *Box) refresh() {
+	halfsize := b.Extents.Get().Scaled(0.5)
+	w, h, d := halfsize.X, halfsize.Y, halfsize.Z
+	c := b.Color.Get().Vec4()
 
-	key := object.Key("box", b)
-	mesh := vertex.NewLines(key, []vertex.C{
+	vertices := []vertex.C{
 		// bottom square
-		{P: vec3.New(x-w, y-h, z-d), C: c}, // 0
-		{P: vec3.New(x+w, y-h, z-d), C: c}, // 1
-		{P: vec3.New(x-w, y-h, z+d), C: c}, // 2
-		{P: vec3.New(x+w, y-h, z+d), C: c}, // 3
+		{P: vec3.New(-w, -h, -d), C: c}, // 0
+		{P: vec3.New(+w, -h, -d), C: c}, // 1
+		{P: vec3.New(-w, -h, +d), C: c}, // 2
+		{P: vec3.New(+w, -h, +d), C: c}, // 3
 
 		// top square
-		{P: vec3.New(x-w, y+h, z-d), C: c}, // 4
-		{P: vec3.New(x+w, y+h, z-d), C: c}, // 5
-		{P: vec3.New(x-w, y+h, z+d), C: c}, // 6
-		{P: vec3.New(x+w, y+h, z+d), C: c}, // 7
-	}, []uint16{
+		{P: vec3.New(-w, +h, -d), C: c}, // 4
+		{P: vec3.New(+w, +h, -d), C: c}, // 5
+		{P: vec3.New(-w, +h, +d), C: c}, // 6
+		{P: vec3.New(+w, +h, +d), C: c}, // 7
+	}
+	indices := []uint16{
 		// bottom
 		0, 1,
 		0, 2,
@@ -66,6 +73,8 @@ func (b *Box) compute() {
 		1, 5,
 		2, 6,
 		3, 7,
-	})
-	b.VertexData.Set(mesh)
+	}
+
+	b.data.Update(vertices, indices)
+	b.VertexData.Set(b.data)
 }

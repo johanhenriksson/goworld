@@ -11,26 +11,33 @@ import (
 
 type Sphere struct {
 	*mesh.Static
-	SphereArgs
+	Radius object.Property[float32]
+	Color  object.Property[color.T]
+
+	data vertex.MutableMesh[vertex.C, uint16]
 }
 
 type SphereArgs struct {
 	Radius float32
-	XColor color.T
-	YColor color.T
-	ZColor color.T
+	Color  color.T
 }
 
 func NewSphere(args SphereArgs) *Sphere {
 	b := object.NewComponent(&Sphere{
-		Static:     mesh.NewLines(),
-		SphereArgs: args,
+		Static: mesh.NewLines(),
+		Radius: object.NewProperty(args.Radius),
+		Color:  object.NewProperty(args.Color),
 	})
-	b.compute()
+	b.Radius.OnChange.Subscribe(func(float32) { b.refresh() })
+	b.Color.OnChange.Subscribe(func(color.T) { b.refresh() })
+	b.data = vertex.NewLines[vertex.C, uint16](object.Key("sphere", b), nil, nil)
+	b.refresh()
 	return b
 }
 
-func (b *Sphere) compute() {
+func (b *Sphere) refresh() {
+	r := b.Radius.Get()
+	color := b.Color.Get().Vec4()
 	segments := 32
 	angle := 2 * math.Pi / float32(segments)
 	vertices := make([]vertex.C, 0, 2*3*segments)
@@ -40,12 +47,12 @@ func (b *Sphere) compute() {
 		a0 := float32(i) * angle
 		a1 := float32(i+1) * angle
 		vertices = append(vertices, vertex.C{
-			P: vec3.New(math.Cos(a0), 0, math.Sin(a0)).Scaled(b.Radius),
-			C: b.XColor.Vec4(),
+			P: vec3.New(math.Cos(a0), 0, math.Sin(a0)).Scaled(r),
+			C: color,
 		})
 		vertices = append(vertices, vertex.C{
-			P: vec3.New(math.Cos(a1), 0, math.Sin(a1)).Scaled(b.Radius),
-			C: b.XColor.Vec4(),
+			P: vec3.New(math.Cos(a1), 0, math.Sin(a1)).Scaled(r),
+			C: color,
 		})
 	}
 
@@ -54,12 +61,12 @@ func (b *Sphere) compute() {
 		a0 := float32(i) * angle
 		a1 := float32(i+1) * angle
 		vertices = append(vertices, vertex.C{
-			P: vec3.New(0, math.Sin(a0), math.Cos(a0)).Scaled(b.Radius),
-			C: b.YColor.Vec4(),
+			P: vec3.New(0, math.Sin(a0), math.Cos(a0)).Scaled(r),
+			C: color,
 		})
 		vertices = append(vertices, vertex.C{
-			P: vec3.New(0, math.Sin(a1), math.Cos(a1)).Scaled(b.Radius),
-			C: b.YColor.Vec4(),
+			P: vec3.New(0, math.Sin(a1), math.Cos(a1)).Scaled(r),
+			C: color,
 		})
 	}
 
@@ -68,16 +75,15 @@ func (b *Sphere) compute() {
 		a0 := float32(i) * angle
 		a1 := float32(i+1) * angle
 		vertices = append(vertices, vertex.C{
-			P: vec3.New(math.Cos(a0), math.Sin(a0), 0).Scaled(b.Radius),
-			C: b.ZColor.Vec4(),
+			P: vec3.New(math.Cos(a0), math.Sin(a0), 0).Scaled(r),
+			C: color,
 		})
 		vertices = append(vertices, vertex.C{
-			P: vec3.New(math.Cos(a1), math.Sin(a1), 0).Scaled(b.Radius),
-			C: b.ZColor.Vec4(),
+			P: vec3.New(math.Cos(a1), math.Sin(a1), 0).Scaled(r),
+			C: color,
 		})
 	}
 
-	key := object.Key("sphere", b)
-	mesh := vertex.NewLines(key, vertices, []uint16{})
-	b.VertexData.Set(mesh)
+	b.data.Update(vertices, []uint16{})
+	b.VertexData.Set(b.data)
 }
