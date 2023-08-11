@@ -4,9 +4,11 @@ import (
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/editor"
+	"github.com/johanhenriksson/goworld/geometry/lines"
 	"github.com/johanhenriksson/goworld/gui"
 	"github.com/johanhenriksson/goworld/gui/node"
 	"github.com/johanhenriksson/goworld/physics"
+	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/vertex"
 )
 
@@ -21,6 +23,7 @@ type PhysicsMeshEditor struct {
 	target *physics.Mesh
 	Shape  *physics.Mesh
 	Body   *physics.RigidBody
+	Mesh   *lines.Mesh
 	GUI    gui.Fragment
 }
 
@@ -31,6 +34,7 @@ func NewPhysicsMeshEditor(ctx *editor.Context, mesh *physics.Mesh) *PhysicsMeshE
 
 		Shape: physics.NewMesh(),
 		Body:  physics.NewRigidBody(0),
+		Mesh:  lines.NewMesh(mesh.Mesh.Get(), color.Green),
 
 		GUI: editor.SidebarFragment(gui.FragmentLast, func() node.T {
 			return editor.Inspector(
@@ -43,6 +47,7 @@ func NewPhysicsMeshEditor(ctx *editor.Context, mesh *physics.Mesh) *PhysicsMeshE
 	editor.Shape.Mesh.Set(mesh.Mesh.Get())
 	mesh.Mesh.OnChange.Subscribe(func(m vertex.Mesh) {
 		editor.Shape.Mesh.Set(m)
+		editor.Mesh.Source.Set(m)
 	})
 
 	return editor

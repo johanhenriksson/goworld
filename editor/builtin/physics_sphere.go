@@ -5,9 +5,11 @@ import (
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/editor"
 	"github.com/johanhenriksson/goworld/editor/propedit"
+	"github.com/johanhenriksson/goworld/geometry/lines"
 	"github.com/johanhenriksson/goworld/gui"
 	"github.com/johanhenriksson/goworld/gui/node"
 	"github.com/johanhenriksson/goworld/physics"
+	"github.com/johanhenriksson/goworld/render/color"
 )
 
 func init() {
@@ -20,6 +22,7 @@ type SphereEditor struct {
 
 	Shape *physics.Sphere
 	Body  *physics.RigidBody
+	Mesh  *lines.Sphere
 
 	GUI gui.Fragment
 }
@@ -31,6 +34,10 @@ func NewSphereEditor(ctx *editor.Context, sphere *physics.Sphere) *SphereEditor 
 
 		Shape: physics.NewSphere(sphere.Radius.Get()),
 		Body:  physics.NewRigidBody(0),
+		Mesh: lines.NewSphere(lines.SphereArgs{
+			Radius: sphere.Radius.Get(),
+			Color:  color.Green,
+		}),
 
 		GUI: editor.SidebarFragment(gui.FragmentLast, func() node.T {
 			return editor.Inspector(
@@ -44,8 +51,9 @@ func NewSphereEditor(ctx *editor.Context, sphere *physics.Sphere) *SphereEditor 
 	})
 
 	// keep properties in sync
-	sphere.Radius.OnChange.Subscribe(func(float32) {
-		editor.Shape.Radius.Set(sphere.Radius.Get())
+	sphere.Radius.OnChange.Subscribe(func(r float32) {
+		editor.Shape.Radius.Set(r)
+		editor.Mesh.Radius.Set(r)
 	})
 
 	return editor
