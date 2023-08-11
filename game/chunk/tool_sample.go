@@ -4,7 +4,7 @@ import (
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/editor"
-	"github.com/johanhenriksson/goworld/geometry/box"
+	"github.com/johanhenriksson/goworld/geometry/lines"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/physics"
 	"github.com/johanhenriksson/goworld/render/color"
@@ -23,7 +23,7 @@ func NewSampleTool() *SampleTool {
 	padding := float32(0.05)
 	return object.New("Sample Tool", &SampleTool{
 		Box: object.Builder(object.Empty("Box")).
-			Attach(box.New(box.Args{
+			Attach(lines.NewBox(lines.BoxArgs{
 				Size:  vec3.One.Scaled(1 + padding),
 				Color: color.Purple,
 			})).

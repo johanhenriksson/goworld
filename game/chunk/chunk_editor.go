@@ -8,7 +8,7 @@ import (
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/editor"
 	"github.com/johanhenriksson/goworld/game/voxel"
-	"github.com/johanhenriksson/goworld/geometry/box"
+	"github.com/johanhenriksson/goworld/geometry/lines"
 	"github.com/johanhenriksson/goworld/geometry/plane"
 	"github.com/johanhenriksson/goworld/gui"
 	"github.com/johanhenriksson/goworld/gui/node"
@@ -56,7 +56,7 @@ type edit struct {
 
 	xp, yp, zp int
 
-	BoundingBox *box.Mesh
+	BoundingBox *lines.Box
 }
 
 var _ editor.T = &edit{}
@@ -95,7 +95,7 @@ func NewEditor(ctx *editor.Context, mesh *Mesh) Editor {
 
 		color: color.Red,
 
-		BoundingBox: box.New(box.Args{
+		BoundingBox: lines.NewBox(lines.BoxArgs{
 			Size:  dimensions,
 			Color: color.White,
 		}),

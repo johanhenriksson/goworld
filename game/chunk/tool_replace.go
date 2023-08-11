@@ -5,7 +5,7 @@ import (
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/editor"
 	"github.com/johanhenriksson/goworld/game/voxel"
-	"github.com/johanhenriksson/goworld/geometry/box"
+	"github.com/johanhenriksson/goworld/geometry/lines"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/physics"
 	"github.com/johanhenriksson/goworld/render/color"
@@ -22,7 +22,7 @@ func NewReplaceTool() *ReplaceTool {
 	padding := float32(0.05)
 	return object.New("Replace Tool", &ReplaceTool{
 		Box: object.Builder(object.Empty("Box")).
-			Attach(box.New(box.Args{
+			Attach(lines.NewBox(lines.BoxArgs{
 				Size:  vec3.One.Scaled(1 + padding),
 				Color: color.Yellow,
 			})).

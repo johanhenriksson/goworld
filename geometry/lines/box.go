@@ -1,4 +1,4 @@
-package box
+package lines
 
 import (
 	"github.com/johanhenriksson/goworld/core/mesh"
@@ -8,29 +8,29 @@ import (
 	"github.com/johanhenriksson/goworld/render/vertex"
 )
 
-type Mesh struct {
+type Box struct {
 	*mesh.Static
-	Args
+	BoxArgs
 }
 
 // Args are kinda like props
 // If they change, we should recomupte the mesh
 
-type Args struct {
+type BoxArgs struct {
 	Size  vec3.T
 	Color color.T
 }
 
-func New(args Args) *Mesh {
-	b := object.NewComponent(&Mesh{
-		Static: mesh.NewLines(),
-		Args:   args,
+func NewBox(args BoxArgs) *Box {
+	b := object.NewComponent(&Box{
+		Static:  mesh.NewLines(),
+		BoxArgs: args,
 	})
 	b.compute()
 	return b
 }
 
-func (b *Mesh) compute() {
+func (b *Box) compute() {
 	var x, y, z float32
 	w, h, d := b.Size.X, b.Size.Y, b.Size.Z
 	c := b.Color.Vec4()
