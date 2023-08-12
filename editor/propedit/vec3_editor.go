@@ -6,7 +6,6 @@ import (
 	"github.com/johanhenriksson/goworld/gui/style"
 	"github.com/johanhenriksson/goworld/gui/widget/rect"
 	"github.com/johanhenriksson/goworld/math/vec3"
-	"github.com/johanhenriksson/goworld/render/color"
 )
 
 func init() {
@@ -14,12 +13,6 @@ func init() {
 		return Vec3Field(key, name, Vec3Props{
 			Value:    prop.GetAny().(vec3.T),
 			OnChange: func(v vec3.T) { prop.SetAny(v) },
-		})
-	})
-	Register[color.T](func(key, name string, prop object.GenericProp) node.T {
-		return Vec3Field(key, name, Vec3Props{
-			Value:    prop.GetAny().(color.T).Vec3(),
-			OnChange: func(v vec3.T) { prop.SetAny(color.FromVec3(v)) },
 		})
 	})
 }
