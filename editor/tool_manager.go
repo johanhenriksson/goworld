@@ -32,10 +32,13 @@ type ToolManager interface {
 	object.Component
 
 	Select(T)
-	SelectTool(Tool)
+	Selected() []T
+
+	Tool() Tool
+	UseTool(Tool)
+
 	MoveTool(object.Component)
 	RotateTool(object.Component)
-	Tool() Tool
 }
 
 type toolmgr struct {
@@ -144,7 +147,7 @@ func (m *toolmgr) Tool() Tool {
 	return m.tool
 }
 
-func (m *toolmgr) SelectTool(tool Tool) {
+func (m *toolmgr) UseTool(tool Tool) {
 	// if we select the same tool twice, deselect it instead
 	sameTool := m.tool == tool
 
@@ -165,6 +168,10 @@ func (m *toolmgr) Select(obj T) {
 	m.setSelect(mouse.NopEvent(), obj)
 }
 
+func (m *toolmgr) Selected() []T {
+	return m.selected
+}
+
 func (m *toolmgr) setSelect(e mouse.Event, component T) bool {
 	// todo: detect if the object has been deleted
 	// otherwise CanDeselect() will make it impossible to select another object
@@ -177,7 +184,7 @@ func (m *toolmgr) setSelect(e mouse.Event, component T) bool {
 	// deselect
 	if m.selected != nil {
 		// deselect tool
-		m.SelectTool(nil)
+		m.UseTool(nil)
 
 		// deselect object
 		for _, editor := range m.selected {
@@ -226,11 +233,11 @@ func (m *toolmgr) PreDraw(args render.Args, scene object.Object) error {
 }
 
 func (m *toolmgr) MoveTool(obj object.Component) {
-	m.SelectTool(m.Mover)
+	m.UseTool(m.Mover)
 	m.Mover.SetTarget(obj.Transform())
 }
 
 func (m *toolmgr) RotateTool(obj object.Component) {
-	m.SelectTool(m.Rotater)
+	m.UseTool(m.Rotater)
 	m.Rotater.SetTarget(obj.Transform())
 }

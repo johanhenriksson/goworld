@@ -242,25 +242,25 @@ func (e *edit) Actions() []editor.Action {
 		{
 			Name:     "Place",
 			Key:      keys.F,
-			Callback: func(mgr editor.ToolManager) { mgr.SelectTool(e.PlaceTool) },
+			Callback: func(mgr editor.ToolManager) { mgr.UseTool(e.PlaceTool) },
 		},
 		{
 			Name:     "Erase",
 			Key:      keys.C,
-			Callback: func(mgr editor.ToolManager) { mgr.SelectTool(e.EraseTool) },
+			Callback: func(mgr editor.ToolManager) { mgr.UseTool(e.EraseTool) },
 		},
 		{
 			Name:     "Replace",
 			Key:      keys.R,
-			Callback: func(mgr editor.ToolManager) { mgr.SelectTool(e.ReplaceTool) },
+			Callback: func(mgr editor.ToolManager) { mgr.UseTool(e.ReplaceTool) },
 		},
 		{
 			Name: "Sample",
 			Key:  keys.T,
 			Callback: func(mgr editor.ToolManager) {
 				previousTool := mgr.Tool()
-				e.SampleTool.Reselect = func() { mgr.SelectTool(previousTool) }
-				mgr.SelectTool(e.SampleTool)
+				e.SampleTool.Reselect = func() { mgr.UseTool(previousTool) }
+				mgr.UseTool(e.SampleTool)
 			},
 		},
 		{

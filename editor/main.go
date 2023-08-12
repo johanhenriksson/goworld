@@ -24,7 +24,6 @@ type Editor struct {
 
 func NewEditor(workspace object.Object) *Editor {
 	editor := object.New("Editor", &Editor{
-		GUI:   MakeGUI(),
 		Tools: NewToolManager(),
 		World: physics.NewWorld(),
 
@@ -32,6 +31,9 @@ func NewEditor(workspace object.Object) *Editor {
 		editors:   nil,
 		workspace: workspace,
 	})
+
+	editor.GUI = MakeGUI(editor)
+	object.Attach(editor, editor.GUI)
 
 	object.Attach(editor, SidebarFragment(
 		gui.FragmentFirst,
@@ -50,16 +52,25 @@ func NewEditor(workspace object.Object) *Editor {
 
 func (e *Editor) Update(scene object.Component, dt float32) {
 	e.Object.Update(scene, dt)
+	e.Refresh()
+}
 
+func (e *Editor) Refresh() {
 	context := &Context{
 		Camera: e.Player.Camera.Camera,
-		Root:   scene,
 		Scene:  e.workspace,
 	}
 	e.editors = ConstructEditors(context, e.editors, e.workspace)
 	if e.editors.Parent() == nil {
 		object.Attach(e, e.editors)
 	}
+}
+
+func (e *Editor) Lookup(obj object.Object) T {
+	editor, _ := object.NewQuery[T]().Where(func(e T) bool {
+		return e.Target() == obj
+	}).First(e.editors)
+	return editor
 }
 
 func Scene(f engine.SceneFunc) engine.SceneFunc {

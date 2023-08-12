@@ -1,9 +1,12 @@
 package editor
 
 import (
+	"log"
 	"os"
 
 	"github.com/johanhenriksson/goworld/core/input/mouse"
+	"github.com/johanhenriksson/goworld/core/light"
+	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/gui"
 	"github.com/johanhenriksson/goworld/gui/node"
 	"github.com/johanhenriksson/goworld/gui/style"
@@ -14,11 +17,11 @@ import (
 	"github.com/johanhenriksson/goworld/render/texture"
 )
 
-func MakeGUI() gui.Manager {
+func MakeGUI(editor *Editor) gui.Manager {
 	return gui.New(func() node.T {
 		return rect.New("gui", rect.Props{
 			Children: []node.T{
-				makeMenu(),
+				makeMenu(editor),
 				rect.New("gui-main", rect.Props{
 					Style: rect.Style{
 						Grow: style.Grow(1),
@@ -32,7 +35,7 @@ func MakeGUI() gui.Manager {
 	})
 }
 
-func makeMenu() node.T {
+func makeMenu(editor *Editor) node.T {
 	return menu.Menu("gui-menu", menu.Props{
 		Style: menu.Style{
 			Color:      color.RGB(0.76, 0.76, 0.76),
@@ -49,6 +52,7 @@ func makeMenu() node.T {
 						Key:   "file-exit",
 						Title: "Exit",
 						OnClick: func(e mouse.Event) {
+							// it'd be cool if there was a decent way of doing things like exiting
 							os.Exit(0)
 						},
 					},
@@ -65,6 +69,43 @@ func makeMenu() node.T {
 					{
 						Key:   "edit-redo",
 						Title: "Redo",
+					},
+				},
+			},
+			{
+				Key:   "menu-object",
+				Title: "Object",
+				Items: []menu.ItemProps{
+					{
+						Key:   "menu-new-object",
+						Title: "New",
+						OnClick: func(e mouse.Event) {
+							position := editor.Player.Transform().Position().Add(editor.Player.Transform().Forward())
+							obj := object.Builder(object.Empty("New Object")).
+								Position(position).
+								Create()
+							object.Attach(editor.workspace, obj)
+							editor.Refresh()
+							editor.Tools.Select(editor.Lookup(obj))
+						},
+					},
+					{
+						Key:   "add-point-light",
+						Title: "Add Point Light",
+						OnClick: func(e mouse.Event) {
+							if len(editor.Tools.Selected()) < 1 {
+								log.Println("no selection?")
+								return
+							}
+							obj := editor.Tools.Selected()[0].Target().(object.Object)
+							object.Attach(obj, light.NewPoint(light.PointArgs{
+								Color:     color.Purple,
+								Range:     10,
+								Intensity: 3,
+							}))
+							editor.Refresh()
+							editor.Tools.Select(editor.Lookup(obj))
+						},
 					},
 				},
 			},
