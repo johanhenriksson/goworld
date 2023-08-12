@@ -34,10 +34,9 @@ func NewPlayer(position vec3.T, rotation quat.T) *Player {
 		})).
 			Rotation(rotation).
 			Attach(light.NewPoint(light.PointArgs{
-				Attenuation: light.DefaultAttenuation,
-				Range:       20,
-				Intensity:   2.5,
-				Color:       color.White,
+				Range:     20,
+				Intensity: 2.5,
+				Color:     color.White,
 			})).
 			Create(),
 		Speed:    float32(33),

@@ -3,12 +3,6 @@
 
 #define SHADOW_CASCADES 4
 
-struct Attenuation {
-	float Constant;
-	float Linear;
-	float Quadratic;
-};
-
 struct Light {
 	mat4 ViewProj[SHADOW_CASCADES];
 	int Shadowmap[SHADOW_CASCADES];
@@ -19,7 +13,9 @@ struct Light {
 	uint Type;
 	float Intensity;
 	float Range;
-	Attenuation Attenuation;
+	float Falloff;
+
+	float _padding;
 };
 
 struct LightSettings {
@@ -32,7 +28,7 @@ struct LightSettings {
 	float NormalOffset;
 };
 
-#define LIGHT_PADDING 76
+#define LIGHT_PADDING 75
 #define LIGHT_BUFFER(idx,name) layout (binding = idx) readonly buffer LightBuffer { LightSettings settings; float[LIGHT_PADDING] _padding; Light item[]; } name;
 
 const float SHADOW_POWER = 60;
@@ -133,6 +129,35 @@ float blendCascades(Light light, vec3 position, float depth, float blendRange, L
     return shadowCurrent;
 }
 
+float sqr(float x)
+{
+	return x * x;
+}
+
+float attenuate_no_cusp(float distance, float radius, float max_intensity, float falloff)
+{
+	float s = distance / radius;
+
+	if (s >= 1.0)
+		return 0.0;
+
+	float s2 = sqr(s);
+
+	return max_intensity * sqr(1 - s2) / (1 + falloff * s2);
+}
+
+float attenuate_cusp(float distance, float radius, float max_intensity, float falloff)
+{
+	float s = distance / radius;
+
+	if (s >= 1.0)
+		return 0.0;
+
+	float s2 = sqr(s);
+
+	return max_intensity * sqr(1 - s2) / (1 + falloff * s);
+}
+
 /* calculates lighting contribution from a point light source */
 float calculatePointLightContrib(Light light, vec3 surfaceToLight, float distanceToLight, vec3 normal) {
 	if (distanceToLight > light.Range) {
@@ -142,11 +167,7 @@ float calculatePointLightContrib(Light light, vec3 surfaceToLight, float distanc
 	// calculate normal coefficient
 	float normalCoef = max(0.0, dot(normal, surfaceToLight));
 
-	// light attenuation as a function of range and distance
-	float attenuation = light.Attenuation.Constant +
-						light.Attenuation.Linear * distanceToLight +
-						light.Attenuation.Quadratic * pow(distanceToLight, 2);
-	attenuation = 1.0 / attenuation;
+	float attenuation = attenuate_cusp(distanceToLight, light.Range, light.Intensity, light.Falloff);
 
 	// multiply and return light contribution
 	return normalCoef * attenuation;

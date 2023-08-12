@@ -24,28 +24,14 @@ type T interface {
 
 // Descriptor holds rendering information for lights
 type Descriptor struct {
-	Projection  mat4.T // Light projection matrix
-	View        mat4.T // Light view matrix
-	ViewProj    mat4.T
-	Color       color.T
-	Position    vec4.T
-	Type        Type
-	Range       float32
-	Intensity   float32
-	Shadows     uint32
-	Attenuation Attenuation
-	Index       int
-}
-
-// Attenuation properties for point lights
-type Attenuation struct {
-	Constant  float32
-	Linear    float32
-	Quadratic float32
-}
-
-var DefaultAttenuation = Attenuation{
-	Constant:  0.8,
-	Linear:    0.35,
-	Quadratic: 0.24,
+	Projection mat4.T // Light projection matrix
+	View       mat4.T // Light view matrix
+	ViewProj   mat4.T
+	Color      color.T
+	Position   vec4.T
+	Type       Type
+	Range      float32
+	Intensity  float32
+	Shadows    uint32
+	Index      int
 }

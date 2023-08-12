@@ -8,31 +8,28 @@ import (
 )
 
 type PointArgs struct {
-	Attenuation Attenuation
-	Color       color.T
-	Range       float32
-	Intensity   float32
+	Color     color.T
+	Range     float32
+	Intensity float32
 }
 
 type Point struct {
 	object.Component
 
-	Attenuation Attenuation
-
 	Color     object.Property[color.T]
 	Range     object.Property[float32]
 	Intensity object.Property[float32]
+	Falloff   object.Property[float32]
 }
 
 var _ T = &Point{}
 
 func NewPoint(args PointArgs) *Point {
 	return object.NewComponent(&Point{
-		Attenuation: args.Attenuation,
-
 		Color:     object.NewProperty(args.Color),
 		Range:     object.NewProperty(args.Range),
 		Intensity: object.NewProperty(args.Intensity),
+		Falloff:   object.NewProperty(float32(2)),
 	})
 }
 
@@ -47,11 +44,7 @@ func (lit *Point) LightData(shadowmaps ShadowmapStore) uniform.Light {
 		Color:     lit.Color.Get(),
 		Intensity: lit.Intensity.Get(),
 		Range:     lit.Range.Get(),
-		Attenuation: uniform.Attenuation{
-			Constant:  lit.Attenuation.Constant,
-			Linear:    lit.Attenuation.Linear,
-			Quadratic: lit.Attenuation.Quadratic,
-		},
+		Falloff:   lit.Falloff.Get(),
 	}
 }
 
