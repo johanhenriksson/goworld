@@ -64,11 +64,13 @@ func (e *BoxEditor) Target() object.Component { return e.target }
 
 func (e *BoxEditor) Select(ev mouse.Event) {
 	object.Enable(e.GUI)
+	object.Enable(e.Mesh)
 }
 
 func (e *BoxEditor) Deselect(ev mouse.Event) bool {
 	// todo: check with editor if we can deselect?
 	object.Disable(e.GUI)
+	object.Disable(e.Mesh)
 	return true
 }
 

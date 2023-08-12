@@ -63,11 +63,13 @@ func (e *SphereEditor) Target() object.Component { return e.target }
 
 func (e *SphereEditor) Select(ev mouse.Event) {
 	object.Enable(e.GUI)
+	object.Enable(e.Mesh)
 }
 
 func (e *SphereEditor) Deselect(ev mouse.Event) bool {
 	// todo: check with editor if we can deselect?
 	object.Disable(e.GUI)
+	object.Disable(e.Mesh)
 	return true
 }
 

@@ -57,11 +57,13 @@ func (e *PhysicsMeshEditor) Target() object.Component { return e.target }
 
 func (e *PhysicsMeshEditor) Select(ev mouse.Event) {
 	object.Enable(e.GUI)
+	object.Enable(e.Mesh)
 }
 
 func (e *PhysicsMeshEditor) Deselect(ev mouse.Event) bool {
 	// todo: check with editor if we can deselect?
 	object.Disable(e.GUI)
+	object.Disable(e.Mesh)
 	return true
 }
 
