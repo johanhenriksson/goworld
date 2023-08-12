@@ -23,10 +23,10 @@ type Arrow struct {
 func NewArrow(clr color.T) *Arrow {
 	height := float32(1.5)
 
-	coneRadius := height * 0.1
-	bodyRadius := coneRadius * 0.25
-	coneHeight := 0.33 * height
-	bodyHeight := 0.67 * height
+	coneRadius := height * 0.06
+	bodyRadius := coneRadius * 0.1
+	coneHeight := 0.2 * height
+	bodyHeight := 0.8 * height
 	segments := 32
 
 	arrow := object.New("Arrow", &Arrow{
