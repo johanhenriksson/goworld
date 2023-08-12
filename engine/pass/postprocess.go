@@ -99,8 +99,8 @@ func NewPostProcessPass(app vulkan.App, target vulkan.Target, input vulkan.Targe
 	for i := 0; i < input.Frames(); i++ {
 		inputKey := fmt.Sprintf("post-input-%d", i)
 		p.inputTex[i], err = texture.FromImage(app.Device(), inputKey, p.input.Surfaces()[i], texture.Args{
-			Filter: core1_0.FilterNearest,
-			Wrap:   core1_0.SamplerAddressModeClampToEdge,
+			Filter: texture.FilterNearest,
+			Wrap:   texture.WrapClamp,
 		})
 		if err != nil {
 			// todo: clean up

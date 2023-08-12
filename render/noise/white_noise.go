@@ -6,8 +6,6 @@ import (
 
 	"github.com/johanhenriksson/goworld/render/image"
 	"github.com/johanhenriksson/goworld/render/texture"
-
-	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
 type WhiteNoise struct {
@@ -44,7 +42,7 @@ func (n *WhiteNoise) ImageData() *image.Data {
 
 func (n *WhiteNoise) TextureArgs() texture.Args {
 	return texture.Args{
-		Filter: core1_0.FilterLinear,
-		Wrap:   core1_0.SamplerAddressModeRepeat,
+		Filter: texture.FilterLinear,
+		Wrap:   texture.WrapRepeat,
 	}
 }

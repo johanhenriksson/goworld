@@ -23,8 +23,8 @@ func NewTextureSync(dev device.T, worker command.Worker, key string, img *osimag
 		img.Rect.Size().Y,
 		image.FormatRGBA8Unorm,
 		texture.Args{
-			Filter: core1_0.FilterLinear,
-			Wrap:   core1_0.SamplerAddressModeRepeat,
+			Filter: texture.FilterLinear,
+			Wrap:   texture.WrapRepeat,
 		})
 	if err != nil {
 		return nil, err

@@ -9,8 +9,6 @@ import (
 	"github.com/johanhenriksson/goworld/math/vec4"
 	"github.com/johanhenriksson/goworld/render/image"
 	"github.com/johanhenriksson/goworld/render/texture"
-
-	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
 // Predefined Colors
@@ -140,7 +138,7 @@ func Hex(s string) T {
 	c := T{A: 1}
 	switch len(s) {
 	case 9:
-		c.A = float32(hexToByte(s[7])<<4+hexToByte(s[8])) / 255
+		c.A = float32(hexToByte(s[7])<<4+hexToByte(s[6])) / 255
 		fallthrough
 	case 7:
 		c.R = float32(hexToByte(s[1])<<4+hexToByte(s[2])) / 255
@@ -177,7 +175,7 @@ func (c T) ImageData() *image.Data {
 
 func (c T) TextureArgs() texture.Args {
 	return texture.Args{
-		Filter: core1_0.FilterNearest,
-		Wrap:   core1_0.SamplerAddressModeClampToEdge,
+		Filter: texture.FilterNearest,
+		Wrap:   texture.WrapClamp,
 	}
 }

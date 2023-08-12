@@ -163,8 +163,8 @@ func NewAmbientOcclusionPass(app vulkan.App, target vulkan.Target, gbuffer Geome
 	for i := 0; i < target.Frames(); i++ {
 		posKey := fmt.Sprintf("ssao-position-%d", i)
 		p.position[i], err = texture.FromImage(app.Device(), posKey, gbuffer.Position()[i], texture.Args{
-			Filter: core1_0.FilterNearest,
-			Wrap:   core1_0.SamplerAddressModeClampToEdge,
+			Filter: texture.FilterNearest,
+			Wrap:   texture.WrapClamp,
 		})
 		if err != nil {
 			// todo: clean up
@@ -174,8 +174,8 @@ func NewAmbientOcclusionPass(app vulkan.App, target vulkan.Target, gbuffer Geome
 
 		normKey := fmt.Sprintf("ssao-normal-%d", i)
 		p.normal[i], err = texture.FromImage(app.Device(), normKey, gbuffer.Normal()[i], texture.Args{
-			Filter: core1_0.FilterNearest,
-			Wrap:   core1_0.SamplerAddressModeClampToEdge,
+			Filter: texture.FilterNearest,
+			Wrap:   texture.WrapClamp,
 		})
 		if err != nil {
 			// todo: clean up
@@ -263,7 +263,7 @@ func (n *HemisphereNoise) ImageData() *image.Data {
 
 func (n *HemisphereNoise) TextureArgs() texture.Args {
 	return texture.Args{
-		Filter: core1_0.FilterNearest,
-		Wrap:   core1_0.SamplerAddressModeRepeat,
+		Filter: texture.FilterNearest,
+		Wrap:   texture.WrapRepeat,
 	}
 }

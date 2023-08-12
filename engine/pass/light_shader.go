@@ -87,25 +87,25 @@ func NewLightShader(app vulkan.App, pass renderpass.T, gbuffer GeometryBuffer, o
 	occlusionTex := make([]texture.T, frames)
 	for i := 0; i < frames; i++ {
 		diffuseTex[i], err = texture.FromImage(app.Device(), "deferred-diffuse", gbuffer.Diffuse()[i], texture.Args{
-			Filter: core1_0.FilterNearest,
+			Filter: texture.FilterNearest,
 		})
 		if err != nil {
 			panic(err)
 		}
 		normalTex[i], err = texture.FromImage(app.Device(), "deferred-normal", gbuffer.Normal()[i], texture.Args{
-			Filter: core1_0.FilterNearest,
+			Filter: texture.FilterNearest,
 		})
 		if err != nil {
 			panic(err)
 		}
 		positionTex[i], err = texture.FromImage(app.Device(), "deferred-position", gbuffer.Position()[i], texture.Args{
-			Filter: core1_0.FilterNearest,
+			Filter: texture.FilterNearest,
 		})
 		if err != nil {
 			panic(err)
 		}
 		occlusionTex[i], err = texture.FromImage(app.Device(), "deferred-ssao", occlusion.Surfaces()[i], texture.Args{
-			Filter: core1_0.FilterNearest,
+			Filter: texture.FilterNearest,
 		})
 		if err != nil {
 			panic(err)

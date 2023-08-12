@@ -19,8 +19,8 @@ type T interface {
 }
 
 type Args struct {
-	Filter core1_0.Filter
-	Wrap   core1_0.SamplerAddressMode
+	Filter Filter
+	Wrap   Wrap
 	Aspect core1_0.ImageAspectFlags
 	Usage  core1_0.ImageUsageFlags
 	Border core1_0.BorderColor
@@ -86,11 +86,11 @@ func FromView(device device.T, key string, view image.View, args Args) (T, error
 		panic("texture must have a key")
 	}
 	info := core1_0.SamplerCreateInfo{
-		MinFilter:    args.Filter,
-		MagFilter:    args.Filter,
-		AddressModeU: args.Wrap,
-		AddressModeV: args.Wrap,
-		AddressModeW: args.Wrap,
+		MinFilter:    core1_0.Filter(args.Filter),
+		MagFilter:    core1_0.Filter(args.Filter),
+		AddressModeU: core1_0.SamplerAddressMode(args.Wrap),
+		AddressModeV: core1_0.SamplerAddressMode(args.Wrap),
+		AddressModeW: core1_0.SamplerAddressMode(args.Wrap),
 		BorderColor:  args.Border,
 
 		MipmapMode: core1_0.SamplerMipmapModeLinear,

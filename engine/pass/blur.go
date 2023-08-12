@@ -91,8 +91,8 @@ func NewBlurPass(app vulkan.App, output vulkan.Target, input vulkan.Target) *Blu
 	for i := range p.tex {
 		key := fmt.Sprintf("blur-%d", i)
 		p.tex[i], err = texture.FromImage(app.Device(), key, p.input.Surfaces()[i], texture.Args{
-			Filter: core1_0.FilterNearest,
-			Wrap:   core1_0.SamplerAddressModeClampToEdge,
+			Filter: texture.FilterNearest,
+			Wrap:   texture.WrapClamp,
 		})
 		if err != nil {
 			// todo: clean up

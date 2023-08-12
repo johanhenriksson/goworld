@@ -2,7 +2,6 @@ package texture
 
 import (
 	"github.com/johanhenriksson/goworld/render/image"
-	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
 var Checker = PathRef("textures/uv_checker.png")
@@ -46,7 +45,7 @@ func (r *pathRef) ImageData() *image.Data {
 
 func (r *pathRef) TextureArgs() Args {
 	return Args{
-		Filter: core1_0.FilterLinear,
-		Wrap:   core1_0.SamplerAddressModeRepeat,
+		Filter: FilterLinear,
+		Wrap:   WrapRepeat,
 	}
 }

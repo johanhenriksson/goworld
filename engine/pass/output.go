@@ -94,8 +94,8 @@ func NewOutputPass(app vulkan.App, target vulkan.Target, source vulkan.Target) *
 	for i := range p.tex {
 		key := fmt.Sprintf("gbuffer-output-%d", i)
 		p.tex[i], err = texture.FromImage(app.Device(), key, p.source.Surfaces()[i], texture.Args{
-			Filter: core1_0.FilterNearest,
-			Wrap:   core1_0.SamplerAddressModeClampToEdge,
+			Filter: texture.FilterNearest,
+			Wrap:   texture.WrapClamp,
 		})
 		if err != nil {
 			// todo: clean up
