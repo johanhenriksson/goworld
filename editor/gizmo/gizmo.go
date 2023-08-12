@@ -15,9 +15,9 @@ import (
 type Gizmo interface {
 	object.Component
 
-	DragStart(e mouse.Event, collider physics.Shape)
-	DragEnd(e mouse.Event)
-	DragMove(e mouse.Event)
+	DragStart(e mouse.Event, hit physics.RaycastHit)
+	DragEnd(e mouse.Event, hit physics.RaycastHit)
+	DragMove(e mouse.Event, hit physics.RaycastHit)
 	Hover(bool, physics.Shape)
 
 	Camera() mat4.T
@@ -39,19 +39,19 @@ func HandleMouse(m Gizmo, e mouse.Event, hit physics.RaycastHit) {
 
 	if m.Dragging() {
 		if e.Action() == mouse.Release && e.Button() == mouse.Button1 {
-			m.DragEnd(e)
+			m.DragEnd(e, hit)
 			e.Consume()
 		} else {
-			m.DragMove(e)
+			m.DragMove(e, hit)
 			e.Consume()
 		}
 	} else if e.Action() == mouse.Press && e.Button() == mouse.Button1 {
 		if ok {
-			m.DragStart(e, hit.Shape)
+			m.DragStart(e, hit)
 			e.Consume()
 		} else if m.Dragging() {
 			// we hit nothing, deselect
-			m.DragEnd(e)
+			m.DragEnd(e, hit)
 			e.Consume()
 		}
 	} else if e.Action() == mouse.Move {

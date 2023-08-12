@@ -34,6 +34,7 @@ type ToolManager interface {
 	Select(T)
 	SelectTool(Tool)
 	MoveTool(object.Component)
+	RotateTool(object.Component)
 	Tool() Tool
 }
 
@@ -46,7 +47,8 @@ type toolmgr struct {
 	viewport render.Screen
 
 	// built-in tools
-	Mover *gizmo.Mover
+	Mover   *gizmo.Mover
+	Rotater *gizmo.Rotater
 
 	Physics *physics.World
 }
@@ -54,6 +56,10 @@ type toolmgr struct {
 func NewToolManager() ToolManager {
 	return object.New("Tool Manager", &toolmgr{
 		Mover: object.Builder(gizmo.NewMover()).
+			Active(false).
+			Create(),
+
+		Rotater: object.Builder(gizmo.NewRotater()).
 			Active(false).
 			Create(),
 
@@ -222,4 +228,9 @@ func (m *toolmgr) PreDraw(args render.Args, scene object.Object) error {
 func (m *toolmgr) MoveTool(obj object.Component) {
 	m.SelectTool(m.Mover)
 	m.Mover.SetTarget(obj.Transform())
+}
+
+func (m *toolmgr) RotateTool(obj object.Component) {
+	m.SelectTool(m.Rotater)
+	m.Rotater.SetTarget(obj.Transform())
 }

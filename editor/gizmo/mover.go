@@ -58,7 +58,7 @@ func NewMover() *Mover {
 	s := side / 2
 
 	g := object.New("Mover Gizmo", &Mover{
-		size:        0.4,
+		size:        0.125,
 		sensitivity: 6,
 		hoverScale:  vec3.New(1.1, 1.1, 1.1),
 
@@ -128,7 +128,7 @@ func (g *Mover) SetTarget(t transform.T) {
 	g.Transform().SetParent(t)
 	g.target = t
 	if t == nil {
-		g.DragEnd(mouse.NopEvent())
+		g.DragEnd(mouse.NopEvent(), physics.RaycastHit{})
 	}
 }
 
@@ -149,10 +149,10 @@ func (g *Mover) getColliderAxis(collider physics.Shape) vec3.T {
 	return vec3.Zero
 }
 
-func (g *Mover) DragStart(e mouse.Event, shape physics.Shape) {
+func (g *Mover) DragStart(e mouse.Event, hit physics.RaycastHit) {
 	g.dragging = true
 
-	g.axis = g.getColliderAxis(shape)
+	g.axis = g.getColliderAxis(hit.Shape)
 	cursor := g.viewport.NormalizeCursor(e.Position())
 	g.start = cursor
 
@@ -160,11 +160,11 @@ func (g *Mover) DragStart(e mouse.Event, shape physics.Shape) {
 	g.screenAxis = g.vp.TransformDir(localDir).XY().Normalized()
 }
 
-func (g *Mover) DragEnd(e mouse.Event) {
+func (g *Mover) DragEnd(e mouse.Event, hit physics.RaycastHit) {
 	g.dragging = false
 }
 
-func (g *Mover) DragMove(e mouse.Event) {
+func (g *Mover) DragMove(e mouse.Event, hit physics.RaycastHit) {
 	if e.Action() == mouse.Move {
 		cursor := g.viewport.NormalizeCursor(e.Position())
 		axisLen := g.screenAxis.Length()

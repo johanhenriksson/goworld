@@ -53,6 +53,13 @@ func (e *ObjectEditor) Actions() []Action {
 			},
 		},
 		{
+			Name: "Rotate",
+			Key:  keys.V,
+			Callback: func(mgr ToolManager) {
+				mgr.RotateTool(e.target)
+			},
+		},
+		{
 			Name: "Select Parent",
 			Key:  keys.U,
 			Callback: func(mgr ToolManager) {
