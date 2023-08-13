@@ -24,7 +24,7 @@ type MeshEditor struct {
 
 	Shape *physics.Mesh
 	Body  *physics.RigidBody
-	Mesh  *lines.Mesh
+	Wire  *lines.Wireframe
 	GUI   gui.Fragment
 }
 
@@ -35,7 +35,7 @@ func NewMeshEditor(ctx *editor.Context, mesh *mesh.Static) *MeshEditor {
 
 		Shape: physics.NewMesh(),
 		Body:  physics.NewRigidBody(0),
-		Mesh:  lines.NewMesh(mesh.VertexData.Get(), color.White),
+		Wire:  lines.NewWireframe(mesh.VertexData.Get(), color.White),
 
 		GUI: editor.SidebarFragment(gui.FragmentLast, func() node.T {
 			return editor.Inspector(
@@ -48,7 +48,7 @@ func NewMeshEditor(ctx *editor.Context, mesh *mesh.Static) *MeshEditor {
 	editor.Shape.Mesh.Set(mesh.VertexData.Get())
 	mesh.VertexData.OnChange.Subscribe(func(m vertex.Mesh) {
 		editor.Shape.Mesh.Set(m)
-		editor.Mesh.Source.Set(m)
+		editor.Wire.Source.Set(m)
 	})
 
 	return editor
@@ -58,13 +58,13 @@ func (e *MeshEditor) Target() object.Component { return e.target }
 
 func (e *MeshEditor) Select(ev mouse.Event) {
 	object.Enable(e.GUI)
-	object.Enable(e.Mesh)
+	object.Enable(e.Wire)
 }
 
 func (e *MeshEditor) Deselect(ev mouse.Event) bool {
 	// todo: check with editor if we can deselect?
 	object.Disable(e.GUI)
-	object.Disable(e.Mesh)
+	object.Disable(e.Wire)
 	return true
 }
 
