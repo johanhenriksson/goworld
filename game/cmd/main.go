@@ -144,12 +144,6 @@ func main() {
 						Color:     color.Blue,
 						Intensity: 5,
 					})).
-					Attach(sprite.New(sprite.Args{
-						Size: vec2.New(1, 1),
-						Texture: texture.PathArgsRef("textures/light.png", texture.Args{
-							Filter: texture.FilterNearest,
-						}),
-					})).
 					Create())
 		}),
 	)
