@@ -11,9 +11,10 @@ import (
 type Icon string
 
 const (
-	IconExpandMore   = Icon(rune(0xe5cf))
-	IconChevronRight = Icon(rune(0xe5cc))
-	IconCheckbox     = Icon(rune(0xe835))
+	IconExpandMore      = Icon(rune(0xe5cf))
+	IconChevronRight    = Icon(rune(0xe5cc))
+	IconCheckboxBlank   = Icon(rune(0xe835))
+	IconCheckboxChecked = Icon(rune(0xe834))
 )
 
 type IconProps struct {
