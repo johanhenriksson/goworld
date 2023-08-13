@@ -159,6 +159,8 @@ func (m *manager) MouseEvent(e mouse.Event) {
 
 	// if the UI captured a press event, we should make sure not to pass
 	// the matching release event
+	// todo: this does not actually pair events, since other events could
+	//       occur in between
 	if ev.Action() == mouse.Release && m.supressNextRelease {
 		m.supressNextRelease = false
 		e.Consume()

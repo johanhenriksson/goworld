@@ -24,7 +24,6 @@ type Editor struct {
 
 func NewEditor(workspace object.Object) *Editor {
 	editor := object.New("Editor", &Editor{
-		Tools: NewToolManager(),
 		World: physics.NewWorld(),
 
 		Player:    NewPlayer(vec3.New(0, 25, -11), quat.Euler(-10, 30, 0)),
@@ -34,6 +33,10 @@ func NewEditor(workspace object.Object) *Editor {
 
 	editor.GUI = MakeGUI(editor)
 	object.Attach(editor, editor.GUI)
+
+	// must be attached AFTER gui so that input events are handled in the correct order
+	editor.Tools = NewToolManager()
+	object.Attach(editor, editor.Tools)
 
 	object.Attach(editor, SidebarFragment(
 		gui.FragmentFirst,
