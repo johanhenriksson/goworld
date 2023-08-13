@@ -25,6 +25,12 @@ func NewObjectEditor(target object.Object) *ObjectEditor {
 		GUI: SidebarFragment(gui.FragmentLast, func() node.T {
 			return Inspector(
 				target,
+				propedit.BoolField("enabled", "Enabled", propedit.BoolProps{
+					Value: target.Enabled(),
+					OnChange: func(b bool) {
+						object.Toggle(target, b)
+					},
+				}),
 				propedit.Transform("transform", target.Transform()),
 			)
 		}),

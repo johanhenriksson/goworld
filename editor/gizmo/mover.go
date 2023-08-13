@@ -4,7 +4,6 @@ import (
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/core/transform"
-	"github.com/johanhenriksson/goworld/geometry/lines"
 	"github.com/johanhenriksson/goworld/geometry/plane"
 	"github.com/johanhenriksson/goworld/math"
 	"github.com/johanhenriksson/goworld/math/mat4"
@@ -14,6 +13,7 @@ import (
 	"github.com/johanhenriksson/goworld/physics"
 	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/color"
+	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/texture"
 )
 
@@ -23,10 +23,9 @@ type Mover struct {
 
 	target transform.T
 
-	Lines *lines.Lines
-	X     *Arrow
-	Y     *Arrow
-	Z     *Arrow
+	X *Arrow
+	Y *Arrow
+	Z *Arrow
 
 	XY *plane.Plane
 	XZ *plane.Plane
@@ -52,10 +51,10 @@ var _ Gizmo = &Mover{}
 
 // NewMover creates a new mover gizmo
 func NewMover() *Mover {
-	side := float32(0.2)
-	planeAlpha := float32(0.3)
+	side := float32(0.33)
+	planeAlpha := float32(0.33)
 
-	s := side / 2
+	s := side * 0.5
 
 	g := object.New("Mover Gizmo", &Mover{
 		size:        0.125,
@@ -75,8 +74,9 @@ func NewMover() *Mover {
 		// XY Plane
 		XY: object.Builder(plane.NewObject(plane.Args{
 			Size: side,
+			Mat:  material.TransparentForward(),
 		})).
-			Position(vec3.New(s, s, -0.03)).
+			Position(vec3.New(s, s, 0)).
 			Rotation(quat.Euler(90, 0, 0)).
 			Texture(texture.Diffuse, color.Blue.WithAlpha(planeAlpha)).
 			Create(),
@@ -84,37 +84,22 @@ func NewMover() *Mover {
 		// XZ Plane
 		XZ: object.Builder(plane.NewObject(plane.Args{
 			Size: side,
+			Mat:  material.TransparentForward(),
 		})).
 			Rotation(quat.Euler(0, 90, 0)).
-			Position(vec3.New(s, -0.03, s)).
+			Position(vec3.New(s, 0, s)).
 			Texture(texture.Diffuse, color.Green.WithAlpha(planeAlpha)).
 			Create(),
 
 		// YZ Plane
 		YZ: object.Builder(plane.NewObject(plane.Args{
 			Size: side,
+			Mat:  material.TransparentForward(),
 		})).
-			Position(vec3.New(-0.03, s, s)).
+			Position(vec3.New(0, s, s)).
 			Rotation(quat.Euler(0, 0, 90)).
 			Texture(texture.Diffuse, color.Red.WithAlpha(planeAlpha)).
 			Create(),
-
-		// Lines
-		Lines: lines.New(lines.Args{
-			Lines: []lines.Line{
-				// xz lines
-				lines.L(vec3.New(side, 0, 0), vec3.New(side, 0, side), color.Green),
-				lines.L(vec3.New(side, 0, side), vec3.New(0, 0, side), color.Green),
-
-				// xy lines
-				lines.L(vec3.New(0, side, 0), vec3.New(side, side, 0), color.Blue),
-				lines.L(vec3.New(side, 0, 0), vec3.New(side, side, 0), color.Blue),
-
-				// yz lines
-				lines.L(vec3.New(0, side, 0), vec3.New(0, side, side), color.Red),
-				lines.L(vec3.New(0, 0, side), vec3.New(0, side, side), color.Red),
-			},
-		}),
 	})
 
 	return g

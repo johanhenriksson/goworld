@@ -14,8 +14,10 @@ import (
 	"github.com/johanhenriksson/goworld/game/terrain"
 	"github.com/johanhenriksson/goworld/geometry/cone"
 	"github.com/johanhenriksson/goworld/geometry/cube"
+	"github.com/johanhenriksson/goworld/geometry/sprite"
 	"github.com/johanhenriksson/goworld/math/quat"
 	"github.com/johanhenriksson/goworld/math/random"
+	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/physics"
 	"github.com/johanhenriksson/goworld/render/color"
@@ -34,12 +36,12 @@ func main() {
 		Title:  "goworld",
 	},
 		editor.Scene(func(scene object.Object) {
-			world := physics.NewWorld()
-			object.Attach(scene, world)
+			// todo: should on the scene object by default
+			object.Attach(scene, physics.NewWorld())
 
 			generator := chunk.ExampleWorldgen(4, 16)
-			chonk := chunk.NewWorld(16, generator, 128)
-			object.Attach(scene, chonk)
+			chonks := chunk.NewWorld(16, generator, 128)
+			object.Attach(scene, chonks)
 
 			// physics boxes
 			for x := 0; x < 3; x++ {
@@ -130,6 +132,23 @@ func main() {
 					Attach(script.New(func(scene, self object.Component, dt float32) {
 						rot -= 0.5 * dt
 						self.Parent().Transform().SetRotation(quat.Euler(rot, 0, 0))
+					})).
+					Create())
+
+			object.Attach(
+				scene,
+				object.Builder(object.Empty("Light")).
+					Position(vec3.New(10, 15, 10)).
+					Attach(light.NewPoint(light.PointArgs{
+						Range:     5,
+						Color:     color.Blue,
+						Intensity: 5,
+					})).
+					Attach(sprite.New(sprite.Args{
+						Size: vec2.New(1, 1),
+						Texture: texture.PathArgsRef("textures/light.png", texture.Args{
+							Filter: texture.FilterNearest,
+						}),
 					})).
 					Create())
 		}),
