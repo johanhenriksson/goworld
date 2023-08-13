@@ -20,11 +20,23 @@ type Ref interface {
 type pathRef struct {
 	path string
 	img  *image.Data
+	args Args
 }
 
 func PathRef(path string) Ref {
 	return &pathRef{
 		path: path,
+		args: Args{
+			Filter: FilterLinear,
+			Wrap:   WrapRepeat,
+		},
+	}
+}
+
+func PathArgsRef(path string, args Args) Ref {
+	return &pathRef{
+		path: path,
+		args: args,
 	}
 }
 
@@ -44,8 +56,5 @@ func (r *pathRef) ImageData() *image.Data {
 }
 
 func (r *pathRef) TextureArgs() Args {
-	return Args{
-		Filter: FilterLinear,
-		Wrap:   WrapRepeat,
-	}
+	return r.args
 }
