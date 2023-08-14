@@ -87,7 +87,7 @@ var _ = Describe("Object", func() {
 
 			pos := vec3.New(10, 20, 30)
 			target.Transform().SetPosition(pos)
-			Expect(ghost.Transform().WorldPosition()).To(BeApproxVec3(pos))
+			Expect(ghost.Transform().WorldPosition()).To(ApproxVec3(pos))
 		})
 
 		It("propagates events", func() {

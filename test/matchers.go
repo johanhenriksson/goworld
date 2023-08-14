@@ -61,7 +61,7 @@ func (matcher *approxQuat) NegatedFailureMessage(actual interface{}) (message st
 // vec3 matcher
 //
 
-func BeApproxVec3(v vec3.T) *approxVec3 {
+func ApproxVec3(v vec3.T) *approxVec3 {
 	return &approxVec3{v}
 }
 

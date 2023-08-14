@@ -61,7 +61,7 @@ var _ = Describe("general physics tests", func() {
 			// raycast towards the origin should hit the box
 			hit, ok := world.Raycast(vec3.New(0, 5, 0), vec3.Zero, All)
 			Expect(ok).To(BeTrue())
-			Expect(hit.Point).To(BeApproxVec3(vec3.New(0, 0.5, 0)))
+			Expect(hit.Point).To(ApproxVec3(vec3.New(0, 0.5, 0)))
 		})
 	})
 
@@ -98,7 +98,7 @@ var _ = Describe("general physics tests", func() {
 			// raycast towards the origin should hit the box
 			hit, ok := world.Raycast(vec3.New(0, 5, 0), vec3.Zero, All)
 			Expect(ok).To(BeTrue())
-			Expect(hit.Point).To(BeApproxVec3(vec3.New(0, 0.5, 0)))
+			Expect(hit.Point).To(ApproxVec3(vec3.New(0, 0.5, 0)))
 		})
 	})
 })

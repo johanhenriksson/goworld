@@ -48,11 +48,11 @@ var _ = Describe("geometry", func() {
 	It("properly unprojects the origin", func() {
 		t := transform.New(vec3.Zero, quat.Ident(), vec3.One)
 		p := t.Unproject(vec3.Zero)
-		Expect(p).To(BeApproxVec3(vec3.Zero))
+		Expect(p).To(ApproxVec3(vec3.Zero))
 
 		t2 := transform.New(vec3.One, quat.Ident(), vec3.One)
 		p2 := t2.Unproject(vec3.One)
-		Expect(p2).To(BeApproxVec3(vec3.Zero))
+		Expect(p2).To(ApproxVec3(vec3.Zero))
 	})
 })
 
@@ -105,17 +105,17 @@ var _ = Describe("transform hierarchy", func() {
 		Expect(child.WorldRotation().Euler()).To(Equal(vec3.New(0, 180, 0)))
 
 		child.SetWorldRotation(quat.Euler(0, 90, 0))
-		Expect(child.WorldRotation().Euler()).To(BeApproxVec3(vec3.New(0, 90, 0)))
-		Expect(child.Rotation().Euler()).To(BeApproxVec3(vec3.Zero))
+		Expect(child.WorldRotation().Euler()).To(ApproxVec3(vec3.New(0, 90, 0)))
+		Expect(child.Rotation().Euler()).To(ApproxVec3(vec3.Zero))
 	})
 
 	It("sets scale relative to parent", func() {
 		parent := transform.New(vec3.Zero, quat.Euler(0, 90, 0), vec3.New(2, 2, 2))
 		child := transform.New(vec3.Zero, quat.Euler(0, 90, 0), vec3.One)
 		child.SetParent(parent)
-		Expect(child.WorldScale()).To(BeApproxVec3(vec3.New(2, 2, 2)))
+		Expect(child.WorldScale()).To(ApproxVec3(vec3.New(2, 2, 2)))
 		child.SetWorldScale(vec3.One)
-		Expect(child.WorldScale()).To(BeApproxVec3(vec3.One))
-		Expect(child.Scale()).To(BeApproxVec3(vec3.New(0.5, 0.5, 0.5)))
+		Expect(child.WorldScale()).To(ApproxVec3(vec3.One))
+		Expect(child.Scale()).To(ApproxVec3(vec3.New(0.5, 0.5, 0.5)))
 	})
 })

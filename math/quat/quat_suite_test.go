@@ -23,7 +23,7 @@ var _ = Describe("quaternion", func() {
 			q := quat.Euler(x, y, z)
 			r := q.Euler()
 			GinkgoWriter.Println(x, y, z, r)
-			Expect(r).To(BeApproxVec3(vec3.New(x, y, z)), "wrong rotation")
+			Expect(r).To(ApproxVec3(vec3.New(x, y, z)), "wrong rotation")
 		})
 	})
 })
