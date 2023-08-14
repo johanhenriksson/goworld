@@ -9,6 +9,10 @@ import (
 	"github.com/johanhenriksson/goworld/render/vertex"
 )
 
+func init() {
+	object.Register[*Static](Deserialize)
+}
+
 type Mesh interface {
 	object.Component
 
@@ -108,4 +112,34 @@ func (m *Static) BoundingSphere() shape.Sphere {
 		Center: m.Transform().WorldPosition().Add(m.center),
 		Radius: m.radius,
 	}
+}
+
+type MeshState struct {
+	object.ComponentState
+	Primitive vertex.Primitive
+	Material  material.Def
+}
+
+func (m *Static) State() MeshState {
+	return MeshState{
+		// send help
+		ComponentState: object.NewComponentState(m.Component),
+		Primitive:      m.primitive,
+		Material:       *m.Material(),
+	}
+}
+
+func (m *Static) Serialize(enc object.Encoder) error {
+	return enc.Encode(m.State())
+}
+
+func Deserialize(dec object.Decoder) (object.Component, error) {
+	var state MeshState
+	if err := dec.Decode(&state); err != nil {
+		return nil, err
+	}
+
+	obj := NewPrimitiveMesh(state.Primitive, &state.Material)
+	obj.Component = state.ComponentState.New()
+	return obj, nil
 }
