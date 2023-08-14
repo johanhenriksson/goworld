@@ -40,6 +40,10 @@ type Directional struct {
 
 var _ T = &Directional{}
 
+func init() {
+	object.Register[*Directional](DeserializeDirectional)
+}
+
 func NewDirectional(args DirectionalArgs) *Directional {
 	lit := object.NewComponent(&Directional{
 		cascades: make([]Cascade, args.Cascades),
@@ -201,4 +205,32 @@ func (lit *Directional) ShadowProjection(mapIndex int) uniform.Camera {
 		Eye:         vec4.Extend(lit.Transform().Position(), 0),
 		Forward:     vec4.Extend(lit.Transform().Forward(), 0),
 	}
+}
+
+type DirectionalState struct {
+	object.ComponentState
+	DirectionalArgs
+}
+
+func (lit *Directional) Serialize(enc object.Encoder) error {
+	return enc.Encode(DirectionalState{
+		// send help
+		ComponentState: object.NewComponentState(lit.Component),
+		DirectionalArgs: DirectionalArgs{
+			Color:     lit.Color.Get(),
+			Intensity: lit.Intensity.Get(),
+			Shadows:   lit.Shadows.Get(),
+		},
+	})
+}
+
+func DeserializeDirectional(dec object.Decoder) (object.Component, error) {
+	var state DirectionalState
+	if err := dec.Decode(&state); err != nil {
+		return nil, err
+	}
+
+	obj := NewDirectional(state.DirectionalArgs)
+	obj.Component = state.ComponentState.New()
+	return obj, nil
 }
