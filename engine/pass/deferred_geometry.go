@@ -105,15 +105,16 @@ func (p *DeferredGeometryPass) Record(cmds command.Recorder, args render.Args, s
 		cmd.CmdBeginRenderPass(p.pass, p.fbuf[args.Frame])
 	})
 
+	cam := CameraFromArgs(args)
 	frustum := shape.FrustumFromMatrix(args.VP)
 
+	// subpass: query, group, draw
 	objects := p.meshQuery.
 		Reset().
 		Where(isDrawDeferred).
 		Where(frustumCulled(&frustum)).
 		Collect(scene)
 
-	cam := CameraFromArgs(args)
 	groups := MaterialGroups(p.materials, args.Frame, objects)
 	groups.Draw(cmds, cam, nil)
 
