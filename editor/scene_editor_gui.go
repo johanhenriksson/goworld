@@ -13,11 +13,12 @@ import (
 	"github.com/johanhenriksson/goworld/gui/widget/image"
 	"github.com/johanhenriksson/goworld/gui/widget/menu"
 	"github.com/johanhenriksson/goworld/gui/widget/rect"
+	"github.com/johanhenriksson/goworld/physics"
 	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/texture"
 )
 
-func MakeGUI(editor *Editor) gui.Manager {
+func MakeGUI(editor *App) gui.Manager {
 	return gui.New(func() node.T {
 		return rect.New("gui", rect.Props{
 			Children: []node.T{
@@ -27,7 +28,7 @@ func MakeGUI(editor *Editor) gui.Manager {
 						Grow: style.Grow(1),
 					},
 					Children: []node.T{
-						makeSidebar(),
+						makeSidebar(editor),
 					},
 				}),
 			},
@@ -35,7 +36,17 @@ func MakeGUI(editor *Editor) gui.Manager {
 	})
 }
 
-func makeMenu(editor *Editor) node.T {
+func makeMenu(editor *App) node.T {
+	attach := func(cmp object.Component) {
+		if len(editor.Tools.Selected()) < 1 {
+			log.Println("no selection?")
+			return
+		}
+		obj := editor.Tools.Selected()[0].Target().(object.Object)
+		object.Attach(obj, cmp)
+		editor.Refresh()
+		editor.Tools.Select(editor.Lookup(obj))
+	}
 	return menu.Menu("gui-menu", menu.Props{
 		Style: menu.Style{
 			Color:      color.RGB(0.76, 0.76, 0.76),
@@ -48,6 +59,20 @@ func makeMenu(editor *Editor) node.T {
 				Key:   "menu-file",
 				Title: "File",
 				Items: []menu.ItemProps{
+					{
+						Key:   "file-new",
+						Title: "New",
+					},
+					{
+						Key:   "file-open",
+						Title: "Open...",
+					},
+					{
+						Key:   "file-save",
+						Title: "Save...",
+						OnClick: func(e mouse.Event) {
+						},
+					},
 					{
 						Key:   "file-exit",
 						Title: "Exit",
@@ -93,18 +118,30 @@ func makeMenu(editor *Editor) node.T {
 						Key:   "add-point-light",
 						Title: "Add Point Light",
 						OnClick: func(e mouse.Event) {
-							if len(editor.Tools.Selected()) < 1 {
-								log.Println("no selection?")
-								return
-							}
-							obj := editor.Tools.Selected()[0].Target().(object.Object)
-							object.Attach(obj, light.NewPoint(light.PointArgs{
+							attach(light.NewPoint(light.PointArgs{
 								Color:     color.Purple,
 								Range:     10,
 								Intensity: 3,
 							}))
-							editor.Refresh()
-							editor.Tools.Select(editor.Lookup(obj))
+						},
+					},
+					{
+						Key:   "add-dir-light",
+						Title: "Add Directional Light",
+						OnClick: func(e mouse.Event) {
+							attach(light.NewDirectional(light.DirectionalArgs{
+								Color:     color.Purple,
+								Intensity: 3,
+								Shadows:   true,
+								Cascades:  3,
+							}))
+						},
+					},
+					{
+						Key:   "add-rigidbody-light",
+						Title: "Add Rigidbody",
+						OnClick: func(e mouse.Event) {
+							attach(physics.NewRigidBody(0))
 						},
 					},
 				},
@@ -113,7 +150,7 @@ func makeMenu(editor *Editor) node.T {
 	})
 }
 
-func makeSidebar() node.T {
+func makeSidebar(editor *App) node.T {
 	return rect.New("sidebar", rect.Props{
 		OnMouseDown: gui.ConsumeMouse,
 		Style: rect.Style{
@@ -138,6 +175,12 @@ func makeSidebar() node.T {
 						},
 					}),
 				},
+			}),
+
+			ObjectList("scene-graph", ObjectListProps{
+				Scene:       editor.workspace,
+				EditorRoot:  editor,
+				ToolManager: editor.Tools,
 			}),
 
 			// content placeholder
