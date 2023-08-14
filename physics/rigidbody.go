@@ -9,6 +9,10 @@ import (
 	"github.com/johanhenriksson/goworld/core/transform"
 )
 
+func init() {
+	object.Register[*RigidBody](DeserializeRigidBody)
+}
+
 type RigidBody struct {
 	object.Component
 
@@ -18,6 +22,7 @@ type RigidBody struct {
 	tfparent transform.T
 	shape    Shape
 
+	Mass  object.Property[float32]
 	Layer object.Property[Mask]
 	Mask  object.Property[Mask]
 
@@ -28,6 +33,7 @@ func NewRigidBody(mass float32) *RigidBody {
 	body := object.NewComponent(&RigidBody{
 		mass: mass,
 
+		Mass:  object.NewProperty[float32](mass),
 		Layer: object.NewProperty(Mask(1)),
 		Mask:  object.NewProperty(All),
 	})
@@ -141,4 +147,27 @@ func (b *RigidBody) destroy() {
 
 func (b *RigidBody) Kinematic() bool {
 	return b.mass <= 0
+}
+
+type RigidbodyState struct {
+	Mass  float32
+	Layer Mask
+	Mask  Mask
+}
+
+func (b *RigidBody) Serialize(enc object.Encoder) error {
+	return enc.Encode(RigidbodyState{
+		Mass:  b.Mass.Get(),
+		Layer: b.Layer.Get(),
+		Mask:  b.Mask.Get(),
+	})
+}
+
+func DeserializeRigidBody(dec object.Decoder) (object.Component, error) {
+	var state RigidbodyState
+	if err := dec.Decode(&state); err != nil {
+		return nil, err
+	}
+	// todo: layer masks etc
+	return NewRigidBody(state.Mass), nil
 }

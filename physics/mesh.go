@@ -8,6 +8,10 @@ import (
 	"github.com/johanhenriksson/goworld/render/vertex"
 )
 
+func init() {
+	object.Register[*Mesh](DeserializeMesh)
+}
+
 type Mesh struct {
 	kind ShapeType
 	*Collider
@@ -87,4 +91,12 @@ func (m *Mesh) OnDisable() {
 		m.unsub = nil
 	}
 	m.Collider.OnDisable()
+}
+
+func (m *Mesh) Serialize(enc object.Encoder) error {
+	return nil
+}
+
+func DeserializeMesh(dec object.Decoder) (object.Component, error) {
+	return NewMesh(), nil
 }
