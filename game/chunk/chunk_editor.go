@@ -2,6 +2,7 @@ package chunk
 
 import (
 	"log"
+	"os"
 
 	"github.com/johanhenriksson/goworld/core/input/keys"
 	"github.com/johanhenriksson/goworld/core/input/mouse"
@@ -17,6 +18,7 @@ import (
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/physics"
 	"github.com/johanhenriksson/goworld/render/color"
+	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/texture"
 )
 
@@ -105,30 +107,39 @@ func NewEditor(ctx *editor.Context, mesh *Mesh) Editor {
 
 		// X Construction Plane
 		XPlane: object.Builder(plane.NewObject(plane.Args{
+			Mat:  material.TransparentForward(),
 			Size: float32(chk.Sx),
 		})).
 			Position(center.WithX(0)).
 			Rotation(quat.Euler(-90, 0, 90)).
-			Texture(texture.Diffuse, color.Red.WithAlpha(constructionPlaneAlpha)).
+			Texture(texture.Diffuse, color.White.WithAlpha(constructionPlaneAlpha)).
+			Attach(physics.NewMesh()).
+			Attach(physics.NewRigidBody(0)).
 			Active(false).
 			Create(),
 
 		// Y Construction Plane
 		YPlane: object.Builder(plane.NewObject(plane.Args{
+			Mat:  material.TransparentForward(),
 			Size: float32(chk.Sy),
 		})).
 			Position(center.WithY(0)).
-			Texture(texture.Diffuse, color.Green.WithAlpha(constructionPlaneAlpha)).
+			Texture(texture.Diffuse, color.White.WithAlpha(constructionPlaneAlpha)).
+			Attach(physics.NewMesh()).
+			Attach(physics.NewRigidBody(0)).
 			Active(false).
 			Create(),
 
 		// Z Construction Plane
 		ZPlane: object.Builder(plane.NewObject(plane.Args{
+			Mat:  material.TransparentForward(),
 			Size: float32(chk.Sz),
 		})).
 			Position(center.WithZ(0)).
 			Rotation(quat.Euler(-90, 0, 0)).
-			Texture(texture.Diffuse, color.Blue.WithAlpha(constructionPlaneAlpha)).
+			Texture(texture.Diffuse, color.White.WithAlpha(constructionPlaneAlpha)).
+			Attach(physics.NewMesh()).
+			Attach(physics.NewRigidBody(0)).
 			Active(false).
 			Create(),
 	})
@@ -269,12 +280,6 @@ func (e *edit) Actions() []editor.Action {
 			Modifier: keys.Ctrl,
 			Callback: func(mgr editor.ToolManager) { e.clearChunk() },
 		},
-		{
-			Name:     "Save",
-			Key:      keys.S,
-			Modifier: keys.Ctrl,
-			Callback: func(mgr editor.ToolManager) { e.saveChunkDialog() },
-		},
 	}
 }
 
@@ -284,14 +289,22 @@ func (e *edit) saveChunkDialog() {
 		Slot:     "gui",
 		Position: gui.FragmentFirst,
 		Render: func() node.T {
-			return modal.NewInput("modal test", modal.InputProps{
+			return modal.NewInput("save-chunk", modal.InputProps{
 				Title:   "Save as...",
 				Message: "Enter filename:",
 				OnClose: func() {
 					object.Detach(saveDialog)
 				},
 				OnAccept: func(input string) {
-					log.Println("input:", input)
+					log.Println("save:", input)
+					fp, err := os.OpenFile(input+".chk", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0755)
+					if err != nil {
+						panic(err)
+					}
+					defer fp.Close()
+					if err := object.Save(fp, e.mesh); err != nil {
+						panic(err)
+					}
 				},
 			})
 		},
