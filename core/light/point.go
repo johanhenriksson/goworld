@@ -24,6 +24,10 @@ type Point struct {
 
 var _ T = &Point{}
 
+func init() {
+	object.Register[*Point](DeserializePoint)
+}
+
 func NewPoint(args PointArgs) *Point {
 	return object.NewComponent(&Point{
 		Color:     object.NewProperty(args.Color),
@@ -54,4 +58,32 @@ func (lit *Point) Shadowmaps() int {
 
 func (lit *Point) ShadowProjection(mapIndex int) uniform.Camera {
 	panic("todo")
+}
+
+type PointState struct {
+	object.ComponentState
+	PointArgs
+}
+
+func (lit *Point) Serialize(enc object.Encoder) error {
+	return enc.Encode(PointState{
+		// send help
+		ComponentState: object.NewComponentState(lit.Component),
+		PointArgs: PointArgs{
+			Color:     lit.Color.Get(),
+			Intensity: lit.Intensity.Get(),
+			Range:     lit.Range.Get(),
+		},
+	})
+}
+
+func DeserializePoint(dec object.Decoder) (object.Component, error) {
+	var state PointState
+	if err := dec.Decode(&state); err != nil {
+		return nil, err
+	}
+
+	obj := NewPoint(state.PointArgs)
+	obj.Component = state.ComponentState.New()
+	return obj, nil
 }
