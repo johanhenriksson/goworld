@@ -45,7 +45,7 @@ func New(args Args) *Mesh {
 
 func (p *Mesh) generate() {
 	s := p.Size / 2
-	y := float32(0)
+	y := float32(0.001)
 
 	vertices := []vertex.T{
 		{P: vec3.New(-s, y, -s), N: vec3.UnitY, T: vec2.New(0, 1)}, // o1
