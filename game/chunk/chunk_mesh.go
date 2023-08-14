@@ -1,11 +1,20 @@
 package chunk
 
 import (
+	"encoding/gob"
+	"log"
+
 	"github.com/johanhenriksson/goworld/core/mesh"
+	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/game/voxel"
 	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/vertex"
 )
+
+func init() {
+	object.Register[*Mesh](Deserialize)
+	gob.Register(voxel.Vertex{})
+}
 
 type Mesh struct {
 	*mesh.Dynamic[voxel.Vertex, uint16]
@@ -25,6 +34,39 @@ func NewMesh(chunk *T) *Mesh {
 		Dynamic: msh,
 		Chunk:   chunk,
 	}
+}
+
+type ChunkState struct {
+	mesh.MeshState
+	Data       []voxel.T
+	Sx, Sy, Sz int
+}
+
+func (m *Mesh) Serialize(enc object.Encoder) error {
+	log.Println("serialize chunk mesh")
+	return enc.Encode(ChunkState{
+		MeshState: m.Dynamic.State(),
+		Data:      m.Chunk.Data,
+		Sx:        m.Chunk.Sx,
+		Sy:        m.Chunk.Sy,
+		Sz:        m.Chunk.Sz,
+	})
+}
+
+func Deserialize(dec object.Decoder) (object.Component, error) {
+	var state ChunkState
+	if err := dec.Decode(&state); err != nil {
+		return nil, err
+	}
+	chunk := &T{
+		Data:  state.Data,
+		Light: NewLightVolume(state.Sx, state.Sy+1, state.Sz),
+		Sx:    state.Sx,
+		Sy:    state.Sy,
+		Sz:    state.Sz,
+	}
+	chunk.Light.Calculate()
+	return NewMesh(chunk), nil
 }
 
 func ChunkVertexGenerator(cm *T) mesh.Generator[voxel.Vertex, uint16] {
