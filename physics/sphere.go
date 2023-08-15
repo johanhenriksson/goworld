@@ -6,6 +6,10 @@ import (
 	"github.com/johanhenriksson/goworld/core/object"
 )
 
+func init() {
+	object.Register[*Sphere](DeserializeSphere)
+}
+
 type Sphere struct {
 	kind ShapeType
 	*Collider
@@ -13,9 +17,7 @@ type Sphere struct {
 	Radius object.Property[float32]
 }
 
-func init() {
-	checkShape(NewSphere(1))
-}
+var _ = checkShape(NewSphere(1))
 
 func NewSphere(radius float32) *Sphere {
 	sphere := &Sphere{
@@ -38,3 +40,21 @@ func (s *Sphere) colliderCreate() shapeHandle {
 
 func (s *Sphere) colliderRefresh() {}
 func (s *Sphere) colliderDestroy() {}
+
+type sphereState struct {
+	Radius float32
+}
+
+func (s *Sphere) Serialize(enc object.Encoder) error {
+	return enc.Encode(sphereState{
+		Radius: s.Radius.Get(),
+	})
+}
+
+func DeserializeSphere(dec object.Decoder) (object.Component, error) {
+	var state sphereState
+	if err := dec.Decode(&state); err != nil {
+		return nil, err
+	}
+	return NewSphere(state.Radius), nil
+}
