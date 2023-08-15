@@ -8,6 +8,10 @@ import (
 	"github.com/johanhenriksson/goworld/math/vec3"
 )
 
+func init() {
+	object.Register[*Box](DeserializeBox)
+}
+
 type Box struct {
 	kind ShapeType
 	*Collider
@@ -46,3 +50,21 @@ func (b *Box) colliderCreate() shapeHandle {
 
 func (b *Box) colliderRefresh() {}
 func (b *Box) colliderDestroy() {}
+
+type boxState struct {
+	Extents vec3.T
+}
+
+func (s *Box) Serialize(enc object.Encoder) error {
+	return enc.Encode(boxState{
+		Extents: s.Extents.Get(),
+	})
+}
+
+func DeserializeBox(dec object.Decoder) (object.Component, error) {
+	var state boxState
+	if err := dec.Decode(&state); err != nil {
+		return nil, err
+	}
+	return NewBox(state.Extents), nil
+}
