@@ -7,6 +7,10 @@ import (
 	"github.com/johanhenriksson/goworld/core/object"
 )
 
+func init() {
+	object.Register[*Capsule](DeserializeCapsule)
+}
+
 type Capsule struct {
 	kind ShapeType
 	*Collider
@@ -49,3 +53,23 @@ func (c *Capsule) colliderCreate() shapeHandle {
 
 func (c *Capsule) colliderRefresh() {}
 func (c *Capsule) colliderDestroy() {}
+
+type capsuleState struct {
+	Radius float32
+	Height float32
+}
+
+func (s *Capsule) Serialize(enc object.Encoder) error {
+	return enc.Encode(capsuleState{
+		Height: s.Height.Get(),
+		Radius: s.Radius.Get(),
+	})
+}
+
+func DeserializeCapsule(dec object.Decoder) (object.Component, error) {
+	var state capsuleState
+	if err := dec.Decode(&state); err != nil {
+		return nil, err
+	}
+	return NewCapsule(state.Height, state.Radius), nil
+}
