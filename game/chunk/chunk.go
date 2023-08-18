@@ -1,11 +1,6 @@
 package chunk
 
 import (
-	"encoding/gob"
-	"fmt"
-	"log"
-	"os"
-
 	"github.com/johanhenriksson/goworld/game/voxel"
 )
 
@@ -75,40 +70,4 @@ func (c *T) Free(x, y, z int) bool {
 	}
 	c.Light.Block(x, y, z, false)
 	return c.Data[v] == voxel.Empty
-}
-
-// Write the chunk to disk
-func (c *T) Write(path string) error {
-	filepath := fmt.Sprintf("%s/chunk_%s.bin", path, c.Key)
-	file, err := os.Create(filepath)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-	encoder := gob.NewEncoder(file)
-	err = encoder.Encode(c)
-	if err == nil {
-		log.Println("Wrote chunk", c.Key, "to disk")
-	} else {
-		log.Println("Error writing chunk", c.Key, ":", err)
-	}
-	return err
-}
-
-func Load(path string, key string) (*T, error) {
-	filepath := fmt.Sprintf("%s/chunk_%s.bin", path, key)
-	file, err := os.Open(filepath)
-	if err != nil {
-		return nil, err
-	}
-	defer file.Close()
-
-	decoder := gob.NewDecoder(file)
-	chunk := &T{}
-	err = decoder.Decode(chunk)
-	if err != nil {
-		return nil, err
-	}
-	log.Printf("Read chunk", key, "from disk")
-	return chunk, nil
 }

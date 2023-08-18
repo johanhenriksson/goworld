@@ -25,6 +25,5 @@ func Generate(wg Generator, size, cx, cz int) *T {
 		}
 	}
 	chonk.Light.Calculate()
-	go chonk.Write("chunks")
 	return chonk
 }
