@@ -59,7 +59,7 @@ type edit struct {
 
 	xp, yp, zp int
 
-	BoundingBox object.Object
+	BoundingBox *lines.BoxObject
 }
 
 var _ editor.T = &edit{}
@@ -98,8 +98,8 @@ func NewEditor(ctx *editor.Context, mesh *Mesh) Editor {
 
 		color: color.Red,
 
-		BoundingBox: object.Builder(object.Empty("Bounds")).
-			Attach(lines.NewBox(lines.BoxArgs{
+		BoundingBox: object.Builder(
+			lines.NewBoxObject(lines.BoxArgs{
 				Extents: dimensions,
 				Color:   color.White,
 			})).
