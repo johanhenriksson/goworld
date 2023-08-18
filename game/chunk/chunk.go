@@ -13,13 +13,13 @@ type T struct {
 }
 
 // New creates a new voxel data chunk
-func New(key string, size int) *T {
+func New(key string, sx, sy, sz int) *T {
 	return &T{
-		Data:  make(voxel.Array, size*size*size),
-		Light: NewLightVolume(size, size+1, size),
-		Sx:    size,
-		Sy:    size,
-		Sz:    size,
+		Data:  make(voxel.Array, sx*sy*sz),
+		Light: NewLightVolume(sx, sy+1, sz),
+		Sx:    sx,
+		Sy:    sy,
+		Sz:    sz,
 	}
 }
 

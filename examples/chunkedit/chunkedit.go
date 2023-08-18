@@ -21,7 +21,7 @@ func main() {
 		Title:  "goworld: chunk edit",
 	},
 		editor.Scene(func(scene object.Object) {
-			chk := chunk.New("editable", 16)
+			chk := chunk.New("editable", 16, 16, 16)
 			chunk := chunk.NewMesh(chk)
 			object.Attach(scene, chunk)
 

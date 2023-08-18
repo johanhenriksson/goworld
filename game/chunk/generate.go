@@ -12,7 +12,7 @@ type Generator interface {
 
 func Generate(wg Generator, size, cx, cz int) *T {
 	offsetX, offsetZ := cx*size, cz*size
-	chonk := New(fmt.Sprintf("%d_%d", cx, cz), size)
+	chonk := New(fmt.Sprintf("%d_%d", cx, cz), size, size, size)
 	for z := 0; z < chonk.Sz; z++ {
 		for y := 0; y < chonk.Sy; y++ {
 			for x := 0; x < chonk.Sx; x++ {
