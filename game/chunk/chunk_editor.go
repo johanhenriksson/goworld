@@ -15,6 +15,7 @@ import (
 	"github.com/johanhenriksson/goworld/gui/node"
 	"github.com/johanhenriksson/goworld/gui/widget/window/modal"
 	"github.com/johanhenriksson/goworld/math/quat"
+	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/physics"
 	"github.com/johanhenriksson/goworld/render/color"
@@ -108,7 +109,7 @@ func NewEditor(ctx *editor.Context, mesh *Mesh) Editor {
 		// X Construction Plane
 		XPlane: object.Builder(plane.NewObject(plane.Args{
 			Mat:  material.TransparentForward(),
-			Size: float32(chk.Sx),
+			Size: vec2.NewI(chk.Sz, chk.Sy),
 		})).
 			Position(center.WithX(0)).
 			Rotation(quat.Euler(-90, 0, 90)).
@@ -121,7 +122,7 @@ func NewEditor(ctx *editor.Context, mesh *Mesh) Editor {
 		// Y Construction Plane
 		YPlane: object.Builder(plane.NewObject(plane.Args{
 			Mat:  material.TransparentForward(),
-			Size: float32(chk.Sy),
+			Size: vec2.NewI(chk.Sx, chk.Sz),
 		})).
 			Position(center.WithY(0)).
 			Texture(texture.Diffuse, color.White.WithAlpha(constructionPlaneAlpha)).
@@ -133,7 +134,7 @@ func NewEditor(ctx *editor.Context, mesh *Mesh) Editor {
 		// Z Construction Plane
 		ZPlane: object.Builder(plane.NewObject(plane.Args{
 			Mat:  material.TransparentForward(),
-			Size: float32(chk.Sz),
+			Size: vec2.NewI(chk.Sx, chk.Sy),
 		})).
 			Position(center.WithZ(0)).
 			Rotation(quat.Euler(-90, 0, 0)).

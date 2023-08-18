@@ -23,11 +23,13 @@ func NewObject(args Args) *Plane {
 // Plane is a single segment, two-sided 3D plane
 type Mesh struct {
 	*mesh.Static
-	Args
+	Size object.Property[vec2.T]
+
+	data vertex.MutableMesh[vertex.T, uint16]
 }
 
 type Args struct {
-	Size float32
+	Size vec2.T
 	Mat  *material.Def
 }
 
@@ -35,28 +37,30 @@ func New(args Args) *Mesh {
 	if args.Mat == nil {
 		args.Mat = material.StandardForward()
 	}
-	plane := object.NewComponent(&Mesh{
+	p := object.NewComponent(&Mesh{
 		Static: mesh.New(args.Mat),
-		Args:   args,
+		Size:   object.NewProperty[vec2.T](args.Size),
 	})
-	plane.generate()
-	return plane
+	p.data = vertex.NewTriangles[vertex.T, uint16](object.Key("plane", p), nil, nil)
+	p.Size.OnChange.Subscribe(func(f vec2.T) { p.refresh() })
+	p.refresh()
+	return p
 }
 
-func (p *Mesh) generate() {
-	s := p.Size / 2
+func (p *Mesh) refresh() {
+	s := p.Size.Get().Scaled(0.5)
 	y := float32(0.001)
 
 	vertices := []vertex.T{
-		{P: vec3.New(-s, y, -s), N: vec3.UnitY, T: vec2.New(0, 1)}, // o1
-		{P: vec3.New(s, y, -s), N: vec3.UnitY, T: vec2.New(1, 1)},  // x1
-		{P: vec3.New(-s, y, s), N: vec3.UnitY, T: vec2.New(0, 0)},  // z1
-		{P: vec3.New(s, y, s), N: vec3.UnitY, T: vec2.New(1, 0)},   // d1
+		{P: vec3.New(-s.X, y, -s.Y), N: vec3.UnitY, T: vec2.New(0, 1)}, // o1
+		{P: vec3.New(s.X, y, -s.Y), N: vec3.UnitY, T: vec2.New(1, 1)},  // x1
+		{P: vec3.New(-s.X, y, s.Y), N: vec3.UnitY, T: vec2.New(0, 0)},  // z1
+		{P: vec3.New(s.X, y, s.Y), N: vec3.UnitY, T: vec2.New(1, 0)},   // d1
 
-		{P: vec3.New(-s, -y, -s), N: vec3.UnitYN, T: vec2.New(0, 0)}, // o2
-		{P: vec3.New(s, -y, -s), N: vec3.UnitYN, T: vec2.New(0, 0)},  // x2
-		{P: vec3.New(-s, -y, s), N: vec3.UnitYN, T: vec2.New(0, 0)},  // z2
-		{P: vec3.New(s, -y, s), N: vec3.UnitYN, T: vec2.New(0, 0)},   // d2
+		{P: vec3.New(-s.X, -y, -s.Y), N: vec3.UnitYN, T: vec2.New(0, 0)}, // o2
+		{P: vec3.New(s.X, -y, -s.Y), N: vec3.UnitYN, T: vec2.New(0, 0)},  // x2
+		{P: vec3.New(-s.X, -y, s.Y), N: vec3.UnitYN, T: vec2.New(0, 0)},  // z2
+		{P: vec3.New(s.X, -y, s.Y), N: vec3.UnitYN, T: vec2.New(0, 0)},   // d2
 	}
 
 	indices := []uint16{
@@ -64,7 +68,6 @@ func (p *Mesh) generate() {
 		5, 6, 4, 7, 6, 5, // bottom
 	}
 
-	key := object.Key("plane", p)
-	mesh := vertex.NewTriangles(key, vertices, indices)
-	p.VertexData.Set(mesh)
+	p.data.Update(vertices, indices)
+	p.VertexData.Set(p.data)
 }
