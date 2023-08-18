@@ -250,6 +250,23 @@ func (e *edit) KeyEvent(ev keys.Event) {
 func (e *edit) Recalculate() {
 	e.Chunk.Light.Calculate()
 	e.mesh.Refresh()
+
+	bounds := vec3.NewI(e.Chunk.Sx, e.Chunk.Sy, e.Chunk.Sz)
+	center := bounds.Scaled(0.5)
+
+	e.BoundingBox.Extents.Set(bounds)
+	e.BoundingBox.Transform().SetPosition(center)
+
+	e.xp = (e.xp + e.Chunk.Sx + 1) % (e.Chunk.Sx + 1)
+	e.yp = (e.yp + e.Chunk.Sy + 1) % (e.Chunk.Sy + 1)
+	e.zp = (e.zp + e.Chunk.Sz + 1) % (e.Chunk.Sz + 1)
+
+	e.XPlane.Transform().SetPosition(center.WithX(float32(e.xp)))
+	e.YPlane.Transform().SetPosition(center.WithY(float32(e.yp)))
+	e.ZPlane.Transform().SetPosition(center.WithZ(float32(e.zp)))
+	e.XPlane.Size.Set(vec2.NewI(e.Chunk.Sz, e.Chunk.Sy))
+	e.YPlane.Size.Set(vec2.NewI(e.Chunk.Sx, e.Chunk.Sz))
+	e.ZPlane.Size.Set(vec2.NewI(e.Chunk.Sx, e.Chunk.Sy))
 }
 
 func (e *edit) Actions() []editor.Action {
@@ -283,6 +300,14 @@ func (e *edit) Actions() []editor.Action {
 			Key:      keys.N,
 			Modifier: keys.Ctrl,
 			Callback: func(mgr editor.ToolManager) { e.clearChunk() },
+		},
+		{
+			Name: "Crop",
+			Key:  keys.U,
+			Callback: func(mgr editor.ToolManager) {
+				Crop(e.Chunk)
+				e.Recalculate()
+			},
 		},
 	}
 }
