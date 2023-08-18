@@ -212,12 +212,15 @@ func (e *edit) KeyEvent(ev keys.Event) {
 	// toggle construction planes
 	if keys.PressedMods(ev, keys.X, keys.Ctrl) {
 		object.Toggle(e.XPlane, !e.XPlane.Enabled())
+		return
 	}
 	if keys.PressedMods(ev, keys.Y, keys.Ctrl) {
 		object.Toggle(e.YPlane, !e.YPlane.Enabled())
+		return
 	}
 	if keys.PressedMods(ev, keys.Z, keys.Ctrl) {
 		object.Toggle(e.ZPlane, !e.ZPlane.Enabled())
+		return
 	}
 
 	m := 1
