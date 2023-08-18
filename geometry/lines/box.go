@@ -8,6 +8,17 @@ import (
 	"github.com/johanhenriksson/goworld/render/vertex"
 )
 
+type BoxObject struct {
+	object.Object
+	*Box
+}
+
+func NewBoxObject(args BoxArgs) *BoxObject {
+	return object.New("Box", &BoxObject{
+		Box: NewBox(args),
+	})
+}
+
 type Box struct {
 	*mesh.Static
 	Extents object.Property[vec3.T]
