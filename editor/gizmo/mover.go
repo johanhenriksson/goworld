@@ -51,7 +51,7 @@ var _ Gizmo = &Mover{}
 
 // NewMover creates a new mover gizmo
 func NewMover() *Mover {
-	side := float32(0.33)
+	side := float32(0.4)
 	planeAlpha := float32(0.33)
 
 	s := side * 0.5
@@ -73,7 +73,7 @@ func NewMover() *Mover {
 
 		// XY Plane
 		XY: object.Builder(plane.NewObject(plane.Args{
-			Size: side,
+			Size: vec2.New(side, side),
 			Mat:  material.TransparentForward(),
 		})).
 			Position(vec3.New(s, s, 0)).
@@ -83,7 +83,7 @@ func NewMover() *Mover {
 
 		// XZ Plane
 		XZ: object.Builder(plane.NewObject(plane.Args{
-			Size: side,
+			Size: vec2.New(side, side),
 			Mat:  material.TransparentForward(),
 		})).
 			Rotation(quat.Euler(0, 90, 0)).
@@ -93,7 +93,7 @@ func NewMover() *Mover {
 
 		// YZ Plane
 		YZ: object.Builder(plane.NewObject(plane.Args{
-			Size: side,
+			Size: vec2.New(side, side),
 			Mat:  material.TransparentForward(),
 		})).
 			Position(vec3.New(0, s, s)).

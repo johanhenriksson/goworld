@@ -13,6 +13,7 @@ import (
 	"github.com/johanhenriksson/goworld/geometry/cube"
 	"github.com/johanhenriksson/goworld/geometry/plane"
 	"github.com/johanhenriksson/goworld/math/quat"
+	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/image"
@@ -92,7 +93,7 @@ var _ = Describe("deferred renderer", Label("e2e"), func() {
 					Create()
 
 				object.Builder(plane.NewObject(plane.Args{
-					Size: 5,
+					Size: vec2.New(5, 5),
 					Mat:  material.StandardDeferred(),
 				})).
 					Texture(texture.Diffuse, color.White).
