@@ -23,20 +23,8 @@ import (
 	"github.com/johanhenriksson/goworld/render/texture"
 )
 
-type Editor interface {
-	object.Component
-	editor.T
-
-	SelectedColor() color.T
-	GetVoxel(x, y, z int) voxel.T
-	SetVoxel(x, y, z int, v voxel.T)
-	SelectColor(color.T)
-	Recalculate()
-	InBounds(p vec3.T) bool
-}
-
 // Editor base struct
-type edit struct {
+type Editor struct {
 	object.Object
 	*editor.Context
 
@@ -62,20 +50,20 @@ type edit struct {
 	BoundingBox *lines.BoxObject
 }
 
-var _ editor.T = &edit{}
+var _ editor.T = &Editor{}
 
 func init() {
 	editor.Register(&Mesh{}, NewEditor)
 }
 
 // NewEditor creates a new chunk editor
-func NewEditor(ctx *editor.Context, mesh *Mesh) Editor {
+func NewEditor(ctx *editor.Context, mesh *Mesh) *Editor {
 	chk := mesh.Chunk
 	dimensions := vec3.NewI(chk.Sx, chk.Sy, chk.Sz)
 	center := dimensions.Scaled(0.5)
 	constructionPlaneAlpha := float32(0.33)
 
-	e := object.New("ChunkEditor", &edit{
+	e := object.New("ChunkEditor", &Editor{
 		Context: ctx,
 		mesh:    mesh,
 		Chunk:   chk,
@@ -154,61 +142,61 @@ func NewEditor(ctx *editor.Context, mesh *Mesh) Editor {
 	return e
 }
 
-func (e *edit) Name() string {
+func (e *Editor) Name() string {
 	return "Chunk"
 }
 
-func (e *edit) Target() object.Component { return e.mesh }
+func (e *Editor) Target() object.Component { return e.mesh }
 
-func (e *edit) Select(ev mouse.Event) {
+func (e *Editor) Select(ev mouse.Event) {
 	object.Enable(e.GUI)
 	object.Enable(e.Menu)
 }
 
-func (e *edit) Deselect(ev mouse.Event) bool {
+func (e *Editor) Deselect(ev mouse.Event) bool {
 	// todo: check with editor if we can deselect?
 	object.Disable(e.GUI)
 	object.Disable(e.Menu)
 	return true
 }
 
-func (e *edit) Bounds() physics.Shape {
+func (e *Editor) Bounds() physics.Shape {
 	return nil
 }
 
-func (e *edit) Update(scene object.Component, dt float32) {
+func (e *Editor) Update(scene object.Component, dt float32) {
 	e.Object.Update(scene, dt)
 	e.mesh.Update(scene, dt)
 }
 
-func (e *edit) GetVoxel(x, y, z int) voxel.T {
+func (e *Editor) GetVoxel(x, y, z int) voxel.T {
 	return e.Chunk.At(x, y, z)
 }
 
-func (e *edit) SetVoxel(x, y, z int, v voxel.T) {
+func (e *Editor) SetVoxel(x, y, z int, v voxel.T) {
 	e.Chunk.Set(x, y, z, v)
 }
 
-func (e *edit) SelectColor(c color.T) {
+func (e *Editor) SelectColor(c color.T) {
 	e.color = c
 }
 
-func (e *edit) SelectedColor() color.T {
+func (e *Editor) SelectedColor() color.T {
 	return e.color
 }
 
-func (e *edit) InBounds(p vec3.T) bool {
+func (e *Editor) InBounds(p vec3.T) bool {
 	p = p.Floor()
 	outside := p.X < 0 || p.Y < 0 || p.Z < 0 || int(p.X) >= e.Chunk.Sx || int(p.Y) >= e.Chunk.Sy || int(p.Z) >= e.Chunk.Sz
 	return !outside
 }
 
-func (e *edit) clearChunk() {
+func (e *Editor) clearChunk() {
 	e.Chunk.Clear()
 	e.Recalculate()
 }
 
-func (e *edit) KeyEvent(ev keys.Event) {
+func (e *Editor) KeyEvent(ev keys.Event) {
 	// toggle construction planes
 	if keys.PressedMods(ev, keys.X, keys.Ctrl) {
 		object.Toggle(e.XPlane, !e.XPlane.Enabled())
@@ -247,20 +235,23 @@ func (e *edit) KeyEvent(ev keys.Event) {
 	}
 }
 
-func (e *edit) Recalculate() {
+func (e *Editor) Recalculate() {
 	e.Chunk.Light.Calculate()
 	e.mesh.Refresh()
 
 	bounds := vec3.NewI(e.Chunk.Sx, e.Chunk.Sy, e.Chunk.Sz)
 	center := bounds.Scaled(0.5)
 
+	// update bounding box
 	e.BoundingBox.Extents.Set(bounds)
 	e.BoundingBox.Transform().SetPosition(center)
 
+	// clamp construction planes
 	e.xp = (e.xp + e.Chunk.Sx + 1) % (e.Chunk.Sx + 1)
 	e.yp = (e.yp + e.Chunk.Sy + 1) % (e.Chunk.Sy + 1)
 	e.zp = (e.zp + e.Chunk.Sz + 1) % (e.Chunk.Sz + 1)
 
+	// resize construction planes
 	e.XPlane.Transform().SetPosition(center.WithX(float32(e.xp)))
 	e.YPlane.Transform().SetPosition(center.WithY(float32(e.yp)))
 	e.ZPlane.Transform().SetPosition(center.WithZ(float32(e.zp)))
@@ -269,7 +260,7 @@ func (e *edit) Recalculate() {
 	e.ZPlane.Size.Set(vec2.NewI(e.Chunk.Sx, e.Chunk.Sy))
 }
 
-func (e *edit) Actions() []editor.Action {
+func (e *Editor) Actions() []editor.Action {
 	return []editor.Action{
 		{
 			Name:     "Place",
@@ -312,7 +303,7 @@ func (e *edit) Actions() []editor.Action {
 	}
 }
 
-func (e *edit) saveChunkDialog() {
+func (e *Editor) saveChunkDialog() {
 	var saveDialog gui.Fragment
 	saveDialog = gui.NewFragment(gui.FragmentArgs{
 		Slot:     "gui",
