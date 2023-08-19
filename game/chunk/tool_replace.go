@@ -31,7 +31,7 @@ func NewReplaceTool() *ReplaceTool {
 	})
 }
 
-func (pt *ReplaceTool) Use(editor Editor, position, normal vec3.T) {
+func (pt *ReplaceTool) Use(editor *Editor, position, normal vec3.T) {
 	target := position.Sub(normal.Scaled(0.5))
 	editor.SetVoxel(int(target.X), int(target.Y), int(target.Z), voxel.New(editor.SelectedColor()))
 
@@ -39,7 +39,7 @@ func (pt *ReplaceTool) Use(editor Editor, position, normal vec3.T) {
 	editor.Recalculate()
 }
 
-func (pt *ReplaceTool) Hover(editor Editor, position, normal vec3.T) {
+func (pt *ReplaceTool) Hover(editor *Editor, position, normal vec3.T) {
 	p := position.Sub(normal.Scaled(0.5))
 	if editor.InBounds(p) {
 		pt.Transform().SetPosition(p.Floor())
@@ -55,7 +55,7 @@ func (pt *ReplaceTool) ToolMouseEvent(ev mouse.Event, hover physics.RaycastHit) 
 		return
 	}
 
-	editor := object.GetInParents[Editor](pt)
+	editor := object.GetInParents[*Editor](pt)
 	if editor == nil {
 		// hm?
 		return

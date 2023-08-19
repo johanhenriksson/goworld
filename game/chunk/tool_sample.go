@@ -32,7 +32,7 @@ func NewSampleTool() *SampleTool {
 	})
 }
 
-func (pt *SampleTool) Use(editor Editor, position, normal vec3.T) {
+func (pt *SampleTool) Use(editor *Editor, position, normal vec3.T) {
 	target := position.Sub(normal.Scaled(0.5))
 	voxel := editor.GetVoxel(int(target.X), int(target.Y), int(target.Z))
 	editor.SelectColor(color.RGB8(voxel.R, voxel.G, voxel.B))
@@ -43,7 +43,7 @@ func (pt *SampleTool) Use(editor Editor, position, normal vec3.T) {
 	}
 }
 
-func (pt *SampleTool) Hover(editor Editor, position, normal vec3.T) {
+func (pt *SampleTool) Hover(editor *Editor, position, normal vec3.T) {
 	p := position.Sub(normal.Scaled(0.5))
 	if editor.InBounds(p) {
 		object.Enable(pt.Box)
@@ -62,7 +62,7 @@ func (pt *SampleTool) ToolMouseEvent(ev mouse.Event, hover physics.RaycastHit) {
 		return
 	}
 
-	editor := object.GetInParents[Editor](pt)
+	editor := object.GetInParents[*Editor](pt)
 	if editor == nil {
 		// hm?
 		return

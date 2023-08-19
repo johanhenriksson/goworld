@@ -13,7 +13,7 @@ import (
 	"github.com/johanhenriksson/goworld/render/color"
 )
 
-func NewGUI(e *edit, target *Mesh) gui.Fragment {
+func NewGUI(e *Editor, target *Mesh) gui.Fragment {
 	return gui.NewFragment(gui.FragmentArgs{
 		Slot:     "sidebar:content",
 		Position: gui.FragmentLast,
@@ -31,7 +31,7 @@ func NewGUI(e *edit, target *Mesh) gui.Fragment {
 	})
 }
 
-func NewMenu(editor *edit) gui.Fragment {
+func NewMenu(editor *Editor) gui.Fragment {
 	return gui.NewFragment(gui.FragmentArgs{
 		Slot:     "main-menu",
 		Position: gui.FragmentLast,
