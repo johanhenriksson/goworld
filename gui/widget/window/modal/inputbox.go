@@ -7,7 +7,6 @@ import (
 	"github.com/johanhenriksson/goworld/gui/style"
 	"github.com/johanhenriksson/goworld/gui/widget/button"
 	"github.com/johanhenriksson/goworld/gui/widget/label"
-	"github.com/johanhenriksson/goworld/gui/widget/rect"
 	"github.com/johanhenriksson/goworld/gui/widget/textbox"
 	"github.com/johanhenriksson/goworld/render/color"
 )
@@ -44,14 +43,9 @@ func renderInput(props InputProps) node.T {
 					props.OnClose()
 				},
 				Style: button.Style{
-					Text: label.Style{
-						Color: color.Black,
-					},
-					Bg: rect.Style{
-						Color:      style.RGBA(0.5, 0.5, 0.5, 1),
-						Padding:    style.RectXY(20, 4),
-						AlignItems: style.AlignCenter,
-					},
+					TextColor: color.Black,
+					BgColor:   style.RGBA(0.5, 0.5, 0.5, 1),
+					Padding:   style.RectXY(20, 4),
 				},
 			}),
 		},

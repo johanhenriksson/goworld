@@ -42,20 +42,16 @@ var FrameStyle = rect.Style{
 }
 
 var CloseButtonStyle = button.Style{
-	Text: label.Style{
-		Color: color.White,
+	TextColor: color.White,
+	BgColor:   RGB(0.597, 0.098, 0.117),
+	Padding: Rect{
+		Left:   5,
+		Right:  5,
+		Top:    2,
+		Bottom: 2,
 	},
-	Bg: rect.Style{
-		Color: RGB(0.597, 0.098, 0.117),
-		Padding: Rect{
-			Left:   5,
-			Right:  5,
-			Top:    2,
-			Bottom: 2,
-		},
 
-		Hover: rect.Hover{
-			Color: RGB(0.3, 0.3, 0.3),
-		},
+	Hover: button.Hover{
+		BgColor: RGB(0.3, 0.3, 0.3),
 	},
 }

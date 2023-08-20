@@ -27,12 +27,10 @@ var itemLabelStyle = label.Style{
 }
 
 var removeButtonStyle = button.Style{
-	Bg: rect.Style{
-		Padding: style.Px(4),
-		Margin: style.Rect{
-			Left: 40,
-		},
-		Color: color.Red,
+	BgColor: color.Red,
+	Padding: style.Px(4),
+	Margin: style.Rect{
+		Left: 40,
 	},
 }
 
@@ -48,12 +46,10 @@ var itemInputStyle = textbox.Style{
 }
 
 var addButtonStyle = button.Style{
-	Bg: rect.Style{
-		Padding: style.Px(4),
-		Color:   color.Green,
-		Margin: style.Rect{
-			Left: 40,
-		},
+	Padding: style.Px(4),
+	BgColor: color.Green,
+	Margin: style.Rect{
+		Left: 40,
 	},
 }
 
@@ -109,10 +105,8 @@ func New(key string, props Props) node.T {
 						button.New("add", button.Props{
 							Text: "+",
 							Style: button.Style{
-								Bg: rect.Style{
-									Padding: style.Px(4),
-									Color:   addColor,
-								},
+								Padding: style.Px(4),
+								BgColor: addColor,
 							},
 							OnClick: func(e mouse.Event) {
 								if len(itemTitle) == 0 {
