@@ -22,6 +22,7 @@ import (
 	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/texture"
+	"github.com/johanhenriksson/goworld/render/vertex"
 )
 
 // Editor base struct
@@ -49,6 +50,9 @@ type Editor struct {
 	xp, yp, zp int
 
 	BoundingBox *lines.BoxObject
+
+	Rigidbody     *physics.RigidBody
+	CollisionMesh *physics.Mesh
 }
 
 var _ editor.T = &Editor{}
@@ -132,6 +136,9 @@ func NewEditor(ctx *editor.Context, mesh *Mesh) *Editor {
 			Attach(physics.NewRigidBody(0)).
 			Active(false).
 			Create(),
+
+		Rigidbody:     physics.NewRigidBody(0),
+		CollisionMesh: physics.NewMesh(),
 	})
 
 	e.GUI = NewGUI(e, mesh)
@@ -139,6 +146,12 @@ func NewEditor(ctx *editor.Context, mesh *Mesh) *Editor {
 
 	e.Menu = NewMenu(e)
 	object.Attach(e, e.Menu)
+
+	// update collision mesh accordingly
+	e.CollisionMesh.Mesh.Set(mesh.Mesh().Get())
+	mesh.Mesh().OnChange.Subscribe(func(m vertex.Mesh) {
+		e.CollisionMesh.Mesh.Set(mesh.Mesh().Get())
+	})
 
 	return e
 }
