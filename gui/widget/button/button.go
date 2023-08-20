@@ -4,12 +4,14 @@ import (
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/gui/node"
 	"github.com/johanhenriksson/goworld/gui/style"
+	"github.com/johanhenriksson/goworld/gui/widget/icon"
 	"github.com/johanhenriksson/goworld/gui/widget/label"
 	"github.com/johanhenriksson/goworld/gui/widget/rect"
 )
 
 type Props struct {
 	Text    string
+	Icon    icon.Icon
 	Style   Style
 	OnClick mouse.Callback
 }
@@ -19,6 +21,13 @@ func New(key string, props Props) node.T {
 }
 
 func render(props Props) node.T {
+	hasLabel := props.Text != ""
+	hasIcon := props.Icon != icon.IconNone
+	iconPadding := float32(0)
+	if hasLabel && hasIcon {
+		iconPadding = 4
+	}
+
 	return rect.New("background", rect.Props{
 		Style: rect.Style{
 			Layout:     style.Row{},
@@ -44,7 +53,24 @@ func render(props Props) node.T {
 			e.Consume()
 		},
 		Children: []node.T{
-			label.New("label", label.Props{
+			node.If(hasIcon, rect.New("icon-wrap", rect.Props{
+				Style: rect.Style{
+					Padding: style.Rect{Top: 6, Right: iconPadding},
+				},
+				Children: []node.T{
+					icon.New("icon", icon.Props{
+						Icon: props.Icon,
+						Style: icon.Style{
+							Color: props.Style.TextColor,
+							Size:  20,
+							Hover: icon.Hover{
+								Color: props.Style.Hover.TextColor,
+							},
+						},
+					}),
+				},
+			})),
+			node.If(hasLabel, label.New("label", label.Props{
 				Text: props.Text,
 				Style: label.Style{
 					Color: props.Style.TextColor,
@@ -52,7 +78,7 @@ func render(props Props) node.T {
 						Color: props.Style.Hover.TextColor,
 					},
 				},
-			}),
+			})),
 		},
 	})
 }
