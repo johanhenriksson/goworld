@@ -23,9 +23,9 @@ func New(key string, props Props) node.T {
 }
 
 func render(props Props) node.T {
-	checker := icon.IconCheckboxBlank
+	checker := icon.IconCheckBoxOutlineBlank
 	if props.Checked {
-		checker = icon.IconCheckboxChecked
+		checker = icon.IconCheckBox
 	}
 
 	click := func(e mouse.Event) {

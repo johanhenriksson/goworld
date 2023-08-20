@@ -8,14 +8,7 @@ import (
 	"github.com/johanhenriksson/goworld/render/color"
 )
 
-type Icon string
-
-const (
-	IconExpandMore      = Icon(rune(0xe5cf))
-	IconChevronRight    = Icon(rune(0xe5cc))
-	IconCheckboxBlank   = Icon(rune(0xe835))
-	IconCheckboxChecked = Icon(rune(0xe834))
-)
+type Icon rune
 
 type IconProps struct {
 	Icon        Icon
@@ -32,6 +25,7 @@ func New(key string, props IconProps) node.T {
 		OnMouseDown: props.OnMouseDown,
 		Style: label.Style{
 			Color: props.Color,
+			Hidden: props.Icon == IconNone,
 			Font: style.Font{
 				Name: "fonts/MaterialIcons-Regular.ttf",
 				Size: props.Size,
