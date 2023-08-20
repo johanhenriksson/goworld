@@ -25,23 +25,10 @@ type Action struct {
 	Name     string
 	Key      keys.Code
 	Modifier keys.Modifier
-	Callback func(ToolManager)
+	Callback func(*ToolManager)
 }
 
-type ToolManager interface {
-	object.Component
-
-	Select(T)
-	Selected() []T
-
-	Tool() Tool
-	UseTool(Tool)
-
-	MoveTool(object.Component)
-	RotateTool(object.Component)
-}
-
-type toolmgr struct {
+type ToolManager struct {
 	object.Object
 	scene    object.Object
 	selected []T
@@ -56,8 +43,8 @@ type toolmgr struct {
 	Physics *physics.World
 }
 
-func NewToolManager() ToolManager {
-	return object.New("Tool Manager", &toolmgr{
+func NewToolManager() *ToolManager {
+	return object.New("Tool Manager", &ToolManager{
 		Mover: object.Builder(gizmo.NewMover()).
 			Active(false).
 			Create(),
@@ -70,7 +57,7 @@ func NewToolManager() ToolManager {
 	})
 }
 
-func (m *toolmgr) MouseEvent(e mouse.Event) {
+func (m *ToolManager) MouseEvent(e mouse.Event) {
 	if m.scene == nil {
 		return
 	}
@@ -120,7 +107,7 @@ func (m *toolmgr) MouseEvent(e mouse.Event) {
 	}
 }
 
-func (m *toolmgr) KeyEvent(e keys.Event) {
+func (m *ToolManager) KeyEvent(e keys.Event) {
 	if e.Action() != keys.Release {
 		return
 	}
@@ -131,7 +118,6 @@ func (m *toolmgr) KeyEvent(e keys.Event) {
 			return
 		}
 
-		// todo: consider all editors
 		for _, editor := range m.selected {
 			for _, action := range editor.Actions() {
 				if action.Key == e.Code() && e.Modifier(action.Modifier) {
@@ -143,11 +129,11 @@ func (m *toolmgr) KeyEvent(e keys.Event) {
 	}
 }
 
-func (m *toolmgr) Tool() Tool {
+func (m *ToolManager) Tool() Tool {
 	return m.tool
 }
 
-func (m *toolmgr) UseTool(tool Tool) {
+func (m *ToolManager) UseTool(tool Tool) {
 	// if we select the same tool twice, deselect it instead
 	sameTool := m.tool == tool
 
@@ -164,15 +150,15 @@ func (m *toolmgr) UseTool(tool Tool) {
 	}
 }
 
-func (m *toolmgr) Select(obj T) {
+func (m *ToolManager) Select(obj T) {
 	m.setSelect(mouse.NopEvent(), obj)
 }
 
-func (m *toolmgr) Selected() []T {
+func (m *ToolManager) Selected() []T {
 	return m.selected
 }
 
-func (m *toolmgr) setSelect(e mouse.Event, component T) bool {
+func (m *ToolManager) setSelect(e mouse.Event, component T) bool {
 	// todo: detect if the object has been deleted
 	// otherwise CanDeselect() will make it impossible to select another object
 
@@ -225,19 +211,19 @@ func (m *toolmgr) setSelect(e mouse.Event, component T) bool {
 	return true
 }
 
-func (m *toolmgr) PreDraw(args render.Args, scene object.Object) error {
+func (m *ToolManager) PreDraw(args render.Args, scene object.Object) error {
 	m.scene = scene
 	m.camera = args.VP
 	m.viewport = args.Viewport
 	return nil
 }
 
-func (m *toolmgr) MoveTool(obj object.Component) {
+func (m *ToolManager) MoveTool(obj object.Component) {
 	m.UseTool(m.Mover)
 	m.Mover.SetTarget(obj.Transform())
 }
 
-func (m *toolmgr) RotateTool(obj object.Component) {
+func (m *ToolManager) RotateTool(obj object.Component) {
 	m.UseTool(m.Rotater)
 	m.Rotater.SetTarget(obj.Transform())
 }

@@ -265,22 +265,22 @@ func (e *Editor) Actions() []editor.Action {
 		{
 			Name:     "Place",
 			Key:      keys.F,
-			Callback: func(mgr editor.ToolManager) { mgr.UseTool(e.PlaceTool) },
+			Callback: func(mgr *editor.ToolManager) { mgr.UseTool(e.PlaceTool) },
 		},
 		{
 			Name:     "Erase",
 			Key:      keys.C,
-			Callback: func(mgr editor.ToolManager) { mgr.UseTool(e.EraseTool) },
+			Callback: func(mgr *editor.ToolManager) { mgr.UseTool(e.EraseTool) },
 		},
 		{
 			Name:     "Replace",
 			Key:      keys.R,
-			Callback: func(mgr editor.ToolManager) { mgr.UseTool(e.ReplaceTool) },
+			Callback: func(mgr *editor.ToolManager) { mgr.UseTool(e.ReplaceTool) },
 		},
 		{
 			Name: "Sample",
 			Key:  keys.T,
-			Callback: func(mgr editor.ToolManager) {
+			Callback: func(mgr *editor.ToolManager) {
 				previousTool := mgr.Tool()
 				e.SampleTool.Reselect = func() { mgr.UseTool(previousTool) }
 				mgr.UseTool(e.SampleTool)
@@ -290,12 +290,12 @@ func (e *Editor) Actions() []editor.Action {
 			Name:     "Clear",
 			Key:      keys.N,
 			Modifier: keys.Ctrl,
-			Callback: func(mgr editor.ToolManager) { e.clearChunk() },
+			Callback: func(mgr *editor.ToolManager) { e.clearChunk() },
 		},
 		{
 			Name: "Crop",
 			Key:  keys.U,
-			Callback: func(mgr editor.ToolManager) {
+			Callback: func(mgr *editor.ToolManager) {
 				Crop(e.Chunk)
 				e.Recalculate()
 			},

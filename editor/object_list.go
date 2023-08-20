@@ -17,7 +17,7 @@ type SelectObjectHandler func(object.Component)
 type ObjectListProps struct {
 	Scene       object.Component
 	EditorRoot  object.Component
-	ToolManager ToolManager
+	ToolManager *ToolManager
 }
 
 func ObjectList(key string, props ObjectListProps) node.T {

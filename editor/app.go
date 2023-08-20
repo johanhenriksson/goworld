@@ -11,7 +11,7 @@ import (
 type App struct {
 	object.Object
 	GUI    gui.Manager
-	Tools  ToolManager
+	Tools  *ToolManager
 	World  *physics.World
 	Player *Player
 
