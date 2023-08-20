@@ -14,20 +14,16 @@ import (
 )
 
 func NewGUI(e *Editor, target *Mesh) gui.Fragment {
-	return gui.NewFragment(gui.FragmentArgs{
-		Slot:     "sidebar:content",
-		Position: gui.FragmentLast,
-		Render: func() node.T {
-			return editor.Inspector(target,
-				// extend the default inspector with a color picker palette
-				palette.New("palette", palette.Props{
-					Palette: color.DefaultPalette,
-					OnPick: func(clr color.T) {
-						e.SelectColor(clr)
-					},
-				}),
-			)
-		},
+	return editor.PropertyEditorFragment(gui.FragmentLast, func() node.T {
+		return editor.Inspector(target,
+			// extend the default inspector with a color picker palette
+			palette.New("palette", palette.Props{
+				Palette: color.DefaultPalette,
+				OnPick: func(clr color.T) {
+					e.SelectColor(clr)
+				},
+			}),
+		)
 	})
 }
 

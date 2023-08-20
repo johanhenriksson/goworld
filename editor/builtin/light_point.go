@@ -50,7 +50,7 @@ func NewPointLightEditor(ctx *editor.Context, lit *light.Point) *PointLightEdito
 			}),
 		}),
 
-		GUI: editor.SidebarFragment(gui.FragmentLast, func() node.T {
+		GUI: editor.PropertyEditorFragment(gui.FragmentLast, func() node.T {
 			return editor.Inspector(
 				lit,
 				propedit.ColorField("color", "Color", propedit.ColorProps{

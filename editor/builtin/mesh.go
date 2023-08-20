@@ -37,7 +37,7 @@ func NewMeshEditor(ctx *editor.Context, mesh *mesh.Static) *MeshEditor {
 		Body:  physics.NewRigidBody(0),
 		Wire:  lines.NewWireframe(mesh.VertexData.Get(), color.White),
 
-		GUI: editor.SidebarFragment(gui.FragmentLast, func() node.T {
+		GUI: editor.PropertyEditorFragment(gui.FragmentLast, func() node.T {
 			return editor.Inspector(
 				mesh,
 			)

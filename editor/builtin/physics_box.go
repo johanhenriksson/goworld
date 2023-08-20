@@ -40,7 +40,7 @@ func NewBoxEditor(ctx *editor.Context, box *physics.Box) *BoxEditor {
 			Color:   color.Green,
 		}),
 
-		GUI: editor.SidebarFragment(gui.FragmentLast, func() node.T {
+		GUI: editor.PropertyEditorFragment(gui.FragmentLast, func() node.T {
 			return editor.Inspector(
 				box,
 				propedit.Vec3Field("extents", "Extents", propedit.Vec3Props{

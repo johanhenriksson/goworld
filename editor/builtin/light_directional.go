@@ -51,7 +51,7 @@ func NewDirectionalLightEditor(ctx *editor.Context, lit *light.Directional) *Dir
 			}),
 		}),
 
-		GUI: editor.SidebarFragment(gui.FragmentLast, func() node.T {
+		GUI: editor.PropertyEditorFragment(gui.FragmentLast, func() node.T {
 			return editor.Inspector(
 				lit,
 				propedit.ColorField("color", "Color", propedit.ColorProps{

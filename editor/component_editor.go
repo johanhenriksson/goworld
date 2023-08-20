@@ -23,7 +23,7 @@ func NewComponentEditor(target object.Component) *ComponentEditor {
 		Object: object.Ghost(target.Name(), target.Transform()),
 		target: target,
 
-		GUI: SidebarFragment(gui.FragmentLast, func() node.T {
+		GUI: PropertyEditorFragment(gui.FragmentLast, func() node.T {
 			editors = editors[:0]
 			for _, prop := range props {
 				if editor := propedit.ForType(prop.Type()); editor != nil {

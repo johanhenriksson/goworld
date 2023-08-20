@@ -189,7 +189,7 @@ func makeSidebar(editor *App) node.T {
 	})
 }
 
-func SidebarFragment(position gui.FragmentPosition, render node.RenderFunc) gui.Fragment {
+func PropertyEditorFragment(position gui.FragmentPosition, render node.RenderFunc) gui.Fragment {
 	return gui.NewFragment(gui.FragmentArgs{
 		Slot:     "sidebar:content",
 		Position: position,

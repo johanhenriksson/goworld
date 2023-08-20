@@ -36,7 +36,7 @@ func NewPhysicsMeshEditor(ctx *editor.Context, mesh *physics.Mesh) *PhysicsMeshE
 		Body:  physics.NewRigidBody(0),
 		Wire:  lines.NewWireframe(mesh.Mesh.Get(), color.Green),
 
-		GUI: editor.SidebarFragment(gui.FragmentLast, func() node.T {
+		GUI: editor.PropertyEditorFragment(gui.FragmentLast, func() node.T {
 			return editor.Inspector(
 				mesh,
 			)

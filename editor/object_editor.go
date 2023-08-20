@@ -22,7 +22,7 @@ func NewObjectEditor(target object.Object) *ObjectEditor {
 		Object: object.Ghost(target.Name(), target.Transform()),
 		target: target,
 
-		GUI: SidebarFragment(gui.FragmentLast, func() node.T {
+		GUI: PropertyEditorFragment(gui.FragmentLast, func() node.T {
 			return Inspector(
 				target,
 				propedit.BoolField("enabled", "Enabled", propedit.BoolProps{

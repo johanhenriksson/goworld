@@ -39,7 +39,7 @@ func NewSphereEditor(ctx *editor.Context, sphere *physics.Sphere) *SphereEditor 
 			Color:  color.Green,
 		}),
 
-		GUI: editor.SidebarFragment(gui.FragmentLast, func() node.T {
+		GUI: editor.PropertyEditorFragment(gui.FragmentLast, func() node.T {
 			return editor.Inspector(
 				sphere,
 				propedit.FloatField("radius", "Radius", propedit.FloatProps{
