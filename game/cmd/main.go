@@ -1,8 +1,6 @@
 package main
 
 import (
-	"log"
-
 	"github.com/johanhenriksson/goworld/core/light"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/core/script"
@@ -24,10 +22,6 @@ import (
 )
 
 func main() {
-	defer func() {
-		log.Println("exited main defer")
-	}()
-
 	engine.Run(engine.Args{
 		Width:  1600,
 		Height: 1200,

@@ -13,6 +13,7 @@ import (
 	"github.com/johanhenriksson/goworld/geometry/plane"
 	"github.com/johanhenriksson/goworld/gui"
 	"github.com/johanhenriksson/goworld/gui/node"
+	"github.com/johanhenriksson/goworld/gui/widget/icon"
 	"github.com/johanhenriksson/goworld/gui/widget/window/modal"
 	"github.com/johanhenriksson/goworld/math/quat"
 	"github.com/johanhenriksson/goworld/math/vec2"
@@ -264,21 +265,25 @@ func (e *Editor) Actions() []editor.Action {
 	return []editor.Action{
 		{
 			Name:     "Place",
+			Icon:     icon.IconEdit,
 			Key:      keys.F,
 			Callback: func(mgr *editor.ToolManager) { mgr.UseTool(e.PlaceTool) },
 		},
 		{
 			Name:     "Erase",
+			Icon:     icon.IconBackspace,
 			Key:      keys.C,
 			Callback: func(mgr *editor.ToolManager) { mgr.UseTool(e.EraseTool) },
 		},
 		{
 			Name:     "Replace",
+			Icon:     icon.IconSwapHoriz,
 			Key:      keys.R,
 			Callback: func(mgr *editor.ToolManager) { mgr.UseTool(e.ReplaceTool) },
 		},
 		{
 			Name: "Sample",
+			Icon: icon.IconColorize,
 			Key:  keys.T,
 			Callback: func(mgr *editor.ToolManager) {
 				previousTool := mgr.Tool()
@@ -288,6 +293,7 @@ func (e *Editor) Actions() []editor.Action {
 		},
 		{
 			Name:     "Clear",
+			Icon:     icon.IconDelete,
 			Key:      keys.N,
 			Modifier: keys.Ctrl,
 			Callback: func(mgr *editor.ToolManager) { e.clearChunk() },
@@ -295,6 +301,7 @@ func (e *Editor) Actions() []editor.Action {
 		{
 			Name: "Crop",
 			Key:  keys.U,
+			Icon: icon.IconCrop,
 			Callback: func(mgr *editor.ToolManager) {
 				Crop(e.Chunk)
 				e.Recalculate()

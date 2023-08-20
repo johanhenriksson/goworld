@@ -7,6 +7,7 @@ import (
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/editor/gizmo"
+	"github.com/johanhenriksson/goworld/gui/widget/icon"
 	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/physics"
@@ -23,6 +24,7 @@ const ToolLayer = physics.Mask(2)
 
 type Action struct {
 	Name     string
+	Icon     icon.Icon
 	Key      keys.Code
 	Modifier keys.Modifier
 	Callback func(*ToolManager)
@@ -39,8 +41,6 @@ type ToolManager struct {
 	// built-in tools
 	Mover   *gizmo.Mover
 	Rotater *gizmo.Rotater
-
-	Physics *physics.World
 }
 
 func NewToolManager() *ToolManager {
@@ -105,6 +105,25 @@ func (m *ToolManager) MouseEvent(e mouse.Event) {
 			m.setSelect(e, nil)
 		}
 	}
+}
+
+func (m *ToolManager) Actions() []Action {
+	actions := make([]Action, 0, 16)
+	actions = append(actions, Action{
+		Name:     "Save",
+		Icon:     icon.IconSave,
+		Key:      keys.S,
+		Modifier: keys.Ctrl,
+		Callback: func(m *ToolManager) {
+			log.Println("save")
+		},
+	})
+	for _, editor := range m.selected {
+		for _, action := range editor.Actions() {
+			actions = append(actions, action)
+		}
+	}
+	return actions
 }
 
 func (m *ToolManager) KeyEvent(e keys.Event) {
