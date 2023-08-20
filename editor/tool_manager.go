@@ -178,7 +178,7 @@ func (m *ToolManager) setSelect(e mouse.Event, component T) bool {
 				log.Println("editor", editor.Name(), "attempted to abort deselection")
 			}
 		}
-		m.selected = m.selected[0:]
+		m.selected = m.selected[:0]
 	}
 
 	// select
