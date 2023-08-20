@@ -47,10 +47,12 @@ func render(props Props) node.T {
 		},
 
 		Children: []node.T{
-			icon.New("checked", icon.IconProps{
-				Size:  18,
-				Icon:  checker,
-				Color: color.White,
+			icon.New("checked", icon.Props{
+				Icon: checker,
+				Style: icon.Style{
+					Size:  18,
+					Color: color.White,
+				},
 			}),
 		},
 	})

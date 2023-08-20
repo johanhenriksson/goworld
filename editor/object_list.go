@@ -83,18 +83,22 @@ func ObjectListEntry(key string, props ObjectListEntryProps) node.T {
 						AlignContent: style.AlignCenter,
 					},
 					Children: []node.T{
-						node.If(hasChildren, icon.New("toggle", icon.IconProps{
-							Icon:  ico,
-							Color: clr,
-							Size:  18,
+						node.If(hasChildren, icon.New("toggle", icon.Props{
+							Icon: ico,
+							Style: icon.Style{
+								Color: clr,
+								Size:  18,
+							},
 							OnMouseDown: func(e mouse.Event) {
 								setOpen(!open)
 							},
 						})),
-						node.If(!hasChildren, icon.New("item", icon.IconProps{
-							Icon:  icon.Icon(0xe5df),
-							Color: clr,
-							Size:  18,
+						node.If(!hasChildren, icon.New("item", icon.Props{
+							Icon: icon.Icon(0xe5df),
+							Style: icon.Style{
+								Color: clr,
+								Size:  18,
+							},
 						})),
 						label.New("title", label.Props{
 							Text: obj.Name(),
