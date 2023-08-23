@@ -32,6 +32,9 @@ func NewWireframe(msh vertex.Mesh, clr color.T) *Wireframe {
 func (w *Wireframe) refresh() {
 	clr := w.Color.Get().Vec4()
 	msh := w.Source.Get()
+	if msh == nil {
+		return
+	}
 
 	indices := make([]uint32, 0, msh.IndexCount()*2)
 	vertices := make([]vertex.C, 0, msh.VertexCount())

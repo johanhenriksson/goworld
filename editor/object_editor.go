@@ -56,7 +56,7 @@ func (e *ObjectEditor) Actions() []Action {
 			Name: "Move",
 			Key:  keys.G,
 			Icon: icon.IconMove,
-			Callback: func(mgr *ToolManager) {
+			Callback: func(mgr *App) {
 				mgr.MoveTool(e.target)
 			},
 		},
@@ -64,7 +64,7 @@ func (e *ObjectEditor) Actions() []Action {
 			Name: "Rotate",
 			Icon: icon.IconRotate,
 			Key:  keys.V,
-			Callback: func(mgr *ToolManager) {
+			Callback: func(mgr *App) {
 				mgr.RotateTool(e.target)
 			},
 		},
@@ -72,7 +72,7 @@ func (e *ObjectEditor) Actions() []Action {
 			Name: "Select Parent",
 			Icon: icon.IconArrowUpward,
 			Key:  keys.U,
-			Callback: func(mgr *ToolManager) {
+			Callback: func(mgr *App) {
 				parent := e.target.Parent()
 				if parent == nil {
 					return
