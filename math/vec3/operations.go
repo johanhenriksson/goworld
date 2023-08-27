@@ -55,6 +55,10 @@ func Distance(a, b T) float32 {
 	return a.Sub(b).Length()
 }
 
+func Mid(a, b T) T {
+	return a.Add(b).Scaled(0.5)
+}
+
 // Random vector, not normalized.
 func Random(min, max T) T {
 	return T{
