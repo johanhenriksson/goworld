@@ -17,9 +17,9 @@ type Mesh struct {
 	data vertex.MutableMesh[vertex.T, uint16]
 }
 
-func New() *Mesh {
+func New(mat *material.Def) *Mesh {
 	m := object.NewComponent(&Mesh{
-		Static:       mesh.New(material.StandardDeferred()),
+		Static:       mesh.New(mat),
 		Subdivisions: object.NewProperty(3),
 	})
 	m.SetTexture(texture.Diffuse, texture.Checker)

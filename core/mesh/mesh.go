@@ -96,7 +96,11 @@ func (m *Static) SetTexture(slot texture.Slot, ref texture.Ref) {
 }
 
 func (m *Static) CastShadows() bool {
-	return m.primitive == vertex.Triangles && m.shadows
+	return m.primitive == vertex.Triangles && m.shadows && !m.mat.Transparent
+}
+
+func (m *Static) SetShadows(shadows bool) {
+	m.shadows = shadows
 }
 
 func (m *Static) Material() *material.Def {
