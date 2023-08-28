@@ -13,7 +13,6 @@ import (
 	"github.com/johanhenriksson/goworld/render/renderpass"
 	"github.com/johanhenriksson/goworld/render/renderpass/attachment"
 	"github.com/johanhenriksson/goworld/render/texture"
-	"github.com/johanhenriksson/goworld/render/vertex"
 	"github.com/johanhenriksson/goworld/render/vulkan"
 
 	"github.com/vkngwrapper/core/v2/core1_0"
@@ -184,7 +183,7 @@ func (p *shadowpass) Record(cmds command.Recorder, args render.Args, scene objec
 }
 
 func castsShadows(m mesh.Mesh) bool {
-	return m.Primitive() == vertex.Triangles && !m.Material().Transparent
+	return m.CastShadows()
 }
 
 func (p *shadowpass) Shadowmap(light light.T, cascade int) texture.T {

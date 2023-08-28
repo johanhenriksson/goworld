@@ -29,7 +29,9 @@ func NewEye() *ArcballCamera {
 			Clear: color.Black,
 		})).
 			Position(vec3.New(0, 0, -distance)).
+			Attach(NewSkydome()).
 			Create(),
+
 		Distance: distance,
 	})).
 		Position(vec3.New(0, 0.8, 0)).
