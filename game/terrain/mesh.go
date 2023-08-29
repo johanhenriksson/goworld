@@ -5,23 +5,34 @@ import (
 	"github.com/johanhenriksson/goworld/math/ivec2"
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/math/vec3"
+	"github.com/johanhenriksson/goworld/math/vec4"
 	"github.com/johanhenriksson/goworld/render/material"
-	"github.com/johanhenriksson/goworld/render/texture"
+	"github.com/johanhenriksson/goworld/render/noise"
 	"github.com/johanhenriksson/goworld/render/vertex"
 )
 
 type Mesh struct {
-	*mesh.Dynamic[vertex.T, uint16]
+	*mesh.Dynamic[Vertex, uint16]
 	Tile *Tile
 }
 
 func NewMesh(tile *Tile) *Mesh {
 	msh := mesh.NewDynamic(
 		"Terrain",
-		material.StandardDeferred(),
+		&material.Def{
+			Pass:         material.Deferred,
+			Shader:       "deferred/terrain",
+			VertexFormat: Vertex{},
+			DepthTest:    true,
+			DepthWrite:   true,
+			Primitive:    vertex.Triangles,
+			CullMode:     vertex.CullBack,
+		},
 		TileVertexGenerator(tile),
 	)
-	msh.SetTexture(texture.Diffuse, texture.Checker)
+	// msh.SetTexture(texture.Diffuse, texture.Checker)
+	msh.SetTexture("pattern", noise.NewWhiteNoise(64, 64))
+	msh.SetTexture("diffuse0", noise.NewWhiteNoise(256, 256))
 	return &Mesh{
 		Dynamic: msh,
 		Tile:    tile,
@@ -40,11 +51,11 @@ var normSamples = []ivec2.T{
 	{X: 0, Y: 1},
 }
 
-func TileVertexGenerator(tile *Tile) mesh.Generator[vertex.T, uint16] {
+func TileVertexGenerator(tile *Tile) mesh.Generator[Vertex, uint16] {
 	if tile.Size > 100 {
 		panic("tile size cant be greater than 100x100")
 	}
-	return func() mesh.Data[vertex.T, uint16] {
+	return func() mesh.Data[Vertex, uint16] {
 		side := tile.Size + 1
 
 		getPoint := func(x, z int) (Point, bool) {
@@ -57,7 +68,7 @@ func TileVertexGenerator(tile *Tile) mesh.Generator[vertex.T, uint16] {
 			return t.Point(tx, tz), true
 		}
 
-		getVertex := func(x, z int) vertex.T {
+		getVertex := func(x, z int) Vertex {
 			root, _ := getPoint(x, z)
 			origin := vec3.New(float32(x), root.Height, float32(z))
 
@@ -83,15 +94,16 @@ func TileVertexGenerator(tile *Tile) mesh.Generator[vertex.T, uint16] {
 			}
 
 			norm = norm.Scaled(float32(1) / float32(samples))
-			return vertex.T{
+			return Vertex{
 				P: vec3.New(float32(x), root.Height, float32(z)),
 				T: vec2.New(float32(x)/float32(tile.Size), 1-float32(z)/float32(tile.Size)),
 				N: norm,
+				W: vec4.New(1, 0.5, 0, 0),
 			}
 		}
 
 		// generate vertices
-		vertices := make([]vertex.T, 0, side*side)
+		vertices := make([]Vertex, 0, side*side)
 		indices := make([]uint16, 0, tile.Size*tile.Size*6)
 		for z := 0; z < side; z++ {
 			for x := 0; x < side; x++ {
@@ -115,7 +127,7 @@ func TileVertexGenerator(tile *Tile) mesh.Generator[vertex.T, uint16] {
 			}
 		}
 
-		return mesh.Data[vertex.T, uint16]{
+		return mesh.Data[Vertex, uint16]{
 			Vertices: vertices,
 			Indices:  indices,
 		}
