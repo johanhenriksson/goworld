@@ -98,7 +98,7 @@ func TileVertexGenerator(tile *Tile) mesh.Generator[Vertex, uint16] {
 				P: vec3.New(float32(x), root.Height, float32(z)),
 				T: vec2.New(float32(x)/float32(tile.Size), 1-float32(z)/float32(tile.Size)),
 				N: norm,
-				W: vec4.New(1, 0.5, 0, 0),
+				W: vec4.New(1, 0, 0, 0),
 			}
 		}
 
