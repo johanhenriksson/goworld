@@ -49,3 +49,7 @@ func NewTile(m *Map, position ivec2.T, size int, color color.T) *Tile {
 func (t *Tile) Point(x, z int) Point {
 	return t.points[z][x]
 }
+
+func (t *Tile) SetPoint(x, z int, p Point) {
+	t.points[z][x] = p
+}
