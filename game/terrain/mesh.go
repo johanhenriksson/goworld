@@ -17,22 +17,21 @@ type Mesh struct {
 }
 
 func NewMesh(tile *Tile) *Mesh {
-	msh := mesh.NewDynamic(
-		"Terrain",
-		&material.Def{
-			Pass:         material.Deferred,
-			Shader:       "deferred/terrain",
-			VertexFormat: Vertex{},
-			DepthTest:    true,
-			DepthWrite:   true,
-			Primitive:    vertex.Triangles,
-			CullMode:     vertex.CullBack,
-		},
-		TileVertexGenerator(tile),
-	)
+	mat := &material.Def{
+		Pass:         material.Deferred,
+		Shader:       "deferred/terrain",
+		VertexFormat: Vertex{},
+		DepthTest:    true,
+		DepthWrite:   true,
+		Primitive:    vertex.Triangles,
+		CullMode:     vertex.CullBack,
+		Transparent:  true, // does not cast shadows
+	}
+	msh := mesh.NewDynamic("Terrain", mat, TileVertexGenerator(tile))
 	// msh.SetTexture(texture.Diffuse, texture.Checker)
 	msh.SetTexture("pattern", noise.NewWhiteNoise(64, 64))
 	msh.SetTexture("diffuse0", noise.NewWhiteNoise(256, 256))
+
 	return &Mesh{
 		Dynamic: msh,
 		Tile:    tile,
