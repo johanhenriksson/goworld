@@ -70,7 +70,7 @@ func (e *ObjectEditor) Actions() []Action {
 		},
 		{
 			Name: "Select Parent",
-			Icon: icon.IconArrowUpward,
+			Icon: icon.IconVerticalAlignTop,
 			Key:  keys.U,
 			Callback: func(mgr *ToolManager) {
 				parent := e.target.Parent()
