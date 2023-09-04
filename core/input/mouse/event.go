@@ -61,6 +61,8 @@ func (e event) String() string {
 		return fmt.Sprintf("MouseEvent: Press %s at %.0f,%.0f", e.button, e.position.X, e.position.Y)
 	case Release:
 		return fmt.Sprintf("MouseEvent: Release %s at %.0f,%.0f", e.button, e.position.X, e.position.Y)
+	case Scroll:
+		return fmt.Sprintf("MouseEvent: Scroll %.0f,%.0f", e.scroll.X, e.scroll.Y)
 	}
 	return "MouseEvent: Invalid"
 }

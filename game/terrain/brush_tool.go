@@ -80,6 +80,12 @@ func (pt *BrushTool) CanDeselect() bool {
 }
 
 func (pt *BrushTool) ToolMouseEvent(ev mouse.Event, hover physics.RaycastHit) {
+	if ev.Action() == mouse.Scroll {
+		radiusSensitivity := float32(0.33)
+		radius := math.Clamp(pt.Radius.Get()-ev.Scroll().Y*radiusSensitivity, 0.5, 64)
+		pt.Radius.Set(radius)
+	}
+
 	if hover.Shape == nil {
 		return
 	}
