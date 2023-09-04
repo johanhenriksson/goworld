@@ -73,7 +73,7 @@ func (e *Editor) Actions() []editor.Action {
 	return []editor.Action{
 		{
 			Name: "Raise",
-			Icon: icon.IconEdit,
+			Icon: icon.IconArrowUpward,
 			Key:  keys.F,
 			Callback: func(mgr *editor.ToolManager) {
 				mgr.UseTool(e.RaiseTool)
@@ -81,7 +81,7 @@ func (e *Editor) Actions() []editor.Action {
 		},
 		{
 			Name: "Lower",
-			Icon: icon.IconEdit,
+			Icon: icon.IconArrowDownward,
 			Key:  keys.C,
 			Callback: func(mgr *editor.ToolManager) {
 				mgr.UseTool(e.LowerTool)
@@ -89,7 +89,7 @@ func (e *Editor) Actions() []editor.Action {
 		},
 		{
 			Name: "Smooth",
-			Icon: icon.IconEdit,
+			Icon: icon.IconSyncAlt,
 			Key:  keys.R,
 			Callback: func(mgr *editor.ToolManager) {
 				mgr.UseTool(e.SmoothTool)
