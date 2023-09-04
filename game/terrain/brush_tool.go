@@ -26,11 +26,11 @@ type BrushTool struct {
 
 var _ editor.Tool = &BrushTool{}
 
-func NewBrushTool(brush Brush) *BrushTool {
+func NewBrushTool(brush Brush, color color.T) *BrushTool {
 	e := object.New("Brush Tool", &BrushTool{
 		Sphere: lines.NewSphere(lines.SphereArgs{
 			Radius: 1,
-			Color:  color.Yellow,
+			Color:  color,
 		}),
 		Radius:   object.NewProperty(float32(1)),
 		Strength: object.NewProperty(float32(3)),
@@ -52,6 +52,11 @@ func (pt *BrushTool) Use(editor *Editor, position vec3.T, dt float32) {
 	mx, mz := math.Max(int(pos.X)-r, 0), math.Max(int(pos.Z)-r, 0)
 	Mx, Mz := math.Min(int(pos.X)+r, editor.Tile.Size-1), math.Min(int(pos.Z)+r, editor.Tile.Size-1)
 	wx, wz := Mx-mx, Mz-mz
+
+	// empty patch
+	if wx <= 0 || wz <= 0 {
+		return
+	}
 
 	// cut a patch of terrain
 	patch := editor.Tile.Patch(ivec2.New(mx, mz), ivec2.New(wx, wz))

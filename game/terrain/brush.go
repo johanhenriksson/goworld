@@ -29,10 +29,20 @@ type Patch struct {
 	Source *Tile
 }
 
-// A raise brush raises or lowers the terrain
-type RaiseBrush struct{}
+// A height brush raises or lowers the terrain
+type HeightBrush struct {
+	Sign float32
+}
 
-func (b *RaiseBrush) Paint(patch *Patch, center vec3.T, radius, strength float32) error {
+func NewRaiseBrush() *HeightBrush {
+	return &HeightBrush{Sign: 1}
+}
+
+func NewLowerBrush() *HeightBrush {
+	return &HeightBrush{Sign: -1}
+}
+
+func (b *HeightBrush) Paint(patch *Patch, center vec3.T, radius, strength float32) error {
 	// implement brush operation
 	// apply operations on copied points
 	for z := 0; z < patch.Size.Y; z++ {
@@ -48,7 +58,7 @@ func (b *RaiseBrush) Paint(patch *Patch, center vec3.T, radius, strength float32
 			// quadratic falloff
 			weight = weight * weight
 
-			patch.Points[z][x].Height += strength * weight
+			patch.Points[z][x].Height += b.Sign * strength * weight
 		}
 	}
 

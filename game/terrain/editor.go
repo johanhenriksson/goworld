@@ -6,6 +6,7 @@ import (
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/editor"
 	"github.com/johanhenriksson/goworld/gui/widget/icon"
+	"github.com/johanhenriksson/goworld/render/color"
 )
 
 func init() {
@@ -20,6 +21,7 @@ type Editor struct {
 	Tile *Tile
 
 	RaiseTool  *BrushTool
+	LowerTool  *BrushTool
 	SmoothTool *BrushTool
 }
 
@@ -31,11 +33,15 @@ func NewEditor(ctx *editor.Context, mesh *Mesh) *Editor {
 		mesh:    mesh,
 		Tile:    mesh.Tile,
 
-		RaiseTool: object.Builder(NewBrushTool(&RaiseBrush{})).
+		RaiseTool: object.Builder(NewBrushTool(NewRaiseBrush(), color.Green)).
 			Active(false).
 			Create(),
 
-		SmoothTool: object.Builder(NewBrushTool(&SmoothBrush{})).
+		LowerTool: object.Builder(NewBrushTool(NewLowerBrush(), color.Red)).
+			Active(false).
+			Create(),
+
+		SmoothTool: object.Builder(NewBrushTool(&SmoothBrush{}, color.Yellow)).
 			Active(false).
 			Create(),
 	})
@@ -71,6 +77,14 @@ func (e *Editor) Actions() []editor.Action {
 			Key:  keys.F,
 			Callback: func(mgr *editor.ToolManager) {
 				mgr.UseTool(e.RaiseTool)
+			},
+		},
+		{
+			Name: "Lower",
+			Icon: icon.IconEdit,
+			Key:  keys.C,
+			Callback: func(mgr *editor.ToolManager) {
+				mgr.UseTool(e.LowerTool)
 			},
 		},
 		{
