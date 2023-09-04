@@ -17,10 +17,12 @@ void main()
 	uint texture2 = objects.item[in_object].textures[2];
 	uint texture3 = objects.item[in_object].textures[3];
 
-	vec3 color = in_weights.x * texture(textures[texture0], texcoord0).rgb +
+	vec3 color = (
+		in_weights.x * texture(textures[texture0], texcoord0).rgb +
 		in_weights.y * texture(textures[texture1], texcoord0).rgb +
 		in_weights.z * texture(textures[texture2], texcoord0).rgb +
-		in_weights.w * texture(textures[texture3], texcoord0).rgb;
+		in_weights.w * texture(textures[texture3], texcoord0).rgb
+	);
 
 	color /= (in_weights.x + in_weights.y + in_weights.z + in_weights.w);
 

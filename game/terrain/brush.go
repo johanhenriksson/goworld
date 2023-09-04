@@ -43,8 +43,6 @@ func NewLowerBrush() *HeightBrush {
 }
 
 func (b *HeightBrush) Paint(patch *Patch, center vec3.T, radius, strength float32) error {
-	// implement brush operation
-	// apply operations on copied points
 	for z := 0; z < patch.Size.Y; z++ {
 		for x := 0; x < patch.Size.X; x++ {
 			p := vec2.NewI(patch.Offset.X+x, patch.Offset.Y+z)
@@ -95,5 +93,25 @@ func (b *SmoothBrush) Paint(patch *Patch, center vec3.T, radius, strength float3
 		}
 	}
 
+	return nil
+}
+
+type PaintBrush struct {
+}
+
+func (b *PaintBrush) Paint(patch *Patch, center vec3.T, radius, strength float32) error {
+	for z := 0; z < patch.Size.Y; z++ {
+		for x := 0; x < patch.Size.X; x++ {
+			p := vec2.NewI(patch.Offset.X+x, patch.Offset.Y+z)
+
+			// calculate brush weight as the distance from center of brush
+			weight := math.Min(p.Sub(center.XZ()).Length()/radius, 1)
+
+			// invert
+			weight = 1 - weight
+
+			patch.Points[z][x].Weights[1] += 1 // strength * weight
+		}
+	}
 	return nil
 }
