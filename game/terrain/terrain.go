@@ -3,12 +3,10 @@ package terrain
 import (
 	"github.com/johanhenriksson/goworld/math/ivec2"
 	"github.com/johanhenriksson/goworld/math/vec2"
-	"github.com/johanhenriksson/goworld/render/color"
 )
 
 type Map struct {
 	TileSize int
-	Color    color.T
 
 	tiles map[ivec2.T]*Tile
 }
@@ -16,13 +14,12 @@ type Map struct {
 func NewMap(tileSize int, tiles int) *Map {
 	m := &Map{
 		TileSize: tileSize,
-		Color:    color.Green,
 		tiles:    make(map[ivec2.T]*Tile),
 	}
 	for z := 0; z < tiles; z++ {
 		for x := 0; x < tiles; x++ {
 			tp := ivec2.New(x, z)
-			m.tiles[tp] = NewTile(m, tp, m.TileSize, m.Color)
+			m.tiles[tp] = NewTile(m, tp, m.TileSize)
 		}
 	}
 	return m
@@ -33,7 +30,7 @@ func (m *Map) GetTile(tx, ty int, create bool) *Tile {
 	tile, exists := m.tiles[tp]
 	if !exists {
 		if create {
-			t := NewTile(m, tp, m.TileSize, m.Color)
+			t := NewTile(m, tp, m.TileSize)
 			m.tiles[tp] = t
 			return t
 		} else {
@@ -65,7 +62,7 @@ func (m *Map) Set(point vec2.T, data Point) {
 	tx, ty := x/m.TileSize, y/m.TileSize
 	ox, oy := x%m.TileSize, y%m.TileSize
 
-	create := data.Height > 0 || data.R > 0 || data.G > 0 || data.B > 0
+	create := data.Height != 0 || data.Weights[0] > 0 || data.Weights[1] > 0 || data.Weights[2] > 0 || data.Weights[3] > 0
 	tile := m.GetTile(tx, ty, create)
 	if tile == nil {
 		return

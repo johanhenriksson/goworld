@@ -3,7 +3,6 @@ package terrain
 import (
 	"github.com/johanhenriksson/goworld/math"
 	"github.com/johanhenriksson/goworld/math/ivec2"
-	"github.com/johanhenriksson/goworld/render/color"
 )
 
 type Tile struct {
@@ -13,7 +12,7 @@ type Tile struct {
 	points   [][]Point
 }
 
-func NewTile(m *Map, position ivec2.T, size int, color color.T) *Tile {
+func NewTile(m *Map, position ivec2.T, size int) *Tile {
 	if size < 1 {
 		panic("size must be at least 1")
 	}
@@ -28,13 +27,9 @@ func NewTile(m *Map, position ivec2.T, size int, color color.T) *Tile {
 	for z := 0; z < vertices; z++ {
 		points[z] = make([]Point, vertices)
 		for x := 0; x < vertices; x++ {
-			b := color.Byte4()
-			points[z][x].R = b.X
-			points[z][x].G = b.Y
-			points[z][x].B = b.Z
-
 			wx, wz := x+size*position.X, z+size*position.Y
 			points[z][x].Height = heightScale*height.Sample(wx, 0, wz) + noiseScale*noise.Sample(wx, 0, wz)
+			points[z][x].Weights[0] = 255
 		}
 	}
 

@@ -8,6 +8,7 @@ import (
 	"github.com/johanhenriksson/goworld/math/vec4"
 	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/noise"
+	"github.com/johanhenriksson/goworld/render/texture"
 	"github.com/johanhenriksson/goworld/render/vertex"
 )
 
@@ -28,9 +29,9 @@ func NewMesh(tile *Tile) *Mesh {
 		Transparent:  true, // does not cast shadows
 	}
 	msh := mesh.NewDynamic("Terrain", mat, TileVertexGenerator(tile))
-	// msh.SetTexture(texture.Diffuse, texture.Checker)
-	msh.SetTexture("pattern", noise.NewWhiteNoise(64, 64))
-	msh.SetTexture("diffuse0", noise.NewWhiteNoise(256, 256))
+	msh.SetTexture("pattern", texture.Checker)
+	msh.SetTexture("diffuse0", noise.NewWhiteNoise(64, 64))
+	msh.SetTexture("diffuse1", noise.NewWhiteNoise(256, 256))
 
 	return &Mesh{
 		Dynamic: msh,
@@ -97,7 +98,7 @@ func TileVertexGenerator(tile *Tile) mesh.Generator[Vertex, uint16] {
 				P: vec3.New(float32(x), root.Height, float32(z)),
 				T: vec2.New(float32(x)/float32(tile.Size), 1-float32(z)/float32(tile.Size)),
 				N: norm,
-				W: vec4.New(1, 0, 0, 0),
+				W: vec4.New(root.Weights[0], root.Weights[1], root.Weights[2], root.Weights[3]),
 			}
 		}
 
