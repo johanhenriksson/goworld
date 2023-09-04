@@ -19,7 +19,7 @@ type Editor struct {
 	mesh *Mesh
 	Tile *Tile
 
-	RaiseTool *RaiseTool
+	RaiseTool *BrushTool
 }
 
 var _ editor.T = &Editor{}
@@ -30,7 +30,7 @@ func NewEditor(ctx *editor.Context, mesh *Mesh) *Editor {
 		mesh:    mesh,
 		Tile:    mesh.Tile,
 
-		RaiseTool: object.Builder(NewRaiseTool()).
+		RaiseTool: object.Builder(NewBrushTool(&RaiseBrush{})).
 			Active(false).
 			Create(),
 	})

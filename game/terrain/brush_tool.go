@@ -1,103 +1,80 @@
 package terrain
 
 import (
-	"log"
-
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/editor"
 	"github.com/johanhenriksson/goworld/geometry/lines"
 	"github.com/johanhenriksson/goworld/math"
-	"github.com/johanhenriksson/goworld/math/vec2"
+	"github.com/johanhenriksson/goworld/math/ivec2"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/physics"
 	"github.com/johanhenriksson/goworld/render/color"
 )
 
-type RaiseTool struct {
+type BrushTool struct {
 	object.Object
 	Sphere   *lines.Sphere
 	Radius   object.Property[float32]
 	Strength object.Property[float32]
 
+	Brush   Brush
 	pressed bool
 	editor  *Editor
 	center  vec3.T
-	normal  vec3.T
 }
 
-var _ editor.Tool = &RaiseTool{}
+var _ editor.Tool = &BrushTool{}
 
-func NewRaiseTool() *RaiseTool {
-	e := object.New("Raise Tool", &RaiseTool{
+func NewBrushTool(brush Brush) *BrushTool {
+	e := object.New("Brush Tool", &BrushTool{
 		Sphere: lines.NewSphere(lines.SphereArgs{
 			Radius: 1,
 			Color:  color.Yellow,
 		}),
 		Radius:   object.NewProperty(float32(1)),
 		Strength: object.NewProperty(float32(3)),
+		Brush:    brush,
 	})
 	e.Radius.OnChange.Subscribe(func(float32) { e.Sphere.Radius.Set(e.Radius.Get()) })
 	e.Radius.Set(4)
 	return e
 }
 
-func (pt *RaiseTool) Use(editor *Editor, position, normal vec3.T, dt float32) {
+func (pt *BrushTool) Use(editor *Editor, position vec3.T, dt float32) {
+	if pt.Brush == nil {
+		return
+	}
+
+	// calculate affected terrain patch
 	pos := position.Floor()
-
-	// copy potential area of effect
-
-	log.Println("raise around", pos, pt.Radius.Get())
 	r := int(math.Ceil(pt.Radius.Get()))
 	mx, mz := math.Max(int(pos.X)-r, 0), math.Max(int(pos.Z)-r, 0)
 	Mx, Mz := math.Min(int(pos.X)+r, editor.Tile.Size-1), math.Min(int(pos.Z)+r, editor.Tile.Size-1)
 	wx, wz := Mx-mx, Mz-mz
 
-	points := make([][]Point, wz)
-	for z := mz; z < Mz; z++ {
-		points[z-mz] = make([]Point, wx)
-		for x := mx; x < Mx; x++ {
-			points[z-mz][x-mx] = editor.Tile.Point(x, z)
-		}
-	}
+	// cut a patch of terrain
+	patch := editor.Tile.Patch(ivec2.New(mx, mz), ivec2.New(wx, wz))
 
-	// apply brush operation
-	pt.Brush(points, position, mx, mz, pt.Strength.Get()*dt)
+	// apply brush to patch
+	pt.Brush.Paint(patch, position, pt.Radius.Get(), pt.Strength.Get()*dt)
 
-	// apply copied points to tile
-	for z := mz; z < Mz; z++ {
-		for x := mx; x < Mx; x++ {
-			editor.Tile.SetPoint(x, z, points[z-mz][x-mx])
-		}
-	}
+	// apply patch to tile
+	editor.Tile.ApplyPatch(patch)
 
 	// recompute mesh
 	editor.Recalculate()
 }
 
-func (pt *RaiseTool) Brush(brush [][]Point, center vec3.T, ox, oz int, dt float32) {
-	// implement brush operation
-	// apply operations on copied points
-	for z := 0; z < len(brush); z++ {
-		for x := 0; x < len(brush[z]); x++ {
-			weight := 1 - vec2.NewI(ox+x, oz+z).Sub(center.XZ()).Length()/pt.Radius.Get()
-			weight = math.Max(0, weight)
-			weight = weight * weight
-
-			brush[z][x].Height += dt * weight
-		}
-	}
-}
-
-func (pt *RaiseTool) Hover(editor *Editor, position, normal vec3.T) {
+func (pt *BrushTool) Hover(editor *Editor, position, normal vec3.T) {
 	pt.Transform().SetPosition(position)
 }
 
-func (pt *RaiseTool) CanDeselect() bool {
+func (pt *BrushTool) CanDeselect() bool {
 	return false
 }
 
-func (pt *RaiseTool) ToolMouseEvent(ev mouse.Event, hover physics.RaycastHit) {
+func (pt *BrushTool) ToolMouseEvent(ev mouse.Event, hover physics.RaycastHit) {
 	if hover.Shape == nil {
 		return
 	}
@@ -123,15 +100,14 @@ func (pt *RaiseTool) ToolMouseEvent(ev mouse.Event, hover physics.RaycastHit) {
 		}
 		pt.editor = editor
 		pt.center = pos
-		pt.normal = norm
 		ev.Consume()
 	}
 }
 
-func (pt *RaiseTool) Update(scene object.Component, dt float32) {
+func (pt *BrushTool) Update(scene object.Component, dt float32) {
 	pt.Object.Update(scene, dt)
 
 	if pt.pressed {
-		pt.Use(pt.editor, pt.center, pt.normal, dt)
+		pt.Use(pt.editor, pt.center, dt)
 	}
 }
