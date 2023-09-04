@@ -53,3 +53,35 @@ func (t *Tile) Point(x, z int) Point {
 func (t *Tile) SetPoint(x, z int, p Point) {
 	t.points[z][x] = p
 }
+
+// Patch returns a patch of the tile
+func (t *Tile) Patch(offset, size ivec2.T) *Patch {
+	if offset.X < 0 || offset.Y < 0 || offset.X+size.X > t.Size || offset.Y+size.Y > t.Size {
+		panic("patch out of bounds")
+	}
+	points := make([][]Point, size.Y)
+	for z := 0; z < size.Y; z++ {
+		points[z] = make([]Point, size.X)
+		for x := 0; x < size.X; x++ {
+			points[z][x] = t.Point(offset.X+x, offset.Y+z)
+		}
+	}
+	return &Patch{
+		Size:   size,
+		Offset: offset,
+		Points: points,
+		Source: t,
+	}
+}
+
+// ApplyPatch applies a patch to the tile
+func (t *Tile) ApplyPatch(p *Patch) {
+	if p.Source != t {
+		panic("patch source must be tile")
+	}
+	for z := 0; z < p.Size.Y; z++ {
+		for x := 0; x < p.Size.X; x++ {
+			t.SetPoint(p.Offset.X+x, p.Offset.Y+z, p.Points[z][x])
+		}
+	}
+}
