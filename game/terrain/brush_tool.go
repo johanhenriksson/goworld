@@ -17,16 +17,16 @@ type BrushTool struct {
 	Sphere   *lines.Sphere
 	Radius   object.Property[float32]
 	Strength object.Property[float32]
+	Brush    Brush
 
-	Brush   Brush
+	terrain *Map
 	pressed bool
-	editor  *Editor
 	center  vec3.T
 }
 
 var _ editor.Tool = &BrushTool{}
 
-func NewBrushTool(brush Brush, color color.T) *BrushTool {
+func NewBrushTool(terrain *Map, brush Brush, color color.T) *BrushTool {
 	e := object.New("Brush Tool", &BrushTool{
 		Sphere: lines.NewSphere(lines.SphereArgs{
 			Radius: 1,
@@ -35,13 +35,15 @@ func NewBrushTool(brush Brush, color color.T) *BrushTool {
 		Radius:   object.NewProperty(float32(1)),
 		Strength: object.NewProperty(float32(3)),
 		Brush:    brush,
+
+		terrain: terrain,
 	})
 	e.Radius.OnChange.Subscribe(func(float32) { e.Sphere.Radius.Set(e.Radius.Get()) })
 	e.Radius.Set(4)
 	return e
 }
 
-func (pt *BrushTool) Use(editor *Editor, position vec3.T, dt float32) {
+func (pt *BrushTool) Use(position vec3.T, dt float32) {
 	if pt.Brush == nil {
 		return
 	}
@@ -49,30 +51,22 @@ func (pt *BrushTool) Use(editor *Editor, position vec3.T, dt float32) {
 	// calculate affected terrain patch
 	pos := position.Floor()
 	r := int(math.Ceil(pt.Radius.Get()))
-	mx, mz := math.Max(int(pos.X)-r, 0), math.Max(int(pos.Z)-r, 0)
-	Mx, Mz := math.Min(int(pos.X)+r, editor.Tile.Size-1), math.Min(int(pos.Z)+r, editor.Tile.Size-1)
+	mx, mz := int(pos.X)-r, int(pos.Z)-r
+	Mx, Mz := int(pos.X)+r, int(pos.Z)+r
 	wx, wz := Mx-mx, Mz-mz
 
-	// empty patch
-	if wx <= 0 || wz <= 0 {
-		return
-	}
-
 	// cut a patch of terrain
-	patch := editor.Tile.Patch(ivec2.New(mx, mz), ivec2.New(wx, wz))
+	patch := pt.terrain.Patch(ivec2.New(mx, mz), ivec2.New(wx, wz))
 
 	// apply brush to patch
 	pt.Brush.Paint(patch, position, pt.Radius.Get(), pt.Strength.Get()*dt)
 
 	// apply patch to tile
-	editor.Tile.ApplyPatch(patch)
-
-	// recompute mesh
-	editor.Recalculate()
+	pt.terrain.ApplyPatch(patch)
 }
 
-func (pt *BrushTool) Hover(editor *Editor, position, normal vec3.T) {
-	pt.Transform().SetPosition(position)
+func (pt *BrushTool) Hover(position vec3.T) {
+	pt.Transform().SetWorldPosition(position)
 }
 
 func (pt *BrushTool) CanDeselect() bool {
@@ -90,17 +84,8 @@ func (pt *BrushTool) ToolMouseEvent(ev mouse.Event, hover physics.RaycastHit) {
 		return
 	}
 
-	editor := object.GetInParents[*Editor](pt)
-	if editor == nil {
-		// hm?
-		return
-	}
-
-	pos := editor.Transform().Unproject(hover.Point)
-	norm := editor.Transform().UnprojectDir(hover.Normal)
-
 	if ev.Action() == mouse.Move {
-		pt.Hover(editor, pos, norm)
+		pt.Hover(hover.Point)
 	}
 
 	if ev.Button() == mouse.Button1 {
@@ -109,8 +94,7 @@ func (pt *BrushTool) ToolMouseEvent(ev mouse.Event, hover physics.RaycastHit) {
 		} else if ev.Action() == mouse.Release {
 			pt.pressed = false
 		}
-		pt.editor = editor
-		pt.center = pos
+		pt.center = hover.Point
 		ev.Consume()
 	}
 }
@@ -119,6 +103,6 @@ func (pt *BrushTool) Update(scene object.Component, dt float32) {
 	pt.Object.Update(scene, dt)
 
 	if pt.pressed {
-		pt.Use(pt.editor, pt.center, dt)
+		pt.Use(pt.center, dt)
 	}
 }

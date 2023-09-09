@@ -18,7 +18,6 @@ type Editor struct {
 	*editor.Context
 
 	mesh *Mesh
-	Tile *Tile
 
 	RaiseTool  *BrushTool
 	LowerTool  *BrushTool
@@ -29,31 +28,31 @@ type Editor struct {
 var _ editor.T = &Editor{}
 
 func NewEditor(ctx *editor.Context, mesh *Mesh) *Editor {
+	terrain := mesh.Tile.Map
 	return object.New("TerrainEditor", &Editor{
 		Context: ctx,
 		mesh:    mesh,
-		Tile:    mesh.Tile,
 
-		RaiseTool: object.Builder(NewBrushTool(NewRaiseBrush(), color.Green)).
+		RaiseTool: object.Builder(NewBrushTool(terrain, NewRaiseBrush(), color.Green)).
 			Active(false).
 			Create(),
 
-		LowerTool: object.Builder(NewBrushTool(NewLowerBrush(), color.Red)).
+		LowerTool: object.Builder(NewBrushTool(terrain, NewLowerBrush(), color.Red)).
 			Active(false).
 			Create(),
 
-		SmoothTool: object.Builder(NewBrushTool(&SmoothBrush{}, color.Yellow)).
+		SmoothTool: object.Builder(NewBrushTool(terrain, &SmoothBrush{}, color.Yellow)).
 			Active(false).
 			Create(),
 
-		PaintTool: object.Builder(NewBrushTool(&PaintBrush{}, color.Purple)).
+		PaintTool: object.Builder(NewBrushTool(terrain, &PaintBrush{}, color.Purple)).
 			Active(false).
 			Create(),
 	})
 }
 
 func (e *Editor) Name() string {
-	return "Chunk"
+	return "Terrain"
 }
 
 func (e *Editor) Target() object.Component { return e.mesh }
@@ -68,10 +67,6 @@ func (e *Editor) Select(ev mouse.Event) {
 
 func (e *Editor) Deselect(ev mouse.Event) bool {
 	return true
-}
-
-func (e *Editor) Recalculate() {
-	e.mesh.Refresh()
 }
 
 func (e *Editor) Actions() []editor.Action {

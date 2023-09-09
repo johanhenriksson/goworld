@@ -26,7 +26,7 @@ type Patch struct {
 	Points [][]Point
 
 	// Source is the tile that the patch was copied from
-	Source *Tile
+	Source *Map
 }
 
 // A height brush raises or lowers the terrain
@@ -68,7 +68,7 @@ type SmoothBrush struct{}
 func (b *SmoothBrush) Paint(patch *Patch, center vec3.T, radius, strength float32) error {
 	for z := 0; z < patch.Size.Y; z++ {
 		for x := 0; x < patch.Size.X; x++ {
-			p := ivec2.New(patch.Offset.X+x, patch.Offset.Y+z)
+			p := vec2.NewI(patch.Offset.X+x, patch.Offset.Y+z)
 
 			// calculate new height value as the average of the surrounding points
 			k := 1
@@ -76,14 +76,13 @@ func (b *SmoothBrush) Paint(patch *Patch, center vec3.T, radius, strength float3
 			smoothed := float32(0)
 			for i := -k; i <= k; i++ {
 				for j := -k; j <= k; j++ {
-					q := p.Add(ivec2.New(i, j))
-					if q.X < 0 || q.Y < 0 || q.X >= patch.Source.Size || q.Y >= patch.Source.Size {
-						continue
-					}
+					q := p.Add(vec2.NewI(i, j))
 
-					// read directly from source tile to avoid smoothing the smoothing
-					smoothed += patch.Source.Point(q.X, q.Y).Height
-					points++
+					// read directly from source map to avoid smoothing the smoothing
+					if pt, exists := patch.Source.Get(q); exists {
+						smoothed += pt.Height
+						points++
+					}
 				}
 			}
 			smoothed /= float32(points)

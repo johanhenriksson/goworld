@@ -14,12 +14,12 @@ import (
 
 type World struct {
 	object.Object
-	terrain  *Map
-	distance float32
+	Terrain *Map
 
-	lock   sync.Mutex
-	active map[string]object.Component
-	ready  chan tileSpawn
+	distance float32
+	lock     sync.Mutex
+	active   map[string]object.Component
+	ready    chan tileSpawn
 }
 
 type tileSpawn struct {
@@ -31,11 +31,34 @@ type tileSpawn struct {
 // Builds a world of tiles around the active camera as it moves around
 func NewWorld(terrain *Map, distance float32) *World {
 	return object.New("World", &World{
-		terrain:  terrain,
+		Terrain:  terrain,
 		distance: distance,
 		active:   make(map[string]object.Component, 100),
 		ready:    make(chan tileSpawn, 100),
 	})
+}
+
+func (w *World) Recalculate(patch *Patch) {
+	mx := patch.Offset.X / w.Terrain.TileSize
+	mz := patch.Offset.Y / w.Terrain.TileSize
+	Mx := (patch.Offset.X + patch.Size.X) / w.Terrain.TileSize
+	Mz := (patch.Offset.Y + patch.Size.Y) / w.Terrain.TileSize
+
+	for x := mx; x <= Mx; x++ {
+		for z := mz; z <= Mz; z++ {
+			key := fmt.Sprintf("Tile:%d,%d", x, z)
+			tile, ok := w.active[key]
+			if !ok {
+				continue
+			}
+			mesh := object.GetInChildren[*Mesh](tile)
+			if mesh == nil {
+				continue
+			}
+			fmt.Println("refresh mesh", key)
+			mesh.Refresh()
+		}
+	}
 }
 
 func (c *World) Update(scene object.Component, dt float32) {
@@ -79,18 +102,19 @@ func (c *World) Update(scene object.Component, dt float32) {
 	}
 
 	// create tiles close to us
-	size := c.terrain.TileSize
+	size := c.Terrain.TileSize
 	tilePos := pos.Scaled(1 / float32(size)).Floor()
 	cx, cz := int(tilePos.X), int(tilePos.Z)
 
 	steps := int(c.distance / float32(size))
+	half := vec3.NewI(size/2, 0, size/2)
 	minDist := math.InfPos
 	var spawn func()
 	for x := cx - steps; x < cx+steps; x++ {
 		for z := cz - steps; z < cz+steps; z++ {
-			// check if the tile would have been in range
+			// check if the center of tile would have been in range
 			p := vec3.NewI(x*size, 0, z*size)
-			dist := vec3.Distance(pos, p)
+			dist := vec3.Distance(pos, p.Add(half))
 			if dist > c.distance {
 				continue
 			}
@@ -112,7 +136,7 @@ func (c *World) Update(scene object.Component, dt float32) {
 					c.active[key] = nil
 					c.lock.Unlock()
 
-					tile := c.terrain.GetTile(ix, iz, true)
+					tile := c.Terrain.GetTile(ix, iz, true)
 					c.ready <- tileSpawn{
 						Key:      key,
 						Position: p,
