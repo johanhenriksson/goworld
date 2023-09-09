@@ -1,12 +1,10 @@
 package terrain
 
 import (
-	"log"
 	"sync"
 
 	"github.com/johanhenriksson/goworld/math"
 	"github.com/johanhenriksson/goworld/math/ivec2"
-	"github.com/johanhenriksson/goworld/math/vec2"
 )
 
 type Map struct {
@@ -30,7 +28,7 @@ func NewMap(tileSize int, tiles int) *Map {
 	return m
 }
 
-func (m *Map) GetTile(tx, ty int, create bool) *Tile {
+func (m *Map) Tile(tx, ty int, create bool) *Tile {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 	tp := ivec2.New(tx, ty)
@@ -47,22 +45,7 @@ func (m *Map) GetTile(tx, ty int, create bool) *Tile {
 	return tile
 }
 
-func (m *Map) Get(point vec2.T) (Point, bool) {
-	p := point.Floor()
-	x, y := int(p.X), int(p.Y)
-
-	tc := m.TileCoords(ivec2.New(x, y))
-	ox, oy := (x+m.TileSize)%m.TileSize, (y+m.TileSize)%m.TileSize
-
-	tile := m.GetTile(tc.X, tc.Y, false)
-	if tile == nil {
-		return Point{}, false
-	}
-
-	return tile.points[oy][ox], true
-}
-
-func (m *Map) Patch(offset, size ivec2.T) *Patch {
+func (m *Map) Get(offset, size ivec2.T) *Patch {
 	// allocate patch
 	points := make([][]Point, size.Y+1)
 	for z := 0; z <= size.Y; z++ {
@@ -80,7 +63,7 @@ func (m *Map) Patch(offset, size ivec2.T) *Patch {
 
 	for x := tmin.X; x <= tmax.X; x++ {
 		for z := tmin.Y; z <= tmax.Y; z++ {
-			t := m.GetTile(x, z, true)
+			t := m.Tile(x, z, true)
 			Tx := x * m.TileSize
 			Tz := z * m.TileSize
 
@@ -109,13 +92,13 @@ func (m *Map) TileCoords(point ivec2.T) ivec2.T {
 	return ivec2.New(Floor(point.X, m.TileSize), Floor(point.Y, m.TileSize))
 }
 
-func (m *Map) ApplyPatch(patch *Patch) {
+func (m *Map) Set(patch *Patch) {
 	tmin := m.TileCoords(patch.Offset)
 	tmax := m.TileCoords(patch.Offset.Add(patch.Size))
 
 	for x := tmin.X; x <= tmax.X; x++ {
 		for z := tmin.Y; z <= tmax.Y; z++ {
-			t := m.GetTile(x, z, true)
+			t := m.Tile(x, z, true)
 			Tx := x * m.TileSize
 			Tz := z * m.TileSize
 
@@ -128,8 +111,6 @@ func (m *Map) ApplyPatch(patch *Patch) {
 			px := math.Max(Tx-patch.Offset.X, 0) - tmx
 			pz := math.Max(Tz-patch.Offset.Y, 0) - tmz
 
-			log.Println("apply patch", x, z, tmx, tMx, tmz, tMz, px, pz)
-
 			// copy the patch region to the tile
 			for tz := tmz; tz <= tMz; tz++ {
 				for tx := tmx; tx <= tMx; tx++ {
@@ -141,7 +122,7 @@ func (m *Map) ApplyPatch(patch *Patch) {
 
 	for x := tmin.X; x <= tmax.X; x++ {
 		for z := tmin.Y; z <= tmax.Y; z++ {
-			t := m.GetTile(x, z, false)
+			t := m.Tile(x, z, false)
 			t.Changed.Emit(t)
 		}
 	}

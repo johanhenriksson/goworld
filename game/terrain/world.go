@@ -38,29 +38,6 @@ func NewWorld(terrain *Map, distance float32) *World {
 	})
 }
 
-func (w *World) Recalculate(patch *Patch) {
-	mx := patch.Offset.X / w.Terrain.TileSize
-	mz := patch.Offset.Y / w.Terrain.TileSize
-	Mx := (patch.Offset.X + patch.Size.X) / w.Terrain.TileSize
-	Mz := (patch.Offset.Y + patch.Size.Y) / w.Terrain.TileSize
-
-	for x := mx; x <= Mx; x++ {
-		for z := mz; z <= Mz; z++ {
-			key := fmt.Sprintf("Tile:%d,%d", x, z)
-			tile, ok := w.active[key]
-			if !ok {
-				continue
-			}
-			mesh := object.GetInChildren[*Mesh](tile)
-			if mesh == nil {
-				continue
-			}
-			fmt.Println("refresh mesh", key)
-			mesh.Refresh()
-		}
-	}
-}
-
 func (w *World) EditorUpdate(scene object.Component, dt float32) {
 	w.Update(scene, dt)
 }
@@ -88,6 +65,8 @@ func (c *World) Update(scene object.Component, dt float32) {
 		return
 	}
 
+	size := c.Terrain.TileSize
+	// half := vec3.NewI(size/2, 0, size/2)
 	pos := cam.Transform().WorldPosition()
 	pos.Y = 0
 
@@ -106,57 +85,56 @@ func (c *World) Update(scene object.Component, dt float32) {
 	}
 
 	// create tiles close to us
-	size := c.Terrain.TileSize
 	tilePos := pos.Scaled(1 / float32(size)).Floor()
 	cx, cz := int(tilePos.X), int(tilePos.Z)
 
 	steps := int(c.distance / float32(size))
-	half := vec3.NewI(size/2, 0, size/2)
 	minDist := math.InfPos
 	var spawn func()
+	var spawnKey string
 	for x := cx - steps; x < cx+steps; x++ {
 		for z := cz - steps; z < cz+steps; z++ {
 			// check if the center of tile would have been in range
 			p := vec3.NewI(x*size, 0, z*size)
-			dist := vec3.Distance(pos, p.Add(half))
+			dist := vec3.Distance(pos, p)
 			if dist > c.distance {
+				continue
+			}
+			if dist > minDist {
 				continue
 			}
 
 			// check if its already active
 			key := fmt.Sprintf("Tile:%d,%d", x, z)
-			_, active := c.active[key]
-			if active {
+			if v, active := c.active[key]; active && v != nil {
 				continue
 			}
 
 			// spawn it
-			if dist < minDist {
-				minDist = dist
-				ix, iz := x, z
-				spawn = func() {
-					log.Println("spawn tile", key)
-					c.lock.Lock()
-					c.active[key] = nil
-					c.lock.Unlock()
+			minDist = dist
+			spawnKey = key
 
-					tile := c.Terrain.GetTile(ix, iz, true)
-					c.ready <- tileSpawn{
-						Key:      key,
-						Position: p,
+			ix, iz := x, z
+			spawn = func() {
+				log.Println("spawn tile", key)
+				tile := c.Terrain.Tile(ix, iz, true)
+				c.ready <- tileSpawn{
+					Key:      key,
+					Position: p,
 
-						Object: object.Builder(object.Empty(key)).
-							Attach(NewMesh(tile)).
-							Attach(physics.NewRigidBody(0)).
-							Attach(physics.NewMesh()).
-							Position(p).
-							Create(),
-					}
+					Object: object.Builder(object.Empty(key)).
+						Attach(NewMesh(tile)).
+						Attach(physics.NewRigidBody(0)).
+						Attach(physics.NewMesh()).
+						Position(p).
+						Create(),
 				}
 			}
 		}
 	}
 	if spawn != nil {
+		// mark key as active before we release the lock
+		c.active[spawnKey] = nil
 		go spawn()
 	}
 }
