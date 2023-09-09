@@ -61,6 +61,10 @@ func (w *World) Recalculate(patch *Patch) {
 	}
 }
 
+func (w *World) EditorUpdate(scene object.Component, dt float32) {
+	w.Update(scene, dt)
+}
+
 func (c *World) Update(scene object.Component, dt float32) {
 	c.lock.Lock()
 	defer c.lock.Unlock()
