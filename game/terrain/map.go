@@ -1,6 +1,8 @@
 package terrain
 
 import (
+	"sync"
+
 	"github.com/johanhenriksson/goworld/math/ivec2"
 	"github.com/johanhenriksson/goworld/math/vec2"
 )
@@ -9,6 +11,7 @@ type Map struct {
 	TileSize int
 
 	tiles map[ivec2.T]*Tile
+	mutex sync.Mutex
 }
 
 func NewMap(tileSize int, tiles int) *Map {
@@ -26,6 +29,8 @@ func NewMap(tileSize int, tiles int) *Map {
 }
 
 func (m *Map) GetTile(tx, ty int, create bool) *Tile {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
 	tp := ivec2.New(tx, ty)
 	tile, exists := m.tiles[tp]
 	if !exists {
