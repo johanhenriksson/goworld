@@ -37,7 +37,7 @@ var _ = Describe("Map", func() {
 			},
 			Source: m,
 		}
-		m.ApplyPatch(patch)
+		m.Set(patch)
 
 		// t00 := m.GetTile(0, 0, false)
 		// Expect(t00.Point(1, 1).Height).To(Equal(float32(1)))
@@ -64,7 +64,7 @@ var _ = Describe("Map", func() {
 		// Expect(t01.Point(2, 1).Height).To(Equal(float32(8)))
 
 		// verify that the expected data is returned from Patch() calls
-		patch2 := m.Patch(patch.Offset, patch.Size)
+		patch2 := m.Get(patch.Offset, patch.Size)
 		Expect(patch2.Size).To(Equal(patch.Size))
 		Expect(patch2.Offset).To(Equal(patch.Offset))
 		Expect(patch2.Points).To(Equal(patch.Points))

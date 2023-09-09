@@ -65,7 +65,7 @@ func TileVertexGenerator(tile *Tile) mesh.Generator[Vertex, uint16] {
 		getPoint := func(x, z int) (Point, bool) {
 			tx, tz := (x+tile.Size)%tile.Size, (z+tile.Size)%tile.Size
 			ox, oz := (x+tile.Size)/tile.Size-1, (z+tile.Size)/tile.Size-1
-			t := tile.Map.GetTile(tile.Position.X+ox, tile.Position.Y+oz, false)
+			t := tile.Map.Tile(tile.Position.X+ox, tile.Position.Y+oz, false)
 			if t == nil {
 				return Point{}, false
 			}

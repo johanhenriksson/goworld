@@ -56,13 +56,13 @@ func (pt *BrushTool) Use(position vec3.T, dt float32) {
 	wx, wz := Mx-mx, Mz-mz
 
 	// cut a patch of terrain
-	patch := pt.terrain.Patch(ivec2.New(mx, mz), ivec2.New(wx, wz))
+	patch := pt.terrain.Get(ivec2.New(mx, mz), ivec2.New(wx, wz))
 
 	// apply brush to patch
 	pt.Brush.Paint(patch, position, pt.Radius.Get(), pt.Strength.Get()*dt)
 
 	// apply patch to tile
-	pt.terrain.ApplyPatch(patch)
+	pt.terrain.Set(patch)
 }
 
 func (pt *BrushTool) Hover(position vec3.T) {
