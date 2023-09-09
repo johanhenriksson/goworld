@@ -19,9 +19,10 @@ type BrushTool struct {
 	Strength object.Property[float32]
 	Brush    Brush
 
-	terrain *Map
-	pressed bool
-	center  vec3.T
+	terrain  *Map
+	pressed  bool
+	center   vec3.T
+	heldtime float32
 }
 
 var _ editor.Tool = &BrushTool{}
@@ -103,6 +104,13 @@ func (pt *BrushTool) Update(scene object.Component, dt float32) {
 	pt.Object.Update(scene, dt)
 
 	if pt.pressed {
-		pt.Use(pt.center, dt)
+		pt.heldtime += dt
+
+		const updatesPerSecond = 15
+		const updateHoldTime float32 = 1.0 / updatesPerSecond
+		if pt.heldtime > updateHoldTime {
+			pt.Use(pt.center, updateHoldTime)
+			pt.heldtime -= updateHoldTime
+		}
 	}
 }
