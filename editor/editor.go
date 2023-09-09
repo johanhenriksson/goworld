@@ -14,3 +14,10 @@ type T interface {
 
 	Actions() []Action
 }
+
+// EditorUpdater is an optional interface that can be implemented by
+// components to receive editor updates.
+type EditorUpdater interface {
+	object.Component
+	EditorUpdate(scene object.Component, dt float32)
+}

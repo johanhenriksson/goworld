@@ -50,3 +50,10 @@ func (e *ComponentEditor) Deselect(ev mouse.Event) bool {
 
 func (e *ComponentEditor) Target() object.Component { return e.target }
 func (e *ComponentEditor) Actions() []Action        { return nil }
+
+func (e *ComponentEditor) Update(scene object.Component, dt float32) {
+	e.Object.Update(scene, dt)
+	if updatable, ok := e.target.(EditorUpdater); ok {
+		updatable.EditorUpdate(scene, dt)
+	}
+}

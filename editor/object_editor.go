@@ -90,3 +90,10 @@ func (e *ObjectEditor) Actions() []Action {
 		},
 	}
 }
+
+func (e *ObjectEditor) Update(scene object.Component, dt float32) {
+	e.Object.Update(scene, dt)
+	if updatable, ok := e.target.(EditorUpdater); ok {
+		updatable.EditorUpdate(scene, dt)
+	}
+}
