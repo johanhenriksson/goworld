@@ -32,8 +32,8 @@ func main() {
 			object.Attach(scene, physics.NewWorld())
 
 			generator := chunk.ExampleWorldgen(4, 16)
-			chonks := chunk.NewWorld(16, generator, 128)
-			object.Attach(scene, chonks)
+			// chonks := chunk.NewWorld(16, generator, 128)
+			// object.Attach(scene, chonks)
 
 			// physics boxes
 			for x := 0; x < 3; x++ {
@@ -95,21 +95,12 @@ func main() {
 			char.Transform().SetPosition(vec3.New(5, 32, 5))
 			object.Attach(scene, char)
 
+			// terrain
 			m := terrain.NewMap(64, 3)
-			tile := m.GetTile(0, 0, true)
-			tileMesh := terrain.NewMesh(tile)
-
-			meshShape := physics.NewMesh()
-			object.Builder(object.Empty("Terrain")).
-				Attach(physics.NewRigidBody(0)).
-				Position(vec3.New(0, 10, 0)).
-				Attach(tileMesh).
-				Attach(meshShape).
-				Parent(scene).
-				Create()
+			object.Attach(scene, terrain.NewWorld(m, 200))
 
 			// directional light
-			rot := float32(40)
+			rot := float32(45)
 			object.Attach(
 				scene,
 				object.Builder(object.Empty("Sun")).
@@ -122,7 +113,7 @@ func main() {
 					Position(vec3.New(1, 2, 3)).
 					Rotation(quat.Euler(rot, 0, 0)).
 					Attach(script.New(func(scene, self object.Component, dt float32) {
-						rot -= 0.5 * dt
+						rot -= dt * 360.0 / 86400.0
 						self.Parent().Transform().SetRotation(quat.Euler(rot, 0, 0))
 					})).
 					Create())

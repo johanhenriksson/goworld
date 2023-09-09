@@ -1,8 +1,10 @@
 package terrain
 
 import (
+	"log"
 	"sync"
 
+	"github.com/johanhenriksson/goworld/math"
 	"github.com/johanhenriksson/goworld/math/ivec2"
 	"github.com/johanhenriksson/goworld/math/vec2"
 )
@@ -49,10 +51,10 @@ func (m *Map) Get(point vec2.T) (Point, bool) {
 	p := point.Floor()
 	x, y := int(p.X), int(p.Y)
 
-	tx, ty := x/m.TileSize, y/m.TileSize
-	ox, oy := x%m.TileSize, y%m.TileSize
+	tc := m.TileCoords(ivec2.New(x, y))
+	ox, oy := (x+m.TileSize)%m.TileSize, (y+m.TileSize)%m.TileSize
 
-	tile := m.GetTile(tx, ty, false)
+	tile := m.GetTile(tc.X, tc.Y, false)
 	if tile == nil {
 		return Point{}, false
 	}
@@ -60,45 +62,94 @@ func (m *Map) Get(point vec2.T) (Point, bool) {
 	return tile.points[oy][ox], true
 }
 
-func (m *Map) Set(point vec2.T, data Point) {
-	p := point.Floor()
-	x, y := int(p.X), int(p.Y)
-
-	tx, ty := x/m.TileSize, y/m.TileSize
-	ox, oy := x%m.TileSize, y%m.TileSize
-
-	create := data.Height != 0 || data.Weights[0] > 0 || data.Weights[1] > 0 || data.Weights[2] > 0 || data.Weights[3] > 0
-	tile := m.GetTile(tx, ty, create)
-	if tile == nil {
-		return
+func (m *Map) Patch(offset, size ivec2.T) *Patch {
+	// allocate patch
+	points := make([][]Point, size.Y+1)
+	for z := 0; z <= size.Y; z++ {
+		points[z] = make([]Point, size.X+1)
+	}
+	patch := &Patch{
+		Size:   size,
+		Offset: offset,
+		Points: points,
+		Source: m,
 	}
 
-	tile.points[oy][ox] = data
+	tmin := m.TileCoords(patch.Offset)
+	tmax := m.TileCoords(patch.Offset.Add(patch.Size))
 
-	// if its an edge point, update neighbors accordingly
-	mt := m.TileSize - 1
-	if ox == 0 {
-		nb := m.GetTile(tx-1, ty, false)
-		if nb != nil {
-			nb.points[oy][mt] = data
+	for x := tmin.X; x <= tmax.X; x++ {
+		for z := tmin.Y; z <= tmax.Y; z++ {
+			t := m.GetTile(x, z, true)
+			Tx := x * m.TileSize
+			Tz := z * m.TileSize
+
+			// find the region of the patch that belongs to this tile
+			tmx := math.Max(patch.Offset.X-Tx, 0)
+			tmz := math.Max(patch.Offset.Y-Tz, 0)
+			tMx := math.Min(patch.Offset.X+patch.Size.X-Tx, m.TileSize)
+			tMz := math.Min(patch.Offset.Y+patch.Size.Y-Tz, m.TileSize)
+
+			px := math.Max(Tx-patch.Offset.X, 0) - tmx
+			pz := math.Max(Tz-patch.Offset.Y, 0) - tmz
+
+			// copy the patch region to the tile
+			for tz := tmz; tz <= tMz; tz++ {
+				for tx := tmx; tx <= tMx; tx++ {
+					patch.Points[tz+pz][tx+px] = t.points[tz][tx]
+				}
+			}
 		}
 	}
-	if oy == 0 {
-		nb := m.GetTile(tx, ty-1, false)
-		if nb != nil {
-			nb.points[mt][ox] = data
+
+	return patch
+}
+
+func (m *Map) TileCoords(point ivec2.T) ivec2.T {
+	return ivec2.New(Floor(point.X, m.TileSize), Floor(point.Y, m.TileSize))
+}
+
+func (m *Map) ApplyPatch(patch *Patch) {
+	tmin := m.TileCoords(patch.Offset)
+	tmax := m.TileCoords(patch.Offset.Add(patch.Size))
+
+	for x := tmin.X; x <= tmax.X; x++ {
+		for z := tmin.Y; z <= tmax.Y; z++ {
+			t := m.GetTile(x, z, true)
+			Tx := x * m.TileSize
+			Tz := z * m.TileSize
+
+			// find the region of the patch that belongs to this tile
+			tmx := math.Max(patch.Offset.X-Tx, 0)
+			tMx := math.Min(patch.Offset.X+patch.Size.X-Tx, m.TileSize)
+			tmz := math.Max(patch.Offset.Y-Tz, 0)
+			tMz := math.Min(patch.Offset.Y+patch.Size.Y-Tz, m.TileSize)
+
+			px := math.Max(Tx-patch.Offset.X, 0) - tmx
+			pz := math.Max(Tz-patch.Offset.Y, 0) - tmz
+
+			log.Println("apply patch", x, z, tmx, tMx, tmz, tMz, px, pz)
+
+			// copy the patch region to the tile
+			for tz := tmz; tz <= tMz; tz++ {
+				for tx := tmx; tx <= tMx; tx++ {
+					t.points[tz][tx] = patch.Points[tz+pz][tx+px]
+				}
+			}
 		}
 	}
-	if ox == mt {
-		nb := m.GetTile(tx+1, ty, false)
-		if nb != nil {
-			nb.points[oy][0] = data
+
+	for x := tmin.X; x <= tmax.X; x++ {
+		for z := tmin.Y; z <= tmax.Y; z++ {
+			t := m.GetTile(x, z, false)
+			t.Changed.Emit(t)
 		}
 	}
-	if oy == mt {
-		nb := m.GetTile(tx, ty+1, false)
-		if nb != nil {
-			nb.points[0][ox] = data
-		}
+}
+
+func Floor(v int, s int) int {
+	if v < 0 {
+		return (v - s + 1) / s
 	}
+	return v / s
 }

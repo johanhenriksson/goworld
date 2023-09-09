@@ -33,6 +33,10 @@ func NewMesh(tile *Tile) *Mesh {
 	msh.SetTexture("diffuse0", noise.NewWhiteNoise(64, 64))
 	msh.SetTexture("diffuse1", noise.NewWhiteNoise(256, 256))
 
+	tile.Changed.Subscribe(func(t *Tile) {
+		msh.Refresh()
+	})
+
 	return &Mesh{
 		Dynamic: msh,
 		Tile:    tile,

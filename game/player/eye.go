@@ -25,7 +25,7 @@ func NewEye() *ArcballCamera {
 		Camera: object.Builder(camera.NewObject(camera.Args{
 			Fov:   58,
 			Near:  0.1,
-			Far:   100,
+			Far:   1000,
 			Clear: color.Black,
 		})).
 			Position(vec3.New(0, 0, -distance)).
