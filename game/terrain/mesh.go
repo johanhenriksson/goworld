@@ -28,7 +28,7 @@ func NewMesh(tile *Tile) *Mesh {
 		CullMode:     vertex.CullBack,
 		Transparent:  true, // does not cast shadows
 	}
-	msh := mesh.NewDynamic("Terrain", mat, TileVertexGenerator(tile))
+	msh := mesh.NewDynamic("Terrain", mat, FlatTileGenerator(tile))
 	msh.SetTexture("pattern", texture.Checker)
 	msh.SetTexture("diffuse0", noise.NewWhiteNoise(64, 64))
 	msh.SetTexture("diffuse1", noise.NewWhiteNoise(256, 256))
@@ -55,7 +55,7 @@ var normSamples = []ivec2.T{
 	{X: 0, Y: 1},
 }
 
-func TileVertexGenerator(tile *Tile) mesh.Generator[Vertex, uint16] {
+func SmoothTileGenerator(tile *Tile) mesh.Generator[Vertex, uint16] {
 	if tile.Size > 100 {
 		panic("tile size cant be greater than 100x100")
 	}
@@ -134,6 +134,69 @@ func TileVertexGenerator(tile *Tile) mesh.Generator[Vertex, uint16] {
 		return mesh.Data[Vertex, uint16]{
 			Vertices: vertices,
 			Indices:  indices,
+		}
+	}
+}
+
+func FlatTileGenerator(tile *Tile) mesh.Generator[Vertex, uint16] {
+	if tile.Size > 100 {
+		panic("tile size cant be greater than 100x100")
+	}
+	return func() mesh.Data[Vertex, uint16] {
+		// generate vertices
+		vertices := make([]Vertex, 0, 6*tile.Size*tile.Size)
+		vertex := func(x, z int) Vertex {
+			root := tile.Point(x, z)
+			return Vertex{
+				P: vec3.New(float32(x), root.Height, float32(z)),
+				T: vec2.New(float32(x)/float32(tile.Size), 1-float32(z)/float32(tile.Size)),
+				W: vec4.New(root.Weights[0], root.Weights[1], root.Weights[2], root.Weights[3]),
+			}
+		}
+		for z := 0; z < tile.Size; z++ {
+			for x := 0; x < tile.Size; x++ {
+				ex, ez := x%2 == 0, z%2 == 0
+				if ex && ez || !ex && !ez {
+					v1_00 := vertex(x, z)
+					v1_10 := vertex(x+1, z)
+					v1_11 := vertex(x+1, z+1)
+
+					v2_00 := v1_00
+					v2_01 := vertex(x, z+1)
+					v2_11 := v1_11
+
+					n1 := vec3.Cross(v1_11.P.Sub(v1_00.P), v1_10.P.Sub(v1_00.P)).Normalized()
+					v1_00.N, v1_10.N, v1_11.N = n1, n1, n1
+
+					n2 := vec3.Cross(v2_01.P.Sub(v2_00.P), v2_11.P.Sub(v2_00.P)).Normalized()
+					v2_00.N, v2_01.N, v2_11.N = n2, n2, n2
+
+					vertices = append(vertices, v1_00, v1_11, v1_10)
+					vertices = append(vertices, v2_00, v2_01, v2_11)
+				} else {
+					v1_00 := vertex(x, z)
+					v1_01 := vertex(x, z+1)
+					v1_10 := vertex(x+1, z)
+
+					v2_01 := v1_01
+					v2_11 := vertex(x+1, z+1)
+					v2_10 := v1_10
+
+					n1 := vec3.Cross(v1_01.P.Sub(v1_00.P), v1_10.P.Sub(v1_00.P)).Normalized()
+					v1_00.N, v1_10.N, v1_01.N = n1, n1, n1
+
+					n2 := vec3.Cross(v2_11.P.Sub(v2_01.P), v2_10.P.Sub(v2_01.P)).Normalized()
+					v2_01.N, v2_11.N, v2_10.N = n2, n2, n2
+
+					vertices = append(vertices, v1_00, v1_01, v1_10)
+					vertices = append(vertices, v2_01, v2_11, v2_10)
+				}
+			}
+		}
+
+		return mesh.Data[Vertex, uint16]{
+			Vertices: vertices,
+			Indices:  nil,
 		}
 	}
 }
