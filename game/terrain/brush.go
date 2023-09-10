@@ -118,3 +118,31 @@ func (b *PaintBrush) Paint(patch *Patch, center vec3.T, radius, strength float32
 	}
 	return nil
 }
+
+type LevelBrush struct{}
+
+func (b *LevelBrush) Paint(patch *Patch, center vec3.T, radius, strength float32) error {
+	// grab center height
+	cx, gz := patch.Size.X/2, patch.Size.Y/2
+	desiredHeight := patch.Points[gz][cx].Height
+
+	for z := 0; z < patch.Size.Y; z++ {
+		for x := 0; x < patch.Size.X; x++ {
+			p := vec2.NewI(patch.Offset.X+x, patch.Offset.Y+z)
+
+			// calculate brush weight as the distance from center of brush
+			weight := math.Min(p.Sub(center.XZ()).Length()/radius, 1)
+
+			// invert
+			weight = 1 - weight
+
+			height := patch.Points[z][x].Height
+
+			adjustment := (desiredHeight - height) * weight * strength
+
+			patch.Points[z][x].Height += adjustment
+		}
+	}
+
+	return nil
+}

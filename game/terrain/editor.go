@@ -23,6 +23,7 @@ type Editor struct {
 	LowerTool  *BrushTool
 	SmoothTool *BrushTool
 	PaintTool  *BrushTool
+	LevelTool  *BrushTool
 }
 
 var _ editor.T = &Editor{}
@@ -42,6 +43,10 @@ func NewEditor(ctx *editor.Context, mesh *Mesh) *Editor {
 			Create(),
 
 		SmoothTool: object.Builder(NewBrushTool(terrain, &SmoothBrush{}, color.Yellow)).
+			Active(false).
+			Create(),
+
+		LevelTool: object.Builder(NewBrushTool(terrain, &LevelBrush{}, color.Blue)).
 			Active(false).
 			Create(),
 
@@ -89,10 +94,18 @@ func (e *Editor) Actions() []editor.Action {
 		},
 		{
 			Name: "Smooth",
-			Icon: icon.IconSyncAlt,
+			Icon: icon.IconWaves,
 			Key:  keys.R,
 			Callback: func(mgr *editor.ToolManager) {
 				mgr.UseTool(e.SmoothTool)
+			},
+		},
+		{
+			Name: "Level",
+			Icon: icon.IconSyncAlt,
+			Key:  keys.G,
+			Callback: func(mgr *editor.ToolManager) {
+				mgr.UseTool(e.LevelTool)
 			},
 		},
 		{
