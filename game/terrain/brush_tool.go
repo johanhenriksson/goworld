@@ -34,7 +34,7 @@ func NewBrushTool(terrain *Map, brush Brush, color color.T) *BrushTool {
 			Color:  color,
 		}),
 		Radius:   object.NewProperty(float32(1)),
-		Strength: object.NewProperty(float32(3)),
+		Strength: object.NewProperty(float32(1)),
 		Brush:    brush,
 
 		terrain: terrain,

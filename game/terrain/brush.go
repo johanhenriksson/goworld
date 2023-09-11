@@ -1,6 +1,8 @@
 package terrain
 
 import (
+	"time"
+
 	"github.com/johanhenriksson/goworld/math"
 	"github.com/johanhenriksson/goworld/math/ivec2"
 	"github.com/johanhenriksson/goworld/math/vec2"
@@ -141,6 +143,34 @@ func (b *LevelBrush) Paint(patch *Patch, center vec3.T, radius, strength float32
 			adjustment := (desiredHeight - height) * weight * strength
 
 			patch.Points[z][x].Height += adjustment
+		}
+	}
+
+	return nil
+}
+
+type NoiseBrush struct {
+	noise *math.Noise
+}
+
+func NewNoiseBrush() *NoiseBrush {
+	return &NoiseBrush{
+		noise: math.NewNoise(int(time.Now().UnixNano()), 4),
+	}
+}
+
+func (b *NoiseBrush) Paint(patch *Patch, center vec3.T, radius, strength float32) error {
+	for z := 0; z < patch.Size.Y; z++ {
+		for x := 0; x < patch.Size.X; x++ {
+			p := vec2.NewI(patch.Offset.X+x, patch.Offset.Y+z)
+
+			// calculate brush weight as the distance from center of brush
+			weight := math.Min(p.Sub(center.XZ()).Length()/radius, 1)
+
+			// invert
+			weight = 1 - weight
+
+			patch.Points[z][x].Height += b.noise.Sample(int(p.X), 0, int(p.Y)) * strength * weight
 		}
 	}
 
