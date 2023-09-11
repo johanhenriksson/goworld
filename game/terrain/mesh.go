@@ -126,8 +126,15 @@ func SmoothTileGenerator(tile *Tile) mesh.Generator[Vertex, uint16] {
 				v01 := idx(x, z+1)
 				v10 := idx(x+1, z)
 				v11 := idx(x+1, z+1)
-				indices = append(indices, v00, v11, v10)
-				indices = append(indices, v00, v01, v11)
+
+				ex, ez := x%2 == 0, z%2 == 0
+				if ex == ez {
+					indices = append(indices, v00, v11, v10)
+					indices = append(indices, v00, v01, v11)
+				} else {
+					indices = append(indices, v00, v01, v10)
+					indices = append(indices, v01, v11, v10)
+				}
 			}
 		}
 
@@ -156,7 +163,7 @@ func FlatTileGenerator(tile *Tile) mesh.Generator[Vertex, uint16] {
 		for z := 0; z < tile.Size; z++ {
 			for x := 0; x < tile.Size; x++ {
 				ex, ez := x%2 == 0, z%2 == 0
-				if ex && ez || !ex && !ez {
+				if ex == ez {
 					v1_00 := vertex(x, z)
 					v1_10 := vertex(x+1, z)
 					v1_11 := vertex(x+1, z+1)
