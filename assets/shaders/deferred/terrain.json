@@ -23,5 +23,5 @@
     "Lights": 2,
     "Textures": 3
   },
-  "Textures": ["pattern", "diffuse0", "diffuse1", "diffuse2"]
+  "Textures": ["diffuse0", "diffuse1", "diffuse2", "diffuse3"]
 }
