@@ -115,7 +115,7 @@ func (b *PaintBrush) Paint(patch *Patch, center vec3.T, radius, strength float32
 			// invert
 			weight = 1 - weight
 
-			patch.Points[z][x].Weights[1] += 1 // strength * weight
+			patch.Points[z][x].Weights[1] += 1000 * strength * weight
 		}
 	}
 	return nil
@@ -155,7 +155,7 @@ type NoiseBrush struct {
 
 func NewNoiseBrush() *NoiseBrush {
 	return &NoiseBrush{
-		noise: math.NewNoise(int(time.Now().UnixNano()), 4),
+		noise: math.NewNoise(int(time.Now().UnixNano()), 0.1),
 	}
 }
 

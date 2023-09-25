@@ -1,15 +1,17 @@
 package terrain
 
 import (
-	// "github.com/johanhenriksson/goworld/math"
 	"github.com/johanhenriksson/goworld/core/events"
 	"github.com/johanhenriksson/goworld/math/ivec2"
+	"github.com/johanhenriksson/goworld/render/texture"
 )
 
 type Tile struct {
 	Map      *Map
 	Position ivec2.T
 	Size     int
+	UVScale  float32
+	Textures []texture.Ref
 	Changed  events.Event[*Tile]
 
 	points [][]Point
@@ -29,11 +31,26 @@ func NewTile(m *Map, position ivec2.T, size int) *Tile {
 		}
 	}
 
+	// scale textures so that 1 unit = 1 pixel
+	// todo: aquire texture size from texture
+	textureSize := 16
+	uvscale := 2 * float32(size) / float32(textureSize)
+
 	return &Tile{
 		Map:      m,
 		Position: position,
 		Size:     size,
-		points:   points,
+		UVScale:  uvscale,
+		Textures: []texture.Ref{
+			texture.PathArgsRef("textures/grass1.png", texture.Args{
+				Filter: texture.FilterNearest,
+			}),
+			texture.PathArgsRef("textures/rock1.png", texture.Args{
+				Filter: texture.FilterNearest,
+			}),
+		},
+
+		points: points,
 	}
 }
 

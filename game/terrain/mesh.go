@@ -1,13 +1,14 @@
 package terrain
 
 import (
+	"strconv"
+
 	"github.com/johanhenriksson/goworld/core/mesh"
 	"github.com/johanhenriksson/goworld/math/ivec2"
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/math/vec4"
 	"github.com/johanhenriksson/goworld/render/material"
-	"github.com/johanhenriksson/goworld/render/noise"
 	"github.com/johanhenriksson/goworld/render/texture"
 	"github.com/johanhenriksson/goworld/render/vertex"
 )
@@ -28,10 +29,12 @@ func NewMesh(tile *Tile) *Mesh {
 		CullMode:     vertex.CullBack,
 		Transparent:  true, // does not cast shadows
 	}
+
 	msh := mesh.NewDynamic("Terrain", mat, FlatTileGenerator(tile, 0))
-	msh.SetTexture("pattern", texture.Checker)
-	msh.SetTexture("diffuse0", noise.NewWhiteNoise(64, 64))
-	msh.SetTexture("diffuse1", noise.NewWhiteNoise(256, 256))
+	for i, tex := range tile.Textures {
+		slot := texture.Slot("diffuse" + strconv.Itoa(i))
+		msh.SetTexture(slot, tex)
+	}
 
 	tile.Changed.Subscribe(func(t *Tile) {
 		msh.Refresh()
@@ -100,7 +103,7 @@ func SmoothTileGenerator(tile *Tile) mesh.Generator[Vertex, uint16] {
 			norm = norm.Scaled(float32(1) / float32(samples))
 			return Vertex{
 				P: vec3.New(float32(x), root.Height, float32(z)),
-				T: vec2.New(float32(x)/float32(tile.Size), 1-float32(z)/float32(tile.Size)),
+				T: vec2.New(float32(x)/float32(tile.Size), 1-float32(z)/float32(tile.Size)).Scaled(tile.UVScale),
 				N: norm,
 				W: vec4.New(root.Weights[0], root.Weights[1], root.Weights[2], root.Weights[3]),
 			}
@@ -159,14 +162,13 @@ func FlatTileGenerator(tile *Tile, levelOfDetail int) mesh.Generator[Vertex, uin
 	}
 
 	return func() mesh.Data[Vertex, uint16] {
-
 		// generate vertices
 		vertices := make([]Vertex, 0, 6*tile.Size*tile.Size)
 		vertex := func(x, z int) Vertex {
 			root := tile.Point(x, z)
 			return Vertex{
 				P: vec3.New(float32(x), root.Height, float32(z)),
-				T: vec2.New(float32(x)/float32(tile.Size), 1-float32(z)/float32(tile.Size)),
+				T: vec2.New(float32(x)/float32(tile.Size), 1-float32(z)/float32(tile.Size)).Scaled(tile.UVScale),
 				W: vec4.New(root.Weights[0], root.Weights[1], root.Weights[2], root.Weights[3]),
 			}
 		}
