@@ -125,6 +125,9 @@ func Serialize(enc Encoder, obj Component) error {
 	if !ok {
 		return fmt.Errorf("%w: %s is not serializable", ErrSerialize, kind)
 	}
+	if _, registered := types[kind]; !registered {
+		return fmt.Errorf("%w: no deserializer for %s", ErrSerialize, kind)
+	}
 	if err := enc.Encode(kind); err != nil {
 		return err
 	}
@@ -147,6 +150,10 @@ func (o *object) Serialize(enc Encoder) error {
 	children := 0
 	for _, child := range o.children {
 		if _, ok := child.(Serializable); ok {
+			kind := typeName(child)
+			if _, registered := types[kind]; !registered {
+				continue
+			}
 			children++
 		}
 	}

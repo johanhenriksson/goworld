@@ -124,17 +124,13 @@ type MeshState struct {
 	Material  material.Def
 }
 
-func (m *Static) State() MeshState {
-	return MeshState{
+func (m *Static) Serialize(enc object.Encoder) error {
+	return enc.Encode(MeshState{
 		// send help
 		ComponentState: object.NewComponentState(m.Component),
 		Primitive:      m.primitive,
 		Material:       *m.Material(),
-	}
-}
-
-func (m *Static) Serialize(enc object.Encoder) error {
-	return enc.Encode(m.State())
+	})
 }
 
 func Deserialize(dec object.Decoder) (object.Component, error) {

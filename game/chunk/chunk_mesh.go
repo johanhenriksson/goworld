@@ -37,7 +37,6 @@ func NewMesh(chunk *T) *Mesh {
 }
 
 type ChunkState struct {
-	mesh.MeshState
 	Data       []voxel.T
 	Sx, Sy, Sz int
 }
@@ -45,11 +44,10 @@ type ChunkState struct {
 func (m *Mesh) Serialize(enc object.Encoder) error {
 	log.Println("serialize chunk mesh")
 	return enc.Encode(ChunkState{
-		MeshState: m.Dynamic.State(),
-		Data:      m.Chunk.Data,
-		Sx:        m.Chunk.Sx,
-		Sy:        m.Chunk.Sy,
-		Sz:        m.Chunk.Sz,
+		Data: m.Chunk.Data,
+		Sx:   m.Chunk.Sx,
+		Sy:   m.Chunk.Sy,
+		Sz:   m.Chunk.Sz,
 	})
 }
 
