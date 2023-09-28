@@ -1,11 +1,20 @@
 package vertex
 
 import (
+	"encoding/gob"
+
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/math/vec4"
 	"github.com/johanhenriksson/goworld/render/color"
 )
+
+func init() {
+	gob.Register(P{})
+	gob.Register(C{})
+	gob.Register(T{})
+	gob.Register(UI{})
+}
 
 // P - Position only vertex
 type P struct {
