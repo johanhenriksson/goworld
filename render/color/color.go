@@ -1,6 +1,7 @@
 package color
 
 import (
+	"encoding/gob"
 	"fmt"
 	"image/color"
 
@@ -26,6 +27,10 @@ var (
 
 	DarkGrey = T{0.2, 0.2, 0.2, 1}
 )
+
+func init() {
+	gob.Register(T{})
+}
 
 // T holds 32-bit RGBA colors
 type T struct {
