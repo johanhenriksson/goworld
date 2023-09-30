@@ -122,6 +122,7 @@ type MeshState struct {
 	object.ComponentState
 	Primitive vertex.Primitive
 	Material  material.Def
+	TexSlots  map[texture.Slot]texture.Ref
 }
 
 func (m *Static) Serialize(enc object.Encoder) error {
@@ -130,6 +131,7 @@ func (m *Static) Serialize(enc object.Encoder) error {
 		ComponentState: object.NewComponentState(m.Component),
 		Primitive:      m.primitive,
 		Material:       *m.Material(),
+		TexSlots:       m.textures,
 	})
 }
 
@@ -141,5 +143,6 @@ func Deserialize(dec object.Decoder) (object.Component, error) {
 
 	obj := NewPrimitiveMesh(state.Primitive, &state.Material)
 	obj.Component = state.ComponentState.New()
+	obj.textures = state.TexSlots
 	return obj, nil
 }
