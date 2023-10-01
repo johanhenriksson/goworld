@@ -98,11 +98,19 @@ type ObjectState struct {
 	Children int
 }
 
+type TypeInfo struct {
+	Name        string
+	Path        []string
+	Create      CreateFn
+	Deserialize DeserializeFn
+}
+
+type CreateFn func() (Component, error)
 type DeserializeFn func(Decoder) (Component, error)
 
 var ErrSerialize = errors.New("serialization error")
 
-var types = map[string]DeserializeFn{}
+var types = map[string]TypeInfo{}
 
 func typeName(obj any) string {
 	t := reflect.TypeOf(obj).Elem()
@@ -110,13 +118,26 @@ func typeName(obj any) string {
 }
 
 func init() {
-	Register[*object](DeserializeObject)
+	Register[*object](TypeInfo{
+		Name: "Object",
+		Create: func() (Component, error) {
+			return Empty("Object"), nil
+		},
+		Deserialize: DeserializeObject,
+	})
 }
 
-func Register[T Serializable](deserializer DeserializeFn) {
+func Register[T Serializable](info TypeInfo) {
 	var empty T
 	kind := typeName(empty)
-	types[kind] = deserializer
+	if info.Name == "" {
+		t := reflect.TypeOf(empty).Elem()
+		info.Name = t.Name()
+	}
+	if info.Deserialize == nil {
+		panic("no deserializer for " + info.Name)
+	}
+	types[kind] = info
 }
 
 func Serialize(enc Encoder, obj Component) error {
@@ -139,11 +160,11 @@ func Deserialize(decoder Decoder) (Component, error) {
 	if err := decoder.Decode(&kind); err != nil {
 		return nil, err
 	}
-	deserializer, exists := types[kind]
+	typ, exists := types[kind]
 	if !exists {
 		return nil, fmt.Errorf("%w: no deserializer for %s", ErrSerialize, kind)
 	}
-	return deserializer(decoder)
+	return typ.Deserialize(decoder)
 }
 
 func (o *object) Serialize(enc Encoder) error {

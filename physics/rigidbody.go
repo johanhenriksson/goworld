@@ -10,7 +10,14 @@ import (
 )
 
 func init() {
-	object.Register[*RigidBody](DeserializeRigidBody)
+	object.Register[*RigidBody](object.TypeInfo{
+		Name:        "Rigidbody",
+		Path:        []string{"Physics"},
+		Deserialize: DeserializeRigidBody,
+		Create: func() (object.Component, error) {
+			return NewRigidBody(1), nil
+		},
+	})
 }
 
 type RigidBody struct {

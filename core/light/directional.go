@@ -41,7 +41,18 @@ type Directional struct {
 var _ T = &Directional{}
 
 func init() {
-	object.Register[*Directional](DeserializeDirectional)
+	object.Register[*Directional](object.TypeInfo{
+		Name:        "Directional Light",
+		Deserialize: DeserializeDirectional,
+		Create: func() (object.Component, error) {
+			return NewDirectional(DirectionalArgs{
+				Color:     color.White,
+				Intensity: 1,
+				Shadows:   true,
+				Cascades:  4,
+			}), nil
+		},
+	})
 }
 
 func NewDirectional(args DirectionalArgs) *Directional {

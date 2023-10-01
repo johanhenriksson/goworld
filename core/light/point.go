@@ -25,7 +25,17 @@ type Point struct {
 var _ T = &Point{}
 
 func init() {
-	object.Register[*Point](DeserializePoint)
+	object.Register[*Point](object.TypeInfo{
+		Name:        "Point Light",
+		Deserialize: DeserializePoint,
+		Create: func() (object.Component, error) {
+			return NewPoint(PointArgs{
+				Color:     color.White,
+				Range:     10,
+				Intensity: 1,
+			}), nil
+		},
+	})
 }
 
 func NewPoint(args PointArgs) *Point {

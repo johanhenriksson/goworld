@@ -10,7 +10,13 @@ import (
 )
 
 func init() {
-	object.Register[*Static](Deserialize)
+	object.Register[*Static](object.TypeInfo{
+		Name:        "Mesh",
+		Deserialize: Deserialize,
+		Create: func() (object.Component, error) {
+			return New(nil), nil
+		},
+	})
 }
 
 type Mesh interface {

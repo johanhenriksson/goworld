@@ -9,7 +9,14 @@ import (
 )
 
 func init() {
-	object.Register[*Box](DeserializeBox)
+	object.Register[*Box](object.TypeInfo{
+		Name:        "Box Collider",
+		Path:        []string{"Physics"},
+		Deserialize: DeserializeBox,
+		Create: func() (object.Component, error) {
+			return NewBox(vec3.One), nil
+		},
+	})
 }
 
 type Box struct {
