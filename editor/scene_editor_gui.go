@@ -1,11 +1,9 @@
 package editor
 
 import (
-	"log"
 	"os"
 
 	"github.com/johanhenriksson/goworld/core/input/mouse"
-	"github.com/johanhenriksson/goworld/core/light"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/gui"
 	"github.com/johanhenriksson/goworld/gui/node"
@@ -13,7 +11,6 @@ import (
 	"github.com/johanhenriksson/goworld/gui/widget/button"
 	"github.com/johanhenriksson/goworld/gui/widget/menu"
 	"github.com/johanhenriksson/goworld/gui/widget/rect"
-	"github.com/johanhenriksson/goworld/physics"
 	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/util"
 )
@@ -100,16 +97,40 @@ func MakeGUI(editor *App) gui.Manager {
 }
 
 func makeMenu(editor *App) node.T {
-	attach := func(cmp object.Component) {
-		if len(editor.Tools.Selected()) < 1 {
-			log.Println("no selection?")
-			return
+	createItems := make([]menu.ItemProps, 0, len(object.Types()))
+	for _, t := range object.Types() {
+		info := t // todo: fix in go 1.22
+		if info.Create == nil {
+			continue
 		}
-		obj := editor.Tools.Selected()[0].Target().(object.Object)
-		object.Attach(obj, cmp)
-		editor.Refresh()
-		editor.Tools.Select(editor.Lookup(obj))
+		createItems = append(createItems, menu.ItemProps{
+			Key:   "new:" + t.Name,
+			Title: "New " + t.Name,
+			OnClick: func(e mouse.Event) {
+				parent := editor.workspace
+				if len(editor.Tools.Selected()) > 0 {
+					parent = editor.Tools.Selected()[0].Target().(object.Object)
+				}
+
+				thing, err := info.Create()
+				if err != nil {
+					// todo: handle errors properly
+					panic("failed to create " + t.Name + ": " + err.Error())
+				}
+				object.Attach(parent, thing)
+				editor.Refresh()
+
+				if obj, ok := thing.(object.Object); ok {
+					position := editor.Player.Transform().Position().Add(editor.Player.Camera.Transform().Forward())
+					obj.Transform().SetWorldPosition(position)
+					editor.Tools.Select(editor.Lookup(obj))
+				} else {
+					editor.Tools.Select(editor.Lookup(parent))
+				}
+			},
+		})
 	}
+
 	return menu.Menu("gui-menu", menu.Props{
 		Style: menu.Style{
 			Color:      color.RGB(0.76, 0.76, 0.76),
@@ -161,53 +182,9 @@ func makeMenu(editor *App) node.T {
 				},
 			},
 			{
-				Key:   "menu-object",
-				Title: "Object",
-				Items: []menu.ItemProps{
-					{
-						Key:   "menu-new-object",
-						Title: "New",
-						OnClick: func(e mouse.Event) {
-							position := editor.Player.Transform().Position().Add(editor.Player.Transform().Forward())
-							obj := object.Builder(object.Empty("New Object")).
-								Position(position).
-								Create()
-							object.Attach(editor.workspace, obj)
-							editor.Refresh()
-							editor.Tools.Select(editor.Lookup(obj))
-						},
-					},
-					{
-						Key:   "add-point-light",
-						Title: "Add Point Light",
-						OnClick: func(e mouse.Event) {
-							attach(light.NewPoint(light.PointArgs{
-								Color:     color.Purple,
-								Range:     10,
-								Intensity: 3,
-							}))
-						},
-					},
-					{
-						Key:   "add-dir-light",
-						Title: "Add Directional Light",
-						OnClick: func(e mouse.Event) {
-							attach(light.NewDirectional(light.DirectionalArgs{
-								Color:     color.Purple,
-								Intensity: 3,
-								Shadows:   true,
-								Cascades:  3,
-							}))
-						},
-					},
-					{
-						Key:   "add-rigidbody-light",
-						Title: "Add Rigidbody",
-						OnClick: func(e mouse.Event) {
-							attach(physics.NewRigidBody(0))
-						},
-					},
-				},
+				Key:   "menu-create",
+				Title: "Create",
+				Items: createItems,
 			},
 		},
 	})

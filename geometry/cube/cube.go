@@ -47,7 +47,7 @@ type Args struct {
 // New creates a vertex colored cube mesh with a given size
 func New(args Args) *Mesh {
 	if args.Mat == nil {
-		args.Mat = material.ColoredForward()
+		args.Mat = material.StandardForward()
 	}
 	cube := object.NewComponent(&Mesh{
 		Static: mesh.New(args.Mat),
