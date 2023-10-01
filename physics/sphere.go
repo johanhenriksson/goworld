@@ -7,7 +7,14 @@ import (
 )
 
 func init() {
-	object.Register[*Sphere](DeserializeSphere)
+	object.Register[*Sphere](object.TypeInfo{
+		Name:        "Sphere Collider",
+		Path:        []string{"Physics"},
+		Deserialize: DeserializeSphere,
+		Create: func() (object.Component, error) {
+			return NewSphere(1), nil
+		},
+	})
 }
 
 type Sphere struct {

@@ -6,9 +6,21 @@ import (
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render/material"
-	"github.com/johanhenriksson/goworld/render/texture"
 	"github.com/johanhenriksson/goworld/render/vertex"
 )
+
+func init() {
+	object.Register[*Mesh](object.TypeInfo{
+		Name:        "Cube",
+		Path:        []string{"Geometry"},
+		Deserialize: Deserialize,
+		Create: func() (object.Component, error) {
+			return NewObject(Args{
+				Size: 1,
+			}), nil
+		},
+	})
+}
 
 type Object struct {
 	object.Object
@@ -41,9 +53,34 @@ func New(args Args) *Mesh {
 		Static: mesh.New(args.Mat),
 		Args:   args,
 	})
-	cube.SetTexture(texture.Diffuse, texture.Checker)
+	// cube.SetTexture(texture.Diffuse, texture.Checker)
 	cube.generate()
 	return cube
+}
+
+func (c *Mesh) Serialize(encoder object.Encoder) error {
+	if err := c.Static.Serialize(encoder); err != nil {
+		return err
+	}
+	return encoder.Encode(c.Args)
+}
+
+func Deserialize(decoder object.Decoder) (object.Component, error) {
+	msh, err := mesh.Deserialize(decoder)
+	if err != nil {
+		return nil, err
+	}
+	var args Args
+	if err := decoder.Decode(&args); err != nil {
+		return nil, err
+	}
+
+	cube := object.NewComponent(&Mesh{
+		Static: msh.(*mesh.Static),
+		Args:   args,
+	})
+	cube.generate()
+	return cube, nil
 }
 
 func (c *Mesh) generate() {

@@ -9,7 +9,14 @@ import (
 )
 
 func init() {
-	object.Register[*Mesh](DeserializeMesh)
+	object.Register[*Mesh](object.TypeInfo{
+		Name:        "Mesh Collider",
+		Path:        []string{"Physics"},
+		Deserialize: DeserializeMesh,
+		Create: func() (object.Component, error) {
+			return NewMesh(), nil
+		},
+	})
 }
 
 type Mesh struct {

@@ -3,7 +3,13 @@ package object
 import "log"
 
 func init() {
-	Register[*scene](deserializeScene)
+	Register[*scene](TypeInfo{
+		Name:        "Scene",
+		Deserialize: deserializeScene,
+		Create: func() (Component, error) {
+			return Scene(), nil
+		},
+	})
 }
 
 type scene struct {

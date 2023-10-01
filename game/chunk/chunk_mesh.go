@@ -12,7 +12,11 @@ import (
 )
 
 func init() {
-	object.Register[*Mesh](Deserialize)
+	object.Register[*Mesh](object.TypeInfo{
+		Name:        "Chunk Mesh",
+		Path:        []string{"Game"},
+		Deserialize: Deserialize,
+	})
 	gob.Register(voxel.Vertex{})
 }
 

@@ -8,7 +8,14 @@ import (
 )
 
 func init() {
-	object.Register[*Capsule](DeserializeCapsule)
+	object.Register[*Capsule](object.TypeInfo{
+		Name:        "Capsule Collider",
+		Path:        []string{"Physics"},
+		Deserialize: DeserializeCapsule,
+		Create: func() (object.Component, error) {
+			return NewCapsule(1.8, 0.3), nil
+		},
+	})
 }
 
 type Capsule struct {
