@@ -34,6 +34,10 @@ func NewSkydome() *Skydome {
 	return dome
 }
 
+func (d *Skydome) EditorUpdate(scene object.Component, dt float32) {
+	d.Update(scene, dt)
+}
+
 func (d *Skydome) Update(scene object.Component, dt float32) {
 	d.Object.Update(scene, dt)
 
