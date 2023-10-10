@@ -280,25 +280,25 @@ func (e *Editor) Actions() []editor.Action {
 			Name:     "Place",
 			Icon:     icon.IconEdit,
 			Key:      keys.F,
-			Callback: func(mgr *editor.ToolManager) { mgr.UseTool(e.PlaceTool) },
+			Callback: func(mgr *editor.App) { mgr.UseTool(e.PlaceTool) },
 		},
 		{
 			Name:     "Erase",
 			Icon:     icon.IconBackspace,
 			Key:      keys.C,
-			Callback: func(mgr *editor.ToolManager) { mgr.UseTool(e.EraseTool) },
+			Callback: func(mgr *editor.App) { mgr.UseTool(e.EraseTool) },
 		},
 		{
 			Name:     "Replace",
 			Icon:     icon.IconSwapHoriz,
 			Key:      keys.R,
-			Callback: func(mgr *editor.ToolManager) { mgr.UseTool(e.ReplaceTool) },
+			Callback: func(mgr *editor.App) { mgr.UseTool(e.ReplaceTool) },
 		},
 		{
 			Name: "Sample",
 			Icon: icon.IconColorize,
 			Key:  keys.T,
-			Callback: func(mgr *editor.ToolManager) {
+			Callback: func(mgr *editor.App) {
 				previousTool := mgr.Tool()
 				e.SampleTool.Reselect = func() { mgr.UseTool(previousTool) }
 				mgr.UseTool(e.SampleTool)
@@ -309,13 +309,13 @@ func (e *Editor) Actions() []editor.Action {
 			Icon:     icon.IconDelete,
 			Key:      keys.N,
 			Modifier: keys.Ctrl,
-			Callback: func(mgr *editor.ToolManager) { e.clearChunk() },
+			Callback: func(mgr *editor.App) { e.clearChunk() },
 		},
 		{
 			Name: "Crop",
 			Key:  keys.U,
 			Icon: icon.IconCrop,
-			Callback: func(mgr *editor.ToolManager) {
+			Callback: func(mgr *editor.App) {
 				Crop(e.Chunk)
 				e.Recalculate()
 			},

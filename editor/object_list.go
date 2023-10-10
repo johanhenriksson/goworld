@@ -15,9 +15,8 @@ import (
 type SelectObjectHandler func(object.Component)
 
 type ObjectListProps struct {
-	Scene       object.Component
-	EditorRoot  object.Component
-	ToolManager *ToolManager
+	Scene  object.Component
+	Editor *App
 }
 
 func ObjectList(key string, props ObjectListProps) node.T {
@@ -34,7 +33,7 @@ func ObjectList(key string, props ObjectListProps) node.T {
 						var hit bool
 						obj, hit = object.NewQuery[T]().Where(func(e T) bool {
 							return e.Target() == obj
-						}).First(props.EditorRoot)
+						}).First(props.Editor)
 						if !hit {
 							return
 						}
@@ -42,7 +41,7 @@ func ObjectList(key string, props ObjectListProps) node.T {
 
 					// check if we found something selectable
 					if selectable, ok := obj.(T); ok {
-						props.ToolManager.Select(selectable)
+						props.Editor.Select(selectable)
 					}
 				},
 			}),

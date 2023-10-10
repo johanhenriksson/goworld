@@ -19,7 +19,7 @@ import (
 )
 
 func makeToolbar(editor *App) node.T {
-	actions := editor.Tools.Actions()
+	actions := editor.Actions()
 	if len(actions) == 0 {
 		return nil
 	}
@@ -30,7 +30,7 @@ func makeToolbar(editor *App) node.T {
 			Layout:  style.Row{},
 			Padding: style.RectAll(2),
 		},
-		Children: util.Map(editor.Tools.Actions(), func(action Action) node.T {
+		Children: util.Map(actions, func(action Action) node.T {
 			return button.New(action.Name, button.Props{
 				// Text: action.Name,
 				Icon: action.Icon,
@@ -42,7 +42,7 @@ func makeToolbar(editor *App) node.T {
 					Radius:    style.Px(4),
 				},
 				OnClick: func(e mouse.Event) {
-					action.Callback(editor.Tools)
+					action.Callback(editor)
 				},
 			})
 		}),
@@ -101,14 +101,14 @@ func MakeGUI(editor *App) gui.Manager {
 
 func makeMenu(editor *App) node.T {
 	attach := func(cmp object.Component) {
-		if len(editor.Tools.Selected()) < 1 {
+		if len(editor.Selected()) < 1 {
 			log.Println("no selection?")
 			return
 		}
-		obj := editor.Tools.Selected()[0].Target().(object.Object)
+		obj := editor.Selected()[0].Target().(object.Object)
 		object.Attach(obj, cmp)
 		editor.Refresh()
-		editor.Tools.Select(editor.Lookup(obj))
+		editor.Select(editor.Lookup(obj))
 	}
 	return menu.Menu("gui-menu", menu.Props{
 		Style: menu.Style{
@@ -174,7 +174,7 @@ func makeMenu(editor *App) node.T {
 								Create()
 							object.Attach(editor.workspace, obj)
 							editor.Refresh()
-							editor.Tools.Select(editor.Lookup(obj))
+							editor.Select(editor.Lookup(obj))
 						},
 					},
 					{
@@ -226,9 +226,8 @@ func makeSidebarLeft(editor *App) node.T {
 		},
 		Children: []node.T{
 			ObjectList("scene-graph", ObjectListProps{
-				Scene:       editor.workspace,
-				EditorRoot:  editor,
-				ToolManager: editor.Tools,
+				Scene:  editor.workspace,
+				Editor: editor,
 			}),
 		},
 	})
