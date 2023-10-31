@@ -3,16 +3,309 @@
 package net
 
 import (
+	capnp "capnproto.org/go/capnp/v3"
+	text "capnproto.org/go/capnp/v3/encoding/text"
 	schemas "capnproto.org/go/capnp/v3/schemas"
+	math "math"
 )
 
-const schema_85d3acc39d94e0f8 = "x\xda\x120r`1\xe4Mgd`\x0a\x14`e" +
-	"c\xd0\x06\x04\x00\x00\xff\xff\x111\x01\xc6"
+type AuthPacket capnp.Struct
+
+// AuthPacket_TypeID is the unique identifier for the type AuthPacket.
+const AuthPacket_TypeID = 0x8623a02a8b2951af
+
+func NewAuthPacket(s *capnp.Segment) (AuthPacket, error) {
+	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 8, PointerCount: 0})
+	return AuthPacket(st), err
+}
+
+func NewRootAuthPacket(s *capnp.Segment) (AuthPacket, error) {
+	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 8, PointerCount: 0})
+	return AuthPacket(st), err
+}
+
+func ReadRootAuthPacket(msg *capnp.Message) (AuthPacket, error) {
+	root, err := msg.Root()
+	return AuthPacket(root.Struct()), err
+}
+
+func (s AuthPacket) String() string {
+	str, _ := text.Marshal(0x8623a02a8b2951af, capnp.Struct(s))
+	return str
+}
+
+func (s AuthPacket) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (AuthPacket) DecodeFromPtr(p capnp.Ptr) AuthPacket {
+	return AuthPacket(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s AuthPacket) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s AuthPacket) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s AuthPacket) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s AuthPacket) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
+func (s AuthPacket) Token() uint64 {
+	return capnp.Struct(s).Uint64(0)
+}
+
+func (s AuthPacket) SetToken(v uint64) {
+	capnp.Struct(s).SetUint64(0, v)
+}
+
+// AuthPacket_List is a list of AuthPacket.
+type AuthPacket_List = capnp.StructList[AuthPacket]
+
+// NewAuthPacket creates a new list of AuthPacket.
+func NewAuthPacket_List(s *capnp.Segment, sz int32) (AuthPacket_List, error) {
+	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 8, PointerCount: 0}, sz)
+	return capnp.StructList[AuthPacket](l), err
+}
+
+// AuthPacket_Future is a wrapper for a AuthPacket promised by a client call.
+type AuthPacket_Future struct{ *capnp.Future }
+
+func (f AuthPacket_Future) Struct() (AuthPacket, error) {
+	p, err := f.Future.Ptr()
+	return AuthPacket(p.Struct()), err
+}
+
+type Vec3 capnp.Struct
+
+// Vec3_TypeID is the unique identifier for the type Vec3.
+const Vec3_TypeID = 0xc7b911fc33bfa5b5
+
+func NewVec3(s *capnp.Segment) (Vec3, error) {
+	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 16, PointerCount: 0})
+	return Vec3(st), err
+}
+
+func NewRootVec3(s *capnp.Segment) (Vec3, error) {
+	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 16, PointerCount: 0})
+	return Vec3(st), err
+}
+
+func ReadRootVec3(msg *capnp.Message) (Vec3, error) {
+	root, err := msg.Root()
+	return Vec3(root.Struct()), err
+}
+
+func (s Vec3) String() string {
+	str, _ := text.Marshal(0xc7b911fc33bfa5b5, capnp.Struct(s))
+	return str
+}
+
+func (s Vec3) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (Vec3) DecodeFromPtr(p capnp.Ptr) Vec3 {
+	return Vec3(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s Vec3) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s Vec3) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s Vec3) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s Vec3) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
+func (s Vec3) X() float32 {
+	return math.Float32frombits(capnp.Struct(s).Uint32(0))
+}
+
+func (s Vec3) SetX(v float32) {
+	capnp.Struct(s).SetUint32(0, math.Float32bits(v))
+}
+
+func (s Vec3) Y() float32 {
+	return math.Float32frombits(capnp.Struct(s).Uint32(4))
+}
+
+func (s Vec3) SetY(v float32) {
+	capnp.Struct(s).SetUint32(4, math.Float32bits(v))
+}
+
+func (s Vec3) Z() float32 {
+	return math.Float32frombits(capnp.Struct(s).Uint32(8))
+}
+
+func (s Vec3) SetZ(v float32) {
+	capnp.Struct(s).SetUint32(8, math.Float32bits(v))
+}
+
+// Vec3_List is a list of Vec3.
+type Vec3_List = capnp.StructList[Vec3]
+
+// NewVec3 creates a new list of Vec3.
+func NewVec3_List(s *capnp.Segment, sz int32) (Vec3_List, error) {
+	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 16, PointerCount: 0}, sz)
+	return capnp.StructList[Vec3](l), err
+}
+
+// Vec3_Future is a wrapper for a Vec3 promised by a client call.
+type Vec3_Future struct{ *capnp.Future }
+
+func (f Vec3_Future) Struct() (Vec3, error) {
+	p, err := f.Future.Ptr()
+	return Vec3(p.Struct()), err
+}
+
+type MovePacket capnp.Struct
+
+// MovePacket_TypeID is the unique identifier for the type MovePacket.
+const MovePacket_TypeID = 0x8585e41809409149
+
+func NewMovePacket(s *capnp.Segment) (MovePacket, error) {
+	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 16, PointerCount: 1})
+	return MovePacket(st), err
+}
+
+func NewRootMovePacket(s *capnp.Segment) (MovePacket, error) {
+	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 16, PointerCount: 1})
+	return MovePacket(st), err
+}
+
+func ReadRootMovePacket(msg *capnp.Message) (MovePacket, error) {
+	root, err := msg.Root()
+	return MovePacket(root.Struct()), err
+}
+
+func (s MovePacket) String() string {
+	str, _ := text.Marshal(0x8585e41809409149, capnp.Struct(s))
+	return str
+}
+
+func (s MovePacket) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (MovePacket) DecodeFromPtr(p capnp.Ptr) MovePacket {
+	return MovePacket(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s MovePacket) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s MovePacket) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s MovePacket) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s MovePacket) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
+func (s MovePacket) Uid() uint64 {
+	return capnp.Struct(s).Uint64(0)
+}
+
+func (s MovePacket) SetUid(v uint64) {
+	capnp.Struct(s).SetUint64(0, v)
+}
+
+func (s MovePacket) Position() (Vec3, error) {
+	p, err := capnp.Struct(s).Ptr(0)
+	return Vec3(p.Struct()), err
+}
+
+func (s MovePacket) HasPosition() bool {
+	return capnp.Struct(s).HasPtr(0)
+}
+
+func (s MovePacket) SetPosition(v Vec3) error {
+	return capnp.Struct(s).SetPtr(0, capnp.Struct(v).ToPtr())
+}
+
+// NewPosition sets the position field to a newly
+// allocated Vec3 struct, preferring placement in s's segment.
+func (s MovePacket) NewPosition() (Vec3, error) {
+	ss, err := NewVec3(capnp.Struct(s).Segment())
+	if err != nil {
+		return Vec3{}, err
+	}
+	err = capnp.Struct(s).SetPtr(0, capnp.Struct(ss).ToPtr())
+	return ss, err
+}
+
+func (s MovePacket) Rot() float32 {
+	return math.Float32frombits(capnp.Struct(s).Uint32(8))
+}
+
+func (s MovePacket) SetRot(v float32) {
+	capnp.Struct(s).SetUint32(8, math.Float32bits(v))
+}
+
+// MovePacket_List is a list of MovePacket.
+type MovePacket_List = capnp.StructList[MovePacket]
+
+// NewMovePacket creates a new list of MovePacket.
+func NewMovePacket_List(s *capnp.Segment, sz int32) (MovePacket_List, error) {
+	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 16, PointerCount: 1}, sz)
+	return capnp.StructList[MovePacket](l), err
+}
+
+// MovePacket_Future is a wrapper for a MovePacket promised by a client call.
+type MovePacket_Future struct{ *capnp.Future }
+
+func (f MovePacket_Future) Struct() (MovePacket, error) {
+	p, err := f.Future.Ptr()
+	return MovePacket(p.Struct()), err
+}
+func (p MovePacket_Future) Position() Vec3_Future {
+	return Vec3_Future{Future: p.Future.Field(0, nil)}
+}
+
+const schema_85d3acc39d94e0f8 = "x\xda\\\x8f\xb1K\x02q\x1c\xc5\xdf\xfb\xdd\x99)\x09" +
+	"\x9e\xe7\xd0PDECAA\xb9\xb5dP\x90\xa1\xe0" +
+	"\x17\"Z\xc5\x0e\x12\xc1;\xea\x8cj\xb7\xa5\xa9h\x0d" +
+	"Z\xda\x02\xa7\x86\x86\x88\x8chi\xeb\x1f(\xa8\xa1\xff" +
+	"\xa0!\xb8\xb8#\xef\xcc\xed\xcb\xe3\xc3\xfb\xbeO\xfa%" +
+	"\xaf\xcf\xa7l\x05%#\xb1\x01\xafp\x9aO\x0c\x7f\xb4" +
+	"Z\x90\x14\x95\xf7\xfdv~\xf1x\xfd\xdaB\x8cq\xc0" +
+	"\x1ce\xc7\x9c\x0a\xaeq\xb6A\xaf-\xd3'3\x97\x93" +
+	"\xc7>\xcc\x08\xd6}\xe2\x8e\x1d\xf3)`\x1f\xb8\x04z" +
+	"7W\xf7\xb9\x1f\xe3\xf6\xb9\xaf8`\xdfyf~\x05" +
+	"\xec'\xdb\x98\xf5\x9cJ\xb5n\xb9sUUq\x1a\xce" +
+	"b\xc9\xde\xb7\xcaA\x822)C\x9a\x0e\xe8\x04\x8c\xd5" +
+	"\x09@\xf2\x1a\xa5\xa8Hf\xe9g\x85u@\xd64\xca" +
+	"\x86\xa2\xa1T\x96\x0a0\xc4\x07\x8b\x1aeK1\xde\xac" +
+	"m3\x01\xc5\x04\xe89\xf6^\xcd\xad\xd9\x0d\x00LG" +
+	"\x13A\xa6\xc1\xf8\xae\xed2\x09\xc5\xa4O\xfe\x9b\xb4\xdc" +
+	"twz&\xe9\xe1\xa4\xd4\x02 \x83\x1a%\xab8\xe6" +
+	"\xdau\xab\x11\xfd\xfak`\xd0\xb0iU\x99\xeb\xd3\xc9" +
+	"D:F\xe8\xe3\x87+\x1a\xa5\xdc\xe3S\xcaD\x92<" +
+	"\xe8n\xe4ax\x1du\xaf\xdf\x00\x00\x00\xff\xffe\xf9" +
+	"j\xb3"
 
 func RegisterSchema(reg *schemas.Registry) {
 	reg.Register(&schemas.Schema{
-		String:     schema_85d3acc39d94e0f8,
-		Nodes:      []uint64{},
+		String: schema_85d3acc39d94e0f8,
+		Nodes: []uint64{
+			0x8585e41809409149,
+			0x8623a02a8b2951af,
+			0xc7b911fc33bfa5b5,
+		},
 		Compressed: true,
 	})
 }
