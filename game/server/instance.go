@@ -15,9 +15,32 @@ type Event struct {
 }
 
 type Instance struct {
-	Clients []*Client
+	Entities []Entity
+	onEvent  chan Event
+}
 
-	onEvent <-chan Event
+func NewInstance() *Instance {
+	instance := &Instance{
+		Entities: make([]Entity, 0, 1024),
+		onEvent:  make(chan Event),
+	}
+	go instance.loop()
+	return instance
+}
+
+func (m *Instance) CreatePlayer() *Player {
+	player := &Player{
+		instance: m,
+	}
+	m.Entities = append(m.Entities, player)
+	return player
+}
+
+func (i *Instance) SubmitEvent(sender *Client, event net.Message) {
+	i.onEvent <- Event{
+		Sender:  sender,
+		Payload: event,
+	}
 }
 
 func (m *Instance) loop() {
@@ -62,13 +85,13 @@ func (m *Instance) processEntityMove(sender Entity, move *net.MovePacket) {
 		return
 	}
 
-	for _, c := range m.Clients {
-		if c.ID() == moved {
-			// dont return packet to sender
-			continue
-		}
-		if err := c.Resend(move); err != nil {
-			// todo: handle error?
-		}
-	}
+	// for _, c := range m.Clients {
+	// 	if c.ID() == moved {
+	// 		// dont return packet to sender
+	// 		continue
+	// 	}
+	// 	if err := c.Resend(move); err != nil {
+	// 		// todo: handle error?
+	// 	}
+	// }
 }
