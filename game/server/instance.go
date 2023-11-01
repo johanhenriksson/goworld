@@ -11,7 +11,7 @@ const TickRate = 50 * time.Millisecond
 
 type Event struct {
 	Sender  *Client
-	Payload net.Packet
+	Payload net.Message
 }
 
 type Instance struct {
@@ -40,6 +40,9 @@ func (m *Instance) loop() {
 }
 
 func (m *Instance) process(ev Event) {
+	// automate cleanup
+	defer ev.Payload.Message().Release()
+
 	// process instance events
 	switch data := ev.Payload.(type) {
 	case *net.MovePacket:
@@ -49,9 +52,6 @@ func (m *Instance) process(ev Event) {
 		// unknown event
 		log.Printf("unknown event: %v", ev)
 	}
-
-	// release packet memory
-	ev.Payload.Message().Release()
 }
 
 func (m *Instance) processEntityMove(sender Entity, move *net.MovePacket) {
@@ -67,6 +67,8 @@ func (m *Instance) processEntityMove(sender Entity, move *net.MovePacket) {
 			// dont return packet to sender
 			continue
 		}
-		c.Send(move)
+		if err := c.Resend(move); err != nil {
+			// todo: handle error?
+		}
 	}
 }
