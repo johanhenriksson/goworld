@@ -56,13 +56,14 @@ func (c *Client) Observe(entity Entity) error {
 func (c *Client) decode() (net.Message, error) {
 	msg, err := c.decoder.Decode()
 	if err != nil {
-		log.Println("accept failed:", err)
+		return nil, fmt.Errorf("packet decode failed: %w", err)
 	}
 
 	pkt, err := net.ReadRootPacket(msg)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("packet read failed: %w", err)
 	}
+	log.Println("<-server:", msg)
 
 	switch pkt.Which() {
 	case net.Packet_Which_auth:
@@ -83,6 +84,9 @@ func (c *Client) readLoop() {
 		if err != nil {
 			log.Fatalln(err)
 		}
+
+		log.Println("<-server:", msg)
+
 		// todo: submit packet event to instance
 		// todo: dont release here
 		msg.Message().Release()
@@ -108,7 +112,7 @@ func (c *Client) Send(fn PacketBuilderFn) error {
 	defer msg.Release()
 
 	// create packet wrapper
-	wrap, err := net.NewPacket(seg)
+	wrap, err := net.NewRootPacket(seg)
 	if err != nil {
 		return err
 	}
@@ -117,6 +121,7 @@ func (c *Client) Send(fn PacketBuilderFn) error {
 	if err := fn(&wrap); err != nil {
 		return err
 	}
+	log.Println("server->:", msg)
 
 	return c.encoder.Encode(msg)
 }
