@@ -7,84 +7,13 @@ import (
 	text "capnproto.org/go/capnp/v3/encoding/text"
 	schemas "capnproto.org/go/capnp/v3/schemas"
 	math "math"
+	strconv "strconv"
 )
-
-type AuthPacket capnp.Struct
-
-// AuthPacket_TypeID is the unique identifier for the type AuthPacket.
-const AuthPacket_TypeID = 0x8623a02a8b2951af
-
-func NewAuthPacket(s *capnp.Segment) (AuthPacket, error) {
-	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 8, PointerCount: 0})
-	return AuthPacket(st), err
-}
-
-func NewRootAuthPacket(s *capnp.Segment) (AuthPacket, error) {
-	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 8, PointerCount: 0})
-	return AuthPacket(st), err
-}
-
-func ReadRootAuthPacket(msg *capnp.Message) (AuthPacket, error) {
-	root, err := msg.Root()
-	return AuthPacket(root.Struct()), err
-}
-
-func (s AuthPacket) String() string {
-	str, _ := text.Marshal(0x8623a02a8b2951af, capnp.Struct(s))
-	return str
-}
-
-func (s AuthPacket) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
-	return capnp.Struct(s).EncodeAsPtr(seg)
-}
-
-func (AuthPacket) DecodeFromPtr(p capnp.Ptr) AuthPacket {
-	return AuthPacket(capnp.Struct{}.DecodeFromPtr(p))
-}
-
-func (s AuthPacket) ToPtr() capnp.Ptr {
-	return capnp.Struct(s).ToPtr()
-}
-func (s AuthPacket) IsValid() bool {
-	return capnp.Struct(s).IsValid()
-}
-
-func (s AuthPacket) Message() *capnp.Message {
-	return capnp.Struct(s).Message()
-}
-
-func (s AuthPacket) Segment() *capnp.Segment {
-	return capnp.Struct(s).Segment()
-}
-func (s AuthPacket) Token() uint64 {
-	return capnp.Struct(s).Uint64(0)
-}
-
-func (s AuthPacket) SetToken(v uint64) {
-	capnp.Struct(s).SetUint64(0, v)
-}
-
-// AuthPacket_List is a list of AuthPacket.
-type AuthPacket_List = capnp.StructList[AuthPacket]
-
-// NewAuthPacket creates a new list of AuthPacket.
-func NewAuthPacket_List(s *capnp.Segment, sz int32) (AuthPacket_List, error) {
-	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 8, PointerCount: 0}, sz)
-	return capnp.StructList[AuthPacket](l), err
-}
-
-// AuthPacket_Future is a wrapper for a AuthPacket promised by a client call.
-type AuthPacket_Future struct{ *capnp.Future }
-
-func (f AuthPacket_Future) Struct() (AuthPacket, error) {
-	p, err := f.Future.Ptr()
-	return AuthPacket(p.Struct()), err
-}
 
 type Vec3 capnp.Struct
 
 // Vec3_TypeID is the unique identifier for the type Vec3.
-const Vec3_TypeID = 0xc7b911fc33bfa5b5
+const Vec3_TypeID = 0xc7e9576dd1cb2dc1
 
 func NewVec3(s *capnp.Segment) (Vec3, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 16, PointerCount: 0})
@@ -102,7 +31,7 @@ func ReadRootVec3(msg *capnp.Message) (Vec3, error) {
 }
 
 func (s Vec3) String() string {
-	str, _ := text.Marshal(0xc7b911fc33bfa5b5, capnp.Struct(s))
+	str, _ := text.Marshal(0xc7e9576dd1cb2dc1, capnp.Struct(s))
 	return str
 }
 
@@ -169,10 +98,238 @@ func (f Vec3_Future) Struct() (Vec3, error) {
 	return Vec3(p.Struct()), err
 }
 
+type Packet capnp.Struct
+type Packet_Which uint16
+
+const (
+	Packet_Which_auth Packet_Which = 0
+	Packet_Which_move Packet_Which = 1
+)
+
+func (w Packet_Which) String() string {
+	const s = "authmove"
+	switch w {
+	case Packet_Which_auth:
+		return s[0:4]
+	case Packet_Which_move:
+		return s[4:8]
+
+	}
+	return "Packet_Which(" + strconv.FormatUint(uint64(w), 10) + ")"
+}
+
+// Packet_TypeID is the unique identifier for the type Packet.
+const Packet_TypeID = 0xc7ca850fead659c0
+
+func NewPacket(s *capnp.Segment) (Packet, error) {
+	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 8, PointerCount: 1})
+	return Packet(st), err
+}
+
+func NewRootPacket(s *capnp.Segment) (Packet, error) {
+	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 8, PointerCount: 1})
+	return Packet(st), err
+}
+
+func ReadRootPacket(msg *capnp.Message) (Packet, error) {
+	root, err := msg.Root()
+	return Packet(root.Struct()), err
+}
+
+func (s Packet) String() string {
+	str, _ := text.Marshal(0xc7ca850fead659c0, capnp.Struct(s))
+	return str
+}
+
+func (s Packet) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (Packet) DecodeFromPtr(p capnp.Ptr) Packet {
+	return Packet(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s Packet) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+
+func (s Packet) Which() Packet_Which {
+	return Packet_Which(capnp.Struct(s).Uint16(0))
+}
+func (s Packet) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s Packet) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s Packet) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
+func (s Packet) Auth() (AuthPacket, error) {
+	if capnp.Struct(s).Uint16(0) != 0 {
+		panic("Which() != auth")
+	}
+	p, err := capnp.Struct(s).Ptr(0)
+	return AuthPacket(p.Struct()), err
+}
+
+func (s Packet) HasAuth() bool {
+	if capnp.Struct(s).Uint16(0) != 0 {
+		return false
+	}
+	return capnp.Struct(s).HasPtr(0)
+}
+
+func (s Packet) SetAuth(v AuthPacket) error {
+	capnp.Struct(s).SetUint16(0, 0)
+	return capnp.Struct(s).SetPtr(0, capnp.Struct(v).ToPtr())
+}
+
+// NewAuth sets the auth field to a newly
+// allocated AuthPacket struct, preferring placement in s's segment.
+func (s Packet) NewAuth() (AuthPacket, error) {
+	capnp.Struct(s).SetUint16(0, 0)
+	ss, err := NewAuthPacket(capnp.Struct(s).Segment())
+	if err != nil {
+		return AuthPacket{}, err
+	}
+	err = capnp.Struct(s).SetPtr(0, capnp.Struct(ss).ToPtr())
+	return ss, err
+}
+
+func (s Packet) Move() (MovePacket, error) {
+	if capnp.Struct(s).Uint16(0) != 1 {
+		panic("Which() != move")
+	}
+	p, err := capnp.Struct(s).Ptr(0)
+	return MovePacket(p.Struct()), err
+}
+
+func (s Packet) HasMove() bool {
+	if capnp.Struct(s).Uint16(0) != 1 {
+		return false
+	}
+	return capnp.Struct(s).HasPtr(0)
+}
+
+func (s Packet) SetMove(v MovePacket) error {
+	capnp.Struct(s).SetUint16(0, 1)
+	return capnp.Struct(s).SetPtr(0, capnp.Struct(v).ToPtr())
+}
+
+// NewMove sets the move field to a newly
+// allocated MovePacket struct, preferring placement in s's segment.
+func (s Packet) NewMove() (MovePacket, error) {
+	capnp.Struct(s).SetUint16(0, 1)
+	ss, err := NewMovePacket(capnp.Struct(s).Segment())
+	if err != nil {
+		return MovePacket{}, err
+	}
+	err = capnp.Struct(s).SetPtr(0, capnp.Struct(ss).ToPtr())
+	return ss, err
+}
+
+// Packet_List is a list of Packet.
+type Packet_List = capnp.StructList[Packet]
+
+// NewPacket creates a new list of Packet.
+func NewPacket_List(s *capnp.Segment, sz int32) (Packet_List, error) {
+	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 8, PointerCount: 1}, sz)
+	return capnp.StructList[Packet](l), err
+}
+
+// Packet_Future is a wrapper for a Packet promised by a client call.
+type Packet_Future struct{ *capnp.Future }
+
+func (f Packet_Future) Struct() (Packet, error) {
+	p, err := f.Future.Ptr()
+	return Packet(p.Struct()), err
+}
+func (p Packet_Future) Auth() AuthPacket_Future {
+	return AuthPacket_Future{Future: p.Future.Field(0, nil)}
+}
+func (p Packet_Future) Move() MovePacket_Future {
+	return MovePacket_Future{Future: p.Future.Field(0, nil)}
+}
+
+type AuthPacket capnp.Struct
+
+// AuthPacket_TypeID is the unique identifier for the type AuthPacket.
+const AuthPacket_TypeID = 0xfe26553a53d9d276
+
+func NewAuthPacket(s *capnp.Segment) (AuthPacket, error) {
+	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 8, PointerCount: 0})
+	return AuthPacket(st), err
+}
+
+func NewRootAuthPacket(s *capnp.Segment) (AuthPacket, error) {
+	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 8, PointerCount: 0})
+	return AuthPacket(st), err
+}
+
+func ReadRootAuthPacket(msg *capnp.Message) (AuthPacket, error) {
+	root, err := msg.Root()
+	return AuthPacket(root.Struct()), err
+}
+
+func (s AuthPacket) String() string {
+	str, _ := text.Marshal(0xfe26553a53d9d276, capnp.Struct(s))
+	return str
+}
+
+func (s AuthPacket) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (AuthPacket) DecodeFromPtr(p capnp.Ptr) AuthPacket {
+	return AuthPacket(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s AuthPacket) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s AuthPacket) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s AuthPacket) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s AuthPacket) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
+func (s AuthPacket) Token() uint64 {
+	return capnp.Struct(s).Uint64(0)
+}
+
+func (s AuthPacket) SetToken(v uint64) {
+	capnp.Struct(s).SetUint64(0, v)
+}
+
+// AuthPacket_List is a list of AuthPacket.
+type AuthPacket_List = capnp.StructList[AuthPacket]
+
+// NewAuthPacket creates a new list of AuthPacket.
+func NewAuthPacket_List(s *capnp.Segment, sz int32) (AuthPacket_List, error) {
+	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 8, PointerCount: 0}, sz)
+	return capnp.StructList[AuthPacket](l), err
+}
+
+// AuthPacket_Future is a wrapper for a AuthPacket promised by a client call.
+type AuthPacket_Future struct{ *capnp.Future }
+
+func (f AuthPacket_Future) Struct() (AuthPacket, error) {
+	p, err := f.Future.Ptr()
+	return AuthPacket(p.Struct()), err
+}
+
 type MovePacket capnp.Struct
 
 // MovePacket_TypeID is the unique identifier for the type MovePacket.
-const MovePacket_TypeID = 0x8585e41809409149
+const MovePacket_TypeID = 0xd5b795949bdeb67a
 
 func NewMovePacket(s *capnp.Segment) (MovePacket, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 16, PointerCount: 1})
@@ -190,7 +347,7 @@ func ReadRootMovePacket(msg *capnp.Message) (MovePacket, error) {
 }
 
 func (s MovePacket) String() string {
-	str, _ := text.Marshal(0x8585e41809409149, capnp.Struct(s))
+	str, _ := text.Marshal(0xd5b795949bdeb67a, capnp.Struct(s))
 	return str
 }
 
@@ -276,35 +433,41 @@ func (p MovePacket_Future) Position() Vec3_Future {
 	return Vec3_Future{Future: p.Future.Field(0, nil)}
 }
 
-const schema_85d3acc39d94e0f8 = "x\xda\\\x8f\xb1K\x02q\x1c\xc5\xdf\xfb\xdd\x99)\x09" +
-	"\x9e\xe7\xd0PDECAA\xb9\xb5dP\x90\xa1\xe0" +
-	"\x17\"Z\xc5\x0e\x12\xc1;\xea\x8cj\xb7\xa5\xa9h\x0d" +
-	"Z\xda\x02\xa7\x86\x86\x88\x8chi\xeb\x1f(\xa8\xa1\xff" +
-	"\xa0!\xb8\xb8#\xef\xcc\xed\xcb\xe3\xc3\xfb\xbeO\xfa%" +
-	"\xaf\xcf\xa7l\x05%#\xb1\x01\xafp\x9aO\x0c\x7f\xb4" +
-	"Z\x90\x14\x95\xf7\xfdv~\xf1x\xfd\xdaB\x8cq\xc0" +
-	"\x1ce\xc7\x9c\x0a\xaeq\xb6A\xaf-\xd3'3\x97\x93" +
-	"\xc7>\xcc\x08\xd6}\xe2\x8e\x1d\xf3)`\x1f\xb8\x04z" +
-	"7W\xf7\xb9\x1f\xe3\xf6\xb9\xaf8`\xdfyf~\x05" +
-	"\xec'\xdb\x98\xf5\x9cJ\xb5n\xb9sUUq\x1a\xce" +
-	"b\xc9\xde\xb7\xcaA\x822)C\x9a\x0e\xe8\x04\x8c\xd5" +
-	"\x09@\xf2\x1a\xa5\xa8Hf\xe9g\x85u@\xd64\xca" +
-	"\x86\xa2\xa1T\x96\x0a0\xc4\x07\x8b\x1aeK1\xde\xac" +
-	"m3\x01\xc5\x04\xe89\xf6^\xcd\xad\xd9\x0d\x00LG" +
-	"\x13A\xa6\xc1\xf8\xae\xed2\x09\xc5\xa4O\xfe\x9b\xb4\xdc" +
-	"twz&\xe9\xe1\xa4\xd4\x02 \x83\x1a%\xab8\xe6" +
-	"\xdau\xab\x11\xfd\xfak`\xd0\xb0iU\x99\xeb\xd3\xc9" +
-	"D:F\xe8\xe3\x87+\x1a\xa5\xdc\xe3S\xcaD\x92<" +
-	"\xe8n\xe4ax\x1du\xaf\xdf\x00\x00\x00\xff\xffe\xf9" +
-	"j\xb3"
+const schema_9c4788c5a214e29c = "x\xdat\x91\xbd\xab\xd3P\x18\x87\xdf\xdf{r\xcd\xbd" +
+	"\x97\x1b\x9a\x98\xec\x8a\x88\xa8P\xf1k\xba\x8bW\xb0h" +
+	"\xa5\x81\x1c\xfc\x1eC\x0c\xb4\x946E\xd3\xaa\xdd\x05g" +
+	"\xd1\xc9N\xdd\x1cD\\t\xd5\x82\x14tRPpq" +
+	"\x10\x1c*\xf8\x0f8\xf4\xc89\xa5\x89\x04\xdc^\x1e\x1e" +
+	"\xf2\xfc\xc2q\xff\xecY\xa7\x9c9\x13\xcb\x83\x1b\xfb\xd4" +
+	"\xdb[_\x7f\xd5\x1e~\x98\x93t\x005\xf9\x11L\xdf" +
+	"?\xba8\xa1\x06l&\xf2\x9b\x98\xfa\x126\x91\x1f\xe2" +
+	"\x1eA\xbd\xab\x7f\xfc\xd4\xbb\xb106\x97\xb6\xa5\x8d\xe7" +
+	"x\xec\xbf2\xee\x0b\xbc$\xa8\xf1\xeb\xef\xcf\x9e<}" +
+	"\xf3\xa5\xe2n\x18\xa5\xc13?d}5Y\xcb\xa3\xcf" +
+	"\xdf\xae\xec^;\xb2\xac\xcc0\x1f\xfe\xc93\xff\xb7q" +
+	"\x17|\x8e\xeaj\x10'\xdd4?\x91 \x1e\xf4\x07\xbb" +
+	"Q\x9c\xd8\xdd4\x8f\x00\xb9)\xac\x1d\xa5,\x10y\xc7" +
+	"\x8e\x13\xc9\xc3\x02\xf2$\xc3\xc1R\x05\xd0\xb4\xae\xe9Q" +
+	"\x01y\x96Q\x8b\x87y\x1bnY&\xc0%\xd4z\xd9" +
+	"(\x85[\xae_\xe1J\xf4z\x9a\xe0\x8cN\xee\x08\x8b" +
+	"\xc8\x14\x1b\xfb\x89\xe4\x9e\x80l1<`\x15ljx" +
+	"A@F\x0c\x8f9\x00\x13y\xa1\x86\x97\x04\xe4U\x06" +
+	"\xeec\x9b\x18\xdb\x04<(\xae\xf1\xfa*\xaal\xaaa" +
+	"6J#C\xa8\xd2>T\xb6\x8b\xf4\xe5\xb2R\xa4\xa5" +
+	"\x16[\x02\xf2&\xc3\x1evnc\x8b\x18[:\x94\xdd" +
+	"\xed\xe4\x9d\xacODp\xcbg^\xfd\xbc}'\xcb\xff" +
+	"3\xe9\xfc0o\xff3\xc9*&9\xa7\x89\xe4\xa6\x80" +
+	"\x0c\x18\x07\xf2\xac\x9b\xf6\xd7\xad\xbf\x01\x00\x00\xff\xffI" +
+	"f\x98l"
 
 func RegisterSchema(reg *schemas.Registry) {
 	reg.Register(&schemas.Schema{
-		String: schema_85d3acc39d94e0f8,
+		String: schema_9c4788c5a214e29c,
 		Nodes: []uint64{
-			0x8585e41809409149,
-			0x8623a02a8b2951af,
-			0xc7b911fc33bfa5b5,
+			0xc7ca850fead659c0,
+			0xc7e9576dd1cb2dc1,
+			0xd5b795949bdeb67a,
+			0xfe26553a53d9d276,
 		},
 		Compressed: true,
 	})

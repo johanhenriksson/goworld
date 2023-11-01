@@ -1,19 +1,17 @@
 package server
 
 import (
-	"log"
-	"net"
+	osnet "net"
 
-	packet "github.com/johanhenriksson/goworld/game/net"
-
-	"capnproto.org/go/capnp/v3"
+	"github.com/johanhenriksson/goworld/game/net"
 )
 
 type Server struct {
+	auths map[uint64]Entity
 }
 
 func (s *Server) Listen() error {
-	sck, err := net.Listen("tcp", ":420")
+	sck, err := osnet.Listen("tcp", ":420")
 	if err != nil {
 		return err
 	}
@@ -22,22 +20,44 @@ func (s *Server) Listen() error {
 		if err != nil {
 			return err
 		}
-		go s.handle(conn)
+		go s.accept(conn)
 	}
 }
 
-func (s *Server) handle(conn net.Conn) {
-	decoder := capnp.NewDecoder(conn)
+func (s *Server) accept(conn osnet.Conn) {
+	client := NewClient(conn)
 
-	// expect the first message to be an authentication packet
-	msg, err := decoder.Decode()
+	pkt, err := client.decode()
 	if err != nil {
-		log.Println("accept failed:", err)
+		client.Drop("failed to decode auth packet")
+		return
 	}
-	auth, err := packet.ReadRootAuthPacket(msg)
-	if err != nil {
-		log.Println("accept failed:", err)
+	defer pkt.Message().Release()
+
+	auth, ok := pkt.(*net.AuthPacket)
+	if !ok {
+		client.Drop("expected auth packet")
+		return
 	}
 
-	auth.Token()
+	// authenticate client
+	entity, authed := s.auths[auth.Token()]
+	if !authed {
+		client.Drop("invalid authenticaton token")
+		return
+	}
+
+	// invalidate authentication token
+	delete(s.auths, auth.Token())
+
+	// assign client to instance
+
+	// trigger observe entity
+	if err := client.Observe(entity); err != nil {
+		client.Drop("faied to observe entity")
+		return
+	}
+
+	// start client read loop
+	go client.readLoop()
 }
