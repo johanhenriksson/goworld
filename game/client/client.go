@@ -31,10 +31,10 @@ func NewClient() (*Client, error) {
 	return client, err
 }
 
-func (c *Client) decode() (net.Message, error) {
+func (c *Client) decode() (*net.Packet, error) {
 	msg, err := c.decoder.Decode()
 	if err != nil {
-		log.Println("accept failed:", err)
+		return nil, err
 	}
 
 	pkt, err := net.ReadRootPacket(msg)
@@ -42,29 +42,54 @@ func (c *Client) decode() (net.Message, error) {
 		return nil, err
 	}
 
-	switch pkt.Which() {
-	case net.Packet_Which_auth:
-		return nil, fmt.Errorf("%w: auth packet is client->server only", net.ErrInvalidPacket)
+	return &pkt, nil
+}
 
-	case net.Packet_Which_move:
-		return pkt.Move()
+func (c *Client) handlePacket(msg *net.Packet) error {
+	switch msg.Which() {
+	case net.Packet_Which_auth:
+		return fmt.Errorf("%w: auth packet is client->server only", net.ErrInvalidPacket)
+
+	case net.Packet_Which_entityMove:
+		log.Println("client: entity move")
+
+	case net.Packet_Which_entityStop:
+		log.Println("client: entity stop")
+
+	case net.Packet_Which_entitySpawn:
+		spawn, err := msg.EntitySpawn()
+		if err != nil {
+			return err
+		}
+		log.Println("spawn entity", spawn.Id())
+
+	case net.Packet_Which_entityObserve:
+		observe, err := msg.EntityObserve()
+		if err != nil {
+			return err
+		}
+		log.Println("observe entity", observe.Entity())
+
+	default:
+		return fmt.Errorf("%w: received packet with type %s", net.ErrUnknownPacket, msg.Which())
 	}
 
-	return nil, fmt.Errorf("%w: received packet with type %v", net.ErrUnknownPacket, pkt.Which())
+	return nil
 }
 
 func (c *Client) readLoop() {
 	for {
 		msg, err := c.decode()
 		if err != nil {
-			log.Fatalln("client error:", err)
+			log.Println("client read error:", err)
+			return
 		}
+		defer msg.Message().Release()
 
-		// todo: submit for processing somewhere
-		log.Println("<-client:", msg)
-
-		// todo: release should happen somewhere else
-		msg.Message().Release()
+		if err := c.handlePacket(msg); err != nil {
+			log.Println("client packet error:", err)
+			return
+		}
 	}
 }
 
@@ -78,7 +103,7 @@ func (c *Client) Send(fn PacketBuilderFn) error {
 	}
 
 	// remember to clean up after transmission
-	// defer msg.Release()
+	defer msg.Release()
 
 	// create packet wrapper
 	wrap, err := net.NewRootPacket(seg)
