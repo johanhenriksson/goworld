@@ -102,17 +102,29 @@ type Packet capnp.Struct
 type Packet_Which uint16
 
 const (
-	Packet_Which_auth Packet_Which = 0
-	Packet_Which_move Packet_Which = 1
+	Packet_Which_unknown       Packet_Which = 0
+	Packet_Which_auth          Packet_Which = 1
+	Packet_Which_entityMove    Packet_Which = 2
+	Packet_Which_entityStop    Packet_Which = 3
+	Packet_Which_entitySpawn   Packet_Which = 4
+	Packet_Which_entityObserve Packet_Which = 5
 )
 
 func (w Packet_Which) String() string {
-	const s = "authmove"
+	const s = "unknownauthentityMoveentityStopentitySpawnentityObserve"
 	switch w {
+	case Packet_Which_unknown:
+		return s[0:7]
 	case Packet_Which_auth:
-		return s[0:4]
-	case Packet_Which_move:
-		return s[4:8]
+		return s[7:11]
+	case Packet_Which_entityMove:
+		return s[11:21]
+	case Packet_Which_entityStop:
+		return s[21:31]
+	case Packet_Which_entitySpawn:
+		return s[31:42]
+	case Packet_Which_entityObserve:
+		return s[42:55]
 
 	}
 	return "Packet_Which(" + strconv.FormatUint(uint64(w), 10) + ")"
@@ -167,8 +179,13 @@ func (s Packet) Message() *capnp.Message {
 func (s Packet) Segment() *capnp.Segment {
 	return capnp.Struct(s).Segment()
 }
+func (s Packet) SetUnknown() {
+	capnp.Struct(s).SetUint16(0, 0)
+
+}
+
 func (s Packet) Auth() (AuthPacket, error) {
-	if capnp.Struct(s).Uint16(0) != 0 {
+	if capnp.Struct(s).Uint16(0) != 1 {
 		panic("Which() != auth")
 	}
 	p, err := capnp.Struct(s).Ptr(0)
@@ -176,21 +193,21 @@ func (s Packet) Auth() (AuthPacket, error) {
 }
 
 func (s Packet) HasAuth() bool {
-	if capnp.Struct(s).Uint16(0) != 0 {
+	if capnp.Struct(s).Uint16(0) != 1 {
 		return false
 	}
 	return capnp.Struct(s).HasPtr(0)
 }
 
 func (s Packet) SetAuth(v AuthPacket) error {
-	capnp.Struct(s).SetUint16(0, 0)
+	capnp.Struct(s).SetUint16(0, 1)
 	return capnp.Struct(s).SetPtr(0, capnp.Struct(v).ToPtr())
 }
 
 // NewAuth sets the auth field to a newly
 // allocated AuthPacket struct, preferring placement in s's segment.
 func (s Packet) NewAuth() (AuthPacket, error) {
-	capnp.Struct(s).SetUint16(0, 0)
+	capnp.Struct(s).SetUint16(0, 1)
 	ss, err := NewAuthPacket(capnp.Struct(s).Segment())
 	if err != nil {
 		return AuthPacket{}, err
@@ -199,33 +216,129 @@ func (s Packet) NewAuth() (AuthPacket, error) {
 	return ss, err
 }
 
-func (s Packet) Move() (MovePacket, error) {
-	if capnp.Struct(s).Uint16(0) != 1 {
-		panic("Which() != move")
+func (s Packet) EntityMove() (EntityMovePacket, error) {
+	if capnp.Struct(s).Uint16(0) != 2 {
+		panic("Which() != entityMove")
 	}
 	p, err := capnp.Struct(s).Ptr(0)
-	return MovePacket(p.Struct()), err
+	return EntityMovePacket(p.Struct()), err
 }
 
-func (s Packet) HasMove() bool {
-	if capnp.Struct(s).Uint16(0) != 1 {
+func (s Packet) HasEntityMove() bool {
+	if capnp.Struct(s).Uint16(0) != 2 {
 		return false
 	}
 	return capnp.Struct(s).HasPtr(0)
 }
 
-func (s Packet) SetMove(v MovePacket) error {
-	capnp.Struct(s).SetUint16(0, 1)
+func (s Packet) SetEntityMove(v EntityMovePacket) error {
+	capnp.Struct(s).SetUint16(0, 2)
 	return capnp.Struct(s).SetPtr(0, capnp.Struct(v).ToPtr())
 }
 
-// NewMove sets the move field to a newly
-// allocated MovePacket struct, preferring placement in s's segment.
-func (s Packet) NewMove() (MovePacket, error) {
-	capnp.Struct(s).SetUint16(0, 1)
-	ss, err := NewMovePacket(capnp.Struct(s).Segment())
+// NewEntityMove sets the entityMove field to a newly
+// allocated EntityMovePacket struct, preferring placement in s's segment.
+func (s Packet) NewEntityMove() (EntityMovePacket, error) {
+	capnp.Struct(s).SetUint16(0, 2)
+	ss, err := NewEntityMovePacket(capnp.Struct(s).Segment())
 	if err != nil {
-		return MovePacket{}, err
+		return EntityMovePacket{}, err
+	}
+	err = capnp.Struct(s).SetPtr(0, capnp.Struct(ss).ToPtr())
+	return ss, err
+}
+
+func (s Packet) EntityStop() (EntityStopPacket, error) {
+	if capnp.Struct(s).Uint16(0) != 3 {
+		panic("Which() != entityStop")
+	}
+	p, err := capnp.Struct(s).Ptr(0)
+	return EntityStopPacket(p.Struct()), err
+}
+
+func (s Packet) HasEntityStop() bool {
+	if capnp.Struct(s).Uint16(0) != 3 {
+		return false
+	}
+	return capnp.Struct(s).HasPtr(0)
+}
+
+func (s Packet) SetEntityStop(v EntityStopPacket) error {
+	capnp.Struct(s).SetUint16(0, 3)
+	return capnp.Struct(s).SetPtr(0, capnp.Struct(v).ToPtr())
+}
+
+// NewEntityStop sets the entityStop field to a newly
+// allocated EntityStopPacket struct, preferring placement in s's segment.
+func (s Packet) NewEntityStop() (EntityStopPacket, error) {
+	capnp.Struct(s).SetUint16(0, 3)
+	ss, err := NewEntityStopPacket(capnp.Struct(s).Segment())
+	if err != nil {
+		return EntityStopPacket{}, err
+	}
+	err = capnp.Struct(s).SetPtr(0, capnp.Struct(ss).ToPtr())
+	return ss, err
+}
+
+func (s Packet) EntitySpawn() (EntitySpawnPacket, error) {
+	if capnp.Struct(s).Uint16(0) != 4 {
+		panic("Which() != entitySpawn")
+	}
+	p, err := capnp.Struct(s).Ptr(0)
+	return EntitySpawnPacket(p.Struct()), err
+}
+
+func (s Packet) HasEntitySpawn() bool {
+	if capnp.Struct(s).Uint16(0) != 4 {
+		return false
+	}
+	return capnp.Struct(s).HasPtr(0)
+}
+
+func (s Packet) SetEntitySpawn(v EntitySpawnPacket) error {
+	capnp.Struct(s).SetUint16(0, 4)
+	return capnp.Struct(s).SetPtr(0, capnp.Struct(v).ToPtr())
+}
+
+// NewEntitySpawn sets the entitySpawn field to a newly
+// allocated EntitySpawnPacket struct, preferring placement in s's segment.
+func (s Packet) NewEntitySpawn() (EntitySpawnPacket, error) {
+	capnp.Struct(s).SetUint16(0, 4)
+	ss, err := NewEntitySpawnPacket(capnp.Struct(s).Segment())
+	if err != nil {
+		return EntitySpawnPacket{}, err
+	}
+	err = capnp.Struct(s).SetPtr(0, capnp.Struct(ss).ToPtr())
+	return ss, err
+}
+
+func (s Packet) EntityObserve() (EntityObservePacket, error) {
+	if capnp.Struct(s).Uint16(0) != 5 {
+		panic("Which() != entityObserve")
+	}
+	p, err := capnp.Struct(s).Ptr(0)
+	return EntityObservePacket(p.Struct()), err
+}
+
+func (s Packet) HasEntityObserve() bool {
+	if capnp.Struct(s).Uint16(0) != 5 {
+		return false
+	}
+	return capnp.Struct(s).HasPtr(0)
+}
+
+func (s Packet) SetEntityObserve(v EntityObservePacket) error {
+	capnp.Struct(s).SetUint16(0, 5)
+	return capnp.Struct(s).SetPtr(0, capnp.Struct(v).ToPtr())
+}
+
+// NewEntityObserve sets the entityObserve field to a newly
+// allocated EntityObservePacket struct, preferring placement in s's segment.
+func (s Packet) NewEntityObserve() (EntityObservePacket, error) {
+	capnp.Struct(s).SetUint16(0, 5)
+	ss, err := NewEntityObservePacket(capnp.Struct(s).Segment())
+	if err != nil {
+		return EntityObservePacket{}, err
 	}
 	err = capnp.Struct(s).SetPtr(0, capnp.Struct(ss).ToPtr())
 	return ss, err
@@ -250,8 +363,17 @@ func (f Packet_Future) Struct() (Packet, error) {
 func (p Packet_Future) Auth() AuthPacket_Future {
 	return AuthPacket_Future{Future: p.Future.Field(0, nil)}
 }
-func (p Packet_Future) Move() MovePacket_Future {
-	return MovePacket_Future{Future: p.Future.Field(0, nil)}
+func (p Packet_Future) EntityMove() EntityMovePacket_Future {
+	return EntityMovePacket_Future{Future: p.Future.Field(0, nil)}
+}
+func (p Packet_Future) EntityStop() EntityStopPacket_Future {
+	return EntityStopPacket_Future{Future: p.Future.Field(0, nil)}
+}
+func (p Packet_Future) EntitySpawn() EntitySpawnPacket_Future {
+	return EntitySpawnPacket_Future{Future: p.Future.Field(0, nil)}
+}
+func (p Packet_Future) EntityObserve() EntityObservePacket_Future {
+	return EntityObservePacket_Future{Future: p.Future.Field(0, nil)}
 }
 
 type AuthPacket capnp.Struct
@@ -326,77 +448,77 @@ func (f AuthPacket_Future) Struct() (AuthPacket, error) {
 	return AuthPacket(p.Struct()), err
 }
 
-type MovePacket capnp.Struct
+type EntityMovePacket capnp.Struct
 
-// MovePacket_TypeID is the unique identifier for the type MovePacket.
-const MovePacket_TypeID = 0xd5b795949bdeb67a
+// EntityMovePacket_TypeID is the unique identifier for the type EntityMovePacket.
+const EntityMovePacket_TypeID = 0xf2786494a8b7e4d0
 
-func NewMovePacket(s *capnp.Segment) (MovePacket, error) {
+func NewEntityMovePacket(s *capnp.Segment) (EntityMovePacket, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 16, PointerCount: 1})
-	return MovePacket(st), err
+	return EntityMovePacket(st), err
 }
 
-func NewRootMovePacket(s *capnp.Segment) (MovePacket, error) {
+func NewRootEntityMovePacket(s *capnp.Segment) (EntityMovePacket, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 16, PointerCount: 1})
-	return MovePacket(st), err
+	return EntityMovePacket(st), err
 }
 
-func ReadRootMovePacket(msg *capnp.Message) (MovePacket, error) {
+func ReadRootEntityMovePacket(msg *capnp.Message) (EntityMovePacket, error) {
 	root, err := msg.Root()
-	return MovePacket(root.Struct()), err
+	return EntityMovePacket(root.Struct()), err
 }
 
-func (s MovePacket) String() string {
-	str, _ := text.Marshal(0xd5b795949bdeb67a, capnp.Struct(s))
+func (s EntityMovePacket) String() string {
+	str, _ := text.Marshal(0xf2786494a8b7e4d0, capnp.Struct(s))
 	return str
 }
 
-func (s MovePacket) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+func (s EntityMovePacket) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
 	return capnp.Struct(s).EncodeAsPtr(seg)
 }
 
-func (MovePacket) DecodeFromPtr(p capnp.Ptr) MovePacket {
-	return MovePacket(capnp.Struct{}.DecodeFromPtr(p))
+func (EntityMovePacket) DecodeFromPtr(p capnp.Ptr) EntityMovePacket {
+	return EntityMovePacket(capnp.Struct{}.DecodeFromPtr(p))
 }
 
-func (s MovePacket) ToPtr() capnp.Ptr {
+func (s EntityMovePacket) ToPtr() capnp.Ptr {
 	return capnp.Struct(s).ToPtr()
 }
-func (s MovePacket) IsValid() bool {
+func (s EntityMovePacket) IsValid() bool {
 	return capnp.Struct(s).IsValid()
 }
 
-func (s MovePacket) Message() *capnp.Message {
+func (s EntityMovePacket) Message() *capnp.Message {
 	return capnp.Struct(s).Message()
 }
 
-func (s MovePacket) Segment() *capnp.Segment {
+func (s EntityMovePacket) Segment() *capnp.Segment {
 	return capnp.Struct(s).Segment()
 }
-func (s MovePacket) Uid() uint64 {
+func (s EntityMovePacket) Entity() uint64 {
 	return capnp.Struct(s).Uint64(0)
 }
 
-func (s MovePacket) SetUid(v uint64) {
+func (s EntityMovePacket) SetEntity(v uint64) {
 	capnp.Struct(s).SetUint64(0, v)
 }
 
-func (s MovePacket) Position() (Vec3, error) {
+func (s EntityMovePacket) Position() (Vec3, error) {
 	p, err := capnp.Struct(s).Ptr(0)
 	return Vec3(p.Struct()), err
 }
 
-func (s MovePacket) HasPosition() bool {
+func (s EntityMovePacket) HasPosition() bool {
 	return capnp.Struct(s).HasPtr(0)
 }
 
-func (s MovePacket) SetPosition(v Vec3) error {
+func (s EntityMovePacket) SetPosition(v Vec3) error {
 	return capnp.Struct(s).SetPtr(0, capnp.Struct(v).ToPtr())
 }
 
 // NewPosition sets the position field to a newly
 // allocated Vec3 struct, preferring placement in s's segment.
-func (s MovePacket) NewPosition() (Vec3, error) {
+func (s EntityMovePacket) NewPosition() (Vec3, error) {
 	ss, err := NewVec3(capnp.Struct(s).Segment())
 	if err != nil {
 		return Vec3{}, err
@@ -405,68 +527,331 @@ func (s MovePacket) NewPosition() (Vec3, error) {
 	return ss, err
 }
 
-func (s MovePacket) Rot() float32 {
+func (s EntityMovePacket) Rot() float32 {
 	return math.Float32frombits(capnp.Struct(s).Uint32(8))
 }
 
-func (s MovePacket) SetRot(v float32) {
+func (s EntityMovePacket) SetRot(v float32) {
 	capnp.Struct(s).SetUint32(8, math.Float32bits(v))
 }
 
-// MovePacket_List is a list of MovePacket.
-type MovePacket_List = capnp.StructList[MovePacket]
+// EntityMovePacket_List is a list of EntityMovePacket.
+type EntityMovePacket_List = capnp.StructList[EntityMovePacket]
 
-// NewMovePacket creates a new list of MovePacket.
-func NewMovePacket_List(s *capnp.Segment, sz int32) (MovePacket_List, error) {
+// NewEntityMovePacket creates a new list of EntityMovePacket.
+func NewEntityMovePacket_List(s *capnp.Segment, sz int32) (EntityMovePacket_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 16, PointerCount: 1}, sz)
-	return capnp.StructList[MovePacket](l), err
+	return capnp.StructList[EntityMovePacket](l), err
 }
 
-// MovePacket_Future is a wrapper for a MovePacket promised by a client call.
-type MovePacket_Future struct{ *capnp.Future }
+// EntityMovePacket_Future is a wrapper for a EntityMovePacket promised by a client call.
+type EntityMovePacket_Future struct{ *capnp.Future }
 
-func (f MovePacket_Future) Struct() (MovePacket, error) {
+func (f EntityMovePacket_Future) Struct() (EntityMovePacket, error) {
 	p, err := f.Future.Ptr()
-	return MovePacket(p.Struct()), err
+	return EntityMovePacket(p.Struct()), err
 }
-func (p MovePacket_Future) Position() Vec3_Future {
+func (p EntityMovePacket_Future) Position() Vec3_Future {
 	return Vec3_Future{Future: p.Future.Field(0, nil)}
 }
 
-const schema_9c4788c5a214e29c = "x\xdat\x91\xbd\xab\xd3P\x18\x87\xdf\xdf{r\xcd\xbd" +
-	"\x97\x1b\x9a\x98\xec\x8a\x88\xa8P\xf1k\xba\x8bW\xb0h" +
-	"\xa5\x81\x1c\xfc\x1eC\x0c\xb4\x946E\xd3\xaa\xdd\x05g" +
-	"\xd1\xc9N\xdd\x1cD\\t\xd5\x82\x14tRPpq" +
-	"\x10\x1c*\xf8\x0f8\xf4\xc89\xa5\x89\x04\xdc^\x1e\x1e" +
-	"\xf2\xfc\xc2q\xff\xecY\xa7\x9c9\x13\xcb\x83\x1b\xfb\xd4" +
-	"\xdb[_\x7f\xd5\x1e~\x98\x93t\x005\xf9\x11L\xdf" +
-	"?\xba8\xa1\x06l&\xf2\x9b\x98\xfa\x126\x91\x1f\xe2" +
-	"\x1eA\xbd\xab\x7f\xfc\xd4\xbb\xb106\x97\xb6\xa5\x8d\xe7" +
-	"x\xec\xbf2\xee\x0b\xbc$\xa8\xf1\xeb\xef\xcf\x9e<}" +
-	"\xf3\xa5\xe2n\x18\xa5\xc13?d}5Y\xcb\xa3\xcf" +
-	"\xdf\xae\xec^;\xb2\xac\xcc0\x1f\xfe\xc93\xff\xb7q" +
-	"\x17|\x8e\xeaj\x10'\xdd4?\x91 \x1e\xf4\x07\xbb" +
-	"Q\x9c\xd8\xdd4\x8f\x00\xb9)\xac\x1d\xa5,\x10y\xc7" +
-	"\x8e\x13\xc9\xc3\x02\xf2$\xc3\xc1R\x05\xd0\xb4\xae\xe9Q" +
-	"\x01y\x96Q\x8b\x87y\x1bnY&\xc0%\xd4z\xd9" +
-	"(\x85[\xae_\xe1J\xf4z\x9a\xe0\x8cN\xee\x08\x8b" +
-	"\xc8\x14\x1b\xfb\x89\xe4\x9e\x80l1<`\x15ljx" +
-	"A@F\x0c\x8f9\x00\x13y\xa1\x86\x97\x04\xe4U\x06" +
-	"\xeec\x9b\x18\xdb\x04<(\xae\xf1\xfa*\xaal\xaaa" +
-	"6J#C\xa8\xd2>T\xb6\x8b\xf4\xe5\xb2R\xa4\xa5" +
-	"\x16[\x02\xf2&\xc3\x1evnc\x8b\x18[:\x94\xdd" +
-	"\xed\xe4\x9d\xacODp\xcbg^\xfd\xbc}'\xcb\xff" +
-	"3\xe9\xfc0o\xff3\xc9*&9\xa7\x89\xe4\xa6\x80" +
-	"\x0c\x18\x07\xf2\xac\x9b\xf6\xd7\xad\xbf\x01\x00\x00\xff\xffI" +
-	"f\x98l"
+type EntityStopPacket capnp.Struct
+
+// EntityStopPacket_TypeID is the unique identifier for the type EntityStopPacket.
+const EntityStopPacket_TypeID = 0xd875a6f9b6c9ca42
+
+func NewEntityStopPacket(s *capnp.Segment) (EntityStopPacket, error) {
+	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 8, PointerCount: 1})
+	return EntityStopPacket(st), err
+}
+
+func NewRootEntityStopPacket(s *capnp.Segment) (EntityStopPacket, error) {
+	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 8, PointerCount: 1})
+	return EntityStopPacket(st), err
+}
+
+func ReadRootEntityStopPacket(msg *capnp.Message) (EntityStopPacket, error) {
+	root, err := msg.Root()
+	return EntityStopPacket(root.Struct()), err
+}
+
+func (s EntityStopPacket) String() string {
+	str, _ := text.Marshal(0xd875a6f9b6c9ca42, capnp.Struct(s))
+	return str
+}
+
+func (s EntityStopPacket) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (EntityStopPacket) DecodeFromPtr(p capnp.Ptr) EntityStopPacket {
+	return EntityStopPacket(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s EntityStopPacket) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s EntityStopPacket) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s EntityStopPacket) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s EntityStopPacket) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
+func (s EntityStopPacket) Entity() uint64 {
+	return capnp.Struct(s).Uint64(0)
+}
+
+func (s EntityStopPacket) SetEntity(v uint64) {
+	capnp.Struct(s).SetUint64(0, v)
+}
+
+func (s EntityStopPacket) Position() (Vec3, error) {
+	p, err := capnp.Struct(s).Ptr(0)
+	return Vec3(p.Struct()), err
+}
+
+func (s EntityStopPacket) HasPosition() bool {
+	return capnp.Struct(s).HasPtr(0)
+}
+
+func (s EntityStopPacket) SetPosition(v Vec3) error {
+	return capnp.Struct(s).SetPtr(0, capnp.Struct(v).ToPtr())
+}
+
+// NewPosition sets the position field to a newly
+// allocated Vec3 struct, preferring placement in s's segment.
+func (s EntityStopPacket) NewPosition() (Vec3, error) {
+	ss, err := NewVec3(capnp.Struct(s).Segment())
+	if err != nil {
+		return Vec3{}, err
+	}
+	err = capnp.Struct(s).SetPtr(0, capnp.Struct(ss).ToPtr())
+	return ss, err
+}
+
+// EntityStopPacket_List is a list of EntityStopPacket.
+type EntityStopPacket_List = capnp.StructList[EntityStopPacket]
+
+// NewEntityStopPacket creates a new list of EntityStopPacket.
+func NewEntityStopPacket_List(s *capnp.Segment, sz int32) (EntityStopPacket_List, error) {
+	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 8, PointerCount: 1}, sz)
+	return capnp.StructList[EntityStopPacket](l), err
+}
+
+// EntityStopPacket_Future is a wrapper for a EntityStopPacket promised by a client call.
+type EntityStopPacket_Future struct{ *capnp.Future }
+
+func (f EntityStopPacket_Future) Struct() (EntityStopPacket, error) {
+	p, err := f.Future.Ptr()
+	return EntityStopPacket(p.Struct()), err
+}
+func (p EntityStopPacket_Future) Position() Vec3_Future {
+	return Vec3_Future{Future: p.Future.Field(0, nil)}
+}
+
+type EntitySpawnPacket capnp.Struct
+
+// EntitySpawnPacket_TypeID is the unique identifier for the type EntitySpawnPacket.
+const EntitySpawnPacket_TypeID = 0x90a96340f29028ba
+
+func NewEntitySpawnPacket(s *capnp.Segment) (EntitySpawnPacket, error) {
+	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 8, PointerCount: 0})
+	return EntitySpawnPacket(st), err
+}
+
+func NewRootEntitySpawnPacket(s *capnp.Segment) (EntitySpawnPacket, error) {
+	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 8, PointerCount: 0})
+	return EntitySpawnPacket(st), err
+}
+
+func ReadRootEntitySpawnPacket(msg *capnp.Message) (EntitySpawnPacket, error) {
+	root, err := msg.Root()
+	return EntitySpawnPacket(root.Struct()), err
+}
+
+func (s EntitySpawnPacket) String() string {
+	str, _ := text.Marshal(0x90a96340f29028ba, capnp.Struct(s))
+	return str
+}
+
+func (s EntitySpawnPacket) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (EntitySpawnPacket) DecodeFromPtr(p capnp.Ptr) EntitySpawnPacket {
+	return EntitySpawnPacket(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s EntitySpawnPacket) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s EntitySpawnPacket) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s EntitySpawnPacket) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s EntitySpawnPacket) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
+func (s EntitySpawnPacket) Id() uint64 {
+	return capnp.Struct(s).Uint64(0)
+}
+
+func (s EntitySpawnPacket) SetId(v uint64) {
+	capnp.Struct(s).SetUint64(0, v)
+}
+
+// EntitySpawnPacket_List is a list of EntitySpawnPacket.
+type EntitySpawnPacket_List = capnp.StructList[EntitySpawnPacket]
+
+// NewEntitySpawnPacket creates a new list of EntitySpawnPacket.
+func NewEntitySpawnPacket_List(s *capnp.Segment, sz int32) (EntitySpawnPacket_List, error) {
+	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 8, PointerCount: 0}, sz)
+	return capnp.StructList[EntitySpawnPacket](l), err
+}
+
+// EntitySpawnPacket_Future is a wrapper for a EntitySpawnPacket promised by a client call.
+type EntitySpawnPacket_Future struct{ *capnp.Future }
+
+func (f EntitySpawnPacket_Future) Struct() (EntitySpawnPacket, error) {
+	p, err := f.Future.Ptr()
+	return EntitySpawnPacket(p.Struct()), err
+}
+
+type EntityObservePacket capnp.Struct
+
+// EntityObservePacket_TypeID is the unique identifier for the type EntityObservePacket.
+const EntityObservePacket_TypeID = 0xc823831ca674c61b
+
+func NewEntityObservePacket(s *capnp.Segment) (EntityObservePacket, error) {
+	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 8, PointerCount: 0})
+	return EntityObservePacket(st), err
+}
+
+func NewRootEntityObservePacket(s *capnp.Segment) (EntityObservePacket, error) {
+	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 8, PointerCount: 0})
+	return EntityObservePacket(st), err
+}
+
+func ReadRootEntityObservePacket(msg *capnp.Message) (EntityObservePacket, error) {
+	root, err := msg.Root()
+	return EntityObservePacket(root.Struct()), err
+}
+
+func (s EntityObservePacket) String() string {
+	str, _ := text.Marshal(0xc823831ca674c61b, capnp.Struct(s))
+	return str
+}
+
+func (s EntityObservePacket) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (EntityObservePacket) DecodeFromPtr(p capnp.Ptr) EntityObservePacket {
+	return EntityObservePacket(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s EntityObservePacket) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s EntityObservePacket) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s EntityObservePacket) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s EntityObservePacket) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
+func (s EntityObservePacket) Entity() uint64 {
+	return capnp.Struct(s).Uint64(0)
+}
+
+func (s EntityObservePacket) SetEntity(v uint64) {
+	capnp.Struct(s).SetUint64(0, v)
+}
+
+// EntityObservePacket_List is a list of EntityObservePacket.
+type EntityObservePacket_List = capnp.StructList[EntityObservePacket]
+
+// NewEntityObservePacket creates a new list of EntityObservePacket.
+func NewEntityObservePacket_List(s *capnp.Segment, sz int32) (EntityObservePacket_List, error) {
+	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 8, PointerCount: 0}, sz)
+	return capnp.StructList[EntityObservePacket](l), err
+}
+
+// EntityObservePacket_Future is a wrapper for a EntityObservePacket promised by a client call.
+type EntityObservePacket_Future struct{ *capnp.Future }
+
+func (f EntityObservePacket_Future) Struct() (EntityObservePacket, error) {
+	p, err := f.Future.Ptr()
+	return EntityObservePacket(p.Struct()), err
+}
+
+const schema_9c4788c5a214e29c = "x\xda\x94\x93MHTo\x14\xc6\xcf\xf3\xbew\x1c\x15" +
+	"/\xce\xfc\xef,\xfe\xf4\x81\xd0\x17\x19Nhnb6" +
+	"c\x92T\xa28/ff\xd0b\x1c\x07\x1c\xa4{/" +
+	"z\xc7\xd16-Bh\x13X\xb8(00\x09Q\x10" +
+	"*\x88\xbehQ\xd1\xa7\x11}@\x91\xdbhS\xbb\x06" +
+	"Zh\xe9\x1b\xf7\x8e\xde;su\xd3\xeep\xces\xcf" +
+	"y\xde\xdf9\xb7~\x1eMJ\x83\xfa\x8e\x13\x13u\x81" +
+	"2\xf9p\xefx\xbe)57NB\x05\xe4\xe4\xd7\xc8" +
+	"\xf4\xf3\x0bG&I\x09\x12io\xb1\xac-\xc2\x8e>" +
+	"!N\x90\x8f{>\xff\xa8\x1e[x\xe9\xd3\xb6 X" +
+	"F\xa4\xfd\xc2\xb4\xb6b\xab\x1b\x97\xd0\x0d\x82|\x12}" +
+	"\xf3\xe1L\xf7wG\xce|\xad\xbb\xf8e\xed4\xb7\xa3" +
+	"\x1e~\x93 \xb7\xbe\xb0f\xb6\x9d\xdf\xf9j\x13\x1b\x8d" +
+	"?y%48\x9f\xadp\xdbG\xf3\xc2\xeb\xbbK3" +
+	"\xd9/>q\xc0\xb1\xba]\xc9k\xb5\x8ex\xb7\x92#" +
+	"\xc8\xf7\xdf\xee\xcdN\xf4\x8d\xe4}.\x0a\xe21%\xaf" +
+	"]r\xc4\x17\x15\xdb\xc6\xf0\xc7\xc5\xceX\xd7\x9e\xd5\xcd" +
+	"h\xd4\x06\x9ej\x0d\x01;\x8a\x06\xe2\x14\x95f25" +
+	"\x90\xb6\xf6\xa7X\xd2\xd4\xcdX\x8bne\xac\xd1N3" +
+	"\x99\xd3\xe3\x09\xa7\x92\x00\x84\xc2\x15\"\x05Dau\x0b" +
+	"\x91(\xe7\x10\x11\x06\x9e\xe9C\x051T\x10\xdc.p" +
+	"\xba$\x92\xa9\xe0\xda\xa7\xffs\xa5JJ\xe7\xdb\xab\xcd" +
+	"Db\x82CL1\xa8X\x95\x11\xd8\xd9k\xfb\x88\xc4" +
+	"\x15\x0eq\x83Ae+2\x02F\x14\xbe~\x8aHL" +
+	"q\x88y\x06\x95\xff\x91\x11p\xa2\xf0\x9c\x9d\x9d\xe5\x10" +
+	"w\x18T\xe5\xb7\x8c@!\x0a\xdf\xee%\x12\xb78\xc4" +
+	"#\x065\xb0,#\x08\x10\x85\x1f\x0c\x12\x89\xfb\x1c\xe2" +
+	"\x19\xc3\xb9\xac>\xa0\x1b9\x9d\xca\xaa\x93Y\xab\x1f!" +
+	"\x8f\x10\x01!\x82L;\xefn7\x88\x0f\xa7\x11\xf2h" +
+	"\x97\x94;-\xe2\x86\x89\x90\xb7\xb9\xd2\xb2I\xc1dN" +
+	"G\xc8\xbb\xc6\x92zG/\xd5\x0c\xa5\x07\x9d\x01\xee\xa1" +
+	"\xac)J\xf9\x9dH\xa7\xd0h\xd3\xabr\xc1\xb7\xfcG" +
+	"$\x9a8D\x1bC\x18(\xb0;f'\x0fs\x88\x04" +
+	"C\x98\xb1\x02\xbav;y\x94C\x1cg\xc0\x08*\x89" +
+	"\xa1\x92\x80Q7:\xbb\x1e\xb9Sy\xd1\xee;z\x1d" +
+	"\x8f\x85\xe5\x13\xf9\xd6\x1f\xf3\xd6\x1f/\xbcj\xc3\x09\x94" +
+	"\x1c\x92e\x98\x89\x1a\xf7\x8e\xca\xddF\xb5v\xa3]\x1c" +
+	"\xa2\x9ea\xfd5\xd1V\"Q\xc7!\x0en\xd2\xdc\x18" +
+	"\xcaX\x19C'\"\x84\xbc_\xd2G\xafxt\xbb1" +
+	"\x9c.\x1a]D2\xe6\x91tA\xb6z\xcc\\\x90b" +
+	"\x07\x91h\xe3\x10'\xff\xd1Op\xd0\xb060.x" +
+	";\x94\xb5\xfa\xd7\xd0\xfa\xc8\x1e\xf0\xc8\xd6X\xc6@Z" +
+	"_\x9f\xf57\x00\x00\xff\xff\x17BHI"
 
 func RegisterSchema(reg *schemas.Registry) {
 	reg.Register(&schemas.Schema{
 		String: schema_9c4788c5a214e29c,
 		Nodes: []uint64{
+			0x90a96340f29028ba,
 			0xc7ca850fead659c0,
 			0xc7e9576dd1cb2dc1,
-			0xd5b795949bdeb67a,
+			0xc823831ca674c61b,
+			0xd875a6f9b6c9ca42,
+			0xf2786494a8b7e4d0,
 			0xfe26553a53d9d276,
 		},
 		Compressed: true,

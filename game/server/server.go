@@ -57,9 +57,14 @@ func (s *Server) accept(conn osnet.Conn) {
 	}
 	defer pkt.Message().Release()
 
-	auth, ok := pkt.(net.AuthPacket)
-	if !ok {
+	if pkt.Which() != net.Packet_Which_auth {
 		client.Drop("expected auth packet")
+		return
+	}
+
+	auth, err := pkt.Auth()
+	if err != nil {
+		client.Drop("invalid auth packet")
 		return
 	}
 	log.Println("server: client auth with token", auth.Token())
@@ -75,13 +80,16 @@ func (s *Server) accept(conn osnet.Conn) {
 	delete(s.auths, auth.Token())
 
 	// create player entity
-	player := s.Instance.CreatePlayer()
-
-	// trigger observe entity
-	if err := client.Observe(player); err != nil {
-		client.Drop("faied to observe entity")
-		return
+	// todo: load player information
+	player := &Player{
+		id: 131273,
 	}
+
+	// enter world
+	s.Instance.SubmitEvent(&EnterWorldEvent{
+		Client: client,
+		Player: player,
+	})
 
 	// start client read loop
 	go client.readLoop()

@@ -8,5 +8,4 @@ type Entity interface {
 	ID() Identity
 	Name() string
 	Position() vec3.T
-	Instance() *Instance
 }

@@ -19,8 +19,14 @@ struct Vec3 {
 
 struct Packet {
     union {
-        auth @0 :AuthPacket;
-        move @1 :MovePacket;
+        unknown @0: Void;
+
+        auth @1 :AuthPacket;
+
+        entityMove @2 :EntityMovePacket;
+        entityStop @3 :EntityStopPacket; 
+        entitySpawn @4 :EntitySpawnPacket;
+        entityObserve @5 :EntityObservePacket;
     }
 }
 
@@ -28,8 +34,21 @@ struct AuthPacket {
     token @0 :UInt64;
 }
 
-struct MovePacket {
-    uid @0 :UInt64;
+struct EntityMovePacket {
+    entity @0 :UInt64;
     position @1 :Vec3;
     rot @2 :Float32;
+}
+
+struct EntityStopPacket {
+    entity @0 :UInt64;
+    position @1 :Vec3;
+}
+
+struct EntitySpawnPacket {
+    id @0 :UInt64;
+}
+
+struct EntityObservePacket {
+    entity @0 :UInt64;
 }

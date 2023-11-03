@@ -38,7 +38,7 @@ var _ = Describe("networking", func() {
 		Expect(err).ToNot(HaveOccurred())
 
 		// some time later..
-		time.Sleep(1 * time.Second)
+		time.Sleep(2 * time.Second)
 		Expect(srv.Instance.Entities).To(HaveLen(1))
 	})
 })
