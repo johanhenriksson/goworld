@@ -46,7 +46,8 @@ struct EntityStopPacket {
 }
 
 struct EntitySpawnPacket {
-    id @0 :UInt64;
+    entity @0 :UInt64;
+    position @1 :Vec3;
 }
 
 struct EntityObservePacket {

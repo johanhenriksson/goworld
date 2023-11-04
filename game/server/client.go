@@ -95,6 +95,8 @@ func (c *Client) decode() (*net.Packet, error) {
 }
 
 func (c *Client) handlePacket(msg *net.Packet) error {
+	defer msg.Message().Release()
+
 	switch msg.Which() {
 	case net.Packet_Which_auth:
 		// auth packets should be handled by the server during the accept phase.
@@ -141,15 +143,17 @@ func (c *Client) handlePacket(msg *net.Packet) error {
 // and submits them to the current instances message queue.
 // todo: in the event of a read error, the client is dropped and a drop event is posted to the instance event queue.
 func (c *Client) readLoop() {
+	defer func() {
+		// disconnected
+		log.Println(c, "disconnected")
+	}()
+
 	for {
 		msg, err := c.decode()
 		if err != nil {
 			log.Println(err)
 			return
 		}
-		defer msg.Message().Release()
-
-		log.Println("<-server:", msg)
 
 		if err := c.handlePacket(msg); err != nil {
 			// something went to shit.
@@ -223,7 +227,7 @@ func (c *Client) SendSpawn(entity Entity) error {
 			return err
 		}
 
-		spawn.SetId(uint64(entity.ID()))
+		spawn.SetEntity(uint64(entity.ID()))
 
 		return wrap.SetEntitySpawn(spawn)
 	})

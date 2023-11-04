@@ -7,7 +7,7 @@ import (
 	"github.com/johanhenriksson/goworld/math/vec3"
 )
 
-const GamePort = 1421
+const GamePort = 1423
 
 var ErrUnknownPacket = errors.New("unknown packet")
 var ErrInvalidPacket = errors.New("invalid packet")

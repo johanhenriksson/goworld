@@ -4,31 +4,51 @@ import (
 	"fmt"
 	"log"
 	osnet "net"
+	"time"
 
 	"capnproto.org/go/capnp/v3"
+	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/game/net"
+	"github.com/johanhenriksson/goworld/game/server"
 )
 
 type Client struct {
+	object.Object
+
 	conn    osnet.Conn
 	arena   *capnp.SingleSegmentArena
 	encoder *capnp.Encoder
 	decoder *capnp.Decoder
+	submit  func(Event)
 }
 
-func NewClient() (*Client, error) {
-	conn, err := osnet.Dial("tcp", fmt.Sprintf("127.0.0.1:%d", net.GamePort))
+func NewClient(events func(Event)) *Client {
+	client := object.New("GameClient", &Client{
+		arena:  capnp.SingleSegment(nil),
+		submit: events,
+	})
+	return client
+}
+
+func (c *Client) Connect(hostname string) error {
+	if c.conn != nil {
+		return fmt.Errorf("already connected")
+	}
+
+	dialer := osnet.Dialer{
+		Timeout: 3 * time.Second,
+	}
+	conn, err := dialer.Dial("tcp", fmt.Sprintf("%s:%d", hostname, net.GamePort))
 	if err != nil {
-		return nil, err
+		return err
 	}
-	client := &Client{
-		conn:    conn,
-		arena:   capnp.SingleSegment(nil),
-		encoder: capnp.NewEncoder(conn),
-		decoder: capnp.NewDecoder(conn),
-	}
-	go client.readLoop()
-	return client, err
+
+	c.conn = conn
+	c.encoder = capnp.NewEncoder(conn)
+	c.decoder = capnp.NewDecoder(conn)
+	go c.readLoop()
+
+	return c.SendAuthToken(1337)
 }
 
 func (c *Client) decode() (*net.Packet, error) {
@@ -46,6 +66,8 @@ func (c *Client) decode() (*net.Packet, error) {
 }
 
 func (c *Client) handlePacket(msg *net.Packet) error {
+	defer msg.Message().Release()
+
 	switch msg.Which() {
 	case net.Packet_Which_auth:
 		return fmt.Errorf("%w: auth packet is client->server only", net.ErrInvalidPacket)
@@ -61,14 +83,23 @@ func (c *Client) handlePacket(msg *net.Packet) error {
 		if err != nil {
 			return err
 		}
-		log.Println("spawn entity", spawn.Id())
+		pos, err := spawn.Position()
+		if err != nil {
+			return err
+		}
+		c.submit(EntitySpawnEvent{
+			EntityID: server.Identity(spawn.Entity()),
+			Position: net.ToVec3(pos),
+		})
 
 	case net.Packet_Which_entityObserve:
 		observe, err := msg.EntityObserve()
 		if err != nil {
 			return err
 		}
-		log.Println("observe entity", observe.Entity())
+		c.submit(EntityObserveEvent{
+			EntityID: observe.Entity(),
+		})
 
 	default:
 		return fmt.Errorf("%w: received packet with type %s", net.ErrUnknownPacket, msg.Which())
@@ -78,13 +109,23 @@ func (c *Client) handlePacket(msg *net.Packet) error {
 }
 
 func (c *Client) readLoop() {
+	defer func() {
+		// disconnected. reset client:
+		c.conn = nil
+		c.encoder = nil
+		c.decoder = nil
+
+		c.submit(DisconnectEvent{})
+
+		log.Println("disconnected from server")
+	}()
+
 	for {
 		msg, err := c.decode()
 		if err != nil {
 			log.Println("client read error:", err)
 			return
 		}
-		defer msg.Message().Release()
 
 		if err := c.handlePacket(msg); err != nil {
 			log.Println("client packet error:", err)
