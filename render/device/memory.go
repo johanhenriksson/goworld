@@ -202,6 +202,7 @@ func (m *memory) Read(offset int, target any) int {
 
 func (m *memory) Flush() {
 	if !m.isCoherent() {
+		m.mmap()
 		m.ptr.FlushAll()
 	}
 }
