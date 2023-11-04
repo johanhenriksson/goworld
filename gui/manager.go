@@ -106,7 +106,9 @@ func (m *manager) Update(scene object.Component, dt float32) {
 func (m *manager) DrawUI(args widget.DrawArgs, quads *widget.QuadBuffer) {
 	m.viewport = args.Viewport
 	// draw
-	m.gui.Draw(args, quads)
+	if m.gui != nil {
+		m.gui.Draw(args, quads)
+	}
 }
 
 func findNodeWithKey(root node.T, key string) node.T {
