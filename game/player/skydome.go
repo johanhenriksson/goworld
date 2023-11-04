@@ -30,6 +30,7 @@ func NewSkydome() *Skydome {
 			Transparent:  true,
 		}),
 	})
+	dome.Transform().SetScale(vec3.New(100, 100, 100))
 	dome.SetShadows(false)
 	return dome
 }

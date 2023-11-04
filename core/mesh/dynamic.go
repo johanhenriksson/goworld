@@ -51,7 +51,7 @@ func (m *Dynamic[V, I]) Refresh() {
 }
 
 func (m *Dynamic[V, I]) RefreshSync() {
-	log.Println("mesh", m, ": blocking refresh")
+	// log.Println("mesh", m, ": blocking refresh")
 	data := m.refresh()
 	m.meshdata.Update(data.Vertices, data.Indices)
 	m.VertexData.Set(m.meshdata)

@@ -7,6 +7,7 @@ import (
 
 	"capnproto.org/go/capnp/v3"
 	"github.com/johanhenriksson/goworld/game/net"
+	"github.com/johanhenriksson/goworld/math/vec3"
 )
 
 var clientId = 1
@@ -89,7 +90,6 @@ func (c *Client) decode() (*net.Packet, error) {
 	if err != nil {
 		return nil, fmt.Errorf("packet read failed: %w", err)
 	}
-	log.Println("<-server:", msg)
 
 	return &pkt, nil
 }
@@ -116,27 +116,14 @@ func (c *Client) handlePacket(msg *net.Packet) error {
 			Sender:   c,
 			Entity:   Identity(move.Entity()),
 			Position: net.ToVec3(pos),
-			Stop:     false,
+			Stopped:  move.Stopped(),
 		})
 
-	case net.Packet_Which_entityStop:
-		stop, err := msg.EntityStop()
-		if err != nil {
-			return err
-		}
-		pos, err := stop.Position()
-		if err != nil {
-			return err
-		}
-		c.Instance.SubmitEvent(EntityMoveEvent{
-			Sender:   c,
-			Entity:   Identity(stop.Entity()),
-			Position: net.ToVec3(pos),
-			Stop:     false,
-		})
+	default:
+		return fmt.Errorf("%w: received packet with type %v", net.ErrUnknownPacket, msg.Which())
 	}
 
-	return fmt.Errorf("%w: received packet with type %v", net.ErrUnknownPacket, msg.Which())
+	return nil
 }
 
 // readLoop is a goroutine that continuously reads packets from the client
@@ -145,6 +132,7 @@ func (c *Client) handlePacket(msg *net.Packet) error {
 func (c *Client) readLoop() {
 	defer func() {
 		// disconnected
+		c.Instance.Despawn(c)
 		log.Println(c, "disconnected")
 	}()
 
@@ -192,12 +180,11 @@ func (c *Client) Send(fn PacketBuilderFn) error {
 	if err := fn(&wrap); err != nil {
 		return err
 	}
-	log.Println("server->:", msg)
 
 	return c.encoder.Encode(msg)
 }
 
-func (c *Client) SendMove() error {
+func (c *Client) SendMove(id Identity, pos vec3.T, stopped bool) error {
 	return c.Send(func(wrap *net.Packet) error {
 		pkt, err := net.NewEntityMovePacket(wrap.Segment())
 		if err != nil {
@@ -205,16 +192,18 @@ func (c *Client) SendMove() error {
 		}
 
 		// encode entity id
-		pkt.SetEntity(uint64(c.ID()))
+		pkt.SetEntity(uint64(id))
 
 		// encode position
-		epos, err := net.FromVec3(wrap.Segment(), c.Position())
+		epos, err := net.FromVec3(wrap.Segment(), pos)
 		if err != nil {
 			return err
 		}
 		pkt.SetPosition(epos)
 
 		// todo: encode facing
+
+		pkt.SetStopped(stopped)
 
 		return wrap.SetEntityMove(pkt)
 	})
@@ -227,7 +216,15 @@ func (c *Client) SendSpawn(entity Entity) error {
 			return err
 		}
 
+		// entity id
 		spawn.SetEntity(uint64(entity.ID()))
+
+		// entity position
+		pos, err := net.FromVec3(wrap.Segment(), entity.Position())
+		if err != nil {
+			return err
+		}
+		spawn.SetPosition(pos)
 
 		return wrap.SetEntitySpawn(spawn)
 	})

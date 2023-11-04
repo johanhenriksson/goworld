@@ -10,6 +10,7 @@ import (
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/game/net"
 	"github.com/johanhenriksson/goworld/game/server"
+	"github.com/johanhenriksson/goworld/math/vec3"
 )
 
 type Client struct {
@@ -48,7 +49,7 @@ func (c *Client) Connect(hostname string) error {
 	c.decoder = capnp.NewDecoder(conn)
 	go c.readLoop()
 
-	return c.SendAuthToken(1337)
+	return nil
 }
 
 func (c *Client) decode() (*net.Packet, error) {
@@ -73,10 +74,21 @@ func (c *Client) handlePacket(msg *net.Packet) error {
 		return fmt.Errorf("%w: auth packet is client->server only", net.ErrInvalidPacket)
 
 	case net.Packet_Which_entityMove:
-		log.Println("client: entity move")
+		move, err := msg.EntityMove()
+		if err != nil {
+			return err
+		}
+		pos, err := move.Position()
+		if err != nil {
+			return err
+		}
 
-	case net.Packet_Which_entityStop:
-		log.Println("client: entity stop")
+		c.submit(EntityMoveEvent{
+			EntityID: server.Identity(move.Entity()),
+			Position: net.ToVec3(pos),
+			Rotation: move.Rotation(),
+			Stopped:  move.Stopped(),
+		})
 
 	case net.Packet_Which_entitySpawn:
 		spawn, err := msg.EntitySpawn()
@@ -98,7 +110,7 @@ func (c *Client) handlePacket(msg *net.Packet) error {
 			return err
 		}
 		c.submit(EntityObserveEvent{
-			EntityID: observe.Entity(),
+			EntityID: server.Identity(observe.Entity()),
 		})
 
 	default:
@@ -156,7 +168,6 @@ func (c *Client) Send(fn PacketBuilderFn) error {
 	if err := fn(&wrap); err != nil {
 		return err
 	}
-	log.Println("client->:", msg)
 
 	return c.encoder.Encode(msg)
 }
@@ -172,5 +183,26 @@ func (c *Client) SendAuthToken(token uint64) error {
 		auth.SetToken(token)
 
 		return p.SetAuth(auth)
+	})
+}
+
+func (c *Client) SendMove(id server.Identity, position vec3.T, rotation float32, stopped bool) error {
+	return c.Send(func(p *net.Packet) error {
+		move, err := net.NewEntityMovePacket(p.Segment())
+		if err != nil {
+			return err
+		}
+
+		move.SetEntity(uint64(id))
+
+		pos, err := net.FromVec3(p.Segment(), position)
+		if err != nil {
+			return err
+		}
+		move.SetPosition(pos)
+
+		move.SetStopped(stopped)
+
+		return p.SetEntityMove(move)
 	})
 }

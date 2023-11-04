@@ -105,13 +105,12 @@ const (
 	Packet_Which_unknown       Packet_Which = 0
 	Packet_Which_auth          Packet_Which = 1
 	Packet_Which_entityMove    Packet_Which = 2
-	Packet_Which_entityStop    Packet_Which = 3
-	Packet_Which_entitySpawn   Packet_Which = 4
-	Packet_Which_entityObserve Packet_Which = 5
+	Packet_Which_entitySpawn   Packet_Which = 3
+	Packet_Which_entityObserve Packet_Which = 4
 )
 
 func (w Packet_Which) String() string {
-	const s = "unknownauthentityMoveentityStopentitySpawnentityObserve"
+	const s = "unknownauthentityMoveentitySpawnentityObserve"
 	switch w {
 	case Packet_Which_unknown:
 		return s[0:7]
@@ -119,12 +118,10 @@ func (w Packet_Which) String() string {
 		return s[7:11]
 	case Packet_Which_entityMove:
 		return s[11:21]
-	case Packet_Which_entityStop:
-		return s[21:31]
 	case Packet_Which_entitySpawn:
-		return s[31:42]
+		return s[21:32]
 	case Packet_Which_entityObserve:
-		return s[42:55]
+		return s[32:45]
 
 	}
 	return "Packet_Which(" + strconv.FormatUint(uint64(w), 10) + ")"
@@ -248,40 +245,8 @@ func (s Packet) NewEntityMove() (EntityMovePacket, error) {
 	return ss, err
 }
 
-func (s Packet) EntityStop() (EntityStopPacket, error) {
-	if capnp.Struct(s).Uint16(0) != 3 {
-		panic("Which() != entityStop")
-	}
-	p, err := capnp.Struct(s).Ptr(0)
-	return EntityStopPacket(p.Struct()), err
-}
-
-func (s Packet) HasEntityStop() bool {
-	if capnp.Struct(s).Uint16(0) != 3 {
-		return false
-	}
-	return capnp.Struct(s).HasPtr(0)
-}
-
-func (s Packet) SetEntityStop(v EntityStopPacket) error {
-	capnp.Struct(s).SetUint16(0, 3)
-	return capnp.Struct(s).SetPtr(0, capnp.Struct(v).ToPtr())
-}
-
-// NewEntityStop sets the entityStop field to a newly
-// allocated EntityStopPacket struct, preferring placement in s's segment.
-func (s Packet) NewEntityStop() (EntityStopPacket, error) {
-	capnp.Struct(s).SetUint16(0, 3)
-	ss, err := NewEntityStopPacket(capnp.Struct(s).Segment())
-	if err != nil {
-		return EntityStopPacket{}, err
-	}
-	err = capnp.Struct(s).SetPtr(0, capnp.Struct(ss).ToPtr())
-	return ss, err
-}
-
 func (s Packet) EntitySpawn() (EntitySpawnPacket, error) {
-	if capnp.Struct(s).Uint16(0) != 4 {
+	if capnp.Struct(s).Uint16(0) != 3 {
 		panic("Which() != entitySpawn")
 	}
 	p, err := capnp.Struct(s).Ptr(0)
@@ -289,21 +254,21 @@ func (s Packet) EntitySpawn() (EntitySpawnPacket, error) {
 }
 
 func (s Packet) HasEntitySpawn() bool {
-	if capnp.Struct(s).Uint16(0) != 4 {
+	if capnp.Struct(s).Uint16(0) != 3 {
 		return false
 	}
 	return capnp.Struct(s).HasPtr(0)
 }
 
 func (s Packet) SetEntitySpawn(v EntitySpawnPacket) error {
-	capnp.Struct(s).SetUint16(0, 4)
+	capnp.Struct(s).SetUint16(0, 3)
 	return capnp.Struct(s).SetPtr(0, capnp.Struct(v).ToPtr())
 }
 
 // NewEntitySpawn sets the entitySpawn field to a newly
 // allocated EntitySpawnPacket struct, preferring placement in s's segment.
 func (s Packet) NewEntitySpawn() (EntitySpawnPacket, error) {
-	capnp.Struct(s).SetUint16(0, 4)
+	capnp.Struct(s).SetUint16(0, 3)
 	ss, err := NewEntitySpawnPacket(capnp.Struct(s).Segment())
 	if err != nil {
 		return EntitySpawnPacket{}, err
@@ -313,7 +278,7 @@ func (s Packet) NewEntitySpawn() (EntitySpawnPacket, error) {
 }
 
 func (s Packet) EntityObserve() (EntityObservePacket, error) {
-	if capnp.Struct(s).Uint16(0) != 5 {
+	if capnp.Struct(s).Uint16(0) != 4 {
 		panic("Which() != entityObserve")
 	}
 	p, err := capnp.Struct(s).Ptr(0)
@@ -321,21 +286,21 @@ func (s Packet) EntityObserve() (EntityObservePacket, error) {
 }
 
 func (s Packet) HasEntityObserve() bool {
-	if capnp.Struct(s).Uint16(0) != 5 {
+	if capnp.Struct(s).Uint16(0) != 4 {
 		return false
 	}
 	return capnp.Struct(s).HasPtr(0)
 }
 
 func (s Packet) SetEntityObserve(v EntityObservePacket) error {
-	capnp.Struct(s).SetUint16(0, 5)
+	capnp.Struct(s).SetUint16(0, 4)
 	return capnp.Struct(s).SetPtr(0, capnp.Struct(v).ToPtr())
 }
 
 // NewEntityObserve sets the entityObserve field to a newly
 // allocated EntityObservePacket struct, preferring placement in s's segment.
 func (s Packet) NewEntityObserve() (EntityObservePacket, error) {
-	capnp.Struct(s).SetUint16(0, 5)
+	capnp.Struct(s).SetUint16(0, 4)
 	ss, err := NewEntityObservePacket(capnp.Struct(s).Segment())
 	if err != nil {
 		return EntityObservePacket{}, err
@@ -365,9 +330,6 @@ func (p Packet_Future) Auth() AuthPacket_Future {
 }
 func (p Packet_Future) EntityMove() EntityMovePacket_Future {
 	return EntityMovePacket_Future{Future: p.Future.Field(0, nil)}
-}
-func (p Packet_Future) EntityStop() EntityStopPacket_Future {
-	return EntityStopPacket_Future{Future: p.Future.Field(0, nil)}
 }
 func (p Packet_Future) EntitySpawn() EntitySpawnPacket_Future {
 	return EntitySpawnPacket_Future{Future: p.Future.Field(0, nil)}
@@ -527,12 +489,20 @@ func (s EntityMovePacket) NewPosition() (Vec3, error) {
 	return ss, err
 }
 
-func (s EntityMovePacket) Rot() float32 {
+func (s EntityMovePacket) Rotation() float32 {
 	return math.Float32frombits(capnp.Struct(s).Uint32(8))
 }
 
-func (s EntityMovePacket) SetRot(v float32) {
+func (s EntityMovePacket) SetRotation(v float32) {
 	capnp.Struct(s).SetUint32(8, math.Float32bits(v))
+}
+
+func (s EntityMovePacket) Stopped() bool {
+	return capnp.Struct(s).Bit(96)
+}
+
+func (s EntityMovePacket) SetStopped(v bool) {
+	capnp.Struct(s).SetBit(96, v)
 }
 
 // EntityMovePacket_List is a list of EntityMovePacket.
@@ -552,105 +522,6 @@ func (f EntityMovePacket_Future) Struct() (EntityMovePacket, error) {
 	return EntityMovePacket(p.Struct()), err
 }
 func (p EntityMovePacket_Future) Position() Vec3_Future {
-	return Vec3_Future{Future: p.Future.Field(0, nil)}
-}
-
-type EntityStopPacket capnp.Struct
-
-// EntityStopPacket_TypeID is the unique identifier for the type EntityStopPacket.
-const EntityStopPacket_TypeID = 0xd875a6f9b6c9ca42
-
-func NewEntityStopPacket(s *capnp.Segment) (EntityStopPacket, error) {
-	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 8, PointerCount: 1})
-	return EntityStopPacket(st), err
-}
-
-func NewRootEntityStopPacket(s *capnp.Segment) (EntityStopPacket, error) {
-	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 8, PointerCount: 1})
-	return EntityStopPacket(st), err
-}
-
-func ReadRootEntityStopPacket(msg *capnp.Message) (EntityStopPacket, error) {
-	root, err := msg.Root()
-	return EntityStopPacket(root.Struct()), err
-}
-
-func (s EntityStopPacket) String() string {
-	str, _ := text.Marshal(0xd875a6f9b6c9ca42, capnp.Struct(s))
-	return str
-}
-
-func (s EntityStopPacket) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
-	return capnp.Struct(s).EncodeAsPtr(seg)
-}
-
-func (EntityStopPacket) DecodeFromPtr(p capnp.Ptr) EntityStopPacket {
-	return EntityStopPacket(capnp.Struct{}.DecodeFromPtr(p))
-}
-
-func (s EntityStopPacket) ToPtr() capnp.Ptr {
-	return capnp.Struct(s).ToPtr()
-}
-func (s EntityStopPacket) IsValid() bool {
-	return capnp.Struct(s).IsValid()
-}
-
-func (s EntityStopPacket) Message() *capnp.Message {
-	return capnp.Struct(s).Message()
-}
-
-func (s EntityStopPacket) Segment() *capnp.Segment {
-	return capnp.Struct(s).Segment()
-}
-func (s EntityStopPacket) Entity() uint64 {
-	return capnp.Struct(s).Uint64(0)
-}
-
-func (s EntityStopPacket) SetEntity(v uint64) {
-	capnp.Struct(s).SetUint64(0, v)
-}
-
-func (s EntityStopPacket) Position() (Vec3, error) {
-	p, err := capnp.Struct(s).Ptr(0)
-	return Vec3(p.Struct()), err
-}
-
-func (s EntityStopPacket) HasPosition() bool {
-	return capnp.Struct(s).HasPtr(0)
-}
-
-func (s EntityStopPacket) SetPosition(v Vec3) error {
-	return capnp.Struct(s).SetPtr(0, capnp.Struct(v).ToPtr())
-}
-
-// NewPosition sets the position field to a newly
-// allocated Vec3 struct, preferring placement in s's segment.
-func (s EntityStopPacket) NewPosition() (Vec3, error) {
-	ss, err := NewVec3(capnp.Struct(s).Segment())
-	if err != nil {
-		return Vec3{}, err
-	}
-	err = capnp.Struct(s).SetPtr(0, capnp.Struct(ss).ToPtr())
-	return ss, err
-}
-
-// EntityStopPacket_List is a list of EntityStopPacket.
-type EntityStopPacket_List = capnp.StructList[EntityStopPacket]
-
-// NewEntityStopPacket creates a new list of EntityStopPacket.
-func NewEntityStopPacket_List(s *capnp.Segment, sz int32) (EntityStopPacket_List, error) {
-	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 8, PointerCount: 1}, sz)
-	return capnp.StructList[EntityStopPacket](l), err
-}
-
-// EntityStopPacket_Future is a wrapper for a EntityStopPacket promised by a client call.
-type EntityStopPacket_Future struct{ *capnp.Future }
-
-func (f EntityStopPacket_Future) Struct() (EntityStopPacket, error) {
-	p, err := f.Future.Ptr()
-	return EntityStopPacket(p.Struct()), err
-}
-func (p EntityStopPacket_Future) Position() Vec3_Future {
 	return Vec3_Future{Future: p.Future.Field(0, nil)}
 }
 
@@ -825,49 +696,47 @@ func (f EntityObservePacket_Future) Struct() (EntityObservePacket, error) {
 	return EntityObservePacket(p.Struct()), err
 }
 
-const schema_9c4788c5a214e29c = "x\xda\xbc\x92OH\x14a\x18\xc6\xdf\xe7\xfbf]\x15" +
-	"\x07w\x9b=\x04\x05BEThh\x12\xd4\x82\xacJ" +
-	"R\x89\xe2~XYA\x87u\x1bp\x11g&\x9du" +
-	"\xb5K\x87\x08:J\x18$(\x98\x84(\x04\x15D\xff" +
-	"\xf0P\x91\xfd1\xa4\x0c\x8a\xbcF\x97:\xee-+\xbf" +
-	"\x98\xd9uf\xdd\xf6\xd2\xa5\xdb\xcb\xfb\xbe\xf3=\xcf\xfc" +
-	"\xde\xa7~\x01\xcdJ\x83\xfa\x8e\x13\x13\xb5\x812\xf9d" +
-	"\xcfX\xb699?FB\x05\xe4\xe4\x97\xc8\xcc\xe2\xd5" +
-	"\xa3\x93\x14@\x90H[\xc6\x9a\xb6\xeaV\x1f\x91!\xc8" +
-	"\xa7g>}\xaf\xbe\xb2\xf4\xaah\xb9\x0d\xc12\"\xed" +
-	" \x9b\xd1\x9aX\x90\xa8\xf10\xeb\x01A>\xab{\xbb" +
-	"2\xd0\xf3\xcd]g\xfe\xba\xe2<x\x9d_\xd3\xa6\xb8" +
-	"SM\xf0;\x04\xb9\xed\xa5=\xbb\xfd\xf2\xce\xd7EO" +
-	";\xbb\x8d\x0dJ%\xb4\x16\xf7\xb3&%F\x90\xadK" +
-	"o\x1e\xfc\x98M\x7f.i\xfa\x9c\x92\xd5R\xee\xb2\xae" +
-	"8\xa6\xdf\x7f}87~~$[\xe4\"\xb7\xbc\xa8" +
-	"d\xb5\x15wyYql\x0c\x7fX\xed\x8e\x9e\xdc\xbd" +
-	"^\xc2\x86\x96\x0a<\xd7.\x04\x9cj \x10\xa3:i" +
-	"%\x92\xfd\xba\xbd?\xc9\x12\x96aE\xdb\x0c;e\x8f" +
-	"v[\x89\x8c\x11\x8b\xbb\x938 \xca\xb9B\xa4\x80(" +
-	"\xbc7J$vq\x88z\x06 \x02\xa7W\xd7N$" +
-	"j9\xc4!\x86\x98\xee>\x80\x0ab\xa8 H\xcb\x1c" +
-	"J\xd9)\xd3 \"\x84|\x94\x04\x84\x9ci^\x1b\xae" +
-	"v<\x91\x0c\xe6\x05\xb7r\xa5JJWq\xa2\x95H" +
-	"\x8cs\x88i\x06\x15\xeb2\xa79\xb5\x8fH\xdc\xe0\x10" +
-	"\xb7\x18T\xf6[F\xc0\x88\xc27\xcf\x12\x89i\x0eq" +
-	"\x9bA\xe5\xbfd\x04\x9c(<\xeft\xe78\xc4}\x06" +
-	"U\xf9)#P\x88\xc2\xf7z\x89\xc4]\x0e\xb1\xc0\xa0" +
-	"\x06\xd6d\x04\x01\xa2\xf0\xe3A\"\xf1\x88C\xbc`\xb8" +
-	"\x946\xfa\x0d3cPYu\"m\xf7!\xe4s\xcd" +
-	"\xfb\xcf\xfdl\xa7I|XG\xc8\xbf\xd1\xa6q\xb7M" +
-	"\xdc\xb4\x10\xf2\xef\xbdylQ0\x911\x10\xf2C\xbc" +
-	"i\xde\xd5K5C\xfa\xa0+\xe0\xc5\xab$\xbfSz" +
-	"\x12\x8d\x0e\xbd*\xef\\m[\x88D3\x87\xe8`\x08" +
-	"o\xdc\xeb\xb8\xd3<\xc2!\xe2\x0ca\xc6r\xe8:\x9d" +
-	"\xe61\x0eq\x82\x01#\xa8$\x86J\x02F\xbd\xea\xe2" +
-	"F\xe5\xa9\xf2\x82\xc4t\xf5\xba\x1es\x91!r\\(" +
-	"\x9e\x0b\xd5\x09M9\x87\x88\x94\x08H\xa9\xf8\xd9\xa6\x15" +
-	"\xaf\xf9o\xe9+\x94\xee4\x87\xf5\x02\xe9\x02\x92Q\x9f" +
-	"\xa4\x07\xb2\xddg\xe6\x81\x14;\x88D\x07\x878\xfd\x8f" +
-	"~\x82\x83\xa6\xfd\x17\xe3\x9c\xb7\x96\xb4\xdd\x97G[D" +
-	"\xf6\x80O\xb6\xc66\xfbucC\xebO\x00\x00\x00\xff" +
-	"\xff\x87\xd2V\xde"
+const schema_9c4788c5a214e29c = "x\xda\x94RMHT\x7f\x14\xbd\xe7w\x9f\x8e\x8a\x0f" +
+	"\xe7\xfd\xdf\xec\xfe\xc1,\x8a\xd0hBs\x13n\xc6\"" +
+	"\xe9\x83\xc4\xf9a\x1f\x14-z\x8e\x0f\x14\xf3\xbd\x87\xbe" +
+	"q\xc60$Rpa a\xd0\xc2E\xb9\x88\\D" +
+	"\xcb\xa0U\x05V\xd4&\x03\x03\x17m\"\x88\xda\xe5\xae" +
+	"\x0f\xfd\xc5{\xf3\xf1t\x9aM\xbb\xcb\xbd\x97s\xcf=" +
+	"\xe7\xb4\xcf\xa3[\xeb\xd0\xf3LB\xb6\xd6\xd5\xab\xa7\xad" +
+	"\x0b\x9b\xdd\xd9\x95\x05\x92:\xa0\x96>%\x96W\xe7N" +
+	",Q\x1dbD\xe6}\xfc4\x1f\x85\xd5\x0a\xf2\x04\xf5" +
+	"\xec\xe2\x87o-\xb3o^U-\xf7 VGd6" +
+	"\x8ae\xd3\x101\xa2N]$AP\xcfSo\xd7F" +
+	"/|\x0d\xd7E\xb4\xae\x05\x80m|\xdb\xec\xe0\xa0J" +
+	"\xf1c\x82\xfa\xff\xa5\xff`\xcf\xcd\xbd\xaf\xab\xa0\x83\xdd" +
+	"\xceUn\x82\xb9\x1e.\xafq\x9a\xa0\xde}~\xf2p" +
+	"q\xb0\xb0Y\x05\\$\xfd\x9d7\xcd\xadp\xf9\x07\x7f" +
+	"!\xa8\x89\xf7\x1b\xfd]\xe7\xf6o\xd7@6\xd7\xb5\x17" +
+	"\xe6\xc7\xb0\xda\xd0\xd2\x94R\x9e\x95\x1d\xb1\xfdCYa" +
+	"y\x8e\xd7\xd5\xe3\xf8\xc3\xfed\xbfg\xe5\x9dt&\x9c" +
+	"d\x00\xd9\xc0\x1a\x91\x06\"\xa3\xad\x8bH\xeec\xc8v" +
+	"\x01 \x81\xa0\x97:M$\x0f2\xe4\x11\x81\xb4\x1d\x02" +
+	"\xa0\x91\x04\x1a\x09\xcas\xc7\x87\xfda\xd7!\"\xc4#" +
+	"u\x08\x88\x07\xd3\xd2m\x84\xb73V6V:\x98`" +
+	"\xadY\xa9\xf0\xe2\xf5cD\xb2\xc0\x903\x02:\xb6U" +
+	"\xf1\xe6\x8d\x03Dr\x8a!\xe7\x04t\xb1\xa5\x12\x10D" +
+	"\xc6\xec%\"9\xc3\x90\x0b\x02:\xffV\x090\x91q" +
+	"k\x80H\xce3\xe4]\x01]\xfb\xa5\x12\xd0\x88\x8c;" +
+	"cDr\x91!\xef\x09L\xe7\x9c\x11\xc7\xcd;T\xdf" +
+	"b\xe5\xfc!\xc4#\x05KL\x8bo\xf5\xba\xc4\x136" +
+	"\xe2\x91\x1b\xbb\xc6\xfd\x1e\xc5\xac\xbc\x83x\x14\xb1]\xf3" +
+	"\xbe\x01J\x8e\xdbc!B\xc5\xfc\x9aR\x9c\xb7\xb3\xe8" +
+	"\x0c\x84h\xae(\xdf\xf3\x1f\x91\xecf\xc83\x02FY" +
+	"\xfaSA\xf38Cf\x04\x0c!\x8a*\xf4\x06\xcd\x93" +
+	"\x0cyV\x00\x054\x91@\x13\x01\x93\x95\xeaZ\xb9\xaa" +
+	"\\\xe5\x1d\xe6\xf7\x0d\x84\x1c\x8b\xee\x13\x05,\xb4\x0a\x0b" +
+	"=\xf0\xbf\x81!\x135\xbc\xae\x91\xa4^w\xc2\xce$" +
+	"+A\x8aW\x80\xac\x00\xe82C\x0eEA\xb2\x83 " +
+	"\x0d2\xa4\xb7\xe3\x9b\xd1\xa0y\x95!\x0b\x02\x06_)" +
+	"Z\x9a\x0bB\xe11\xe4\xd4\xbfFn\xcc\xf5\xad\xf2\xb4" +
+	"\xa4\xc2\xf4\xb8\xefz\x9e=\x08\x90\x00\xfez\xe4h\xce" +
+	"\x1f*\x89Q\xa5\xc5\xe1H\x8b\xa4\xef\x8e\xd8N\x99\xc3" +
+	"\x9f\x00\x00\x00\xff\xff\xec\x03\"+"
 
 func RegisterSchema(reg *schemas.Registry) {
 	reg.Register(&schemas.Schema{
@@ -877,7 +746,6 @@ func RegisterSchema(reg *schemas.Registry) {
 			0xc7ca850fead659c0,
 			0xc7e9576dd1cb2dc1,
 			0xc823831ca674c61b,
-			0xd875a6f9b6c9ca42,
 			0xf2786494a8b7e4d0,
 			0xfe26553a53d9d276,
 		},
