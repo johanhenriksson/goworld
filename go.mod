@@ -3,6 +3,7 @@ module github.com/johanhenriksson/goworld
 go 1.20
 
 require (
+	capnproto.org/go/capnp/v3 v3.0.0-alpha-29
 	github.com/go-gl/glfw/v3.3/glfw v0.0.0-20211213063430-748e38ca8aec
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
 	github.com/kjk/flex v0.0.0-20171203210503-ed34d6b6a425
@@ -13,7 +14,7 @@ require (
 	github.com/qmuntal/gltf v0.21.0
 	github.com/vkngwrapper/core/v2 v2.1.1
 	github.com/vkngwrapper/extensions/v2 v2.1.0
-	golang.org/x/exp v0.0.0-20220323121947-b445f275a754
+	golang.org/x/exp v0.0.0-20230321023759-10a507213a29
 	golang.org/x/image v0.0.0-20220722155232-062f8c9fd539
 )
 
@@ -34,8 +35,10 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/rogpeppe/go-internal v1.9.0 // indirect
 	golang.org/x/net v0.12.0 // indirect
+	golang.org/x/sync v0.3.0 // indirect
 	golang.org/x/sys v0.10.0 // indirect
 	golang.org/x/text v0.11.0 // indirect
 	golang.org/x/tools v0.11.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
+	zenhack.net/go/util v0.0.0-20230414204917-531d38494cf5 // indirect
 )
