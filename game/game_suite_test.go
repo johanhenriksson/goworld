@@ -1,6 +1,7 @@
 package game_test
 
 import (
+	"log"
 	"testing"
 	"time"
 
@@ -27,8 +28,10 @@ var _ = Describe("networking", func() {
 			Fail(err.Error())
 		}
 
-		cli, err = client.NewClient()
-		if err != nil {
+		cli = client.NewClient(func(e client.Event) {
+			log.Println("client event:", e)
+		})
+		if err = cli.Connect("localhost"); err != nil {
 			Fail(err.Error())
 		}
 	})
