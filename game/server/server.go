@@ -6,26 +6,32 @@ import (
 	osnet "net"
 
 	"github.com/johanhenriksson/goworld/game/net"
+	"github.com/johanhenriksson/goworld/math/vec3"
 )
 
-type AuthToken struct{}
+type AuthToken struct {
+	Token uint64
+}
 
 type Server struct {
-	auths    map[uint64]AuthToken
 	Instance *Instance
 }
 
 func NewServer() (*Server, error) {
 	server := &Server{
-		auths: map[uint64]AuthToken{
-			1337: {},
-		},
 		Instance: NewInstance(),
 	}
 	if err := server.Listen(); err != nil {
 		return nil, err
 	}
 	return server, nil
+}
+
+func (s *Server) Authenticate(token uint64) (*Player, error) {
+	return &Player{
+		id:       Identity(token),
+		position: vec3.New(0, 10, 0),
+	}, nil
 }
 
 func (s *Server) Listen() error {
@@ -70,19 +76,10 @@ func (s *Server) accept(conn osnet.Conn) {
 	log.Println("server: client auth with token", auth.Token())
 
 	// authenticate client
-	_, authed := s.auths[auth.Token()]
-	if !authed {
+	player, err := s.Authenticate(auth.Token())
+	if err != nil {
 		client.Drop("invalid authenticaton token")
 		return
-	}
-
-	// invalidate authentication token
-	delete(s.auths, auth.Token())
-
-	// create player entity
-	// todo: load player information
-	player := &Player{
-		id: 131273,
 	}
 
 	// enter world

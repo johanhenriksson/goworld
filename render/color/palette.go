@@ -1,5 +1,9 @@
 package color
 
+import (
+	"github.com/johanhenriksson/goworld/math/random"
+)
+
 // A Palette is a list of colors
 type Palette []T
 
@@ -26,3 +30,7 @@ var DefaultPalette = RawPalette(
 	0x5044ba, 0x5e9ccc, 0x7fc6ce, 0x9de2df, 0xcaf1ea,
 	0x202c56, 0x3f2d6d, 0x772673, 0xb9284f, 0xcb5135,
 	0xeda7d8, 0xf3bedd, 0xdbebeb, 0xe9dde8, 0xd5c4df)
+
+func Random() T {
+	return random.Choice(DefaultPalette)
+}

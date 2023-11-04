@@ -24,9 +24,8 @@ struct Packet {
         auth @1 :AuthPacket;
 
         entityMove @2 :EntityMovePacket;
-        entityStop @3 :EntityStopPacket; 
-        entitySpawn @4 :EntitySpawnPacket;
-        entityObserve @5 :EntityObservePacket;
+        entitySpawn @3 :EntitySpawnPacket;
+        entityObserve @4 :EntityObservePacket;
     }
 }
 
@@ -37,12 +36,8 @@ struct AuthPacket {
 struct EntityMovePacket {
     entity @0 :UInt64;
     position @1 :Vec3;
-    rot @2 :Float32;
-}
-
-struct EntityStopPacket {
-    entity @0 :UInt64;
-    position @1 :Vec3;
+    rotation @2 :Float32;
+    stopped @3 :Bool;
 }
 
 struct EntitySpawnPacket {

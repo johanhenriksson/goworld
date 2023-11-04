@@ -78,7 +78,7 @@ func (c *World) Update(scene object.Component, dt float32) {
 		}
 		dist := vec3.Distance(pos, tile.Transform().Position())
 		if dist > c.distance*1.1 {
-			log.Println("destroy tile", key)
+			// log.Println("destroy tile", key)
 			tile.Destroy()
 			delete(c.active, key)
 		}
@@ -116,7 +116,7 @@ func (c *World) Update(scene object.Component, dt float32) {
 
 			ix, iz := x, z
 			spawn = func() {
-				log.Println("spawn tile", key)
+				// log.Println("spawn tile", key)
 				tile := c.Terrain.Tile(ix, iz, true)
 				c.ready <- tileSpawn{
 					Key:      key,

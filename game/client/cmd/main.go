@@ -20,8 +20,8 @@ import (
 
 func main() {
 	engine.Run(engine.Args{
-		Width:  1600,
-		Height: 1200,
+		Width:  800,
+		Height: 600,
 		Title:  "goworld",
 	},
 		editor.Scene(func(scene object.Object) {

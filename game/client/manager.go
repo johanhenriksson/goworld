@@ -7,11 +7,14 @@ import (
 	"time"
 
 	"github.com/johanhenriksson/goworld/core/object"
+	"github.com/johanhenriksson/goworld/game/server"
 )
 
 type Manager struct {
 	object.Object
-	Client *Client
+	Client     *Client
+	Controller *LocalController
+	Entities   map[server.Identity]Entity
 
 	hostname    string
 	lock        sync.Mutex
@@ -21,6 +24,9 @@ type Manager struct {
 
 func NewManager(hostname string) *Manager {
 	return object.New("GameManager", &Manager{
+		Controller: NewLocalController(),
+		Entities:   make(map[server.Identity]Entity, 64),
+
 		hostname:    hostname,
 		events:      make([]Event, 0, 1024),
 		nextAttempt: time.Now(),
@@ -43,6 +49,13 @@ func (m *Manager) Update(scene object.Component, dt float32) {
 			m.nextAttempt = time.Now().Add(5 * time.Second)
 			return
 		}
+
+		if err := cli.SendAuthToken(uint64(m.ID())); err != nil {
+			log.Println("failed to authenticate:", err)
+			m.nextAttempt = time.Now().Add(5 * time.Second)
+			return
+		}
+
 		m.Client = cli
 	}
 
@@ -51,7 +64,7 @@ func (m *Manager) Update(scene object.Component, dt float32) {
 
 	for _, event := range m.events {
 		t := reflect.TypeOf(event)
-		log.Println("client event:", t.Name())
+		log.Printf("client event: %s %+v\n", t.Name(), event)
 		event.Apply(m)
 	}
 	m.events = m.events[:0]

@@ -3,7 +3,8 @@ package server
 import "github.com/johanhenriksson/goworld/math/vec3"
 
 type Player struct {
-	id Identity
+	id       Identity
+	position vec3.T
 }
 
 var _ Entity = &Player{}
@@ -17,5 +18,9 @@ func (p *Player) Name() string {
 }
 
 func (p *Player) Position() vec3.T {
-	return vec3.New(1, 2, 3)
+	return p.position
+}
+
+func (p *Player) SetPosition(pos vec3.T) {
+	p.position = pos
 }

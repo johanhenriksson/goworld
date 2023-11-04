@@ -40,6 +40,11 @@ func (e *EnterWorldEvent) Apply(instance *Instance) error {
 	e.Client.Instance = instance
 	e.Client.Entity = e.Player
 
+	// send other entities to client
+	for _, other := range instance.Entities {
+		e.Client.SendSpawn(other)
+	}
+
 	// spawn entity
 	instance.Spawn(e.Client)
 
@@ -55,7 +60,7 @@ type EntityMoveEvent struct {
 	Sender   *Client
 	Entity   Identity
 	Position vec3.T
-	Stop     bool
+	Stopped  bool
 }
 
 func (e EntityMoveEvent) Apply(instance *Instance) error {
@@ -63,5 +68,18 @@ func (e EntityMoveEvent) Apply(instance *Instance) error {
 		// attempt to move unobserved unit
 		return fmt.Errorf("client %v attempted to move unobserved unit %v", e.Sender.ID(), e.Entity)
 	}
+
+	// update entity position
+	instance.Entities[e.Entity].SetPosition(e.Position)
+
+	// send move to other clients
+	for _, other := range instance.Entities {
+		if client, isClient := other.(*Client); isClient {
+			if client != e.Sender {
+				client.SendMove(e.Entity, e.Position, e.Stopped)
+			}
+		}
+	}
+
 	return nil
 }
