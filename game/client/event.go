@@ -5,6 +5,7 @@ import (
 
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/game/server"
+	"github.com/johanhenriksson/goworld/game/terrain"
 	"github.com/johanhenriksson/goworld/math/quat"
 	"github.com/johanhenriksson/goworld/math/vec3"
 )
@@ -13,6 +14,10 @@ type Event interface {
 	Apply(*Manager) error
 }
 
+//
+//
+//
+
 type DisconnectEvent struct{}
 
 func (e DisconnectEvent) Apply(m *Manager) error {
@@ -20,6 +25,36 @@ func (e DisconnectEvent) Apply(m *Manager) error {
 	m.events = m.events[:0]
 	return nil
 }
+
+//
+// enter world
+//
+
+type EnterWorldEvent struct {
+	Map string
+}
+
+func (e EnterWorldEvent) Apply(c *Manager) error {
+	// unload current world
+	if c.World != nil {
+		c.World.Destroy()
+		object.Detach(c.World)
+		c.World = nil
+	}
+
+	// load map
+	m := terrain.NewMap(32)
+	world := terrain.NewWorld(m, 200)
+
+	object.Attach(c, world)
+	c.World = world
+
+	return nil
+}
+
+//
+// entity spawn
+//
 
 type EntitySpawnEvent struct {
 	EntityID server.Identity
@@ -71,6 +106,10 @@ type EntityObserveEvent struct {
 }
 
 func (e EntityObserveEvent) Apply(c *Manager) error {
+	if c.World == nil {
+		return fmt.Errorf("cant observe entity %x, not in a world yet", e.EntityID)
+	}
+
 	entity, exists := c.Entities[e.EntityID]
 	if !exists {
 		return fmt.Errorf("cant observe entity %x, it does not exist", e.EntityID)

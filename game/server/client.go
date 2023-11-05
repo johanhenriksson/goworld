@@ -188,6 +188,21 @@ func (c *Client) Send(fn PacketBuilderFn) error {
 	return c.encoder.Encode(msg)
 }
 
+func (c *Client) SendEnterWorld(mapName string) error {
+	return c.Send(func(wrap *net.Packet) error {
+		enter, err := net.NewEnterWorldPacket(wrap.Segment())
+		if err != nil {
+			return err
+		}
+
+		if err := enter.SetMap(mapName); err != nil {
+			return err
+		}
+
+		return wrap.SetEnterWorld(enter)
+	})
+}
+
 func (c *Client) SendMove(id Identity, pos vec3.T, rot float32, stopped bool, delta float32) error {
 	return c.Send(func(wrap *net.Packet) error {
 		move, err := net.NewEntityMovePacket(wrap.Segment())

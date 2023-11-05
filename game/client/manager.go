@@ -7,12 +7,14 @@ import (
 
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/game/server"
+	"github.com/johanhenriksson/goworld/game/terrain"
 )
 
 type Manager struct {
 	object.Object
 	Client     *Client
 	Controller *LocalController
+	World      *terrain.World
 	Entities   map[server.Identity]Entity
 
 	hostname    string
@@ -23,7 +25,7 @@ type Manager struct {
 
 func NewManager(hostname string) *Manager {
 	return object.New("GameManager", &Manager{
-		Controller: NewLocalController(),
+		Controller: object.Builder(NewLocalController()).Active(false).Create(),
 		Entities:   make(map[server.Identity]Entity, 64),
 
 		hostname:    hostname,
@@ -58,16 +60,27 @@ func (m *Manager) Update(scene object.Component, dt float32) {
 		m.Client = cli
 	}
 
+	m.handleEvents()
+
+	// update world (if ingame)
+	if m.World != nil {
+		m.Object.Update(scene, dt)
+	}
+}
+
+func (m *Manager) handleEvents() {
 	m.lock.Lock()
 	defer m.lock.Unlock()
 
 	for _, event := range m.events {
 		// t := reflect.TypeOf(event)
 		// log.Printf("client event: %s %+v\n", t.Name(), event)
-		event.Apply(m)
+		if err := event.Apply(m); err != nil {
+			log.Println("failed to apply event:", err)
+			m.Client.Disconnect()
+			m.Client = nil
+			break
+		}
 	}
 	m.events = m.events[:0]
-
-	// update world
-	m.Object.Update(scene, dt)
 }

@@ -96,7 +96,7 @@ func main() {
 			object.Attach(scene, char)
 
 			// terrain
-			m := terrain.NewMap(32, 3)
+			m := terrain.NewMap(32)
 			object.Attach(scene, terrain.NewWorld(m, 200))
 
 			// directional light

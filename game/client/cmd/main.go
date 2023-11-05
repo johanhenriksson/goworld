@@ -8,7 +8,6 @@ import (
 	_ "github.com/johanhenriksson/goworld/editor/builtin"
 	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/game/client"
-	"github.com/johanhenriksson/goworld/game/terrain"
 	"github.com/johanhenriksson/goworld/gui"
 	"github.com/johanhenriksson/goworld/gui/node"
 	"github.com/johanhenriksson/goworld/gui/widget/rect"
@@ -34,10 +33,6 @@ func main() {
 
 			// create game client
 			object.Attach(scene, client.NewManager("127.0.0.1"))
-
-			// terrain
-			m := terrain.NewMap(32, 3)
-			object.Attach(scene, terrain.NewWorld(m, 200))
 
 			// directional light
 			rot := float32(45)

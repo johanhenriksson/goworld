@@ -14,16 +14,10 @@ type Map struct {
 	mutex sync.Mutex
 }
 
-func NewMap(tileSize int, tiles int) *Map {
+func NewMap(tileSize int) *Map {
 	m := &Map{
 		TileSize: tileSize,
 		tiles:    make(map[ivec2.T]*Tile),
-	}
-	for z := 0; z < tiles; z++ {
-		for x := 0; x < tiles; x++ {
-			tp := ivec2.New(x, z)
-			m.tiles[tp] = NewTile(m, tp, m.TileSize)
-		}
 	}
 	return m
 }

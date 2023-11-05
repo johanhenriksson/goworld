@@ -26,7 +26,7 @@ var _ = Describe("Map", func() {
 
 	It("applies patches across multiple tiles", func() {
 		point := func(v int) terrain.Point { return terrain.Point{Height: float32(v)} }
-		m := terrain.NewMap(2, 0)
+		m := terrain.NewMap(2)
 		patch := &terrain.Patch{
 			Offset: ivec2.New(-1, -1),
 			Size:   ivec2.New(2, 2),
