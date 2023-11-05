@@ -9,4 +9,6 @@ type Entity interface {
 	Name() string
 	Position() vec3.T
 	SetPosition(vec3.T)
+	Rotation() float32
+	SetRotation(float32)
 }

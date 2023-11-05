@@ -3,11 +3,10 @@ package server
 import (
 	"fmt"
 	"log"
-	"reflect"
 	"time"
 )
 
-const TickRate = 50 * time.Millisecond
+const TickRate = 10 * time.Millisecond
 
 var instanceId = 1
 
@@ -22,7 +21,7 @@ func NewInstance() *Instance {
 	instance := &Instance{
 		Entities: make(map[Identity]Entity, 1024),
 		id:       instanceId,
-		onEvent:  make(chan Event),
+		onEvent:  make(chan Event, 1024),
 	}
 	instanceId++
 	go instance.loop()
@@ -42,7 +41,6 @@ func (m *Instance) Spawn(entity Entity) {
 	// send entity spawn update to clients
 	for _, other := range m.Entities {
 		if client, isClient := other.(*Client); isClient {
-			log.Println("send spawn to", client)
 			if err := client.SendSpawn(entity); err != nil {
 				log.Println("failed to send entity spawn")
 			}
@@ -81,8 +79,6 @@ func (m *Instance) loop() {
 
 			// process updates
 			for _, e := range events {
-				t := reflect.TypeOf(e)
-				log.Printf("%s: %s %+v\n", m, t.Name(), e)
 				if err := e.Apply(m); err != nil {
 					log.Println("instance error:", err)
 				}
