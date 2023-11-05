@@ -71,6 +71,7 @@ type EntityMoveEvent struct {
 	Entity   Identity
 	Position vec3.T
 	Rotation float32
+	Delta    float32
 	Stopped  bool
 }
 
@@ -88,7 +89,7 @@ func (e EntityMoveEvent) Apply(instance *Instance) error {
 	for _, other := range instance.Entities {
 		if client, isClient := other.(*Client); isClient {
 			if client != e.Sender {
-				client.SendMove(e.Entity, e.Position, e.Rotation, e.Stopped)
+				client.SendMove(e.Entity, e.Position, e.Rotation, e.Stopped, e.Delta)
 			}
 		}
 	}

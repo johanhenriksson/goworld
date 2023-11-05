@@ -38,6 +38,7 @@ struct EntityMovePacket {
     position @1 :Vec3;
     rotation @2 :Float32;
     stopped @3 :Bool;
+    delta @4 :Float32;
 }
 
 struct EntitySpawnPacket {

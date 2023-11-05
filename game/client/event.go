@@ -63,6 +63,7 @@ type EntityMoveEvent struct {
 	Position vec3.T
 	Rotation float32
 	Stopped  bool
+	Delta    float32
 }
 
 func (e EntityMoveEvent) Apply(c *Manager) error {

@@ -88,6 +88,7 @@ func (c *Client) handlePacket(msg *net.Packet) error {
 			Position: net.ToVec3(pos),
 			Rotation: move.Rotation(),
 			Stopped:  move.Stopped(),
+			Delta:    move.Delta(),
 		})
 
 	case net.Packet_Which_entitySpawn:
@@ -187,7 +188,7 @@ func (c *Client) SendAuthToken(token uint64) error {
 	})
 }
 
-func (c *Client) SendMove(id server.Identity, position vec3.T, rotation float32, stopped bool) error {
+func (c *Client) SendMove(id server.Identity, position vec3.T, rotation float32, stopped bool, delta float32) error {
 	return c.Send(func(p *net.Packet) error {
 		move, err := net.NewEntityMovePacket(p.Segment())
 		if err != nil {
@@ -205,6 +206,8 @@ func (c *Client) SendMove(id server.Identity, position vec3.T, rotation float32,
 		move.SetRotation(rotation)
 
 		move.SetStopped(stopped)
+
+		move.SetDelta(delta)
 
 		return p.SetEntityMove(move)
 	})
