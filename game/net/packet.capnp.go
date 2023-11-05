@@ -107,10 +107,11 @@ const (
 	Packet_Which_entityMove    Packet_Which = 2
 	Packet_Which_entitySpawn   Packet_Which = 3
 	Packet_Which_entityObserve Packet_Which = 4
+	Packet_Which_entityDespawn Packet_Which = 5
 )
 
 func (w Packet_Which) String() string {
-	const s = "unknownauthentityMoveentitySpawnentityObserve"
+	const s = "unknownauthentityMoveentitySpawnentityObserveentityDespawn"
 	switch w {
 	case Packet_Which_unknown:
 		return s[0:7]
@@ -122,6 +123,8 @@ func (w Packet_Which) String() string {
 		return s[21:32]
 	case Packet_Which_entityObserve:
 		return s[32:45]
+	case Packet_Which_entityDespawn:
+		return s[45:58]
 
 	}
 	return "Packet_Which(" + strconv.FormatUint(uint64(w), 10) + ")"
@@ -309,6 +312,38 @@ func (s Packet) NewEntityObserve() (EntityObservePacket, error) {
 	return ss, err
 }
 
+func (s Packet) EntityDespawn() (EntityDespawnPacket, error) {
+	if capnp.Struct(s).Uint16(0) != 5 {
+		panic("Which() != entityDespawn")
+	}
+	p, err := capnp.Struct(s).Ptr(0)
+	return EntityDespawnPacket(p.Struct()), err
+}
+
+func (s Packet) HasEntityDespawn() bool {
+	if capnp.Struct(s).Uint16(0) != 5 {
+		return false
+	}
+	return capnp.Struct(s).HasPtr(0)
+}
+
+func (s Packet) SetEntityDespawn(v EntityDespawnPacket) error {
+	capnp.Struct(s).SetUint16(0, 5)
+	return capnp.Struct(s).SetPtr(0, capnp.Struct(v).ToPtr())
+}
+
+// NewEntityDespawn sets the entityDespawn field to a newly
+// allocated EntityDespawnPacket struct, preferring placement in s's segment.
+func (s Packet) NewEntityDespawn() (EntityDespawnPacket, error) {
+	capnp.Struct(s).SetUint16(0, 5)
+	ss, err := NewEntityDespawnPacket(capnp.Struct(s).Segment())
+	if err != nil {
+		return EntityDespawnPacket{}, err
+	}
+	err = capnp.Struct(s).SetPtr(0, capnp.Struct(ss).ToPtr())
+	return ss, err
+}
+
 // Packet_List is a list of Packet.
 type Packet_List = capnp.StructList[Packet]
 
@@ -336,6 +371,9 @@ func (p Packet_Future) EntitySpawn() EntitySpawnPacket_Future {
 }
 func (p Packet_Future) EntityObserve() EntityObservePacket_Future {
 	return EntityObservePacket_Future{Future: p.Future.Field(0, nil)}
+}
+func (p Packet_Future) EntityDespawn() EntityDespawnPacket_Future {
+	return EntityDespawnPacket_Future{Future: p.Future.Field(0, nil)}
 }
 
 type AuthPacket capnp.Struct
@@ -712,48 +750,125 @@ func (f EntityObservePacket_Future) Struct() (EntityObservePacket, error) {
 	return EntityObservePacket(p.Struct()), err
 }
 
-const schema_9c4788c5a214e29c = "x\xda\xacRMHTk\x18~\x9f\xef\xfb\xc6\xb9\x8a" +
-	"\x83s<\xe7\xae\xee\x85Y\\\xb8H`\xa4\xae\x1a\x88" +
-	"1I\xcahp>\xcc\xc2h\xd1q<\xe0`\x9es" +
-	"\xd2\xa3\xa3\x91\x98\xa4``0\x85A\x0b\x17\xe5\"\x92" +
-	"\x88\x96A\xab\x0a\xca\xa8M\xb5\x08\xdaF\x9bZ\xba\xec" +
-	"\xc7/\xbe3?GG\x97\xed^\xde\x9f\x87\xe7}\x9e" +
-	"\xe7\xd0Ct\x8b\x8eD\x91\x13\x93m\xb1\x06\xf5\xb4\xad" +
-	"\xb4\xd5\x9d\xdf(\x91L\x80\xa9\xb5\xcf\xd6\xfa\xcb\xe5\xe3" +
-	"k\x14C\x9c\xc8\xbc\x87\xef\xe6\xa3\xb0\xda\xc0c\x82z" +
-	"6\xf4\xf1[\xcb\xd2\x9bM\xbd\x8ch\xb9\x17\xf1\x18\x91" +
-	"\xd9\xc7\xd6M\xc9\xe2D]Y\x96\x02A=o\x7f\xfb" +
-	"~\xfc\xec\xd7\xcd:l\xa1\x01\x0b\xfc\x96y\x89\xebj" +
-	"\x9ck\xe8\x7f^\x05\xf7\xff\xbd\xf6\xdf\xeb:h\xbd\xdb" +
-	"\x15\x13M0\xff\x0e\xcf\x0c\x91!\xa8w_\x9e<X" +
-	"\x1d\x99\xd9\xd2\xcb\xbc\x9et\x87\xd82\x8f\x84w\x87E" +
-	"Hc\xfa\xc3\xa7\x81\xf4\xe0\xff\xdb\xfb@\x9b2\xf6\xc2" +
-	"\x1c\x8a\xe9j0\x96\xa1v\xe5\xdb\xf91'8\x98g" +
-	"\xb6\xef\xfa\xe9^7(\x04\xb3\x03\xbe]t3\xb9p" +
-	"\x92\x03d3\x17D\x02DFo\x9aHvs\xc8S" +
-	"\x0c\x80\x05\xdd\xeb;I$Op\xc8\xd3\x0c\x06c\x16" +
-	"\x18\x91!u3\xc7!\xcf3d\x9c\x10\x15\x8d\xc4\xd0" +
-	"HP\xbe7Y\x08\x0a\x9eKDHF\x9a\x11\x90$" +
-	"\xa8\x09/\xb0\xab\xd3&bh\xd2\x17\x15\x92\x08I\xe6" +
-	"\xec|\xbc\xc2\xcc\xe2\xa2Y\xa9\x90\xda\\\x0f\x91\x9c\xe1" +
-	"\x90\x8b\x0c\x09l\xab2\xb9\x85\x03D\xf2\x0a\x87\\f" +
-	"H\xb0_\xaa\xccn\xe9\x1c\x91\\\xe4\x90%\x86\x04\xff" +
-	"\xa9,p\"\xe3\xc60\x91\\\xe1\x90w\x18\x12\xe2\x87" +
-	"\xb2 \x88\x8c\xdb\x13Dr\x95C\xdee\x98\x9fr\xc7" +
-	"\\\xaf\xe8RC\x8b=\x15\x8c\"\x19I]a_~" +
-	"5\xeb\x11\x9fv\x90\x8c|\xdb5\x1e\xf0)n\x17]" +
-	"$\xa30\xee\x9a\xf7\x0fSj\xd2\x99\x08\x11j1\xa9" +
-	"l\xec\x96\xe2\x8c\x93GW\x9dE\xad\x91EF\xcd#" +
-	"\xdd<\xc6!s;<\xca\xb6F\xc6a\xa6*6f" +
-	"k\xd5\xe5=\x06\xf0\x1d)\xe9\x1f\x0e9\x96cB\xa4" +
-	"Y\x88\x1a\x8b\x84\x0e\xca_\x1c\xd2\xda\xc7\xff}\"\x97" +
-	"\xf5\xa6\x9d\\\xaa\x968\xab\x064\x97\x8el\xad~\xb3" +
-	"\xa0\xc3u\x95C\xae\xec\xf8\xe6\xban.s\xc8U\x06" +
-	"\x83_([z\xb3'\xb2\xd4\x10\xa2\xe2h'\x91," +
-	"q\xc8\xb5?\x90\xcd\xf9\xc9\xc0\xf3}g\x04 \x06\x10" +
-	"R#\xce\xc5\xc0\xde#\\\xf9\xd7\xa3S\xc1hE\xaf" +
-	":\xb9:#\xb9R\x817\xe6\xb8UF\xbf\x03\x00\x00" +
-	"\xff\xff\x9a-+0"
+type EntityDespawnPacket capnp.Struct
+
+// EntityDespawnPacket_TypeID is the unique identifier for the type EntityDespawnPacket.
+const EntityDespawnPacket_TypeID = 0xe597cefc768f55cb
+
+func NewEntityDespawnPacket(s *capnp.Segment) (EntityDespawnPacket, error) {
+	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 8, PointerCount: 0})
+	return EntityDespawnPacket(st), err
+}
+
+func NewRootEntityDespawnPacket(s *capnp.Segment) (EntityDespawnPacket, error) {
+	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 8, PointerCount: 0})
+	return EntityDespawnPacket(st), err
+}
+
+func ReadRootEntityDespawnPacket(msg *capnp.Message) (EntityDespawnPacket, error) {
+	root, err := msg.Root()
+	return EntityDespawnPacket(root.Struct()), err
+}
+
+func (s EntityDespawnPacket) String() string {
+	str, _ := text.Marshal(0xe597cefc768f55cb, capnp.Struct(s))
+	return str
+}
+
+func (s EntityDespawnPacket) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (EntityDespawnPacket) DecodeFromPtr(p capnp.Ptr) EntityDespawnPacket {
+	return EntityDespawnPacket(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s EntityDespawnPacket) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s EntityDespawnPacket) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s EntityDespawnPacket) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s EntityDespawnPacket) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
+func (s EntityDespawnPacket) Entity() uint64 {
+	return capnp.Struct(s).Uint64(0)
+}
+
+func (s EntityDespawnPacket) SetEntity(v uint64) {
+	capnp.Struct(s).SetUint64(0, v)
+}
+
+// EntityDespawnPacket_List is a list of EntityDespawnPacket.
+type EntityDespawnPacket_List = capnp.StructList[EntityDespawnPacket]
+
+// NewEntityDespawnPacket creates a new list of EntityDespawnPacket.
+func NewEntityDespawnPacket_List(s *capnp.Segment, sz int32) (EntityDespawnPacket_List, error) {
+	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 8, PointerCount: 0}, sz)
+	return capnp.StructList[EntityDespawnPacket](l), err
+}
+
+// EntityDespawnPacket_Future is a wrapper for a EntityDespawnPacket promised by a client call.
+type EntityDespawnPacket_Future struct{ *capnp.Future }
+
+func (f EntityDespawnPacket_Future) Struct() (EntityDespawnPacket, error) {
+	p, err := f.Future.Ptr()
+	return EntityDespawnPacket(p.Struct()), err
+}
+
+const schema_9c4788c5a214e29c = "x\xda\xacSMH\x1cg\x18~\x9f\xef\x9bu\xab8" +
+	"\xb8\xe3\xcc\xa1\xd0\xc2\x1e\x0a\xa5\x94ZZ\xbdyY[" +
+	"\x94\xfePq?\xac\x95\x96\x1e:\xae\x03\x8a\xed\xcc\xd4" +
+	"\x9d]\xb5 V\xda\x82\x05\xa1\xb6XjA\xc1H\x08" +
+	"\x0a\x09I \x90\x1frHB\x12\x93H~\x0c\x18\x10" +
+	"\x92KH\x0e\x06r\x88Gc\x9c\xf0\xcd\xac;\xbb\xeb" +
+	"\x9eBn/\xef\xfb|\x0f\xcf\xfb>\xcf\xf7\xd1}\xb4" +
+	")\x1f\xab\xb791\xf1A\xac\xc6?\xf7\xde\xccv[" +
+	"fe\x86\x84\x0a\xe6\xcf?4\x96\xaeL}6O1" +
+	"\xc4\x89\xf4\x9b\xd8\xd17\x83j\x03\xc7\x09\xfe\x85o\xef" +
+	"=i\xf8\xe3\xc6\xaa\x04#\x02w ^C\xa4\xe7\xd8" +
+	"\x92>\xce\xe2D-c\xac\x17\x04\xffb\xd3\xda\xfaO" +
+	"\xbd[\xab\x15\xdcJ@\xc8\xff\xd1\x1fpYmrI" +
+	"\xfd\xd6U\xef\xc8\xdb\xbf\xbds\xad\x82Zb[~V" +
+	"\xea\xa0O\x06\xcf\xc6\x95\x14\xc1_\xeb\xf9+\xbf{\xeb" +
+	"\xbf\xc7\xd5\xc0\x0b\x12|,\x00\xaf\x04\xe0;\x8fN/" +
+	"\xcf\xf6\x8fnK0\xaf\xdc\xf0\xba\xb2\xado\x04\xef\xd6" +
+	"\x95\xa4\xd4\x9c\xbf\xbb\xd9\xdd\xda\xf3\xee^\x15j}+" +
+	"vI\x7f\x16\x93\xd5\xd3X\x8a\x9a|\xd7\xcc\x0cY\xde" +
+	"\x87\x19f\xba\xb6\xdb\xdaa{\x83\xdeX\xb7k\x8e\xd8" +
+	"\xa9t0I\x03\xa2\x9e+D\x0a\x88\xb4\x8eV\"\xd1" +
+	"\xc6!\xbeb\x00\x0c\xc8\xde\x17_\x12\x89\xcf9\xc4\xd7" +
+	"\x0c\x1ac\x06\x18\x91&d3\xcd!\xbegHY\x01" +
+	"+j\x89\xa1\x96\xe0\xbbNv\xd0\x1btl\"B\"" +
+	":0\x01\x09\x82?\xecx\xe6\xfe\xb4\x8e\x18\xea\xe4\x8b" +
+	"\x82H\x04\"\xd3f&^P\xf6&W\xea}?\x90" +
+	"\xf6\xff\xa7Db\x96C,2\xa8\xd8\xf3Cq\x0b\xef" +
+	"\x13\x899\x0eq\x98Ae/\xfcP\xdd\xa1\xef\x88\xc4" +
+	"\"\x878\xca\xa0\xf2]\xdf\x00'\xd2V\xfa\x88\xc42" +
+	"\x878\xc5\xa0*\xcf}\x03\x0a\x91vr\x98H\x9c\xe0" +
+	"\x10\xe7\x19\xd4\xd8\x8eo F\xa4\x9d\x95\xdd3\x1c\xe2" +
+	"2\xc3D\xce\x1e\xb2\x9d\x11\x9bj\x1a\xcc\x9c7\x80D" +
+	"d@a\xa7\xf0\x00\x9d\x0e\xf1\xbc\x85D\xe4f\xd9\xb8" +
+	"\xdb\xa5\xb89b#\x11\xe5\xb9l\xde\xd5G\xc9\xac5" +
+	"\x1c0\x14\x93V\x86h\xb7(\x99uC\x8eb\xbc\x0a" +
+	"\x88\xf2\x13~ce\xd0Ramcd\xadV\xf4V" +
+	"6\xdb9D\xba\xc4\xdb\xce\xc6\xc8p\x8c\xee\x9b\x84\xb1" +
+	"b\xf5\xcb\x01\xe3xI\xba\xba\xfa\x82-\xc2x\x11I" +
+	"\x15JQ\x85*\x03\xf6\x06\x870\xaa\xe4\xa6\x0aY\xbb" +
+	"\x15,\xfc\xead\xa5\xb9\xeft\xf2V:Y\x8c\xbdQ" +
+	"$\x1a\x97D\xa3\x1c\xe2\xf7(\xf6\x932\xe1\xbfr\x88" +
+	"\xe9\x92\xd3\xfc)\x9bS\x1cb\x96A\xe3?\x84\xb9\xfa" +
+	"[&s\x9aC\xcc1h\x8a\x12\xc6\xea\xdff\"1" +
+	"\xc3!\xe6_\xc3\x07\x99\xc8z\x8e\xebZ\xfd\x001\x80" +
+	"\x90\xec\xb7~\xf4\xcc\x03.\x84\xbb~\x92\xf3\x06\x0a\xf7" +
+	"\xaa8Wst\xae\xa4\xe7\x0cY\xf6\xbe\xa2\x97\x01\x00" +
+	"\x00\xff\xff\xcc\x89h\x9f"
 
 func RegisterSchema(reg *schemas.Registry) {
 	reg.Register(&schemas.Schema{
@@ -763,6 +878,7 @@ func RegisterSchema(reg *schemas.Registry) {
 			0xc7ca850fead659c0,
 			0xc7e9576dd1cb2dc1,
 			0xc823831ca674c61b,
+			0xe597cefc768f55cb,
 			0xf2786494a8b7e4d0,
 			0xfe26553a53d9d276,
 		},

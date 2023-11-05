@@ -43,6 +43,29 @@ func (e EntitySpawnEvent) Apply(c *Manager) error {
 	return nil
 }
 
+//
+// entity despawn
+//
+
+type EntityDespawnEvent struct {
+	EntityID server.Identity
+}
+
+func (e EntityDespawnEvent) Apply(c *Manager) error {
+	if entity, exists := c.Entities[e.EntityID]; exists {
+		delete(c.Entities, e.EntityID)
+		object.Detach(entity)
+		entity.Destroy()
+	} else {
+		return fmt.Errorf("cant despawn entity %x, it does not exist", e.EntityID)
+	}
+	return nil
+}
+
+//
+// entity observe
+//
+
 type EntityObserveEvent struct {
 	EntityID server.Identity
 }

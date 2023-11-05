@@ -235,3 +235,16 @@ func (c *Client) SendSpawn(entity Entity) error {
 		return wrap.SetEntitySpawn(spawn)
 	})
 }
+
+func (c *Client) SendDespawn(entity Entity) error {
+	return c.Send(func(wrap *net.Packet) error {
+		despawn, err := net.NewEntityDespawnPacket(wrap.Segment())
+		if err != nil {
+			return err
+		}
+
+		despawn.SetEntity(uint64(entity.ID()))
+
+		return wrap.SetEntityDespawn(despawn)
+	})
+}
