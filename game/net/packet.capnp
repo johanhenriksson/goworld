@@ -26,6 +26,7 @@ struct Packet {
         entityMove @2 :EntityMovePacket;
         entitySpawn @3 :EntitySpawnPacket;
         entityObserve @4 :EntityObservePacket;
+        entityDespawn @5 :EntityDespawnPacket;
     }
 }
 
@@ -48,5 +49,9 @@ struct EntitySpawnPacket {
 }
 
 struct EntityObservePacket {
+    entity @0 :UInt64;
+}
+
+struct EntityDespawnPacket {
     entity @0 :UInt64;
 }

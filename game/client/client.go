@@ -106,6 +106,15 @@ func (c *Client) handlePacket(msg *net.Packet) error {
 			Rotation: spawn.Rotation(),
 		})
 
+	case net.Packet_Which_entityDespawn:
+		despawn, err := msg.EntityDespawn()
+		if err != nil {
+			return err
+		}
+		c.submit(EntityDespawnEvent{
+			EntityID: server.Identity(despawn.Entity()),
+		})
+
 	case net.Packet_Which_entityObserve:
 		observe, err := msg.EntityObserve()
 		if err != nil {

@@ -58,10 +58,11 @@ func (m *Instance) Despawn(entity Entity) {
 	delete(m.Entities, entity.ID())
 
 	// send entity despawn update to other clients
-	// for _, other := range m.Entities {
-	// 	if client, isClient := other.(*Client); isClient {
-	// 	}
-	// }
+	for _, other := range m.Entities {
+		if client, isClient := other.(*Client); isClient {
+			client.SendDespawn(entity)
+		}
+	}
 }
 
 func (i *Instance) SubmitEvent(event Event) {
