@@ -9,6 +9,7 @@ import (
 	"github.com/johanhenriksson/goworld/geometry/cube"
 	"github.com/johanhenriksson/goworld/math"
 	"github.com/johanhenriksson/goworld/math/quat"
+	"github.com/johanhenriksson/goworld/math/random"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/material"
@@ -49,11 +50,13 @@ func NewEntity(id server.Identity, pos vec3.T, rot float32) *entity {
 	colorIdx := uint64(id) % uint64(len(color.DefaultPalette))
 	model.SetTexture(texture.Diffuse, color.DefaultPalette[colorIdx])
 
+	scale := random.Range(-0.05, 0)
+
 	return object.New(fmt.Sprintf("Entity %x", id), &entity{
 		id: id,
 		Model: object.Builder(object.Empty("Model")).
 			Attach(model).
-			Scale(vec3.New(1, 2, 1)).
+			Scale(vec3.New(1+scale, 2+scale, 1+scale)).
 			Create(),
 
 		animating:  false,
