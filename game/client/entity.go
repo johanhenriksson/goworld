@@ -7,7 +7,6 @@ import (
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/game/server"
 	"github.com/johanhenriksson/goworld/geometry/cube"
-	"github.com/johanhenriksson/goworld/math"
 	"github.com/johanhenriksson/goworld/math/quat"
 	"github.com/johanhenriksson/goworld/math/random"
 	"github.com/johanhenriksson/goworld/math/vec3"
@@ -76,12 +75,10 @@ func (e *entity) Move(ev EntityMoveEvent) {
 	e.rotTo = ev.Rotation
 	e.moveTo = ev.Position
 	e.stopAfter = ev.Stopped
-	e.duration = time.Now().Sub(e.lastUpdate)
+	e.duration = time.Duration(ev.Delta * float32(time.Second))
 	e.lastUpdate = time.Now()
-	if e.duration < time.Microsecond {
-		return
-	}
-	e.animating = vec3.Distance(e.moveFrom, e.moveTo) > 0.01 || math.Abs(e.rotFrom-ev.Rotation) > 0.001
+
+	e.animating = true // vec3.Distance(e.moveFrom, e.moveTo) > 0.01 || math.Abs(e.rotFrom-ev.Rotation) > 0.001
 	e.moveVel = e.moveTo.Sub(e.moveFrom).Scaled(1 / float32(e.duration.Seconds()))
 	e.rotVel = (e.rotTo - e.rotFrom) / float32(e.duration.Seconds())
 }

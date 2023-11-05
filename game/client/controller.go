@@ -29,7 +29,7 @@ type LocalController struct {
 	mouse    mouse.State
 	velocity vec3.T
 	tickRate time.Duration
-	nextTick time.Time
+	lastTick time.Time
 	moving   bool
 	lastPos  vec3.T
 	rotating bool
@@ -47,7 +47,7 @@ func NewLocalController() *LocalController {
 		keys:     keys.NewState(),
 		mouse:    mouse.NewState(),
 		tickRate: time.Second / time.Duration(updatesPerSecond),
-		nextTick: time.Now(),
+		lastTick: time.Now(),
 	})
 }
 
@@ -126,24 +126,22 @@ func (p *LocalController) Update(scene object.Component, dt float32) {
 	pos := p.Transform().Position()
 	rotY := p.Camera.Transform().Rotation().Euler().Y
 
-	moving := vec3.Distance(pos, p.lastPos) > 0.01
-	rotating := math.Abs(rotY-p.lastPos.Y) > 0.001
-	stopped := (!moving && p.moving) || (!rotating && p.rotating)
-	p.moving = moving
-	p.rotating = rotating
-	p.lastPos = pos
-	p.lastRot = rotY
-
 	// update target
 	if p.Target != nil {
 		p.Target.Transform().SetPosition(pos)
 		p.Target.Transform().SetRotation(quat.Euler(0, rotY, 0))
 
-		if stopped {
-			p.mgr.Client.SendMove(p.Target.EntityID(), pos, rotY, true)
-		} else if (moving || rotating) && time.Now().After(p.nextTick) {
-			p.mgr.Client.SendMove(p.Target.EntityID(), pos, rotY, false)
-			p.nextTick = time.Now().Add(p.tickRate)
+		sinceUpdate := time.Now().Sub(p.lastTick)
+		if sinceUpdate >= p.tickRate {
+			moving := vec3.Distance(pos, p.lastPos) > 0.01
+			rotating := math.Abs(rotY-p.lastPos.Y) > 0.001
+			stopped := (!moving && p.moving) || (!rotating && p.rotating)
+			p.moving = moving
+			p.rotating = rotating
+			p.lastPos = pos
+			p.lastRot = rotY
+			p.mgr.Client.SendMove(p.Target.EntityID(), pos, rotY, stopped, float32(p.tickRate.Seconds()))
+			p.lastTick = time.Now().Add(p.tickRate - sinceUpdate)
 		}
 	}
 }

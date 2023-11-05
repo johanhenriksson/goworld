@@ -118,6 +118,7 @@ func (c *Client) handlePacket(msg *net.Packet) error {
 			Position: net.ToVec3(pos),
 			Rotation: move.Rotation(),
 			Stopped:  move.Stopped(),
+			Delta:    move.Delta(),
 		})
 
 	default:
@@ -187,7 +188,7 @@ func (c *Client) Send(fn PacketBuilderFn) error {
 	return c.encoder.Encode(msg)
 }
 
-func (c *Client) SendMove(id Identity, pos vec3.T, rot float32, stopped bool) error {
+func (c *Client) SendMove(id Identity, pos vec3.T, rot float32, stopped bool, delta float32) error {
 	return c.Send(func(wrap *net.Packet) error {
 		move, err := net.NewEntityMovePacket(wrap.Segment())
 		if err != nil {
@@ -205,8 +206,8 @@ func (c *Client) SendMove(id Identity, pos vec3.T, rot float32, stopped bool) er
 		move.SetPosition(epos)
 
 		move.SetRotation(rot)
-
 		move.SetStopped(stopped)
+		move.SetDelta(delta)
 
 		return wrap.SetEntityMove(move)
 	})
