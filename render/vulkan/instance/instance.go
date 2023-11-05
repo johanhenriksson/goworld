@@ -7,11 +7,6 @@ import (
 	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
-var layers = []string{
-	"VK_LAYER_KHRONOS_validation",
-	//"VK_LAYER_LUNARG_api_dump",
-}
-
 type T interface {
 	EnumeratePhysicalDevices() []core1_0.PhysicalDevice
 	Destroy()
