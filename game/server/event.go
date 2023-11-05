@@ -40,9 +40,16 @@ func (e *EnterWorldEvent) Apply(instance *Instance) error {
 	e.Client.Instance = instance
 	e.Client.Entity = e.Player
 
+	// send enter world
+	if err := e.Client.SendEnterWorld("the_world"); err != nil {
+		return err
+	}
+
 	// send other entities to client
 	for _, other := range instance.Entities {
-		e.Client.SendSpawn(other)
+		if err := e.Client.SendSpawn(other); err != nil {
+			return err
+		}
 	}
 
 	// spawn entity

@@ -22,16 +22,21 @@ struct Packet {
         unknown @0: Void;
 
         auth @1 :AuthPacket;
+        enterWorld @2 :EnterWorldPacket;
 
-        entityMove @2 :EntityMovePacket;
-        entitySpawn @3 :EntitySpawnPacket;
-        entityObserve @4 :EntityObservePacket;
-        entityDespawn @5 :EntityDespawnPacket;
+        entityMove @3 :EntityMovePacket;
+        entitySpawn @4 :EntitySpawnPacket;
+        entityObserve @5 :EntityObservePacket;
+        entityDespawn @6 :EntityDespawnPacket;
     }
 }
 
 struct AuthPacket {
     token @0 :UInt64;
+}
+
+struct EnterWorldPacket {
+    map @0 :Text;
 }
 
 struct EntityMovePacket {

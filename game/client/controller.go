@@ -52,9 +52,15 @@ func NewLocalController() *LocalController {
 }
 
 func (p *LocalController) Observe(entity Entity) {
-	p.Transform().SetPosition(entity.Transform().Position())
 	p.Target = entity
 	p.velocity = vec3.Zero
+
+	if entity != nil {
+		p.Transform().SetPosition(entity.Transform().Position())
+		object.Enable(p)
+	} else {
+		object.Disable(p)
+	}
 }
 
 func (p *LocalController) Update(scene object.Component, dt float32) {

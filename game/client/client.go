@@ -52,6 +52,13 @@ func (c *Client) Connect(hostname string) error {
 	return nil
 }
 
+func (c *Client) Disconnect() error {
+	if c.conn == nil {
+		return fmt.Errorf("not connected")
+	}
+	return c.conn.Close()
+}
+
 func (c *Client) decode() (*net.Packet, error) {
 	msg, err := c.decoder.Decode()
 	if err != nil {
@@ -72,6 +79,21 @@ func (c *Client) handlePacket(msg *net.Packet) error {
 	switch msg.Which() {
 	case net.Packet_Which_auth:
 		return fmt.Errorf("%w: auth packet is client->server only", net.ErrInvalidPacket)
+
+	case net.Packet_Which_enterWorld:
+		enter, err := msg.EnterWorld()
+		if err != nil {
+			return err
+		}
+
+		mapName, err := enter.Map()
+		if err != nil {
+			return err
+		}
+
+		c.submit(EnterWorldEvent{
+			Map: mapName,
+		})
 
 	case net.Packet_Which_entityMove:
 		move, err := msg.EntityMove()
