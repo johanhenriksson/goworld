@@ -15,7 +15,7 @@ func Scene(f engine.SceneFunc) engine.SceneFunc {
 		workspace := object.Empty("Workspace")
 		f(workspace)
 
-		editorScene := NewEditorScene(workspace)
+		editorScene := NewEditorScene(workspace, true)
 		object.Attach(scene, editorScene)
 	}
 }
@@ -28,18 +28,22 @@ type EditorScene struct {
 	playing bool
 }
 
-func NewEditorScene(workspace object.Object) *EditorScene {
+func NewEditorScene(workspace object.Object, playing bool) *EditorScene {
+	app := NewApp(workspace)
+	object.Toggle(app, !playing)
+
 	return object.New("Editor", &EditorScene{
 		Object:    object.Scene(),
-		App:       NewApp(workspace),
+		App:       app,
 		Workspace: workspace,
+		playing:   playing,
 	})
 }
 
 func (s *EditorScene) Replace(workspace object.Object) {
 	parent := s.Parent()
 	object.Detach(s)
-	*s = *NewEditorScene(workspace)
+	*s = *NewEditorScene(workspace, s.playing)
 	object.Attach(parent, s)
 }
 
