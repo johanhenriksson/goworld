@@ -14,8 +14,10 @@ type Object interface {
 
 type World struct {
 	object.Component
-	handle worldHandle
-	debug  bool
+	handle    worldHandle
+	debug     bool
+	fixedStep float32
+	maxSteps  int
 
 	objects []Object
 }
@@ -23,7 +25,9 @@ type World struct {
 func NewWorld() *World {
 	handle := world_new()
 	world := object.NewComponent(&World{
-		handle: handle,
+		handle:    handle,
+		fixedStep: 1.0 / 60.0,
+		maxSteps:  3,
 	})
 	runtime.SetFinalizer(world, func(w *World) {
 		world_delete(&world.handle)
@@ -36,7 +40,7 @@ func (w *World) Update(scene object.Component, dt float32) {
 	for _, obj := range w.objects {
 		obj.pushState()
 	}
-	world_step_simulation(w.handle, dt)
+	world_step_simulation(w.handle, dt, w.fixedStep, w.maxSteps)
 	for _, obj := range w.objects {
 		obj.pullState()
 	}

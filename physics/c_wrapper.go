@@ -79,8 +79,8 @@ func world_debug_draw(world worldHandle) {
 	C.goDebugDraw(world)
 }
 
-func world_step_simulation(world worldHandle, timestep float32) {
-	C.goStepSimulation(world, (C.goReal)(timestep))
+func world_step_simulation(world worldHandle, timestep, fixedTimestep float32, maxSteps int) {
+	C.goStepSimulation(world, (C.goReal)(timestep), (C.goReal)(fixedTimestep), (C.int)(maxSteps))
 }
 
 func world_gravity_set(world worldHandle, gravity vec3.T) {

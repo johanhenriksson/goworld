@@ -75,7 +75,7 @@ extern void goSetGravity(goDynamicsWorldHandle world, goVector3* gravity);
 
 extern void goDeleteDynamicsWorld(goDynamicsWorldHandle world);
 
-extern void goStepSimulation(goDynamicsWorldHandle, goReal timeStep);
+extern void goStepSimulation(goDynamicsWorldHandle, goReal timeStep, goReal fixedStep, int maxSteps);
 
 extern void goAddRigidBody(goDynamicsWorldHandle world, goRigidBodyHandle object, int group, int mask);
 
