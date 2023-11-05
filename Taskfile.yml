@@ -29,7 +29,15 @@ tasks:
 
   build:
     cmds:
+      - rm -f goworld
       - go build -o goworld ./game/cmd/main.go
+      - install_name_tool -add_rpath @executable_path/../Frameworks/. goworld
+      - mv goworld Goworld.app/Contents/MacOS
+      - cp $(which glslc) Goworld.app/Contents/MacOS
+      - cp /usr/local/lib/lib{Bullet3Common,BulletCollision,BulletDynamics,LinearMath}.3.25.dylib Goworld.app/Contents/Frameworks
+      - cp /usr/local/lib/lib{vulkan.1,MoltenVK}.dylib Goworld.app/Contents/Frameworks
+      - cp -r assets/* Goworld.app/Contents/Resources
+      - rm -f Goworld.app/Contents/Resources/*.go
     env:
       # required to for large ssaos on macos
       MVK_CONFIG_USE_METAL_ARGUMENT_BUFFERS: 1
