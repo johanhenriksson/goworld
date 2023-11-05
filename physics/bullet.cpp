@@ -57,10 +57,10 @@ void goSetGravity(goDynamicsWorldHandle world, goVector3* gravity) {
     dynamicsWorld->setGravity(vec3FromGo(gravity));
 }
 
-void goStepSimulation(goDynamicsWorldHandle world, goReal timeStep) {
+void goStepSimulation(goDynamicsWorldHandle world, goReal timeStep, goReal fixedTimeStep, int maxSteps) {
     btDynamicsWorld* dynamicsWorld = reinterpret_cast<btDynamicsWorld*>(world);
     btAssert(dynamicsWorld);
-    dynamicsWorld->stepSimulation(timeStep);
+    dynamicsWorld->stepSimulation(timeStep, maxSteps, fixedTimeStep);
 }
 
 void goAddRigidBody(goDynamicsWorldHandle world, goRigidBodyHandle object, int group, int mask) {
