@@ -13,3 +13,7 @@ assets/models/
 
 # ignore screenshots etc
 /*.png
+
+Goworld.app/Contents/Resources/
+Goworld.app/Contents/MacOS/
+Goworld.app/Contents/Frameworks/

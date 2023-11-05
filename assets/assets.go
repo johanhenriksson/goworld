@@ -11,12 +11,20 @@ import (
 var vfs fs.FS
 var Path string
 
+const AssetPathConfig = "ASSET_PATH"
+
 func init() {
 	cwd, err := os.Getwd()
 	if err != nil {
 		panic(err)
 	}
-	Path = FindFileInParents("assets", cwd)
+
+	assetPath := "assets"
+	if os.Getenv(AssetPathConfig) != "" {
+		assetPath = os.Getenv(AssetPathConfig)
+	}
+
+	Path = FindFileInParents(assetPath, cwd)
 	vfs = os.DirFS(Path)
 }
 

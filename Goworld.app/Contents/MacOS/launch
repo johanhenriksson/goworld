@@ -1,0 +1,10 @@
+#!/bin/bash
+cd $(dirname "$0")
+log=/tmp/goworld.log
+echo starting goworld > $log
+export MVK_CONFIG_USE_METAL_ARGUMENT_BUFFERS=1
+export VK_LAYER_ENABLES=VK_VALIDATION_FEATURE_ENABLE_SYNCHRONIZATION_VALIDATION_EXT
+export ASSET_PATH=Resources
+export PATH=$PATH:$(pwd)
+./goworld >> $log 2>&1 
+echo goworld exited with code $? >> $log
