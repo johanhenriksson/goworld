@@ -2,7 +2,6 @@ package client
 
 import (
 	"log"
-	"reflect"
 	"sync"
 	"time"
 
@@ -63,8 +62,8 @@ func (m *Manager) Update(scene object.Component, dt float32) {
 	defer m.lock.Unlock()
 
 	for _, event := range m.events {
-		t := reflect.TypeOf(event)
-		log.Printf("client event: %s %+v\n", t.Name(), event)
+		// t := reflect.TypeOf(event)
+		// log.Printf("client event: %s %+v\n", t.Name(), event)
 		event.Apply(m)
 	}
 	m.events = m.events[:0]

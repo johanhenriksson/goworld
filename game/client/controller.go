@@ -8,6 +8,7 @@ import (
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/game/player"
+	"github.com/johanhenriksson/goworld/math"
 	"github.com/johanhenriksson/goworld/math/quat"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/physics"
@@ -27,9 +28,12 @@ type LocalController struct {
 	keys     keys.State
 	mouse    mouse.State
 	velocity vec3.T
-	moving   bool
 	tickRate time.Duration
 	nextTick time.Time
+	moving   bool
+	lastPos  vec3.T
+	rotating bool
+	lastRot  float32
 }
 
 func NewLocalController() *LocalController {
@@ -43,6 +47,7 @@ func NewLocalController() *LocalController {
 		keys:     keys.NewState(),
 		mouse:    mouse.NewState(),
 		tickRate: time.Second / time.Duration(updatesPerSecond),
+		nextTick: time.Now(),
 	})
 }
 
@@ -118,23 +123,26 @@ func (p *LocalController) Update(scene object.Component, dt float32) {
 	}
 	p.Character.Move(p.velocity)
 
-	moving := p.velocity.LengthSqr() > 0.01
-	stopped := p.moving && !moving
+	pos := p.Transform().Position()
+	rotY := p.Camera.Transform().Rotation().Euler().Y
+
+	moving := vec3.Distance(pos, p.lastPos) > 0.01
+	rotating := math.Abs(rotY-p.lastPos.Y) > 0.001
+	stopped := (!moving && p.moving) || (!rotating && p.rotating)
 	p.moving = moving
+	p.rotating = rotating
+	p.lastPos = pos
+	p.lastRot = rotY
 
 	// update target
 	if p.Target != nil {
-		pos := p.Transform().WorldPosition()
-		p.Target.Transform().SetWorldPosition(pos)
+		p.Target.Transform().SetPosition(pos)
+		p.Target.Transform().SetRotation(quat.Euler(0, rotY, 0))
 
-		rotY := p.Camera.Transform().WorldRotation().Euler().Y
-		rot := quat.Euler(0, rotY, 0)
-		p.Target.Transform().SetWorldRotation(rot)
-
-		periodicUpdate := moving && p.nextTick.Before(time.Now())
-		if periodicUpdate || stopped {
-			// send entity move update to server
-			p.mgr.Client.SendMove(p.Target.EntityID(), pos, rotY, stopped)
+		if stopped {
+			p.mgr.Client.SendMove(p.Target.EntityID(), pos, rotY, true)
+		} else if (moving || rotating) && time.Now().After(p.nextTick) {
+			p.mgr.Client.SendMove(p.Target.EntityID(), pos, rotY, false)
 			p.nextTick = time.Now().Add(p.tickRate)
 		}
 	}

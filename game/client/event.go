@@ -24,6 +24,7 @@ func (e DisconnectEvent) Apply(m *Manager) error {
 type EntitySpawnEvent struct {
 	EntityID server.Identity
 	Position vec3.T
+	Rotation float32
 }
 
 func (e EntitySpawnEvent) Apply(c *Manager) error {
@@ -32,8 +33,9 @@ func (e EntitySpawnEvent) Apply(c *Manager) error {
 	}
 
 	// entity object
-	entity := object.Builder(NewEntity(e.EntityID, e.Position)).
+	entity := object.Builder(NewEntity(e.EntityID, e.Position, e.Rotation)).
 		Position(e.Position).
+		Rotation(quat.Euler(0, e.Rotation, 0)).
 		Parent(c).
 		Create()
 
@@ -70,8 +72,7 @@ func (e EntityMoveEvent) Apply(c *Manager) error {
 	}
 
 	// move entity
-	entity.Transform().SetPosition(e.Position)
-	entity.Transform().SetRotation(quat.Euler(0, e.Rotation, 0))
+	entity.Move(e)
 
 	return nil
 }

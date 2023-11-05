@@ -102,6 +102,7 @@ func (c *Client) handlePacket(msg *net.Packet) error {
 		c.submit(EntitySpawnEvent{
 			EntityID: server.Identity(spawn.Entity()),
 			Position: net.ToVec3(pos),
+			Rotation: spawn.Rotation(),
 		})
 
 	case net.Packet_Which_entityObserve:
@@ -200,6 +201,8 @@ func (c *Client) SendMove(id server.Identity, position vec3.T, rotation float32,
 			return err
 		}
 		move.SetPosition(pos)
+
+		move.SetRotation(rotation)
 
 		move.SetStopped(stopped)
 

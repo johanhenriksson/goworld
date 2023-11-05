@@ -52,6 +52,16 @@ func (e *EnterWorldEvent) Apply(instance *Instance) error {
 	return e.Client.Observe(e.Player)
 }
 
+type DisconnectEvent struct {
+	Entity Entity
+}
+
+func (e DisconnectEvent) Apply(instance *Instance) error {
+	log.Printf("disconnect entity %v\n", e.Entity)
+	instance.Despawn(e.Entity)
+	return nil
+}
+
 //
 // move
 //
@@ -60,6 +70,7 @@ type EntityMoveEvent struct {
 	Sender   *Client
 	Entity   Identity
 	Position vec3.T
+	Rotation float32
 	Stopped  bool
 }
 
@@ -71,12 +82,13 @@ func (e EntityMoveEvent) Apply(instance *Instance) error {
 
 	// update entity position
 	instance.Entities[e.Entity].SetPosition(e.Position)
+	instance.Entities[e.Entity].SetRotation(e.Rotation)
 
 	// send move to other clients
 	for _, other := range instance.Entities {
 		if client, isClient := other.(*Client); isClient {
 			if client != e.Sender {
-				client.SendMove(e.Entity, e.Position, e.Stopped)
+				client.SendMove(e.Entity, e.Position, e.Rotation, e.Stopped)
 			}
 		}
 	}

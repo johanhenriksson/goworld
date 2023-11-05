@@ -83,3 +83,11 @@ func Max(a, b T) T {
 		Z: math.Max(a.Z, b.Z),
 	}
 }
+
+func Lerp(a, b T, f float32) T {
+	return T{
+		X: math.Lerp(a.X, b.X, f),
+		Y: math.Lerp(a.Y, b.Y, f),
+		Z: math.Lerp(a.Z, b.Z, f),
+	}
+}

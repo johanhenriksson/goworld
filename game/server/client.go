@@ -116,6 +116,7 @@ func (c *Client) handlePacket(msg *net.Packet) error {
 			Sender:   c,
 			Entity:   Identity(move.Entity()),
 			Position: net.ToVec3(pos),
+			Rotation: move.Rotation(),
 			Stopped:  move.Stopped(),
 		})
 
@@ -132,7 +133,9 @@ func (c *Client) handlePacket(msg *net.Packet) error {
 func (c *Client) readLoop() {
 	defer func() {
 		// disconnected
-		c.Instance.Despawn(c)
+		c.Instance.SubmitEvent(DisconnectEvent{
+			Entity: c,
+		})
 		log.Println(c, "disconnected")
 	}()
 
@@ -184,28 +187,28 @@ func (c *Client) Send(fn PacketBuilderFn) error {
 	return c.encoder.Encode(msg)
 }
 
-func (c *Client) SendMove(id Identity, pos vec3.T, stopped bool) error {
+func (c *Client) SendMove(id Identity, pos vec3.T, rot float32, stopped bool) error {
 	return c.Send(func(wrap *net.Packet) error {
-		pkt, err := net.NewEntityMovePacket(wrap.Segment())
+		move, err := net.NewEntityMovePacket(wrap.Segment())
 		if err != nil {
 			return err
 		}
 
 		// encode entity id
-		pkt.SetEntity(uint64(id))
+		move.SetEntity(uint64(id))
 
 		// encode position
 		epos, err := net.FromVec3(wrap.Segment(), pos)
 		if err != nil {
 			return err
 		}
-		pkt.SetPosition(epos)
+		move.SetPosition(epos)
 
-		// todo: encode facing
+		move.SetRotation(rot)
 
-		pkt.SetStopped(stopped)
+		move.SetStopped(stopped)
 
-		return wrap.SetEntityMove(pkt)
+		return wrap.SetEntityMove(move)
 	})
 }
 
@@ -225,6 +228,8 @@ func (c *Client) SendSpawn(entity Entity) error {
 			return err
 		}
 		spawn.SetPosition(pos)
+
+		spawn.SetRotation(entity.Rotation())
 
 		return wrap.SetEntitySpawn(spawn)
 	})
