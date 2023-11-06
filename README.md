@@ -61,6 +61,10 @@ but its not officially supported yet.
 
 Grab the latest version of MoltenVK.
 
+### Install glslc
+
+`glslc` must be installed in your path to compile shaders.
+
 ### Build Bullet SDK
 
 Goworld uses the Bullet SDK for physics. In order to compile from source, you first need to compile Bullet.

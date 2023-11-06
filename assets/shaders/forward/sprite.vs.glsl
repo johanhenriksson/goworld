@@ -22,7 +22,9 @@ void main()
 	vec3 up = vec3(0, 1, 0);
 
 	vec3 right = normalize(cross(up, lookDirection));
-	up = normalize(cross(lookDirection, right));
+
+	// if Y is not locked, calculate up vector
+	// up = normalize(cross(lookDirection, right));
 
 	out_world_position = center + 
 		right * in_position.x +

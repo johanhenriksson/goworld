@@ -20,7 +20,7 @@ func NewObject(args Args) *Sprite {
 	})
 }
 
-// Sprite is a single segment, two-sided 3D plane
+// Sprite is a single segment, one-sided 3D plane
 type Mesh struct {
 	*mesh.Static
 	Size   object.Property[vec2.T]

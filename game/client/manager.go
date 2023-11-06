@@ -15,7 +15,7 @@ type Manager struct {
 	Client     *Client
 	Controller *LocalController
 	World      *terrain.World
-	Entities   map[server.Identity]Entity
+	Entities   map[server.Identity]*Entity
 
 	hostname    string
 	lock        sync.Mutex
@@ -26,7 +26,7 @@ type Manager struct {
 func NewManager(hostname string) *Manager {
 	return object.New("GameManager", &Manager{
 		Controller: object.Builder(NewLocalController()).Active(false).Create(),
-		Entities:   make(map[server.Identity]Entity, 64),
+		Entities:   make(map[server.Identity]*Entity, 64),
 
 		hostname:    hostname,
 		events:      make([]Event, 0, 1024),
