@@ -6,24 +6,13 @@ import (
 
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/game/server"
-	"github.com/johanhenriksson/goworld/geometry/cube"
 	"github.com/johanhenriksson/goworld/math/quat"
-	"github.com/johanhenriksson/goworld/math/random"
 	"github.com/johanhenriksson/goworld/math/vec3"
-	"github.com/johanhenriksson/goworld/render/color"
-	"github.com/johanhenriksson/goworld/render/material"
-	"github.com/johanhenriksson/goworld/render/texture"
 )
 
-type Entity interface {
+type Entity struct {
 	object.Object
-	EntityID() server.Identity
-	Move(EntityMoveEvent)
-}
-
-type entity struct {
-	object.Object
-	Model object.Object
+	Sprite *CharacterSprite
 
 	id server.Identity
 
@@ -40,24 +29,14 @@ type entity struct {
 	stopAfter  bool
 }
 
-func NewEntity(id server.Identity, pos vec3.T, rot float32) *entity {
-	// entity model
-	model := cube.New(cube.Args{
-		Size: 1,
-		Mat:  material.StandardDeferred(),
-	})
-	colorIdx := uint64(id) % uint64(len(color.DefaultPalette))
-	model.SetTexture(texture.Diffuse, color.DefaultPalette[colorIdx])
+func NewEntity(id server.Identity, pos vec3.T, rot float32) *Entity {
+	spriteIndex := int(id % 365)
+	sprite := NewCharacterSprite(spriteIndex)
 
-	scale := random.Range(-0.05, 0)
+	return object.New(fmt.Sprintf("Entity %x", id), &Entity{
+		Sprite: sprite,
 
-	return object.New(fmt.Sprintf("Entity %x", id), &entity{
-		id: id,
-		Model: object.Builder(object.Empty("Model")).
-			Attach(model).
-			Scale(vec3.New(1+scale, 2+scale, 1+scale)).
-			Create(),
-
+		id:         id,
 		animating:  false,
 		moveFrom:   pos,
 		rotFrom:    rot,
@@ -65,11 +44,11 @@ func NewEntity(id server.Identity, pos vec3.T, rot float32) *entity {
 	})
 }
 
-func (e *entity) EntityID() server.Identity {
+func (e *Entity) EntityID() server.Identity {
 	return e.id
 }
 
-func (e *entity) Move(ev EntityMoveEvent) {
+func (e *Entity) Move(ev EntityMoveEvent) {
 	e.rotFrom = e.Transform().Rotation().Euler().Y
 	e.moveFrom = e.Transform().Position()
 	e.rotTo = ev.Rotation
@@ -83,8 +62,10 @@ func (e *entity) Move(ev EntityMoveEvent) {
 	e.rotVel = (e.rotTo - e.rotFrom) / float32(e.duration.Seconds())
 }
 
-func (e *entity) Update(scene object.Component, dt float32) {
+func (e *Entity) Update(scene object.Component, dt float32) {
 	e.Object.Update(scene, dt)
+
+	e.Sprite.animating = e.moveVel.LengthSqr() > 0.3
 
 	if e.animating {
 		elapsed := time.Now().Sub(e.lastUpdate)

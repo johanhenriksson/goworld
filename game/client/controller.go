@@ -16,7 +16,7 @@ import (
 
 type LocalController struct {
 	object.Object
-	Target Entity
+	Target *Entity
 
 	Character *physics.Character
 	Camera    *player.ArcballCamera
@@ -51,7 +51,7 @@ func NewLocalController() *LocalController {
 	})
 }
 
-func (p *LocalController) Observe(entity Entity) {
+func (p *LocalController) Observe(entity *Entity) {
 	p.Target = entity
 	p.velocity = vec3.Zero
 
@@ -137,9 +137,11 @@ func (p *LocalController) Update(scene object.Component, dt float32) {
 		p.Target.Transform().SetPosition(pos)
 		p.Target.Transform().SetRotation(quat.Euler(0, rotY, 0))
 
+		moving := vec3.Distance(pos, p.lastPos) > 0.01
+		p.Target.Sprite.animating = moving
+
 		sinceUpdate := time.Now().Sub(p.lastTick)
 		if sinceUpdate >= p.tickRate {
-			moving := vec3.Distance(pos, p.lastPos) > 0.01
 			rotating := math.Abs(rotY-p.lastPos.Y) > 0.001
 			stopped := (!moving && p.moving) || (!rotating && p.rotating)
 			p.moving = moving
