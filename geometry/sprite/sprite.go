@@ -1,6 +1,8 @@
 package sprite
 
 import (
+	"fmt"
+
 	"github.com/johanhenriksson/goworld/core/mesh"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/math/vec2"
@@ -43,7 +45,7 @@ func New(args Args) *Mesh {
 		Sprite: object.NewProperty(args.Texture),
 	})
 
-	sprite.mesh = vertex.NewTriangles[vertex.T, uint16]("sprite", nil, nil)
+	sprite.mesh = vertex.NewTriangles[vertex.T, uint16](fmt.Sprintf("sprite_%.2f_%.2f", args.Size.X, args.Size.Y), nil, nil)
 	sprite.generate()
 
 	sprite.SetTexture(texture.Diffuse, args.Texture)
