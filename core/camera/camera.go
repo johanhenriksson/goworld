@@ -57,10 +57,17 @@ func (cam *Object) Name() string { return "Camera" }
 func (cam *Camera) Unproject(pos vec3.T) vec3.T {
 	// screen space -> clip space
 	pos.Y = 1 - pos.Y
-	pos = pos.Scaled(2).Sub(vec3.One)
+	pos = pos.Scaled(2).Sub(vec3.One) // transforms from [0,1] to [-1,1]
 
 	// unproject to world space by multiplying inverse view-projection
 	return cam.ViewProjInv.TransformPoint(pos)
+}
+
+// Project world coordinates into screen space
+func (cam *Camera) Project(pos vec3.T) vec3.T {
+	p := cam.ViewProj.TransformPoint(pos)
+	p = p.Add(vec3.One).Scaled(0.5) // transforms from [-1,1] to [0,1]
+	return p.Mul(vec3.Extend(cam.Viewport.Size(), 1)).Scaled(1 / cam.Viewport.Scale)
 }
 
 func (cam *Camera) RenderArgs(screen render.Screen) render.Args {

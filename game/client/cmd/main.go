@@ -28,7 +28,7 @@ func main() {
 			object.Attach(scene, physics.NewWorld())
 
 			object.Attach(scene, gui.New(func() node.T {
-				return rect.New("empty", rect.Props{})
+				return rect.New("plates", rect.Props{})
 			}))
 
 			// create game client

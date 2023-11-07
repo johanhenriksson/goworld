@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"image/color"
 
+	"github.com/johanhenriksson/goworld/math"
 	"github.com/johanhenriksson/goworld/math/byte4"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/math/vec4"
@@ -157,6 +158,16 @@ func Hex(s string) T {
 		panic("invalid color value")
 	}
 	return c
+}
+
+// Linearly interpolates between two colors
+func Lerp(a, b T, f float32) T {
+	return T{
+		R: math.Lerp(a.R, b.R, f),
+		G: math.Lerp(a.G, b.G, f),
+		B: math.Lerp(a.B, b.B, f),
+		A: math.Lerp(a.A, b.A, f),
+	}
 }
 
 //
