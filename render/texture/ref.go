@@ -1,10 +1,17 @@
 package texture
 
 import (
+	"encoding/gob"
+
 	"github.com/johanhenriksson/goworld/render/image"
 )
 
 var Checker = PathRef("textures/uv_checker.png")
+
+func init() {
+	gob.Register(&pathRef{})
+	gob.Register(Args{})
+}
 
 type Ref interface {
 	Key() string
@@ -18,15 +25,16 @@ type Ref interface {
 }
 
 type pathRef struct {
-	path string
-	img  *image.Data
-	args Args
+	Path string
+	Args Args
+
+	img *image.Data
 }
 
 func PathRef(path string) Ref {
 	return &pathRef{
-		path: path,
-		args: Args{
+		Path: path,
+		Args: Args{
 			Filter: FilterLinear,
 			Wrap:   WrapRepeat,
 		},
@@ -35,12 +43,12 @@ func PathRef(path string) Ref {
 
 func PathArgsRef(path string, args Args) Ref {
 	return &pathRef{
-		path: path,
-		args: args,
+		Path: path,
+		Args: args,
 	}
 }
 
-func (r *pathRef) Key() string  { return r.path }
+func (r *pathRef) Key() string  { return r.Path }
 func (r *pathRef) Version() int { return 1 }
 
 func (r *pathRef) ImageData() *image.Data {
@@ -48,7 +56,7 @@ func (r *pathRef) ImageData() *image.Data {
 		return r.img
 	}
 	var err error
-	r.img, err = image.LoadFile(r.path)
+	r.img, err = image.LoadFile(r.Path)
 	if err != nil {
 		panic(err)
 	}
@@ -56,5 +64,5 @@ func (r *pathRef) ImageData() *image.Data {
 }
 
 func (r *pathRef) TextureArgs() Args {
-	return r.args
+	return r.Args
 }
