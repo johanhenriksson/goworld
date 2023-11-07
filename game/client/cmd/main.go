@@ -7,6 +7,7 @@ import (
 	"github.com/johanhenriksson/goworld/editor"
 	_ "github.com/johanhenriksson/goworld/editor/builtin"
 	"github.com/johanhenriksson/goworld/engine"
+	_ "github.com/johanhenriksson/goworld/game/chunk"
 	"github.com/johanhenriksson/goworld/game/client"
 	"github.com/johanhenriksson/goworld/gui"
 	"github.com/johanhenriksson/goworld/gui/node"
