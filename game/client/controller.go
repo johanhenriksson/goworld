@@ -1,7 +1,6 @@
 package client
 
 import (
-	"log"
 	"time"
 
 	"github.com/johanhenriksson/goworld/core/input/keys"
@@ -70,7 +69,6 @@ func (p *LocalController) Update(scene object.Component, dt float32) {
 		var ok bool
 		p.mgr, ok = p.Parent().(*Manager)
 		if !ok {
-			log.Println("no manager in parents")
 			return
 		}
 	}

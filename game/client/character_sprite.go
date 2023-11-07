@@ -30,11 +30,11 @@ type CharacterSprite struct {
 	nextFrame float32
 }
 
-func NewCharacterSprite(id int) *CharacterSprite {
+func NewCharacterSprite(id int, size float32) *CharacterSprite {
 	ft := float32(time.Duration(time.Second / 10).Seconds())
 	return object.New("CharacterSprite", &CharacterSprite{
 		Sprite: sprite.New(sprite.Args{
-			Size: vec2.New(2, 2),
+			Size: vec2.New(size, size),
 		}),
 		Index: id,
 
@@ -55,6 +55,8 @@ func (c *CharacterSprite) Update(scene object.Component, dt float32) {
 		c.nextFrame += c.frameTime
 		if c.animating {
 			c.Frame = (c.Frame + 1) % 2
+		} else {
+			c.Frame = 0
 		}
 	}
 
@@ -86,7 +88,7 @@ func (c *CharacterSprite) Update(scene object.Component, dt float32) {
 	}
 	frame := c.Facing*c.frames + c.Frame
 
-	c.Sprite.Sprite.Set(texture.PathArgsRef(fmt.Sprintf("sprites/sprite_%d_%d.png", c.Index, frame), texture.Args{
+	c.Sprite.Sprite.Set(texture.PathArgsRef(fmt.Sprintf("sprites/characters/sprite_%d_%d.png", c.Index, frame), texture.Args{
 		Filter: texture.FilterNearest,
 	}))
 }
