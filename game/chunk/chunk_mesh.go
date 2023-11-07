@@ -7,6 +7,7 @@ import (
 	"github.com/johanhenriksson/goworld/core/mesh"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/game/voxel"
+	"github.com/johanhenriksson/goworld/physics"
 	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/vertex"
 )
@@ -16,6 +17,13 @@ func init() {
 		Name:        "Chunk Mesh",
 		Path:        []string{"Game"},
 		Deserialize: Deserialize,
+		Create: func() (object.Component, error) {
+			return object.Builder(object.Empty("Chonk")).
+				Attach(NewMesh(New("asd", 16, 16, 16))).
+				Attach(physics.NewRigidBody(0)).
+				Attach(physics.NewMesh()).
+				Create(), nil
+		},
 	})
 	gob.Register(voxel.Vertex{})
 }
