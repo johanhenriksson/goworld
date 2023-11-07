@@ -11,14 +11,9 @@ import (
 	"github.com/johanhenriksson/goworld/render/vertex"
 )
 
-type Sprite struct {
-	object.Object
-	*Mesh
-}
-
-func NewObject(args Args) *Sprite {
-	return object.New("Sprite", &Sprite{
-		Mesh: New(args),
+func init() {
+	object.Register[*Mesh](object.TypeInfo{
+		Deserialize: Deserialize,
 	})
 }
 
@@ -54,6 +49,22 @@ func New(args Args) *Mesh {
 	})
 
 	return sprite
+}
+
+func (m *Mesh) Serialize(encoder object.Encoder) error {
+	err := encoder.Encode(&Args{
+		Size:    m.Size.Get(),
+		Texture: m.Sprite.Get(),
+	})
+	return err
+}
+
+func Deserialize(decoder object.Decoder) (object.Component, error) {
+	args := Args{}
+	if err := decoder.Decode(&args); err != nil {
+		return nil, err
+	}
+	return New(args), nil
 }
 
 func (p *Mesh) generate() {
