@@ -75,6 +75,20 @@ func (p *LocalController) Update(scene object.Component, dt float32) {
 		}
 	}
 
+	p.updateMovement(dt)
+}
+
+func (p *LocalController) Shoot() {
+	// shoot projectile
+
+	dir := p.Target.Transform().Forward().Scaled(8)
+	proj := object.Builder(NewProjectile(dir)).
+		Position(p.Target.Transform().Position()).
+		Create()
+	object.Attach(p.mgr, proj)
+}
+
+func (p *LocalController) updateMovement(dt float32) {
 	forward, right := float32(0), float32(0)
 	mouseMove := p.mouse.Down(mouse.Button1) && p.mouse.Down(mouse.Button2)
 	if p.keys.Down(keys.D) {
@@ -160,6 +174,10 @@ func (p *LocalController) KeyEvent(e keys.Event) {
 
 	if p.Character.Grounded() && e.Code() == keys.Space {
 		p.Character.Jump()
+	}
+
+	if e.Action() == keys.Press && e.Code() == keys.Key1 {
+		p.Shoot()
 	}
 }
 
