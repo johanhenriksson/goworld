@@ -37,7 +37,7 @@ void main()
 	out_view_position = (camera.View * vec4(out_world_position.xyz, 1.0)).xyz;
 
 	// world normal is always facing the camera
-	out_world_normal = normalize(center - camera.Eye.xyz);
+	out_world_normal = normalize(camera.Eye.xyz - center);
 
 	// vertex clip space position
 	gl_Position = camera.Proj * vec4(out_view_position, 1);
