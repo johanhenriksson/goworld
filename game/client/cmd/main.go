@@ -9,6 +9,7 @@ import (
 	"github.com/johanhenriksson/goworld/engine"
 	_ "github.com/johanhenriksson/goworld/game/chunk"
 	"github.com/johanhenriksson/goworld/game/client"
+	"github.com/johanhenriksson/goworld/game/terrain"
 	"github.com/johanhenriksson/goworld/gui"
 	"github.com/johanhenriksson/goworld/gui/node"
 	"github.com/johanhenriksson/goworld/gui/widget/rect"
@@ -31,6 +32,11 @@ func main() {
 			object.Attach(scene, gui.New(func() node.T {
 				return rect.New("plates", rect.Props{})
 			}))
+
+			// add water
+			object.Attach(scene, object.Builder(terrain.NewWater(512, 2000)).
+				Position(vec3.New(0, -1, 0)).
+				Create())
 
 			// create game client
 			object.Attach(scene, client.NewManager("127.0.0.1"))

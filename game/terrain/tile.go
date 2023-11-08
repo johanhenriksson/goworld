@@ -40,10 +40,16 @@ func NewTile(position ivec2.T, size int) *Tile {
 		Size:     size,
 		UVScale:  uvscale,
 		Textures: []texture.Ref{
-			texture.PathArgsRef("textures/grass1.png", texture.Args{
+			texture.PathArgsRef("textures/terrain/grass1.png", texture.Args{
 				Filter: texture.FilterNearest,
 			}),
-			texture.PathArgsRef("textures/rock1.png", texture.Args{
+			texture.PathArgsRef("textures/terrain/grass2.png", texture.Args{
+				Filter: texture.FilterNearest,
+			}),
+			texture.PathArgsRef("textures/terrain/path1.png", texture.Args{
+				Filter: texture.FilterNearest,
+			}),
+			texture.PathArgsRef("textures/terrain/sand1.png", texture.Args{
 				Filter: texture.FilterNearest,
 			}),
 		},

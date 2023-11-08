@@ -51,16 +51,17 @@ func (p *Mesh) refresh() {
 	s := p.Size.Get().Scaled(0.5)
 	y := float32(0.001)
 
+	uv := p.Size.Get().Scaled(1.0 / 8)
 	vertices := []vertex.T{
-		{P: vec3.New(-s.X, y, -s.Y), N: vec3.UnitY, T: vec2.New(0, 1)}, // o1
-		{P: vec3.New(s.X, y, -s.Y), N: vec3.UnitY, T: vec2.New(1, 1)},  // x1
-		{P: vec3.New(-s.X, y, s.Y), N: vec3.UnitY, T: vec2.New(0, 0)},  // z1
-		{P: vec3.New(s.X, y, s.Y), N: vec3.UnitY, T: vec2.New(1, 0)},   // d1
+		{P: vec3.New(-s.X, y, -s.Y), N: vec3.UnitY, T: vec2.New(0, uv.Y)},   // o1
+		{P: vec3.New(s.X, y, -s.Y), N: vec3.UnitY, T: vec2.New(uv.X, uv.Y)}, // x1
+		{P: vec3.New(-s.X, y, s.Y), N: vec3.UnitY, T: vec2.New(0, 0)},       // z1
+		{P: vec3.New(s.X, y, s.Y), N: vec3.UnitY, T: vec2.New(uv.X, 0)},     // d1
 
-		{P: vec3.New(-s.X, -y, -s.Y), N: vec3.UnitYN, T: vec2.New(0, 0)}, // o2
-		{P: vec3.New(s.X, -y, -s.Y), N: vec3.UnitYN, T: vec2.New(0, 0)},  // x2
-		{P: vec3.New(-s.X, -y, s.Y), N: vec3.UnitYN, T: vec2.New(0, 0)},  // z2
-		{P: vec3.New(s.X, -y, s.Y), N: vec3.UnitYN, T: vec2.New(0, 0)},   // d2
+		{P: vec3.New(-s.X, -y, -s.Y), N: vec3.UnitYN, T: vec2.New(0, uv.Y)},   // o2
+		{P: vec3.New(s.X, -y, -s.Y), N: vec3.UnitYN, T: vec2.New(uv.X, uv.Y)}, // x2
+		{P: vec3.New(-s.X, -y, s.Y), N: vec3.UnitYN, T: vec2.New(0, 0)},       // z2
+		{P: vec3.New(s.X, -y, s.Y), N: vec3.UnitYN, T: vec2.New(uv.X, 0)},     // d2
 	}
 
 	indices := []uint16{
