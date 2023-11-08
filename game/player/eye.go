@@ -8,6 +8,7 @@ import (
 	"github.com/johanhenriksson/goworld/math/quat"
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/math/vec3"
+	"github.com/johanhenriksson/goworld/physics"
 	"github.com/johanhenriksson/goworld/render/color"
 )
 
@@ -49,6 +50,18 @@ func (p *ArcballCamera) MouseEvent(e mouse.Event) {
 		p.mouselook = false
 		mouse.Show()
 		e.Consume()
+	}
+
+	world := object.GetInParents[*physics.World](p)
+	if world != nil {
+		hit, exists := world.Raycast(p.Transform().WorldPosition(), p.Camera.Transform().WorldPosition(), physics.All)
+		if exists {
+			maxDist := vec3.Distance(p.Transform().WorldPosition(), hit.Point)
+			if p.Distance > maxDist {
+				p.Distance = maxDist
+				p.Camera.Transform().SetPosition(vec3.New(0, 0, -p.Distance))
+			}
+		}
 	}
 
 	// orbit
