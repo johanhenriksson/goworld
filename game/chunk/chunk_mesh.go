@@ -2,13 +2,14 @@ package chunk
 
 import (
 	"encoding/gob"
-	"log"
 
 	"github.com/johanhenriksson/goworld/core/mesh"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/game/voxel"
+	"github.com/johanhenriksson/goworld/math/random"
 	"github.com/johanhenriksson/goworld/physics"
 	"github.com/johanhenriksson/goworld/render/material"
+	"github.com/johanhenriksson/goworld/render/texture"
 	"github.com/johanhenriksson/goworld/render/vertex"
 )
 
@@ -42,6 +43,9 @@ func NewMesh(chunk *T) *Mesh {
 		DepthWrite:   true,
 		CullMode:     vertex.CullBack,
 	}, ChunkVertexGenerator(chunk))
+	msh.SetTexture(texture.Slot("tileset"), texture.PathArgsRef("textures/voxel_noise.png", texture.Args{
+		Filter: texture.FilterNearest,
+	}))
 	return &Mesh{
 		Dynamic: msh,
 		Chunk:   chunk,
@@ -54,7 +58,6 @@ type ChunkState struct {
 }
 
 func (m *Mesh) Serialize(enc object.Encoder) error {
-	log.Println("serialize chunk mesh")
 	return enc.Encode(ChunkState{
 		Data: m.Chunk.Data,
 		Sx:   m.Chunk.Sx,
@@ -79,6 +82,23 @@ func Deserialize(dec object.Decoder) (object.Component, error) {
 	return NewMesh(chunk), nil
 }
 
+func packTexdata(normal_id int, texcoord_id int, texture_id int) byte {
+	return byte((texture_id&0x7)<<5 | (texcoord_id&0x3)<<3 | (normal_id&0x7)<<0)
+}
+
+const NormalUndefined = 0
+const NormalXP = 1
+const NormalXN = 2
+const NormalYP = 3
+const NormalYN = 4
+const NormalZP = 5
+const NormalZN = 6
+
+const TexcoordTopLeft = 0
+const TexcoordTopRight = 1
+const TexcoordBottomLeft = 2
+const TexcoordBottomRight = 3
+
 func ChunkVertexGenerator(cm *T) mesh.Generator[voxel.Vertex, uint16] {
 	return func() mesh.Data[voxel.Vertex, uint16] {
 		vertices := make([]voxel.Vertex, 0, 1024)
@@ -93,6 +113,7 @@ func ChunkVertexGenerator(cm *T) mesh.Generator[voxel.Vertex, uint16] {
 						// consider ONLY empty voxels
 						continue
 					}
+					texid := random.Int(0, 8)
 
 					xp := cm.At(x+1, y, z)
 					xn := cm.At(x-1, y, z)
@@ -121,9 +142,10 @@ func ChunkVertexGenerator(cm *T) mesh.Generator[voxel.Vertex, uint16] {
 
 						if xpf {
 							// xp is empty - tesselate square with X- normal
-							n := byte(2)
+							normal := NormalXN
 							v1 := voxel.Vertex{
-								X: byte(x + 1), Y: byte(y + 1), Z: byte(z + 1), N: n,
+								X: byte(x + 1), Y: byte(y + 1), Z: byte(z + 1),
+								N: packTexdata(normal, TexcoordTopLeft, texid),
 								R: xp.R, G: xp.G, B: xp.B,
 								O: byte(Omax * (1 - (lzp+lyp+lypzp+l)/4)),
 							}
@@ -131,7 +153,8 @@ func ChunkVertexGenerator(cm *T) mesh.Generator[voxel.Vertex, uint16] {
 								v1.O = byte(Omax * (1 - (lzp+lyp+l)/3))
 							}
 							v2 := voxel.Vertex{
-								X: byte(x + 1), Y: byte(y + 1), Z: byte(z), N: n,
+								X: byte(x + 1), Y: byte(y + 1), Z: byte(z),
+								N: packTexdata(normal, TexcoordBottomLeft, texid),
 								R: xp.R, G: xp.G, B: xp.B,
 								O: byte(Omax * (1 - (lzn+lyp+lypzn+l)/4)),
 							}
@@ -139,7 +162,8 @@ func ChunkVertexGenerator(cm *T) mesh.Generator[voxel.Vertex, uint16] {
 								v2.O = byte(Omax * (1 - (lzn+lyp+l)/3))
 							}
 							v3 := voxel.Vertex{
-								X: byte(x + 1), Y: byte(y), Z: byte(z + 1), N: n,
+								X: byte(x + 1), Y: byte(y), Z: byte(z + 1),
+								N: packTexdata(normal, TexcoordTopRight, texid),
 								R: xp.R, G: xp.G, B: xp.B,
 								O: byte(Omax * (1 - (lzp+lyn+lynzp+l)/4)),
 							}
@@ -147,7 +171,8 @@ func ChunkVertexGenerator(cm *T) mesh.Generator[voxel.Vertex, uint16] {
 								v3.O = byte(Omax * (1 - (lzp+lyn+l)/3))
 							}
 							v4 := voxel.Vertex{
-								X: byte(x + 1), Y: byte(y), Z: byte(z), N: n,
+								X: byte(x + 1), Y: byte(y), Z: byte(z),
+								N: packTexdata(normal, TexcoordBottomRight, texid),
 								R: xp.R, G: xp.G, B: xp.B,
 								O: byte(Omax * (1 - (lzn+lyn+lynzn+l)/4)),
 							}
@@ -159,9 +184,10 @@ func ChunkVertexGenerator(cm *T) mesh.Generator[voxel.Vertex, uint16] {
 
 						if xnf {
 							// xn is empty - tesselate square with x+ normal
-							n := byte(1)
+							normal := NormalXP
 							v1 := voxel.Vertex{
-								X: byte(x), Y: byte(y + 1), Z: byte(z), N: n,
+								X: byte(x), Y: byte(y + 1), Z: byte(z),
+								N: packTexdata(normal, TexcoordTopLeft, texid),
 								R: xn.R, G: xn.G, B: xn.B,
 								O: byte(Omax * (1 - (lyp+lzn+lypzn+l)/4)),
 							}
@@ -169,7 +195,8 @@ func ChunkVertexGenerator(cm *T) mesh.Generator[voxel.Vertex, uint16] {
 								v1.O = byte(Omax * (1 - (lyp+lzn+l)/3))
 							}
 							v2 := voxel.Vertex{
-								X: byte(x), Y: byte(y + 1), Z: byte(z + 1), N: n,
+								X: byte(x), Y: byte(y + 1), Z: byte(z + 1),
+								N: packTexdata(normal, TexcoordBottomLeft, texid),
 								R: xn.R, G: xn.G, B: xn.B,
 								O: byte(Omax * (1 - (lyp+lzp+lypzp+l)/4)),
 							}
@@ -177,7 +204,8 @@ func ChunkVertexGenerator(cm *T) mesh.Generator[voxel.Vertex, uint16] {
 								v2.O = byte(Omax * (1 - (lyp+lzp+l)/3))
 							}
 							v3 := voxel.Vertex{
-								X: byte(x), Y: byte(y), Z: byte(z), N: n,
+								X: byte(x), Y: byte(y), Z: byte(z),
+								N: packTexdata(normal, TexcoordTopRight, texid),
 								R: xn.R, G: xn.G, B: xn.B,
 								O: byte(Omax * (1 - (lyn+lzn+lynzn+l)/4)),
 							}
@@ -185,7 +213,8 @@ func ChunkVertexGenerator(cm *T) mesh.Generator[voxel.Vertex, uint16] {
 								v3.O = byte(Omax * (1 - (lyn+lzn+l)/3))
 							}
 							v4 := voxel.Vertex{
-								X: byte(x), Y: byte(y), Z: byte(z + 1), N: n,
+								X: byte(x), Y: byte(y), Z: byte(z + 1),
+								N: packTexdata(normal, TexcoordBottomRight, texid),
 								R: xn.R, G: xn.G, B: xn.B,
 								O: byte(Omax * (1 - (lyn+lzp+lynzp+l)/4)),
 							}
@@ -207,9 +236,10 @@ func ChunkVertexGenerator(cm *T) mesh.Generator[voxel.Vertex, uint16] {
 						lxnzn := light(x-1, y, z-1)
 
 						if ypf {
-							n := byte(4) // YN
+							normal := NormalYN
 							v1 := voxel.Vertex{
-								X: byte(x + 1), Y: byte(y + 1), Z: byte(z + 1), N: n,
+								X: byte(x + 1), Y: byte(y + 1), Z: byte(z + 1),
+								N: packTexdata(normal, TexcoordTopRight, texid),
 								R: yp.R, G: yp.G, B: yp.B,
 								O: byte(Omax * (1 - (lxp+lzp+lxpzp+l)/4)),
 							}
@@ -217,7 +247,8 @@ func ChunkVertexGenerator(cm *T) mesh.Generator[voxel.Vertex, uint16] {
 								v1.O = byte(Omax * (1 - (lxp+lzp+l)/3))
 							}
 							v2 := voxel.Vertex{
-								X: byte(x + 1), Y: byte(y + 1), Z: byte(z), N: n,
+								X: byte(x + 1), Y: byte(y + 1), Z: byte(z),
+								N: packTexdata(normal, TexcoordBottomRight, texid),
 								R: yp.R, G: yp.G, B: yp.B,
 								O: byte(Omax * (1 - (lxp+lzn+lxpzn+l)/4)),
 							}
@@ -225,7 +256,8 @@ func ChunkVertexGenerator(cm *T) mesh.Generator[voxel.Vertex, uint16] {
 								v2.O = byte(Omax * (1 - (lxp+lzn+l)/3))
 							}
 							v3 := voxel.Vertex{
-								X: byte(x), Y: byte(y + 1), Z: byte(z + 1), N: n,
+								X: byte(x), Y: byte(y + 1), Z: byte(z + 1),
+								N: packTexdata(normal, TexcoordTopLeft, texid),
 								R: yp.R, G: yp.G, B: yp.B,
 								O: byte(Omax * (1 - (lxn+lzp+lxnzp+l)/4)),
 							}
@@ -233,7 +265,8 @@ func ChunkVertexGenerator(cm *T) mesh.Generator[voxel.Vertex, uint16] {
 								v3.O = byte(Omax * (1 - (lxn+lzp+l)/3))
 							}
 							v4 := voxel.Vertex{
-								X: byte(x), Y: byte(y + 1), Z: byte(z), N: n,
+								X: byte(x), Y: byte(y + 1), Z: byte(z),
+								N: packTexdata(normal, TexcoordBottomLeft, texid),
 								R: yp.R, G: yp.G, B: yp.B,
 								O: byte(Omax * (1 - (lxn+lzn+lxnzn+l)/4)),
 							}
@@ -245,9 +278,10 @@ func ChunkVertexGenerator(cm *T) mesh.Generator[voxel.Vertex, uint16] {
 
 						if ynf {
 							// Y-1 is filled, add quad with Y+ normal
-							n := byte(3) // YP
+							normal := NormalYP
 							v1 := voxel.Vertex{
-								X: byte(x + 1), Y: byte(y), Z: byte(z + 1), N: n,
+								X: byte(x + 1), Y: byte(y), Z: byte(z + 1),
+								N: packTexdata(normal, TexcoordTopLeft, texid),
 								R: yn.R, G: yn.G, B: yn.B,
 								O: byte(Omax * (1 - (lxp+lzp+lxpzp+l)/4)),
 							}
@@ -255,7 +289,8 @@ func ChunkVertexGenerator(cm *T) mesh.Generator[voxel.Vertex, uint16] {
 								v1.O = byte(Omax * (1 - l/3))
 							}
 							v2 := voxel.Vertex{
-								X: byte(x + 1), Y: byte(y), Z: byte(z), N: n,
+								X: byte(x + 1), Y: byte(y), Z: byte(z),
+								N: packTexdata(normal, TexcoordBottomLeft, texid),
 								R: yn.R, G: yn.G, B: yn.B,
 								O: byte(Omax * (1 - (lxp+lzn+lxpzn+l)/4)),
 							}
@@ -263,7 +298,8 @@ func ChunkVertexGenerator(cm *T) mesh.Generator[voxel.Vertex, uint16] {
 								v2.O = byte(Omax * (1 - l/3))
 							}
 							v3 := voxel.Vertex{
-								X: byte(x), Y: byte(y), Z: byte(z + 1), N: n,
+								X: byte(x), Y: byte(y), Z: byte(z + 1),
+								N: packTexdata(normal, TexcoordTopRight, texid),
 								R: yn.R, G: yn.G, B: yn.B,
 								O: byte(Omax * (1 - (lxn+lzp+lxnzp+l)/4)),
 							}
@@ -271,7 +307,8 @@ func ChunkVertexGenerator(cm *T) mesh.Generator[voxel.Vertex, uint16] {
 								v3.O = byte(Omax * (1 - l/3))
 							}
 							v4 := voxel.Vertex{
-								X: byte(x), Y: byte(y), Z: byte(z), N: n,
+								X: byte(x), Y: byte(y), Z: byte(z),
+								N: packTexdata(normal, TexcoordBottomRight, texid),
 								R: yn.R, G: yn.G, B: yn.B,
 								O: byte(Omax * (1 - (lxn+lzn+lxnzn+l)/4)),
 							}
@@ -294,9 +331,10 @@ func ChunkVertexGenerator(cm *T) mesh.Generator[voxel.Vertex, uint16] {
 
 						if zpf {
 							// zp is empty - tesselate square with ZN normal
-							n := byte(6)
+							normal := NormalZP
 							v1 := voxel.Vertex{
-								X: byte(x), Y: byte(y + 1), Z: byte(z + 1), N: n,
+								X: byte(x), Y: byte(y + 1), Z: byte(z + 1),
+								N: packTexdata(normal, TexcoordTopLeft, texid),
 								R: zp.R, G: zp.G, B: zp.B,
 								O: byte(Omax * (1 - (lxn+lyp+lxnyp+l)/4)),
 							}
@@ -304,7 +342,8 @@ func ChunkVertexGenerator(cm *T) mesh.Generator[voxel.Vertex, uint16] {
 								v1.O = byte(Omax * (1 - (lxn+lyp+l)/3))
 							}
 							v2 := voxel.Vertex{
-								X: byte(x + 1), Y: byte(y + 1), Z: byte(z + 1), N: n,
+								X: byte(x + 1), Y: byte(y + 1), Z: byte(z + 1),
+								N: packTexdata(normal, TexcoordBottomLeft, texid),
 								R: zp.R, G: zp.G, B: zp.B,
 								O: byte(Omax * (1 - (lxp+lyp+lxpyp+l)/4)),
 							}
@@ -312,7 +351,8 @@ func ChunkVertexGenerator(cm *T) mesh.Generator[voxel.Vertex, uint16] {
 								v2.O = byte(Omax * (1 - (lxp+lyp+l)/3))
 							}
 							v3 := voxel.Vertex{
-								X: byte(x), Y: byte(y), Z: byte(z + 1), N: n,
+								X: byte(x), Y: byte(y), Z: byte(z + 1),
+								N: packTexdata(normal, TexcoordTopRight, texid),
 								R: zp.R, G: zp.G, B: zp.B,
 								O: byte(Omax * (1 - (lxn+lyn+lxnyn+l)/4)),
 							}
@@ -320,7 +360,8 @@ func ChunkVertexGenerator(cm *T) mesh.Generator[voxel.Vertex, uint16] {
 								v3.O = byte(Omax * (1 - (lxn+lyn+l)/3))
 							}
 							v4 := voxel.Vertex{
-								X: byte(x + 1), Y: byte(y), Z: byte(z + 1), N: n,
+								X: byte(x + 1), Y: byte(y), Z: byte(z + 1),
+								N: packTexdata(normal, TexcoordBottomRight, texid),
 								R: zp.R, G: zp.G, B: zp.B,
 								O: byte(Omax * (1 - (lxp+lyn+lxpyn+l)/4)),
 							}
@@ -332,9 +373,10 @@ func ChunkVertexGenerator(cm *T) mesh.Generator[voxel.Vertex, uint16] {
 
 						if znf {
 							// zn is empty - tesselate square with ZP normal
-							n := byte(5)
+							normal := NormalZP
 							v1 := voxel.Vertex{
-								X: byte(x), Y: byte(y + 1), Z: byte(z), N: n,
+								X: byte(x), Y: byte(y + 1), Z: byte(z),
+								N: packTexdata(normal, TexcoordTopLeft, texid),
 								R: zn.R, G: zn.G, B: zn.B,
 								O: byte(Omax * (1 - (lxn+lyp+lxnyp+l)/4)),
 							}
@@ -342,7 +384,8 @@ func ChunkVertexGenerator(cm *T) mesh.Generator[voxel.Vertex, uint16] {
 								v1.O = byte(Omax * (1 - (lxn+lyp+l)/3))
 							}
 							v2 := voxel.Vertex{
-								X: byte(x + 1), Y: byte(y + 1), Z: byte(z), N: n,
+								X: byte(x + 1), Y: byte(y + 1), Z: byte(z),
+								N: packTexdata(normal, TexcoordBottomLeft, texid),
 								R: zn.R, G: zn.G, B: zn.B,
 								O: byte(Omax * (1 - (lxp+lyp+lxpyp+l)/4)),
 							}
@@ -350,7 +393,8 @@ func ChunkVertexGenerator(cm *T) mesh.Generator[voxel.Vertex, uint16] {
 								v2.O = byte(Omax * (1 - (lxp+lyp+l)/3))
 							}
 							v3 := voxel.Vertex{
-								X: byte(x), Y: byte(y), Z: byte(z), N: n,
+								X: byte(x), Y: byte(y), Z: byte(z),
+								N: packTexdata(normal, TexcoordTopRight, texid),
 								R: zn.R, G: zn.G, B: zn.B,
 								O: byte(Omax * (1 - (lxn+lyn+lxnyn+l)/4)),
 							}
@@ -358,7 +402,8 @@ func ChunkVertexGenerator(cm *T) mesh.Generator[voxel.Vertex, uint16] {
 								v3.O = byte(Omax * (1 - (lxn+lyn+l)/3))
 							}
 							v4 := voxel.Vertex{
-								X: byte(x + 1), Y: byte(y), Z: byte(z), N: n,
+								X: byte(x + 1), Y: byte(y), Z: byte(z),
+								N: packTexdata(normal, TexcoordBottomRight, texid),
 								R: zn.R, G: zn.G, B: zn.B,
 								O: byte(Omax * (1 - (lxp+lyn+lxpyn+l)/4)),
 							}
