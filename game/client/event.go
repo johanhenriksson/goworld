@@ -43,7 +43,7 @@ func (e EnterWorldEvent) Apply(c *Manager) error {
 	}
 
 	// load map
-	m := terrain.NewMap(32)
+	m := terrain.NewMap("default", 32)
 	world := terrain.NewWorld(m, 200)
 
 	object.Attach(c, world)

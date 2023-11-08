@@ -42,7 +42,7 @@ func (m *ForwardMatCache) Instantiate(def *material.Def, callback func([]Materia
 		},
 		Objects: &descriptor.Storage[uniform.Object]{
 			Stages: core1_0.StageAll,
-			Size:   2000,
+			Size:   20000,
 		},
 		Lights: &descriptor.Storage[uniform.Light]{
 			Stages: core1_0.StageAll,

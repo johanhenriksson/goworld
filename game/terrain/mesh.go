@@ -71,6 +71,7 @@ type TileData struct {
 	Size     int
 	UVScale  float32
 	Points   [][]Point
+	Textures []texture.Ref
 }
 
 func (c *Mesh) Serialize(encoder object.Encoder) error {
@@ -79,6 +80,7 @@ func (c *Mesh) Serialize(encoder object.Encoder) error {
 		Size:     c.Tile.Size,
 		Points:   c.Tile.points,
 		UVScale:  c.Tile.UVScale,
+		Textures: c.Tile.Textures,
 	})
 }
 
@@ -92,10 +94,16 @@ func Deserialize(decoder object.Decoder) (object.Component, error) {
 		Size:     tileData.Size,
 		UVScale:  tileData.UVScale,
 		Textures: []texture.Ref{
-			texture.PathArgsRef("textures/grass1.png", texture.Args{
+			texture.PathArgsRef("textures/terrain/grass1.png", texture.Args{
 				Filter: texture.FilterNearest,
 			}),
-			texture.PathArgsRef("textures/rock1.png", texture.Args{
+			texture.PathArgsRef("textures/terrain/grass2.png", texture.Args{
+				Filter: texture.FilterNearest,
+			}),
+			texture.PathArgsRef("textures/terrain/path1.png", texture.Args{
+				Filter: texture.FilterNearest,
+			}),
+			texture.PathArgsRef("textures/terrain/sand1.png", texture.Args{
 				Filter: texture.FilterNearest,
 			}),
 		},

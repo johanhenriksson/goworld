@@ -102,6 +102,7 @@ func (b *SmoothBrush) Paint(patch *Patch, center vec3.T, radius, strength float3
 }
 
 type PaintBrush struct {
+	Texture int
 }
 
 func (b *PaintBrush) Paint(patch *Patch, center vec3.T, radius, strength float32) error {
@@ -115,7 +116,19 @@ func (b *PaintBrush) Paint(patch *Patch, center vec3.T, radius, strength float32
 			// invert
 			weight = 1 - weight
 
-			patch.Points[z][x].Weights[1] += 1000 * strength * weight
+			weights := patch.Points[z][x].Weights
+			weights[b.Texture%len(weights)] += strength * weight
+
+			// normalize
+			total := float32(0)
+			for _, w := range weights {
+				total += w
+			}
+			for i := range weights {
+				weights[i] /= total
+			}
+
+			patch.Points[z][x].Weights = weights
 		}
 	}
 	return nil

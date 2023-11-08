@@ -144,12 +144,49 @@ func (e *Editor) Actions() []editor.Action {
 				mgr.UseTool(e.NoiseTool)
 			},
 		},
+
 		{
-			Name: "Paint",
+			Name: "Texture 1",
+			Key:  keys.Key1,
 			Icon: icon.IconBrush,
-			Key:  keys.T,
 			Callback: func(mgr *editor.ToolManager) {
-				mgr.UseTool(e.PaintTool)
+				if mgr.Tool() != e.PaintTool {
+					mgr.UseTool(e.PaintTool)
+				}
+				e.PaintTool.Brush.(*PaintBrush).Texture = 0
+			},
+		},
+		{
+			Name: "Texture 2",
+			Key:  keys.Key2,
+			Icon: icon.IconBrush,
+			Callback: func(mgr *editor.ToolManager) {
+				if mgr.Tool() != e.PaintTool {
+					mgr.UseTool(e.PaintTool)
+				}
+				e.PaintTool.Brush.(*PaintBrush).Texture = 1
+			},
+		},
+		{
+			Name: "Texture 3",
+			Key:  keys.Key3,
+			Icon: icon.IconBrush,
+			Callback: func(mgr *editor.ToolManager) {
+				if mgr.Tool() != e.PaintTool {
+					mgr.UseTool(e.PaintTool)
+				}
+				e.PaintTool.Brush.(*PaintBrush).Texture = 2
+			},
+		},
+		{
+			Name: "Texture 4",
+			Key:  keys.Key4,
+			Icon: icon.IconBrush,
+			Callback: func(mgr *editor.ToolManager) {
+				if mgr.Tool() != e.PaintTool {
+					mgr.UseTool(e.PaintTool)
+				}
+				e.PaintTool.Brush.(*PaintBrush).Texture = 3
 			},
 		},
 	}

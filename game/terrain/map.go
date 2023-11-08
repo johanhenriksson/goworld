@@ -15,10 +15,10 @@ type Map struct {
 	mutex sync.Mutex
 }
 
-func NewMap(tileSize int) *Map {
+func NewMap(name string, tileSize int) *Map {
 	m := &Map{
 		TileSize: tileSize,
-		Name:     "default",
+		Name:     name,
 		tiles:    make(map[ivec2.T]*Tile),
 	}
 	return m
