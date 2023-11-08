@@ -38,7 +38,7 @@ type LocalController struct {
 func NewLocalController() *LocalController {
 	updatesPerSecond := 20
 	return object.New("LocalController", &LocalController{
-		Character: physics.NewCharacter(1, 0.5, 0.1),
+		Character: physics.NewCharacter(0, 1, 0.25),
 		Camera:    player.NewEye(),
 
 		Speed:    7,
