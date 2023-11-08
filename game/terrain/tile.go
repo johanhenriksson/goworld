@@ -7,7 +7,6 @@ import (
 )
 
 type Tile struct {
-	Map      *Map
 	Position ivec2.T
 	Size     int
 	UVScale  float32
@@ -17,7 +16,7 @@ type Tile struct {
 	points [][]Point
 }
 
-func NewTile(m *Map, position ivec2.T, size int) *Tile {
+func NewTile(position ivec2.T, size int) *Tile {
 	if size < 1 {
 		panic("size must be at least 1")
 	}
@@ -37,7 +36,6 @@ func NewTile(m *Map, position ivec2.T, size int) *Tile {
 	uvscale := 2 * float32(size) / float32(textureSize)
 
 	return &Tile{
-		Map:      m,
 		Position: position,
 		Size:     size,
 		UVScale:  uvscale,

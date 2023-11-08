@@ -1,6 +1,10 @@
 package terrain
 
 import (
+	"fmt"
+	"log"
+	"os"
+
 	"github.com/johanhenriksson/goworld/core/input/keys"
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/core/object"
@@ -17,7 +21,8 @@ type Editor struct {
 	object.Object
 	*editor.Context
 
-	mesh *Mesh
+	mesh  *Mesh
+	world *World
 
 	RaiseTool  *BrushTool
 	LowerTool  *BrushTool
@@ -30,32 +35,50 @@ type Editor struct {
 var _ editor.T = &Editor{}
 
 func NewEditor(ctx *editor.Context, mesh *Mesh) *Editor {
-	terrain := mesh.Tile.Map
+	world := object.GetInParents[*World](mesh)
+	if world == nil {
+		panic("mesh is not attached to a world")
+	}
+
+	mesh.Tile.Changed.Subscribe(func(t *Tile) {
+		log.Println("saving tile", mesh.Parent())
+		pos := mesh.Tile.Position
+		path := fmt.Sprintf("assets/maps/default/tile_%d_%d", pos.X, pos.Y)
+		f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
+		if err != nil {
+			log.Println("failed to open tile file: %w", err)
+		}
+		if err := object.Save(f, mesh.Parent()); err != nil {
+			log.Println("failed to save tile:", err)
+		}
+	})
+
 	return object.New("TerrainEditor", &Editor{
 		Context: ctx,
 		mesh:    mesh,
+		world:   world,
 
-		RaiseTool: object.Builder(NewBrushTool(terrain, NewRaiseBrush(), color.Green)).
+		RaiseTool: object.Builder(NewBrushTool(world.Terrain, NewRaiseBrush(), color.Green)).
 			Active(false).
 			Create(),
 
-		LowerTool: object.Builder(NewBrushTool(terrain, NewLowerBrush(), color.Red)).
+		LowerTool: object.Builder(NewBrushTool(world.Terrain, NewLowerBrush(), color.Red)).
 			Active(false).
 			Create(),
 
-		SmoothTool: object.Builder(NewBrushTool(terrain, &SmoothBrush{}, color.Yellow)).
+		SmoothTool: object.Builder(NewBrushTool(world.Terrain, &SmoothBrush{}, color.Yellow)).
 			Active(false).
 			Create(),
 
-		LevelTool: object.Builder(NewBrushTool(terrain, &LevelBrush{}, color.Blue)).
+		LevelTool: object.Builder(NewBrushTool(world.Terrain, &LevelBrush{}, color.Blue)).
 			Active(false).
 			Create(),
 
-		NoiseTool: object.Builder(NewBrushTool(terrain, NewNoiseBrush(), color.Cyan)).
+		NoiseTool: object.Builder(NewBrushTool(world.Terrain, NewNoiseBrush(), color.Cyan)).
 			Active(false).
 			Create(),
 
-		PaintTool: object.Builder(NewBrushTool(terrain, &PaintBrush{}, color.Purple)).
+		PaintTool: object.Builder(NewBrushTool(world.Terrain, &PaintBrush{}, color.Purple)).
 			Active(false).
 			Create(),
 	})
@@ -99,7 +122,7 @@ func (e *Editor) Actions() []editor.Action {
 		},
 		{
 			Name: "Smooth",
-			Icon: icon.IconWaves,
+			Icon: icon.IconSyncAlt,
 			Key:  keys.R,
 			Callback: func(mgr *editor.ToolManager) {
 				mgr.UseTool(e.SmoothTool)
@@ -107,7 +130,7 @@ func (e *Editor) Actions() []editor.Action {
 		},
 		{
 			Name: "Level",
-			Icon: icon.IconSyncAlt,
+			Icon: icon.IconTrendingFlat,
 			Key:  keys.G,
 			Callback: func(mgr *editor.ToolManager) {
 				mgr.UseTool(e.LevelTool)
@@ -115,7 +138,7 @@ func (e *Editor) Actions() []editor.Action {
 		},
 		{
 			Name: "Noise",
-			Icon: icon.IconSyncAlt,
+			Icon: icon.IconWaves,
 			Key:  keys.N,
 			Callback: func(mgr *editor.ToolManager) {
 				mgr.UseTool(e.NoiseTool)
