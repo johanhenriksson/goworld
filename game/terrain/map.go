@@ -9,6 +9,7 @@ import (
 
 type Map struct {
 	TileSize int
+	Name     string
 
 	tiles map[ivec2.T]*Tile
 	mutex sync.Mutex
@@ -17,6 +18,7 @@ type Map struct {
 func NewMap(tileSize int) *Map {
 	m := &Map{
 		TileSize: tileSize,
+		Name:     "default",
 		tiles:    make(map[ivec2.T]*Tile),
 	}
 	return m
@@ -29,7 +31,7 @@ func (m *Map) Tile(tx, ty int, create bool) *Tile {
 	tile, exists := m.tiles[tp]
 	if !exists {
 		if create {
-			t := NewTile(m, tp, m.TileSize)
+			t := NewTile(tp, m.TileSize)
 			m.tiles[tp] = t
 			return t
 		} else {
@@ -37,6 +39,12 @@ func (m *Map) Tile(tx, ty int, create bool) *Tile {
 		}
 	}
 	return tile
+}
+
+func (m *Map) AddTile(t *Tile) {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+	m.tiles[t.Position] = t
 }
 
 func (m *Map) Get(offset, size ivec2.T) *Patch {

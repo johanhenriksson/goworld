@@ -3,13 +3,18 @@ package terrain
 import (
 	"fmt"
 	"log"
+	"os"
 	"sync"
 
 	"github.com/johanhenriksson/goworld/core/camera"
 	"github.com/johanhenriksson/goworld/core/object"
+	"github.com/johanhenriksson/goworld/geometry/sprite"
 	"github.com/johanhenriksson/goworld/math"
+	"github.com/johanhenriksson/goworld/math/random"
+	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/physics"
+	"github.com/johanhenriksson/goworld/render/texture"
 )
 
 type World struct {
@@ -116,18 +121,107 @@ func (c *World) Update(scene object.Component, dt float32) {
 
 			ix, iz := x, z
 			spawn = func() {
-				// log.Println("spawn tile", key)
-				tile := c.Terrain.Tile(ix, iz, true)
+				f, err := os.OpenFile(fmt.Sprintf("assets/maps/%s/tile_%d_%d", c.Terrain.Name, ix, iz), os.O_RDONLY, 0)
+
+				var tile object.Object
+				if err == nil {
+					if tileCmp, err := object.Load(f); err == nil {
+						tile = tileCmp.(object.Object)
+
+						log.Println(tile.Name())
+						mesh := object.GetInChildren[*Mesh](tile)
+						if mesh == nil {
+							log.Println("failed to load tile:", tile.Name())
+							tile = nil
+						} else {
+							c.Terrain.AddTile(mesh.Tile)
+						}
+					} else {
+						panic(err)
+					}
+				}
+
+				if tile == nil {
+					tileData := c.Terrain.Tile(ix, iz, true)
+					tile = object.Builder(object.Empty(key)).
+						Attach(NewMesh(tileData)).
+						Attach(physics.NewRigidBody(0)).
+						Attach(physics.NewMesh()).
+						Position(p).
+						Create()
+
+					// bushes
+					type RandomSprite struct {
+						Texture   string
+						SizeMin   float32
+						SizeMax   float32
+						CountMin  int
+						CountMax  int
+						Collision bool
+					}
+					sprites := []RandomSprite{
+						{
+							Texture:  "sprites/objects/flower3.png",
+							SizeMin:  0.5,
+							SizeMax:  1.5,
+							CountMin: 0,
+							CountMax: 10,
+						},
+						{
+							Texture:   "sprites/objects/tree1.png",
+							SizeMin:   7,
+							SizeMax:   12,
+							CountMin:  3,
+							CountMax:  9,
+							Collision: true,
+						},
+						{
+							Texture:  "sprites/objects/flower2.png",
+							SizeMin:  0.5,
+							SizeMax:  1.5,
+							CountMin: 2,
+							CountMax: 10,
+						},
+						{
+							Texture:  "sprites/objects/bush2.png",
+							SizeMin:  1,
+							SizeMax:  3,
+							CountMin: 0,
+							CountMax: 10,
+						},
+					}
+					for _, s := range sprites {
+						for i := 0; i < random.Int(s.CountMin, s.CountMax); i++ {
+							size := random.Range(s.SizeMin, s.SizeMax)
+							prop := object.Builder(object.Empty("Prop")).
+								Attach(sprite.New(sprite.Args{
+									Size: vec2.New(size, size),
+									Texture: texture.PathArgsRef(s.Texture, texture.Args{
+										Filter: texture.FilterNearest,
+									}),
+								})).
+								Position(vec3.New(
+									random.Range(0, float32(c.Terrain.TileSize)),
+									size/2,
+									random.Range(0, float32(c.Terrain.TileSize)),
+								)).
+								Create()
+
+							if s.Collision {
+								object.Attach(prop, physics.NewSphere(0.8*size/2))
+								object.Attach(prop, physics.NewRigidBody(0))
+							}
+
+							object.Attach(tile, prop)
+						}
+					}
+				}
+
 				c.ready <- tileSpawn{
 					Key:      key,
 					Position: p,
 
-					Object: object.Builder(object.Empty(key)).
-						Attach(NewMesh(tile)).
-						Attach(physics.NewRigidBody(0)).
-						Attach(physics.NewMesh()).
-						Position(p).
-						Create(),
+					Object: tile,
 				}
 			}
 		}

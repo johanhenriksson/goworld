@@ -4,6 +4,7 @@ import (
 	"strconv"
 
 	"github.com/johanhenriksson/goworld/core/mesh"
+	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/math/ivec2"
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/math/vec3"
@@ -12,6 +13,13 @@ import (
 	"github.com/johanhenriksson/goworld/render/texture"
 	"github.com/johanhenriksson/goworld/render/vertex"
 )
+
+func init() {
+	object.Register[*Mesh](object.TypeInfo{
+		Create:      nil,
+		Deserialize: Deserialize,
+	})
+}
 
 type Mesh struct {
 	*mesh.Dynamic[Vertex, uint16]
@@ -58,95 +66,133 @@ var normSamples = []ivec2.T{
 	{X: 0, Y: 1},
 }
 
-func SmoothTileGenerator(tile *Tile) mesh.Generator[Vertex, uint16] {
-	if tile.Size > 100 {
-		panic("tile size cant be greater than 100x100")
-	}
-	return func() mesh.Data[Vertex, uint16] {
-		side := tile.Size + 1
-
-		getPoint := func(x, z int) (Point, bool) {
-			tx, tz := (x+tile.Size)%tile.Size, (z+tile.Size)%tile.Size
-			ox, oz := (x+tile.Size)/tile.Size-1, (z+tile.Size)/tile.Size-1
-			t := tile.Map.Tile(tile.Position.X+ox, tile.Position.Y+oz, false)
-			if t == nil {
-				return Point{}, false
-			}
-			return t.Point(tx, tz), true
-		}
-
-		getVertex := func(x, z int) Vertex {
-			root, _ := getPoint(x, z)
-			origin := vec3.New(float32(x), root.Height, float32(z))
-
-			norm := vec3.Zero
-			samples := 0
-			for i := 0; i < 8; i++ {
-				ao := normSamples[i]
-				ap, ok := getPoint(x+ao.X, z+ao.Y)
-				if !ok {
-					continue
-				}
-				a := vec3.New(float32(x+ao.X), ap.Height, float32(z+ao.Y)).Sub(origin)
-
-				bo := normSamples[i+1]
-				bp, ok := getPoint(x+bo.X, z+bo.Y)
-				if !ok {
-					continue
-				}
-				b := vec3.New(float32(x+bo.X), bp.Height, float32(z+bo.Y)).Sub(origin)
-
-				norm = norm.Add(vec3.Cross(a, b).Normalized())
-				samples++
-			}
-
-			norm = norm.Scaled(float32(1) / float32(samples))
-			return Vertex{
-				P: vec3.New(float32(x), root.Height, float32(z)),
-				T: vec2.New(float32(x)/float32(tile.Size), 1-float32(z)/float32(tile.Size)).Scaled(tile.UVScale),
-				N: norm,
-				W: vec4.New(root.Weights[0], root.Weights[1], root.Weights[2], root.Weights[3]),
-			}
-		}
-
-		// generate vertices
-		vertices := make([]Vertex, 0, side*side)
-		indices := make([]uint16, 0, tile.Size*tile.Size*6)
-		for z := 0; z < side; z++ {
-			for x := 0; x < side; x++ {
-				v := getVertex(x, z)
-				vertices = append(vertices, v)
-			}
-		}
-
-		// generate face indices
-		idx := func(x, z int) uint16 {
-			return uint16(z*side + x)
-		}
-		for z := 0; z < tile.Size; z++ {
-			for x := 0; x < tile.Size; x++ {
-				v00 := idx(x, z)
-				v01 := idx(x, z+1)
-				v10 := idx(x+1, z)
-				v11 := idx(x+1, z+1)
-
-				ex, ez := x%2 == 0, z%2 == 0
-				if ex == ez {
-					indices = append(indices, v00, v11, v10)
-					indices = append(indices, v00, v01, v11)
-				} else {
-					indices = append(indices, v00, v01, v10)
-					indices = append(indices, v01, v11, v10)
-				}
-			}
-		}
-
-		return mesh.Data[Vertex, uint16]{
-			Vertices: vertices,
-			Indices:  indices,
-		}
-	}
+type TileData struct {
+	Position ivec2.T
+	Size     int
+	UVScale  float32
+	Points   [][]Point
 }
+
+func (c *Mesh) Serialize(encoder object.Encoder) error {
+	return encoder.Encode(TileData{
+		Position: c.Tile.Position,
+		Size:     c.Tile.Size,
+		Points:   c.Tile.points,
+		UVScale:  c.Tile.UVScale,
+	})
+}
+
+func Deserialize(decoder object.Decoder) (object.Component, error) {
+	tileData := TileData{}
+	if err := decoder.Decode(&tileData); err != nil {
+		return nil, err
+	}
+	tile := &Tile{
+		Position: tileData.Position,
+		Size:     tileData.Size,
+		UVScale:  tileData.UVScale,
+		Textures: []texture.Ref{
+			texture.PathArgsRef("textures/grass1.png", texture.Args{
+				Filter: texture.FilterNearest,
+			}),
+			texture.PathArgsRef("textures/rock1.png", texture.Args{
+				Filter: texture.FilterNearest,
+			}),
+		},
+		points: tileData.Points,
+	}
+	return NewMesh(tile), nil
+}
+
+// func SmoothTileGenerator(tile *Tile) mesh.Generator[Vertex, uint16] {
+// 	if tile.Size > 100 {
+// 		panic("tile size cant be greater than 100x100")
+// 	}
+// 	return func() mesh.Data[Vertex, uint16] {
+// 		side := tile.Size + 1
+//
+// 		getPoint := func(x, z int) (Point, bool) {
+// 			tx, tz := (x+tile.Size)%tile.Size, (z+tile.Size)%tile.Size
+// 			ox, oz := (x+tile.Size)/tile.Size-1, (z+tile.Size)/tile.Size-1
+// 			t := tile.Map.Tile(tile.Position.X+ox, tile.Position.Y+oz, false)
+// 			if t == nil {
+// 				return Point{}, false
+// 			}
+// 			return t.Point(tx, tz), true
+// 		}
+//
+// 		getVertex := func(x, z int) Vertex {
+// 			root, _ := getPoint(x, z)
+// 			origin := vec3.New(float32(x), root.Height, float32(z))
+//
+// 			norm := vec3.Zero
+// 			samples := 0
+// 			for i := 0; i < 8; i++ {
+// 				ao := normSamples[i]
+// 				ap, ok := getPoint(x+ao.X, z+ao.Y)
+// 				if !ok {
+// 					continue
+// 				}
+// 				a := vec3.New(float32(x+ao.X), ap.Height, float32(z+ao.Y)).Sub(origin)
+//
+// 				bo := normSamples[i+1]
+// 				bp, ok := getPoint(x+bo.X, z+bo.Y)
+// 				if !ok {
+// 					continue
+// 				}
+// 				b := vec3.New(float32(x+bo.X), bp.Height, float32(z+bo.Y)).Sub(origin)
+//
+// 				norm = norm.Add(vec3.Cross(a, b).Normalized())
+// 				samples++
+// 			}
+//
+// 			norm = norm.Scaled(float32(1) / float32(samples))
+// 			return Vertex{
+// 				P: vec3.New(float32(x), root.Height, float32(z)),
+// 				T: vec2.New(float32(x)/float32(tile.Size), 1-float32(z)/float32(tile.Size)).Scaled(tile.UVScale),
+// 				N: norm,
+// 				W: vec4.New(root.Weights[0], root.Weights[1], root.Weights[2], root.Weights[3]),
+// 			}
+// 		}
+//
+// 		// generate vertices
+// 		vertices := make([]Vertex, 0, side*side)
+// 		indices := make([]uint16, 0, tile.Size*tile.Size*6)
+// 		for z := 0; z < side; z++ {
+// 			for x := 0; x < side; x++ {
+// 				v := getVertex(x, z)
+// 				vertices = append(vertices, v)
+// 			}
+// 		}
+//
+// 		// generate face indices
+// 		idx := func(x, z int) uint16 {
+// 			return uint16(z*side + x)
+// 		}
+// 		for z := 0; z < tile.Size; z++ {
+// 			for x := 0; x < tile.Size; x++ {
+// 				v00 := idx(x, z)
+// 				v01 := idx(x, z+1)
+// 				v10 := idx(x+1, z)
+// 				v11 := idx(x+1, z+1)
+//
+// 				ex, ez := x%2 == 0, z%2 == 0
+// 				if ex == ez {
+// 					indices = append(indices, v00, v11, v10)
+// 					indices = append(indices, v00, v01, v11)
+// 				} else {
+// 					indices = append(indices, v00, v01, v10)
+// 					indices = append(indices, v01, v11, v10)
+// 				}
+// 			}
+// 		}
+//
+// 		return mesh.Data[Vertex, uint16]{
+// 			Vertices: vertices,
+// 			Indices:  indices,
+// 		}
+// 	}
+// }
 
 func FlatTileGenerator(tile *Tile, levelOfDetail int) mesh.Generator[Vertex, uint16] {
 	if tile.Size < 1 {

@@ -116,7 +116,7 @@ func (e *Entity) renderNameplate() node.T {
 		return nil
 	}
 
-	viewPortPos := cam.Project(e.Transform().WorldPosition().Add(vec3.New(0, e.Height+0.25, 0)))
+	viewPortPos := cam.Project(e.Transform().WorldPosition().Add(vec3.New(0, e.Height+0.1, 0)))
 
 	const plateWidth = 120
 	return rect.New(fmt.Sprintf("plate_%x", e.EntityID()), rect.Props{
