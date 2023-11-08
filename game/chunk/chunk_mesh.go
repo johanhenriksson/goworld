@@ -6,7 +6,6 @@ import (
 	"github.com/johanhenriksson/goworld/core/mesh"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/game/voxel"
-	"github.com/johanhenriksson/goworld/math/random"
 	"github.com/johanhenriksson/goworld/physics"
 	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/texture"
@@ -113,7 +112,7 @@ func ChunkVertexGenerator(cm *T) mesh.Generator[voxel.Vertex, uint16] {
 						// consider ONLY empty voxels
 						continue
 					}
-					texid := random.Int(0, 8)
+					texid := (113*x + 827*y + 2333*z) % 8
 
 					xp := cm.At(x+1, y, z)
 					xn := cm.At(x-1, y, z)

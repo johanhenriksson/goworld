@@ -320,6 +320,25 @@ func (e *Editor) Actions() []editor.Action {
 				e.Recalculate()
 			},
 		},
+		{
+			Name: "Expand",
+			Key:  keys.I,
+			Icon: icon.IconExpandMore,
+			Callback: func(mgr *editor.ToolManager) {
+				Expand(e.Chunk)
+				e.Recalculate()
+			},
+		},
+		{
+			Name: "Subdivide",
+			Key:  keys.P,
+			Icon: icon.IconGridView,
+			Callback: func(mgr *editor.ToolManager) {
+				Subdivide(e.Chunk)
+				e.Target().Transform().SetScale(e.Target().Transform().Scale().Scaled(0.5))
+				e.Recalculate()
+			},
+		},
 	}
 }
 

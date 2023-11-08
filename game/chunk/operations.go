@@ -23,9 +23,9 @@ func Crop(chk *T) {
 	ymin, ymax := chk.Sy, 0
 	zmin, zmax := chk.Sz, 0
 
-	for z := 0; z < chk.Sx; z++ {
+	for z := 0; z < chk.Sz; z++ {
 		for x := 0; x < chk.Sx; x++ {
-			for y := 0; y < chk.Sx; y++ {
+			for y := 0; y < chk.Sy; y++ {
 				// ignore empty space
 				if chk.At(x, y, z) == voxel.Empty {
 					continue
@@ -57,4 +57,41 @@ func Crop(chk *T) {
 	// recalculate light
 	cropped.Light.Calculate()
 	*chk = *cropped
+}
+
+func Expand(chk *T) {
+	expanded := New(chk.Key, chk.Sx+2, chk.Sy+2, chk.Sz+2)
+
+	for z := 0; z < chk.Sz; z++ {
+		for x := 0; x < chk.Sx; x++ {
+			for y := 0; y < chk.Sy; y++ {
+				expanded.Set(x+1, y+1, z+1, chk.At(x, y, z))
+			}
+		}
+	}
+
+	expanded.Light.Calculate()
+	*chk = *expanded
+}
+
+func Subdivide(chk *T) {
+	expanded := New(chk.Key, chk.Sx*2, chk.Sy*2, chk.Sz*2)
+
+	for z := 0; z < chk.Sz; z++ {
+		for x := 0; x < chk.Sx; x++ {
+			for y := 0; y < chk.Sy; y++ {
+				expanded.Set(2*x+0, 2*y+0, 2*z+0, chk.At(x, y, z))
+				expanded.Set(2*x+0, 2*y+0, 2*z+1, chk.At(x, y, z))
+				expanded.Set(2*x+0, 2*y+1, 2*z+0, chk.At(x, y, z))
+				expanded.Set(2*x+0, 2*y+1, 2*z+1, chk.At(x, y, z))
+				expanded.Set(2*x+1, 2*y+0, 2*z+0, chk.At(x, y, z))
+				expanded.Set(2*x+1, 2*y+0, 2*z+1, chk.At(x, y, z))
+				expanded.Set(2*x+1, 2*y+1, 2*z+0, chk.At(x, y, z))
+				expanded.Set(2*x+1, 2*y+1, 2*z+1, chk.At(x, y, z))
+			}
+		}
+	}
+
+	expanded.Light.Calculate()
+	*chk = *expanded
 }
