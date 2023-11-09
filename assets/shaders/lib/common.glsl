@@ -30,6 +30,8 @@ struct Object {
 	vec4 Eye; \
 	vec4 Forward; \
 	vec2 Viewport; \
+	float Delta; \
+	float Time; \
 } name;
 
 #define IN(idx,type,name) layout (location = idx) in type in_ ## name;

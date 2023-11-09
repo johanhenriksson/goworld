@@ -64,5 +64,7 @@ func CameraFromArgs(args render.Args) uniform.Camera {
 		Eye:         vec4.Extend(args.Position, 0),
 		Forward:     vec4.Extend(args.Forward, 0),
 		Viewport:    vec2.NewI(args.Viewport.Width, args.Viewport.Height),
+		Delta:       args.Delta,
+		Time:        args.Time,
 	}
 }

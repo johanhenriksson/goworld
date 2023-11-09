@@ -16,4 +16,6 @@ type Camera struct {
 	Eye         vec4.T
 	Forward     vec4.T
 	Viewport    vec2.T
+	Delta       float32
+	Time        float32
 }

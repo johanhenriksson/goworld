@@ -14,6 +14,9 @@ import (
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/texture"
+	"github.com/johanhenriksson/goworld/render/vertex"
+
+	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
 type Water struct {
@@ -143,7 +146,17 @@ type WaterTile struct {
 func NewWaterTile(size float32) *WaterTile {
 	mesh := plane.New(plane.Args{
 		Size: vec2.New(size, size),
-		Mat:  material.TransparentForward(),
+		Mat: &material.Def{
+			Pass:         material.Forward,
+			Shader:       "forward/water",
+			VertexFormat: vertex.T{},
+			DepthTest:    true,
+			DepthWrite:   false,
+			DepthFunc:    core1_0.CompareOpLessOrEqual,
+			Primitive:    vertex.Triangles,
+			CullMode:     vertex.CullBack,
+			Transparent:  true,
+		},
 	})
 	mesh.SetTexture(texture.Diffuse, texture.PathArgsRef("textures/terrain/water1.png", texture.Args{}))
 
