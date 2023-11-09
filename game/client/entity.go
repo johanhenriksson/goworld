@@ -87,11 +87,6 @@ func (e *Entity) Update(scene object.Component, dt float32) {
 	e.Object.Update(scene, dt)
 	e.cam = object.GetInChildren[*camera.Camera](scene)
 
-	e.Health -= 0.25 * dt
-	if e.Health < 0 {
-		e.Health = 1
-	}
-
 	// update sprite animation state
 	e.Sprite.animating = e.moveVel.LengthSqr() > 0.3
 

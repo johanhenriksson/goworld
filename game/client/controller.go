@@ -145,6 +145,7 @@ func (p *LocalController) updateMovement(dt float32) {
 	rotY := p.Camera.Transform().Rotation().Euler().Y
 
 	// update target
+	object.Toggle(p.Target.Nameplate, p.Target == nil)
 	if p.Target != nil {
 		p.Target.Transform().SetPosition(pos)
 		p.Target.Transform().SetRotation(quat.Euler(0, rotY, 0))

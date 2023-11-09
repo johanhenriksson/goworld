@@ -78,7 +78,6 @@ func (c *Water) Update(scene object.Component, dt float32) {
 		}
 		dist := vec3.Distance(pos, tile.Transform().Position())
 		if dist > c.distance*1.1 {
-			// log.Println("destroy tile", key)
 			tile.Destroy()
 			delete(c.active, key)
 		}
@@ -151,7 +150,7 @@ func NewWaterTile(size float32) *WaterTile {
 			Shader:       "forward/water",
 			VertexFormat: vertex.T{},
 			DepthTest:    true,
-			DepthWrite:   false,
+			DepthWrite:   true,
 			DepthFunc:    core1_0.CompareOpLessOrEqual,
 			Primitive:    vertex.Triangles,
 			CullMode:     vertex.CullBack,
