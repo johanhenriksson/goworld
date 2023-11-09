@@ -30,7 +30,7 @@ tasks:
   build:
     cmds:
       - rm -f goworld
-      - go build -tags release -o goworld ./game/cmd/main.go
+      - go build -tags release -o goworld ./game/client/cmd/main.go
       - install_name_tool -add_rpath @executable_path/../Frameworks/. goworld
       - mv goworld Goworld.app/Contents/MacOS
       - cp $(which glslc) Goworld.app/Contents/MacOS

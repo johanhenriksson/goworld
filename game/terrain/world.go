@@ -83,7 +83,6 @@ func (c *World) Update(scene object.Component, dt float32) {
 		}
 		dist := vec3.Distance(pos, tile.Transform().Position())
 		if dist > c.distance*1.1 {
-			// log.Println("destroy tile", key)
 			tile.Destroy()
 			delete(c.active, key)
 		}
@@ -128,7 +127,6 @@ func (c *World) Update(scene object.Component, dt float32) {
 					if tileCmp, err := object.Load(f); err == nil {
 						tile = tileCmp.(object.Object)
 
-						log.Println(tile.Name())
 						mesh := object.GetInChildren[*Mesh](tile)
 						if mesh == nil {
 							log.Println("failed to load tile:", tile.Name())
