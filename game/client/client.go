@@ -1,22 +1,27 @@
 package client
 
 import (
+	"context"
+	"crypto/tls"
 	"fmt"
 	"log"
-	osnet "net"
 	"time"
 
-	"capnproto.org/go/capnp/v3"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/game/net"
 	"github.com/johanhenriksson/goworld/game/server"
 	"github.com/johanhenriksson/goworld/math/vec3"
+
+	"capnproto.org/go/capnp/v3"
+	"github.com/quic-go/quic-go"
 )
 
 type Client struct {
 	object.Object
 
-	conn    osnet.Conn
+	conn   quic.Connection
+	stream quic.Stream
+
 	arena   *capnp.SingleSegmentArena
 	encoder *capnp.Encoder
 	decoder *capnp.Decoder
@@ -36,17 +41,33 @@ func (c *Client) Connect(hostname string) error {
 		return fmt.Errorf("already connected")
 	}
 
-	dialer := osnet.Dialer{
-		Timeout: 3 * time.Second,
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	conn, err := quic.DialAddr(
+		ctx,
+		fmt.Sprintf("%s:%d", hostname, net.GamePort),
+		&tls.Config{
+			InsecureSkipVerify: true,
+			NextProtos:         []string{"goworld"},
+		},
+		&quic.Config{
+			KeepAlivePeriod: 3 * time.Second,
+			EnableDatagrams: true,
+		},
+	)
+	if err != nil {
+		return err
 	}
-	conn, err := dialer.Dial("tcp", fmt.Sprintf("%s:%d", hostname, net.GamePort))
+
+	stream, err := conn.OpenStreamSync(ctx)
 	if err != nil {
 		return err
 	}
 
 	c.conn = conn
-	c.encoder = capnp.NewEncoder(conn)
-	c.decoder = capnp.NewDecoder(conn)
+	c.stream = stream
+	c.encoder = capnp.NewEncoder(stream)
+	c.decoder = capnp.NewDecoder(stream)
 	go c.readLoop()
 
 	return nil
@@ -56,7 +77,7 @@ func (c *Client) Disconnect() error {
 	if c.conn == nil {
 		return fmt.Errorf("not connected")
 	}
-	return c.conn.Close()
+	return c.conn.CloseWithError(0, "disconnected")
 }
 
 func (c *Client) decode() (*net.Packet, error) {
