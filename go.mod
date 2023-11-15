@@ -12,6 +12,7 @@ require (
 	github.com/onsi/ginkgo/v2 v2.11.0
 	github.com/onsi/gomega v1.27.10
 	github.com/qmuntal/gltf v0.21.0
+	github.com/quic-go/quic-go v0.40.0
 	github.com/vkngwrapper/core/v2 v2.1.1
 	github.com/vkngwrapper/extensions/v2 v2.1.0
 	golang.org/x/exp v0.0.0-20230321023759-10a507213a29
@@ -33,7 +34,11 @@ require (
 	github.com/kr/pretty v0.3.1 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
+	github.com/quic-go/qtls-go1-20 v0.4.1 // indirect
 	github.com/rogpeppe/go-internal v1.9.0 // indirect
+	go.uber.org/mock v0.3.0 // indirect
+	golang.org/x/crypto v0.11.0 // indirect
+	golang.org/x/mod v0.12.0 // indirect
 	golang.org/x/net v0.12.0 // indirect
 	golang.org/x/sync v0.3.0 // indirect
 	golang.org/x/sys v0.10.0 // indirect

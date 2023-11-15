@@ -1,13 +1,14 @@
 package server
 
 import (
+	"context"
 	"fmt"
 	"log"
-	osnet "net"
 
 	"capnproto.org/go/capnp/v3"
 	"github.com/johanhenriksson/goworld/game/net"
 	"github.com/johanhenriksson/goworld/math/vec3"
+	"github.com/quic-go/quic-go"
 )
 
 var clientId = 1
@@ -19,22 +20,30 @@ type Client struct {
 	Instance *Instance
 
 	id      int
-	conn    osnet.Conn
+	conn    quic.Connection
+	strem   quic.Stream
 	arena   *capnp.SingleSegmentArena
 	encoder *capnp.Encoder
 	decoder *capnp.Decoder
 }
 
-func NewClient(conn osnet.Conn) *Client {
+func NewClient(conn quic.Connection) (*Client, error) {
+	stream, err := conn.AcceptStream(context.Background())
+	if err != nil {
+		log.Println("failed to open stream:", err)
+		return nil, err
+	}
+
 	id := clientId
 	clientId++
 	return &Client{
 		id:      id,
 		conn:    conn,
+		strem:   stream,
 		arena:   capnp.SingleSegment(nil),
-		encoder: capnp.NewEncoder(conn),
-		decoder: capnp.NewDecoder(conn),
-	}
+		encoder: capnp.NewEncoder(stream),
+		decoder: capnp.NewDecoder(stream),
+	}, nil
 }
 
 func (c *Client) String() string {
@@ -46,7 +55,7 @@ func (c *Client) Drop(reason string) error {
 	if c.conn == nil {
 		return fmt.Errorf("client already dropped")
 	}
-	if err := c.conn.Close(); err != nil {
+	if err := c.conn.CloseWithError(1, reason); err != nil {
 		return err
 	}
 	c.conn = nil
