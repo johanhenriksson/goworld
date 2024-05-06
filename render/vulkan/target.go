@@ -3,7 +3,6 @@ package vulkan
 import (
 	"fmt"
 
-	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/device"
 	"github.com/johanhenriksson/goworld/render/image"
 	"github.com/johanhenriksson/goworld/render/swapchain"
@@ -30,7 +29,7 @@ type Target interface {
 	Surfaces() []image.T
 	SurfaceFormat() core1_0.Format
 	Aquire() (*swapchain.Context, error)
-	Present(command.Worker, *swapchain.Context)
+	Present(*swapchain.Context)
 
 	Destroy()
 }
@@ -105,6 +104,6 @@ func (i *renderTarget) Aquire() (*swapchain.Context, error) {
 	return i.context, nil
 }
 
-func (b *renderTarget) Present(command.Worker, *swapchain.Context) {
+func (b *renderTarget) Present(*swapchain.Context) {
 
 }

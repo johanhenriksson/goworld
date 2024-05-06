@@ -5,7 +5,6 @@ import (
 	"log"
 	"time"
 
-	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/device"
 	"github.com/johanhenriksson/goworld/render/image"
 	"github.com/johanhenriksson/goworld/util"
@@ -19,7 +18,7 @@ type T interface {
 	device.Resource[khr_swapchain.Swapchain]
 
 	Aquire() (*Context, error)
-	Present(command.Worker, *Context)
+	Present(*Context)
 	Resize(int, int)
 
 	Images() []image.T
@@ -182,16 +181,15 @@ func (s *swapchain) Aquire() (*Context, error) {
 	return ctx, nil
 }
 
-func (s *swapchain) Present(worker command.Worker, ctx *Context) {
+func (s *swapchain) Present(ctx *Context) {
 	if ctx.RenderComplete == nil {
 		panic("context has no RenderComplete semaphore")
 	}
-	worker.Invoke(func() {
-		s.ext.QueuePresent(worker.Ptr(), khr_swapchain.PresentInfo{
-			WaitSemaphores: []core1_0.Semaphore{ctx.RenderComplete.Ptr()},
-			Swapchains:     []khr_swapchain.Swapchain{s.Ptr()},
-			ImageIndices:   []int{ctx.image},
-		})
+	queue := s.device.GraphicsQueue()
+	s.ext.QueuePresent(queue.Ptr(), khr_swapchain.PresentInfo{
+		WaitSemaphores: []core1_0.Semaphore{ctx.RenderComplete.Ptr()},
+		Swapchains:     []khr_swapchain.Swapchain{s.Ptr()},
+		ImageIndices:   []int{ctx.image},
 	})
 }
 

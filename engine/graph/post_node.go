@@ -35,7 +35,9 @@ func (n *postNode) Present(worker command.Worker, context *swapchain.Context) {
 	})
 
 	// present
-	n.target.Present(worker, context)
+	worker.Invoke(func() {
+		n.target.Present(context)
+	})
 
 	// flush ensures all commands are submitted before we start rendering the next frame. otherwise, frame submissions may overlap.
 	// todo: perhaps its possible to do this at a later stage? e.g. we could run update loop etc while waiting

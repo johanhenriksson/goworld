@@ -73,7 +73,6 @@ func New(device device.T, args Args) (T, error) {
 		args.Layers = 1
 	}
 
-	queueIdx := device.GetQueueFamilyIndex(core1_0.QueueGraphics)
 	info := core1_0.ImageCreateInfo{
 		ImageType: args.Type,
 		Format:    args.Format,
@@ -82,14 +81,17 @@ func New(device device.T, args Args) (T, error) {
 			Height: args.Height,
 			Depth:  args.Depth,
 		},
-		MipLevels:          args.Levels,
-		ArrayLayers:        args.Layers,
-		Samples:            core1_0.Samples1,
-		Tiling:             args.Tiling,
-		Usage:              core1_0.ImageUsageFlags(args.Usage),
-		SharingMode:        args.Sharing,
-		QueueFamilyIndices: []uint32{uint32(queueIdx)},
-		InitialLayout:      args.Layout,
+		MipLevels:   args.Levels,
+		ArrayLayers: args.Layers,
+		Samples:     core1_0.Samples1,
+		Tiling:      args.Tiling,
+		Usage:       core1_0.ImageUsageFlags(args.Usage),
+		SharingMode: args.Sharing,
+		QueueFamilyIndices: []uint32{
+			uint32(device.GraphicsQueue().FamilyIndex()),
+			uint32(device.TransferQueue().FamilyIndex()),
+		},
+		InitialLayout: args.Layout,
 	}
 
 	ptr, result, err := device.Ptr().CreateImage(nil, info)

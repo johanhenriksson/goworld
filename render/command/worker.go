@@ -16,7 +16,6 @@ type CommandFn func(Buffer)
 
 // Workers manage a command pool thread
 type Worker interface {
-	Ptr() core1_0.Queue
 	Queue(CommandFn)
 	Submit(SubmitInfo)
 	Destroy()
@@ -28,19 +27,18 @@ type Workers []Worker
 
 type worker struct {
 	device device.T
+	queue  device.Queue
 	name   string
-	queue  core1_0.Queue
 	pool   Pool
 	batch  []Buffer
 	work   *ThreadWorker
 }
 
-func NewWorker(device device.T, name string, queueFlags core1_0.QueueFlags, queueIndex int) Worker {
-	pool := NewPool(device, core1_0.CommandPoolCreateTransient, queueIndex)
-	queue := device.GetQueue(queueIndex, queueFlags)
+func NewWorker(device device.T, name string, queue device.Queue) Worker {
+	pool := NewPool(device, core1_0.CommandPoolCreateTransient, queue.FamilyIndex())
 
-	name = fmt.Sprintf("%s:%d:%x", name, queueIndex, queue.Handle())
-	device.SetDebugObjectName(driver.VulkanHandle(queue.Handle()), core1_0.ObjectTypeQueue, name)
+	name = fmt.Sprintf("%s:%d:%x", name, queue.FamilyIndex(), queue.Ptr().Handle())
+	device.SetDebugObjectName(driver.VulkanHandle(queue.Ptr().Handle()), core1_0.ObjectTypeQueue, name)
 
 	return &worker{
 		device: device,
@@ -50,10 +48,6 @@ func NewWorker(device device.T, name string, queueFlags core1_0.QueueFlags, queu
 		batch:  make([]Buffer, 0, 128),
 		work:   NewThreadWorker(name, 100, true),
 	}
-}
-
-func (w *worker) Ptr() core1_0.Queue {
-	return w.queue
 }
 
 // Invoke schedules a callback to be called from the worker thread
@@ -112,7 +106,7 @@ func (w *worker) submit(submit SubmitInfo) {
 	fence := sync.NewFence(w.device, submit.Marker, false)
 
 	// submit buffers to the given queue
-	w.queue.Submit(fence.Ptr(), []core1_0.SubmitInfo{
+	w.queue.Ptr().Submit(fence.Ptr(), []core1_0.SubmitInfo{
 		{
 			CommandBuffers:   buffers,
 			SignalSemaphores: util.Map(submit.Signal, func(sem sync.Semaphore) core1_0.Semaphore { return sem.Ptr() }),
