@@ -8,7 +8,6 @@ import (
 	"github.com/johanhenriksson/goworld/core/input"
 	"github.com/johanhenriksson/goworld/core/input/keys"
 	"github.com/johanhenriksson/goworld/core/input/mouse"
-	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/image"
 	"github.com/johanhenriksson/goworld/render/swapchain"
 
@@ -32,8 +31,6 @@ type Window interface {
 	Destroy()
 
 	SetInputHandler(input.Handler)
-
-	Swapchain() swapchain.T
 }
 
 type WindowArgs struct {
@@ -152,7 +149,6 @@ func (w *window) Title() string     { return w.title }
 
 func (w *window) Surfaces() []image.T           { return w.swap.Images() }
 func (w *window) SurfaceFormat() core1_0.Format { return w.swap.SurfaceFormat() }
-func (w *window) Swapchain() swapchain.T        { return w.swap }
 
 func (w *window) SetInputHandler(handler input.Handler) {
 	// keyboard events
@@ -175,8 +171,8 @@ func (w *window) Aquire() (*swapchain.Context, error) {
 	return w.swap.Aquire()
 }
 
-func (w *window) Present(worker command.Worker, ctx *swapchain.Context) {
-	w.swap.Present(worker, ctx)
+func (w *window) Present(ctx *swapchain.Context) {
+	w.swap.Present(ctx)
 }
 
 func (w *window) Destroy() {

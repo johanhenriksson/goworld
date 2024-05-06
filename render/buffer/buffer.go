@@ -44,13 +44,15 @@ func New(device device.T, args Args) T {
 		panic("buffer size cant be 0")
 	}
 
-	queueIdx := device.GetQueueFamilyIndex(core1_0.QueueGraphics)
 	ptr, _, err := device.Ptr().CreateBuffer(nil, core1_0.BufferCreateInfo{
-		Flags:              0,
-		Size:               args.Size,
-		Usage:              args.Usage,
-		SharingMode:        core1_0.SharingModeExclusive,
-		QueueFamilyIndices: []int{queueIdx},
+		Flags:       0,
+		Size:        args.Size,
+		Usage:       args.Usage,
+		SharingMode: core1_0.SharingModeExclusive,
+		QueueFamilyIndices: []int{
+			device.GraphicsQueue().FamilyIndex(),
+			device.TransferQueue().FamilyIndex(),
+		},
 	})
 	if err != nil {
 		panic(err)

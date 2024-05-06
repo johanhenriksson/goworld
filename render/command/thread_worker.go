@@ -4,17 +4,19 @@ import (
 	"runtime"
 )
 
+type InvokeFunc func()
+
 type ThreadWorker struct {
 	name   string
 	buffer int
-	work   chan func()
+	work   chan InvokeFunc
 }
 
 func NewThreadWorker(name string, buffer int, locked bool) *ThreadWorker {
 	w := &ThreadWorker{
 		name:   name,
 		buffer: buffer,
-		work:   make(chan func(), buffer),
+		work:   make(chan InvokeFunc, buffer),
 	}
 	go w.workloop(locked)
 	return w
@@ -37,13 +39,14 @@ func (tw *ThreadWorker) workloop(locked bool) {
 }
 
 // Invoke schedules a callback to be called from the worker thread
-func (tw *ThreadWorker) Invoke(callback func()) {
+func (tw *ThreadWorker) Invoke(callback InvokeFunc) {
+	// debug.PrintStack()
 	tw.work <- callback
 }
 
 // InvokeSync schedules a callback to be called on the worker thread,
 // and blocks until the callback is finished.
-func (tw *ThreadWorker) InvokeSync(callback func()) {
+func (tw *ThreadWorker) InvokeSync(callback InvokeFunc) {
 	done := make(chan struct{})
 	tw.work <- func() {
 		callback()

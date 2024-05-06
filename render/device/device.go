@@ -1,7 +1,9 @@
 package device
 
 import (
+	"fmt"
 	"log"
+	"math"
 
 	"github.com/johanhenriksson/goworld/render/vulkan/instance"
 
@@ -22,12 +24,13 @@ type T interface {
 
 	Physical() core1_0.PhysicalDevice
 	Allocate(key string, req core1_0.MemoryRequirements, flags core1_0.MemoryPropertyFlags) Memory
-	GetQueue(queueIndex int, flags core1_0.QueueFlags) core1_0.Queue
-	GetQueueFamilyIndex(flags core1_0.QueueFlags) int
 	GetDepthFormat() core1_0.Format
 	GetMemoryTypeIndex(uint32, core1_0.MemoryPropertyFlags) int
 	GetLimits() *core1_0.PhysicalDeviceLimits
 	WaitIdle()
+
+	GraphicsQueue() Queue
+	TransferQueue() Queue
 
 	SetDebugObjectName(ptr driver.VulkanHandle, objType core1_0.ObjectType, name string)
 }
@@ -38,8 +41,9 @@ type device struct {
 	limits   *core1_0.PhysicalDeviceLimits
 	debug    ext_debug_utils.Extension
 
-	memtypes map[memtype]int
-	queues   map[core1_0.QueueFlags]int
+	memtypes      map[memtype]int
+	graphicsQueue Queue
+	transferQueue Queue
 }
 
 func New(instance instance.T, physDevice core1_0.PhysicalDevice) (T, error) {
@@ -48,7 +52,25 @@ func New(instance instance.T, physDevice core1_0.PhysicalDevice) (T, error) {
 	families := physDevice.QueueFamilyProperties()
 	log.Println("Queue families:", len(families))
 	for index, family := range families {
-		log.Printf("  [%d,%d]: %d\n", index, family.QueueCount, family.QueueFlags)
+		log.Printf("  %d: %dx %s\n", index, family.QueueCount, family.QueueFlags)
+	}
+
+	mostSpecificQueue := func(flags core1_0.QueueFlags) int {
+		bestQueue := 0
+		value := math.MaxInt
+		for index, family := range families {
+			if (family.QueueFlags&flags == flags) && (int(family.QueueFlags) < value) {
+				bestQueue = index
+				value = int(family.QueueFlags)
+			}
+		}
+		return bestQueue
+	}
+
+	graphicsIdx := mostSpecificQueue(core1_0.QueueGraphics)
+	transferIdx := mostSpecificQueue(core1_0.QueueTransfer)
+	if graphicsIdx == transferIdx {
+		return nil, fmt.Errorf("unable to find queues")
 	}
 
 	indexingFeatures := ext_descriptor_indexing.PhysicalDeviceDescriptorIndexingFeatures{
@@ -67,19 +89,11 @@ func New(instance instance.T, physDevice core1_0.PhysicalDevice) (T, error) {
 		EnabledExtensionNames: deviceExtensions,
 		QueueCreateInfos: []core1_0.DeviceQueueCreateInfo{
 			{
-				QueueFamilyIndex: 0,
+				QueueFamilyIndex: graphicsIdx,
 				QueuePriorities:  []float32{1},
 			},
 			{
-				QueueFamilyIndex: 1,
-				QueuePriorities:  []float32{1},
-			},
-			{
-				QueueFamilyIndex: 2,
-				QueuePriorities:  []float32{1},
-			},
-			{
-				QueueFamilyIndex: 3,
+				QueueFamilyIndex: transferIdx,
 				QueuePriorities:  []float32{1},
 			},
 		},
@@ -107,7 +121,13 @@ func New(instance instance.T, physDevice core1_0.PhysicalDevice) (T, error) {
 		physical: physDevice,
 		limits:   properties.Limits,
 		memtypes: make(map[memtype]int),
-		queues:   make(map[core1_0.QueueFlags]int),
+
+		graphicsQueue: Queue{
+			ptr: dev.GetQueue(graphicsIdx, 0),
+		},
+		transferQueue: Queue{
+			ptr: dev.GetQueue(transferIdx, 0),
+		},
 	}, nil
 }
 
@@ -119,24 +139,12 @@ func (d *device) Physical() core1_0.PhysicalDevice {
 	return d.physical
 }
 
-func (d *device) GetQueue(queueIndex int, flags core1_0.QueueFlags) core1_0.Queue {
-	return d.ptr.GetQueue(queueIndex, 0)
+func (d *device) GraphicsQueue() Queue {
+	return d.graphicsQueue
 }
 
-func (d *device) GetQueueFamilyIndex(flags core1_0.QueueFlags) int {
-	if q, ok := d.queues[flags]; ok {
-		return q
-	}
-
-	families := d.physical.QueueFamilyProperties()
-	for index, family := range families {
-		if family.QueueFlags&flags == flags {
-			d.queues[flags] = index
-			return index
-		}
-	}
-
-	panic("no such queue available")
+func (d *device) TransferQueue() Queue {
+	return d.transferQueue
 }
 
 func (d *device) GetDepthFormat() core1_0.Format {

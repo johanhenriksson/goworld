@@ -1,15 +1,11 @@
 package vulkan
 
 import (
-	"fmt"
-
 	"github.com/johanhenriksson/goworld/render/cache"
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/descriptor"
 	"github.com/johanhenriksson/goworld/render/device"
 	"github.com/johanhenriksson/goworld/render/vulkan/instance"
-
-	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
 type App interface {
@@ -33,7 +29,7 @@ type backend struct {
 	device   device.T
 
 	transfer command.Worker
-	workers  []command.Worker
+	graphics command.Worker
 
 	pool     descriptor.Pool
 	meshes   cache.MeshCache
@@ -48,15 +44,13 @@ func New(appName string, deviceIndex int) App {
 		panic(err)
 	}
 
-	// transfer worker
-	transfer := command.NewWorker(device, "xfer", core1_0.QueueTransfer|core1_0.QueueGraphics, 0)
+	// general purpose worker
+	worker := command.NewWorker(device, "all", device.GraphicsQueue())
+	transfer := worker
+	graphics := worker
 
-	// per frame graphics workers
-	workerCount := 1 // frames
-	workers := make([]command.Worker, workerCount)
-	for i := range workers {
-		workers[i] = command.NewWorker(device, fmt.Sprintf("frame%d", i), core1_0.QueueGraphics, i+1)
-	}
+	// transfer := command.NewWorker(device, "xfer", device.TransferQueue())
+	// graphics := command.NewWorker(device, "graphics", device.GraphicsQueue())
 
 	// init caches
 	meshes := cache.NewMeshCache(device, transfer)
@@ -71,7 +65,7 @@ func New(appName string, deviceIndex int) App {
 		device:   device,
 		instance: instance,
 		transfer: transfer,
-		workers:  workers,
+		graphics: graphics,
 		meshes:   meshes,
 		textures: textures,
 		shaders:  shaders,
@@ -92,14 +86,13 @@ func (b *backend) Transferer() command.Worker {
 }
 
 func (b *backend) Worker(frame int) command.Worker {
-	return b.workers[frame%len(b.workers)]
+	return b.graphics
 }
 
 func (b *backend) Flush() {
 	// wait for all workers
-	for _, w := range b.workers {
-		w.Flush()
-	}
+	b.transfer.Flush()
+	b.graphics.Flush()
 	b.device.WaitIdle()
 }
 
@@ -115,10 +108,8 @@ func (b *backend) Destroy() {
 
 	// destroy workers
 	b.transfer.Destroy()
-	for _, w := range b.workers {
-		w.Destroy()
-	}
-	b.workers = nil
+	b.graphics.Destroy()
+	b.graphics = nil
 
 	if b.device != nil {
 		b.device.Destroy()
