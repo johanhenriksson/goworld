@@ -189,11 +189,12 @@ func NewAmbientOcclusionPass(app vulkan.App, target vulkan.Target, gbuffer Geome
 
 func (p *AmbientOcclusionPass) Record(cmds command.Recorder, args render.Args, scene object.Component) {
 	quad := p.app.Meshes().Fetch(p.quad)
+	noiseTex := p.app.Textures().Fetch(p.noise)
 
 	cmds.Record(func(cmd command.Buffer) {
 		cmd.CmdBeginRenderPass(p.pass, p.fbuf[args.Frame])
 		p.desc[args.Frame].Bind(cmd)
-		p.desc[args.Frame].Descriptors().Noise.Set(p.app.Textures().Fetch(p.noise))
+		p.desc[args.Frame].Descriptors().Noise.Set(noiseTex)
 		p.desc[args.Frame].Descriptors().Params.Set(AmbientOcclusionParams{
 			Projection: args.Projection,
 			Kernel:     p.kernel,
