@@ -4,10 +4,10 @@ An attempt at building a basic 3D engine from scratch in Go using Vulkan.
 
 **Goals**
 
-- Have fun making it
+- Have fun creating it
 - Use minimal dependencies
 - Implement modern GPU-driven rendering techniques
-- Ideally leverage Go's concurrency useful ways
+- Ideally leverage Go's concurrency in useful ways
 - Run on MacOS/Linux/Windows
 - Create an ergonomic, reactive GUI system
 - Get to a state capable of producing _some_ kind of _passable_ graphics with a coherent art style
@@ -73,10 +73,12 @@ Goworld uses the Bullet SDK for physics. In order to compile from source, you fi
 # check out bullet3
 git clone https://github.com/bulletphysics/bullet3.git
 cd bullet3
+git checkout 3.25
 
 # configure build
 cmake . \
     -DBUILD_SHARED_LIBS=ON \
+    -DBUILD_UNIT_TESTS=OFF \
     -DINSTALL_LIBS=ON \
     -DUSE_DOUBLE_PRECISION=OFF \
     -DBUILD_BULLET2_DEMOS=OFF \
