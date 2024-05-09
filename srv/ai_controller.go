@@ -10,21 +10,32 @@ import (
 type Actor interface {
 	Observable
 
+	ID() Identity
 	Name() string
+	Area() Area
+
 	Position() vec3.T
 	SetPosition(p vec3.T)
+
+	Target() Identity
+	SetTarget(t Identity)
+
+	Spawn(Area, Identity, vec3.T)
+	Despawn()
 }
+
+type Behavior map[string]Task
 
 type AIController struct {
-	task   Task
-	todo   []Task
-	target Actor
+	target   Actor
+	task     Task
+	behavior Behavior
 }
 
-func NewAIController(target Actor, tasks []Task) *AIController {
+func NewAIController(target Actor, tasks Behavior) *AIController {
 	aic := &AIController{
-		target: target,
-		todo:   tasks,
+		target:   target,
+		behavior: tasks,
 	}
 	go aic.loop()
 	return aic
@@ -32,7 +43,7 @@ func NewAIController(target Actor, tasks []Task) *AIController {
 
 func (c *AIController) loop() {
 	// subscribe to the target unit events
-	events := make(chan Event, 1024)
+	events := EventBuffer()
 	unsub := c.target.Subscribe(c, func(ev Event) {
 		events <- ev
 	})
@@ -48,17 +59,15 @@ func (c *AIController) loop() {
 		// react to events from the target unit
 		case ev := <-events:
 			switch ev := ev.(type) {
-			case UnitPositionUpdateEvent:
+			case PositionUpdateEvent:
 				// react to the unit position update
 				// move towards the unit
 				log.Println("unit", c.target.Name(), "position update", ev.Position)
-			case TaskEvent:
-				log.Println("unit", c.target.Name(), "aquired task", ev.Task)
-				if c.task == nil {
-					c.task = ev.Task
-				} else {
-					c.todo = append(c.todo, ev.Task)
-				}
+
+			case BehaviorEvent:
+				// react to behavior events
+				log.Println("unit", c.target.Name(), "behavior event", ev.Behavior)
+				c.Do(ev.Behavior)
 
 			default:
 				log.Println("unit", c.target.Name(), "unhandled event", ev)
@@ -70,14 +79,10 @@ func (c *AIController) loop() {
 			lastTick = now
 
 			if c.task == nil {
-				if len(c.todo) > 0 {
-					c.task = c.todo[0]
-					c.todo = c.todo[1:]
-					log.Println("unit", c.target.Name(), "starting task", c.task)
-					c.task.Start(c.target)
-				} else {
-					log.Println("unit", c.target.Name(), "is idle")
-					continue
+				c.task = c.behavior["idle"]
+				if c.task == nil {
+					log.Println("unit", c.target.Name(), "has no idle task")
+					return
 				}
 			}
 
@@ -89,4 +94,26 @@ func (c *AIController) loop() {
 			}
 		}
 	}
+}
+
+func (c *AIController) Do(behavior string) {
+	if task, ok := c.behavior[behavior]; ok {
+		c.task = task
+	}
+}
+
+func (c *AIController) Stop() {
+	if c.task != nil {
+		c.task.Stop(c.target)
+	}
+	c.task = nil
+}
+
+type BehaviorEvent struct {
+	source   any
+	Behavior string
+}
+
+func (e BehaviorEvent) Source() any {
+	return e.source
 }

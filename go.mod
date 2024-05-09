@@ -1,6 +1,6 @@
 module github.com/johanhenriksson/goworld
 
-go 1.20
+go 1.21
 
 require (
 	capnproto.org/go/capnp/v3 v3.0.0-alpha-29

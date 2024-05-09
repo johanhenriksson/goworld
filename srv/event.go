@@ -8,6 +8,7 @@ type EventHandler func(Event)
 
 type Observable interface {
 	Subscribe(any, EventHandler) func()
+	Unsubscribe(any)
 }
 
 // Emitter is an observable that can emit events to subscribers
@@ -35,4 +36,8 @@ func (e *Emitter) Emit(ev Event) {
 	for _, callback := range e.subscribers {
 		callback(ev)
 	}
+}
+
+func EventBuffer() chan Event {
+	return make(chan Event, 1024)
 }

@@ -5,6 +5,9 @@ import "log"
 type Task interface {
 	Start(Actor)
 	Step(Actor, float32) bool
+
+	// Stop is called by the controller if the task is interrupted
+	Stop(Actor)
 }
 
 type TaskQueue struct {
@@ -12,12 +15,12 @@ type TaskQueue struct {
 	todo []Task
 }
 
-func (c *TaskQueue) Start(u Actor) {
-}
-
 func (c *TaskQueue) Queue(t Task) {
 	c.todo = append(c.todo, t)
 }
+
+func (c *TaskQueue) Start(u Actor) {}
+func (c *TaskQueue) Stop(u Actor)  {}
 
 func (c *TaskQueue) Step(u Actor, dt float32) bool {
 	if c.task == nil {
@@ -47,9 +50,15 @@ type TaskLoop struct {
 	index int
 }
 
+func NewTaskLoop(tasks ...Task) *TaskLoop {
+	return &TaskLoop{todo: tasks}
+}
+
 func (c *TaskLoop) Start(u Actor) {
 	c.index = 0
 }
+
+func (c *TaskLoop) Stop(u Actor) {}
 
 func (c *TaskLoop) Step(u Actor, dt float32) bool {
 	if len(c.todo) == 0 {
