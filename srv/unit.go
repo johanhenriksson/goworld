@@ -28,6 +28,10 @@ func (u *Unit) Name() string {
 	return u.name
 }
 
+func (u *Unit) String() string {
+	return u.name
+}
+
 func (u *Unit) Position() vec3.T {
 	return u.position
 }

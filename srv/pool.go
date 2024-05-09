@@ -2,6 +2,7 @@ package srv
 
 import (
 	"errors"
+	"fmt"
 	"sync"
 )
 
@@ -44,7 +45,7 @@ func (p *Pool[T]) Add(e T) Identity {
 	p.gen[i] = gen
 	p.data[i] = e
 
-	return Identity(uint64(p.typeId)<<56 | uint64(gen)<<32 | uint64(i))
+	return NewID(p.typeId, int(gen), i)
 }
 
 func (p *Pool[T]) Remove(id Identity) error {
@@ -77,7 +78,7 @@ func (p *Pool[T]) Get(id Identity) (T, error) {
 
 	if id.TypeID() != p.typeId {
 		// wrong type
-		return empty, ErrType
+		return empty, fmt.Errorf("%w: %d != %d", ErrType, id.TypeID(), p.typeId)
 	}
 
 	index := id.Index()

@@ -10,10 +10,19 @@ import (
 func main() {
 	area := srv.NewSimpleArea()
 
-	unit := srv.NewUnit("testy")
-	uid := area.Join(unit)
+	client := &srv.DummyClient{
+		Token: srv.ClientToken{
+			Character: "player",
+		},
+	}
 
-	srv.NewAIController(unit, srv.Behavior{
+	realm := srv.NewRealm(area)
+	realm.Accept(client)
+
+	npc := srv.NewUnit("testy")
+	uid := area.Join(npc)
+
+	srv.NewAIController(npc, srv.Behavior{
 		"idle": srv.NewTaskLoop(
 			&srv.MoveToTask{
 				Target: vec3.T{X: 3, Y: 0, Z: 0},
@@ -26,15 +35,11 @@ func main() {
 		),
 	})
 
-	player := srv.NewUnit("player")
-	area.Join(player)
-
-	inputs := make(chan srv.Action)
-	srv.NewPlayerController(area, player, inputs)
-
 	time.Sleep(2 * time.Second)
-	inputs <- srv.SetTargetAction{Target: uid}
-	inputs <- srv.CastSpellAction{Target: uid, Spell: "fireball"}
+
+	id := client.Actor.ID()
+	client.Action(srv.SetTargetAction{Unit: id, Target: uid})
+	client.Action(srv.CastSpellAction{Unit: id, Target: uid, Spell: "fireball"})
 
 	time.Sleep(8 * time.Second)
 }

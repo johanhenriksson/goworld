@@ -34,6 +34,13 @@ type testRealm struct {
 	chars map[string]*Unit
 }
 
+func NewRealm(area Area) *testRealm {
+	return &testRealm{
+		area:  area,
+		chars: make(map[string]*Unit),
+	}
+}
+
 func (r *testRealm) Accept(c Client) error {
 	// read client token
 	token, err := c.ReadToken()
@@ -53,13 +60,10 @@ func (r *testRealm) Accept(c Client) error {
 	}
 
 	// join area
-	id := r.area.Join(player)
+	r.area.Join(player)
 
 	// todo: send observe entity event
-	c.Send(AreaEnterEvent{
-		Area: r.area,
-		Unit: id,
-	})
+	c.Observe(r.area, player)
 
 	return nil
 }

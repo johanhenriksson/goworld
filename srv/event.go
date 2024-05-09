@@ -1,5 +1,10 @@
 package srv
 
+import (
+	"fmt"
+	"reflect"
+)
+
 type Event interface {
 	Source() any
 }
@@ -40,4 +45,9 @@ func (e *Emitter) Emit(ev Event) {
 
 func EventBuffer() chan Event {
 	return make(chan Event, 1024)
+}
+
+func Dump(object any) string {
+	t := reflect.TypeOf(object)
+	return fmt.Sprintf("%s %+v", t.Name(), object)
 }

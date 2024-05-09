@@ -10,8 +10,14 @@ type Identity uint64
 
 const None Identity = 0
 
+const typeMask = 0xFF
+const generationMask = 0x00FFFFFF
+const indexMask = 0xFFFFFFFF
+
 func NewID(typeID, generation, index int) Identity {
-	return Identity(uint64(typeID)<<56 | uint64(generation)<<32 | uint64(index))
+	return Identity(uint64(typeID&0xFF)<<56 |
+		uint64(generation&0xFFFFFF)<<32 |
+		uint64(index&0xFFFFFFFF)<<0)
 }
 
 func (id Identity) TypeID() int {

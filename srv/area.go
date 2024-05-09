@@ -1,6 +1,7 @@
 package srv
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/johanhenriksson/goworld/math"
@@ -33,10 +34,13 @@ type Geometry interface {
 	Visible(vec3.T, vec3.T) bool
 }
 
+var nextAreaID = 1
+
 type SimpleArea struct {
 	Geometry
 	Emitter
 
+	id      int
 	actions chan Action
 	events  chan Event
 	actors  *Pool[Actor]
@@ -46,7 +50,11 @@ type SimpleArea struct {
 var _ Area = (*SimpleArea)(nil)
 
 func NewSimpleArea() *SimpleArea {
+	id := nextAreaID
+	nextAreaID++
+
 	a := &SimpleArea{
+		id:      id,
 		actions: make(chan Action, 1024),
 		events:  make(chan Event, 1024),
 		actors:  NewPool[Actor](1, 8),
@@ -54,6 +62,10 @@ func NewSimpleArea() *SimpleArea {
 	}
 	go a.loop()
 	return a
+}
+
+func (a *SimpleArea) String() string {
+	return fmt.Sprintf("Area%d", a.id)
 }
 
 func (a *SimpleArea) Action(action Action) {
