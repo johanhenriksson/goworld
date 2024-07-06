@@ -1,11 +1,11 @@
 package device
 
 import (
-	"fmt"
 	"log"
-	"math"
+	"slices"
 
 	"github.com/johanhenriksson/goworld/render/vulkan/instance"
+	"github.com/samber/lo"
 
 	"github.com/vkngwrapper/core/v2/common"
 	"github.com/vkngwrapper/core/v2/core1_0"
@@ -49,29 +49,36 @@ type device struct {
 func New(instance instance.T, physDevice core1_0.PhysicalDevice) (T, error) {
 	log.Println("creating device with extensions", deviceExtensions)
 
+	queues := []Queue{}
 	families := physDevice.QueueFamilyProperties()
 	log.Println("Queue families:", len(families))
 	for index, family := range families {
 		log.Printf("  %d: %dx %s\n", index, family.QueueCount, family.QueueFlags)
-	}
-
-	mostSpecificQueue := func(flags core1_0.QueueFlags) int {
-		bestQueue := 0
-		value := math.MaxInt
-		for index, family := range families {
-			if (family.QueueFlags&flags == flags) && (int(family.QueueFlags) < value) {
-				bestQueue = index
-				value = int(family.QueueFlags)
-			}
+		for i := 0; i < int(family.QueueCount); i++ {
+			queues = append(queues, Queue{
+				flags:  family.QueueFlags,
+				family: index,
+				index:  i,
+			})
 		}
-		return bestQueue
 	}
 
-	graphicsIdx := mostSpecificQueue(core1_0.QueueGraphics)
-	transferIdx := mostSpecificQueue(core1_0.QueueTransfer)
-	if graphicsIdx == transferIdx {
-		return nil, fmt.Errorf("unable to find queues")
+	mostSpecificQueue := func(flags core1_0.QueueFlags, avoid ...Queue) Queue {
+		options := lo.Filter(queues, func(q Queue, _ int) bool { return q.Matches(flags) })
+
+		// try to avoid certain families
+		optimal := lo.Filter(options, func(q Queue, _ int) bool { return !slices.Contains(avoid, q) })
+		if len(optimal) > 0 {
+			options = optimal
+		}
+
+		return lo.MinBy(options, func(a Queue, b Queue) bool { return int(a.flags) < int(b.flags) })
 	}
+
+	graphics := mostSpecificQueue(core1_0.QueueGraphics)
+	log.Println("Graphics queue:", graphics)
+	transfer := mostSpecificQueue(core1_0.QueueTransfer, graphics)
+	log.Println("Transfer queue:", transfer)
 
 	indexingFeatures := ext_descriptor_indexing.PhysicalDeviceDescriptorIndexingFeatures{
 		ShaderSampledImageArrayNonUniformIndexing:          true,
@@ -89,11 +96,11 @@ func New(instance instance.T, physDevice core1_0.PhysicalDevice) (T, error) {
 		EnabledExtensionNames: deviceExtensions,
 		QueueCreateInfos: []core1_0.DeviceQueueCreateInfo{
 			{
-				QueueFamilyIndex: graphicsIdx,
+				QueueFamilyIndex: graphics.FamilyIndex(),
 				QueuePriorities:  []float32{1},
 			},
 			{
-				QueueFamilyIndex: transferIdx,
+				QueueFamilyIndex: transfer.FamilyIndex(),
 				QueuePriorities:  []float32{1},
 			},
 		},
@@ -115,6 +122,10 @@ func New(instance instance.T, physDevice core1_0.PhysicalDevice) (T, error) {
 
 	debug := ext_debug_utils.CreateExtensionFromInstance(instance.Ptr())
 
+	// resolve queue pointers
+	graphics.ptr = dev.GetQueue(graphics.FamilyIndex(), graphics.Index())
+	transfer.ptr = dev.GetQueue(transfer.FamilyIndex(), transfer.Index())
+
 	return &device{
 		ptr:      dev,
 		debug:    debug,
@@ -122,12 +133,8 @@ func New(instance instance.T, physDevice core1_0.PhysicalDevice) (T, error) {
 		limits:   properties.Limits,
 		memtypes: make(map[memtype]int),
 
-		graphicsQueue: Queue{
-			ptr: dev.GetQueue(graphicsIdx, 0),
-		},
-		transferQueue: Queue{
-			ptr: dev.GetQueue(transferIdx, 0),
-		},
+		graphicsQueue: graphics,
+		transferQueue: transfer,
 	}, nil
 }
 
