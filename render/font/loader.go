@@ -21,7 +21,7 @@ func loadTruetypeFont(filename string) (*truetype.Font, error) {
 		return fnt, nil
 	}
 
-	fontBytes, err := assets.ReadAll(filename)
+	fontBytes, err := assets.Read(filename)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load font: %w", err)
 	}

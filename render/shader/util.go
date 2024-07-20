@@ -27,7 +27,7 @@ func sliceUint32(data []byte) []uint32 {
 
 func LoadOrCompile(path string, stage ShaderStage) ([]byte, error) {
 	spvPath := fmt.Sprintf("%s.spv", path)
-	source, err := assets.ReadAll(spvPath)
+	source, err := assets.Read(spvPath)
 	if errors.Is(err, assets.ErrNotFound) {
 		return Compile(path, stage)
 	}
@@ -49,7 +49,7 @@ func Compile(path string, stage ShaderStage) ([]byte, error) {
 		stageflag = "-fshader-stage=compute"
 	}
 
-	source, err := assets.ReadAll(path)
+	source, err := assets.Read(path)
 	if err != nil {
 		return nil, err
 	}

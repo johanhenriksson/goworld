@@ -1,6 +1,7 @@
 package object
 
 import (
+	"bytes"
 	"encoding/gob"
 	"errors"
 	"fmt"
@@ -60,22 +61,21 @@ func Copy(obj Component) Component {
 }
 
 func Save(key string, obj Component) error {
-	fp, err := assets.Write(key)
-	if err != nil {
+	buf := &bytes.Buffer{}
+	enc := gob.NewEncoder(buf)
+	if err := Serialize(enc, obj); err != nil {
 		return err
 	}
-	defer fp.Close()
-	enc := gob.NewEncoder(fp)
-	return Serialize(enc, obj)
+	return assets.Write(key, buf.Bytes())
 }
 
 func Load(key string) (Component, error) {
-	fp, err := assets.Open(key)
+	data, err := assets.Read(key)
 	if err != nil {
 		return nil, err
 	}
-	defer fp.Close()
-	dec := gob.NewDecoder(fp)
+	buf := bytes.NewBuffer(data)
+	dec := gob.NewDecoder(buf)
 	return Deserialize(dec)
 }
 

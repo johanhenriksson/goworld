@@ -1,6 +1,7 @@
 package image
 
 import (
+	"bytes"
 	imglib "image"
 	"image/draw"
 
@@ -19,11 +20,12 @@ type Data struct {
 }
 
 func LoadFile(file string) (*Data, error) {
-	imgFile, err := assets.Open(file)
+	imgdata, err := assets.Read(file)
 	if err != nil {
 		return nil, err
 	}
-	img, _, err := imglib.Decode(imgFile)
+	buf := bytes.NewBuffer(imgdata)
+	img, _, err := imglib.Decode(buf)
 	if err != nil {
 		return nil, err
 	}

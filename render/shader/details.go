@@ -35,7 +35,7 @@ func (d *Details) ParseInputs() (Inputs, error) {
 }
 
 func ReadDetails(path string) (*Details, error) {
-	data, err := assets.ReadAll(path)
+	data, err := assets.Read(path)
 	if err != nil {
 		return nil, err
 	}
