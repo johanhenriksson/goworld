@@ -3,7 +3,6 @@ package terrain
 import (
 	"fmt"
 	"log"
-	"os"
 
 	"github.com/johanhenriksson/goworld/core/input/keys"
 	"github.com/johanhenriksson/goworld/core/input/mouse"
@@ -43,12 +42,8 @@ func NewEditor(ctx *editor.Context, mesh *Mesh) *Editor {
 	mesh.Tile.Changed.Subscribe(func(t *Tile) {
 		log.Println("saving tile", mesh.Parent())
 		pos := mesh.Tile.Position
-		path := fmt.Sprintf("assets/maps/default/tile_%d_%d", pos.X, pos.Y)
-		f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
-		if err != nil {
-			log.Println("failed to open tile file: %w", err)
-		}
-		if err := object.Save(f, mesh.Parent()); err != nil {
+		key := fmt.Sprintf("maps/default/tile_%d_%d", pos.X, pos.Y)
+		if err := object.Save(key, mesh.Parent()); err != nil {
 			log.Println("failed to save tile:", err)
 		}
 	})

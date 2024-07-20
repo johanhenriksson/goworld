@@ -1,11 +1,12 @@
 package terrain
 
 import (
+	"errors"
 	"fmt"
 	"log"
-	"os"
 	"sync"
 
+	"github.com/johanhenriksson/goworld/assets"
 	"github.com/johanhenriksson/goworld/core/camera"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/geometry/sprite"
@@ -120,29 +121,25 @@ func (c *World) Update(scene object.Component, dt float32) {
 
 			ix, iz := x, z
 			spawn = func() {
-				f, err := os.OpenFile(fmt.Sprintf("assets/maps/%s/tile_%d_%d", c.Terrain.Name, ix, iz), os.O_RDONLY, 0)
+				assetKey := fmt.Sprintf("maps/%s/tile_%d_%d", c.Terrain.Name, ix, iz)
 
 				var tile object.Object
-				if err == nil {
-					if tileCmp, err := object.Load(f); err == nil {
-						tile = tileCmp.(object.Object)
+				if tileCmp, err := object.Load(assetKey); err == nil {
+					tile = tileCmp.(object.Object)
 
-						mesh := object.GetInChildren[*Mesh](tile)
-						if mesh == nil {
-							log.Println("failed to load tile:", tile.Name())
-							tile = nil
-						} else {
-							c.Terrain.AddTile(mesh.Tile)
-						}
+					mesh := object.GetInChildren[*Mesh](tile)
+					if mesh == nil {
+						log.Println("failed to load tile:", tile.Name())
+						tile = nil
 					} else {
-						panic(err)
+						c.Terrain.AddTile(mesh.Tile)
 					}
-				}
-
-				if tile == nil {
+				} else if errors.Is(err, assets.ErrNotFound) {
 					tileData := c.Terrain.Tile(ix, iz, true)
 					tile = DefaultWorldTile(key, c.Terrain, tileData)
 					tile.Transform().SetPosition(p)
+				} else {
+					panic(err)
 				}
 
 				c.ready <- tileSpawn{

@@ -2,7 +2,6 @@ package editor
 
 import (
 	"log"
-	"os"
 
 	"github.com/johanhenriksson/goworld/core/input/keys"
 	"github.com/johanhenriksson/goworld/core/object"
@@ -49,12 +48,7 @@ func (s *EditorScene) Replace(workspace object.Object) {
 
 func (s *EditorScene) KeyEvent(e keys.Event) {
 	if e.Action() == keys.Release && e.Code() == keys.O && e.Modifier(keys.Ctrl) {
-		fp, err := os.Open("scene.scn")
-		if err != nil {
-			panic(err)
-		}
-		defer fp.Close()
-		c, err := object.Load(fp)
+		c, err := object.Load("scene.scn")
 		if err != nil {
 			panic(err)
 		}
@@ -62,12 +56,7 @@ func (s *EditorScene) KeyEvent(e keys.Event) {
 		log.Println("scene loaded")
 	}
 	if e.Action() == keys.Release && e.Code() == keys.S && e.Modifier(keys.Ctrl) {
-		fp, err := os.OpenFile("scene.scn", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0755)
-		if err != nil {
-			panic(err)
-		}
-		defer fp.Close()
-		if err := object.Save(fp, s.Workspace); err != nil {
+		if err := object.Save("scene.scn", s.Workspace); err != nil {
 			panic(err)
 		}
 		log.Println("scene saved")

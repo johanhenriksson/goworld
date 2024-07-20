@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"os"
 	"os/exec"
 	"path/filepath"
 	"unsafe"
@@ -29,7 +28,7 @@ func sliceUint32(data []byte) []uint32 {
 func LoadOrCompile(path string, stage ShaderStage) ([]byte, error) {
 	spvPath := fmt.Sprintf("%s.spv", path)
 	source, err := assets.ReadAll(spvPath)
-	if errors.Is(err, os.ErrNotExist) {
+	if errors.Is(err, assets.ErrNotFound) {
 		return Compile(path, stage)
 	}
 	if err != nil {

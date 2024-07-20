@@ -1,14 +1,15 @@
 package assets
 
 import (
+	"errors"
 	"fmt"
 	"io"
-	"io/fs"
 	"os"
 	"path/filepath"
 )
 
-var vfs fs.FS
+var ErrNotFound = fmt.Errorf("not found")
+
 var Path string
 
 const AssetPathConfig = "ASSET_PATH"
@@ -25,26 +26,46 @@ func init() {
 	}
 
 	Path = FindFileInParents(assetPath, cwd)
-	vfs = os.DirFS(Path)
 }
 
-func Open(fileName string) (fs.File, error) {
-	return vfs.Open(fileName)
-}
-
-func ReadAll(fileName string) ([]byte, error) {
-	file, err := Open(fileName)
+func Open(key string) (io.ReadCloser, error) {
+	fullpath := filepath.Join(Path, key)
+	fp, err := os.Open(fullpath)
 	if err != nil {
-		return nil, fmt.Errorf("error opening file %s: %w", fileName, err)
+		if errors.Is(err, os.ErrNotExist) {
+			return nil, fmt.Errorf("asset %s %w", key, ErrNotFound)
+		}
+		return nil, fmt.Errorf("error opening asset %s: %w", key, err)
+	}
+	return fp, nil
+}
+
+func ReadAll(key string) ([]byte, error) {
+	file, err := Open(key)
+	if err != nil {
+		return nil, err
 	}
 	defer file.Close()
 
 	data, err := io.ReadAll(file)
 	if err != nil {
-		return nil, fmt.Errorf("error reading file %s: %w", fileName, err)
+		return nil, fmt.Errorf("error reading asset %s: %w", key, err)
 	}
 
 	return data, nil
+}
+
+func Write(key string) (io.WriteCloser, error) {
+	fullpath := filepath.Join(Path, key)
+	file, err := os.Create(fullpath)
+	if err != nil {
+		if errors.Is(err, os.ErrExist) {
+			return nil, fmt.Errorf("asset %s exists: %w", key, ErrNotFound)
+		}
+		return nil, fmt.Errorf("error opening asset %s: %w", key, err)
+	}
+
+	return file, nil
 }
 
 func FindFileInParents(name, path string) string {

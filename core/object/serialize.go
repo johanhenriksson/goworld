@@ -7,6 +7,7 @@ import (
 	"io"
 	"reflect"
 
+	"github.com/johanhenriksson/goworld/assets"
 	"github.com/johanhenriksson/goworld/math/quat"
 	"github.com/johanhenriksson/goworld/math/vec3"
 )
@@ -58,13 +59,23 @@ func Copy(obj Component) Component {
 	return kopy
 }
 
-func Save(writer io.Writer, obj Component) error {
-	enc := gob.NewEncoder(writer)
+func Save(key string, obj Component) error {
+	fp, err := assets.Write(key)
+	if err != nil {
+		return err
+	}
+	defer fp.Close()
+	enc := gob.NewEncoder(fp)
 	return Serialize(enc, obj)
 }
 
-func Load(reader io.Reader) (Component, error) {
-	dec := gob.NewDecoder(reader)
+func Load(key string) (Component, error) {
+	fp, err := assets.Open(key)
+	if err != nil {
+		return nil, err
+	}
+	defer fp.Close()
+	dec := gob.NewDecoder(fp)
 	return Deserialize(dec)
 }
 

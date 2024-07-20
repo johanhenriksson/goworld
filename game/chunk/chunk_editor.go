@@ -2,7 +2,6 @@ package chunk
 
 import (
 	"log"
-	"os"
 
 	"github.com/johanhenriksson/goworld/core/input/keys"
 	"github.com/johanhenriksson/goworld/core/input/mouse"
@@ -356,12 +355,8 @@ func (e *Editor) saveChunkDialog() {
 				},
 				OnAccept: func(input string) {
 					log.Println("save:", input)
-					fp, err := os.OpenFile(input+".chk", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0755)
-					if err != nil {
-						panic(err)
-					}
-					defer fp.Close()
-					if err := object.Save(fp, e.mesh); err != nil {
+					key := input + ".chk"
+					if err := object.Save(key, e.mesh); err != nil {
 						panic(err)
 					}
 				},
