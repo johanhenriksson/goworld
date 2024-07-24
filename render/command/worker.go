@@ -30,8 +30,8 @@ type worker struct {
 	queue  device.Queue
 	name   string
 	pool   Pool
-	batch  []Buffer
 	work   *ThreadWorker
+	buffer Buffer
 }
 
 func NewWorker(device device.T, name string, queue device.Queue) Worker {
@@ -40,13 +40,17 @@ func NewWorker(device device.T, name string, queue device.Queue) Worker {
 	name = fmt.Sprintf("%s:%d:%x", name, queue.FamilyIndex(), queue.Ptr().Handle())
 	device.SetDebugObjectName(driver.VulkanHandle(queue.Ptr().Handle()), core1_0.ObjectTypeQueue, name)
 
+	// allocate initial command buffer
+	buffer := pool.Allocate(core1_0.CommandBufferLevelPrimary)
+	buffer.Begin()
+
 	return &worker{
 		device: device,
 		name:   name,
 		queue:  queue,
 		pool:   pool,
-		batch:  make([]Buffer, 0, 128),
 		work:   NewThreadWorker(name, 100, true),
+		buffer: buffer,
 	}
 }
 
@@ -57,24 +61,11 @@ func (w *worker) Invoke(callback func()) {
 
 func (w *worker) Queue(batch CommandFn) {
 	w.work.Invoke(func() {
-		w.enqueue(batch)
+		batch(w.buffer)
 	})
 }
 
 func (w *worker) enqueue(batch CommandFn) {
-	// todo: dont make a command buffer for each call to Queue() !!
-	//       instead, allocate and record everything that we've batched just prior to submission
-
-	// allocate a new buffer
-	buf := w.pool.Allocate(core1_0.CommandBufferLevelPrimary)
-
-	// record commands
-	buf.Begin()
-	defer buf.End()
-	batch(buf)
-
-	// append to the next batch
-	w.batch = append(w.batch, buf)
 }
 
 type SubmitInfo struct {
@@ -99,7 +90,14 @@ func (w *worker) Submit(submit SubmitInfo) {
 
 func (w *worker) submit(submit SubmitInfo) {
 	debug.SetPanicOnFault(true)
-	buffers := util.Map(w.batch, func(buf Buffer) core1_0.CommandBuffer { return buf.Ptr() })
+
+	// end current buffer
+	w.buffer.End()
+	buffers := []core1_0.CommandBuffer{w.buffer.Ptr()}
+
+	// prepare next buffer
+	w.buffer = w.pool.Allocate(core1_0.CommandBufferLevelPrimary)
+	w.buffer.Begin()
 
 	// create a cleanup callback
 	// todo: reuse fences
@@ -114,9 +112,6 @@ func (w *worker) submit(submit SubmitInfo) {
 			WaitDstStageMask: util.Map(submit.Wait, func(w Wait) core1_0.PipelineStageFlags { return w.Mask }),
 		},
 	})
-
-	// clear batch slice but keep memory
-	w.batch = w.batch[:0]
 
 	// fire up a cleanup goroutine that will execute when the work fence is signalled
 	go func() {
