@@ -104,13 +104,13 @@ func (matcher *approxVec3) NegatedFailureMessage(actual interface{}) (message st
 func ApproxImage(expected any) *approxImage {
 	return &approxImage{
 		Expected:  expected,
-		Threshold: 10,
+		Threshold: 0.1, // 0.1% difference
 	}
 }
 
 type approxImage struct {
 	Expected  interface{}
-	Threshold int
+	Threshold float64
 }
 
 func (matcher *approxImage) Match(actualValue interface{}) (success bool, err error) {
@@ -151,6 +151,9 @@ func (matcher *approxImage) Match(actualValue interface{}) (success bool, err er
 		}
 	}
 
+	maxDelta := 255 * 4 * expected.Bounds().Max.X * expected.Bounds().Max.Y
+	actualDelta := 0
+
 	for y := 0; y < expected.Bounds().Max.Y; y++ {
 		for x := 0; x < expected.Bounds().Max.X; x++ {
 			expectedColor := expected.At(x, y)
@@ -159,13 +162,16 @@ func (matcher *approxImage) Match(actualValue interface{}) (success bool, err er
 			er, eg, eb, ea := expectedColor.RGBA()
 			ar, ag, ab, aa := actualColor.RGBA()
 			delta := diff(er, ar) + diff(eg, ag) + diff(eb, ab) + diff(ea, aa)
+			actualDelta += delta
 
-			if delta > matcher.Threshold {
-				writeFailureImage(expected, actual)
-				return false, fmt.Errorf("colors at (%d,%d) dont match (delta: %d), expected: %v but was %v",
-					x, y, delta, expectedColor, actualColor)
-			}
 		}
+	}
+
+	relativeDelta := float64(100*actualDelta) / float64(maxDelta)
+	if relativeDelta > matcher.Threshold {
+		writeFailureImage(expected, actual)
+		return false, fmt.Errorf("image delta of %.2f%% exceeds threshold of %.2f%%",
+			relativeDelta, matcher.Threshold)
 	}
 
 	return true, nil
