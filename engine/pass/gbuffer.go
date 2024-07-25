@@ -40,17 +40,17 @@ func NewGbuffer(device device.T, size vulkan.TargetSize) (GeometryBuffer, error)
 	positions := make([]image.T, frames)
 
 	for i := 0; i < frames; i++ {
-		diffuses[i], err = image.New2D(device, "diffuse", width, height, diffuseFmt, usage)
+		diffuses[i], err = image.New2D(device, "diffuse", width, height, diffuseFmt, false, usage)
 		if err != nil {
 			return nil, err
 		}
 
-		normals[i], err = image.New2D(device, "normal", width, height, normalFmt, usage|core1_0.ImageUsageTransferSrc)
+		normals[i], err = image.New2D(device, "normal", width, height, normalFmt, false, usage|core1_0.ImageUsageTransferSrc)
 		if err != nil {
 			return nil, err
 		}
 
-		positions[i], err = image.New2D(device, "position", width, height, positionFmt, usage|core1_0.ImageUsageTransferSrc)
+		positions[i], err = image.New2D(device, "position", width, height, positionFmt, false, usage|core1_0.ImageUsageTransferSrc)
 		if err != nil {
 			return nil, err
 		}

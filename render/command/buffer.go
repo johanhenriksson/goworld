@@ -35,7 +35,7 @@ type Buffer interface {
 	CmdSetViewport(x, y, w, h int) core1_0.Viewport
 	CmdSetScissor(x, y, w, h int) core1_0.Rect2D
 	CmdPushConstant(stages core1_0.ShaderStageFlags, offset int, value any)
-	CmdImageBarrier(srcMask, dstMask core1_0.PipelineStageFlags, image image.T, oldLayout, newLayout core1_0.ImageLayout, aspects core1_0.ImageAspectFlags)
+	CmdImageBarrier(srcMask, dstMask core1_0.PipelineStageFlags, image image.T, oldLayout, newLayout core1_0.ImageLayout, aspects core1_0.ImageAspectFlags, mipLevel, levels int)
 	CmdCopyBufferToImage(source buffer.T, dst image.T, layout core1_0.ImageLayout)
 	CmdCopyImageToBuffer(src image.T, srcLayout core1_0.ImageLayout, aspect core1_0.ImageAspectFlags, dst buffer.T)
 	CmdConvertImage(src image.T, srcLayout core1_0.ImageLayout, dst image.T, dstLayout core1_0.ImageLayout, aspects core1_0.ImageAspectFlags)
@@ -226,16 +226,17 @@ func (b *buf) CmdPushConstant(stages core1_0.ShaderStageFlags, offset int, value
 	b.ptr.CmdPushConstants(b.pipeline.Layout().Ptr(), stages, offset, valueBytes)
 }
 
-func (b *buf) CmdImageBarrier(srcMask, dstMask core1_0.PipelineStageFlags, image image.T, oldLayout, newLayout core1_0.ImageLayout, aspects core1_0.ImageAspectFlags) {
+func (b *buf) CmdImageBarrier(srcMask, dstMask core1_0.PipelineStageFlags, image image.T, oldLayout, newLayout core1_0.ImageLayout, aspects core1_0.ImageAspectFlags, mipLevel, levels int) {
 	b.ptr.CmdPipelineBarrier(core1_0.PipelineStageFlags(srcMask), core1_0.PipelineStageFlags(dstMask), core1_0.DependencyFlags(0), nil, nil, []core1_0.ImageMemoryBarrier{
 		{
 			OldLayout: oldLayout,
 			NewLayout: newLayout,
 			Image:     image.Ptr(),
 			SubresourceRange: core1_0.ImageSubresourceRange{
-				AspectMask: core1_0.ImageAspectFlags(aspects),
-				LayerCount: 1,
-				LevelCount: 1,
+				AspectMask:   core1_0.ImageAspectFlags(aspects),
+				BaseMipLevel: mipLevel,
+				LevelCount:   levels,
+				LayerCount:   1,
 			},
 			SrcAccessMask: core1_0.AccessMemoryRead | core1_0.AccessMemoryWrite,
 			DstAccessMask: core1_0.AccessMemoryRead | core1_0.AccessMemoryWrite,

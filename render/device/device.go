@@ -25,6 +25,7 @@ type T interface {
 	Physical() core1_0.PhysicalDevice
 	Allocate(key string, req core1_0.MemoryRequirements, flags core1_0.MemoryPropertyFlags) Memory
 	GetDepthFormat() core1_0.Format
+	GetFormatProperties(format core1_0.Format) *core1_0.FormatProperties
 	GetMemoryTypeIndex(uint32, core1_0.MemoryPropertyFlags) int
 	GetLimits() *core1_0.PhysicalDeviceLimits
 	WaitIdle()
@@ -124,7 +125,17 @@ func New(instance instance.T, physDevice core1_0.PhysicalDevice) (T, error) {
 
 	// resolve queue pointers
 	graphics.ptr = dev.GetQueue(graphics.FamilyIndex(), graphics.Index())
+	debug.SetDebugUtilsObjectName(dev, ext_debug_utils.DebugUtilsObjectNameInfo{
+		ObjectName:   "graphics",
+		ObjectHandle: driver.VulkanHandle(graphics.Ptr().Handle()),
+		ObjectType:   core1_0.ObjectTypeQueue,
+	})
 	transfer.ptr = dev.GetQueue(transfer.FamilyIndex(), transfer.Index())
+	debug.SetDebugUtilsObjectName(dev, ext_debug_utils.DebugUtilsObjectNameInfo{
+		ObjectName:   "transfer",
+		ObjectHandle: driver.VulkanHandle(transfer.Ptr().Handle()),
+		ObjectType:   core1_0.ObjectTypeQueue,
+	})
 
 	return &device{
 		ptr:      dev,
@@ -152,6 +163,10 @@ func (d *device) GraphicsQueue() Queue {
 
 func (d *device) TransferQueue() Queue {
 	return d.transferQueue
+}
+
+func (d *device) GetFormatProperties(format core1_0.Format) *core1_0.FormatProperties {
+	return d.physical.FormatProperties(format)
 }
 
 func (d *device) GetDepthFormat() core1_0.Format {

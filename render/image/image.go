@@ -1,6 +1,8 @@
 package image
 
 import (
+	"math"
+
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render/device"
 	"github.com/johanhenriksson/goworld/render/vkerror"
@@ -18,6 +20,7 @@ type T interface {
 	Width() int
 	Height() int
 	Format() core1_0.Format
+	MipLevels() int
 	Size() vec3.T
 }
 
@@ -44,7 +47,11 @@ type Args struct {
 	Memory  core1_0.MemoryPropertyFlags
 }
 
-func New2D(device device.T, key string, width, height int, format core1_0.Format, usage core1_0.ImageUsageFlags) (T, error) {
+func New2D(device device.T, key string, width, height int, format core1_0.Format, mipmaps bool, usage core1_0.ImageUsageFlags) (T, error) {
+	mipLevels := 1
+	if mipmaps {
+		mipLevels = MipLevels(width, height)
+	}
 	return New(device, Args{
 		Type:    core1_0.ImageType2D,
 		Key:     key,
@@ -52,7 +59,7 @@ func New2D(device device.T, key string, width, height int, format core1_0.Format
 		Height:  height,
 		Depth:   1,
 		Layers:  1,
-		Levels:  1,
+		Levels:  mipLevels,
 		Format:  format,
 		Usage:   usage,
 		Tiling:  core1_0.ImageTilingOptimal,
@@ -155,6 +162,7 @@ func (i *image) Key() string            { return i.Args.Key }
 func (i *image) Width() int             { return i.Args.Width }
 func (i *image) Height() int            { return i.Args.Height }
 func (i *image) Format() core1_0.Format { return i.Args.Format }
+func (i *image) MipLevels() int         { return i.Args.Levels }
 
 func (i *image) Size() vec3.T {
 	return vec3.T{
@@ -184,7 +192,7 @@ func (i *image) View(format core1_0.Format, mask core1_0.ImageAspectFlags) (View
 		SubresourceRange: core1_0.ImageSubresourceRange{
 			AspectMask:     mask,
 			BaseMipLevel:   0,
-			LevelCount:     1,
+			LevelCount:     i.Levels,
 			BaseArrayLayer: 0,
 			LayerCount:     1,
 		},
@@ -208,4 +216,8 @@ func (i *image) View(format core1_0.Format, mask core1_0.ImageAspectFlags) (View
 		image:  i,
 		format: format,
 	}, nil
+}
+
+func MipLevels(width, height int) int {
+	return 1 + int(math.Log2(float64(max(width, height))))
 }

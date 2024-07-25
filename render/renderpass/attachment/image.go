@@ -41,7 +41,7 @@ func (im *alloc) Next(
 		device,
 		key,
 		width, height,
-		im.format, im.usage,
+		im.format, false, im.usage,
 	)
 	return img, true, err
 }

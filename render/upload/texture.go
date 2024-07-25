@@ -45,7 +45,8 @@ func NewTextureSync(dev device.T, worker command.Worker, key string, img *osimag
 			tex.Image(),
 			core1_0.ImageLayoutUndefined,
 			core1_0.ImageLayoutTransferDstOptimal,
-			core1_0.ImageAspectColor)
+			core1_0.ImageAspectColor,
+			0, 1)
 		cmd.CmdCopyBufferToImage(stage, tex.Image(), core1_0.ImageLayoutTransferDstOptimal)
 		cmd.CmdImageBarrier(
 			core1_0.PipelineStageTransfer,
@@ -53,7 +54,8 @@ func NewTextureSync(dev device.T, worker command.Worker, key string, img *osimag
 			tex.Image(),
 			core1_0.ImageLayoutTransferDstOptimal,
 			core1_0.ImageLayoutShaderReadOnlyOptimal,
-			core1_0.ImageAspectColor)
+			core1_0.ImageAspectColor,
+			0, 1)
 	})
 	worker.Submit(command.SubmitInfo{
 		Marker:   "TextureUpload",
@@ -101,14 +103,14 @@ func DownloadImageAsync(dev device.T, worker command.Worker, src image.T) (<-cha
 			src,
 			core1_0.ImageLayoutUndefined,
 			core1_0.ImageLayoutTransferSrcOptimal,
-			core1_0.ImageAspectColor)
+			core1_0.ImageAspectColor, 0, 1)
 		cmd.CmdImageBarrier(
 			core1_0.PipelineStageTopOfPipe,
 			core1_0.PipelineStageTransfer,
 			dst,
 			core1_0.ImageLayoutUndefined,
 			core1_0.ImageLayoutTransferDstOptimal,
-			core1_0.ImageAspectColor)
+			core1_0.ImageAspectColor, 0, 1)
 		cmd.CmdCopyImage(src, core1_0.ImageLayoutTransferSrcOptimal, dst, core1_0.ImageLayoutTransferDstOptimal, core1_0.ImageAspectColor)
 		cmd.CmdImageBarrier(
 			core1_0.PipelineStageTransfer,
@@ -116,14 +118,14 @@ func DownloadImageAsync(dev device.T, worker command.Worker, src image.T) (<-cha
 			src,
 			core1_0.ImageLayoutTransferSrcOptimal,
 			core1_0.ImageLayoutColorAttachmentOptimal,
-			core1_0.ImageAspectColor)
+			core1_0.ImageAspectColor, 0, 1)
 		cmd.CmdImageBarrier(
 			core1_0.PipelineStageTopOfPipe,
 			core1_0.PipelineStageTransfer,
 			dst,
 			core1_0.ImageLayoutTransferDstOptimal,
 			core1_0.ImageLayoutGeneral,
-			core1_0.ImageAspectColor)
+			core1_0.ImageAspectColor, 0, 1)
 	})
 
 	done := make(chan *osimage.RGBA)

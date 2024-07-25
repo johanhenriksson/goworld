@@ -19,11 +19,12 @@ type T interface {
 }
 
 type Args struct {
-	Filter Filter
-	Wrap   Wrap
-	Aspect core1_0.ImageAspectFlags
-	Usage  core1_0.ImageUsageFlags
-	Border core1_0.BorderColor
+	Filter  Filter
+	Wrap    Wrap
+	Aspect  core1_0.ImageAspectFlags
+	Usage   core1_0.ImageUsageFlags
+	Border  core1_0.BorderColor
+	Mipmaps bool
 }
 
 type vktexture struct {
@@ -39,9 +40,9 @@ func New(device device.T, key string, width, height int, format core1_0.Format, 
 	if key == "" {
 		panic("texture must have a key")
 	}
-	args.Usage |= core1_0.ImageUsageFlags(core1_0.ImageUsageSampled | core1_0.ImageUsageTransferDst)
+	args.Usage |= core1_0.ImageUsageFlags(core1_0.ImageUsageSampled | core1_0.ImageUsageTransferSrc | core1_0.ImageUsageTransferDst)
 
-	img, err := image.New2D(device, key, width, height, format, args.Usage)
+	img, err := image.New2D(device, key, width, height, format, args.Mipmaps, args.Usage)
 	if err != nil {
 		return nil, err
 	}
@@ -93,7 +94,10 @@ func FromView(device device.T, key string, view image.View, args Args) (T, error
 		AddressModeW: core1_0.SamplerAddressMode(args.Wrap),
 		BorderColor:  args.Border,
 
-		MipmapMode: core1_0.SamplerMipmapModeLinear,
+		MipmapMode: core1_0.SamplerMipmapModeNearest,
+		MinLod:     0,
+		MaxLod:     float32(view.Image().MipLevels()),
+		MipLodBias: 0,
 	}
 
 	ptr, result, err := device.Ptr().CreateSampler(nil, info)

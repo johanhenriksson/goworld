@@ -95,16 +95,20 @@ func Deserialize(decoder object.Decoder) (object.Component, error) {
 		UVScale:  tileData.UVScale,
 		Textures: []texture.Ref{
 			texture.PathArgsRef("textures/terrain/grass1.png", texture.Args{
-				Filter: texture.FilterNearest,
+				Filter:  texture.FilterNearest,
+				Mipmaps: true,
 			}),
 			texture.PathArgsRef("textures/terrain/grass2.png", texture.Args{
-				Filter: texture.FilterNearest,
+				Filter:  texture.FilterNearest,
+				Mipmaps: true,
 			}),
 			texture.PathArgsRef("textures/terrain/path1.png", texture.Args{
-				Filter: texture.FilterNearest,
+				Filter:  texture.FilterNearest,
+				Mipmaps: true,
 			}),
 			texture.PathArgsRef("textures/terrain/sand1.png", texture.Args{
-				Filter: texture.FilterNearest,
+				Filter:  texture.FilterNearest,
+				Mipmaps: true,
 			}),
 		},
 		points: tileData.Points,

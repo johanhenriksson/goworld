@@ -48,7 +48,7 @@ func PathArgsRef(path string, args Args) Ref {
 	}
 }
 
-func (r *pathRef) Key() string  { return r.Path }
+func (r *pathRef) Key() string  { return r.Path } // todo: this must include arguments somehow
 func (r *pathRef) Version() int { return 1 }
 
 func (r *pathRef) ImageData() *image.Data {

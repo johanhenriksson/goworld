@@ -44,13 +44,9 @@ func New(appName string, deviceIndex int) App {
 		panic(err)
 	}
 
-	// general purpose worker
-	worker := command.NewWorker(device, "all", device.GraphicsQueue())
-	transfer := worker
-	graphics := worker
-
-	// transfer := command.NewWorker(device, "xfer", device.TransferQueue())
-	// graphics := command.NewWorker(device, "graphics", device.GraphicsQueue())
+	// workers
+	transfer := command.NewWorker(device, "xfer", device.TransferQueue())
+	graphics := command.NewWorker(device, "graphics", device.GraphicsQueue())
 
 	// init caches
 	meshes := cache.NewMeshCache(device, transfer)
@@ -109,7 +105,6 @@ func (b *backend) Destroy() {
 	// destroy workers
 	b.transfer.Destroy()
 	b.graphics.Destroy()
-	b.graphics = nil
 
 	if b.device != nil {
 		b.device.Destroy()

@@ -212,7 +212,8 @@ func DefaultWorldTile(key string, terrain *Map, tileData *Tile) object.Object {
 				Attach(sprite.New(sprite.Args{
 					Size: vec2.New(size, size),
 					Texture: texture.PathArgsRef(s.Texture, texture.Args{
-						Filter: texture.FilterNearest,
+						Filter:  texture.FilterNearest,
+						Mipmaps: true,
 					}),
 				})).
 				Position(vec3.New(

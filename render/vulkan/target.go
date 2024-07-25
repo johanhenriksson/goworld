@@ -65,7 +65,7 @@ func NewRenderTarget(device device.T, key string, format core1_0.Format, usage c
 	var err error
 	outputs := make([]image.T, size.Frames)
 	for i := 0; i < size.Frames; i++ {
-		outputs[i], err = image.New2D(device, fmt.Sprintf("%s:%d", key, i), size.Width, size.Height, format, usage)
+		outputs[i], err = image.New2D(device, fmt.Sprintf("%s:%d", key, i), size.Width, size.Height, format, false, usage)
 		if err != nil {
 			return nil, err
 		}
