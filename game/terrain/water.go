@@ -157,7 +157,9 @@ func NewWaterTile(size float32) *WaterTile {
 			Transparent:  true,
 		},
 	})
-	mesh.SetTexture(texture.Diffuse, texture.PathArgsRef("textures/terrain/water1.png", texture.Args{}))
+	mesh.SetTexture(texture.Diffuse, texture.PathArgsRef("textures/terrain/water1.png", texture.Args{
+		Mipmaps: true,
+	}))
 
 	return object.New("Water", &WaterTile{
 		Mesh: mesh,

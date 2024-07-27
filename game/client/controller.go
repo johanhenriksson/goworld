@@ -161,8 +161,8 @@ func (p *LocalController) updateMovement(dt float32) {
 			p.rotating = rotating
 			p.lastPos = pos
 			p.lastRot = rotY
-			p.mgr.Client.SendMove(p.Target.EntityID(), pos, rotY, stopped, float32(p.tickRate.Seconds()))
-			p.lastTick = time.Now().Add(p.tickRate - sinceUpdate)
+			p.mgr.Client.SendMove(p.Target.EntityID(), pos, rotY, stopped, float32(sinceUpdate.Seconds()))
+			p.lastTick = time.Now()
 		}
 	}
 }

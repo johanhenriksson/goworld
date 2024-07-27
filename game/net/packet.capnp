@@ -51,6 +51,7 @@ struct EntitySpawnPacket {
     entity @0 :UInt64;
     position @1 :Vec3;
     rotation @2 :Float32;
+    name @3 :Text;
 }
 
 struct EntityObservePacket {

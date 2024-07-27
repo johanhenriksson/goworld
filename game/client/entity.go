@@ -24,8 +24,9 @@ type Entity struct {
 	Height    float32
 	Health    float32
 
-	id  server.Identity
-	cam *camera.Camera
+	id   server.Identity
+	name string
+	cam  *camera.Camera
 
 	moveFrom   vec3.T
 	moveTo     vec3.T
@@ -40,7 +41,7 @@ type Entity struct {
 	stopAfter  bool
 }
 
-func NewEntity(id server.Identity, pos vec3.T, rot float32) *Entity {
+func NewEntity(id server.Identity, pos vec3.T, rot float32, name string) *Entity {
 	height := float32(2)
 	spriteIndex := int(id % 365)
 	sprite := NewCharacterSprite(spriteIndex, height)
@@ -50,6 +51,7 @@ func NewEntity(id server.Identity, pos vec3.T, rot float32) *Entity {
 		Height: height,
 
 		id:         id,
+		name:       name,
 		animating:  false,
 		moveFrom:   pos,
 		rotFrom:    rot,
@@ -67,6 +69,10 @@ func NewEntity(id server.Identity, pos vec3.T, rot float32) *Entity {
 
 func (e *Entity) EntityID() server.Identity {
 	return e.id
+}
+
+func (e *Entity) EntityName() string {
+	return e.name
 }
 
 func (e *Entity) Move(ev EntityMoveEvent) {
@@ -142,7 +148,7 @@ func (e *Entity) renderNameplate() node.T {
 				},
 				Children: []node.T{
 					label.New("name", label.Props{
-						Text: fmt.Sprintf("%x", e.EntityID()),
+						Text: e.EntityName(),
 						Style: label.Style{
 							Color: color.White,
 						},

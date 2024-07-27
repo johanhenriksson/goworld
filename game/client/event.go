@@ -60,6 +60,7 @@ type EntitySpawnEvent struct {
 	EntityID server.Identity
 	Position vec3.T
 	Rotation float32
+	Name     string
 }
 
 func (e EntitySpawnEvent) Apply(c *Manager) error {
@@ -68,7 +69,7 @@ func (e EntitySpawnEvent) Apply(c *Manager) error {
 	}
 
 	// entity object
-	entity := object.Builder(NewEntity(e.EntityID, e.Position, e.Rotation)).
+	entity := object.Builder(NewEntity(e.EntityID, e.Position, e.Rotation, e.Name)).
 		Position(e.Position).
 		Rotation(quat.Euler(0, e.Rotation, 0)).
 		Parent(c).

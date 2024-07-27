@@ -256,6 +256,8 @@ func (c *Client) SendSpawn(entity Entity) error {
 
 		spawn.SetRotation(entity.Rotation())
 
+		spawn.SetName(entity.Name())
+
 		return wrap.SetEntitySpawn(spawn)
 	})
 }
