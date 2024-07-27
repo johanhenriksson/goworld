@@ -2,7 +2,7 @@
 #extension GL_ARB_shading_language_420pack : enable
 #extension GL_EXT_nonuniform_qualifier : enable
 
-#define MAX_TEXTURES 4
+#define MAX_TEXTURES 16
 
 const float gamma = 2.2;
 

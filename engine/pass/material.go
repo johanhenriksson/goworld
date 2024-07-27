@@ -39,14 +39,17 @@ type Material interface {
 	End()
 }
 
-func AssignMeshTextures(samplers cache.SamplerCache, msh mesh.Mesh, slots []texture.Slot) [4]uint32 {
-	textureIds := [4]uint32{}
+func AssignMeshTextures(samplers cache.SamplerCache, msh mesh.Mesh, slots []texture.Slot) uniform.TextureIds {
+	if len(slots) > uniform.MaxTextures {
+		panic("too many textures")
+	}
+	textureIds := uniform.TextureIds{}
 	for id, slot := range slots {
 		ref := msh.Texture(slot)
 		if ref != nil {
 			handle, exists := samplers.TryFetch(ref)
 			if exists {
-				textureIds[id] = uint32(handle.ID)
+				textureIds[id] = uniform.TextureId(handle.ID)
 			}
 		}
 	}
