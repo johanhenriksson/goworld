@@ -5,7 +5,7 @@
 #include "lib/forward_vertex.glsl"
 
 CAMERA(0, camera)
-STORAGE_BUFFER(1, Object, objects)
+OBJECT(1, object)
 
 // Attributes
 IN(0, vec3, position)
@@ -15,9 +15,8 @@ IN(2, vec2, texcoord)
 void main() 
 {
 	out_object = gl_InstanceIndex;
-	mat4 m = objects.item[out_object].model;
 
-	vec3 center = (m * vec4(0, 0, 0, 1.0)).xyz;
+	vec3 center = (object.model * vec4(0, 0, 0, 1.0)).xyz;
 	vec3 lookDirection = normalize(center - camera.Eye.xyz);
 	vec3 up = vec3(0, 1, 0);
 

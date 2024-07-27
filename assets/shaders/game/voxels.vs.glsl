@@ -5,7 +5,7 @@
 #include "lib/deferred_vertex.glsl"
 
 CAMERA(0, camera)
-STORAGE_BUFFER(1, Object, objects)
+OBJECT(1, object)
 
 // Attributes
 IN(0, vec3, position)
@@ -41,7 +41,7 @@ const uint texdata_texture_mask = 0xE0;
 void main() 
 {
 	out_object = gl_InstanceIndex;
-	mat4 mv = camera.View * objects.item[out_object].model;
+	mat4 mv = camera.View * object.model;
 
 	// gbuffer diffuse
 	out_color = vec4(in_color, 1 - in_occlusion);

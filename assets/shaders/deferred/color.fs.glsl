@@ -4,7 +4,7 @@
 #include "lib/common.glsl"
 #include "lib/deferred_fragment.glsl"
 
-STORAGE_BUFFER(1, Object, objects)
+OBJECT(1, object)
 
 void main() 
 {

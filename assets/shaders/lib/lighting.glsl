@@ -29,7 +29,7 @@ struct LightSettings {
 };
 
 #define LIGHT_PADDING 75
-#define LIGHT_BUFFER(idx,name) layout (binding = idx) readonly buffer LightBuffer { LightSettings settings; float[LIGHT_PADDING] _padding; Light item[]; } name;
+#define LIGHTS(idx,name) layout (binding = idx) readonly buffer LightBuffer { LightSettings settings; float[LIGHT_PADDING] _padding; Light item[]; } name;
 
 const float SHADOW_POWER = 60;
 

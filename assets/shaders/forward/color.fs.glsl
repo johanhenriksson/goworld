@@ -6,8 +6,7 @@
 #include "lib/forward_fragment.glsl"
 
 CAMERA(0, camera)
-STORAGE_BUFFER(1, Object, objects)
-LIGHT_BUFFER(2, lights)
+LIGHTS(2, lights)
 SAMPLER_ARRAY(3, textures)
 
 void main() 

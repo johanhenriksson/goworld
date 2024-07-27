@@ -5,7 +5,7 @@
 #include "lib/deferred_vertex.glsl"
 
 CAMERA(0, camera)
-STORAGE_BUFFER(1, Object, objects)
+OBJECT(1, object)
 
 // Attributes
 IN(0, vec3, position)
@@ -20,7 +20,7 @@ OUT(5, flat uvec4, indices)
 void main() 
 {
 	out_object = gl_InstanceIndex;
-	mat4 mv = camera.View * objects.item[out_object].model;
+	mat4 mv = camera.View * object.model;
 
 	// textures
 	out_color.xy = in_texcoord;

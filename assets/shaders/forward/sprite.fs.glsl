@@ -6,14 +6,14 @@
 #include "lib/forward_fragment.glsl"
 
 CAMERA(0, camera)
-STORAGE_BUFFER(1, Object, objects)
-LIGHT_BUFFER(2, lights)
+OBJECT(1, object)
+LIGHTS(2, lights)
 SAMPLER_ARRAY(3, textures)
 
 void main() 
 {
 	vec2 texcoord0 = in_color.xy;
-	uint texture0 = objects.item[in_object].textures[0];
+	uint texture0 = object.textures[0];
 	vec4 albedo = texture(textures[texture0], texcoord0);
 
 	if (albedo.a < 0.5) { 

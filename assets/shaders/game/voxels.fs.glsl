@@ -4,7 +4,7 @@
 #include "lib/common.glsl"
 #include "lib/deferred_fragment.glsl"
 
-STORAGE_BUFFER(1, Object, objects)
+OBJECT(1, object)
 SAMPLER_ARRAY(3, textures)
 
 IN(4, vec2, texcoord0)
@@ -14,7 +14,7 @@ const int tile_count = 8;
 
 void main() 
 {
-	uint texture0 = objects.item[in_object].textures[0];
+	uint texture0 = object.textures[0];
 
 	// unpack tile coordinates
 	vec2 t = vec2((in_texture_id + in_texcoord0.x) / tile_count, in_texcoord0.y);

@@ -5,7 +5,7 @@
 #include "lib/lighting.glsl"
 
 CAMERA(0, camera)
-LIGHT_BUFFER(1, lights)
+LIGHTS(1, lights)
 SAMPLER(2, diffuse)
 SAMPLER(3, normal)
 SAMPLER(4, position)

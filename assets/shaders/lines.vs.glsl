@@ -5,6 +5,7 @@
 
 CAMERA(0, camera)
 STORAGE_BUFFER(1, Object, objects)
+Object object = objects.item[gl_InstanceIndex];
 
 IN(0, vec3, position)
 IN(1, vec4, color)
@@ -19,6 +20,6 @@ void main()
 {
     out_color = in_color.rgb;
 
-	mat4 mvp = camera.ViewProj * objects.item[gl_InstanceIndex].model;
+	mat4 mvp = camera.ViewProj * object.model;
 	gl_Position = mvp * vec4(in_position, 1);
 }

@@ -4,7 +4,7 @@
 #include "lib/common.glsl"
 #include "lib/deferred_fragment.glsl"
 
-STORAGE_BUFFER(1, Object, objects)
+OBJECT(1, object)
 SAMPLER_ARRAY(3, textures)
 
 IN(4, vec4, weights)
@@ -17,7 +17,7 @@ vec4 sample_texture(uint index, float weight) {
 	if (weight <= 0) {
 		return vec4(0);
 	}
-	uint texture_id = objects.item[in_object].textures[index];
+	uint texture_id = object.textures[index];
 	vec4 color = texture(textures[texture_id], texcoord);
 	return weight * vec4(color.rgb, 1);
 }

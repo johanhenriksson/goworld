@@ -6,9 +6,6 @@
 #include "lib/forward_fragment.glsl"
 
 CAMERA(0, camera)
-STORAGE_BUFFER(1, Object, objects)
-LIGHT_BUFFER(2, lights)
-SAMPLER_ARRAY(3, textures)
 
 float arc(vec3 a, vec3 b, float threshold) {
 	return max(0, dot(a, b) - threshold) / (1 - threshold);

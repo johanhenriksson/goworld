@@ -5,6 +5,7 @@
 
 CAMERA(0, camera)
 STORAGE_BUFFER(1, Object, objects)
+Object object = objects.item[gl_InstanceIndex];
 
 // Attributes
 layout (location = 0) in vec3 position;
@@ -21,7 +22,7 @@ out gl_PerVertex
 
 void main() 
 {
-	mat4 m = objects.item[gl_InstanceIndex].model;
+	mat4 m = object.model;
 	mat4 mv = camera.View * m;
 
 	// gbuffer view position
