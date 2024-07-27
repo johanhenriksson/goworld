@@ -12,8 +12,10 @@ IN(0, vec3, position)
 IN(1, vec3, normal)
 IN(2, vec2, texcoord)
 IN(3, vec4, weights)
+IN(4, uvec4, indices)
 
 OUT(4, vec4, weights)
+OUT(5, flat uvec4, indices)
 
 void main() 
 {
@@ -25,6 +27,9 @@ void main()
 
 	// pass texture weights
 	out_weights = in_weights;
+
+	// pass texture indices
+	out_indices = in_indices;
 
 	// gbuffer position
 	out_position = (mv * vec4(in_position, 1)).xyz;

@@ -2,11 +2,13 @@
 #extension GL_ARB_shading_language_420pack : enable
 #extension GL_EXT_nonuniform_qualifier : enable
 
+#define MAX_TEXTURES 4
+
 const float gamma = 2.2;
 
 struct Object {
 	mat4 model;
-	uint textures[4];
+	uint textures[MAX_TEXTURES];
 };
 
 #define SAMPLER_ARRAY(idx,name) \

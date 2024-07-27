@@ -26,7 +26,11 @@ func NewTile(position ivec2.T, size int) *Tile {
 	for z := 0; z < vertices; z++ {
 		points[z] = make([]Point, vertices)
 		for x := 0; x < vertices; x++ {
-			points[z][x].Weights[0] = 255
+			point := Point{
+				Weights:  [4]float32{255, 0, 0, 0},
+				Textures: [4]uint8{0, 1, 2, 3},
+			}
+			points[z][x] = point
 		}
 	}
 

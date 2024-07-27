@@ -228,6 +228,7 @@ func FlatTileGenerator(tile *Tile, levelOfDetail int) mesh.Generator[Vertex, uin
 				P: vec3.New(float32(x), root.Height, float32(z)),
 				T: vec2.New(float32(x)/float32(tile.Size), 1-float32(z)/float32(tile.Size)).Scaled(tile.UVScale),
 				W: vec4.New(root.Weights[0], root.Weights[1], root.Weights[2], root.Weights[3]),
+				I: root.Textures,
 			}
 		}
 
