@@ -65,6 +65,28 @@ func NewOutputPass(app vulkan.App, target vulkan.Target, source vulkan.Target) *
 				ColorAttachments: []attachment.Name{OutputAttachment},
 			},
 		},
+		Dependencies: []renderpass.SubpassDependency{
+			{
+				// For color attachment operations
+				Src:           renderpass.ExternalSubpass,
+				Dst:           MainSubpass,
+				SrcStageMask:  core1_0.PipelineStageColorAttachmentOutput,
+				DstStageMask:  core1_0.PipelineStageColorAttachmentOutput,
+				SrcAccessMask: core1_0.AccessColorAttachmentWrite,
+				DstAccessMask: core1_0.AccessColorAttachmentWrite | core1_0.AccessColorAttachmentRead,
+				Flags:         core1_0.DependencyByRegion,
+			},
+			{
+				// For fragment shader reads
+				Src:           renderpass.ExternalSubpass,
+				Dst:           MainSubpass,
+				SrcStageMask:  core1_0.PipelineStageColorAttachmentOutput,
+				DstStageMask:  core1_0.PipelineStageFragmentShader,
+				SrcAccessMask: core1_0.AccessColorAttachmentWrite,
+				DstAccessMask: core1_0.AccessShaderRead,
+				Flags:         core1_0.DependencyByRegion,
+			},
+		},
 	})
 
 	p.material = material.New(

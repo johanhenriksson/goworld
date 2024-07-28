@@ -38,11 +38,12 @@ func NewForwardPass(
 		Name: "Forward",
 		ColorAttachments: []attachment.Color{
 			{
-				Name:        OutputAttachment,
-				LoadOp:      core1_0.AttachmentLoadOpLoad,
-				StoreOp:     core1_0.AttachmentStoreOpStore,
-				FinalLayout: core1_0.ImageLayoutShaderReadOnlyOptimal,
-				Blend:       attachment.BlendMultiply,
+				Name:          OutputAttachment,
+				LoadOp:        core1_0.AttachmentLoadOpLoad,
+				StoreOp:       core1_0.AttachmentStoreOpStore,
+				InitialLayout: core1_0.ImageLayoutShaderReadOnlyOptimal,
+				FinalLayout:   core1_0.ImageLayoutShaderReadOnlyOptimal,
+				Blend:         attachment.BlendMultiply,
 
 				Image: attachment.FromImageArray(target.Surfaces()),
 			},
@@ -51,6 +52,7 @@ func NewForwardPass(
 			LoadOp:        core1_0.AttachmentLoadOpLoad,
 			StencilLoadOp: core1_0.AttachmentLoadOpLoad,
 			StoreOp:       core1_0.AttachmentStoreOpStore,
+			InitialLayout: core1_0.ImageLayoutShaderReadOnlyOptimal,
 			FinalLayout:   core1_0.ImageLayoutShaderReadOnlyOptimal,
 
 			Image: attachment.FromImageArray(depth.Surfaces()),

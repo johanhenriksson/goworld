@@ -85,6 +85,29 @@ func NewGuiPass(app vulkan.App, target vulkan.Target) *GuiPass {
 				ColorAttachments: []attachment.Name{OutputAttachment},
 			},
 		},
+		Dependencies: []renderpass.SubpassDependency{
+			// fragment shader can not read the input textures until the previous pass has written to the color attachment
+			{
+				// For color attachment (addressing READ_AFTER_WRITE hazard)
+				Src:           renderpass.ExternalSubpass,
+				Dst:           MainSubpass,
+				SrcStageMask:  core1_0.PipelineStageColorAttachmentOutput,
+				DstStageMask:  core1_0.PipelineStageColorAttachmentOutput,
+				SrcAccessMask: core1_0.AccessColorAttachmentWrite,
+				DstAccessMask: core1_0.AccessColorAttachmentRead,
+				Flags:         core1_0.DependencyByRegion,
+			},
+			{
+				// For depth attachment (addressing WRITE_AFTER_WRITE hazard)
+				Src:           renderpass.ExternalSubpass,
+				Dst:           MainSubpass,
+				SrcStageMask:  core1_0.PipelineStageLateFragmentTests,
+				DstStageMask:  core1_0.PipelineStageEarlyFragmentTests,
+				SrcAccessMask: core1_0.AccessDepthStencilAttachmentWrite,
+				DstAccessMask: core1_0.AccessDepthStencilAttachmentWrite | core1_0.AccessDepthStencilAttachmentRead,
+				Flags:         core1_0.DependencyByRegion,
+			},
+		},
 	})
 
 	frames := target.Frames()
