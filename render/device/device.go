@@ -30,8 +30,7 @@ type T interface {
 	GetLimits() *core1_0.PhysicalDeviceLimits
 	WaitIdle()
 
-	GraphicsQueue() Queue
-	TransferQueue() Queue
+	Queue() Queue
 
 	SetDebugObjectName(ptr driver.VulkanHandle, objType core1_0.ObjectType, name string)
 }
@@ -42,9 +41,8 @@ type device struct {
 	limits   *core1_0.PhysicalDeviceLimits
 	debug    ext_debug_utils.Extension
 
-	memtypes      map[memtype]int
-	graphicsQueue Queue
-	transferQueue Queue
+	memtypes map[memtype]int
+	queue    Queue
 }
 
 func New(instance instance.T, physDevice core1_0.PhysicalDevice) (T, error) {
@@ -76,10 +74,8 @@ func New(instance instance.T, physDevice core1_0.PhysicalDevice) (T, error) {
 		return lo.MinBy(options, func(a Queue, b Queue) bool { return int(a.flags) < int(b.flags) })
 	}
 
-	graphics := mostSpecificQueue(core1_0.QueueGraphics)
-	log.Println("Graphics queue:", graphics)
-	transfer := mostSpecificQueue(core1_0.QueueTransfer, graphics)
-	log.Println("Transfer queue:", transfer)
+	queue := mostSpecificQueue(core1_0.QueueGraphics | core1_0.QueueTransfer)
+	log.Println("worker queue:", queue)
 
 	indexingFeatures := ext_descriptor_indexing.PhysicalDeviceDescriptorIndexingFeatures{
 		ShaderSampledImageArrayNonUniformIndexing:          true,
@@ -97,11 +93,7 @@ func New(instance instance.T, physDevice core1_0.PhysicalDevice) (T, error) {
 		EnabledExtensionNames: deviceExtensions,
 		QueueCreateInfos: []core1_0.DeviceQueueCreateInfo{
 			{
-				QueueFamilyIndex: graphics.FamilyIndex(),
-				QueuePriorities:  []float32{1},
-			},
-			{
-				QueueFamilyIndex: transfer.FamilyIndex(),
+				QueueFamilyIndex: queue.FamilyIndex(),
 				QueuePriorities:  []float32{1},
 			},
 		},
@@ -124,16 +116,10 @@ func New(instance instance.T, physDevice core1_0.PhysicalDevice) (T, error) {
 	debug := ext_debug_utils.CreateExtensionFromInstance(instance.Ptr())
 
 	// resolve queue pointers
-	graphics.ptr = dev.GetQueue(graphics.FamilyIndex(), graphics.Index())
+	queue.ptr = dev.GetQueue(queue.FamilyIndex(), queue.Index())
 	debug.SetDebugUtilsObjectName(dev, ext_debug_utils.DebugUtilsObjectNameInfo{
 		ObjectName:   "graphics",
-		ObjectHandle: driver.VulkanHandle(graphics.Ptr().Handle()),
-		ObjectType:   core1_0.ObjectTypeQueue,
-	})
-	transfer.ptr = dev.GetQueue(transfer.FamilyIndex(), transfer.Index())
-	debug.SetDebugUtilsObjectName(dev, ext_debug_utils.DebugUtilsObjectNameInfo{
-		ObjectName:   "transfer",
-		ObjectHandle: driver.VulkanHandle(transfer.Ptr().Handle()),
+		ObjectHandle: driver.VulkanHandle(queue.Ptr().Handle()),
 		ObjectType:   core1_0.ObjectTypeQueue,
 	})
 
@@ -143,9 +129,7 @@ func New(instance instance.T, physDevice core1_0.PhysicalDevice) (T, error) {
 		physical: physDevice,
 		limits:   properties.Limits,
 		memtypes: make(map[memtype]int),
-
-		graphicsQueue: graphics,
-		transferQueue: transfer,
+		queue:    queue,
 	}, nil
 }
 
@@ -157,12 +141,8 @@ func (d *device) Physical() core1_0.PhysicalDevice {
 	return d.physical
 }
 
-func (d *device) GraphicsQueue() Queue {
-	return d.graphicsQueue
-}
-
-func (d *device) TransferQueue() Queue {
-	return d.transferQueue
+func (d *device) Queue() Queue {
+	return d.queue
 }
 
 func (d *device) GetFormatProperties(format core1_0.Format) *core1_0.FormatProperties {

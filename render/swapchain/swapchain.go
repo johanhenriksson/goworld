@@ -185,7 +185,7 @@ func (s *swapchain) Present(ctx *Context) {
 	if ctx.RenderComplete == nil {
 		panic("context has no RenderComplete semaphore")
 	}
-	queue := s.device.GraphicsQueue()
+	queue := s.device.Queue()
 	s.ext.QueuePresent(queue.Ptr(), khr_swapchain.PresentInfo{
 		WaitSemaphores: []core1_0.Semaphore{ctx.RenderComplete.Ptr()},
 		Swapchains:     []khr_swapchain.Swapchain{s.Ptr()},

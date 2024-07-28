@@ -95,8 +95,7 @@ func New(device device.T, args Args) (T, error) {
 		Usage:       core1_0.ImageUsageFlags(args.Usage),
 		SharingMode: args.Sharing,
 		QueueFamilyIndices: []uint32{
-			uint32(device.GraphicsQueue().FamilyIndex()),
-			uint32(device.TransferQueue().FamilyIndex()),
+			uint32(device.Queue().FamilyIndex()),
 		},
 		InitialLayout: args.Layout,
 	}

@@ -112,7 +112,7 @@ func (g *graph) Draw(scene object.Object, time, delta float32) {
 	}
 
 	// select a suitable worker for this frame
-	worker := g.app.Worker(args.Frame)
+	worker := g.app.Worker()
 
 	for len(g.todo) > 0 {
 		progress := false
@@ -138,7 +138,7 @@ func (g *graph) Screengrab() *image.RGBA {
 	idx := 0
 	g.app.Device().WaitIdle()
 	source := g.target.Surfaces()[idx]
-	ss, err := upload.DownloadImage(g.app.Device(), g.app.Transferer(), source)
+	ss, err := upload.DownloadImage(g.app.Device(), g.app.Worker(), source)
 	if err != nil {
 		panic(err)
 	}

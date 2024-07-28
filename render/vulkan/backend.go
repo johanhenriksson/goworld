@@ -13,8 +13,7 @@ type App interface {
 	Device() device.T
 	Destroy()
 
-	Worker(int) command.Worker
-	Transferer() command.Worker
+	Worker() command.Worker
 	Flush()
 
 	Pool() descriptor.Pool
@@ -28,9 +27,7 @@ type backend struct {
 	instance instance.T
 	device   device.T
 
-	transfer command.Worker
-	graphics command.Worker
-
+	worker   command.Worker
 	pool     descriptor.Pool
 	meshes   cache.MeshCache
 	textures cache.TextureCache
@@ -45,12 +42,11 @@ func New(appName string, deviceIndex int) App {
 	}
 
 	// workers
-	transfer := command.NewWorker(device, "xfer", device.TransferQueue())
-	graphics := command.NewWorker(device, "graphics", device.GraphicsQueue())
+	worker := command.NewWorker(device, "worker", device.Queue())
 
 	// init caches
-	meshes := cache.NewMeshCache(device, transfer)
-	textures := cache.NewTextureCache(device, transfer)
+	meshes := cache.NewMeshCache(device, worker)
+	textures := cache.NewTextureCache(device, worker)
 	shaders := cache.NewShaderCache(device)
 
 	pool := descriptor.NewPool(device, 1000, DefaultDescriptorPools)
@@ -60,8 +56,7 @@ func New(appName string, deviceIndex int) App {
 
 		device:   device,
 		instance: instance,
-		transfer: transfer,
-		graphics: graphics,
+		worker:   worker,
 		meshes:   meshes,
 		textures: textures,
 		shaders:  shaders,
@@ -77,18 +72,13 @@ func (b *backend) Meshes() cache.MeshCache      { return b.meshes }
 func (b *backend) Textures() cache.TextureCache { return b.textures }
 func (b *backend) Shaders() cache.ShaderCache   { return b.shaders }
 
-func (b *backend) Transferer() command.Worker {
-	return b.transfer
-}
-
-func (b *backend) Worker(frame int) command.Worker {
-	return b.graphics
+func (b *backend) Worker() command.Worker {
+	return b.worker
 }
 
 func (b *backend) Flush() {
 	// wait for all workers
-	b.transfer.Flush()
-	b.graphics.Flush()
+	b.worker.Flush()
 	b.device.WaitIdle()
 }
 
@@ -103,8 +93,7 @@ func (b *backend) Destroy() {
 	b.shaders.Destroy()
 
 	// destroy workers
-	b.transfer.Destroy()
-	b.graphics.Destroy()
+	b.worker.Destroy()
 
 	if b.device != nil {
 		b.device.Destroy()

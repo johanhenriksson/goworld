@@ -50,8 +50,7 @@ func New(device device.T, args Args) T {
 		Usage:       args.Usage,
 		SharingMode: core1_0.SharingModeExclusive,
 		QueueFamilyIndices: []int{
-			device.GraphicsQueue().FamilyIndex(),
-			device.TransferQueue().FamilyIndex(),
+			device.Queue().FamilyIndex(),
 		},
 	})
 	if err != nil {

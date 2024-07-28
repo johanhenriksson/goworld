@@ -91,7 +91,7 @@ func (n *preNode) Prepare(scene object.Object, time, delta float32) (*render.Arg
 		}
 	}
 
-	worker := n.app.Worker(context.Index)
+	worker := n.app.Worker()
 	worker.Submit(command.SubmitInfo{
 		Marker: n.Name(),
 		Wait:   waits,

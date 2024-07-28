@@ -95,6 +95,9 @@ func (w *worker) submit(submit SubmitInfo) {
 	w.buffer.End()
 	buffers := []core1_0.CommandBuffer{w.buffer.Ptr()}
 
+	// set debug name
+	w.device.SetDebugObjectName(driver.VulkanHandle(w.buffer.Ptr().Handle()), core1_0.ObjectTypeCommandBuffer, submit.Marker)
+
 	// prepare next buffer
 	w.buffer = w.pool.Allocate(core1_0.CommandBufferLevelPrimary)
 	w.buffer.Begin()
@@ -114,6 +117,10 @@ func (w *worker) submit(submit SubmitInfo) {
 	})
 
 	// fire up a cleanup goroutine that will execute when the work fence is signalled
+	// todo: rewrite this without goroutine spam.
+	// idea: keep track of pending batches and check fences occasionally
+	//       at the start of each work loop, check if any fence is ready.
+	// 		 if so, run the cleanup. then reset the fence and return it to the pool
 	go func() {
 		fence.Wait()
 		fence.Destroy()
