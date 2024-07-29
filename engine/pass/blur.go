@@ -82,6 +82,7 @@ func NewBlurPass(app vulkan.App, output vulkan.Target, input vulkan.Target) *Blu
 				DstStageMask:  core1_0.PipelineStageFragmentShader,
 				SrcAccessMask: core1_0.AccessColorAttachmentWrite,
 				DstAccessMask: core1_0.AccessShaderRead,
+				Flags:         core1_0.DependencyByRegion,
 			},
 		},
 	})

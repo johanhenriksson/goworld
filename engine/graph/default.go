@@ -48,26 +48,31 @@ func Default(app vulkan.App, target vulkan.Target) T {
 		depthPass := g.Node(pass.NewDepthPass(app, depth, gbuffer))
 
 		// deferred geometry
+		// - wait for depth pass before fragment tests
 		deferredGeometry := g.Node(pass.NewDeferredGeometryPass(app, depth, gbuffer))
-		deferredGeometry.After(depthPass, core1_0.PipelineStageTopOfPipe)
+		deferredGeometry.After(depthPass, core1_0.PipelineStageEarlyFragmentTests)
 
 		// ssao pass
+		// - wait for geometry before executing fragment shader
 		ssao := g.Node(pass.NewAmbientOcclusionPass(app, ssaoOutput, gbuffer))
-		ssao.After(deferredGeometry, core1_0.PipelineStageTopOfPipe)
+		ssao.After(deferredGeometry, core1_0.PipelineStageFragmentShader)
 
 		// ssao blur pass
+		// - wait for ssao pass before executing fragment shader
 		blurOutput := vulkan.NewColorTarget(app.Device(), "blur-output", ssaoOutput.SurfaceFormat(), ssaoOutput.Size())
 		blur := g.Node(pass.NewBlurPass(app, blurOutput, ssaoOutput))
-		blur.After(ssao, core1_0.PipelineStageTopOfPipe)
+		blur.After(ssao, core1_0.PipelineStageFragmentShader)
 
 		// deferred lighting
+		// - wait for geometry and ssao blur before executing fragment shader
 		deferredLighting := g.Node(pass.NewDeferredLightingPass(app, hdrBuffer, gbuffer, shadows, blurOutput))
-		deferredLighting.After(shadowNode, core1_0.PipelineStageTopOfPipe)
-		deferredLighting.After(blur, core1_0.PipelineStageTopOfPipe)
+		deferredLighting.After(shadowNode, core1_0.PipelineStageFragmentShader)
+		deferredLighting.After(blur, core1_0.PipelineStageFragmentShader)
 
 		// forward pass
+		// - wait for deferred lighting before executing fragment shader
 		forward := g.Node(pass.NewForwardPass(app, hdrBuffer, depth, shadows))
-		forward.After(deferredLighting, core1_0.PipelineStageTopOfPipe)
+		forward.After(deferredLighting, core1_0.PipelineStageFragmentShader)
 
 		//
 		// final image composition
@@ -76,16 +81,16 @@ func Default(app vulkan.App, target vulkan.Target) T {
 		// post process pass
 		composition := vulkan.NewColorTarget(app.Device(), "composition", hdrBuffer.SurfaceFormat(), hdrBuffer.Size())
 		post := g.Node(pass.NewPostProcessPass(app, composition, hdrBuffer))
-		post.After(forward, core1_0.PipelineStageTopOfPipe)
+		post.After(forward, core1_0.PipelineStageFragmentShader)
 
 		lines := g.Node(pass.NewLinePass(app, composition, depth))
-		lines.After(post, core1_0.PipelineStageTopOfPipe)
+		lines.After(post, core1_0.PipelineStageFragmentShader)
 
 		gui := g.Node(pass.NewGuiPass(app, composition))
-		gui.After(lines, core1_0.PipelineStageTopOfPipe)
+		gui.After(lines, core1_0.PipelineStageFragmentShader)
 
 		outputPass := g.Node(pass.NewOutputPass(app, output, composition))
-		outputPass.After(gui, core1_0.PipelineStageTopOfPipe)
+		outputPass.After(gui, core1_0.PipelineStageFragmentShader)
 
 		return []Resource{
 			depth,

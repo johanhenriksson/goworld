@@ -38,7 +38,8 @@ func NewTextureSync(dev device.T, worker command.Worker, key string, img *osimag
 	stage.Flush()
 
 	// transfer data to texture buffer
-	worker.Queue(func(cmd command.Buffer) {
+	cmds := command.NewRecorder()
+	cmds.Record(func(cmd command.Buffer) {
 		cmd.CmdImageBarrier(
 			core1_0.PipelineStageTopOfPipe,
 			core1_0.PipelineStageTransfer,
@@ -59,6 +60,7 @@ func NewTextureSync(dev device.T, worker command.Worker, key string, img *osimag
 	})
 	worker.Submit(command.SubmitInfo{
 		Marker:   "TextureUpload",
+		Commands: cmds,
 		Callback: stage.Destroy,
 	})
 	worker.Flush()
@@ -96,7 +98,8 @@ func DownloadImageAsync(dev device.T, worker command.Worker, src image.T) (<-cha
 	}
 
 	// transfer data from texture buffer
-	worker.Queue(func(cmd command.Buffer) {
+	cmds := command.NewRecorder()
+	cmds.Record(func(cmd command.Buffer) {
 		cmd.CmdImageBarrier(
 			core1_0.PipelineStageTopOfPipe,
 			core1_0.PipelineStageTransfer,
@@ -130,7 +133,8 @@ func DownloadImageAsync(dev device.T, worker command.Worker, src image.T) (<-cha
 
 	done := make(chan *osimage.RGBA)
 	worker.Submit(command.SubmitInfo{
-		Marker: "TextureDownload",
+		Marker:   "TextureDownload",
+		Commands: cmds,
 		Callback: func() {
 			defer dst.Destroy()
 			defer close(done)

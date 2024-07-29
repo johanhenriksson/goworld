@@ -100,7 +100,6 @@ func (i *renderTarget) Surfaces() []image.T           { return i.surfaces }
 func (i *renderTarget) SurfaceFormat() core1_0.Format { return i.format }
 
 func (i *renderTarget) Aquire() (*swapchain.Context, error) {
-	i.context.Aquire()
 	return i.context, nil
 }
 

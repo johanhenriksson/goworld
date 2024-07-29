@@ -46,10 +46,15 @@ func (n *preNode) Prepare(scene object.Object, time, delta float32) (*render.Arg
 	}
 
 	// aquire next frame
-	context, err := n.target.Aquire()
-	if err != nil {
-		return nil, nil, ErrRecreate
-	}
+	ctxAvailable := make(chan *swapchain.Context)
+	n.app.Worker().Invoke(func() {
+		context, err := n.target.Aquire()
+		if err != nil {
+			ctxAvailable <- nil
+		} else {
+			ctxAvailable <- context
+		}
+	})
 
 	// ensure the default white texture is always available
 	n.app.Textures().Fetch(color.White)
@@ -68,6 +73,12 @@ func (n *preNode) Prepare(scene object.Object, time, delta float32) (*render.Arg
 		args.Viewport = screen
 	}
 
+	// wait for context
+	context := <-ctxAvailable
+	if context == nil {
+		return nil, nil, ErrRecreate
+	}
+
 	// fill in time & swapchain context
 	args.Frame = context.Index
 	args.Time = time
@@ -83,6 +94,7 @@ func (n *preNode) Prepare(scene object.Object, time, delta float32) (*render.Arg
 	// fire off render start signals
 	var waits []command.Wait
 	if context.ImageAvailable != nil {
+		// why would this be nil?
 		waits = []command.Wait{
 			{
 				Semaphore: context.ImageAvailable,
@@ -91,11 +103,14 @@ func (n *preNode) Prepare(scene object.Object, time, delta float32) (*render.Arg
 		}
 	}
 
+	// pre-node submits a dummy pass that does nothing
+	// except signal that any pass without dependencies can start
 	worker := n.app.Worker()
 	worker.Submit(command.SubmitInfo{
-		Marker: n.Name(),
-		Wait:   waits,
-		Signal: n.signals(context.Index),
+		Commands: command.Empty,
+		Marker:   n.Name(),
+		Wait:     waits,
+		Signal:   n.signals(context.Index),
 	})
 
 	return &args, context, nil

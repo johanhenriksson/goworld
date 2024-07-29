@@ -3,12 +3,13 @@ package swapchain
 import (
 	"fmt"
 	"log"
-	"time"
 
 	"github.com/johanhenriksson/goworld/render/device"
 	"github.com/johanhenriksson/goworld/render/image"
+	"github.com/johanhenriksson/goworld/render/sync"
 	"github.com/johanhenriksson/goworld/util"
 
+	"github.com/vkngwrapper/core/v2/common"
 	"github.com/vkngwrapper/core/v2/core1_0"
 	"github.com/vkngwrapper/extensions/v2/khr_surface"
 	"github.com/vkngwrapper/extensions/v2/khr_swapchain"
@@ -32,13 +33,14 @@ type swapchain struct {
 	surface    khr_surface.Surface
 	surfaceFmt khr_surface.SurfaceFormat
 	images     []image.T
-	current    int
 	frames     int
 	width      int
 	height     int
 	resized    bool
 
-	contexts []*Context
+	nextSemaphore  int
+	imageAvailable []sync.Semaphore
+	renderComplete []sync.Semaphore
 }
 
 func New(device device.T, frames, width, height int, surface khr_surface.Surface, surfaceFormat khr_surface.SurfaceFormat) T {
@@ -48,7 +50,6 @@ func New(device device.T, frames, width, height int, surface khr_surface.Surface
 		surface:    surface,
 		surfaceFmt: surfaceFormat,
 		frames:     frames,
-		contexts:   make([]*Context, frames),
 		width:      width,
 		height:     height,
 	}
@@ -72,12 +73,6 @@ func (s *swapchain) Resize(width, height int) {
 
 func (s *swapchain) recreate() {
 	log.Println("recreating swapchain")
-
-	// wait for all in-flight frames
-	// no need to release locks, they will be destroyed
-	for _, ctx := range s.contexts {
-		ctx.Aquire()
-	}
 
 	// wait for device idle
 	s.device.WaitIdle()
@@ -142,14 +137,14 @@ func (s *swapchain) create() {
 		})
 	})
 
-	// create frame contexts
-	s.contexts = make([]*Context, len(s.images))
-	for i := range s.contexts {
-		s.contexts[i] = newContext(s.device, i)
+	// create synchronization semaphores
+	s.nextSemaphore = 0
+	s.imageAvailable = make([]sync.Semaphore, s.frames)
+	s.renderComplete = make([]sync.Semaphore, s.frames)
+	for i := 0; i < s.frames; i++ {
+		s.imageAvailable[i] = sync.NewSemaphore(s.device, fmt.Sprintf("ImageAvailable:%d", i))
+		s.renderComplete[i] = sync.NewSemaphore(s.device, fmt.Sprintf("RenderComplete:%d", i))
 	}
-
-	// this ensures the first call to Aquire works properly
-	s.current = -1
 }
 
 func (s *swapchain) Aquire() (*Context, error) {
@@ -159,14 +154,13 @@ func (s *swapchain) Aquire() (*Context, error) {
 		return nil, fmt.Errorf("swapchain out of date")
 	}
 
-	// get next frame context
-	s.current = (s.current + 1) % s.frames
-	ctx := s.contexts[s.current]
+	// create a context from the next set of available semaphores
+	ctx := &Context{
+		ImageAvailable: s.imageAvailable[s.nextSemaphore],
+		RenderComplete: s.renderComplete[s.nextSemaphore],
+	}
 
-	// wait for frame context to become available
-	ctx.Aquire()
-
-	idx, r, err := s.ptr.AcquireNextImage(time.Second, ctx.ImageAvailable.Ptr(), nil)
+	idx, r, err := s.ptr.AcquireNextImage(common.NoTimeout, ctx.ImageAvailable.Ptr(), nil)
 	if err != nil {
 		panic(err)
 	}
@@ -175,8 +169,11 @@ func (s *swapchain) Aquire() (*Context, error) {
 		return nil, fmt.Errorf("swapchain out of date")
 	}
 
-	// update swapchain output index
-	ctx.image = idx
+	// store frame index
+	ctx.Index = idx
+
+	// update semaphore ring buffer index
+	s.nextSemaphore = (s.nextSemaphore + 1) % s.frames
 
 	return ctx, nil
 }
@@ -189,15 +186,19 @@ func (s *swapchain) Present(ctx *Context) {
 	s.ext.QueuePresent(queue.Ptr(), khr_swapchain.PresentInfo{
 		WaitSemaphores: []core1_0.Semaphore{ctx.RenderComplete.Ptr()},
 		Swapchains:     []khr_swapchain.Swapchain{s.Ptr()},
-		ImageIndices:   []int{ctx.image},
+		ImageIndices:   []int{ctx.Index},
 	})
 }
 
 func (s *swapchain) Destroy() {
-	for _, context := range s.contexts {
-		context.Destroy()
+	for i := range s.imageAvailable {
+		s.imageAvailable[i].Destroy()
 	}
-	s.contexts = nil
+	s.imageAvailable = nil
+	for i := range s.renderComplete {
+		s.renderComplete[i].Destroy()
+	}
+	s.renderComplete = nil
 
 	if s.ptr != nil {
 		s.ptr.Destroy(nil)

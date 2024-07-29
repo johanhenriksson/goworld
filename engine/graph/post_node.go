@@ -25,13 +25,12 @@ func (n *postNode) Present(worker command.Worker, context *swapchain.Context) {
 		signal = []sync.Semaphore{context.RenderComplete}
 	}
 
+	// submit a dummy pass that waits for all previous passes to complete, then signals the render complete semaphore
 	worker.Submit(command.SubmitInfo{
-		Marker: n.Name(),
-		Wait:   n.waits(context.Index),
-		Signal: signal,
-		Callback: func() {
-			context.Release()
-		},
+		Marker:   n.Name(),
+		Commands: command.Empty,
+		Wait:     n.waits(context.Index),
+		Signal:   signal,
 	})
 
 	// present

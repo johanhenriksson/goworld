@@ -48,7 +48,8 @@ func (m *meshes) Instantiate(mesh vertex.Mesh, callback func(Mesh)) {
 		return
 	}
 
-	m.worker.Queue(func(cmd command.Buffer) {
+	cmds := command.NewRecorder()
+	cmds.Record(func(cmd command.Buffer) {
 		vtxSize := mesh.VertexSize() * mesh.VertexCount()
 		vtxStage = buffer.NewShared(m.device, "staging:vertex", vtxSize)
 
@@ -72,7 +73,8 @@ func (m *meshes) Instantiate(mesh vertex.Mesh, callback func(Mesh)) {
 		})
 	})
 	m.worker.Submit(command.SubmitInfo{
-		Marker: "MeshCache",
+		Marker:   "MeshCache",
+		Commands: cmds,
 		Callback: func() {
 			vtxStage.Destroy()
 			idxStage.Destroy()

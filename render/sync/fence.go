@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/johanhenriksson/goworld/render/device"
-	"github.com/johanhenriksson/goworld/util"
 
 	"github.com/vkngwrapper/core/v2/core1_0"
 	"github.com/vkngwrapper/core/v2/driver"
@@ -66,12 +65,4 @@ func (f *fence) Done() bool {
 		panic(err)
 	}
 	return r == core1_0.VKSuccess
-}
-
-func (f *fence) WaitForAny(fences []Fence, timeout time.Duration) {
-	f.device.Ptr().WaitForFences(false, timeout, util.Map(fences, func(f Fence) core1_0.Fence { return f.Ptr() }))
-}
-
-func (f *fence) WaitForAll(fences []Fence, timeout time.Duration) {
-	f.device.Ptr().WaitForFences(true, timeout, util.Map(fences, func(f Fence) core1_0.Fence { return f.Ptr() }))
 }

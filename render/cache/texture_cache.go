@@ -29,7 +29,8 @@ func (t *textures) Instantiate(ref texture.Ref, callback func(texture.T)) {
 	var tex texture.T
 
 	// transfer data to texture buffer
-	t.worker.Queue(func(cmd command.Buffer) {
+	cmds := command.NewRecorder()
+	cmds.Record(func(cmd command.Buffer) {
 		// load image data
 		img := ref.ImageData()
 
@@ -144,7 +145,8 @@ func (t *textures) Instantiate(ref texture.Ref, callback func(texture.T)) {
 			mipLevels-1, 1)
 	})
 	t.worker.Submit(command.SubmitInfo{
-		Marker: "TextureUpload",
+		Marker:   "TextureUpload",
+		Commands: cmds,
 		Callback: func() {
 			stage.Destroy()
 			callback(tex)

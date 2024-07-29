@@ -94,6 +94,9 @@ func (n *node) refresh() {
 	// recompute signals
 	n.dependants = make([]Node, 0, len(n.after))
 	for _, edge := range n.before {
+		if edge.signal == nil {
+			panic("nil signal in render graph")
+		}
 		n.dependants = append(n.dependants, edge.node)
 	}
 
@@ -101,8 +104,7 @@ func (n *node) refresh() {
 	n.requires = make([]Node, 0, len(n.after))
 	for _, edge := range n.after {
 		if edge.signal == nil {
-			// skip nil signals
-			continue
+			panic("nil signal in render graph")
 		}
 		n.requires = append(n.requires, edge.node)
 	}
@@ -152,8 +154,8 @@ func (n *node) waits(index int) []command.Wait {
 	waits := make([]command.Wait, 0, len(n.after))
 	for _, after := range n.after {
 		if after.signal == nil {
-			// skip nil signals
-			continue
+			// why would there be nil signals
+			panic("nil signal")
 		}
 		waits = append(waits, command.Wait{
 			Semaphore: after.signal[index],
@@ -165,8 +167,12 @@ func (n *node) waits(index int) []command.Wait {
 
 func (n *node) signals(index int) []sync.Semaphore {
 	signals := make([]sync.Semaphore, 0, len(n.before))
-	for _, edge := range n.before {
-		signals = append(signals, edge.signal[index])
+	for _, before := range n.before {
+		if before.signal == nil {
+			// why would there be nil signals
+			panic("nil signal")
+		}
+		signals = append(signals, before.signal[index])
 	}
 	return signals
 }
@@ -177,11 +183,11 @@ func (n *node) Draw(worker command.Worker, args render.Args, scene object.Compon
 	}
 	cmds := command.NewRecorder()
 	n.pass.Record(cmds, args, scene)
-	worker.Queue(cmds.Apply)
 
 	worker.Submit(command.SubmitInfo{
-		Marker: n.pass.Name(),
-		Wait:   n.waits(args.Frame),
-		Signal: n.signals(args.Frame),
+		Commands: cmds,
+		Marker:   fmt.Sprintf("%s:%d", n.pass.Name(), args.Frame),
+		Wait:     n.waits(args.Frame),
+		Signal:   n.signals(args.Frame),
 	})
 }

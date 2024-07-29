@@ -24,3 +24,12 @@ func (r recorder) Apply(cmd Buffer) {
 func (r *recorder) Record(cmd CommandFn) {
 	r.parts = append(r.parts, cmd)
 }
+
+type empty struct{}
+
+var Empty Recorder = empty{}
+
+func (empty) Apply(Buffer) {}
+func (empty) Record(CommandFn) {
+	panic("empty command should not be recorded")
+}

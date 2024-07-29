@@ -16,7 +16,6 @@ type CommandFn func(Buffer)
 
 // Workers manage a command pool thread
 type Worker interface {
-	Queue(CommandFn)
 	Submit(SubmitInfo)
 	Destroy()
 	Flush()
@@ -31,7 +30,6 @@ type worker struct {
 	name   string
 	pool   Pool
 	work   *ThreadWorker
-	buffer Buffer
 }
 
 func NewWorker(device device.T, name string, queue device.Queue) Worker {
@@ -40,17 +38,12 @@ func NewWorker(device device.T, name string, queue device.Queue) Worker {
 	name = fmt.Sprintf("%s:%d:%x", name, queue.FamilyIndex(), queue.Ptr().Handle())
 	device.SetDebugObjectName(driver.VulkanHandle(queue.Ptr().Handle()), core1_0.ObjectTypeQueue, name)
 
-	// allocate initial command buffer
-	buffer := pool.Allocate(core1_0.CommandBufferLevelPrimary)
-	buffer.Begin()
-
 	return &worker{
 		device: device,
 		name:   name,
 		queue:  queue,
 		pool:   pool,
 		work:   NewThreadWorker(name, 100, true),
-		buffer: buffer,
 	}
 }
 
@@ -59,16 +52,8 @@ func (w *worker) Invoke(callback func()) {
 	w.work.Invoke(callback)
 }
 
-func (w *worker) Queue(batch CommandFn) {
-	w.work.Invoke(func() {
-		batch(w.buffer)
-	})
-}
-
-func (w *worker) enqueue(batch CommandFn) {
-}
-
 type SubmitInfo struct {
+	Commands Recorder
 	Marker   string
 	Wait     []Wait
 	Signal   []sync.Semaphore
@@ -88,19 +73,28 @@ func (w *worker) Submit(submit SubmitInfo) {
 	})
 }
 
+var noBuffers = []core1_0.CommandBuffer{}
+
 func (w *worker) submit(submit SubmitInfo) {
+	if submit.Commands == nil {
+		panic("no commands submit. marker: " + submit.Marker)
+	}
+
 	debug.SetPanicOnFault(true)
 
-	// end current buffer
-	w.buffer.End()
-	buffers := []core1_0.CommandBuffer{w.buffer.Ptr()}
+	buffers := noBuffers
+	if submit.Commands != Empty {
+		// allocate & record command buffers
+		buffer := w.pool.Allocate(core1_0.CommandBufferLevelPrimary)
+		buffer.Begin()
+		submit.Commands.Apply(buffer)
+		buffer.End()
 
-	// set debug name
-	w.device.SetDebugObjectName(driver.VulkanHandle(w.buffer.Ptr().Handle()), core1_0.ObjectTypeCommandBuffer, submit.Marker)
+		// set debug name
+		w.device.SetDebugObjectName(driver.VulkanHandle(buffer.Ptr().Handle()), core1_0.ObjectTypeCommandBuffer, submit.Marker)
 
-	// prepare next buffer
-	w.buffer = w.pool.Allocate(core1_0.CommandBufferLevelPrimary)
-	w.buffer.Begin()
+		buffers = []core1_0.CommandBuffer{buffer.Ptr()}
+	}
 
 	// create a cleanup callback
 	// todo: reuse fences
