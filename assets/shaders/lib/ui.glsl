@@ -9,6 +9,7 @@ struct Quad {
 	float edge_softness;
 	float border;
 	uint texture;
+	uint _padding[3];
 };
 
 UNIFORM(0, config, {

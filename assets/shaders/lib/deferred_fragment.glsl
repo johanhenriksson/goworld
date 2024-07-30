@@ -10,5 +10,5 @@ OUT(1, vec4, normal)
 OUT(2, vec4, position)
 
 #define OBJECT(idx,name) \
-	layout (binding = idx) readonly buffer uniform_ ## name { Object item[]; } __ ## name; \
+	layout (std430, binding = idx) readonly buffer uniform_ ## name { Object item[]; } __ ## name; \
 	Object name = __ ## name.item[in_object];

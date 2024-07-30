@@ -20,7 +20,7 @@ struct Object {
 
 #define UNIFORM(idx,name,body) layout (binding = idx) uniform uniform_ ## name body name;
 
-#define STORAGE_BUFFER(idx,type,name) layout (binding = idx) readonly buffer uniform_ ## name { type item[]; } name;
+#define STORAGE_BUFFER(idx,type,name) layout (std430, binding = idx) readonly buffer uniform_ ## name { type item[]; } name;
 
 #define CAMERA(idx,name) layout (binding = idx) uniform Camera { \
 	mat4 Proj; \

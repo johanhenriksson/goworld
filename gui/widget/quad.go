@@ -1,6 +1,9 @@
 package widget
 
 import (
+	"fmt"
+	"unsafe"
+
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/render/color"
 )
@@ -16,6 +19,18 @@ type Quad struct {
 	Softness float32
 	Border   float32
 	Texture  uint32
+	_padding [3]uint32
+}
+
+func init() {
+	size := unsafe.Sizeof(Quad{})
+	if size != 128 {
+		panic(fmt.Sprintf("Quad size is not 64 bytes, was %d", size))
+	}
+	align := unsafe.Alignof(Quad{})
+	if align != 4 {
+		panic(fmt.Sprintf("Quad alignment is not 4 bytes, was %d", align))
+	}
 }
 
 type QuadBuffer struct {
