@@ -16,7 +16,8 @@ type samplers struct {
 
 	// the max age must be shorter than the max life of the texture cache.
 	// if using a per-frame sampler cache, then the max life time should be
-	// at most (texture max life) / (number of swapchain frames)
+	// at most (texture max life) / (number of swapchain frames) since the
+	// sampler cache will only be polled every N frames.
 	maxAge int
 
 	// blank keeps a reference to a blank (white) texture
@@ -138,6 +139,11 @@ func (s *samplers) Flush() {
 
 func (s *samplers) Tick() {
 	for ref, handle := range s.reverse {
+		if handle.ID == 0 {
+			// never evict the blank texture
+			continue
+		}
+
 		// increase the age of the handle and check for eviction
 		handle.age++
 		if handle.age > s.maxAge {
