@@ -10,6 +10,7 @@ import (
 )
 
 const ShadowCascades = 4
+const LightPadding = 74
 
 type Light struct {
 	ViewProj  [ShadowCascades]mat4.T
@@ -21,7 +22,6 @@ type Light struct {
 	Intensity float32
 	Range     float32
 	Falloff   float32
-	_padding  float32
 }
 
 type LightSettings struct {
@@ -32,7 +32,7 @@ type LightSettings struct {
 	ShadowSampleRadius float32
 	ShadowBias         float32
 	NormalOffset       float32
-	_padding           [75]float32 // pad to the size of Light
+	_padding           [LightPadding]uint32
 }
 
 func init() {

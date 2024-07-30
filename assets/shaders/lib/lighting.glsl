@@ -14,10 +14,9 @@ struct Light {
 	float Intensity;
 	float Range;
 	float Falloff;
-
-	float _padding;
 };
 
+#define LIGHT_PADDING 74
 struct LightSettings {
 	vec4 AmbientColor;
 	float AmbientIntensity;
@@ -26,10 +25,11 @@ struct LightSettings {
 	float ShadowSampleRadius;
 	float ShadowBias;
 	float NormalOffset;
+
+	float _padding[LIGHT_PADDING];
 };
 
-#define LIGHT_PADDING 75
-#define LIGHTS(idx,name) layout (binding = idx) readonly buffer LightBuffer { LightSettings settings; float[LIGHT_PADDING] _padding; Light item[]; } name;
+#define LIGHTS(idx,name) layout (std430, binding = idx) readonly buffer LightBuffer { LightSettings settings; Light item[]; } name;
 
 const float SHADOW_POWER = 60;
 
