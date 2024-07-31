@@ -79,7 +79,7 @@ func Default(app vulkan.App, target vulkan.Target) T {
 		//
 
 		// post process pass
-		composition := vulkan.NewColorTarget(app.Device(), "composition", hdrBuffer.SurfaceFormat(), hdrBuffer.Size())
+		composition := vulkan.NewColorTarget(app.Device(), "composition", core1_0.FormatR8G8B8A8UnsignedNormalized, hdrBuffer.Size())
 		post := g.Node(pass.NewPostProcessPass(app, composition, hdrBuffer))
 		post.After(forward, core1_0.PipelineStageFragmentShader)
 
