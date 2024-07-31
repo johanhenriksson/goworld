@@ -27,8 +27,9 @@ func (r *Glyph) ImageData() *image.Data {
 
 func (r *Glyph) TextureArgs() texture.Args {
 	return texture.Args{
-		Filter: texture.FilterNearest,
-		Wrap:   texture.WrapClamp,
-		Border: core1_0.BorderColorFloatTransparentBlack,
+		Filter:  texture.FilterLinear,
+		Wrap:    texture.WrapBorder,
+		Border:  core1_0.BorderColorFloatTransparentBlack,
+		Mipmaps: false,
 	}
 }

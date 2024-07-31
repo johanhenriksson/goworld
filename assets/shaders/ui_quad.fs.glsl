@@ -51,6 +51,9 @@ void main()
 	}
 
 	vec4 sample0 = texture(textures[quad.texture], in_texcoord);
+	if(sample0.a == 0) {
+		discard;
+	}
 	out_color = in_color * sample0 * sdf_factor * border_factor;
 }
 

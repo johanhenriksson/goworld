@@ -12,3 +12,4 @@ type Wrap core1_0.SamplerAddressMode
 const WrapClamp = Wrap(core1_0.SamplerAddressModeClampToEdge)
 const WrapRepeat = Wrap(core1_0.SamplerAddressModeRepeat)
 const WrapMirror = Wrap(core1_0.SamplerAddressModeMirroredRepeat)
+const WrapBorder = Wrap(core1_0.SamplerAddressModeClampToBorder)

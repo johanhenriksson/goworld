@@ -63,13 +63,16 @@ func (f *font) Glyph(r rune) (*Glyph, error) {
 	}
 
 	// calculate bearing
-	bearing := vec2.New(FixToFloat(bounds.Min.X), FixToFloat(bounds.Min.Y))
+	bearing := vec2.New(FixToFloat(bounds.Min.X), FixToFloat(bounds.Min.Y)).Floor()
 
 	// texture size
-	size := vec2.New(FixToFloat(bounds.Max.X), FixToFloat(bounds.Max.Y)).Sub(bearing)
+	size := vec2.New(FixToFloat(bounds.Max.X), FixToFloat(bounds.Max.Y)).Ceil().Sub(bearing)
 
 	// glyph texture
-	_, mask, offset, _, _ := f.face.Glyph(fixed.Point26_6{X: 0, Y: 0}, r)
+	_, mask, offset, _, _ := f.face.Glyph(fixed.Point26_6{
+		X: FloatToFix(-bearing.X),
+		Y: FloatToFix(-bearing.Y),
+	}, r)
 	width, height := int(size.X), int(size.Y)
 
 	img := &image.Data{
@@ -177,4 +180,9 @@ func (f *font) Measure(text string, args Args) vec2.T {
 func FixToFloat(v fixed.Int26_6) float32 {
 	const scalar = 1 / float32(1<<6)
 	return float32(v) * scalar
+}
+
+func FloatToFix(f float32) fixed.Int26_6 {
+	const scalar = float32(1 << 6)
+	return fixed.Int26_6(f * scalar)
 }
