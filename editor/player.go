@@ -4,7 +4,6 @@ import (
 	"github.com/johanhenriksson/goworld/core/camera"
 	"github.com/johanhenriksson/goworld/core/input/keys"
 	"github.com/johanhenriksson/goworld/core/input/mouse"
-	"github.com/johanhenriksson/goworld/core/light"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/math"
 	"github.com/johanhenriksson/goworld/math/quat"
@@ -33,11 +32,6 @@ func NewPlayer(position vec3.T, rotation quat.T) *Player {
 			Clear: color.Hex("#eddaab"),
 		})).
 			Rotation(rotation).
-			Attach(light.NewPoint(light.PointArgs{
-				Range:     20,
-				Intensity: 2.5,
-				Color:     color.White,
-			})).
 			Create(),
 		Speed:    float32(33),
 		Friction: vec3.New(2, 2, 2),
