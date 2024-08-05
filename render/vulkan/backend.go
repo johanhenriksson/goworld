@@ -45,7 +45,7 @@ func New(appName string, deviceIndex int) App {
 	worker := command.NewWorker(device, "worker", device.Queue())
 
 	// init caches
-	meshes := cache.NewMeshCache(device, worker)
+	meshes := cache.NewMeshBlockCache(device, worker, 1024*1024*1024, 256*1024*1024)
 	textures := cache.NewTextureCache(device, worker)
 	shaders := cache.NewShaderCache(device)
 
