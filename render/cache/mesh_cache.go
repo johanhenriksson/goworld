@@ -11,20 +11,20 @@ import (
 
 type MeshCache T[vertex.Mesh, Mesh]
 
-type meshes struct {
+type meshCache struct {
 	device device.T
 	worker command.Worker
 }
 
 func NewMeshCache(device device.T, worker command.Worker) MeshCache {
-	return New[vertex.Mesh, Mesh](&meshes{
+	return New[vertex.Mesh, Mesh](&meshCache{
 		device: device,
 		worker: worker,
 	})
 }
 
-func (m *meshes) Instantiate(mesh vertex.Mesh, callback func(Mesh)) {
-	var cached *vkMesh
+func (m *meshCache) Instantiate(mesh vertex.Mesh, callback func(Mesh)) {
+	var cached *cachedMesh
 	var vtxStage, idxStage buffer.T
 
 	var idxType core1_0.IndexType
@@ -37,12 +37,12 @@ func (m *meshes) Instantiate(mesh vertex.Mesh, callback func(Mesh)) {
 		panic("illegal index type")
 	}
 
-	cached = &vkMesh{
-		key:      mesh.Key(),
-		elements: mesh.IndexCount(),
-		idxType:  idxType,
+	cached = &cachedMesh{
+		key:        mesh.Key(),
+		indexCount: mesh.IndexCount(),
+		idxType:    idxType,
 	}
-	if cached.elements == 0 {
+	if cached.indexCount == 0 {
 		// special case for empty meshes
 		callback(cached)
 		return
@@ -83,11 +83,19 @@ func (m *meshes) Instantiate(mesh vertex.Mesh, callback func(Mesh)) {
 	})
 }
 
-func (m *meshes) Delete(mesh Mesh) {
-	mesh.Destroy()
+func (m *meshCache) Delete(mesh Mesh) {
+	vkmesh := mesh.(*cachedMesh)
+	if vkmesh.vertices != nil {
+		vkmesh.vertices.Destroy()
+		vkmesh.vertices = nil
+	}
+	if vkmesh.indices != nil {
+		vkmesh.indices.Destroy()
+		vkmesh.indices = nil
+	}
 }
 
-func (m *meshes) Destroy() {}
+func (m *meshCache) Destroy() {}
 
-func (m *meshes) Name() string   { return "MeshCache" }
-func (m *meshes) String() string { return "MeshCache" }
+func (m *meshCache) Name() string   { return "MeshCache" }
+func (m *meshCache) String() string { return "MeshCache" }
