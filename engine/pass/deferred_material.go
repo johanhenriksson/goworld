@@ -34,6 +34,7 @@ func (m *DeferredMaterial) ID() material.ID {
 func (m *DeferredMaterial) Begin(camera uniform.Camera, lights []light.T) {
 	m.Instance.Descriptors().Camera.Set(camera)
 	m.Objects.Reset()
+	m.Commands.Reset()
 }
 
 func (m *DeferredMaterial) Bind(cmds command.Recorder) {
@@ -70,9 +71,9 @@ func (m *DeferredMaterial) Unbind(cmds command.Recorder) {
 }
 
 func (m *DeferredMaterial) End() {
-	m.Commands.Flush()
 	m.Objects.Flush(m.Instance.Descriptors().Objects)
 	m.Textures.Flush()
+	m.Commands.Flush()
 }
 
 func (m *DeferredMaterial) Destroy() {

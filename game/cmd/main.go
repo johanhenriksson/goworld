@@ -97,11 +97,10 @@ func main() {
 
 			// terrain
 			m := terrain.NewMap("default", 32)
-			object.Attach(scene, terrain.NewWorld(m, 200))
-			object.Attach(scene, terrain.NewWorld(m, 1000))
+			object.Attach(scene, terrain.NewWorld(m, 256))
 
 			// add water
-			object.Attach(scene, object.Builder(terrain.NewWater(512, 3000)).
+			object.Attach(scene, object.Builder(terrain.NewWater(64, 256)).
 				Position(vec3.New(0, -1, 0)).
 				Create())
 

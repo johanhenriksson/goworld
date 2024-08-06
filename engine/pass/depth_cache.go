@@ -43,7 +43,7 @@ func (m *DepthMatCache) Instantiate(def *material.Def, callback func([]Material)
 		},
 		Objects: &descriptor.Storage[uniform.Object]{
 			Stages: core1_0.StageAll,
-			Size:   2000,
+			Size:   10000,
 		},
 	}
 

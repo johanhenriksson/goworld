@@ -40,6 +40,7 @@ func (m *ForwardMaterial) Begin(camera uniform.Camera, lights []light.T) {
 	// multiple calls to this reset in a single frame will cause weird behaviour
 	// we need to split this function somehow in order to be able to do depth sorting etc
 	m.Objects.Reset()
+	m.Commands.Reset()
 
 	if len(lights) > 0 {
 		// how to get ambient light info?
@@ -87,6 +88,7 @@ func (m *ForwardMaterial) Unbind(cmds command.Recorder) {
 func (m *ForwardMaterial) End() {
 	m.Objects.Flush(m.Instance.Descriptors().Objects)
 	m.Textures.Flush()
+	m.Commands.Flush()
 }
 
 func (m *ForwardMaterial) Destroy() {

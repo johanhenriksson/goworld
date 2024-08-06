@@ -88,7 +88,7 @@ func NewDepthPass(
 func (p *DepthPass) Record(cmds command.Recorder, args render.Args, scene object.Component) {
 	opaque := p.meshQuery.
 		Reset().
-		Where(isDrawForward(false)).
+		Where(isDrawDeferred).
 		Collect(scene)
 
 	cmds.Record(func(cmd command.Buffer) {

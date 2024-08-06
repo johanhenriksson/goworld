@@ -68,8 +68,8 @@ func New[K Key, V Value](backend Backend[K, V]) T[K, V] {
 		data:    map[string]*line[V]{},
 		worker:  command.NewThreadWorker(backend.Name(), 100, false),
 		lock:    &sync.RWMutex{},
-		maxAge:  100,
-		// async:   true,
+		maxAge:  60 * 100,
+		async:   true,
 	}
 	return c
 }

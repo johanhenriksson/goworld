@@ -17,6 +17,7 @@ type DrawGroup struct {
 type DrawGroups []DrawGroup
 
 func (groups DrawGroups) Draw(cmds command.Recorder, camera uniform.Camera, lights []light.T) {
+	// todo: this can happen multiple times per frame if there are multiple draw groups for the same material.
 	for _, group := range groups {
 		group.Material.Begin(camera, lights)
 	}
@@ -29,6 +30,7 @@ func (groups DrawGroups) Draw(cmds command.Recorder, camera uniform.Camera, ligh
 		group.Material.Unbind(cmds)
 	}
 
+	// todo: this can happen multiple times per frame if there are multiple draw groups for the same material.
 	for _, group := range groups {
 		group.Material.End()
 	}
