@@ -81,6 +81,7 @@ func (m *DeferredMatCache) Instantiate(def *material.Def, callback func([]Materi
 			Objects:  NewObjectBuffer(instance.Descriptors().Objects.Size),
 			Textures: textures,
 			Meshes:   m.app.Meshes(),
+			Commands: cache.NewIndirectDrawBuffer(m.app.Device(), 1000),
 		}
 	}
 
