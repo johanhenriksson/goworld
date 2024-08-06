@@ -191,7 +191,8 @@ func (c T) ImageData() *image.Data {
 
 func (c T) TextureArgs() texture.Args {
 	return texture.Args{
-		Filter: texture.FilterNearest,
-		Wrap:   texture.WrapClamp,
+		Filter:  texture.FilterNearest,
+		Wrap:    texture.WrapClamp,
+		Mipmaps: false,
 	}
 }

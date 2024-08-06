@@ -63,7 +63,7 @@ func NewDirectional(args DirectionalArgs) *Directional {
 		Intensity: object.NewProperty(args.Intensity),
 		Shadows:   object.NewProperty(args.Shadows),
 
-		CascadeLambda: object.NewProperty[float32](0.9),
+		CascadeLambda: object.NewProperty[float32](0.5),
 		CascadeBlend:  object.NewProperty[float32](3.0),
 	})
 	return lit

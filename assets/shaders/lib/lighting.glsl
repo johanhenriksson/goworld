@@ -54,13 +54,13 @@ float calculatePointLightContrib(Light light, vec3 surfaceToLight, float distanc
 vec3 ambientLight(LightSettings settings, float occlusion);
 vec3 calculateLightColor(Light light, vec3 position, vec3 normal, float depth, LightSettings settings);
 
-float sampleShadowmap(uint shadowmap, mat4 viewProj, vec3 position, float bias) {
+float sampleShadowmap(uint shadowmap, mat4 viewProj, vec3 position, LightSettings settings) {
 	vec4 shadowCoord = biasMat * viewProj * vec4(position, 1);
 
 	float shadow = 1.0;
 	if (shadowCoord.z > -1.0 && shadowCoord.z < 1.0 && shadowCoord.w > 0) {
 		float dist = _shadow_texture(shadowmap, shadowCoord.st);
-		float actual = exp(SHADOW_POWER * shadowCoord.z - bias) / exp(SHADOW_POWER);
+		float actual = exp(SHADOW_POWER * shadowCoord.z - settings.ShadowBias) / exp(SHADOW_POWER);
 
 		if (dist < actual) {
 			shadow = 0;
@@ -111,7 +111,7 @@ float blendCascades(Light light, vec3 position, float depth, float blendRange, L
         }
     }
 
-    float shadowCurrent = sampleShadowmapPCF(light.Shadowmap[cascadeIndex], light.ViewProj[cascadeIndex], position, settings);
+    float shadowCurrent = sampleShadowmap(light.Shadowmap[cascadeIndex], light.ViewProj[cascadeIndex], position, settings);
 
     // blend with previous cascade to get a smooth transition
     if (cascadeIndex > 0 && blendRange > 0) {
@@ -121,7 +121,7 @@ float blendCascades(Light light, vec3 position, float depth, float blendRange, L
         float blendFactor = smoothstep(cascadeStart, cascadeStart + blendRange, depth);
 
         if (blendFactor > 0) {
-			float shadowPrev = sampleShadowmapPCF(light.Shadowmap[cascadeIndex - 1], light.ViewProj[cascadeIndex - 1], position, settings);
+			float shadowPrev = sampleShadowmap(light.Shadowmap[cascadeIndex - 1], light.ViewProj[cascadeIndex - 1], position, settings);
 			return mix(shadowPrev, shadowCurrent, blendFactor);
         }
     }

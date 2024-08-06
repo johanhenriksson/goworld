@@ -69,6 +69,7 @@ func NewGuiPass(app vulkan.App, target vulkan.Target) *GuiPass {
 			},
 		},
 		DepthAttachment: &attachment.Depth{
+			// todo: reuse the depth buffer from a previous pass
 			Image:          attachment.NewImage("gui-depth", app.Device().GetDepthFormat(), core1_0.ImageUsageDepthStencilAttachment|core1_0.ImageUsageInputAttachment),
 			LoadOp:         core1_0.AttachmentLoadOpClear,
 			StoreOp:        core1_0.AttachmentStoreOpDontCare,

@@ -19,5 +19,5 @@
     "Lights": 2,
     "Textures": 3
   },
-  "Textures": ["diffuse"]
+  "Textures": ["diffuse0", "diffuse1"]
 }
