@@ -9,7 +9,6 @@ import (
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/geometry/plane"
 	"github.com/johanhenriksson/goworld/math"
-	"github.com/johanhenriksson/goworld/math/random"
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render/material"
@@ -136,10 +135,6 @@ type WaterTile struct {
 	object.Object
 
 	Mesh *plane.Mesh
-
-	frame    int
-	animTick float32
-	nextAnim float32
 }
 
 func NewWaterTile(size float32) *WaterTile {
@@ -157,26 +152,14 @@ func NewWaterTile(size float32) *WaterTile {
 			Transparent:  true,
 		},
 	})
-	mesh.SetTexture(texture.Diffuse, texture.PathArgsRef("textures/terrain/water1.png", texture.Args{
+	mesh.SetTexture("diffuse0", texture.PathArgsRef("textures/terrain/water1.png", texture.Args{
+		Mipmaps: true,
+	}))
+	mesh.SetTexture("diffuse1", texture.PathArgsRef("textures/terrain/water2.png", texture.Args{
 		Mipmaps: true,
 	}))
 
 	return object.New("Water", &WaterTile{
 		Mesh: mesh,
-
-		animTick: 0.2,
-		frame:    1,
 	})
-}
-
-func (w *WaterTile) Update(scene object.Component, dt float32) {
-	w.nextAnim -= dt
-	if w.nextAnim < 0 {
-		w.nextAnim = random.Range(0.6, 1.2)
-		w.frame++
-
-		w.Mesh.SetTexture(texture.Diffuse, texture.PathArgsRef(fmt.Sprintf("textures/terrain/water%d.png", w.frame%2+1), texture.Args{
-			Filter: texture.FilterNearest,
-		}))
-	}
 }
