@@ -8,8 +8,9 @@ import (
 )
 
 type IndirectDrawBuffer struct {
-	commands buffer.Array[DrawIndirectIndexed]
-	count    int
+	commands    buffer.Array[DrawIndirectIndexed]
+	nextIndex   int
+	batchOffset int
 }
 
 func NewIndirectDrawBuffer(device device.T, key string, size int) *IndirectDrawBuffer {
@@ -25,8 +26,13 @@ func NewIndirectDrawBuffer(device device.T, key string, size int) *IndirectDrawB
 	}
 }
 
+func (i *IndirectDrawBuffer) Reset() {
+	i.nextIndex = 0
+	i.batchOffset = 0
+}
+
 func (i *IndirectDrawBuffer) BeginDrawIndirect() {
-	i.count = 0
+	i.batchOffset = i.nextIndex
 }
 
 func (i *IndirectDrawBuffer) DrawIndexed(indexCount, firstIndex, vertexOffset, firstInstance, instanceCount int) {
@@ -36,24 +42,23 @@ func (i *IndirectDrawBuffer) DrawIndexed(indexCount, firstIndex, vertexOffset, f
 	if instanceCount == 0 {
 		return
 	}
-	i.commands.Set(i.count, DrawIndirectIndexed{
+	i.commands.Set(i.nextIndex, DrawIndirectIndexed{
 		IndexCount:    uint32(indexCount),
 		InstanceCount: uint32(instanceCount),
 		FirstIndex:    uint32(firstIndex),
 		VertexOffset:  int32(vertexOffset),
 		FirstInstance: uint32(firstInstance),
 	})
-	i.count++
+	i.nextIndex++
 }
 
 func (i *IndirectDrawBuffer) EndDrawIndirect(cmd Buffer) {
-	if i.count == 0 {
+	batchCount := i.nextIndex - i.batchOffset
+	if batchCount == 0 {
 		return
 	}
 
-	// flush?
-
-	cmd.CmdDrawIndexedIndirect(i.commands, 0, i.count, i.commands.Stride())
+	cmd.CmdDrawIndexedIndirect(i.commands, i.batchOffset*i.commands.Stride(), batchCount, i.commands.Stride())
 }
 
 func (i *IndirectDrawBuffer) Flush() {
