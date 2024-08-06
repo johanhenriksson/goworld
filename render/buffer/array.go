@@ -21,14 +21,14 @@ type Array[K any] interface {
 	// Count returns the number of items in the array
 	Count() int
 
-	// Element returns the aligned byte size of a single element
-	Element() int
+	// Stride returns the aligned byte size of a single element
+	Stride() int
 }
 
 type array[K any] struct {
 	T
-	element int
-	count   int
+	stride int
+	count  int
 }
 
 // NewArray creates a new typed array buffer.
@@ -38,11 +38,11 @@ func NewArray[K any](device device.T, args Args) Array[K] {
 
 	var empty K
 	kind := reflect.TypeOf(empty)
+	sizeof := int(kind.Size())
 
-	element := util.Align(int(kind.Size()), align)
-
+	stride := util.Align(sizeof, align)
 	count := args.Size
-	size := count * element
+	size := count * stride
 	if size > maxSize {
 		panic(fmt.Sprintf("buffer is too large for the specified usage. size: %d, max: %d", size, maxSize))
 	}
@@ -51,23 +51,23 @@ func NewArray[K any](device device.T, args Args) Array[K] {
 	buffer := New(device, args)
 
 	return &array[K]{
-		T:       buffer,
-		element: element,
-		count:   count,
+		T:      buffer,
+		stride: stride,
+		count:  count,
 	}
 }
 
 func (a *array[K]) Set(index int, data K) {
-	a.Write(index*a.element, &data)
+	a.Write(index*a.stride, &data)
 	a.Flush()
 }
 
 func (a *array[K]) SetRange(offset int, data []K) {
 	for i, el := range data {
-		a.Write((i+offset)*a.element, &el)
+		a.Write((i+offset)*a.stride, &el)
 	}
 	a.Flush()
 }
 
-func (a *array[K]) Count() int   { return a.count }
-func (a *array[K]) Element() int { return a.element }
+func (a *array[K]) Count() int  { return a.count }
+func (a *array[K]) Stride() int { return a.stride }

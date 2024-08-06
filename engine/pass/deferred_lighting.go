@@ -143,6 +143,7 @@ func (p *DeferredLightPass) Record(cmds command.Recorder, args render.Args, scen
 
 		p.light.Bind(cmd, args.Frame)
 
+		quad.Bind(cmd)
 		quad.Draw(cmd, 0)
 
 		cmd.CmdEndRenderPass()

@@ -22,6 +22,7 @@ type DeferredMaterial struct {
 	Objects  *ObjectBuffer
 	Textures cache.SamplerCache
 	Meshes   cache.MeshCache
+	Commands *cache.IndirectDrawBuffer
 
 	id material.ID
 }
@@ -38,12 +39,8 @@ func (m *DeferredMaterial) Begin(camera uniform.Camera, lights []light.T) {
 func (m *DeferredMaterial) Bind(cmds command.Recorder) {
 	cmds.Record(func(cmd command.Buffer) {
 		m.Instance.Bind(cmd)
+		m.Commands.BeginDrawIndirect()
 	})
-}
-
-func (m *DeferredMaterial) End() {
-	m.Objects.Flush(m.Instance.Descriptors().Objects)
-	m.Textures.Flush()
 }
 
 func (m *DeferredMaterial) Draw(cmds command.Recorder, msh mesh.Mesh) {
@@ -55,16 +52,30 @@ func (m *DeferredMaterial) Draw(cmds command.Recorder, msh mesh.Mesh) {
 	textures := m.Instance.Material().TextureSlots()
 	textureIds := AssignMeshTextures(m.Textures, msh, textures)
 
-	index := m.Objects.Store(uniform.Object{
+	instanceId := m.Objects.Store(uniform.Object{
 		Model:    msh.Transform().Matrix(),
 		Textures: textureIds,
 	})
 
 	cmds.Record(func(cmd command.Buffer) {
-		vkmesh.Draw(cmd, index)
+		vkmesh.Bind(cmd)
+		m.Commands.DrawIndexed(vkmesh.IndexCount, vkmesh.IndexOffset, vkmesh.VertexOffset, instanceId, 1)
 	})
+}
+
+func (m *DeferredMaterial) Unbind(cmds command.Recorder) {
+	cmds.Record(func(cmd command.Buffer) {
+		m.Commands.EndDrawIndirect(cmd)
+	})
+}
+
+func (m *DeferredMaterial) End() {
+	m.Commands.Flush()
+	m.Objects.Flush(m.Instance.Descriptors().Objects)
+	m.Textures.Flush()
 }
 
 func (m *DeferredMaterial) Destroy() {
 	m.Instance.Material().Destroy()
+	m.Commands.Destroy()
 }

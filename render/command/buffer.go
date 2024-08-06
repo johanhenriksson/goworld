@@ -28,7 +28,9 @@ type Buffer interface {
 	CmdBindVertexBuffer(vtx buffer.T, offset int)
 	CmdBindIndexBuffers(idx buffer.T, offset int, kind core1_0.IndexType)
 	CmdDraw(vertexCount, instanceCount, firstVertex, firstInstance int)
+	CmdDrawIndirect(buffer buffer.T, offset, count, stride int)
 	CmdDrawIndexed(indexCount, instanceCount, firstIndex, vertexOffset, firstInstance int)
+	CmdDrawIndexedIndirect(buffer buffer.T, offset, count, stride int)
 	CmdBeginRenderPass(pass renderpass.T, framebuffer framebuffer.T)
 	CmdNextSubpass()
 	CmdEndRenderPass()
@@ -145,8 +147,16 @@ func (b *buf) CmdDraw(vertexCount, instanceCount, firstVertex, firstInstance int
 	b.ptr.CmdDraw(vertexCount, instanceCount, uint32(firstVertex), uint32(firstInstance))
 }
 
+func (b *buf) CmdDrawIndirect(buffer buffer.T, offset, count, stride int) {
+	b.ptr.CmdDrawIndirect(buffer.Ptr(), offset, count, stride)
+}
+
 func (b *buf) CmdDrawIndexed(indexCount, instanceCount, firstIndex, vertexOffset, firstInstance int) {
 	b.ptr.CmdDrawIndexed(indexCount, instanceCount, uint32(firstIndex), vertexOffset, uint32(firstInstance))
+}
+
+func (b *buf) CmdDrawIndexedIndirect(buffer buffer.T, offset, count, stride int) {
+	b.ptr.CmdDrawIndexedIndirect(buffer.Ptr(), offset, count, stride)
 }
 
 func (b *buf) CmdBeginRenderPass(pass renderpass.T, framebuffer framebuffer.T) {

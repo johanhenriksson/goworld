@@ -147,6 +147,7 @@ func (p *PostProcessPass) Record(cmds command.Recorder, args render.Args, scene 
 		desc.Bind(cmd)
 		desc.Descriptors().LUT.Set(lutTex)
 
+		quad.Bind(cmd)
 		quad.Draw(cmd, 0)
 		cmd.CmdEndRenderPass()
 	})

@@ -9,7 +9,7 @@ import (
 	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
-type MeshCache T[vertex.Mesh, Mesh]
+type MeshCache T[vertex.Mesh, *GpuMesh]
 
 type meshCache struct {
 	device device.T
@@ -17,14 +17,14 @@ type meshCache struct {
 }
 
 func NewMeshCache(device device.T, worker command.Worker) MeshCache {
-	return New[vertex.Mesh, Mesh](&meshCache{
+	return New[vertex.Mesh, *GpuMesh](&meshCache{
 		device: device,
 		worker: worker,
 	})
 }
 
-func (m *meshCache) Instantiate(mesh vertex.Mesh, callback func(Mesh)) {
-	var cached *cachedMesh
+func (m *meshCache) Instantiate(mesh vertex.Mesh, callback func(*GpuMesh)) {
+	var cached *GpuMesh
 	var vtxStage, idxStage buffer.T
 
 	var idxType core1_0.IndexType
@@ -37,12 +37,14 @@ func (m *meshCache) Instantiate(mesh vertex.Mesh, callback func(Mesh)) {
 		panic("illegal index type")
 	}
 
-	cached = &cachedMesh{
-		key:        mesh.Key(),
-		indexCount: mesh.IndexCount(),
-		idxType:    idxType,
+	cached = &GpuMesh{
+		Key:          mesh.Key(),
+		IndexCount:   mesh.IndexCount(),
+		IndexType:    idxType,
+		IndexOffset:  0,
+		VertexOffset: 0,
 	}
-	if cached.indexCount == 0 {
+	if cached.IndexCount == 0 {
 		// special case for empty meshes
 		callback(cached)
 		return
@@ -62,13 +64,15 @@ func (m *meshCache) Instantiate(mesh vertex.Mesh, callback func(Mesh)) {
 		idxStage.Flush()
 
 		// allocate buffers
-		cached.vertices = buffer.NewRemote(m.device, mesh.Key()+":vertex", vtxSize, core1_0.BufferUsageVertexBuffer)
-		cached.indices = buffer.NewRemote(m.device, mesh.Key()+":index", idxSize, core1_0.BufferUsageIndexBuffer)
+		vtxBuffer := buffer.NewRemote(m.device, mesh.Key()+":vertex", vtxSize, core1_0.BufferUsageVertexBuffer)
+		idxBuffer := buffer.NewRemote(m.device, mesh.Key()+":index", idxSize, core1_0.BufferUsageIndexBuffer)
+		cached.Vertices = buffer.EntireBuffer(vtxBuffer)
+		cached.Indices = buffer.EntireBuffer(idxBuffer)
 
-		cmd.CmdCopyBuffer(vtxStage, cached.vertices, core1_0.BufferCopy{
+		cmd.CmdCopyBuffer(vtxStage, cached.Vertices.Buffer(), core1_0.BufferCopy{
 			Size: vtxSize,
 		})
-		cmd.CmdCopyBuffer(idxStage, cached.indices, core1_0.BufferCopy{
+		cmd.CmdCopyBuffer(idxStage, cached.Indices.Buffer(), core1_0.BufferCopy{
 			Size: idxSize,
 		})
 	})
@@ -83,16 +87,9 @@ func (m *meshCache) Instantiate(mesh vertex.Mesh, callback func(Mesh)) {
 	})
 }
 
-func (m *meshCache) Delete(mesh Mesh) {
-	vkmesh := mesh.(*cachedMesh)
-	if vkmesh.vertices != nil {
-		vkmesh.vertices.Destroy()
-		vkmesh.vertices = nil
-	}
-	if vkmesh.indices != nil {
-		vkmesh.indices.Destroy()
-		vkmesh.indices = nil
-	}
+func (m *meshCache) Delete(mesh *GpuMesh) {
+	mesh.Vertices.Buffer().Destroy()
+	mesh.Indices.Buffer().Destroy()
 }
 
 func (m *meshCache) Destroy() {}

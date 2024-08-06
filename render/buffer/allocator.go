@@ -18,6 +18,10 @@ type Block struct {
 	offset int
 }
 
+func EntireBuffer(buffer T) Block {
+	return Block{buffer, buffer.Size(), 0}
+}
+
 func (b *Block) Buffer() T   { return b.buffer }
 func (b *Block) Size() int   { return b.size }
 func (b *Block) Offset() int { return b.offset }

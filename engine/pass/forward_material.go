@@ -56,11 +56,6 @@ func (m *ForwardMaterial) Bind(cmds command.Recorder) {
 	})
 }
 
-func (m *ForwardMaterial) End() {
-	m.Objects.Flush(m.Instance.Descriptors().Objects)
-	m.Textures.Flush()
-}
-
 func (m *ForwardMaterial) Draw(cmds command.Recorder, msh mesh.Mesh) {
 	vkmesh, meshReady := m.Meshes.TryFetch(msh.Mesh().Get())
 	if !meshReady {
@@ -76,8 +71,17 @@ func (m *ForwardMaterial) Draw(cmds command.Recorder, msh mesh.Mesh) {
 	})
 
 	cmds.Record(func(cmd command.Buffer) {
+		vkmesh.Bind(cmd)
 		vkmesh.Draw(cmd, index)
 	})
+}
+
+func (m *ForwardMaterial) Unbind(cmds command.Recorder) {
+}
+
+func (m *ForwardMaterial) End() {
+	m.Objects.Flush(m.Instance.Descriptors().Objects)
+	m.Textures.Flush()
 }
 
 func (m *ForwardMaterial) Destroy() {

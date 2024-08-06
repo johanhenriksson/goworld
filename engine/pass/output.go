@@ -135,6 +135,7 @@ func (p *OutputPass) Record(cmds command.Recorder, args render.Args, scene objec
 	cmds.Record(func(cmd command.Buffer) {
 		cmd.CmdBeginRenderPass(p.pass, p.fbufs[args.Frame])
 		p.desc[args.Frame].Bind(cmd)
+		quad.Bind(cmd)
 		quad.Draw(cmd, 0)
 		cmd.CmdEndRenderPass()
 	})
