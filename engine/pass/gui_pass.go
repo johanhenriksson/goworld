@@ -217,6 +217,7 @@ func (p *GuiPass) Record(cmds command.Recorder, args render.Args, scene object.C
 	cmds.Record(func(cmd command.Buffer) {
 		cmd.CmdBeginRenderPass(p.pass, p.fbuf[args.Frame])
 		mat.Bind(cmd)
+		mesh.Bind(cmd)
 		mesh.DrawInstanced(cmd, 0, len(qb.Data))
 		cmd.CmdEndRenderPass()
 	})

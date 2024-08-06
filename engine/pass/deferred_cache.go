@@ -1,6 +1,8 @@
 package pass
 
 import (
+	"fmt"
+
 	"github.com/johanhenriksson/goworld/engine/uniform"
 	"github.com/johanhenriksson/goworld/render/cache"
 	"github.com/johanhenriksson/goworld/render/descriptor"
@@ -81,6 +83,9 @@ func (m *DeferredMatCache) Instantiate(def *material.Def, callback func([]Materi
 			Objects:  NewObjectBuffer(instance.Descriptors().Objects.Size),
 			Textures: textures,
 			Meshes:   m.app.Meshes(),
+			Commands: cache.NewIndirectDrawBuffer(m.app.Device(),
+				fmt.Sprintf("DeferredIndirectCommands:%d", i),
+				instance.Descriptors().Objects.Size),
 		}
 	}
 
@@ -92,5 +97,7 @@ func (m *DeferredMatCache) Destroy() {
 }
 
 func (m *DeferredMatCache) Delete(mat []Material) {
-	mat[0].Destroy()
+	for _, m := range mat {
+		m.Destroy()
+	}
 }

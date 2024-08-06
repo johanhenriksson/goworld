@@ -110,9 +110,18 @@ func (m *Material[D]) TextureSlots() []texture.Slot {
 }
 
 func (m *Material[D]) Destroy() {
-	m.dlayout.Destroy()
-	m.pipe.Destroy()
-	m.layout.Destroy()
+	if m.dlayout != nil {
+		m.dlayout.Destroy()
+		m.dlayout = nil
+	}
+	if m.layout != nil {
+		m.layout.Destroy()
+		m.layout = nil
+	}
+	if m.pipe != nil {
+		m.pipe.Destroy()
+		m.pipe = nil
+	}
 }
 
 func (m *Material[D]) Instantiate(pool descriptor.Pool) *Instance[D] {

@@ -68,8 +68,8 @@ func (d *UniformArray[K]) write() {
 		BufferInfo: util.Map(util.Range(0, d.Size, 1), func(i int) core1_0.DescriptorBufferInfo {
 			return core1_0.DescriptorBufferInfo{
 				Buffer: d.buffer.Ptr(),
-				Offset: i * d.buffer.Element(),
-				Range:  d.buffer.Element(),
+				Offset: i * d.buffer.Stride(),
+				Range:  d.buffer.Stride(),
 			}
 		}),
 	})

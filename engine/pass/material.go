@@ -20,9 +20,13 @@ type Material interface {
 	ID() material.ID
 	Destroy()
 
-	// Begin is called prior to drawing, once per frame.
+	// Begin is called prior to recording, once per frame.
 	// Its purpose is to clear object buffers and set up per-frame data such as cameras & lighting.
 	Begin(uniform.Camera, []light.T)
+
+	// End is called after all draw groups have been processed.
+	// It runs once per frame and is primarily responsible for flushing uniform buffers.
+	End()
 
 	// Bind is called just prior to recording draw calls.
 	// Its called once for each group, and may be called multiple times each frame.
@@ -34,9 +38,8 @@ type Material interface {
 	// as well as issuing the draw call.
 	Draw(command.Recorder, mesh.Mesh)
 
-	// End is called after all draw groups have been processed.
-	// It runs once per frame and is primarily responsible for flushing uniform buffers.
-	End()
+	// Unbind is called after recording all draw calls for the group.
+	Unbind(command.Recorder)
 }
 
 func AssignMeshTextures(samplers cache.SamplerCache, msh mesh.Mesh, slots []texture.Slot) uniform.TextureIds {
