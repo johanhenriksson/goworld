@@ -152,6 +152,11 @@ func (p *shadowpass) Record(cmds command.Recorder, args render.Args, scene objec
 		Where(func(lit light.T) bool { return lit.Type() == light.TypeDirectional && lit.CastShadows() }).
 		Collect(scene)
 
+	meshes := p.meshQuery.
+		Reset().
+		Where(castsShadows).
+		Collect(scene)
+
 	for _, light := range lights {
 		shadowmap, mapExists := p.shadowmaps[light]
 		if !mapExists {
@@ -160,17 +165,12 @@ func (p *shadowpass) Record(cmds command.Recorder, args render.Args, scene objec
 
 		for index, cascade := range shadowmap.Cascades {
 			camera := light.ShadowProjection(index)
-
 			frame := cascade.Frame
 			cmds.Record(func(cmd command.Buffer) {
 				cmd.CmdBeginRenderPass(p.pass, frame)
 			})
 
-			// todo: filter only meshes that cast shadows
-			meshes := p.meshQuery.
-				Reset().
-				Where(castsShadows).
-				Collect(scene)
+			// todo: frustum cull meshes using light frustum
 
 			groups := MaterialGroups(cascade.Mats, args.Frame, meshes)
 			groups.Draw(cmds, camera, nil)

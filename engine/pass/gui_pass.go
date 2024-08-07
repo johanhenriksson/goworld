@@ -173,7 +173,6 @@ func (p *GuiPass) Record(cmds command.Recorder, args render.Args, scene object.C
 		Time:     args.Time,
 		Delta:    args.Delta,
 		Commands: cmds,
-		Meshes:   p.app.Meshes(),
 		Textures: textures,
 		Viewport: render.Screen{
 			Width:  int(size.X),

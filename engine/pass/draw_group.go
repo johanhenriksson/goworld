@@ -18,8 +18,6 @@ type DrawGroups []DrawGroup
 
 func (groups DrawGroups) Draw(cmds command.Recorder, camera uniform.Camera, lights []light.T) {
 	for _, group := range groups {
-		// there could be multiple instances of the same material
-		// however, as long as there are no calls in between draws we should be okay
 		group.Material.Begin(camera, lights)
 	}
 
@@ -28,11 +26,10 @@ func (groups DrawGroups) Draw(cmds command.Recorder, camera uniform.Camera, ligh
 		for _, msh := range group.Meshes {
 			group.Material.Draw(cmds, msh)
 		}
+		group.Material.Unbind(cmds)
 	}
 
 	for _, group := range groups {
-		// can happen multiple times - similar to BeginFrame it should be ok
-		// it is wasted work though
 		group.Material.End()
 	}
 }
