@@ -88,6 +88,9 @@ func (m *meshCache) Instantiate(mesh vertex.Mesh, callback func(*GpuMesh)) {
 }
 
 func (m *meshCache) Delete(mesh *GpuMesh) {
+	if mesh.IndexCount == 0 {
+		return
+	}
 	mesh.Vertices.Buffer().Destroy()
 	mesh.Indices.Buffer().Destroy()
 }

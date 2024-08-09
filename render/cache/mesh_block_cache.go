@@ -113,8 +113,15 @@ func (m *meshBlockCache) Instantiate(mesh vertex.Mesh, callback func(*GpuMesh)) 
 }
 
 func (m *meshBlockCache) Delete(mesh *GpuMesh) {
-	m.vtxAlloc.Free(mesh.Vertices)
-	m.idxAlloc.Free(mesh.Indices)
+	if mesh.IndexCount == 0 {
+		return
+	}
+	if err := m.vtxAlloc.Free(mesh.Vertices); err != nil {
+		panic(err)
+	}
+	if err := m.idxAlloc.Free(mesh.Indices); err != nil {
+		panic(err)
+	}
 }
 
 func (m *meshBlockCache) Destroy() {
