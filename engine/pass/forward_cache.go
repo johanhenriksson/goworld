@@ -1,6 +1,8 @@
 package pass
 
 import (
+	"fmt"
+
 	"github.com/johanhenriksson/goworld/engine/uniform"
 	"github.com/johanhenriksson/goworld/render/cache"
 	"github.com/johanhenriksson/goworld/render/descriptor"
@@ -90,6 +92,9 @@ func (m *ForwardMatCache) Instantiate(def *material.Def, callback func([]Materia
 			Shadows:  NewShadowCache(textures, m.lookup),
 			Textures: textures,
 			Meshes:   m.app.Meshes(),
+			Commands: cache.NewIndirectDrawBuffer(m.app.Device(),
+				fmt.Sprintf("ForwardCommands:%d", i),
+				instance.Descriptors().Objects.Size),
 		}
 	}
 
@@ -101,5 +106,7 @@ func (m *ForwardMatCache) Destroy() {
 }
 
 func (m *ForwardMatCache) Delete(mat []Material) {
-	mat[0].Destroy()
+	for _, m := range mat {
+		m.Destroy()
+	}
 }
