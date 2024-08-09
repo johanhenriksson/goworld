@@ -1,20 +1,19 @@
-package cache
+package command
 
 import (
 	"github.com/johanhenriksson/goworld/render/buffer"
-	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/device"
 
 	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
 type IndirectDrawBuffer struct {
-	commands buffer.Array[command.DrawIndirectIndexed]
+	commands buffer.Array[DrawIndirectIndexed]
 	count    int
 }
 
 func NewIndirectDrawBuffer(device device.T, key string, size int) *IndirectDrawBuffer {
-	cmds := buffer.NewArray[command.DrawIndirectIndexed](device, buffer.Args{
+	cmds := buffer.NewArray[DrawIndirectIndexed](device, buffer.Args{
 		Key:  key,
 		Size: size,
 		Usage: core1_0.BufferUsageStorageBuffer | core1_0.BufferUsageIndirectBuffer |
@@ -31,7 +30,13 @@ func (i *IndirectDrawBuffer) BeginDrawIndirect() {
 }
 
 func (i *IndirectDrawBuffer) DrawIndexed(indexCount, firstIndex, vertexOffset, firstInstance, instanceCount int) {
-	i.commands.Set(i.count, command.DrawIndirectIndexed{
+	if indexCount == 0 {
+		return
+	}
+	if instanceCount == 0 {
+		return
+	}
+	i.commands.Set(i.count, DrawIndirectIndexed{
 		IndexCount:    uint32(indexCount),
 		InstanceCount: uint32(instanceCount),
 		FirstIndex:    uint32(firstIndex),
@@ -41,8 +46,13 @@ func (i *IndirectDrawBuffer) DrawIndexed(indexCount, firstIndex, vertexOffset, f
 	i.count++
 }
 
-func (i *IndirectDrawBuffer) EndDrawIndirect(cmd command.Buffer) {
+func (i *IndirectDrawBuffer) EndDrawIndirect(cmd Buffer) {
+	if i.count == 0 {
+		return
+	}
+
 	// flush?
+
 	cmd.CmdDrawIndexedIndirect(i.commands, 0, i.count, i.commands.Stride())
 }
 

@@ -1,8 +1,11 @@
 package pass
 
 import (
+	"fmt"
+
 	"github.com/johanhenriksson/goworld/engine/uniform"
 	"github.com/johanhenriksson/goworld/render/cache"
+	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/descriptor"
 	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/renderpass"
@@ -75,6 +78,9 @@ func (m *LineMatCache) Instantiate(def *material.Def, callback func([]Material))
 			Instance: instance,
 			Objects:  NewObjectBuffer(desc.Objects.Size),
 			Meshes:   m.app.Meshes(),
+			Commands: command.NewIndirectDrawBuffer(m.app.Device(),
+				fmt.Sprintf("LineCommands:%d", i),
+				desc.Objects.Size),
 		}
 	}
 
@@ -85,5 +91,7 @@ func (m *LineMatCache) Destroy() {
 }
 
 func (m *LineMatCache) Delete(mat []Material) {
-	mat[0].Destroy()
+	for _, m := range mat {
+		m.Destroy()
+	}
 }

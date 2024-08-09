@@ -5,6 +5,7 @@ import (
 
 	"github.com/johanhenriksson/goworld/engine/uniform"
 	"github.com/johanhenriksson/goworld/render/cache"
+	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/descriptor"
 	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/renderpass"
@@ -83,7 +84,7 @@ func (m *DeferredMatCache) Instantiate(def *material.Def, callback func([]Materi
 			Objects:  NewObjectBuffer(instance.Descriptors().Objects.Size),
 			Textures: textures,
 			Meshes:   m.app.Meshes(),
-			Commands: cache.NewIndirectDrawBuffer(m.app.Device(),
+			Commands: command.NewIndirectDrawBuffer(m.app.Device(),
 				fmt.Sprintf("DeferredCommands:%d", i),
 				instance.Descriptors().Objects.Size),
 		}

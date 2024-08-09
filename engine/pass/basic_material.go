@@ -23,6 +23,7 @@ type BasicMaterial struct {
 	Instance *material.Instance[*BasicDescriptors]
 	Objects  *ObjectBuffer
 	Meshes   cache.MeshCache
+	Commands *command.IndirectDrawBuffer
 
 	id material.ID
 }
@@ -39,26 +40,30 @@ func (m *BasicMaterial) Begin(camera uniform.Camera, lights []light.T) {
 func (m *BasicMaterial) Bind(cmds command.Recorder) {
 	cmds.Record(func(cmd command.Buffer) {
 		m.Instance.Bind(cmd)
+		m.Commands.BeginDrawIndirect()
 	})
 }
 
 func (m *BasicMaterial) Draw(cmds command.Recorder, msh mesh.Mesh) {
-	vkmesh, meshReady := m.Meshes.TryFetch(msh.Mesh().Get())
+	gpuMesh, meshReady := m.Meshes.TryFetch(msh.Mesh().Get())
 	if !meshReady {
 		return
 	}
 
-	index := m.Objects.Store(uniform.Object{
+	instanceId := m.Objects.Store(uniform.Object{
 		Model: msh.Transform().Matrix(),
 	})
 
 	cmds.Record(func(cmd command.Buffer) {
-		vkmesh.Bind(cmd)
-		vkmesh.Draw(cmd, index)
+		gpuMesh.Bind(cmd)
+		m.Commands.DrawIndexed(gpuMesh.IndexCount, gpuMesh.IndexOffset, gpuMesh.VertexOffset, instanceId, 1)
 	})
 }
 
 func (m *BasicMaterial) Unbind(cmds command.Recorder) {
+	cmds.Record(func(cmd command.Buffer) {
+		m.Commands.EndDrawIndirect(cmd)
+	})
 }
 
 func (m *BasicMaterial) End() {
@@ -67,4 +72,5 @@ func (m *BasicMaterial) End() {
 
 func (m *BasicMaterial) Destroy() {
 	m.Instance.Material().Destroy()
+	m.Commands.Destroy()
 }
