@@ -25,6 +25,7 @@ type ForwardMaterial struct {
 	Shadows  *ShadowCache
 	Textures cache.SamplerCache
 	Meshes   cache.MeshCache
+	Commands *cache.IndirectDrawBuffer
 
 	id material.ID
 }
@@ -53,11 +54,12 @@ func (m *ForwardMaterial) Begin(camera uniform.Camera, lights []light.T) {
 func (m *ForwardMaterial) Bind(cmds command.Recorder) {
 	cmds.Record(func(cmd command.Buffer) {
 		m.Instance.Bind(cmd)
+		m.Commands.BeginDrawIndirect()
 	})
 }
 
 func (m *ForwardMaterial) Draw(cmds command.Recorder, msh mesh.Mesh) {
-	vkmesh, meshReady := m.Meshes.TryFetch(msh.Mesh().Get())
+	gpuMesh, meshReady := m.Meshes.TryFetch(msh.Mesh().Get())
 	if !meshReady {
 		return
 	}
@@ -65,18 +67,21 @@ func (m *ForwardMaterial) Draw(cmds command.Recorder, msh mesh.Mesh) {
 	textures := m.Instance.Material().TextureSlots()
 	textureIds := AssignMeshTextures(m.Textures, msh, textures)
 
-	index := m.Objects.Store(uniform.Object{
+	instanceId := m.Objects.Store(uniform.Object{
 		Model:    msh.Transform().Matrix(),
 		Textures: textureIds,
 	})
 
 	cmds.Record(func(cmd command.Buffer) {
-		vkmesh.Bind(cmd)
-		vkmesh.Draw(cmd, index)
+		gpuMesh.Bind(cmd)
+		m.Commands.DrawIndexed(gpuMesh.IndexCount, gpuMesh.IndexOffset, gpuMesh.VertexOffset, instanceId, 1)
 	})
 }
 
 func (m *ForwardMaterial) Unbind(cmds command.Recorder) {
+	cmds.Record(func(cmd command.Buffer) {
+		m.Commands.EndDrawIndirect(cmd)
+	})
 }
 
 func (m *ForwardMaterial) End() {
@@ -86,4 +91,5 @@ func (m *ForwardMaterial) End() {
 
 func (m *ForwardMaterial) Destroy() {
 	m.Instance.Material().Destroy()
+	m.Commands.Destroy()
 }
