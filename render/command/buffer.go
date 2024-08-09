@@ -22,14 +22,15 @@ type Buffer interface {
 	Begin()
 	End()
 
+	DrawBuffer
+	DrawIndexedBuffer
+
 	CmdCopyBuffer(src, dst buffer.T, regions ...core1_0.BufferCopy)
 	CmdBindGraphicsPipeline(pipe pipeline.T)
 	CmdBindGraphicsDescriptor(sets descriptor.Set)
 	CmdBindVertexBuffer(vtx buffer.T, offset int)
 	CmdBindIndexBuffers(idx buffer.T, offset int, kind core1_0.IndexType)
-	CmdDraw(vertexCount, instanceCount, firstVertex, firstInstance int)
 	CmdDrawIndirect(buffer buffer.T, offset, count, stride int)
-	CmdDrawIndexed(indexCount, instanceCount, firstIndex, vertexOffset, firstInstance int)
 	CmdDrawIndexedIndirect(buffer buffer.T, offset, count, stride int)
 	CmdBeginRenderPass(pass renderpass.T, framebuffer framebuffer.T)
 	CmdNextSubpass()
@@ -143,16 +144,25 @@ func (b *buf) CmdBindIndexBuffers(idx buffer.T, offset int, kind core1_0.IndexTy
 	b.index = binding
 }
 
-func (b *buf) CmdDraw(vertexCount, instanceCount, firstVertex, firstInstance int) {
-	b.ptr.CmdDraw(vertexCount, instanceCount, uint32(firstVertex), uint32(firstInstance))
+func (b *buf) CmdDraw(cmd Draw) {
+	b.ptr.CmdDraw(
+		int(cmd.VertexCount),
+		int(cmd.InstanceCount),
+		uint32(cmd.VertexOffset),
+		uint32(cmd.InstanceOffset))
 }
 
 func (b *buf) CmdDrawIndirect(buffer buffer.T, offset, count, stride int) {
 	b.ptr.CmdDrawIndirect(buffer.Ptr(), offset, count, stride)
 }
 
-func (b *buf) CmdDrawIndexed(indexCount, instanceCount, firstIndex, vertexOffset, firstInstance int) {
-	b.ptr.CmdDrawIndexed(indexCount, instanceCount, uint32(firstIndex), vertexOffset, uint32(firstInstance))
+func (b *buf) CmdDrawIndexed(cmd DrawIndexed) {
+	b.ptr.CmdDrawIndexed(
+		int(cmd.IndexCount),
+		int(cmd.InstanceCount),
+		uint32(cmd.IndexOffset),
+		int(cmd.VertexOffset),
+		uint32(cmd.InstanceOffset))
 }
 
 func (b *buf) CmdDrawIndexedIndirect(buffer buffer.T, offset, count, stride int) {
