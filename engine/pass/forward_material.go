@@ -75,7 +75,7 @@ func (m *ForwardMaterial) Draw(cmds command.Recorder, msh mesh.Mesh) {
 
 	cmds.Record(func(cmd command.Buffer) {
 		gpuMesh.Bind(cmd)
-		m.Commands.DrawIndexed(gpuMesh.IndexCount, gpuMesh.IndexOffset, gpuMesh.VertexOffset, instanceId, 1)
+		gpuMesh.Draw(m.Commands, instanceId)
 	})
 }
 

@@ -45,7 +45,7 @@ func (m *DeferredMaterial) Bind(cmds command.Recorder) {
 }
 
 func (m *DeferredMaterial) Draw(cmds command.Recorder, msh mesh.Mesh) {
-	vkmesh, meshReady := m.Meshes.TryFetch(msh.Mesh().Get())
+	gpuMesh, meshReady := m.Meshes.TryFetch(msh.Mesh().Get())
 	if !meshReady {
 		return
 	}
@@ -59,8 +59,8 @@ func (m *DeferredMaterial) Draw(cmds command.Recorder, msh mesh.Mesh) {
 	})
 
 	cmds.Record(func(cmd command.Buffer) {
-		vkmesh.Bind(cmd)
-		m.Commands.DrawIndexed(vkmesh.IndexCount, vkmesh.IndexOffset, vkmesh.VertexOffset, instanceId, 1)
+		gpuMesh.Bind(cmd)
+		gpuMesh.Draw(m.Commands, instanceId)
 	})
 }
 

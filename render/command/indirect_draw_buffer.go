@@ -8,13 +8,15 @@ import (
 )
 
 type IndirectDrawBuffer struct {
-	commands    buffer.Array[DrawIndirectIndexed]
+	commands    buffer.Array[DrawIndexed]
 	nextIndex   int
 	batchOffset int
 }
 
+var _ DrawIndexedBuffer = (*IndirectDrawBuffer)(nil)
+
 func NewIndirectDrawBuffer(device device.T, key string, size int) *IndirectDrawBuffer {
-	cmds := buffer.NewArray[DrawIndirectIndexed](device, buffer.Args{
+	cmds := buffer.NewArray[DrawIndexed](device, buffer.Args{
 		Key:  key,
 		Size: size,
 		Usage: core1_0.BufferUsageStorageBuffer | core1_0.BufferUsageIndirectBuffer |
@@ -35,20 +37,14 @@ func (i *IndirectDrawBuffer) BeginDrawIndirect() {
 	i.batchOffset = i.nextIndex
 }
 
-func (i *IndirectDrawBuffer) DrawIndexed(indexCount, firstIndex, vertexOffset, firstInstance, instanceCount int) {
-	if indexCount == 0 {
+func (i *IndirectDrawBuffer) CmdDrawIndexed(cmd DrawIndexed) {
+	if cmd.IndexCount == 0 {
 		return
 	}
-	if instanceCount == 0 {
+	if cmd.InstanceCount == 0 {
 		return
 	}
-	i.commands.Set(i.nextIndex, DrawIndirectIndexed{
-		IndexCount:    uint32(indexCount),
-		InstanceCount: uint32(instanceCount),
-		FirstIndex:    uint32(firstIndex),
-		VertexOffset:  int32(vertexOffset),
-		FirstInstance: uint32(firstInstance),
-	})
+	i.commands.Set(i.nextIndex, cmd)
 	i.nextIndex++
 }
 

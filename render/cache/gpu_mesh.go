@@ -30,11 +30,11 @@ func (m *GpuMesh) Bind(cmd command.Buffer) {
 	cmd.CmdBindIndexBuffers(m.Indices.Buffer(), 0, m.IndexType)
 }
 
-func (m *GpuMesh) Draw(cmd command.Buffer, instanceOffset int) {
+func (m *GpuMesh) Draw(cmd command.DrawIndexedBuffer, instanceOffset int) {
 	m.DrawInstanced(cmd, instanceOffset, 1)
 }
 
-func (m *GpuMesh) DrawInstanced(cmd command.Buffer, instanceOffset, instanceCount int) {
+func (m *GpuMesh) DrawInstanced(cmd command.DrawIndexedBuffer, instanceOffset, instanceCount int) {
 	if m.IndexCount <= 0 {
 		// nothing to draw
 		return
@@ -45,5 +45,11 @@ func (m *GpuMesh) DrawInstanced(cmd command.Buffer, instanceOffset, instanceCoun
 	}
 
 	// index of the object properties in the ssbo
-	cmd.CmdDrawIndexed(m.IndexCount, instanceCount, m.IndexOffset, m.VertexOffset, instanceOffset)
+	cmd.CmdDrawIndexed(command.DrawIndexed{
+		IndexCount:     uint32(m.IndexCount),
+		InstanceCount:  uint32(instanceCount),
+		IndexOffset:    uint32(m.IndexOffset),
+		VertexOffset:   int32(m.VertexOffset),
+		InstanceOffset: uint32(instanceOffset),
+	})
 }
