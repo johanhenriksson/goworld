@@ -22,7 +22,7 @@ type DeferredMaterial struct {
 	Objects  *ObjectBuffer
 	Textures cache.SamplerCache
 	Meshes   cache.MeshCache
-	Commands *cache.IndirectDrawBuffer
+	Commands *command.IndirectDrawBuffer
 
 	id material.ID
 }

@@ -25,7 +25,7 @@ type ForwardMaterial struct {
 	Shadows  *ShadowCache
 	Textures cache.SamplerCache
 	Meshes   cache.MeshCache
-	Commands *cache.IndirectDrawBuffer
+	Commands *command.IndirectDrawBuffer
 
 	id material.ID
 }
