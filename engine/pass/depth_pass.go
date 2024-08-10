@@ -14,10 +14,10 @@ import (
 )
 
 type DepthPass struct {
-	gbuffer GeometryBuffer
-	app     vulkan.App
-	pass    renderpass.T
-	fbuf    framebuffer.Array
+	app   vulkan.App
+	depth vulkan.Target
+	pass  renderpass.T
+	fbuf  framebuffer.Array
 
 	materials MaterialCache
 	meshQuery *object.Query[mesh.Mesh]
@@ -28,28 +28,9 @@ var _ Pass = &ForwardPass{}
 func NewDepthPass(
 	app vulkan.App,
 	depth vulkan.Target,
-	gbuffer GeometryBuffer,
 ) *DepthPass {
 	pass := renderpass.New(app.Device(), renderpass.Args{
 		Name: "Depth",
-		ColorAttachments: []attachment.Color{
-			{
-				Name:        NormalsAttachment,
-				LoadOp:      core1_0.AttachmentLoadOpClear,
-				StoreOp:     core1_0.AttachmentStoreOpStore,
-				FinalLayout: core1_0.ImageLayoutShaderReadOnlyOptimal,
-
-				Image: attachment.FromImageArray(gbuffer.Normal()),
-			},
-			{
-				Name:        PositionAttachment,
-				LoadOp:      core1_0.AttachmentLoadOpClear,
-				StoreOp:     core1_0.AttachmentStoreOpStore,
-				FinalLayout: core1_0.ImageLayoutShaderReadOnlyOptimal,
-
-				Image: attachment.FromImageArray(gbuffer.Position()),
-			},
-		},
 		DepthAttachment: &attachment.Depth{
 			LoadOp:        core1_0.AttachmentLoadOpClear,
 			StencilLoadOp: core1_0.AttachmentLoadOpClear,
@@ -63,24 +44,22 @@ func NewDepthPass(
 			{
 				Name:  MainSubpass,
 				Depth: true,
-
-				ColorAttachments: []attachment.Name{NormalsAttachment, PositionAttachment},
 			},
 		},
 	})
 
-	fbuf, err := framebuffer.NewArray(gbuffer.Frames(), app.Device(), "depth", gbuffer.Width(), gbuffer.Height(), pass)
+	fbuf, err := framebuffer.NewArray(depth.Frames(), app.Device(), "depth", depth.Width(), depth.Height(), pass)
 	if err != nil {
 		panic(err)
 	}
 
 	return &DepthPass{
-		gbuffer: gbuffer,
-		app:     app,
-		pass:    pass,
-		fbuf:    fbuf,
+		app:   app,
+		depth: depth,
+		pass:  pass,
+		fbuf:  fbuf,
 
-		materials: NewDepthMaterialCache(app, pass, gbuffer.Frames()),
+		materials: NewDepthMaterialCache(app, pass, depth.Frames()),
 		meshQuery: object.NewQuery[mesh.Mesh](),
 	}
 }

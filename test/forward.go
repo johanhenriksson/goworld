@@ -41,7 +41,7 @@ func ForwardGraph(app vulkan.App, target vulkan.Target) graph.T {
 		}
 
 		// depth pre-pass
-		depthPass := g.Node(pass.NewDepthPass(app, depth, gbuffer))
+		depthPass := g.Node(pass.NewDepthPass(app, depth))
 
 		shadows := pass.NewShadowPass(app, output)
 		shadowNode := g.Node(shadows)

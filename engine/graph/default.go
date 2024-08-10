@@ -45,7 +45,7 @@ func Default(app vulkan.App, target vulkan.Target) T {
 		shadowNode := g.Node(shadows)
 
 		// depth pre-pass
-		depthPass := g.Node(pass.NewDepthPass(app, depth, gbuffer))
+		depthPass := g.Node(pass.NewDepthPass(app, depth))
 
 		// deferred geometry
 		// - wait for depth pass before fragment tests
