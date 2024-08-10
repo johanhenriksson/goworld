@@ -71,7 +71,6 @@ func Compile(path string, stage ShaderStage) ([]byte, error) {
 	cmd.Stdin = bytes.NewBuffer(source)
 	cmd.Stdout = bytecode
 	cmd.Stderr = errors
-	cmd.Dir = assets.Path
 
 	if err := cmd.Run(); err != nil {
 		if errors.Len() > 0 {
