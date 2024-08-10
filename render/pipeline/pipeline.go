@@ -48,7 +48,7 @@ func New(device device.T, args Args) T {
 	log.Println("  depth write:", args.DepthWrite)
 
 	log.Println("  attributes", args.Pointers)
-	attrs := pointersToVertexAttributes(args.Pointers, 0)
+	vertexInput := pointersToVertexInput(args.Pointers, 0)
 
 	subpass := args.Pass.Subpass(args.Subpass)
 	log.Println("  subpass:", subpass.Name, subpass.Index())
@@ -84,16 +84,7 @@ func New(device device.T, args Args) T {
 		Stages: modules,
 
 		// Vertex input state
-		VertexInputState: &core1_0.PipelineVertexInputStateCreateInfo{
-			VertexBindingDescriptions: []core1_0.VertexInputBindingDescription{
-				{
-					Binding:   0,
-					Stride:    args.Pointers.Stride(),
-					InputRate: core1_0.VertexInputRateVertex,
-				},
-			},
-			VertexAttributeDescriptions: attrs,
-		},
+		VertexInputState: vertexInput,
 
 		// Input assembly
 		InputAssemblyState: &core1_0.PipelineInputAssemblyStateCreateInfo{
@@ -212,7 +203,8 @@ func (p *pipeline) Destroy() {
 	p.ptr = nil
 }
 
-func pointersToVertexAttributes(ptrs vertex.Pointers, binding int) []core1_0.VertexInputAttributeDescription {
+func pointersToVertexInput(ptrs vertex.Pointers, binding int) *core1_0.PipelineVertexInputStateCreateInfo {
+	bindings := make([]core1_0.VertexInputBindingDescription, 0, 1)
 	attrs := make([]core1_0.VertexInputAttributeDescription, 0, len(ptrs))
 	for _, ptr := range ptrs {
 		if ptr.Binding < 0 {
@@ -225,7 +217,17 @@ func pointersToVertexAttributes(ptrs vertex.Pointers, binding int) []core1_0.Ver
 			Offset:   ptr.Offset,
 		})
 	}
-	return attrs
+	if len(attrs) > 0 {
+		bindings = append(bindings, core1_0.VertexInputBindingDescription{
+			Binding:   0,
+			Stride:    ptrs.Stride(),
+			InputRate: core1_0.VertexInputRateVertex,
+		})
+	}
+	return &core1_0.PipelineVertexInputStateCreateInfo{
+		VertexBindingDescriptions:   bindings,
+		VertexAttributeDescriptions: attrs,
+	}
 }
 
 type ptrType struct {

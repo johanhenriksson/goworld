@@ -15,7 +15,6 @@ import (
 	"github.com/johanhenriksson/goworld/render/renderpass"
 	"github.com/johanhenriksson/goworld/render/renderpass/attachment"
 	"github.com/johanhenriksson/goworld/render/shader"
-	"github.com/johanhenriksson/goworld/render/vertex"
 	"github.com/johanhenriksson/goworld/render/vulkan"
 
 	"github.com/vkngwrapper/core/v2/core1_0"
@@ -112,7 +111,6 @@ func NewGuiPass(app vulkan.App, target vulkan.Target) *GuiPass {
 	mat := material.New(app.Device(), material.Args{
 		Pass:       pass,
 		Shader:     app.Shaders().Fetch(shader.NewRef("ui_quad")),
-		Pointers:   vertex.ParsePointers(vertex.UI{}),
 		DepthTest:  true,
 		DepthWrite: true,
 	}, &GuiDescriptors{
