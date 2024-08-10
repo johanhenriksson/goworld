@@ -8,16 +8,11 @@ import (
 	"path/filepath"
 )
 
-type Server interface {
-	Read(key string) ([]byte, error)
-	Write(key string, data []byte) error
-}
-
 type LocalFilesystem struct {
 	root string
 }
 
-var _ Server = (*LocalFilesystem)(nil)
+var _ Filesystem = (*LocalFilesystem)(nil)
 
 func NewLocalFilesystem(root string) *LocalFilesystem {
 	return &LocalFilesystem{root: root}

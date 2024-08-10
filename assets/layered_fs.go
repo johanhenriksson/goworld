@@ -6,15 +6,17 @@ import (
 )
 
 type LayeredFilesystem struct {
-	layers []Server
+	layers []Filesystem
 }
 
-func NewLayeredFilesystem(layers ...Server) *LayeredFilesystem {
+var _ Filesystem = (*LayeredFilesystem)(nil)
+
+func NewLayeredFilesystem(layers ...Filesystem) *LayeredFilesystem {
 	return &LayeredFilesystem{layers: layers}
 }
 
 // Push adds a layer to the top of the filesystem stack
-func (fs *LayeredFilesystem) Push(layer Server) {
+func (fs *LayeredFilesystem) Push(layer Filesystem) {
 	fs.layers = slices.Insert(fs.layers, 0, layer)
 }
 
@@ -30,7 +32,7 @@ func (fs *LayeredFilesystem) Read(key string) ([]byte, error) {
 			return data, nil
 		}
 	}
-	return nil, ErrNotFound
+	return nil, fmt.Errorf("asset %s %w", key, ErrNotFound)
 }
 
 func (fs *LayeredFilesystem) Write(key string, data []byte) error {
