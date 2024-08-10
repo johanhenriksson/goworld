@@ -14,7 +14,7 @@ void main()
 {
 	vec2 texcoord0 = in_color.xy;
 	uint texture0 = object.textures[0];
-	vec4 albedo = texture(textures[texture0], texcoord0);
+	vec4 albedo = texture_array(textures, texture0, texcoord0);
 
 	int lightCount = lights.settings.Count;
 	vec3 lightColor = ambientLight(lights.settings, 1);

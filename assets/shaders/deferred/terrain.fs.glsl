@@ -18,7 +18,7 @@ vec4 sample_texture(uint index, float weight) {
 		return vec4(0);
 	}
 	uint texture_id = object.textures[index];
-	vec4 color = texture(textures[texture_id], texcoord);
+	vec4 color = texture_array(textures, texture_id, texcoord);
 	return weight * vec4(color.rgb, 1);
 }
 

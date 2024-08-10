@@ -50,7 +50,7 @@ void main()
 		border_factor = inside_f;
 	}
 
-	vec4 sample0 = texture(textures[quad.texture], in_texcoord);
+	vec4 sample0 = texture_array(textures, quad.texture, in_texcoord);
 	if(sample0.a == 0) {
 		discard;
 	}

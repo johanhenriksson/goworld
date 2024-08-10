@@ -20,7 +20,7 @@ void main()
 	vec2 t = vec2((in_texture_id + in_texcoord0.x) / tile_count, in_texcoord0.y);
 
 	vec4 tint = vec4(in_color.rgb * in_color.a, 1);
-	vec4 tex = vec4(texture(textures[texture0], t).rgb, 1);
+	vec4 tex = vec4(texture_array(textures, texture0, t).rgb, 1);
 	out_diffuse =tex * tint;
 
 	out_normal = pack_normal(in_normal);

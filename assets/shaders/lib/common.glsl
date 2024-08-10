@@ -13,8 +13,10 @@ struct Object {
 
 #define SAMPLER_ARRAY(idx,name) \
 	layout (binding = idx) uniform sampler2D[] name; \
-	float _shadow_texture(uint index, vec2 point) { return texture(name[index], point).r; } \
+	float _shadow_texture(uint index, vec2 point) { return texture(name[nonuniformEXT(index)], point).r; } \
 	vec2 _shadow_size(uint index) { return textureSize(name[index], 0).xy; }
+
+#define texture_array(name,index,point) texture(name[nonuniformEXT(index)], point)
 
 #define SAMPLER(idx,name) layout (binding = idx) uniform sampler2D tex_ ## name;
 
