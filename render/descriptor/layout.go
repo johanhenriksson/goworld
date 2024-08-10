@@ -59,6 +59,9 @@ func New[S Set](device device.T, set S, shader shader.T) SetLayoutTyped[S] {
 		flags := descriptor.BindingFlags()
 		bindFlags = append(bindFlags, flags)
 
+		// always allow updating while pending
+		flags = flags | ext_descriptor_indexing.DescriptorBindingUpdateUnusedWhilePending
+
 		if flags&ext_descriptor_indexing.DescriptorBindingUpdateAfterBind == ext_descriptor_indexing.DescriptorBindingUpdateAfterBind {
 			createFlags |= ext_descriptor_indexing.DescriptorSetLayoutCreateUpdateAfterBindPool
 		}
