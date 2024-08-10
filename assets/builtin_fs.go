@@ -2,21 +2,25 @@ package assets
 
 import (
 	"embed"
+	"errors"
 	"fmt"
 	"io"
+	"os"
 )
 
 //go:embed builtin/*
 var builtinFs embed.FS
 
-var BuiltinFilesystem = &builtinFilesystem{}
+var BuiltinFilesystem Filesystem = &builtinFilesystem{}
 
 type builtinFilesystem struct{}
 
 func (fs *builtinFilesystem) Read(key string) ([]byte, error) {
 	file, err := builtinFs.Open("builtin/" + key)
 	if err != nil {
-		return nil, err
+		if errors.Is(err, os.ErrNotExist) {
+			return nil, fmt.Errorf("asset %s %w", key, ErrNotFound)
+		}
 	}
 	return io.ReadAll(file)
 }

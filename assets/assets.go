@@ -9,7 +9,7 @@ import (
 var ErrNotFound = fmt.Errorf("not found")
 
 var Path string
-var server Server
+var assetFs Filesystem
 
 const AssetPathConfig = "ASSET_PATH"
 
@@ -26,18 +26,18 @@ func init() {
 
 	Path = FindFileInParents(assetPath, cwd)
 
-	server = NewLayeredFilesystem(
+	assetFs = NewLayeredFilesystem(
 		NewLocalFilesystem(Path),
 		BuiltinFilesystem,
 	)
 }
 
 func Read(key string) ([]byte, error) {
-	return server.Read(key)
+	return assetFs.Read(key)
 }
 
 func Write(key string, data []byte) error {
-	return server.Write(key, data)
+	return assetFs.Write(key, data)
 }
 
 func FindFileInParents(name, path string) string {
@@ -50,5 +50,9 @@ func FindFileInParents(name, path string) string {
 			return filepath.Join(path, name)
 		}
 	}
-	return FindFileInParents(name, filepath.Dir(path))
+	parentPath := filepath.Dir(path)
+	if parentPath == path {
+		return ""
+	}
+	return FindFileInParents(name, parentPath)
 }
