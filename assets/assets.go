@@ -2,34 +2,36 @@ package assets
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 )
 
 var ErrNotFound = fmt.Errorf("not found")
 
-var Path string
 var assetFs Filesystem
 
-const AssetPathConfig = "ASSET_PATH"
+const AssetFolderEnv = "ASSET_PATH"
 
 func init() {
+	layeredFs := NewLayeredFilesystem(BuiltinFilesystem)
+	assetFs = layeredFs
+
+	// look for a local asset path
+	assetFolderName := "assets"
+	if os.Getenv(AssetFolderEnv) != "" {
+		assetFolderName = os.Getenv(AssetFolderEnv)
+	}
 	cwd, err := os.Getwd()
 	if err != nil {
 		panic(err)
 	}
-
-	assetPath := "assets"
-	if os.Getenv(AssetPathConfig) != "" {
-		assetPath = os.Getenv(AssetPathConfig)
+	if localAssetPath, err := FindFileInParents(assetFolderName, cwd); err == nil {
+		log.Println("adding local file system layer rooted at", localAssetPath)
+		layeredFs.Push(NewLocalFilesystem(localAssetPath))
+	} else {
+		log.Println("no local asset path found")
 	}
-
-	Path = FindFileInParents(assetPath, cwd)
-
-	assetFs = NewLayeredFilesystem(
-		NewLocalFilesystem(Path),
-		BuiltinFilesystem,
-	)
 }
 
 func Read(key string) ([]byte, error) {
@@ -40,19 +42,19 @@ func Write(key string, data []byte) error {
 	return assetFs.Write(key, data)
 }
 
-func FindFileInParents(name, path string) string {
+func FindFileInParents(name, path string) (string, error) {
 	files, err := os.ReadDir(path)
 	if err != nil {
 		panic(err)
 	}
 	for _, file := range files {
 		if file.Name() == name {
-			return filepath.Join(path, name)
+			return filepath.Join(path, name), nil
 		}
 	}
 	parentPath := filepath.Dir(path)
 	if parentPath == path {
-		return ""
+		return "", ErrNotFound
 	}
 	return FindFileInParents(name, parentPath)
 }
