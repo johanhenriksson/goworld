@@ -45,7 +45,7 @@ func NewPointLightEditor(ctx *editor.Context, lit *light.Point) *PointLightEdito
 		Body:  physics.NewRigidBody(0),
 		Sprite: sprite.New(sprite.Args{
 			Size: vec2.New(1, 1),
-			Texture: texture.PathArgsRef("textures/ui/light.png", texture.Args{
+			Texture: texture.PathArgsRef("editor/sprites/light.png", texture.Args{
 				Filter: texture.FilterNearest,
 			}),
 		}),
