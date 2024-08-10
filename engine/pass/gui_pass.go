@@ -214,11 +214,29 @@ func (p *GuiPass) Record(cmds command.Recorder, args render.Args, scene object.C
 	})
 
 	// draw everything in a single batch
+	// todo: split into multiple batches to be able to use scissor test
+	// todo: use draw indirect
 	cmds.Record(func(cmd command.Buffer) {
 		cmd.CmdBeginRenderPass(p.pass, p.fbuf[args.Frame])
 		mat.Bind(cmd)
 		mesh.Bind(cmd)
-		mesh.DrawInstanced(cmd, 0, len(qb.Data))
+
+		cmd.CmdDrawIndexed(command.DrawIndexed{
+			// vertex offset must be 0
+			// the gui quad shader does not actually use any vertex attribute data.
+			// position/uv are hardcoded in the shader, and calculated used the vertex index.
+			VertexOffset: int32(0),
+
+			// the meshes index buffer is used normally.
+			// would be nice to draw without indexing so avoid using a mesh at all
+			IndexCount:  uint32(mesh.IndexCount),
+			IndexOffset: uint32(mesh.IndexOffset),
+
+			// run an instance for each quad
+			InstanceOffset: uint32(0),
+			InstanceCount:  uint32(len(qb.Data)),
+		})
+
 		cmd.CmdEndRenderPass()
 	})
 }
