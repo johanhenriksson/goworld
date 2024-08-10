@@ -24,5 +24,5 @@ void main()
 
     // gamma correct & write fragment
 	vec3 linearColor = pow(albedo.rgb, vec3(gamma));
-    out_diffuse = vec4(linearColor * lightColor, albedo.a);
+    out_diffuse = vec4(linearColor * lightColor, albedo.a+0.2);
 }

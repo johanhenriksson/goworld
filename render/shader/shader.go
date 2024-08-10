@@ -48,9 +48,10 @@ type shader struct {
 
 func New(device device.T, path string) T {
 	// todo: inputs & descriptors should be obtained from SPIR-V reflection
-	details, err := ReadDetails(fmt.Sprintf("shaders/%s.json", path))
+	detailsPath := fmt.Sprintf("shaders/%s.json", path)
+	details, err := ReadDetails(detailsPath)
 	if err != nil {
-		panic(fmt.Sprintf("failed to load shader details: %s", err))
+		panic(fmt.Sprintf("failed to load shader details %s: %s", detailsPath, err))
 	}
 
 	inputs, err := details.ParseInputs()

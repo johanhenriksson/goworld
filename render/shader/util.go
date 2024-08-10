@@ -7,12 +7,16 @@ import (
 	"log"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"unsafe"
 
 	"github.com/johanhenriksson/goworld/assets"
 )
 
 var ErrCompileFailed = errors.New("shader compilation error")
+
+var includePattern = regexp.MustCompile(`(?m:^#include\s+\"[^\"]*\"\s*$)`)
+var includeFilePattern = regexp.MustCompile(`#include\s+\"([^\"]*)\"`)
 
 // Disgusting hack that reinterprets a byte slice as a slice of uint32
 func sliceUint32(data []byte) []uint32 {
@@ -49,19 +53,17 @@ func Compile(path string, stage ShaderStage) ([]byte, error) {
 		stageflag = "-fshader-stage=compute"
 	}
 
-	source, err := assets.Read(path)
+	source, err := LoadSource(path, []string{"shaders"})
 	if err != nil {
 		return nil, err
 	}
 
 	// todo: check for glslc
-	includePath := filepath.Join(assets.Path, "shaders")
 	bytecode := &bytes.Buffer{}
 	errors := &bytes.Buffer{}
 	args := []string{
 		stageflag,
-		"-O",              // optimize SPIR-V
-		"-I", includePath, // include path
+		"-O",      // optimize SPIR-V
 		"-o", "-", // output file: standard out
 		"-", // input file: standard in
 	}
@@ -83,4 +85,50 @@ func Compile(path string, stage ShaderStage) ([]byte, error) {
 
 	log.Println("shader compiled successfully:", path)
 	return bytecode.Bytes(), nil
+}
+
+func LoadSource(path string, includePaths []string) ([]byte, error) {
+	source, err := assets.Read(path)
+	if errors.Is(err, assets.ErrNotFound) {
+		for _, includePath := range includePaths {
+			includePathFile := filepath.Join(includePath, path)
+			source, err = assets.Read(includePathFile)
+			if errors.Is(err, assets.ErrNotFound) {
+				continue
+			} else if err != nil {
+				return nil, err
+			}
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	// implement #include logic
+	for {
+		// find the next include statement
+		include := includePattern.FindIndex(source)
+		if include == nil {
+			break
+		}
+
+		// extract the file name
+		includeStatement := string(source[include[0]:include[1]])
+		includeFile := includeFilePattern.FindStringSubmatch(includeStatement)
+		if len(includeFile) != 2 {
+			return nil, fmt.Errorf("invalid include statement: %s", includeStatement)
+		}
+
+		// recursively load the included file
+		includeSource, err := LoadSource(includeFile[1], includePaths)
+		if err != nil {
+			return nil, err
+		}
+
+		// insert the included file into the source
+		source = bytes.Replace(source, []byte(includeStatement), includeSource, 1)
+	}
+
+	// return preprocessed source
+	return source, nil
 }
