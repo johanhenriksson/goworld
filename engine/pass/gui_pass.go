@@ -3,7 +3,6 @@ package pass
 import (
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/gui"
-	"github.com/johanhenriksson/goworld/gui/quad"
 	"github.com/johanhenriksson/goworld/gui/widget"
 	"github.com/johanhenriksson/goworld/math"
 	"github.com/johanhenriksson/goworld/math/vec2"
@@ -45,7 +44,6 @@ type GuiPass struct {
 	mat    []*material.Instance[*GuiDescriptors]
 	pass   renderpass.T
 	fbuf   framebuffer.Array
-	quad   quad.T
 
 	textures []cache.SamplerCache
 	quads    []*widget.QuadBuffer
@@ -131,8 +129,6 @@ func NewGuiPass(app vulkan.App, target vulkan.Target) *GuiPass {
 		},
 	}).InstantiateMany(app.Pool(), target.Frames())
 
-	mesh := quad.New("gui-quad", quad.Props{Size: vec2.One})
-
 	fbufs, err := framebuffer.NewArray(frames, app.Device(), "gui", target.Width(), target.Height(), pass)
 	if err != nil {
 		panic(err)
@@ -151,7 +147,6 @@ func NewGuiPass(app vulkan.App, target vulkan.Target) *GuiPass {
 		mat:      mat,
 		pass:     pass,
 		fbuf:     fbufs,
-		quad:     mesh,
 		textures: textures,
 		quads:    quads,
 		guiQuery: object.NewQuery[gui.Manager](),
@@ -164,8 +159,6 @@ func (p *GuiPass) Record(cmds command.Recorder, args render.Args, scene object.C
 	size := vec2.NewI(args.Viewport.Width, args.Viewport.Height)
 	scale := args.Viewport.Scale
 	size = size.Scaled(1 / scale)
-
-	mesh := p.app.Meshes().Fetch(p.quad.Mesh())
 
 	textures := p.textures[args.Frame]
 
@@ -219,18 +212,12 @@ func (p *GuiPass) Record(cmds command.Recorder, args render.Args, scene object.C
 	cmds.Record(func(cmd command.Buffer) {
 		cmd.CmdBeginRenderPass(p.pass, p.fbuf[args.Frame])
 		mat.Bind(cmd)
-		mesh.Bind(cmd)
 
-		cmd.CmdDrawIndexed(command.DrawIndexed{
-			// vertex offset must be 0
-			// the gui quad shader does not actually use any vertex attribute data.
-			// position/uv are hardcoded in the shader, and calculated used the vertex index.
-			VertexOffset: int32(0),
-
-			// the meshes index buffer is used normally.
-			// would be nice to draw without indexing so avoid using a mesh at all
-			IndexCount:  uint32(mesh.IndexCount),
-			IndexOffset: uint32(mesh.IndexOffset),
+		cmd.CmdDraw(command.Draw{
+			// the gui quad shader does not use any vertex attribute data.
+			// position/uv are hardcoded in the shader, and retrieved used the vertex index.
+			VertexOffset: 0,
+			VertexCount:  6,
 
 			// run an instance for each quad
 			InstanceOffset: uint32(0),
