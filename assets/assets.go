@@ -25,7 +25,11 @@ func init() {
 	}
 
 	Path = FindFileInParents(assetPath, cwd)
-	server = NewLocalFilesystem(Path)
+
+	server = NewLayeredFilesystem(
+		NewLocalFilesystem(Path),
+		BuiltinFilesystem,
+	)
 }
 
 func Read(key string) ([]byte, error) {
