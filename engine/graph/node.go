@@ -3,20 +3,14 @@ package graph
 import (
 	"fmt"
 
+	"github.com/johanhenriksson/goworld/core/draw"
 	"github.com/johanhenriksson/goworld/core/object"
-	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/sync"
 	"github.com/johanhenriksson/goworld/render/vulkan"
 
 	"github.com/vkngwrapper/core/v2/core1_0"
 )
-
-type NodePass interface {
-	Name() string
-	Record(command.Recorder, render.Args, object.Component)
-	Destroy()
-}
 
 type Node interface {
 	After(nd Node, mask core1_0.PipelineStageFlags)
@@ -25,7 +19,7 @@ type Node interface {
 	Dependants() []Node
 
 	Name() string
-	Draw(command.Worker, render.Args, object.Component)
+	Draw(command.Worker, draw.Args, object.Component)
 	Detach(Node)
 	Destroy()
 }
@@ -33,7 +27,7 @@ type Node interface {
 type node struct {
 	name       string
 	app        vulkan.App
-	pass       NodePass
+	pass       draw.Pass
 	after      map[string]edge
 	before     map[string]edge
 	requires   []Node
@@ -46,7 +40,7 @@ type edge struct {
 	signal []sync.Semaphore
 }
 
-func newNode(app vulkan.App, name string, pass NodePass) *node {
+func newNode(app vulkan.App, name string, pass draw.Pass) *node {
 	return &node{
 		app:        app,
 		name:       name,
@@ -177,7 +171,7 @@ func (n *node) signals(index int) []sync.Semaphore {
 	return signals
 }
 
-func (n *node) Draw(worker command.Worker, args render.Args, scene object.Component) {
+func (n *node) Draw(worker command.Worker, args draw.Args, scene object.Component) {
 	if n.pass == nil {
 		return
 	}

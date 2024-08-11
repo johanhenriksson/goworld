@@ -1,10 +1,11 @@
 package pass
 
 import (
+	"github.com/johanhenriksson/goworld/core/draw"
 	"github.com/johanhenriksson/goworld/core/light"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/engine/cache"
-	"github.com/johanhenriksson/goworld/render"
+	"github.com/johanhenriksson/goworld/engine/uniform"
 	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/framebuffer"
@@ -118,8 +119,8 @@ func NewDeferredLightingPass(
 	}
 }
 
-func (p *DeferredLightPass) Record(cmds command.Recorder, args render.Args, scene object.Component) {
-	camera := CameraFromArgs(args)
+func (p *DeferredLightPass) Record(cmds command.Recorder, args draw.Args, scene object.Component) {
+	camera := uniform.CameraFromArgs(args)
 
 	desc := p.light.Descriptors(args.Frame)
 	desc.Camera.Set(camera)

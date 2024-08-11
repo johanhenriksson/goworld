@@ -5,9 +5,6 @@ import (
 	"github.com/johanhenriksson/goworld/core/mesh"
 	"github.com/johanhenriksson/goworld/engine/cache"
 	"github.com/johanhenriksson/goworld/engine/uniform"
-	"github.com/johanhenriksson/goworld/math/vec2"
-	"github.com/johanhenriksson/goworld/math/vec4"
-	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/texture"
@@ -57,20 +54,4 @@ func AssignMeshTextures(samplers cache.SamplerCache, msh mesh.Mesh, slots []text
 		}
 	}
 	return textureIds
-}
-
-func CameraFromArgs(args render.Args) uniform.Camera {
-	return uniform.Camera{
-		Proj:        args.Projection,
-		View:        args.View,
-		ViewProj:    args.VP,
-		ProjInv:     args.Projection.Invert(),
-		ViewInv:     args.View.Invert(),
-		ViewProjInv: args.VP.Invert(),
-		Eye:         vec4.Extend(args.Position, 0),
-		Forward:     vec4.Extend(args.Forward, 0),
-		Viewport:    vec2.NewI(args.Viewport.Width, args.Viewport.Height),
-		Delta:       args.Delta,
-		Time:        args.Time,
-	}
 }

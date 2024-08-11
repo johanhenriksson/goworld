@@ -1,12 +1,12 @@
 package gizmo
 
 import (
+	"github.com/johanhenriksson/goworld/core/draw"
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/physics"
-	"github.com/johanhenriksson/goworld/render"
 )
 
 // Gizmos are basically tools that may have mouse-interactive
@@ -21,7 +21,7 @@ type Gizmo interface {
 	Hover(bool, physics.Shape)
 
 	Camera() mat4.T
-	Viewport() render.Screen
+	Viewport() draw.Viewport
 	Dragging() bool
 }
 

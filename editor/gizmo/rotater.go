@@ -1,6 +1,7 @@
 package gizmo
 
 import (
+	"github.com/johanhenriksson/goworld/core/draw"
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/core/transform"
@@ -10,7 +11,6 @@ import (
 	"github.com/johanhenriksson/goworld/math/quat"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/physics"
-	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/color"
 )
 
@@ -32,7 +32,7 @@ type Rotater struct {
 	start      vec3.T
 
 	eye      vec3.T
-	viewport render.Screen
+	viewport draw.Viewport
 	vp       mat4.T
 	fov      float32
 	scale    float32
@@ -116,11 +116,11 @@ func (g *Rotater) Hover(hovering bool, shape physics.Shape) {
 
 }
 
-func (g *Rotater) PreDraw(args render.Args, scene object.Object) error {
-	g.eye = args.Position
-	g.fov = args.Fov
-	g.vp = args.VP
-	g.viewport = args.Viewport
+func (g *Rotater) PreDraw(args draw.Args, scene object.Object) error {
+	g.eye = args.Camera.Position
+	g.fov = args.Camera.Fov
+	g.vp = args.Camera.ViewProj
+	g.viewport = args.Camera.Viewport
 	return nil
 }
 
@@ -140,7 +140,7 @@ func (g *Rotater) Update(scene object.Component, dt float32) {
 }
 
 func (g *Rotater) Dragging() bool          { return g.dragging }
-func (g *Rotater) Viewport() render.Screen { return g.viewport }
+func (g *Rotater) Viewport() draw.Viewport { return g.viewport }
 func (g *Rotater) Camera() mat4.T          { return g.vp }
 
 func (m *Rotater) ToolMouseEvent(e mouse.Event, hover physics.RaycastHit) {

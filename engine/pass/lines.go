@@ -3,10 +3,11 @@ package pass
 import (
 	"log"
 
+	"github.com/johanhenriksson/goworld/core/draw"
 	"github.com/johanhenriksson/goworld/core/mesh"
 	"github.com/johanhenriksson/goworld/core/object"
+	"github.com/johanhenriksson/goworld/engine/uniform"
 	lineShape "github.com/johanhenriksson/goworld/geometry/lines"
-	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/framebuffer"
 	"github.com/johanhenriksson/goworld/render/renderpass"
@@ -75,7 +76,7 @@ func NewLinePass(app vulkan.App, target vulkan.Target, depth vulkan.Target) *Lin
 	}
 }
 
-func (p *LinePass) Record(cmds command.Recorder, args render.Args, scene object.Component) {
+func (p *LinePass) Record(cmds command.Recorder, args draw.Args, scene object.Component) {
 	cmds.Record(func(cmd command.Buffer) {
 		cmd.CmdBeginRenderPass(p.pass, p.fbuf[args.Frame])
 	})
@@ -89,7 +90,7 @@ func (p *LinePass) Record(cmds command.Recorder, args render.Args, scene object.
 	debug := lineShape.Debug.Fetch()
 	lines = append(lines, debug)
 
-	cam := CameraFromArgs(args)
+	cam := uniform.CameraFromArgs(args)
 	groups := MaterialGroups(p.materials, args.Frame, lines)
 	groups.Draw(cmds, cam, nil)
 

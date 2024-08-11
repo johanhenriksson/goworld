@@ -6,6 +6,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/johanhenriksson/goworld/core/draw"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/render/upload"
 	"github.com/johanhenriksson/goworld/render/vulkan"
@@ -18,7 +19,7 @@ type NodeFunc func(T, vulkan.Target) []Resource
 // The render graph is responsible for synchronization between
 // different render nodes.
 type T interface {
-	Node(pass NodePass) Node
+	Node(pass draw.Pass) Node
 	Recreate()
 	Draw(scene object.Object, time, delta float32)
 	Destroy()
@@ -64,7 +65,7 @@ func (g *graph) Recreate() {
 	g.connect()
 }
 
-func (g *graph) Node(pass NodePass) Node {
+func (g *graph) Node(pass draw.Pass) Node {
 	nd := newNode(g.app, pass.Name(), pass)
 	g.nodes = append(g.nodes, nd)
 	return nd

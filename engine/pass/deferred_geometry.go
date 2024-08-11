@@ -1,10 +1,11 @@
 package pass
 
 import (
+	"github.com/johanhenriksson/goworld/core/draw"
 	"github.com/johanhenriksson/goworld/core/mesh"
 	"github.com/johanhenriksson/goworld/core/object"
+	"github.com/johanhenriksson/goworld/engine/uniform"
 	"github.com/johanhenriksson/goworld/math/shape"
-	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/framebuffer"
@@ -33,6 +34,8 @@ type DeferredGeometryPass struct {
 	materials MaterialCache
 	meshQuery *object.Query[mesh.Mesh]
 }
+
+var _ draw.Pass = (*DeferredGeometryPass)(nil)
 
 func NewDeferredGeometryPass(
 	app vulkan.App,
@@ -101,12 +104,12 @@ func NewDeferredGeometryPass(
 	}
 }
 
-func (p *DeferredGeometryPass) Record(cmds command.Recorder, args render.Args, scene object.Component) {
+func (p *DeferredGeometryPass) Record(cmds command.Recorder, args draw.Args, scene object.Component) {
 	cmds.Record(func(cmd command.Buffer) {
 		cmd.CmdBeginRenderPass(p.pass, p.fbuf[args.Frame])
 	})
 
-	frustum := shape.FrustumFromMatrix(args.VP)
+	frustum := shape.FrustumFromMatrix(args.Camera.ViewProj)
 
 	objects := p.meshQuery.
 		Reset().
@@ -114,7 +117,7 @@ func (p *DeferredGeometryPass) Record(cmds command.Recorder, args render.Args, s
 		Where(frustumCulled(&frustum)).
 		Collect(scene)
 
-	cam := CameraFromArgs(args)
+	cam := uniform.CameraFromArgs(args)
 	groups := MaterialGroups(p.materials, args.Frame, objects)
 	groups.Draw(cmds, cam, nil)
 

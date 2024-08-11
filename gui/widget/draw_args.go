@@ -1,9 +1,9 @@
 package widget
 
 import (
+	"github.com/johanhenriksson/goworld/core/draw"
 	"github.com/johanhenriksson/goworld/engine/cache"
 	"github.com/johanhenriksson/goworld/math/vec3"
-	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/command"
 )
 
@@ -16,6 +16,6 @@ type DrawArgs struct {
 	Delta    float32
 	Commands command.Recorder
 	Textures cache.SamplerCache
-	Viewport render.Screen
+	Viewport draw.Viewport
 	Position vec3.T
 }

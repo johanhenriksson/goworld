@@ -1,10 +1,10 @@
 package camera
 
 import (
+	"github.com/johanhenriksson/goworld/core/draw"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/math/vec3"
-	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/color"
 )
 
@@ -19,15 +19,7 @@ type Camera struct {
 	object.Component
 	Args
 
-	Viewport    render.Screen
-	Aspect      float32
-	Proj        mat4.T
-	View        mat4.T
-	ViewInv     mat4.T
-	ViewProj    mat4.T
-	ViewProjInv mat4.T
-	Eye         vec3.T
-	Forward     vec3.T
+	state draw.Camera
 }
 
 type Args struct {
@@ -40,8 +32,7 @@ type Args struct {
 // New creates a new camera component.
 func New(args Args) *Camera {
 	return object.NewComponent(&Camera{
-		Args:   args,
-		Aspect: 1,
+		Args: args,
 	})
 }
 
@@ -60,50 +51,45 @@ func (cam *Camera) Unproject(pos vec3.T) vec3.T {
 	pos = pos.Scaled(2).Sub(vec3.One) // transforms from [0,1] to [-1,1]
 
 	// unproject to world space by multiplying inverse view-projection
-	return cam.ViewProjInv.TransformPoint(pos)
+	return cam.state.ViewProjInv.TransformPoint(pos)
 }
 
 // Project world coordinates into screen space
 func (cam *Camera) Project(pos vec3.T) vec3.T {
-	p := cam.ViewProj.TransformPoint(pos)
+	p := cam.state.ViewProj.TransformPoint(pos)
 	p = p.Add(vec3.One).Scaled(0.5) // transforms from [-1,1] to [0,1]
-	return p.Mul(vec3.Extend(cam.Viewport.Size(), 1)).Scaled(1 / cam.Viewport.Scale)
+	scale := float32(1)
+	if cam.state.Viewport.Scale > 1 {
+		scale /= cam.state.Viewport.Scale
+	}
+	return p.Mul(vec3.Extend(cam.state.Viewport.Size(), 1)).Scaled(scale)
 }
 
-func (cam *Camera) RenderArgs(screen render.Screen) render.Args {
+// Recalculate camera matrices based on the current transform and viewport
+func (cam *Camera) Refresh(viewport draw.Viewport) draw.Camera {
 	// todo: passing the global viewport allows the camera to modify the actual render viewport
 
+	cam.state.Viewport = viewport
+	cam.state.Aspect = viewport.Aspect()
+	cam.state.Near = cam.Near
+	cam.state.Far = cam.Far
+	cam.state.Fov = cam.Fov
+
 	// update view & view-projection matrices
-	cam.Viewport = screen
-	cam.Aspect = float32(cam.Viewport.Width) / float32(cam.Viewport.Height)
-	cam.Proj = mat4.Perspective(cam.Fov, cam.Aspect, cam.Near, cam.Far)
+	cam.state.Proj = mat4.Perspective(cam.Fov, cam.state.Aspect, cam.Near, cam.Far)
 
 	// calculate the view matrix.
 	// should be the inverse of the cameras transform matrix
 	tf := cam.Transform()
 
-	cam.Eye = tf.WorldPosition()
-	cam.Forward = tf.Forward()
+	cam.state.Position = tf.WorldPosition()
+	cam.state.Forward = tf.Forward()
 
-	cam.ViewInv = tf.Matrix()
-	cam.View = cam.ViewInv.Invert()
+	cam.state.ViewInv = tf.Matrix()
+	cam.state.View = cam.state.ViewInv.Invert()
 
-	cam.ViewProj = cam.Proj.Mul(&cam.View)
-	cam.ViewProjInv = cam.ViewProj.Invert()
+	cam.state.ViewProj = cam.state.Proj.Mul(&cam.state.View)
+	cam.state.ViewProjInv = cam.state.ViewProj.Invert()
 
-	return render.Args{
-		Viewport:   cam.Viewport,
-		Near:       cam.Near,
-		Far:        cam.Far,
-		Fov:        cam.Fov,
-		Projection: cam.Proj,
-		View:       cam.View,
-		ViewInv:    cam.ViewInv,
-		VP:         cam.ViewProj,
-		VPInv:      cam.ViewProjInv,
-		MVP:        cam.ViewProj,
-		Clear:      cam.Clear,
-		Position:   cam.Transform().WorldPosition(),
-		Forward:    cam.Transform().Forward(),
-	}
+	return cam.state
 }

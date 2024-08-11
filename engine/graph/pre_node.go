@@ -4,9 +4,9 @@ import (
 	"errors"
 
 	"github.com/johanhenriksson/goworld/core/camera"
+	"github.com/johanhenriksson/goworld/core/draw"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/math/mat4"
-	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/swapchain"
@@ -19,7 +19,7 @@ var ErrRecreate = errors.New("recreate renderer")
 
 type PreDrawable interface {
 	object.Component
-	PreDraw(render.Args, object.Object) error
+	PreDraw(draw.Args, object.Object) error
 }
 
 type preNode struct {
@@ -38,8 +38,8 @@ func newPreNode(app vulkan.App, target vulkan.Target) *preNode {
 	}
 }
 
-func (n *preNode) Prepare(scene object.Object, time, delta float32) (*render.Args, *swapchain.Context, error) {
-	screen := render.Screen{
+func (n *preNode) Prepare(scene object.Object, time, delta float32) (*draw.Args, *swapchain.Context, error) {
+	viewport := draw.Viewport{
 		Width:  n.target.Width(),
 		Height: n.target.Height(),
 		Scale:  n.target.Scale(),
@@ -64,13 +64,13 @@ func (n *preNode) Prepare(scene object.Object, time, delta float32) (*render.Arg
 	n.app.Textures().Tick()
 
 	// create render arguments
-	args := render.Args{}
+	args := draw.Args{}
 
-	// find the first active camera
-	if camera, exists := n.cameraQuery.Reset().First(scene); exists {
-		args = camera.RenderArgs(screen)
+	// find the first active cam
+	if cam, exists := n.cameraQuery.Reset().First(scene); exists {
+		args.Camera = cam.Refresh(viewport)
 	} else {
-		args.Viewport = screen
+		args.Camera.Viewport = viewport
 	}
 
 	// wait for context

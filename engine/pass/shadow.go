@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/johanhenriksson/goworld/core/draw"
 	"github.com/johanhenriksson/goworld/core/light"
 	"github.com/johanhenriksson/goworld/core/mesh"
 	"github.com/johanhenriksson/goworld/core/object"
-	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/framebuffer"
 	"github.com/johanhenriksson/goworld/render/renderpass"
@@ -19,7 +19,7 @@ import (
 )
 
 type Shadow interface {
-	Pass
+	draw.Pass
 
 	Shadowmap(lit light.T, cascade int) texture.T
 }
@@ -146,7 +146,7 @@ func (p *shadowpass) createShadowmap(light light.T) Shadowmap {
 	return shadowmap
 }
 
-func (p *shadowpass) Record(cmds command.Recorder, args render.Args, scene object.Component) {
+func (p *shadowpass) Record(cmds command.Recorder, args draw.Args, scene object.Component) {
 	lights := p.lightQuery.
 		Reset().
 		Where(func(lit light.T) bool { return lit.Type() == light.TypeDirectional && lit.CastShadows() }).

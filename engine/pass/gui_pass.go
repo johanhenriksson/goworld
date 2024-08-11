@@ -1,13 +1,13 @@
 package pass
 
 import (
+	"github.com/johanhenriksson/goworld/core/draw"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/engine/cache"
 	"github.com/johanhenriksson/goworld/gui"
 	"github.com/johanhenriksson/goworld/gui/widget"
 	"github.com/johanhenriksson/goworld/math"
 	"github.com/johanhenriksson/goworld/math/vec2"
-	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/descriptor"
 	"github.com/johanhenriksson/goworld/render/framebuffer"
@@ -49,7 +49,7 @@ type GuiPass struct {
 	guiQuery *object.Query[gui.Manager]
 }
 
-var _ Pass = &GuiPass{}
+var _ draw.Pass = &GuiPass{}
 
 func NewGuiPass(app vulkan.App, target vulkan.Target) *GuiPass {
 	pass := renderpass.New(app.Device(), renderpass.Args{
@@ -151,11 +151,11 @@ func NewGuiPass(app vulkan.App, target vulkan.Target) *GuiPass {
 	}
 }
 
-func (p *GuiPass) Record(cmds command.Recorder, args render.Args, scene object.Component) {
+func (p *GuiPass) Record(cmds command.Recorder, args draw.Args, scene object.Component) {
 	mat := p.mat[args.Frame]
 
-	size := vec2.NewI(args.Viewport.Width, args.Viewport.Height)
-	scale := args.Viewport.Scale
+	size := vec2.NewI(args.Camera.Viewport.Width, args.Camera.Viewport.Height)
+	scale := args.Camera.Viewport.Scale
 	size = size.Scaled(1 / scale)
 
 	textures := p.textures[args.Frame]
@@ -165,7 +165,7 @@ func (p *GuiPass) Record(cmds command.Recorder, args render.Args, scene object.C
 		Delta:    args.Delta,
 		Commands: cmds,
 		Textures: textures,
-		Viewport: render.Screen{
+		Viewport: draw.Viewport{
 			Width:  int(size.X),
 			Height: int(size.Y),
 			Scale:  scale,

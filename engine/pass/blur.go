@@ -3,8 +3,8 @@ package pass
 import (
 	"fmt"
 
+	"github.com/johanhenriksson/goworld/core/draw"
 	"github.com/johanhenriksson/goworld/core/object"
-	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/descriptor"
 	"github.com/johanhenriksson/goworld/render/framebuffer"
@@ -31,7 +31,7 @@ type BlurPass struct {
 	pass  renderpass.T
 }
 
-var _ Pass = &BlurPass{}
+var _ draw.Pass = &BlurPass{}
 
 type BlurDescriptors struct {
 	descriptor.Set
@@ -126,7 +126,7 @@ func NewBlurPass(app vulkan.App, output vulkan.Target, input vulkan.Target) *Blu
 	return p
 }
 
-func (p *BlurPass) Record(cmds command.Recorder, args render.Args, scene object.Component) {
+func (p *BlurPass) Record(cmds command.Recorder, args draw.Args, scene object.Component) {
 	quad := p.app.Meshes().Fetch(p.quad)
 
 	cmds.Record(func(cmd command.Buffer) {
