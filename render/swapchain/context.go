@@ -13,7 +13,7 @@ type Context struct {
 	RenderComplete sync.Semaphore
 }
 
-func NewContext(dev device.T, index int) *Context {
+func NewContext(dev *device.Device, index int) *Context {
 	return &Context{
 		Index:          index,
 		ImageAvailable: sync.NewSemaphore(dev, fmt.Sprintf("ImageAvailable:%d", index)),

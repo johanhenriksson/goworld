@@ -12,11 +12,11 @@ import (
 type MeshCache T[vertex.Mesh, *GpuMesh]
 
 type meshCache struct {
-	device device.T
+	device *device.Device
 	worker command.Worker
 }
 
-func NewMeshCache(device device.T, worker command.Worker) MeshCache {
+func NewMeshCache(device *device.Device, worker command.Worker) MeshCache {
 	return New[vertex.Mesh, *GpuMesh](&meshCache{
 		device: device,
 		worker: worker,
@@ -51,7 +51,7 @@ func (m *meshCache) Instantiate(mesh vertex.Mesh, callback func(*GpuMesh)) {
 	}
 
 	cmds := command.NewRecorder()
-	cmds.Record(func(cmd command.Buffer) {
+	cmds.Record(func(cmd *command.Buffer) {
 		vtxSize := mesh.VertexSize() * mesh.VertexCount()
 		vtxStage = buffer.NewShared(m.device, "staging:vertex", vtxSize)
 

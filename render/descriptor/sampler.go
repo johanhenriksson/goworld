@@ -21,7 +21,7 @@ type Sampler struct {
 
 var _ Descriptor = &Sampler{}
 
-func (d *Sampler) Initialize(device device.T) {}
+func (d *Sampler) Initialize(device *device.Device) {}
 
 func (d *Sampler) String() string {
 	return fmt.Sprintf("Sampler:%d", d.binding)
@@ -34,7 +34,7 @@ func (d *Sampler) Bind(set Set, binding int) {
 	d.binding = binding
 }
 
-func (d *Sampler) Set(tex texture.T) {
+func (d *Sampler) Set(tex *texture.Texture) {
 	d.sampler = tex.Ptr()
 	d.view = tex.View().Ptr()
 	d.write()

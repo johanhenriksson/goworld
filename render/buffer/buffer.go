@@ -32,14 +32,14 @@ type Args struct {
 	Memory core1_0.MemoryPropertyFlags
 }
 
-type buffer struct {
+type Buffer struct {
 	ptr    core1_0.Buffer
-	device device.T
+	device *device.Device
 	memory device.Memory
 	size   int
 }
 
-func New(device device.T, args Args) T {
+func New(device *device.Device, args Args) *Buffer {
 	if args.Size == 0 {
 		panic("buffer size cant be 0")
 	}
@@ -67,7 +67,7 @@ func New(device device.T, args Args) T {
 	mem := device.Allocate(args.Key, *memreq, args.Memory)
 	ptr.BindBufferMemory(mem.Ptr(), 0)
 
-	return &buffer{
+	return &Buffer{
 		ptr:    ptr,
 		device: device,
 		memory: mem,
@@ -75,7 +75,7 @@ func New(device device.T, args Args) T {
 	}
 }
 
-func NewShared(device device.T, key string, size int) T {
+func NewShared(device *device.Device, key string, size int) *Buffer {
 	return New(device, Args{
 		Key:    key,
 		Size:   size,
@@ -84,7 +84,7 @@ func NewShared(device device.T, key string, size int) T {
 	})
 }
 
-func NewRemote(device device.T, key string, size int, flags core1_0.BufferUsageFlags) T {
+func NewRemote(device *device.Device, key string, size int, flags core1_0.BufferUsageFlags) *Buffer {
 	return New(device, Args{
 		Key:    key,
 		Size:   size,
@@ -93,19 +93,19 @@ func NewRemote(device device.T, key string, size int, flags core1_0.BufferUsageF
 	})
 }
 
-func (b *buffer) Ptr() core1_0.Buffer {
+func (b *Buffer) Ptr() core1_0.Buffer {
 	return b.ptr
 }
 
-func (b *buffer) Size() int {
+func (b *Buffer) Size() int {
 	return b.size
 }
 
-func (b *buffer) Memory() device.Memory {
+func (b *Buffer) Memory() device.Memory {
 	return b.memory
 }
 
-func (b *buffer) Destroy() {
+func (b *Buffer) Destroy() {
 	b.ptr.Destroy(nil)
 	b.memory.Destroy()
 	b.ptr = nil
@@ -113,14 +113,14 @@ func (b *buffer) Destroy() {
 	b.device = nil
 }
 
-func (b *buffer) Write(offset int, data any) int {
+func (b *Buffer) Write(offset int, data any) int {
 	return b.memory.Write(offset, data)
 }
 
-func (b *buffer) Read(offset int, data any) int {
+func (b *Buffer) Read(offset int, data any) int {
 	return b.memory.Read(offset, data)
 }
 
-func (b *buffer) Flush() {
+func (b *Buffer) Flush() {
 	b.memory.Flush()
 }

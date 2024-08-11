@@ -15,43 +15,13 @@ import (
 	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
-type Buffer interface {
-	device.Resource[core1_0.CommandBuffer]
-
-	Reset()
-	Begin()
-	End()
-
-	DrawBuffer
-	DrawIndexedBuffer
-
-	CmdCopyBuffer(src, dst buffer.T, regions ...core1_0.BufferCopy)
-	CmdBindGraphicsPipeline(pipe pipeline.T)
-	CmdBindGraphicsDescriptor(sets descriptor.Set)
-	CmdBindVertexBuffer(vtx buffer.T, offset int)
-	CmdBindIndexBuffers(idx buffer.T, offset int, kind core1_0.IndexType)
-	CmdDrawIndirect(buffer buffer.T, offset, count, stride int)
-	CmdDrawIndexedIndirect(buffer buffer.T, offset, count, stride int)
-	CmdBeginRenderPass(pass renderpass.T, framebuffer framebuffer.T)
-	CmdNextSubpass()
-	CmdEndRenderPass()
-	CmdSetViewport(x, y, w, h int) core1_0.Viewport
-	CmdSetScissor(x, y, w, h int) core1_0.Rect2D
-	CmdPushConstant(stages core1_0.ShaderStageFlags, offset int, value any)
-	CmdImageBarrier(srcMask, dstMask core1_0.PipelineStageFlags, image image.T, oldLayout, newLayout core1_0.ImageLayout, aspects core1_0.ImageAspectFlags, mipLevel, levels int)
-	CmdCopyBufferToImage(source buffer.T, dst image.T, layout core1_0.ImageLayout)
-	CmdCopyImageToBuffer(src image.T, srcLayout core1_0.ImageLayout, aspect core1_0.ImageAspectFlags, dst buffer.T)
-	CmdConvertImage(src image.T, srcLayout core1_0.ImageLayout, dst image.T, dstLayout core1_0.ImageLayout, aspects core1_0.ImageAspectFlags)
-	CmdCopyImage(src image.T, srcLayout core1_0.ImageLayout, dst image.T, dstLayout core1_0.ImageLayout, aspects core1_0.ImageAspectFlags)
-}
-
-type buf struct {
+type Buffer struct {
 	ptr    core1_0.CommandBuffer
 	pool   core1_0.CommandPool
-	device device.T
+	device *device.Device
 
 	// cached bindings
-	pipeline pipeline.T
+	pipeline *pipeline.Pipeline
 	vertex   bufferBinding
 	index    bufferBinding
 	scissor  core1_0.Rect2D
@@ -64,38 +34,38 @@ type bufferBinding struct {
 	indexType core1_0.IndexType
 }
 
-func newBuffer(device device.T, pool core1_0.CommandPool, ptr core1_0.CommandBuffer) Buffer {
-	return &buf{
+func newBuffer(device *device.Device, pool core1_0.CommandPool, ptr core1_0.CommandBuffer) *Buffer {
+	return &Buffer{
 		ptr:    ptr,
 		pool:   pool,
 		device: device,
 	}
 }
 
-func (b *buf) Ptr() core1_0.CommandBuffer {
+func (b *Buffer) Ptr() core1_0.CommandBuffer {
 	return b.ptr
 }
 
-func (b *buf) Destroy() {
+func (b *Buffer) Destroy() {
 	b.ptr.Free()
 	b.ptr = nil
 }
 
-func (b *buf) Reset() {
+func (b *Buffer) Reset() {
 	b.ptr.Reset(core1_0.CommandBufferResetReleaseResources)
 }
 
-func (b *buf) Begin() {
+func (b *Buffer) Begin() {
 	if _, err := b.ptr.Begin(core1_0.CommandBufferBeginInfo{}); err != nil {
 		panic(err)
 	}
 }
 
-func (b *buf) End() {
+func (b *Buffer) End() {
 	b.ptr.End()
 }
 
-func (b *buf) CmdCopyBuffer(src, dst buffer.T, regions ...core1_0.BufferCopy) {
+func (b *Buffer) CmdCopyBuffer(src, dst buffer.T, regions ...core1_0.BufferCopy) {
 	if len(regions) == 0 {
 		regions = []core1_0.BufferCopy{
 			{
@@ -111,7 +81,7 @@ func (b *buf) CmdCopyBuffer(src, dst buffer.T, regions ...core1_0.BufferCopy) {
 	b.ptr.CmdCopyBuffer(src.Ptr(), dst.Ptr(), regions)
 }
 
-func (b *buf) CmdBindGraphicsPipeline(pipe pipeline.T) {
+func (b *Buffer) CmdBindGraphicsPipeline(pipe *pipeline.Pipeline) {
 	// if b.pipeline != nil && b.pipeline.Ptr() == pipe.Ptr() {
 	// 	return
 	// }
@@ -119,14 +89,14 @@ func (b *buf) CmdBindGraphicsPipeline(pipe pipeline.T) {
 	b.pipeline = pipe
 }
 
-func (b *buf) CmdBindGraphicsDescriptor(set descriptor.Set) {
+func (b *Buffer) CmdBindGraphicsDescriptor(set descriptor.Set) {
 	if b.pipeline == nil {
 		panic("bind graphics pipeline first")
 	}
 	b.ptr.CmdBindDescriptorSets(core1_0.PipelineBindPointGraphics, b.pipeline.Layout().Ptr(), 0, []core1_0.DescriptorSet{set.Ptr()}, nil)
 }
 
-func (b *buf) CmdBindVertexBuffer(vtx buffer.T, offset int) {
+func (b *Buffer) CmdBindVertexBuffer(vtx buffer.T, offset int) {
 	binding := bufferBinding{buffer: vtx.Ptr(), offset: offset}
 	if b.vertex == binding {
 		return
@@ -135,7 +105,7 @@ func (b *buf) CmdBindVertexBuffer(vtx buffer.T, offset int) {
 	b.vertex = binding
 }
 
-func (b *buf) CmdBindIndexBuffers(idx buffer.T, offset int, kind core1_0.IndexType) {
+func (b *Buffer) CmdBindIndexBuffers(idx buffer.T, offset int, kind core1_0.IndexType) {
 	binding := bufferBinding{buffer: idx.Ptr(), offset: offset, indexType: kind}
 	if b.index == binding {
 		return
@@ -144,7 +114,7 @@ func (b *buf) CmdBindIndexBuffers(idx buffer.T, offset int, kind core1_0.IndexTy
 	b.index = binding
 }
 
-func (b *buf) CmdDraw(cmd Draw) {
+func (b *Buffer) CmdDraw(cmd Draw) {
 	b.ptr.CmdDraw(
 		int(cmd.VertexCount),
 		int(cmd.InstanceCount),
@@ -152,11 +122,11 @@ func (b *buf) CmdDraw(cmd Draw) {
 		uint32(cmd.InstanceOffset))
 }
 
-func (b *buf) CmdDrawIndirect(buffer buffer.T, offset, count, stride int) {
+func (b *Buffer) CmdDrawIndirect(buffer buffer.T, offset, count, stride int) {
 	b.ptr.CmdDrawIndirect(buffer.Ptr(), offset, count, stride)
 }
 
-func (b *buf) CmdDrawIndexed(cmd DrawIndexed) {
+func (b *Buffer) CmdDrawIndexed(cmd DrawIndexed) {
 	b.ptr.CmdDrawIndexed(
 		int(cmd.IndexCount),
 		int(cmd.InstanceCount),
@@ -165,11 +135,11 @@ func (b *buf) CmdDrawIndexed(cmd DrawIndexed) {
 		uint32(cmd.InstanceOffset))
 }
 
-func (b *buf) CmdDrawIndexedIndirect(buffer buffer.T, offset, count, stride int) {
+func (b *Buffer) CmdDrawIndexedIndirect(buffer buffer.T, offset, count, stride int) {
 	b.ptr.CmdDrawIndexedIndirect(buffer.Ptr(), offset, count, stride)
 }
 
-func (b *buf) CmdBeginRenderPass(pass renderpass.T, framebuffer framebuffer.T) {
+func (b *Buffer) CmdBeginRenderPass(pass *renderpass.Renderpass, framebuffer *framebuffer.Framebuffer) {
 	clear := pass.Clear()
 	w, h := framebuffer.Size()
 
@@ -190,15 +160,15 @@ func (b *buf) CmdBeginRenderPass(pass renderpass.T, framebuffer framebuffer.T) {
 	b.CmdSetScissor(0, 0, w, h)
 }
 
-func (b *buf) CmdEndRenderPass() {
+func (b *Buffer) CmdEndRenderPass() {
 	b.ptr.CmdEndRenderPass()
 }
 
-func (b *buf) CmdNextSubpass() {
+func (b *Buffer) CmdNextSubpass() {
 	b.ptr.CmdNextSubpass(core1_0.SubpassContentsInline)
 }
 
-func (b *buf) CmdSetViewport(x, y, w, h int) core1_0.Viewport {
+func (b *Buffer) CmdSetViewport(x, y, w, h int) core1_0.Viewport {
 	prev := b.viewport
 	b.viewport = core1_0.Viewport{
 		X:        float32(x),
@@ -214,7 +184,7 @@ func (b *buf) CmdSetViewport(x, y, w, h int) core1_0.Viewport {
 	return prev
 }
 
-func (b *buf) CmdSetScissor(x, y, w, h int) core1_0.Rect2D {
+func (b *Buffer) CmdSetScissor(x, y, w, h int) core1_0.Rect2D {
 	prev := b.scissor
 	b.scissor = core1_0.Rect2D{
 		Offset: core1_0.Offset2D{
@@ -232,7 +202,7 @@ func (b *buf) CmdSetScissor(x, y, w, h int) core1_0.Rect2D {
 	return prev
 }
 
-func (b *buf) CmdPushConstant(stages core1_0.ShaderStageFlags, offset int, value any) {
+func (b *Buffer) CmdPushConstant(stages core1_0.ShaderStageFlags, offset int, value any) {
 	if b.pipeline == nil {
 		panic("bind graphics pipeline first")
 	}
@@ -246,7 +216,7 @@ func (b *buf) CmdPushConstant(stages core1_0.ShaderStageFlags, offset int, value
 	b.ptr.CmdPushConstants(b.pipeline.Layout().Ptr(), stages, offset, valueBytes)
 }
 
-func (b *buf) CmdImageBarrier(srcMask, dstMask core1_0.PipelineStageFlags, image image.T, oldLayout, newLayout core1_0.ImageLayout, aspects core1_0.ImageAspectFlags, mipLevel, levels int) {
+func (b *Buffer) CmdImageBarrier(srcMask, dstMask core1_0.PipelineStageFlags, image image.T, oldLayout, newLayout core1_0.ImageLayout, aspects core1_0.ImageAspectFlags, mipLevel, levels int) {
 	b.ptr.CmdPipelineBarrier(core1_0.PipelineStageFlags(srcMask), core1_0.PipelineStageFlags(dstMask), core1_0.DependencyFlags(0), nil, nil, []core1_0.ImageMemoryBarrier{
 		{
 			OldLayout: oldLayout,
@@ -264,7 +234,7 @@ func (b *buf) CmdImageBarrier(srcMask, dstMask core1_0.PipelineStageFlags, image
 	})
 }
 
-func (b *buf) CmdCopyBufferToImage(source buffer.T, dst image.T, layout core1_0.ImageLayout) {
+func (b *Buffer) CmdCopyBufferToImage(source buffer.T, dst image.T, layout core1_0.ImageLayout) {
 	b.ptr.CmdCopyBufferToImage(source.Ptr(), dst.Ptr(), layout, []core1_0.BufferImageCopy{
 		{
 			ImageSubresource: core1_0.ImageSubresourceLayers{
@@ -280,7 +250,7 @@ func (b *buf) CmdCopyBufferToImage(source buffer.T, dst image.T, layout core1_0.
 	})
 }
 
-func (b *buf) CmdCopyImageToBuffer(src image.T, srcLayout core1_0.ImageLayout, aspects core1_0.ImageAspectFlags, dst buffer.T) {
+func (b *Buffer) CmdCopyImageToBuffer(src image.T, srcLayout core1_0.ImageLayout, aspects core1_0.ImageAspectFlags, dst buffer.T) {
 	b.ptr.CmdCopyImageToBuffer(src.Ptr(), srcLayout, dst.Ptr(), []core1_0.BufferImageCopy{
 		{
 			ImageSubresource: core1_0.ImageSubresourceLayers{
@@ -296,7 +266,7 @@ func (b *buf) CmdCopyImageToBuffer(src image.T, srcLayout core1_0.ImageLayout, a
 	})
 }
 
-func (b *buf) CmdConvertImage(src image.T, srcLayout core1_0.ImageLayout, dst image.T, dstLayout core1_0.ImageLayout, aspects core1_0.ImageAspectFlags) {
+func (b *Buffer) CmdConvertImage(src image.T, srcLayout core1_0.ImageLayout, dst image.T, dstLayout core1_0.ImageLayout, aspects core1_0.ImageAspectFlags) {
 	b.ptr.CmdBlitImage(src.Ptr(), srcLayout, dst.Ptr(), dstLayout, []core1_0.ImageBlit{
 		{
 			SrcOffsets: [2]core1_0.Offset3D{
@@ -323,7 +293,7 @@ func (b *buf) CmdConvertImage(src image.T, srcLayout core1_0.ImageLayout, dst im
 	}, core1_0.FilterNearest)
 }
 
-func (b *buf) CmdCopyImage(src image.T, srcLayout core1_0.ImageLayout, dst image.T, dstLayout core1_0.ImageLayout, aspects core1_0.ImageAspectFlags) {
+func (b *Buffer) CmdCopyImage(src image.T, srcLayout core1_0.ImageLayout, dst image.T, dstLayout core1_0.ImageLayout, aspects core1_0.ImageAspectFlags) {
 	b.ptr.CmdCopyImage(src.Ptr(), srcLayout, dst.Ptr(), dstLayout, []core1_0.ImageCopy{
 		{
 			SrcOffset: core1_0.Offset3D{X: 0, Y: 0, Z: 0},

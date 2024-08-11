@@ -15,7 +15,7 @@ import (
 	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
-func NewTextureSync(dev device.T, worker command.Worker, key string, img *osimage.RGBA) (texture.T, error) {
+func NewTextureSync(dev *device.Device, worker command.Worker, key string, img *osimage.RGBA) (*texture.Texture, error) {
 	// allocate texture
 	tex, err := texture.New(dev,
 		key,
@@ -39,7 +39,7 @@ func NewTextureSync(dev device.T, worker command.Worker, key string, img *osimag
 
 	// transfer data to texture buffer
 	cmds := command.NewRecorder()
-	cmds.Record(func(cmd command.Buffer) {
+	cmds.Record(func(cmd *command.Buffer) {
 		cmd.CmdImageBarrier(
 			core1_0.PipelineStageTopOfPipe,
 			core1_0.PipelineStageTransfer,
@@ -68,7 +68,7 @@ func NewTextureSync(dev device.T, worker command.Worker, key string, img *osimag
 	return tex, nil
 }
 
-func DownloadImageAsync(dev device.T, worker command.Worker, src image.T) (<-chan *osimage.RGBA, error) {
+func DownloadImageAsync(dev *device.Device, worker command.Worker, src image.T) (<-chan *osimage.RGBA, error) {
 	swizzle := false
 	switch src.Format() {
 	case core1_0.FormatB8G8R8A8UnsignedNormalized:
@@ -99,7 +99,7 @@ func DownloadImageAsync(dev device.T, worker command.Worker, src image.T) (<-cha
 
 	// transfer data from texture buffer
 	cmds := command.NewRecorder()
-	cmds.Record(func(cmd command.Buffer) {
+	cmds.Record(func(cmd *command.Buffer) {
 		cmd.CmdImageBarrier(
 			core1_0.PipelineStageTopOfPipe,
 			core1_0.PipelineStageTransfer,
@@ -158,7 +158,7 @@ func DownloadImageAsync(dev device.T, worker command.Worker, src image.T) (<-cha
 	return done, nil
 }
 
-func DownloadImage(dev device.T, worker command.Worker, src image.T) (*osimage.RGBA, error) {
+func DownloadImage(dev *device.Device, worker command.Worker, src image.T) (*osimage.RGBA, error) {
 	img, err := DownloadImageAsync(dev, worker, src)
 	if err != nil {
 		return nil, err

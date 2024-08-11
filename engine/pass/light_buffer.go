@@ -10,7 +10,7 @@ import (
 	"github.com/johanhenriksson/goworld/render/texture"
 )
 
-type ShadowmapLookupFn func(light.T, int) texture.T
+type ShadowmapLookupFn func(light.T, int) *texture.Texture
 
 type LightBuffer struct {
 	buffer   []uniform.Light

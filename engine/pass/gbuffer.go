@@ -13,21 +13,21 @@ type GeometryBuffer interface {
 	Width() int
 	Height() int
 	Frames() int
-	Diffuse() []image.T
-	Normal() []image.T
-	Position() []image.T
+	Diffuse() image.Array
+	Normal() image.Array
+	Position() image.Array
 	Destroy()
 }
 
 type gbuffer struct {
-	diffuse  []image.T
-	normal   []image.T
-	position []image.T
+	diffuse  image.Array
+	normal   image.Array
+	position image.Array
 	width    int
 	height   int
 }
 
-func NewGbuffer(device device.T, size engine.TargetSize) (GeometryBuffer, error) {
+func NewGbuffer(device *device.Device, size engine.TargetSize) (GeometryBuffer, error) {
 	frames, width, height := size.Frames, size.Width, size.Height
 	diffuseFmt := core1_0.FormatR8G8B8A8UnsignedNormalized
 	normalFmt := core1_0.FormatR8G8B8A8UnsignedNormalized
@@ -35,9 +35,9 @@ func NewGbuffer(device device.T, size engine.TargetSize) (GeometryBuffer, error)
 	usage := core1_0.ImageUsageSampled | core1_0.ImageUsageColorAttachment | core1_0.ImageUsageInputAttachment
 
 	var err error
-	diffuses := make([]image.T, frames)
-	normals := make([]image.T, frames)
-	positions := make([]image.T, frames)
+	diffuses := make(image.Array, frames)
+	normals := make(image.Array, frames)
+	positions := make(image.Array, frames)
 
 	for i := 0; i < frames; i++ {
 		diffuses[i], err = image.New2D(device, "diffuse", width, height, diffuseFmt, false, usage)
@@ -65,12 +65,12 @@ func NewGbuffer(device device.T, size engine.TargetSize) (GeometryBuffer, error)
 	}, nil
 }
 
-func (b *gbuffer) Width() int          { return b.width }
-func (b *gbuffer) Height() int         { return b.height }
-func (b *gbuffer) Frames() int         { return len(b.diffuse) }
-func (b *gbuffer) Diffuse() []image.T  { return b.diffuse }
-func (b *gbuffer) Normal() []image.T   { return b.normal }
-func (b *gbuffer) Position() []image.T { return b.position }
+func (b *gbuffer) Width() int            { return b.width }
+func (b *gbuffer) Height() int           { return b.height }
+func (b *gbuffer) Frames() int           { return len(b.diffuse) }
+func (b *gbuffer) Diffuse() image.Array  { return b.diffuse }
+func (b *gbuffer) Normal() image.Array   { return b.normal }
+func (b *gbuffer) Position() image.Array { return b.position }
 
 func (b *gbuffer) pixelOffset(pos vec2.T, img image.T, size int) int {
 	denormPos := pos.Mul(img.Size().XY())

@@ -11,12 +11,14 @@ import (
 	"github.com/vkngwrapper/core/v2/driver"
 )
 
+type Array []*Image
+
 type T interface {
 	device.Resource[core1_0.Image]
 
 	Key() string
 	Memory() device.Memory
-	View(format core1_0.Format, mask core1_0.ImageAspectFlags) (View, error)
+	View(format core1_0.Format, mask core1_0.ImageAspectFlags) (*View, error)
 	Width() int
 	Height() int
 	Format() core1_0.Format
@@ -24,10 +26,10 @@ type T interface {
 	Size() vec3.T
 }
 
-type image struct {
+type Image struct {
 	Args
 	ptr    core1_0.Image
-	device device.T
+	device *device.Device
 	memory device.Memory
 }
 
@@ -47,7 +49,7 @@ type Args struct {
 	Memory  core1_0.MemoryPropertyFlags
 }
 
-func New2D(device device.T, key string, width, height int, format core1_0.Format, mipmaps bool, usage core1_0.ImageUsageFlags) (T, error) {
+func New2D(device *device.Device, key string, width, height int, format core1_0.Format, mipmaps bool, usage core1_0.ImageUsageFlags) (*Image, error) {
 	mipLevels := 1
 	if mipmaps {
 		mipLevels = MipLevels(width, height)
@@ -69,7 +71,7 @@ func New2D(device device.T, key string, width, height int, format core1_0.Format
 	})
 }
 
-func New(device device.T, args Args) (T, error) {
+func New(device *device.Device, args Args) (*Image, error) {
 	if args.Depth < 1 {
 		args.Depth = 1
 	}
@@ -132,7 +134,7 @@ func New(device device.T, args Args) (T, error) {
 		return nil, vkerror.FromResult(result)
 	}
 
-	return &image{
+	return &Image{
 		Args:   args,
 		ptr:    ptr,
 		device: device,
@@ -140,8 +142,8 @@ func New(device device.T, args Args) (T, error) {
 	}, nil
 }
 
-func Wrap(dev device.T, ptr core1_0.Image, args Args) T {
-	return &image{
+func Wrap(dev *device.Device, ptr core1_0.Image, args Args) *Image {
+	return &Image{
 		ptr:    ptr,
 		device: dev,
 		memory: nil,
@@ -149,21 +151,21 @@ func Wrap(dev device.T, ptr core1_0.Image, args Args) T {
 	}
 }
 
-func (i *image) Ptr() core1_0.Image {
+func (i *Image) Ptr() core1_0.Image {
 	return i.ptr
 }
 
-func (i *image) Memory() device.Memory {
+func (i *Image) Memory() device.Memory {
 	return i.memory
 }
 
-func (i *image) Key() string            { return i.Args.Key }
-func (i *image) Width() int             { return i.Args.Width }
-func (i *image) Height() int            { return i.Args.Height }
-func (i *image) Format() core1_0.Format { return i.Args.Format }
-func (i *image) MipLevels() int         { return i.Args.Levels }
+func (i *Image) Key() string            { return i.Args.Key }
+func (i *Image) Width() int             { return i.Args.Width }
+func (i *Image) Height() int            { return i.Args.Height }
+func (i *Image) Format() core1_0.Format { return i.Args.Format }
+func (i *Image) MipLevels() int         { return i.Args.Levels }
 
-func (i *image) Size() vec3.T {
+func (i *Image) Size() vec3.T {
 	return vec3.T{
 		X: float32(i.Args.Width),
 		Y: float32(i.Args.Height),
@@ -171,7 +173,7 @@ func (i *image) Size() vec3.T {
 	}
 }
 
-func (i *image) Destroy() {
+func (i *Image) Destroy() {
 	if i.memory != nil {
 		i.memory.Destroy()
 		if i.ptr != nil {
@@ -183,7 +185,7 @@ func (i *image) Destroy() {
 	i.device = nil
 }
 
-func (i *image) View(format core1_0.Format, mask core1_0.ImageAspectFlags) (View, error) {
+func (i *Image) View(format core1_0.Format, mask core1_0.ImageAspectFlags) (*View, error) {
 	info := core1_0.ImageViewCreateInfo{
 		Image:    i.ptr,
 		ViewType: core1_0.ImageViewType2D,
@@ -209,7 +211,7 @@ func (i *image) View(format core1_0.Format, mask core1_0.ImageAspectFlags) (View
 		i.device.SetDebugObjectName(driver.VulkanHandle(ptr.Handle()), core1_0.ObjectTypeImageView, i.Args.Key)
 	}
 
-	return &imgview{
+	return &View{
 		ptr:    ptr,
 		device: i.device,
 		image:  i,

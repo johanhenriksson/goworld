@@ -41,7 +41,7 @@ type GuiPass struct {
 	app    engine.App
 	target engine.Target
 	mat    []*material.Instance[*GuiDescriptors]
-	pass   renderpass.T
+	pass   *renderpass.Renderpass
 	fbuf   framebuffer.Array
 
 	textures []cache.SamplerCache
@@ -207,7 +207,7 @@ func (p *GuiPass) Record(cmds command.Recorder, args draw.Args, scene object.Com
 	// draw everything in a single batch
 	// todo: split into multiple batches to be able to use scissor test
 	// todo: use draw indirect
-	cmds.Record(func(cmd command.Buffer) {
+	cmds.Record(func(cmd *command.Buffer) {
 		cmd.CmdBeginRenderPass(p.pass, p.fbuf[args.Frame])
 		mat.Bind(cmd)
 

@@ -6,7 +6,7 @@ type Ref interface {
 	Key() string
 	Version() int
 
-	Load(device.T) T
+	Load(*device.Device) *Shader
 }
 
 type ref struct {
@@ -25,6 +25,6 @@ func (r *ref) Version() int {
 	return 1
 }
 
-func (r *ref) Load(dev device.T) T {
+func (r *ref) Load(dev *device.Device) *Shader {
 	return New(dev, r.name)
 }

@@ -19,7 +19,7 @@ import (
 type ForwardPass struct {
 	target engine.Target
 	app    engine.App
-	pass   renderpass.T
+	pass   *renderpass.Renderpass
 	fbuf   framebuffer.Array
 
 	materials  MaterialCache
@@ -33,7 +33,7 @@ func NewForwardPass(
 	app engine.App,
 	target engine.Target,
 	depth engine.Target,
-	shadows Shadow,
+	shadows *Shadowpass,
 ) *ForwardPass {
 	pass := renderpass.New(app.Device(), renderpass.Args{
 		Name: "Forward",
@@ -89,7 +89,7 @@ func (p *ForwardPass) Record(cmds command.Recorder, args draw.Args, scene object
 	cam := uniform.CameraFromArgs(args)
 	lights := p.lightQuery.Reset().Collect(scene)
 
-	cmds.Record(func(cmd command.Buffer) {
+	cmds.Record(func(cmd *command.Buffer) {
 		cmd.CmdBeginRenderPass(p.pass, p.fbuf[args.Frame])
 	})
 
@@ -111,7 +111,7 @@ func (p *ForwardPass) Record(cmds command.Recorder, args draw.Args, scene object
 	groups = DepthSortGroups(p.materials, args.Frame, cam, transparent)
 	groups.Draw(cmds, cam, lights)
 
-	cmds.Record(func(cmd command.Buffer) {
+	cmds.Record(func(cmd *command.Buffer) {
 		cmd.CmdEndRenderPass()
 	})
 }

@@ -48,7 +48,7 @@ type label struct {
 
 	fontSize   int
 	fontName   string
-	font       font.T
+	font       *font.Font
 	color      color.T
 	highlight  color.T
 	lineHeight float32

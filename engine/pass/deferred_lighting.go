@@ -25,8 +25,8 @@ type DeferredLightPass struct {
 	gbuffer    GeometryBuffer
 	ssao       engine.Target
 	quad       vertex.Mesh
-	pass       renderpass.T
-	light      LightShader
+	pass       *renderpass.Renderpass
+	light      *LightShader
 	fbuf       framebuffer.Array
 	samplers   []cache.SamplerCache
 	shadows    []*ShadowCache
@@ -38,7 +38,7 @@ func NewDeferredLightingPass(
 	app engine.App,
 	target engine.Target,
 	gbuffer GeometryBuffer,
-	shadows Shadow,
+	shadows *Shadowpass,
 	occlusion engine.Target,
 ) *DeferredLightPass {
 	pass := renderpass.New(app.Device(), renderpass.Args{
@@ -139,7 +139,7 @@ func (p *DeferredLightPass) Record(cmds command.Recorder, args draw.Args, scene 
 	shadows.Flush()
 
 	quad := p.app.Meshes().Fetch(p.quad)
-	cmds.Record(func(cmd command.Buffer) {
+	cmds.Record(func(cmd *command.Buffer) {
 		cmd.CmdBeginRenderPass(p.pass, p.fbuf[args.Frame])
 
 		p.light.Bind(cmd, args.Frame)

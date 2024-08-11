@@ -7,9 +7,9 @@ import (
 	"github.com/johanhenriksson/goworld/render/renderpass"
 )
 
-type Array []T
+type Array []*Framebuffer
 
-func NewArray(count int, device device.T, name string, width, height int, pass renderpass.T) (Array, error) {
+func NewArray(count int, device *device.Device, name string, width, height int, pass *renderpass.Renderpass) (Array, error) {
 	var err error
 	array := make(Array, count)
 	for i := range array {

@@ -12,10 +12,10 @@ import (
 
 type Args struct {
 	Key      string
-	Pass     renderpass.T
+	Pass     *renderpass.Renderpass
 	Subpass  renderpass.Name
-	Layout   Layout
-	Shader   shader.T
+	Layout   *Layout
+	Shader   *shader.Shader
 	Pointers vertex.Pointers
 
 	Primitive       vertex.Primitive

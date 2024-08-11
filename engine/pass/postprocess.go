@@ -28,9 +28,9 @@ type PostProcessPass struct {
 	mat   *material.Material[*PostProcessDescriptors]
 	desc  []*material.Instance[*PostProcessDescriptors]
 	fbufs framebuffer.Array
-	pass  renderpass.T
+	pass  *renderpass.Renderpass
 
-	inputTex []texture.T
+	inputTex texture.Array
 }
 
 var _ draw.Pass = &PostProcessPass{}
@@ -117,7 +117,7 @@ func NewPostProcessPass(app engine.App, target engine.Target, input engine.Targe
 	}
 
 	p.desc = p.mat.InstantiateMany(app.Pool(), frames)
-	p.inputTex = make([]texture.T, frames)
+	p.inputTex = make(texture.Array, frames)
 	for i := 0; i < input.Frames(); i++ {
 		inputKey := fmt.Sprintf("post-input-%d", i)
 		p.inputTex[i], err = texture.FromImage(app.Device(), inputKey, p.input.Surfaces()[i], texture.Args{
@@ -140,7 +140,7 @@ func (p *PostProcessPass) Record(cmds command.Recorder, args draw.Args, scene ob
 	// refresh color lut
 	lutTex := p.app.Textures().Fetch(p.LUT)
 
-	cmds.Record(func(cmd command.Buffer) {
+	cmds.Record(func(cmd *command.Buffer) {
 		cmd.CmdBeginRenderPass(p.pass, p.fbufs[args.Frame])
 
 		desc := p.desc[args.Frame]

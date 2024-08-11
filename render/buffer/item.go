@@ -8,20 +8,13 @@ import (
 	"github.com/johanhenriksson/goworld/util"
 )
 
-type Item[K any] interface {
-	T
-
-	// Set the data in the buffer and flushes.
-	Set(data K)
-}
-
-type item[K any] struct {
+type Item[K any] struct {
 	T
 }
 
 // NewItem creates a new typed single-item buffer.
 // When allocating items, the Size argument is ignored
-func NewItem[K any](device device.T, args Args) Item[K] {
+func NewItem[K any](device *device.Device, args Args) *Item[K] {
 	align, maxSize := GetBufferLimits(device, args.Usage)
 
 	var empty K
@@ -35,12 +28,12 @@ func NewItem[K any](device device.T, args Args) Item[K] {
 	args.Size = element
 	buffer := New(device, args)
 
-	return &item[K]{
+	return &Item[K]{
 		T: buffer,
 	}
 }
 
-func (i *item[K]) Set(data K) {
+func (i *Item[K]) Set(data K) {
 	ptr := &data
 	i.Write(0, ptr)
 	i.Flush()

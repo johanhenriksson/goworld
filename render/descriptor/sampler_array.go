@@ -26,7 +26,7 @@ type SamplerArray struct {
 
 var _ Descriptor = &SamplerArray{}
 
-func (d *SamplerArray) Initialize(device device.T) {
+func (d *SamplerArray) Initialize(device *device.Device) {
 	if d.Count == 0 {
 		panic("sampler array has count 0")
 	}
@@ -69,7 +69,7 @@ func (d *SamplerArray) MaxCount() int {
 	return d.Count
 }
 
-func (d *SamplerArray) Set(index int, tex texture.T) {
+func (d *SamplerArray) Set(index int, tex *texture.Texture) {
 	if index > d.Count {
 		panic("out of bounds")
 	}
@@ -90,7 +90,7 @@ func (d *SamplerArray) Clear(index int) {
 	d.write(index, 1)
 }
 
-func (d *SamplerArray) SetRange(textures []texture.T, offset int) {
+func (d *SamplerArray) SetRange(textures texture.Array, offset int) {
 	end := offset + len(textures)
 	if end > d.Count {
 		panic("out of bounds")

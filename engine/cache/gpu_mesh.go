@@ -20,7 +20,7 @@ type GpuMesh struct {
 	VertexOffset int
 }
 
-func (m *GpuMesh) Bind(cmd command.Buffer) {
+func (m *GpuMesh) Bind(cmd *command.Buffer) {
 	if m.IndexCount <= 0 {
 		// nothing to draw
 		// todo: this can happen if the mesh is not ready?

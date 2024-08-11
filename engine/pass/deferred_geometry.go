@@ -28,7 +28,7 @@ type DeferredGeometryPass struct {
 	target  engine.Target
 	gbuffer GeometryBuffer
 	app     engine.App
-	pass    renderpass.T
+	pass    *renderpass.Renderpass
 	fbuf    framebuffer.Array
 
 	materials MaterialCache
@@ -105,7 +105,7 @@ func NewDeferredGeometryPass(
 }
 
 func (p *DeferredGeometryPass) Record(cmds command.Recorder, args draw.Args, scene object.Component) {
-	cmds.Record(func(cmd command.Buffer) {
+	cmds.Record(func(cmd *command.Buffer) {
 		cmd.CmdBeginRenderPass(p.pass, p.fbuf[args.Frame])
 	})
 
@@ -121,7 +121,7 @@ func (p *DeferredGeometryPass) Record(cmds command.Recorder, args draw.Args, sce
 	groups := MaterialGroups(p.materials, args.Frame, objects)
 	groups.Draw(cmds, cam, nil)
 
-	cmds.Record(func(cmd command.Buffer) {
+	cmds.Record(func(cmd *command.Buffer) {
 		cmd.CmdEndRenderPass()
 	})
 }

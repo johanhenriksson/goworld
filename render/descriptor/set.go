@@ -12,7 +12,7 @@ type Set interface {
 }
 
 type set struct {
-	device device.T
+	device *device.Device
 	layout SetLayout
 	ptr    core1_0.DescriptorSet
 }

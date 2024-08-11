@@ -29,16 +29,7 @@ func (d Bindings) Descriptor(name string) (int, bool) {
 	return index, exists
 }
 
-type T interface {
-	Name() string
-	Modules() []Module
-	Destroy()
-	Input(name string) (int, types.Type, bool)
-	Descriptor(name string) (int, bool)
-	Textures() []texture.Slot
-}
-
-type shader struct {
+type Shader struct {
 	name     string
 	modules  []Module
 	inputs   Inputs
@@ -46,7 +37,7 @@ type shader struct {
 	textures []texture.Slot
 }
 
-func New(device device.T, path string) T {
+func New(device *device.Device, path string) *Shader {
 	// todo: inputs & descriptors should be obtained from SPIR-V reflection
 	detailsPath := fmt.Sprintf("shaders/%s.json", path)
 	details, err := ReadDetails(detailsPath)
@@ -64,7 +55,7 @@ func New(device device.T, path string) T {
 		NewModule(device, fmt.Sprintf("shaders/%s.fs.glsl", path), StageFragment),
 	}
 
-	return &shader{
+	return &Shader{
 		name:     path,
 		modules:  modules,
 		inputs:   inputs,
@@ -74,29 +65,29 @@ func New(device device.T, path string) T {
 }
 
 // Name returns the file name of the shader
-func (s *shader) Name() string {
+func (s *Shader) Name() string {
 	return s.name
 }
 
-func (s *shader) Modules() []Module {
+func (s *Shader) Modules() []Module {
 	return s.modules
 }
 
 // Destroy the shader and its modules.
-func (s *shader) Destroy() {
+func (s *Shader) Destroy() {
 	for _, module := range s.modules {
 		module.Destroy()
 	}
 }
 
-func (s *shader) Input(name string) (int, types.Type, bool) {
+func (s *Shader) Input(name string) (int, types.Type, bool) {
 	return s.inputs.Input(name)
 }
 
-func (s *shader) Textures() []texture.Slot {
+func (s *Shader) Textures() []texture.Slot {
 	return s.textures
 }
 
-func (s *shader) Descriptor(name string) (int, bool) {
+func (s *Shader) Descriptor(name string) (int, bool) {
 	return s.bindings.Descriptor(name)
 }

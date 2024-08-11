@@ -18,11 +18,11 @@ type Fence interface {
 }
 
 type fence struct {
-	device device.T
+	device *device.Device
 	ptr    core1_0.Fence
 }
 
-func NewFence(device device.T, name string, signaled bool) Fence {
+func NewFence(device *device.Device, name string, signaled bool) Fence {
 	var flags core1_0.FenceCreateFlags
 	if signaled {
 		flags = core1_0.FenceCreateSignaled

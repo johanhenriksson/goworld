@@ -21,7 +21,7 @@ import (
 type LinePass struct {
 	app       engine.App
 	target    engine.Target
-	pass      renderpass.T
+	pass      *renderpass.Renderpass
 	fbuf      framebuffer.Array
 	materials MaterialCache
 	meshQuery *object.Query[mesh.Mesh]
@@ -77,7 +77,7 @@ func NewLinePass(app engine.App, target engine.Target, depth engine.Target) *Lin
 }
 
 func (p *LinePass) Record(cmds command.Recorder, args draw.Args, scene object.Component) {
-	cmds.Record(func(cmd command.Buffer) {
+	cmds.Record(func(cmd *command.Buffer) {
 		cmd.CmdBeginRenderPass(p.pass, p.fbuf[args.Frame])
 	})
 
@@ -94,7 +94,7 @@ func (p *LinePass) Record(cmds command.Recorder, args draw.Args, scene object.Co
 	groups := MaterialGroups(p.materials, args.Frame, lines)
 	groups.Draw(cmds, cam, nil)
 
-	cmds.Record(func(cmd command.Buffer) {
+	cmds.Record(func(cmd *command.Buffer) {
 		cmd.CmdEndRenderPass()
 	})
 }

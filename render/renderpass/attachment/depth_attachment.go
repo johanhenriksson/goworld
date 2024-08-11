@@ -32,7 +32,7 @@ func (desc *Depth) defaults() {
 	}
 }
 
-func NewDepth(device device.T, desc Depth) T {
+func NewDepth(device *device.Device, desc Depth) T {
 	desc.defaults()
 
 	clear := core1_0.ClearValueDepthStencil{

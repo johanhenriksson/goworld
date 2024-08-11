@@ -19,17 +19,17 @@ import (
 
 // Materials combine pipelines and descriptors into a common unit.
 type Material[D descriptor.Set] struct {
-	device  device.T
-	dlayout descriptor.SetLayoutTyped[D]
-	shader  shader.T
-	layout  pipeline.Layout
-	pipe    pipeline.T
-	pass    renderpass.T
+	device  *device.Device
+	dlayout *descriptor.Layout[D]
+	shader  *shader.Shader
+	playout *pipeline.Layout
+	pipe    *pipeline.Pipeline
+	pass    *renderpass.Renderpass
 }
 
 type Args struct {
-	Shader    shader.T
-	Pass      renderpass.T
+	Shader    *shader.Shader
+	Pass      *renderpass.Renderpass
 	Subpass   renderpass.Name
 	Constants []pipeline.PushConstant
 
@@ -44,7 +44,7 @@ type Args struct {
 	CullMode   vertex.CullMode
 }
 
-func New[D descriptor.Set](device device.T, args Args, descriptors D) *Material[D] {
+func New[D descriptor.Set](device *device.Device, args Args, descriptors D) *Material[D] {
 	if device == nil {
 		panic("device is nil")
 	}
@@ -95,13 +95,13 @@ func New[D descriptor.Set](device device.T, args Args, descriptors D) *Material[
 		shader: args.Shader,
 
 		dlayout: descLayout,
-		layout:  layout,
+		playout: layout,
 		pipe:    pipe,
 		pass:    args.Pass,
 	}
 }
 
-func (m *Material[D]) Bind(cmd command.Buffer) {
+func (m *Material[D]) Bind(cmd *command.Buffer) {
 	cmd.CmdBindGraphicsPipeline(m.pipe)
 }
 
@@ -114,9 +114,9 @@ func (m *Material[D]) Destroy() {
 		m.dlayout.Destroy()
 		m.dlayout = nil
 	}
-	if m.layout != nil {
-		m.layout.Destroy()
-		m.layout = nil
+	if m.playout != nil {
+		m.playout.Destroy()
+		m.playout = nil
 	}
 	if m.pipe != nil {
 		m.pipe.Destroy()
@@ -124,7 +124,7 @@ func (m *Material[D]) Destroy() {
 	}
 }
 
-func (m *Material[D]) Instantiate(pool descriptor.Pool) *Instance[D] {
+func (m *Material[D]) Instantiate(pool *descriptor.Pool) *Instance[D] {
 	set := m.dlayout.Instantiate(pool)
 	return &Instance[D]{
 		material: m,
@@ -132,6 +132,6 @@ func (m *Material[D]) Instantiate(pool descriptor.Pool) *Instance[D] {
 	}
 }
 
-func (m *Material[D]) InstantiateMany(pool descriptor.Pool, n int) []*Instance[D] {
+func (m *Material[D]) InstantiateMany(pool *descriptor.Pool, n int) []*Instance[D] {
 	return util.Map(util.Range(0, n, 1), func(i int) *Instance[D] { return m.Instantiate(pool) })
 }

@@ -35,7 +35,7 @@ type glfwWindow struct {
 	surface       khr_surface.Surface
 }
 
-func NewWindow(vulkan instance.T, device device.T, args window.WindowArgs) (window.Window, error) {
+func NewWindow(vulkan *instance.Instance, device *device.Device, args window.WindowArgs) (window.Window, error) {
 	// window creation hints.
 	glfw.WindowHint(glfw.ClientAPI, glfw.NoAPI)
 
@@ -126,7 +126,7 @@ func (w *glfwWindow) Scale() float32    { return w.scale }
 func (w *glfwWindow) ShouldClose() bool { return w.wnd.ShouldClose() }
 func (w *glfwWindow) Title() string     { return w.title }
 
-func (w *glfwWindow) Surfaces() []image.T           { return w.swap.Images() }
+func (w *glfwWindow) Surfaces() image.Array         { return w.swap.Images() }
 func (w *glfwWindow) SurfaceFormat() core1_0.Format { return w.swap.SurfaceFormat() }
 
 func (w *glfwWindow) SetInputHandler(handler input.Handler) {

@@ -25,13 +25,13 @@ type memtype struct {
 
 type memory struct {
 	ptr    core1_0.DeviceMemory
-	device T
+	device *Device
 	size   int
 	flags  core1_0.MemoryPropertyFlags
 	mapPtr unsafe.Pointer
 }
 
-func alloc(device T, key string, req core1_0.MemoryRequirements, flags core1_0.MemoryPropertyFlags) Memory {
+func alloc(device *Device, key string, req core1_0.MemoryRequirements, flags core1_0.MemoryPropertyFlags) Memory {
 	typeIdx := device.GetMemoryTypeIndex(req.MemoryTypeBits, flags)
 
 	align := int(device.GetLimits().NonCoherentAtomSize)

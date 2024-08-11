@@ -21,15 +21,9 @@ type SetLayout interface {
 	VariableCount() int
 }
 
-type SetLayoutTyped[S Set] interface {
-	SetLayout
-	Name() string
-	Instantiate(pool Pool) S
-}
-
-type layout[S Set] struct {
-	device    device.T
-	shader    shader.T
+type Layout[S Set] struct {
+	device    *device.Device
+	shader    *shader.Shader
 	ptr       core1_0.DescriptorSetLayout
 	set       S
 	allocated []Descriptor
@@ -37,7 +31,7 @@ type layout[S Set] struct {
 	counts    map[core1_0.DescriptorType]int
 }
 
-func New[S Set](device device.T, set S, shader shader.T) SetLayoutTyped[S] {
+func New[S Set](device *device.Device, set S, shader *shader.Shader) *Layout[S] {
 	descriptors, err := ParseDescriptorStruct(set)
 	if err != nil {
 		panic(err)
@@ -93,7 +87,7 @@ func New[S Set](device device.T, set S, shader shader.T) SetLayoutTyped[S] {
 
 	device.SetDebugObjectName(driver.VulkanHandle(ptr.Handle()), core1_0.ObjectTypeDescriptorSetLayout, shader.Name())
 
-	return &layout[S]{
+	return &Layout[S]{
 		device:   device,
 		shader:   shader,
 		ptr:      ptr,
@@ -103,23 +97,23 @@ func New[S Set](device device.T, set S, shader shader.T) SetLayoutTyped[S] {
 	}
 }
 
-func (d *layout[S]) Name() string {
+func (d *Layout[S]) Name() string {
 	return d.shader.Name()
 }
 
-func (d *layout[S]) Ptr() core1_0.DescriptorSetLayout {
+func (d *Layout[S]) Ptr() core1_0.DescriptorSetLayout {
 	return d.ptr
 }
 
-func (d *layout[S]) Counts() map[core1_0.DescriptorType]int {
+func (d *Layout[S]) Counts() map[core1_0.DescriptorType]int {
 	return d.counts
 }
 
-func (d *layout[S]) VariableCount() int {
+func (d *Layout[S]) VariableCount() int {
 	return d.maxCount
 }
 
-func (d *layout[S]) Instantiate(pool Pool) S {
+func (d *Layout[S]) Instantiate(pool *Pool) S {
 	set := pool.Allocate(d)
 	copy, descriptors := CopyDescriptorStruct(d.set, set, d.shader)
 	for _, descriptor := range descriptors {
@@ -129,7 +123,7 @@ func (d *layout[S]) Instantiate(pool Pool) S {
 	return copy
 }
 
-func (d *layout[S]) Destroy() {
+func (d *Layout[S]) Destroy() {
 	// todo: allocated sets should probably clean up themselves
 	for _, desc := range d.allocated {
 		desc.Destroy()

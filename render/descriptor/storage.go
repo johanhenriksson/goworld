@@ -16,11 +16,11 @@ type Storage[K comparable] struct {
 	Size   int
 
 	binding int
-	buffer  buffer.Array[K]
+	buffer  *buffer.Array[K]
 	set     Set
 }
 
-func (d *Storage[K]) Initialize(device device.T) {
+func (d *Storage[K]) Initialize(device *device.Device) {
 	if d.set == nil {
 		panic("descriptor must be bound first")
 	}

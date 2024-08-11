@@ -12,7 +12,7 @@ import (
 	"github.com/vkngwrapper/core/v2/driver"
 )
 
-type CommandFn func(Buffer)
+type CommandFn func(*Buffer)
 
 // Workers manage a command pool thread
 type Worker interface {
@@ -25,14 +25,14 @@ type Worker interface {
 type Workers []Worker
 
 type worker struct {
-	device device.T
+	device *device.Device
 	queue  device.Queue
 	name   string
-	pool   Pool
+	pool   *Pool
 	work   *ThreadWorker
 }
 
-func NewWorker(device device.T, name string, queue device.Queue) Worker {
+func NewWorker(device *device.Device, name string, queue device.Queue) Worker {
 	pool := NewPool(device, core1_0.CommandPoolCreateTransient, queue.FamilyIndex())
 
 	name = fmt.Sprintf("%s:%d:%x", name, queue.FamilyIndex(), queue.Ptr().Handle())

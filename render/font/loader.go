@@ -13,7 +13,7 @@ import (
 )
 
 var parseCache map[string]*truetype.Font = make(map[string]*truetype.Font, 32)
-var faceCache map[string]T = make(map[string]T, 128)
+var faceCache map[string]*Font = make(map[string]*Font, 128)
 
 func loadTruetypeFont(filename string) (*truetype.Font, error) {
 	// check parsed font cache
@@ -36,7 +36,7 @@ func loadTruetypeFont(filename string) (*truetype.Font, error) {
 	return fnt, nil
 }
 
-func Load(filename string, size int, scale float32) T {
+func Load(filename string, size int, scale float32) *Font {
 	key := fmt.Sprintf("%s:%dx%.2f", filename, size, scale)
 	if font, exists := faceCache[key]; exists {
 		return font
@@ -59,7 +59,7 @@ func Load(filename string, size int, scale float32) T {
 		SubPixelsY: 8,
 	})
 
-	fnt := &font{
+	fnt := &Font{
 		size:   float32(size),
 		scale:  scale,
 		name:   name,
