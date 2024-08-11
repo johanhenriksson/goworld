@@ -12,14 +12,20 @@ func init() {
 	})
 }
 
+type SceneFunc func(Object)
+
 type scene struct {
 	Object
 }
 
-func Scene() Object {
-	return &scene{
+func Scene(funcs ...SceneFunc) Object {
+	s := &scene{
 		Object: Empty("Scene"),
 	}
+	for _, f := range funcs {
+		f(s)
+	}
+	return s
 }
 
 func (s *scene) Active() bool {

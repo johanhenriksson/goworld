@@ -8,8 +8,8 @@ import (
 )
 
 // Instantiates the default render graph
-func Default(app engine.App, target engine.Target) T {
-	return New(app, target, func(g T, output engine.Target) []Resource {
+func Default(app engine.App, target engine.Target) engine.Renderer {
+	return New(app, target, func(g *Graph, output engine.Target) []Resource {
 		size := output.Size()
 
 		//

@@ -4,9 +4,6 @@ import (
 	"github.com/johanhenriksson/goworld/core/light"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/core/script"
-	"github.com/johanhenriksson/goworld/editor"
-	_ "github.com/johanhenriksson/goworld/editor/builtin"
-	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/engine/app"
 	_ "github.com/johanhenriksson/goworld/game/chunk"
 	"github.com/johanhenriksson/goworld/game/client"
@@ -21,14 +18,13 @@ import (
 )
 
 func main() {
-	app.Run(
-		engine.Args{
+	app.RunEditor(
+		app.Args{
 			Width:  800,
 			Height: 600,
 			Title:  "goworld",
 		},
-		nil,
-		editor.Scene(func(scene object.Object) {
+		func(scene object.Object) {
 			// todo: should on the scene object by default
 			object.Attach(scene, physics.NewWorld())
 
@@ -62,6 +58,6 @@ func main() {
 						self.Parent().Transform().SetRotation(quat.Euler(rot, 0, 0))
 					})).
 					Create())
-		}),
+		},
 	)
 }

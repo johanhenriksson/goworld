@@ -3,9 +3,6 @@ package main
 import (
 	"github.com/johanhenriksson/goworld/core/light"
 	"github.com/johanhenriksson/goworld/core/object"
-	"github.com/johanhenriksson/goworld/editor"
-	_ "github.com/johanhenriksson/goworld/editor/builtin"
-	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/engine/app"
 	"github.com/johanhenriksson/goworld/game/chunk"
 	"github.com/johanhenriksson/goworld/math/quat"
@@ -14,14 +11,13 @@ import (
 )
 
 func main() {
-	app.Run(
-		engine.Args{
+	app.RunEditor(
+		app.Args{
 			Width:  1600,
 			Height: 1200,
 			Title:  "voxel editor",
 		},
-		nil,
-		editor.Scene(func(scene object.Object) {
+		func(scene object.Object) {
 			chk := chunk.New("editable", 16, 16, 16)
 
 			object.Builder(object.Empty("Chunk")).
@@ -40,6 +36,6 @@ func main() {
 					Position(vec3.New(16, 16, -4)).
 					Rotation(quat.Euler(40, 0, 0)).
 					Create())
-		}),
+		},
 	)
 }

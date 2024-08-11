@@ -1,7 +1,7 @@
 package quat_test
 
 import (
-	. "github.com/johanhenriksson/goworld/test"
+	. "github.com/johanhenriksson/goworld/test/util"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 

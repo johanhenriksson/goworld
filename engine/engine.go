@@ -8,6 +8,20 @@ import (
 	"github.com/johanhenriksson/goworld/render/instance"
 )
 
+type App interface {
+	Instance() instance.T
+	Device() device.T
+	Destroy()
+
+	Worker() command.Worker
+	Flush()
+
+	Pool() descriptor.Pool
+	Meshes() cache.MeshCache
+	Textures() cache.TextureCache
+	Shaders() cache.ShaderCache
+}
+
 type engine struct {
 	appName  string
 	instance instance.T
