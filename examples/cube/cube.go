@@ -5,9 +5,6 @@ import (
 	"github.com/johanhenriksson/goworld/core/light"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/core/script"
-	"github.com/johanhenriksson/goworld/editor"
-	_ "github.com/johanhenriksson/goworld/editor/builtin"
-	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/engine/app"
 	"github.com/johanhenriksson/goworld/geometry/cube"
 	"github.com/johanhenriksson/goworld/geometry/plane"
@@ -21,14 +18,13 @@ import (
 )
 
 func main() {
-	app.Run(
-		engine.Args{
+	app.RunEditor(
+		app.Args{
 			Width:  1200,
 			Height: 800,
 			Title:  "goworld: cube",
 		},
-		nil,
-		editor.Scene(func(scene object.Object) {
+		func(scene object.Object) {
 			rot := float32(45)
 			box := cube.New(cube.Args{
 				Size: 1,
@@ -86,6 +82,6 @@ func main() {
 				).
 				Parent(scene).
 				Create()
-		}),
+		},
 	)
 }

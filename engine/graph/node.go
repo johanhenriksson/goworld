@@ -55,6 +55,8 @@ func newNode(app engine.App, name string, pass draw.Pass) *node {
 func (n *node) Requires() []Node   { return n.requires }
 func (n *node) Dependants() []Node { return n.dependants }
 
+// After introduces a render graph dependency, ensuring that the current node
+// will wait at the given pipeline stage until the referenced node has completed.
 func (n *node) After(nd Node, mask core1_0.PipelineStageFlags) {
 	if _, exists := n.after[nd.Name()]; exists {
 		return
@@ -70,6 +72,8 @@ func (n *node) After(nd Node, mask core1_0.PipelineStageFlags) {
 	n.refresh()
 }
 
+// Before introduces a render graph dependency, ensuring that the current node
+// will complete before the referenced node enters the given pipeline stage.
 func (n *node) Before(nd Node, mask core1_0.PipelineStageFlags, signal []sync.Semaphore) {
 	if _, exists := n.before[nd.Name()]; exists {
 		return
@@ -172,15 +176,17 @@ func (n *node) signals(index int) []sync.Semaphore {
 }
 
 func (n *node) Draw(worker command.Worker, args draw.Args, scene object.Component) {
-	if n.pass == nil {
-		return
+	var cmds = command.Empty
+	var marker = "EmptyNode"
+	if n.pass != nil {
+		cmds = command.NewRecorder()
+		n.pass.Record(cmds, args, scene)
+		marker = fmt.Sprintf("%s:%d", n.pass.Name(), args.Frame)
 	}
-	cmds := command.NewRecorder()
-	n.pass.Record(cmds, args, scene)
 
 	worker.Submit(command.SubmitInfo{
 		Commands: cmds,
-		Marker:   fmt.Sprintf("%s:%d", n.pass.Name(), args.Frame),
+		Marker:   marker,
 		Wait:     n.waits(args.Frame),
 		Signal:   n.signals(args.Frame),
 	})

@@ -5,10 +5,9 @@ import (
 
 	"github.com/johanhenriksson/goworld/core/input/keys"
 	"github.com/johanhenriksson/goworld/core/object"
-	"github.com/johanhenriksson/goworld/engine"
 )
 
-func Scene(f engine.SceneFunc) engine.SceneFunc {
+func Scene(f object.SceneFunc) object.SceneFunc {
 	return func(scene object.Object) {
 		// create subscene in a child object
 		workspace := object.Empty("Workspace")

@@ -6,23 +6,19 @@ import (
 
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/engine"
-	"github.com/johanhenriksson/goworld/engine/graph"
 	"github.com/johanhenriksson/goworld/engine/window"
 	"github.com/johanhenriksson/goworld/engine/window/glfw"
 )
 
-func Run(args engine.Args, graphFunc graph.GraphFunc, scenefuncs ...engine.SceneFunc) {
+func Run(args Args, scenefuncs ...object.SceneFunc) {
 	runtime.LockOSThread()
+	args.Defaults()
 
 	go engine.RunProfilingServer(6060)
 	interrupt := NewInterrupter()
 
 	app := engine.New("goworld", 0)
 	defer app.Destroy()
-
-	if graphFunc == nil {
-		graphFunc = graph.Default
-	}
 
 	// create a window
 	wnd, err := glfw.NewWindow(app.Instance(), app.Device(), window.WindowArgs{
@@ -37,15 +33,12 @@ func Run(args engine.Args, graphFunc graph.GraphFunc, scenefuncs ...engine.Scene
 	defer wnd.Destroy()
 
 	// create renderer
-	renderer := graphFunc(app, wnd)
+	renderer := args.Renderer(app, wnd)
 	defer renderer.Destroy()
 
 	// create scene
-	scene := object.Empty("Scene")
+	scene := object.Scene(scenefuncs...)
 	wnd.SetInputHandler(scene)
-	for _, scenefunc := range scenefuncs {
-		scenefunc(scene)
-	}
 
 	object.Attach(scene, engine.NewStatsGUI())
 

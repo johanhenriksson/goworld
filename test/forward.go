@@ -1,6 +1,7 @@
 package test
 
 import (
+	. "github.com/johanhenriksson/goworld/test/util"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
@@ -24,8 +25,8 @@ import (
 	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
-func ForwardGraph(app engine.App, target engine.Target) graph.T {
-	return graph.New(app, target, func(g graph.T, output engine.Target) []graph.Resource {
+func ForwardGraph(app engine.App, target engine.Target) engine.Renderer {
+	return graph.New(app, target, func(g *graph.Graph, output engine.Target) []graph.Resource {
 		size := output.Size()
 
 		// allocate main depth buffer
@@ -64,12 +65,12 @@ func ForwardGraph(app engine.App, target engine.Target) graph.T {
 var _ = Describe("forward renderer", Label("e2e"), func() {
 	It("renders correctly", func() {
 		img := app.Frame(
-			engine.Args{
-				Width:  512,
-				Height: 512,
-				Title:  "goworld",
+			app.Args{
+				Width:    512,
+				Height:   512,
+				Title:    "goworld",
+				Renderer: ForwardGraph,
 			},
-			ForwardGraph,
 			func(scene object.Object) {
 				object.Builder(object.Empty("Camera")).
 					Rotation(quat.Euler(30, 45, 0)).

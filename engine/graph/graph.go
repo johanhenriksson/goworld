@@ -14,37 +14,25 @@ import (
 	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
-type GraphFunc func(app engine.App, target engine.Target) T
-type NodeFunc func(T, engine.Target) []Resource
-
-// The render graph is responsible for synchronization between
-// different render nodes.
-type T interface {
-	Node(pass draw.Pass) Node
-	Recreate()
-	Draw(scene object.Object, time, delta float32)
-	Destroy()
-	Screengrab() *image.RGBA
-	Screenshot()
-}
+type GraphFunc func(*Graph, engine.Target) []Resource
 
 type Resource interface {
 	Destroy()
 }
 
-type graph struct {
+type Graph struct {
 	app       engine.App
 	target    engine.Target
 	pre       *preNode
 	post      *postNode
 	nodes     []Node
 	todo      map[Node]bool
-	init      NodeFunc
+	init      GraphFunc
 	resources []Resource
 }
 
-func New(app engine.App, output engine.Target, init NodeFunc) T {
-	g := &graph{
+func New(app engine.App, output engine.Target, init GraphFunc) *Graph {
+	g := &Graph{
 		app:    app,
 		target: output,
 		nodes:  make([]Node, 0, 16),
@@ -55,7 +43,7 @@ func New(app engine.App, output engine.Target, init NodeFunc) T {
 	return g
 }
 
-func (g *graph) Recreate() {
+func (g *Graph) Recreate() {
 	g.Destroy()
 	g.app.Pool().Recreate()
 
@@ -66,13 +54,13 @@ func (g *graph) Recreate() {
 	g.connect()
 }
 
-func (g *graph) Node(pass draw.Pass) Node {
+func (g *Graph) Node(pass draw.Pass) Node {
 	nd := newNode(g.app, pass.Name(), pass)
 	g.nodes = append(g.nodes, nd)
 	return nd
 }
 
-func (g *graph) connect() {
+func (g *Graph) connect() {
 	// use bottom of pipe so that subsequent passes start as soon as possible
 	for _, node := range g.nodes {
 		if len(node.Requires()) == 0 {
@@ -86,7 +74,7 @@ func (g *graph) connect() {
 	}
 }
 
-func (g *graph) Draw(scene object.Object, time, delta float32) {
+func (g *Graph) Draw(scene object.Object, time, delta float32) {
 	// put all nodes in a todo list
 	// for each node in todo list
 	//   if all Before nodes are not in todo list
@@ -136,7 +124,7 @@ func (g *graph) Draw(scene object.Object, time, delta float32) {
 	g.post.Present(worker, context)
 }
 
-func (g *graph) Screengrab() *image.RGBA {
+func (g *Graph) Screengrab() *image.RGBA {
 	idx := 0
 	g.app.Device().WaitIdle()
 	source := g.target.Surfaces()[idx]
@@ -147,7 +135,7 @@ func (g *graph) Screengrab() *image.RGBA {
 	return ss
 }
 
-func (g *graph) Screenshot() {
+func (g *Graph) Screenshot() {
 	img := g.Screengrab()
 	filename := fmt.Sprintf("Screenshot-%s.png", time.Now().Format("2006-01-02_15-04-05"))
 	if err := upload.SavePng(img, filename); err != nil {
@@ -156,7 +144,7 @@ func (g *graph) Screenshot() {
 	log.Println("saved screenshot", filename)
 }
 
-func (g *graph) Destroy() {
+func (g *Graph) Destroy() {
 	g.app.Flush()
 	for _, resource := range g.resources {
 		resource.Destroy()
