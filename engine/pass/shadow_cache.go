@@ -2,7 +2,7 @@ package pass
 
 import (
 	"github.com/johanhenriksson/goworld/core/light"
-	"github.com/johanhenriksson/goworld/render/cache"
+	"github.com/johanhenriksson/goworld/engine/cache"
 )
 
 type ShadowCache struct {
