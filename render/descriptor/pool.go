@@ -11,16 +11,9 @@ import (
 	"github.com/vkngwrapper/extensions/v2/ext_descriptor_indexing"
 )
 
-type Pool interface {
-	device.Resource[core1_0.DescriptorPool]
-
-	Allocate(layouts SetLayout) Set
-	Recreate()
-}
-
-type pool struct {
+type Pool struct {
 	ptr     core1_0.DescriptorPool
-	device  device.T
+	device  *device.Device
 	sizes   []core1_0.DescriptorPoolSize
 	maxSets int
 
@@ -28,8 +21,8 @@ type pool struct {
 	allocatedCounts map[core1_0.DescriptorType]int
 }
 
-func NewPool(device device.T, sets int, sizes []core1_0.DescriptorPoolSize) Pool {
-	p := &pool{
+func NewPool(device *device.Device, sets int, sizes []core1_0.DescriptorPoolSize) *Pool {
+	p := &Pool{
 		device:          device,
 		ptr:             nil,
 		sizes:           sizes,
@@ -40,11 +33,11 @@ func NewPool(device device.T, sets int, sizes []core1_0.DescriptorPoolSize) Pool
 	return p
 }
 
-func (p *pool) Ptr() core1_0.DescriptorPool {
+func (p *Pool) Ptr() core1_0.DescriptorPool {
 	return p.ptr
 }
 
-func (p *pool) Recreate() {
+func (p *Pool) Recreate() {
 	p.Destroy()
 
 	info := core1_0.DescriptorPoolCreateInfo{
@@ -62,7 +55,7 @@ func (p *pool) Recreate() {
 	p.ptr = ptr
 }
 
-func (p *pool) Destroy() {
+func (p *Pool) Destroy() {
 	if p.ptr == nil {
 		return
 	}
@@ -70,7 +63,7 @@ func (p *pool) Destroy() {
 	p.ptr = nil
 }
 
-func (p *pool) Allocate(layout SetLayout) Set {
+func (p *Pool) Allocate(layout SetLayout) Set {
 	info := core1_0.DescriptorSetAllocateInfo{
 		DescriptorPool: p.ptr,
 		SetLayouts:     []core1_0.DescriptorSetLayout{layout.Ptr()},

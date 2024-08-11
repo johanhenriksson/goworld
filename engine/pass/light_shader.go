@@ -25,23 +25,17 @@ type LightDescriptors struct {
 	Shadow    *descriptor.SamplerArray
 }
 
-type LightShader interface {
-	Bind(command.Buffer, int)
-	Descriptors(int) *LightDescriptors
-	Destroy()
-}
-
-type lightShader struct {
+type LightShader struct {
 	mat       *material.Material[*LightDescriptors]
 	instances []*material.Instance[*LightDescriptors]
 
-	diffuseTex   []texture.T
-	normalTex    []texture.T
-	positionTex  []texture.T
-	occlusionTex []texture.T
+	diffuseTex   texture.Array
+	normalTex    texture.Array
+	positionTex  texture.Array
+	occlusionTex texture.Array
 }
 
-func NewLightShader(app engine.App, pass renderpass.T, gbuffer GeometryBuffer, occlusion engine.Target) LightShader {
+func NewLightShader(app engine.App, pass *renderpass.Renderpass, gbuffer GeometryBuffer, occlusion engine.Target) *LightShader {
 	mat := material.New(
 		app.Device(),
 		material.Args{
@@ -81,10 +75,10 @@ func NewLightShader(app engine.App, pass renderpass.T, gbuffer GeometryBuffer, o
 	lightsh := mat.InstantiateMany(app.Pool(), frames)
 
 	var err error
-	diffuseTex := make([]texture.T, frames)
-	normalTex := make([]texture.T, frames)
-	positionTex := make([]texture.T, frames)
-	occlusionTex := make([]texture.T, frames)
+	diffuseTex := make(texture.Array, frames)
+	normalTex := make(texture.Array, frames)
+	positionTex := make(texture.Array, frames)
+	occlusionTex := make(texture.Array, frames)
 	for i := 0; i < frames; i++ {
 		diffuseTex[i], err = texture.FromImage(app.Device(), "deferred-diffuse", gbuffer.Diffuse()[i], texture.Args{
 			Filter: texture.FilterNearest,
@@ -118,7 +112,7 @@ func NewLightShader(app engine.App, pass renderpass.T, gbuffer GeometryBuffer, o
 		lightDesc.Occlusion.Set(occlusionTex[i])
 	}
 
-	return &lightShader{
+	return &LightShader{
 		mat:       mat,
 		instances: lightsh,
 
@@ -129,14 +123,14 @@ func NewLightShader(app engine.App, pass renderpass.T, gbuffer GeometryBuffer, o
 	}
 }
 
-func (ls *lightShader) Bind(buf command.Buffer, frame int) {
+func (ls *LightShader) Bind(buf *command.Buffer, frame int) {
 	ls.instances[frame].Bind(buf)
 }
-func (ls *lightShader) Descriptors(frame int) *LightDescriptors {
+func (ls *LightShader) Descriptors(frame int) *LightDescriptors {
 	return ls.instances[frame].Descriptors()
 }
 
-func (ls *lightShader) Destroy() {
+func (ls *LightShader) Destroy() {
 	for _, view := range ls.diffuseTex {
 		view.Destroy()
 	}

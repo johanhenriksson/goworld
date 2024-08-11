@@ -26,9 +26,9 @@ type BlurPass struct {
 
 	quad  vertex.Mesh
 	desc  []*material.Instance[*BlurDescriptors]
-	tex   []texture.T
+	tex   texture.Array
 	fbufs framebuffer.Array
-	pass  renderpass.T
+	pass  *renderpass.Renderpass
 }
 
 var _ draw.Pass = &BlurPass{}
@@ -109,7 +109,7 @@ func NewBlurPass(app engine.App, output engine.Target, input engine.Target) *Blu
 	}
 
 	p.desc = p.material.InstantiateMany(app.Pool(), frames)
-	p.tex = make([]texture.T, frames)
+	p.tex = make(texture.Array, frames)
 	for i := range p.tex {
 		key := fmt.Sprintf("blur-%d", i)
 		p.tex[i], err = texture.FromImage(app.Device(), key, p.input.Surfaces()[i], texture.Args{
@@ -129,7 +129,7 @@ func NewBlurPass(app engine.App, output engine.Target, input engine.Target) *Blu
 func (p *BlurPass) Record(cmds command.Recorder, args draw.Args, scene object.Component) {
 	quad := p.app.Meshes().Fetch(p.quad)
 
-	cmds.Record(func(cmd command.Buffer) {
+	cmds.Record(func(cmd *command.Buffer) {
 		cmd.CmdBeginRenderPass(p.pass, p.fbufs[args.Frame])
 		p.desc[args.Frame].Bind(cmd)
 		quad.Bind(cmd)

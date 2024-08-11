@@ -12,31 +12,24 @@ import (
 	"github.com/vkngwrapper/core/v2/driver"
 )
 
-type T interface {
-	device.Resource[core1_0.Framebuffer]
-
-	Attachment(attachment.Name) image.View
-	Size() (int, int)
-}
-
-type framebuf struct {
+type Framebuffer struct {
 	ptr         core1_0.Framebuffer
-	device      device.T
+	device      *device.Device
 	name        string
-	attachments map[attachment.Name]image.View
-	views       []image.View
-	images      []image.T
+	attachments map[attachment.Name]*image.View
+	views       image.ViewArray
+	images      image.Array
 	width       int
 	height      int
 }
 
-func New(device device.T, name string, width, height int, pass renderpass.T) (T, error) {
+func New(device *device.Device, name string, width, height int, pass *renderpass.Renderpass) (*Framebuffer, error) {
 	attachments := pass.Attachments()
 	depth := pass.Depth()
 
-	images := make([]image.T, 0, len(attachments)+1)
-	views := make([]image.View, 0, len(attachments)+1)
-	attachs := make(map[attachment.Name]image.View)
+	images := make(image.Array, 0, len(attachments)+1)
+	views := make(image.ViewArray, 0, len(attachments)+1)
+	attachs := make(map[attachment.Name]*image.View)
 
 	cleanup := func() {
 		// clean up the mess we've made so far
@@ -87,7 +80,7 @@ func New(device device.T, name string, width, height int, pass renderpass.T) (T,
 
 	info := core1_0.FramebufferCreateInfo{
 		RenderPass:  pass.Ptr(),
-		Attachments: util.Map(views, func(v image.View) core1_0.ImageView { return v.Ptr() }),
+		Attachments: util.Map(views, func(v *image.View) core1_0.ImageView { return v.Ptr() }),
 		Width:       width,
 		Height:      height,
 		Layers:      1,
@@ -105,7 +98,7 @@ func New(device device.T, name string, width, height int, pass renderpass.T) (T,
 
 	device.SetDebugObjectName(driver.VulkanHandle(ptr.Handle()), core1_0.ObjectTypeFramebuffer, name)
 
-	return &framebuf{
+	return &Framebuffer{
 		ptr:         ptr,
 		device:      device,
 		name:        name,
@@ -117,19 +110,19 @@ func New(device device.T, name string, width, height int, pass renderpass.T) (T,
 	}, nil
 }
 
-func (b *framebuf) Ptr() core1_0.Framebuffer {
+func (b *Framebuffer) Ptr() core1_0.Framebuffer {
 	return b.ptr
 }
 
-func (b *framebuf) Size() (int, int) {
+func (b *Framebuffer) Size() (int, int) {
 	return b.width, b.height
 }
 
-func (b *framebuf) Attachment(name attachment.Name) image.View {
+func (b *Framebuffer) Attachment(name attachment.Name) *image.View {
 	return b.attachments[name]
 }
 
-func (b *framebuf) Destroy() {
+func (b *Framebuffer) Destroy() {
 	if b.ptr == nil {
 		panic("framebuffer already destroyed")
 	}

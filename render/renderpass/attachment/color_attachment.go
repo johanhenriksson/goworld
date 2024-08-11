@@ -28,7 +28,7 @@ func (desc *Color) defaults() {
 	}
 }
 
-func NewColor(device device.T, desc Color) T {
+func NewColor(device *device.Device, desc Color) T {
 	desc.defaults()
 
 	clear := core1_0.ClearValueFloat{desc.Clear.R, desc.Clear.G, desc.Clear.B, desc.Clear.A}

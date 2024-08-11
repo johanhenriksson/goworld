@@ -18,16 +18,10 @@ import (
 	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
-type Shadow interface {
-	draw.Pass
-
-	Shadowmap(lit light.T, cascade int) texture.T
-}
-
-type shadowpass struct {
+type Shadowpass struct {
 	app    engine.App
 	target engine.Target
-	pass   renderpass.T
+	pass   *renderpass.Renderpass
 	size   int
 
 	// should be replaced with a proper cache that will evict unused maps
@@ -42,12 +36,12 @@ type Shadowmap struct {
 }
 
 type Cascade struct {
-	Texture texture.T
-	Frame   framebuffer.T
+	Texture *texture.Texture
+	Frame   *framebuffer.Framebuffer
 	Mats    MaterialCache
 }
 
-func NewShadowPass(app engine.App, target engine.Target) Shadow {
+func NewShadowPass(app engine.App, target engine.Target) *Shadowpass {
 	pass := renderpass.New(app.Device(), renderpass.Args{
 		Name: "Shadow",
 		DepthAttachment: &attachment.Depth{
@@ -94,7 +88,7 @@ func NewShadowPass(app engine.App, target engine.Target) Shadow {
 		},
 	})
 
-	return &shadowpass{
+	return &Shadowpass{
 		app:        app,
 		target:     target,
 		pass:       pass,
@@ -106,11 +100,11 @@ func NewShadowPass(app engine.App, target engine.Target) Shadow {
 	}
 }
 
-func (p *shadowpass) Name() string {
+func (p *Shadowpass) Name() string {
 	return "Shadow"
 }
 
-func (p *shadowpass) createShadowmap(light light.T) Shadowmap {
+func (p *Shadowpass) createShadowmap(light light.T) Shadowmap {
 	log.Println("creating shadowmap for", light.Name())
 
 	cascades := make([]Cascade, light.Shadowmaps())
@@ -146,7 +140,7 @@ func (p *shadowpass) createShadowmap(light light.T) Shadowmap {
 	return shadowmap
 }
 
-func (p *shadowpass) Record(cmds command.Recorder, args draw.Args, scene object.Component) {
+func (p *Shadowpass) Record(cmds command.Recorder, args draw.Args, scene object.Component) {
 	lights := p.lightQuery.
 		Reset().
 		Where(func(lit light.T) bool { return lit.Type() == light.TypeDirectional && lit.CastShadows() }).
@@ -166,7 +160,7 @@ func (p *shadowpass) Record(cmds command.Recorder, args draw.Args, scene object.
 		for index, cascade := range shadowmap.Cascades {
 			camera := light.ShadowProjection(index)
 			frame := cascade.Frame
-			cmds.Record(func(cmd command.Buffer) {
+			cmds.Record(func(cmd *command.Buffer) {
 				cmd.CmdBeginRenderPass(p.pass, frame)
 			})
 
@@ -175,7 +169,7 @@ func (p *shadowpass) Record(cmds command.Recorder, args draw.Args, scene object.
 			groups := MaterialGroups(cascade.Mats, args.Frame, meshes)
 			groups.Draw(cmds, camera, nil)
 
-			cmds.Record(func(cmd command.Buffer) {
+			cmds.Record(func(cmd *command.Buffer) {
 				cmd.CmdEndRenderPass()
 			})
 		}
@@ -186,14 +180,14 @@ func castsShadows(m mesh.Mesh) bool {
 	return m.CastShadows()
 }
 
-func (p *shadowpass) Shadowmap(light light.T, cascade int) texture.T {
+func (p *Shadowpass) Shadowmap(light light.T, cascade int) *texture.Texture {
 	if shadowmap, exists := p.shadowmaps[light]; exists {
 		return shadowmap.Cascades[cascade].Texture
 	}
 	return nil
 }
 
-func (p *shadowpass) Destroy() {
+func (p *Shadowpass) Destroy() {
 	for _, shadowmap := range p.shadowmaps {
 		for _, cascade := range shadowmap.Cascades {
 			cascade.Frame.Destroy()

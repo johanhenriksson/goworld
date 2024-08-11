@@ -18,12 +18,12 @@ import (
 
 type ForwardMatCache struct {
 	app    engine.App
-	pass   renderpass.T
+	pass   *renderpass.Renderpass
 	lookup ShadowmapLookupFn
 	frames int
 }
 
-func NewForwardMaterialCache(app engine.App, pass renderpass.T, frames int, lookup ShadowmapLookupFn) MaterialCache {
+func NewForwardMaterialCache(app engine.App, pass *renderpass.Renderpass, frames int, lookup ShadowmapLookupFn) MaterialCache {
 	return cache.New[*material.Def, []Material](&ForwardMatCache{
 		app:    app,
 		pass:   pass,

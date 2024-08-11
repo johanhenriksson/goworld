@@ -17,11 +17,11 @@ type UniformArray[K any] struct {
 	Stages core1_0.ShaderStageFlags
 
 	binding int
-	buffer  buffer.Array[K]
+	buffer  *buffer.Array[K]
 	set     Set
 }
 
-func (d *UniformArray[K]) Initialize(device device.T) {
+func (d *UniformArray[K]) Initialize(device *device.Device) {
 	if d.set == nil {
 		panic("descriptor must be bound first")
 	}

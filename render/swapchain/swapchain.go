@@ -23,17 +23,17 @@ type T interface {
 	Present(command.Worker, *Context)
 	Resize(int, int)
 
-	Images() []image.T
+	Images() image.Array
 	SurfaceFormat() core1_0.Format
 }
 
 type swapchain struct {
-	device     device.T
+	device     *device.Device
 	ptr        khr_swapchain.Swapchain
 	ext        khr_swapchain.Extension
 	surface    khr_surface.Surface
 	surfaceFmt khr_surface.SurfaceFormat
-	images     []image.T
+	images     image.Array
 	frames     int
 	width      int
 	height     int
@@ -44,7 +44,7 @@ type swapchain struct {
 	renderComplete []sync.Semaphore
 }
 
-func New(device device.T, frames, width, height int, surface khr_surface.Surface, surfaceFormat khr_surface.SurfaceFormat) T {
+func New(device *device.Device, frames, width, height int, surface khr_surface.Surface, surfaceFormat khr_surface.SurfaceFormat) T {
 	s := &swapchain{
 		device:     device,
 		ext:        khr_swapchain.CreateExtensionFromDevice(device.Ptr()),
@@ -62,7 +62,7 @@ func (s *swapchain) Ptr() khr_swapchain.Swapchain {
 	return s.ptr
 }
 
-func (s *swapchain) Images() []image.T             { return s.images }
+func (s *swapchain) Images() image.Array           { return s.images }
 func (s *swapchain) SurfaceFormat() core1_0.Format { return core1_0.Format(s.surfaceFmt.Format) }
 
 func (s *swapchain) Resize(width, height int) {
@@ -125,7 +125,7 @@ func (s *swapchain) create() {
 	}
 
 	// create images from swapchain buffers
-	s.images = util.Map(swapimages, func(img core1_0.Image) image.T {
+	s.images = util.Map(swapimages, func(img core1_0.Image) *image.Image {
 		return image.Wrap(s.device, img, image.Args{
 			Type:    core1_0.ImageType2D,
 			Width:   s.width,

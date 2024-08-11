@@ -12,19 +12,8 @@ import (
 	"github.com/vkngwrapper/core/v2/driver"
 )
 
-type T interface {
-	device.Resource[core1_0.RenderPass]
-
-	Depth() attachment.T
-	Attachment(name attachment.Name) attachment.T
-	Attachments() []attachment.T
-	Subpass(name Name) Subpass
-	Clear() []core1_0.ClearValue
-	Name() string
-}
-
-type renderpass struct {
-	device      device.T
+type Renderpass struct {
+	device      *device.Device
 	ptr         core1_0.RenderPass
 	subpasses   []Subpass
 	passIndices map[Name]int
@@ -35,7 +24,7 @@ type renderpass struct {
 	name        string
 }
 
-func New(device device.T, args Args) T {
+func New(device *device.Device, args Args) *Renderpass {
 	clear := make([]core1_0.ClearValue, 0, len(args.ColorAttachments)+1)
 	attachments := make([]attachment.T, len(args.ColorAttachments))
 	attachmentIndices := make(map[attachment.Name]int)
@@ -148,7 +137,7 @@ func New(device device.T, args Args) T {
 	// set object name
 	device.SetDebugObjectName(driver.VulkanHandle(ptr.Handle()), core1_0.ObjectTypeRenderPass, args.Name)
 
-	return &renderpass{
+	return &Renderpass{
 		device:      device,
 		ptr:         ptr,
 		depth:       depth,
@@ -161,11 +150,11 @@ func New(device device.T, args Args) T {
 	}
 }
 
-func (r *renderpass) Ptr() core1_0.RenderPass { return r.ptr }
-func (r *renderpass) Depth() attachment.T     { return r.depth }
-func (r *renderpass) Name() string            { return r.name }
+func (r *Renderpass) Ptr() core1_0.RenderPass { return r.ptr }
+func (r *Renderpass) Depth() attachment.T     { return r.depth }
+func (r *Renderpass) Name() string            { return r.name }
 
-func (r *renderpass) Attachment(name attachment.Name) attachment.T {
+func (r *Renderpass) Attachment(name attachment.Name) attachment.T {
 	if name == attachment.DepthName {
 		return r.depth
 	}
@@ -173,15 +162,15 @@ func (r *renderpass) Attachment(name attachment.Name) attachment.T {
 	return r.attachments[index]
 }
 
-func (r *renderpass) Clear() []core1_0.ClearValue {
+func (r *Renderpass) Clear() []core1_0.ClearValue {
 	return r.clear
 }
 
-func (r *renderpass) Attachments() []attachment.T {
+func (r *Renderpass) Attachments() []attachment.T {
 	return r.attachments
 }
 
-func (r *renderpass) Subpass(name Name) Subpass {
+func (r *Renderpass) Subpass(name Name) Subpass {
 	if name == "" {
 		return r.subpasses[0]
 	}
@@ -192,7 +181,7 @@ func (r *renderpass) Subpass(name Name) Subpass {
 	return r.subpasses[idx]
 }
 
-func (r *renderpass) Destroy() {
+func (r *Renderpass) Destroy() {
 	if r.ptr != nil {
 		r.ptr.Destroy(nil)
 		r.ptr = nil

@@ -2,7 +2,7 @@ package command
 
 type Recorder interface {
 	Record(CommandFn)
-	Apply(Buffer)
+	Apply(*Buffer)
 }
 
 type recorder struct {
@@ -15,7 +15,7 @@ func NewRecorder() Recorder {
 	}
 }
 
-func (r recorder) Apply(cmd Buffer) {
+func (r recorder) Apply(cmd *Buffer) {
 	for _, part := range r.parts {
 		part(cmd)
 	}
@@ -29,7 +29,7 @@ type empty struct{}
 
 var Empty Recorder = empty{}
 
-func (empty) Apply(Buffer) {}
+func (empty) Apply(*Buffer) {}
 func (empty) Record(CommandFn) {
 	panic("empty command should not be recorded")
 }

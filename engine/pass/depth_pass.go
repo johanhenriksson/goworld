@@ -17,7 +17,7 @@ import (
 type DepthPass struct {
 	app   engine.App
 	depth engine.Target
-	pass  renderpass.T
+	pass  *renderpass.Renderpass
 	fbuf  framebuffer.Array
 
 	materials MaterialCache
@@ -71,7 +71,7 @@ func (p *DepthPass) Record(cmds command.Recorder, args draw.Args, scene object.C
 		Where(isDrawDeferred).
 		Collect(scene)
 
-	cmds.Record(func(cmd command.Buffer) {
+	cmds.Record(func(cmd *command.Buffer) {
 		cmd.CmdBeginRenderPass(p.pass, p.fbuf[args.Frame])
 	})
 
@@ -79,7 +79,7 @@ func (p *DepthPass) Record(cmds command.Recorder, args draw.Args, scene object.C
 	groups := MaterialGroups(p.materials, args.Frame, opaque)
 	groups.Draw(cmds, cam, nil)
 
-	cmds.Record(func(cmd command.Buffer) {
+	cmds.Record(func(cmd *command.Buffer) {
 		cmd.CmdEndRenderPass()
 	})
 }

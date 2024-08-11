@@ -5,23 +5,23 @@ import (
 	"github.com/johanhenriksson/goworld/render/shader"
 )
 
-type ShaderCache T[shader.Ref, shader.T]
+type ShaderCache T[shader.Ref, *shader.Shader]
 
-func NewShaderCache(dev device.T) ShaderCache {
-	return New[shader.Ref, shader.T](&shaders{
+func NewShaderCache(dev *device.Device) ShaderCache {
+	return New[shader.Ref, *shader.Shader](&shaders{
 		device: dev,
 	})
 }
 
 type shaders struct {
-	device device.T
+	device *device.Device
 }
 
 func (s *shaders) Name() string {
 	return "Shaders"
 }
 
-func (s *shaders) Instantiate(key shader.Ref, callback func(shader.T)) {
+func (s *shaders) Instantiate(key shader.Ref, callback func(*shader.Shader)) {
 	// load shader in a background goroutine
 	go func() {
 		shader := key.Load(s.device)
@@ -29,7 +29,7 @@ func (s *shaders) Instantiate(key shader.Ref, callback func(shader.T)) {
 	}()
 }
 
-func (s *shaders) Delete(shader shader.T) {
+func (s *shaders) Delete(shader *shader.Shader) {
 	shader.Destroy()
 }
 

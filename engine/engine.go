@@ -9,14 +9,14 @@ import (
 )
 
 type App interface {
-	Instance() instance.T
-	Device() device.T
+	Instance() *instance.Instance
+	Device() *device.Device
 	Destroy()
 
 	Worker() command.Worker
 	Flush()
 
-	Pool() descriptor.Pool
+	Pool() *descriptor.Pool
 	Meshes() cache.MeshCache
 	Textures() cache.TextureCache
 	Shaders() cache.ShaderCache
@@ -24,11 +24,11 @@ type App interface {
 
 type engine struct {
 	appName  string
-	instance instance.T
-	device   device.T
+	instance *instance.Instance
+	device   *device.Device
 
 	worker   command.Worker
-	pool     descriptor.Pool
+	pool     *descriptor.Pool
 	meshes   cache.MeshCache
 	textures cache.TextureCache
 	shaders  cache.ShaderCache
@@ -64,10 +64,10 @@ func New(appName string, deviceIndex int) App {
 	}
 }
 
-func (b *engine) Instance() instance.T { return b.instance }
-func (b *engine) Device() device.T     { return b.device }
+func (b *engine) Instance() *instance.Instance { return b.instance }
+func (b *engine) Device() *device.Device       { return b.device }
 
-func (b *engine) Pool() descriptor.Pool        { return b.pool }
+func (b *engine) Pool() *descriptor.Pool       { return b.pool }
 func (b *engine) Meshes() cache.MeshCache      { return b.meshes }
 func (b *engine) Textures() cache.TextureCache { return b.textures }
 func (b *engine) Shaders() cache.ShaderCache   { return b.shaders }

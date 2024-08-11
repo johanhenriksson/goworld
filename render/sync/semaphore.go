@@ -15,12 +15,12 @@ type Semaphore interface {
 }
 
 type semaphore struct {
-	device device.T
+	device *device.Device
 	ptr    core1_0.Semaphore
 	name   string
 }
 
-func NewSemaphore(dev device.T, name string) Semaphore {
+func NewSemaphore(dev *device.Device, name string) Semaphore {
 	ptr, _, err := dev.Ptr().CreateSemaphore(nil, core1_0.SemaphoreCreateInfo{})
 	if err != nil {
 		panic(err)
@@ -49,7 +49,7 @@ func (s *semaphore) Destroy() {
 	}
 }
 
-func NewSemaphoreArray(dev device.T, name string, count int) []Semaphore {
+func NewSemaphoreArray(dev *device.Device, name string, count int) []Semaphore {
 	arr := make([]Semaphore, count)
 	for i := range arr {
 		arr[i] = NewSemaphore(dev, fmt.Sprintf("%s:%d", name, i))

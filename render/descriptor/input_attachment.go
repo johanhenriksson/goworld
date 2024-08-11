@@ -21,7 +21,7 @@ type InputAttachment struct {
 
 var _ Descriptor = &InputAttachment{}
 
-func (d *InputAttachment) Initialize(device device.T) {
+func (d *InputAttachment) Initialize(device *device.Device) {
 	if d.Layout == 0 {
 		d.Layout = core1_0.ImageLayoutShaderReadOnlyOptimal
 	}

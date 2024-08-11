@@ -7,17 +7,11 @@ import (
 	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
-type T interface {
-	EnumeratePhysicalDevices() []core1_0.PhysicalDevice
-	Destroy()
-	Ptr() core1_0.Instance
-}
-
-type instance struct {
+type Instance struct {
 	ptr core1_0.Instance
 }
 
-func New(appName string) T {
+func New(appName string) *Instance {
 	loader, err := core.CreateLoaderFromProcAddr(glfw.GetVulkanGetInstanceProcAddress())
 	if err != nil {
 		panic(err)
@@ -34,21 +28,21 @@ func New(appName string) T {
 	if err != nil {
 		panic(err)
 	}
-	return &instance{
+	return &Instance{
 		ptr: handle,
 	}
 }
 
-func (i *instance) Ptr() core1_0.Instance {
+func (i *Instance) Ptr() core1_0.Instance {
 	return i.ptr
 }
 
-func (i *instance) Destroy() {
+func (i *Instance) Destroy() {
 	i.ptr.Destroy(nil)
 	i.ptr = nil
 }
 
-func (i *instance) EnumeratePhysicalDevices() []core1_0.PhysicalDevice {
+func (i *Instance) EnumeratePhysicalDevices() []core1_0.PhysicalDevice {
 	r, _, err := i.ptr.EnumeratePhysicalDevices()
 	if err != nil {
 		panic(err)

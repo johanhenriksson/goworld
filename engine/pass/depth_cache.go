@@ -18,11 +18,11 @@ import (
 
 type DepthMatCache struct {
 	app    engine.App
-	pass   renderpass.T
+	pass   *renderpass.Renderpass
 	frames int
 }
 
-func NewDepthMaterialCache(app engine.App, pass renderpass.T, frames int) MaterialCache {
+func NewDepthMaterialCache(app engine.App, pass *renderpass.Renderpass, frames int) MaterialCache {
 	return cache.New[*material.Def, []Material](&DepthMatCache{
 		app:    app,
 		pass:   pass,

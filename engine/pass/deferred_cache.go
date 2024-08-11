@@ -18,11 +18,11 @@ import (
 
 type DeferredMatCache struct {
 	app    engine.App
-	pass   renderpass.T
+	pass   *renderpass.Renderpass
 	frames int
 }
 
-func NewDeferredMaterialCache(app engine.App, pass renderpass.T, frames int) MaterialCache {
+func NewDeferredMaterialCache(app engine.App, pass *renderpass.Renderpass, frames int) MaterialCache {
 	return cache.New[*material.Def, []Material](&DeferredMatCache{
 		app:    app,
 		pass:   pass,

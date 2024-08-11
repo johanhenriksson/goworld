@@ -10,7 +10,7 @@ import (
 )
 
 type meshBlockCache struct {
-	device   device.T
+	device   *device.Device
 	worker   command.Worker
 	vtxData  buffer.T
 	idxData  buffer.T
@@ -18,7 +18,7 @@ type meshBlockCache struct {
 	idxAlloc buffer.Allocator
 }
 
-func NewMeshBlockCache(device device.T, worker command.Worker, vtxSize, idxSize int) MeshCache {
+func NewMeshBlockCache(device *device.Device, worker command.Worker, vtxSize, idxSize int) MeshCache {
 	vtxBuf := buffer.NewRemote(device, "MeshVertexBlocks", vtxSize, core1_0.BufferUsageVertexBuffer)
 	idxBuf := buffer.NewRemote(device, "MeshIndexBlocks", idxSize, core1_0.BufferUsageIndexBuffer)
 	return New[vertex.Mesh, *GpuMesh](&meshBlockCache{
@@ -86,7 +86,7 @@ func (m *meshBlockCache) Instantiate(mesh vertex.Mesh, callback func(*GpuMesh)) 
 	}
 
 	cmds := command.NewRecorder()
-	cmds.Record(func(cmd command.Buffer) {
+	cmds.Record(func(cmd *command.Buffer) {
 		vtxStage.Write(0, mesh.VertexData())
 		vtxStage.Flush()
 		idxStage.Write(0, mesh.IndexData())

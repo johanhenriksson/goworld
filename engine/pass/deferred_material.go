@@ -38,7 +38,7 @@ func (m *DeferredMaterial) Begin(camera uniform.Camera, lights []light.T) {
 }
 
 func (m *DeferredMaterial) Bind(cmds command.Recorder) {
-	cmds.Record(func(cmd command.Buffer) {
+	cmds.Record(func(cmd *command.Buffer) {
 		m.Instance.Bind(cmd)
 		m.Commands.BeginDrawIndirect()
 	})
@@ -58,14 +58,14 @@ func (m *DeferredMaterial) Draw(cmds command.Recorder, msh mesh.Mesh) {
 		Textures: textureIds,
 	})
 
-	cmds.Record(func(cmd command.Buffer) {
+	cmds.Record(func(cmd *command.Buffer) {
 		gpuMesh.Bind(cmd)
 		gpuMesh.Draw(m.Commands, instanceId)
 	})
 }
 
 func (m *DeferredMaterial) Unbind(cmds command.Recorder) {
-	cmds.Record(func(cmd command.Buffer) {
+	cmds.Record(func(cmd *command.Buffer) {
 		m.Commands.EndDrawIndirect(cmd)
 	})
 }

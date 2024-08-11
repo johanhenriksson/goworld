@@ -15,7 +15,7 @@ var ErrArrayExhausted = errors.New("image array allocator exhausted")
 
 type Image interface {
 	Format() core1_0.Format
-	Next(device device.T, name string, width, height int) (image.T, bool, error)
+	Next(device *device.Device, name string, width, height int) (*image.Image, bool, error)
 }
 
 type alloc struct {
@@ -31,10 +31,10 @@ func (im *alloc) Format() core1_0.Format {
 }
 
 func (im *alloc) Next(
-	device device.T,
+	device *device.Device,
 	name string,
 	width, height int,
-) (image.T, bool, error) {
+) (*image.Image, bool, error) {
 	key := fmt.Sprintf("%s-%s", name, im.key)
 	log.Println("attachment alloc", key)
 	img, err := image.New2D(
@@ -55,7 +55,7 @@ func NewImage(key string, format core1_0.Format, usage core1_0.ImageUsageFlags) 
 }
 
 type imageArray struct {
-	images []image.T
+	images image.Array
 	next   int
 }
 
@@ -64,10 +64,10 @@ func (im *imageArray) Format() core1_0.Format {
 }
 
 func (im *imageArray) Next(
-	device device.T,
+	device *device.Device,
 	name string,
 	width, height int,
-) (image.T, bool, error) {
+) (*image.Image, bool, error) {
 	if im.next >= len(im.images) {
 		return nil, false, ErrArrayExhausted
 	}
@@ -76,7 +76,7 @@ func (im *imageArray) Next(
 	return img, false, nil
 }
 
-func FromImageArray(images []image.T) Image {
+func FromImageArray(images image.Array) Image {
 	return &imageArray{
 		images: images,
 		next:   0,
@@ -84,12 +84,12 @@ func FromImageArray(images []image.T) Image {
 }
 
 // FromImage returns an allocator that always returns a reference to the provided image.
-func FromImage(img image.T) Image {
+func FromImage(img *image.Image) Image {
 	return &imageRef{image: img}
 }
 
 type imageRef struct {
-	image image.T
+	image *image.Image
 }
 
 func (im *imageRef) Format() core1_0.Format {
@@ -97,9 +97,9 @@ func (im *imageRef) Format() core1_0.Format {
 }
 
 func (im *imageRef) Next(
-	device device.T,
+	device *device.Device,
 	name string,
 	width, height int,
-) (image.T, bool, error) {
+) (*image.Image, bool, error) {
 	return im.image, false, nil
 }

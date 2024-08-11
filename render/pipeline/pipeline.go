@@ -15,20 +15,14 @@ import (
 	"github.com/vkngwrapper/core/v2/driver"
 )
 
-type T interface {
-	device.Resource[core1_0.Pipeline]
-
-	Layout() Layout
-}
-
-type pipeline struct {
+type Pipeline struct {
 	ptr    core1_0.Pipeline
-	device device.T
-	layout Layout
+	device *device.Device
+	layout *Layout
 	args   Args
 }
 
-func New(device device.T, args Args) T {
+func New(device *device.Device, args Args) *Pipeline {
 	args.defaults()
 	log.Println("creating pipeline", args.Key)
 
@@ -182,7 +176,7 @@ func New(device device.T, args Args) T {
 		device.SetDebugObjectName(driver.VulkanHandle(ptrs[0].Handle()), core1_0.ObjectTypePipeline, args.Key)
 	}
 
-	return &pipeline{
+	return &Pipeline{
 		ptr:    ptrs[0],
 		device: device,
 		layout: args.Layout,
@@ -190,15 +184,15 @@ func New(device device.T, args Args) T {
 	}
 }
 
-func (p *pipeline) Ptr() core1_0.Pipeline {
+func (p *Pipeline) Ptr() core1_0.Pipeline {
 	return p.ptr
 }
 
-func (p *pipeline) Layout() Layout {
+func (p *Pipeline) Layout() *Layout {
 	return p.layout
 }
 
-func (p *pipeline) Destroy() {
+func (p *Pipeline) Destroy() {
 	p.ptr.Destroy(nil)
 	p.ptr = nil
 }

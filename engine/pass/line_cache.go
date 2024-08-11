@@ -18,11 +18,11 @@ import (
 
 type LineMatCache struct {
 	app    engine.App
-	pass   renderpass.T
+	pass   *renderpass.Renderpass
 	frames int
 }
 
-func NewLineMaterialCache(app engine.App, pass renderpass.T, frames int) MaterialCache {
+func NewLineMaterialCache(app engine.App, pass *renderpass.Renderpass, frames int) MaterialCache {
 	return cache.New[*material.Def, []Material](&LineMatCache{
 		app:    app,
 		pass:   pass,

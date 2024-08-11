@@ -19,23 +19,7 @@ type Resource[T any] interface {
 	Ptr() T
 }
 
-type T interface {
-	Resource[core1_0.Device]
-
-	Physical() core1_0.PhysicalDevice
-	Allocate(key string, req core1_0.MemoryRequirements, flags core1_0.MemoryPropertyFlags) Memory
-	GetDepthFormat() core1_0.Format
-	GetFormatProperties(format core1_0.Format) *core1_0.FormatProperties
-	GetMemoryTypeIndex(uint32, core1_0.MemoryPropertyFlags) int
-	GetLimits() *core1_0.PhysicalDeviceLimits
-	WaitIdle()
-
-	Queue() Queue
-
-	SetDebugObjectName(ptr driver.VulkanHandle, objType core1_0.ObjectType, name string)
-}
-
-type device struct {
+type Device struct {
 	physical core1_0.PhysicalDevice
 	ptr      core1_0.Device
 	limits   *core1_0.PhysicalDeviceLimits
@@ -45,7 +29,7 @@ type device struct {
 	queue    Queue
 }
 
-func New(instance instance.T, physDevice core1_0.PhysicalDevice) (T, error) {
+func New(instance *instance.Instance, physDevice core1_0.PhysicalDevice) (*Device, error) {
 	log.Println("creating device with extensions", deviceExtensions)
 
 	queues := []Queue{}
@@ -126,7 +110,7 @@ func New(instance instance.T, physDevice core1_0.PhysicalDevice) (T, error) {
 		ObjectType:   core1_0.ObjectTypeQueue,
 	})
 
-	return &device{
+	return &Device{
 		ptr:      dev,
 		debug:    debug,
 		physical: physDevice,
@@ -136,23 +120,23 @@ func New(instance instance.T, physDevice core1_0.PhysicalDevice) (T, error) {
 	}, nil
 }
 
-func (d *device) Ptr() core1_0.Device {
+func (d *Device) Ptr() core1_0.Device {
 	return d.ptr
 }
 
-func (d *device) Physical() core1_0.PhysicalDevice {
+func (d *Device) Physical() core1_0.PhysicalDevice {
 	return d.physical
 }
 
-func (d *device) Queue() Queue {
+func (d *Device) Queue() Queue {
 	return d.queue
 }
 
-func (d *device) GetFormatProperties(format core1_0.Format) *core1_0.FormatProperties {
+func (d *Device) GetFormatProperties(format core1_0.Format) *core1_0.FormatProperties {
 	return d.physical.FormatProperties(format)
 }
 
-func (d *device) GetDepthFormat() core1_0.Format {
+func (d *Device) GetDepthFormat() core1_0.Format {
 	depthFormats := []core1_0.Format{
 		core1_0.FormatD32SignedFloatS8UnsignedInt,
 		core1_0.FormatD32SignedFloat,
@@ -170,7 +154,7 @@ func (d *device) GetDepthFormat() core1_0.Format {
 	return depthFormats[0]
 }
 
-func (d *device) GetMemoryTypeIndex(typeBits uint32, flags core1_0.MemoryPropertyFlags) int {
+func (d *Device) GetMemoryTypeIndex(typeBits uint32, flags core1_0.MemoryPropertyFlags) int {
 	mtype := memtype{typeBits, flags}
 	if t, ok := d.memtypes[mtype]; ok {
 		return t
@@ -191,27 +175,27 @@ func (d *device) GetMemoryTypeIndex(typeBits uint32, flags core1_0.MemoryPropert
 	return 0
 }
 
-func (d *device) GetLimits() *core1_0.PhysicalDeviceLimits {
+func (d *Device) GetLimits() *core1_0.PhysicalDeviceLimits {
 	return d.limits
 }
 
-func (d *device) Allocate(key string, req core1_0.MemoryRequirements, flags core1_0.MemoryPropertyFlags) Memory {
+func (d *Device) Allocate(key string, req core1_0.MemoryRequirements, flags core1_0.MemoryPropertyFlags) Memory {
 	if req.Size == 0 {
 		panic("allocating 0 bytes of memory")
 	}
 	return alloc(d, key, req, flags)
 }
 
-func (d *device) Destroy() {
+func (d *Device) Destroy() {
 	d.ptr.Destroy(nil)
 	d.ptr = nil
 }
 
-func (d *device) WaitIdle() {
+func (d *Device) WaitIdle() {
 	d.ptr.WaitIdle()
 }
 
-func (d *device) SetDebugObjectName(handle driver.VulkanHandle, objType core1_0.ObjectType, name string) {
+func (d *Device) SetDebugObjectName(handle driver.VulkanHandle, objType core1_0.ObjectType, name string) {
 	d.debug.SetDebugUtilsObjectName(d.ptr, ext_debug_utils.DebugUtilsObjectNameInfo{
 		ObjectName:   name,
 		ObjectHandle: handle,

@@ -8,7 +8,7 @@ import (
 )
 
 type Descriptor interface {
-	Initialize(device.T)
+	Initialize(*device.Device)
 	LayoutBinding(int) core1_0.DescriptorSetLayoutBinding
 	BindingFlags() ext_descriptor_indexing.DescriptorBindingFlags
 	Bind(Set, int)

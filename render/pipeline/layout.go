@@ -10,16 +10,12 @@ import (
 	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
-type Layout interface {
-	device.Resource[core1_0.PipelineLayout]
-}
-
-type layout struct {
+type Layout struct {
 	ptr    core1_0.PipelineLayout
-	device device.T
+	device *device.Device
 }
 
-func NewLayout(device device.T, descriptors []descriptor.SetLayout, constants []PushConstant) Layout {
+func NewLayout(device *device.Device, descriptors []descriptor.SetLayout, constants []PushConstant) *Layout {
 	offset := 0
 	info := core1_0.PipelineLayoutCreateInfo{
 
@@ -45,17 +41,17 @@ func NewLayout(device device.T, descriptors []descriptor.SetLayout, constants []
 		panic(err)
 	}
 
-	return &layout{
+	return &Layout{
 		ptr:    ptr,
 		device: device,
 	}
 }
 
-func (l *layout) Ptr() core1_0.PipelineLayout {
+func (l *Layout) Ptr() core1_0.PipelineLayout {
 	return l.ptr
 }
 
-func (l *layout) Destroy() {
+func (l *Layout) Destroy() {
 	if l.ptr != nil {
 		l.ptr.Destroy(nil)
 		l.ptr = nil

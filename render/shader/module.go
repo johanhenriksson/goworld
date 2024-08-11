@@ -15,12 +15,12 @@ type Module interface {
 }
 
 type shader_module struct {
-	device device.T
+	device *device.Device
 	ptr    core1_0.ShaderModule
 	stage  ShaderStage
 }
 
-func NewModule(device device.T, path string, stage ShaderStage) Module {
+func NewModule(device *device.Device, path string, stage ShaderStage) Module {
 	if device == nil {
 		panic("device is nil")
 	}

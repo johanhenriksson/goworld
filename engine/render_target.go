@@ -26,7 +26,7 @@ type Target interface {
 	Height() int
 	Frames() int
 
-	Surfaces() []image.T
+	Surfaces() image.Array
 	SurfaceFormat() core1_0.Format
 	Aquire(command.Worker) (*swapchain.Context, error)
 	Present(command.Worker, *swapchain.Context)
@@ -35,15 +35,17 @@ type Target interface {
 }
 
 type RenderTarget struct {
-	device   device.T
+	device   *device.Device
 	size     TargetSize
 	format   core1_0.Format
 	usage    core1_0.ImageUsageFlags
-	surfaces []image.T
+	surfaces image.Array
 	contexts chan *swapchain.Context
 }
 
-func NewDepthTarget(device device.T, key string, size TargetSize) *RenderTarget {
+var _ Target = (*RenderTarget)(nil)
+
+func NewDepthTarget(device *device.Device, key string, size TargetSize) *RenderTarget {
 	format := device.GetDepthFormat()
 	usage := core1_0.ImageUsageSampled | core1_0.ImageUsageDepthStencilAttachment | core1_0.ImageUsageInputAttachment
 	target, err := NewRenderTarget(device, key, format, usage, size)
@@ -53,7 +55,7 @@ func NewDepthTarget(device device.T, key string, size TargetSize) *RenderTarget 
 	return target
 }
 
-func NewColorTarget(device device.T, key string, format core1_0.Format, size TargetSize) *RenderTarget {
+func NewColorTarget(device *device.Device, key string, format core1_0.Format, size TargetSize) *RenderTarget {
 	usage := core1_0.ImageUsageSampled | core1_0.ImageUsageColorAttachment | core1_0.ImageUsageInputAttachment | core1_0.ImageUsageTransferSrc
 	target, err := NewRenderTarget(device, key, format, usage, size)
 	if err != nil {
@@ -62,9 +64,9 @@ func NewColorTarget(device device.T, key string, format core1_0.Format, size Tar
 	return target
 }
 
-func NewRenderTarget(device device.T, key string, format core1_0.Format, usage core1_0.ImageUsageFlags, size TargetSize) (*RenderTarget, error) {
+func NewRenderTarget(device *device.Device, key string, format core1_0.Format, usage core1_0.ImageUsageFlags, size TargetSize) (*RenderTarget, error) {
 	var err error
-	outputs := make([]image.T, size.Frames)
+	outputs := make(image.Array, size.Frames)
 	contexts := make(chan *swapchain.Context, size.Frames) // context ring buffer channel
 	for i := 0; i < size.Frames; i++ {
 		outputs[i], err = image.New2D(device, fmt.Sprintf("%s:%d", key, i), size.Width, size.Height, format, false, usage)
@@ -109,7 +111,7 @@ func (r *RenderTarget) Destroy() {
 	r.surfaces = nil
 }
 
-func (i *RenderTarget) Surfaces() []image.T           { return i.surfaces }
+func (i *RenderTarget) Surfaces() image.Array         { return i.surfaces }
 func (i *RenderTarget) SurfaceFormat() core1_0.Format { return i.format }
 
 func (i *RenderTarget) Aquire(worker command.Worker) (*swapchain.Context, error) {

@@ -11,7 +11,7 @@ type samplers struct {
 	desc        *descriptor.SamplerArray
 	reverse     map[string]*SamplerHandle
 	free        map[int]bool
-	descriptors []texture.T
+	descriptors texture.Array
 	next        int
 
 	// the max age must be shorter than the max life of the texture cache.
@@ -21,12 +21,12 @@ type samplers struct {
 	maxAge int
 
 	// blank keeps a reference to a blank (white) texture
-	blank texture.T
+	blank *texture.Texture
 }
 
 type SamplerHandle struct {
 	ID      int
-	Texture texture.T
+	Texture *texture.Texture
 	age     int
 }
 
@@ -34,7 +34,7 @@ type SamplerCache interface {
 	T[texture.Ref, *SamplerHandle]
 
 	// Assign a handle to a texture directly
-	Assign(texture.T) *SamplerHandle
+	Assign(*texture.Texture) *SamplerHandle
 
 	// Writes descriptor updates to the backing Sampler Array.
 	Flush()
@@ -46,7 +46,7 @@ func NewSamplerCache(textures TextureCache, desc *descriptor.SamplerArray) Sampl
 		desc:        desc,
 		reverse:     make(map[string]*SamplerHandle, 1000),
 		free:        make(map[int]bool, 100),
-		descriptors: make([]texture.T, desc.Count),
+		descriptors: make(texture.Array, desc.Count),
 		next:        0,
 		maxAge:      textures.MaxAge() / 4,
 		blank:       textures.Fetch(color.White),
@@ -111,7 +111,7 @@ func (s *samplers) Fetch(ref texture.Ref) *SamplerHandle {
 	return handle
 }
 
-func (s *samplers) Assign(tex texture.T) *SamplerHandle {
+func (s *samplers) Assign(tex *texture.Texture) *SamplerHandle {
 	handle := s.assignHandle(tex)
 	handle.Texture = tex
 	return handle

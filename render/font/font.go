@@ -17,20 +17,12 @@ import (
 
 var ErrNoGlyph = errors.New("no glyph for rune")
 
-type T interface {
-	Name() string
-	Glyph(rune) (*Glyph, error)
-	Kern(rune, rune) float32
-	Measure(string, Args) vec2.T
-	Size() float32
-}
-
 type Args struct {
 	Color      color.T
 	LineHeight float32
 }
 
-type font struct {
+type Font struct {
 	size   float32
 	scale  float32
 	name   string
@@ -45,10 +37,10 @@ type runepair struct {
 	a, b rune
 }
 
-func (f *font) Name() string  { return f.name }
-func (f *font) Size() float32 { return f.size }
+func (f *Font) Name() string  { return f.name }
+func (f *Font) Size() float32 { return f.size }
 
-func (f *font) Glyph(r rune) (*Glyph, error) {
+func (f *Font) Glyph(r rune) (*Glyph, error) {
 	if cached, exists := f.glyphs.Load(r); exists {
 		return cached, nil
 	}
@@ -107,7 +99,7 @@ func (f *font) Glyph(r rune) (*Glyph, error) {
 	return glyph, nil
 }
 
-func (f *font) Kern(a, b rune) float32 {
+func (f *Font) Kern(a, b rune) float32 {
 	pair := runepair{a, b}
 	if k, exists := f.kern.Load(pair); exists {
 		return k
@@ -120,7 +112,7 @@ func (f *font) Kern(a, b rune) float32 {
 	return k
 }
 
-func (f *font) MeasureLine(text string) vec2.T {
+func (f *Font) MeasureLine(text string) vec2.T {
 	size := vec2.Zero
 	var prev rune
 	for i, r := range text {
@@ -142,7 +134,7 @@ func (f *font) MeasureLine(text string) vec2.T {
 	return size.Scaled(f.scale)
 }
 
-func (f *font) Measure(text string, args Args) vec2.T {
+func (f *Font) Measure(text string, args Args) vec2.T {
 	if args.LineHeight == 0 {
 		args.LineHeight = 1
 	}

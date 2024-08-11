@@ -30,15 +30,15 @@ const SSAOSamples = 32
 
 type AmbientOcclusionPass struct {
 	app  engine.App
-	pass renderpass.T
+	pass *renderpass.Renderpass
 	fbuf framebuffer.Array
 	mat  *material.Material[*AmbientOcclusionDescriptors]
 	desc []*material.Instance[*AmbientOcclusionDescriptors]
 	quad vertex.Mesh
 
 	scale    float32
-	position []texture.T
-	normal   []texture.T
+	position texture.Array
+	normal   texture.Array
 	kernel   [SSAOSamples]vec4.T
 	noise    *HemisphereNoise
 }
@@ -180,8 +180,8 @@ func NewAmbientOcclusionPass(app engine.App, target engine.Target, gbuffer Geome
 	// todo: if we shuffle the kernel, it would be ok to use fewer samples
 
 	p.desc = p.mat.InstantiateMany(app.Pool(), target.Frames())
-	p.position = make([]texture.T, target.Frames())
-	p.normal = make([]texture.T, target.Frames())
+	p.position = make(texture.Array, target.Frames())
+	p.normal = make(texture.Array, target.Frames())
 	for i := 0; i < target.Frames(); i++ {
 		posKey := fmt.Sprintf("ssao-position-%d", i)
 		p.position[i], err = texture.FromImage(app.Device(), posKey, gbuffer.Position()[i], texture.Args{
@@ -213,7 +213,7 @@ func (p *AmbientOcclusionPass) Record(cmds command.Recorder, args draw.Args, sce
 	quad := p.app.Meshes().Fetch(p.quad)
 	noiseTex := p.app.Textures().Fetch(p.noise)
 
-	cmds.Record(func(cmd command.Buffer) {
+	cmds.Record(func(cmd *command.Buffer) {
 		cmd.CmdBeginRenderPass(p.pass, p.fbuf[args.Frame])
 		p.desc[args.Frame].Bind(cmd)
 		p.desc[args.Frame].Descriptors().Noise.Set(noiseTex)

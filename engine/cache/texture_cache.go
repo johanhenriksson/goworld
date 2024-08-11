@@ -10,27 +10,27 @@ import (
 	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
-type TextureCache T[texture.Ref, texture.T]
+type TextureCache T[texture.Ref, *texture.Texture]
 
-func NewTextureCache(device device.T, worker command.Worker) TextureCache {
-	return New[texture.Ref, texture.T](&textures{
+func NewTextureCache(device *device.Device, worker command.Worker) TextureCache {
+	return New[texture.Ref, *texture.Texture](&textures{
 		device: device,
 		worker: worker,
 	})
 }
 
 type textures struct {
-	device device.T
+	device *device.Device
 	worker command.Worker
 }
 
-func (t *textures) Instantiate(ref texture.Ref, callback func(texture.T)) {
-	var stage buffer.T
-	var tex texture.T
+func (t *textures) Instantiate(ref texture.Ref, callback func(*texture.Texture)) {
+	var stage *buffer.Buffer
+	var tex *texture.Texture
 
 	// transfer data to texture buffer
 	cmds := command.NewRecorder()
-	cmds.Record(func(cmd command.Buffer) {
+	cmds.Record(func(cmd *command.Buffer) {
 		// load image data
 		img := ref.ImageData()
 
@@ -154,7 +154,7 @@ func (t *textures) Instantiate(ref texture.Ref, callback func(texture.T)) {
 	})
 }
 
-func (t *textures) Delete(tex texture.T) {
+func (t *textures) Delete(tex *texture.Texture) {
 	tex.Destroy()
 }
 
