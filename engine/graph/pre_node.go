@@ -45,25 +45,18 @@ func (n *preNode) Prepare(scene object.Object, time, delta float32) (*draw.Args,
 		Scale:  n.target.Scale(),
 	}
 
+	// todo: cache handling does not really belong in the render graph
 	// ensure the default white texture is always available
 	n.app.Textures().Fetch(color.White)
-
-	// aquire next frame
-	ctxAvailable := make(chan *swapchain.Context)
-	n.app.Worker().Invoke(func() {
-		context, err := n.target.Aquire()
-		// warning: this will block the worker until the context is available
-		// using the worker before the context is available will cause a deadlock!
-		if err != nil {
-			ctxAvailable <- nil
-		} else {
-			ctxAvailable <- context
-		}
-	})
-
 	// cache ticks
 	n.app.Meshes().Tick()
 	n.app.Textures().Tick()
+
+	// aquire next frame
+	context, err := n.target.Aquire(n.app.Worker())
+	if err != nil {
+		return nil, nil, ErrRecreate
+	}
 
 	// create render arguments
 	args := draw.Args{}
@@ -73,12 +66,6 @@ func (n *preNode) Prepare(scene object.Object, time, delta float32) (*draw.Args,
 		args.Camera = cam.Refresh(viewport)
 	} else {
 		args.Camera.Viewport = viewport
-	}
-
-	// wait for context
-	context := <-ctxAvailable
-	if context == nil {
-		return nil, nil, ErrRecreate
 	}
 
 	// fill in time & swapchain context
@@ -93,26 +80,19 @@ func (n *preNode) Prepare(scene object.Object, time, delta float32) (*draw.Args,
 		object.PreDraw(args.Apply(object.Transform().Matrix()), scene)
 	}
 
-	// fire off render start signals
-	var waits []command.Wait
-	if context.ImageAvailable != nil {
-		// why would this be nil?
-		waits = []command.Wait{
-			{
-				Semaphore: context.ImageAvailable,
-				Mask:      core1_0.PipelineStageColorAttachmentOutput,
-			},
-		}
-	}
-
 	// pre-node submits a dummy pass that does nothing
 	// except signal that any pass without dependencies can start
 	worker := n.app.Worker()
 	worker.Submit(command.SubmitInfo{
 		Commands: command.Empty,
 		Marker:   n.Name(),
-		Wait:     waits,
 		Signal:   n.signals(context.Index),
+		Wait: []command.Wait{
+			{
+				Semaphore: context.ImageAvailable,
+				Mask:      core1_0.PipelineStageColorAttachmentOutput,
+			},
+		},
 	})
 
 	return &args, context, nil

@@ -10,6 +10,7 @@ import (
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/engine/window"
+	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/device"
 	"github.com/johanhenriksson/goworld/render/image"
 	"github.com/johanhenriksson/goworld/render/instance"
@@ -145,12 +146,12 @@ func (w *glfwWindow) SetTitle(title string) {
 	w.title = title
 }
 
-func (w *glfwWindow) Aquire() (*swapchain.Context, error) {
-	return w.swap.Aquire()
+func (w *glfwWindow) Aquire(worker command.Worker) (*swapchain.Context, error) {
+	return w.swap.Aquire(worker)
 }
 
-func (w *glfwWindow) Present(ctx *swapchain.Context) {
-	w.swap.Present(ctx)
+func (w *glfwWindow) Present(worker command.Worker, ctx *swapchain.Context) {
+	w.swap.Present(worker, ctx)
 }
 
 func (w *glfwWindow) Destroy() {
