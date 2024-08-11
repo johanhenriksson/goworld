@@ -1,10 +1,11 @@
 package pass
 
 import (
+	"github.com/johanhenriksson/goworld/core/draw"
 	"github.com/johanhenriksson/goworld/core/light"
 	"github.com/johanhenriksson/goworld/core/mesh"
 	"github.com/johanhenriksson/goworld/core/object"
-	"github.com/johanhenriksson/goworld/render"
+	"github.com/johanhenriksson/goworld/engine/uniform"
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/framebuffer"
 	"github.com/johanhenriksson/goworld/render/material"
@@ -26,7 +27,7 @@ type ForwardPass struct {
 	lightQuery *object.Query[light.T]
 }
 
-var _ Pass = &ForwardPass{}
+var _ draw.Pass = &ForwardPass{}
 
 func NewForwardPass(
 	app vulkan.App,
@@ -84,8 +85,8 @@ func NewForwardPass(
 	}
 }
 
-func (p *ForwardPass) Record(cmds command.Recorder, args render.Args, scene object.Component) {
-	cam := CameraFromArgs(args)
+func (p *ForwardPass) Record(cmds command.Recorder, args draw.Args, scene object.Component) {
+	cam := uniform.CameraFromArgs(args)
 	lights := p.lightQuery.Reset().Collect(scene)
 
 	cmds.Record(func(cmd command.Buffer) {

@@ -1,13 +1,13 @@
 package gui
 
 import (
+	"github.com/johanhenriksson/goworld/core/draw"
 	"github.com/johanhenriksson/goworld/core/input/keys"
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/gui/node"
 	"github.com/johanhenriksson/goworld/gui/widget"
 	"github.com/johanhenriksson/goworld/math/vec2"
-	"github.com/johanhenriksson/goworld/render"
 
 	"github.com/kjk/flex"
 )
@@ -21,7 +21,7 @@ type Manager interface {
 type manager struct {
 	object.Component
 
-	viewport render.Screen
+	viewport draw.Viewport
 	render   node.RenderFunc
 	tree     node.T
 	gui      widget.T
@@ -32,7 +32,7 @@ type manager struct {
 
 func New(renderNodes node.RenderFunc) Manager {
 	return object.NewComponent(&manager{
-		viewport: render.Screen{
+		viewport: draw.Viewport{
 			Scale: 1,
 		},
 		updated: make(chan struct{}),

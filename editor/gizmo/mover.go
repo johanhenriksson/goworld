@@ -1,6 +1,7 @@
 package gizmo
 
 import (
+	"github.com/johanhenriksson/goworld/core/draw"
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/core/transform"
@@ -11,7 +12,6 @@ import (
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/physics"
-	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/texture"
@@ -38,7 +38,7 @@ type Mover struct {
 	axis        vec3.T
 	screenAxis  vec2.T
 	start       vec2.T
-	viewport    render.Screen
+	viewport    draw.Viewport
 	vp          mat4.T
 	fov         float32
 	scale       float32
@@ -194,11 +194,11 @@ func (g *Mover) Hover(hovering bool, shape physics.Shape) {
 	}
 }
 
-func (g *Mover) PreDraw(args render.Args, scene object.Object) error {
-	g.eye = args.Position
-	g.fov = args.Fov
-	g.vp = args.VP
-	g.viewport = args.Viewport
+func (g *Mover) PreDraw(args draw.Args, scene object.Object) error {
+	g.eye = args.Camera.Position
+	g.fov = args.Camera.Fov
+	g.vp = args.Camera.ViewProj
+	g.viewport = args.Camera.Viewport
 	return nil
 }
 
@@ -218,7 +218,7 @@ func (g *Mover) Update(scene object.Component, dt float32) {
 }
 
 func (g *Mover) Dragging() bool          { return g.dragging }
-func (g *Mover) Viewport() render.Screen { return g.viewport }
+func (g *Mover) Viewport() draw.Viewport { return g.viewport }
 func (g *Mover) Camera() mat4.T          { return g.vp }
 
 func (m *Mover) ToolMouseEvent(e mouse.Event, hover physics.RaycastHit) {

@@ -1,9 +1,10 @@
 package pass
 
 import (
+	"github.com/johanhenriksson/goworld/core/draw"
 	"github.com/johanhenriksson/goworld/core/mesh"
 	"github.com/johanhenriksson/goworld/core/object"
-	"github.com/johanhenriksson/goworld/render"
+	"github.com/johanhenriksson/goworld/engine/uniform"
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/framebuffer"
 	"github.com/johanhenriksson/goworld/render/renderpass"
@@ -23,7 +24,7 @@ type DepthPass struct {
 	meshQuery *object.Query[mesh.Mesh]
 }
 
-var _ Pass = &ForwardPass{}
+var _ draw.Pass = &ForwardPass{}
 
 func NewDepthPass(
 	app vulkan.App,
@@ -64,7 +65,7 @@ func NewDepthPass(
 	}
 }
 
-func (p *DepthPass) Record(cmds command.Recorder, args render.Args, scene object.Component) {
+func (p *DepthPass) Record(cmds command.Recorder, args draw.Args, scene object.Component) {
 	opaque := p.meshQuery.
 		Reset().
 		Where(isDrawDeferred).
@@ -74,7 +75,7 @@ func (p *DepthPass) Record(cmds command.Recorder, args render.Args, scene object
 		cmd.CmdBeginRenderPass(p.pass, p.fbuf[args.Frame])
 	})
 
-	cam := CameraFromArgs(args)
+	cam := uniform.CameraFromArgs(args)
 	groups := MaterialGroups(p.materials, args.Frame, opaque)
 	groups.Draw(cmds, cam, nil)
 

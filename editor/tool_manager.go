@@ -3,6 +3,7 @@ package editor
 import (
 	"log"
 
+	"github.com/johanhenriksson/goworld/core/draw"
 	"github.com/johanhenriksson/goworld/core/input/keys"
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/core/object"
@@ -11,7 +12,6 @@ import (
 	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/physics"
-	"github.com/johanhenriksson/goworld/render"
 )
 
 type Tool interface {
@@ -36,7 +36,7 @@ type ToolManager struct {
 	selected []T
 	tool     Tool
 	camera   mat4.T
-	viewport render.Screen
+	viewport draw.Viewport
 
 	// built-in tools
 	Mover   *gizmo.Mover
@@ -230,10 +230,10 @@ func (m *ToolManager) setSelect(e mouse.Event, component T) bool {
 	return true
 }
 
-func (m *ToolManager) PreDraw(args render.Args, scene object.Object) error {
+func (m *ToolManager) PreDraw(args draw.Args, scene object.Object) error {
 	m.scene = scene
-	m.camera = args.VP
-	m.viewport = args.Viewport
+	m.camera = args.Camera.ViewProj
+	m.viewport = args.Camera.Viewport
 	return nil
 }
 

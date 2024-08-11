@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"unsafe"
 
+	"github.com/johanhenriksson/goworld/core/draw"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/math"
 	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/math/random"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/math/vec4"
-	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/descriptor"
 	"github.com/johanhenriksson/goworld/render/framebuffer"
@@ -43,7 +43,7 @@ type AmbientOcclusionPass struct {
 	noise    *HemisphereNoise
 }
 
-var _ Pass = &AmbientOcclusionPass{}
+var _ draw.Pass = &AmbientOcclusionPass{}
 
 type AmbientOcclusionParams struct {
 	Projection mat4.T
@@ -209,7 +209,7 @@ func NewAmbientOcclusionPass(app vulkan.App, target vulkan.Target, gbuffer Geome
 	return p
 }
 
-func (p *AmbientOcclusionPass) Record(cmds command.Recorder, args render.Args, scene object.Component) {
+func (p *AmbientOcclusionPass) Record(cmds command.Recorder, args draw.Args, scene object.Component) {
 	quad := p.app.Meshes().Fetch(p.quad)
 	noiseTex := p.app.Textures().Fetch(p.noise)
 
@@ -218,7 +218,7 @@ func (p *AmbientOcclusionPass) Record(cmds command.Recorder, args render.Args, s
 		p.desc[args.Frame].Bind(cmd)
 		p.desc[args.Frame].Descriptors().Noise.Set(noiseTex)
 		p.desc[args.Frame].Descriptors().Params.Set(AmbientOcclusionParams{
-			Projection: args.Projection,
+			Projection: args.Camera.Proj,
 			Kernel:     p.kernel,
 			Samples:    32,
 			Scale:      p.scale,

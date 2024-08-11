@@ -3,8 +3,8 @@ package pass
 import (
 	"fmt"
 
+	"github.com/johanhenriksson/goworld/core/draw"
 	"github.com/johanhenriksson/goworld/core/object"
-	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/descriptor"
 	"github.com/johanhenriksson/goworld/render/framebuffer"
@@ -33,7 +33,7 @@ type PostProcessPass struct {
 	inputTex []texture.T
 }
 
-var _ Pass = &PostProcessPass{}
+var _ draw.Pass = &PostProcessPass{}
 
 type PostProcessDescriptors struct {
 	descriptor.Set
@@ -134,7 +134,7 @@ func NewPostProcessPass(app vulkan.App, target vulkan.Target, input vulkan.Targe
 	return p
 }
 
-func (p *PostProcessPass) Record(cmds command.Recorder, args render.Args, scene object.Component) {
+func (p *PostProcessPass) Record(cmds command.Recorder, args draw.Args, scene object.Component) {
 	quad := p.app.Meshes().Fetch(p.quad)
 
 	// refresh color lut

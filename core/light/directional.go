@@ -1,13 +1,13 @@
 package light
 
 import (
+	"github.com/johanhenriksson/goworld/core/draw"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/engine/uniform"
 	"github.com/johanhenriksson/goworld/math"
 	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/math/vec4"
-	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/color"
 )
 
@@ -97,7 +97,7 @@ func nearSplitDist(cascade, cascades int, near, far, splitLambda float32) float3
 	return farSplitDist(cascade-1, cascades, near, far, splitLambda)
 }
 
-func (lit *Directional) PreDraw(args render.Args, scene object.Object) error {
+func (lit *Directional) PreDraw(args draw.Args, scene object.Object) error {
 	// update cascades
 	for i, _ := range lit.cascades {
 		lit.cascades[i] = lit.calculateCascade(args, i, len(lit.cascades))
@@ -105,7 +105,7 @@ func (lit *Directional) PreDraw(args render.Args, scene object.Object) error {
 	return nil
 }
 
-func (lit *Directional) calculateCascade(args render.Args, cascade, cascades int) Cascade {
+func (lit *Directional) calculateCascade(args draw.Args, cascade, cascades int) Cascade {
 	texSize := float32(2048)
 
 	frustumCorners := []vec3.T{
@@ -121,12 +121,12 @@ func (lit *Directional) calculateCascade(args render.Args, cascade, cascades int
 
 	// transform frustum into world space
 	for i, corner := range frustumCorners {
-		frustumCorners[i] = args.VPInv.TransformPoint(corner)
+		frustumCorners[i] = args.Camera.ViewProjInv.TransformPoint(corner)
 	}
 
 	// squash
-	nearSplit := nearSplitDist(cascade, cascades, args.Near, args.Far, lit.CascadeLambda.Get())
-	farSplit := farSplitDist(cascade, cascades, args.Near, args.Far, lit.CascadeLambda.Get())
+	nearSplit := nearSplitDist(cascade, cascades, args.Camera.Near, args.Camera.Far, lit.CascadeLambda.Get())
+	farSplit := farSplitDist(cascade, cascades, args.Camera.Near, args.Camera.Far, lit.CascadeLambda.Get())
 	for i := 0; i < 4; i++ {
 		dist := frustumCorners[i+4].Sub(frustumCorners[i])
 		frustumCorners[i] = frustumCorners[i].Add(dist.Scaled(nearSplit))
@@ -174,8 +174,8 @@ func (lit *Directional) calculateCascade(args render.Args, cascade, cascades int
 		Proj:      lproj,
 		View:      lview,
 		ViewProj:  lvp,
-		NearSplit: nearSplit * args.Far,
-		FarSplit:  farSplit * args.Far,
+		NearSplit: nearSplit * args.Camera.Far,
+		FarSplit:  farSplit * args.Camera.Far,
 	}
 }
 

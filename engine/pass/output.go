@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/johanhenriksson/goworld/core/draw"
 	"github.com/johanhenriksson/goworld/core/object"
-	"github.com/johanhenriksson/goworld/render"
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/descriptor"
 	"github.com/johanhenriksson/goworld/render/framebuffer"
@@ -33,7 +33,7 @@ type OutputPass struct {
 	pass  renderpass.T
 }
 
-var _ Pass = &OutputPass{}
+var _ draw.Pass = &OutputPass{}
 
 type OutputDescriptors struct {
 	descriptor.Set
@@ -129,7 +129,7 @@ func NewOutputPass(app vulkan.App, target vulkan.Target, source vulkan.Target) *
 	return p
 }
 
-func (p *OutputPass) Record(cmds command.Recorder, args render.Args, scene object.Component) {
+func (p *OutputPass) Record(cmds command.Recorder, args draw.Args, scene object.Component) {
 	quad := p.app.Meshes().Fetch(p.quad)
 
 	cmds.Record(func(cmd command.Buffer) {
