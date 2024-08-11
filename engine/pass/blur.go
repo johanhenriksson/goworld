@@ -5,6 +5,7 @@ import (
 
 	"github.com/johanhenriksson/goworld/core/draw"
 	"github.com/johanhenriksson/goworld/core/object"
+	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/descriptor"
 	"github.com/johanhenriksson/goworld/render/framebuffer"
@@ -14,15 +15,14 @@ import (
 	"github.com/johanhenriksson/goworld/render/shader"
 	"github.com/johanhenriksson/goworld/render/texture"
 	"github.com/johanhenriksson/goworld/render/vertex"
-	"github.com/johanhenriksson/goworld/render/vulkan"
 
 	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
 type BlurPass struct {
-	app      vulkan.App
+	app      engine.App
 	material *material.Material[*BlurDescriptors]
-	input    vulkan.Target
+	input    engine.Target
 
 	quad  vertex.Mesh
 	desc  []*material.Instance[*BlurDescriptors]
@@ -38,7 +38,7 @@ type BlurDescriptors struct {
 	Input *descriptor.Sampler
 }
 
-func NewBlurPass(app vulkan.App, output vulkan.Target, input vulkan.Target) *BlurPass {
+func NewBlurPass(app engine.App, output engine.Target, input engine.Target) *BlurPass {
 	p := &BlurPass{
 		app:   app,
 		input: input,

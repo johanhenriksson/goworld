@@ -1,27 +1,27 @@
-package engine
+package app
 
 import (
 	osimage "image"
 	"runtime"
 
 	"github.com/johanhenriksson/goworld/core/object"
+	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/engine/graph"
 	"github.com/johanhenriksson/goworld/render/image"
-	"github.com/johanhenriksson/goworld/render/vulkan"
 )
 
 // Render a single frame and return it as *image.RGBA
-func Frame(args Args, scenefuncs ...SceneFunc) *osimage.RGBA {
+func Frame(args engine.Args, graphFunc graph.GraphFunc, scenefuncs ...engine.SceneFunc) *osimage.RGBA {
 	runtime.LockOSThread()
 
-	backend := vulkan.New("goworld", 0)
-	defer backend.Destroy()
+	app := engine.New("goworld", 0)
+	defer app.Destroy()
 
-	if args.Renderer == nil {
-		args.Renderer = graph.Default
+	if graphFunc == nil {
+		graphFunc = graph.Default
 	}
 
-	buffer := vulkan.NewColorTarget(backend.Device(), "output", image.FormatRGBA8Unorm, vulkan.TargetSize{
+	buffer := engine.NewColorTarget(app.Device(), "output", image.FormatRGBA8Unorm, engine.TargetSize{
 		Width:  args.Width,
 		Height: args.Height,
 		Frames: 1,
@@ -30,7 +30,7 @@ func Frame(args Args, scenefuncs ...SceneFunc) *osimage.RGBA {
 	defer buffer.Destroy()
 
 	// create renderer
-	renderer := args.Renderer(backend, buffer)
+	renderer := graphFunc(app, buffer)
 	defer renderer.Destroy()
 
 	// create scene

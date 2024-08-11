@@ -7,6 +7,7 @@ import (
 	"github.com/johanhenriksson/goworld/editor"
 	_ "github.com/johanhenriksson/goworld/editor/builtin"
 	"github.com/johanhenriksson/goworld/engine"
+	"github.com/johanhenriksson/goworld/engine/app"
 	"github.com/johanhenriksson/goworld/game/chunk"
 	"github.com/johanhenriksson/goworld/game/player"
 	"github.com/johanhenriksson/goworld/game/terrain"
@@ -22,11 +23,13 @@ import (
 )
 
 func main() {
-	engine.Run(engine.Args{
-		Width:  1600,
-		Height: 1200,
-		Title:  "goworld",
-	},
+	app.Run(
+		engine.Args{
+			Width:  1600,
+			Height: 1200,
+			Title:  "goworld",
+		},
+		nil,
 		editor.Scene(func(scene object.Object) {
 			// todo: should on the scene object by default
 			object.Attach(scene, physics.NewWorld())

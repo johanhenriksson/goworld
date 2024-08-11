@@ -8,12 +8,12 @@ import (
 	"github.com/johanhenriksson/goworld/core/light"
 	"github.com/johanhenriksson/goworld/core/mesh"
 	"github.com/johanhenriksson/goworld/core/object"
+	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/framebuffer"
 	"github.com/johanhenriksson/goworld/render/renderpass"
 	"github.com/johanhenriksson/goworld/render/renderpass/attachment"
 	"github.com/johanhenriksson/goworld/render/texture"
-	"github.com/johanhenriksson/goworld/render/vulkan"
 
 	"github.com/vkngwrapper/core/v2/core1_0"
 )
@@ -25,8 +25,8 @@ type Shadow interface {
 }
 
 type shadowpass struct {
-	app    vulkan.App
-	target vulkan.Target
+	app    engine.App
+	target engine.Target
 	pass   renderpass.T
 	size   int
 
@@ -47,7 +47,7 @@ type Cascade struct {
 	Mats    MaterialCache
 }
 
-func NewShadowPass(app vulkan.App, target vulkan.Target) Shadow {
+func NewShadowPass(app engine.App, target engine.Target) Shadow {
 	pass := renderpass.New(app.Device(), renderpass.Args{
 		Name: "Shadow",
 		DepthAttachment: &attachment.Depth{

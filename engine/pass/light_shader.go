@@ -1,6 +1,7 @@
 package pass
 
 import (
+	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/engine/uniform"
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/descriptor"
@@ -9,7 +10,6 @@ import (
 	"github.com/johanhenriksson/goworld/render/shader"
 	"github.com/johanhenriksson/goworld/render/texture"
 	"github.com/johanhenriksson/goworld/render/vertex"
-	"github.com/johanhenriksson/goworld/render/vulkan"
 
 	"github.com/vkngwrapper/core/v2/core1_0"
 )
@@ -41,7 +41,7 @@ type lightShader struct {
 	occlusionTex []texture.T
 }
 
-func NewLightShader(app vulkan.App, pass renderpass.T, gbuffer GeometryBuffer, occlusion vulkan.Target) LightShader {
+func NewLightShader(app engine.App, pass renderpass.T, gbuffer GeometryBuffer, occlusion engine.Target) LightShader {
 	mat := material.New(
 		app.Device(),
 		material.Args{

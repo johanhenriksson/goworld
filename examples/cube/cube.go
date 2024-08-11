@@ -8,6 +8,7 @@ import (
 	"github.com/johanhenriksson/goworld/editor"
 	_ "github.com/johanhenriksson/goworld/editor/builtin"
 	"github.com/johanhenriksson/goworld/engine"
+	"github.com/johanhenriksson/goworld/engine/app"
 	"github.com/johanhenriksson/goworld/geometry/cube"
 	"github.com/johanhenriksson/goworld/geometry/plane"
 	"github.com/johanhenriksson/goworld/math/quat"
@@ -20,11 +21,13 @@ import (
 )
 
 func main() {
-	engine.Run(engine.Args{
-		Width:  1200,
-		Height: 800,
-		Title:  "goworld: cube",
-	},
+	app.Run(
+		engine.Args{
+			Width:  1200,
+			Height: 800,
+			Title:  "goworld: cube",
+		},
+		nil,
 		editor.Scene(func(scene object.Object) {
 			rot := float32(45)
 			box := cube.New(cube.Args{

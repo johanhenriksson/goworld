@@ -1,4 +1,4 @@
-package vulkan
+package glfw
 
 import (
 	"runtime"

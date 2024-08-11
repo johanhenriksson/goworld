@@ -5,20 +5,20 @@ import (
 	"github.com/johanhenriksson/goworld/core/light"
 	"github.com/johanhenriksson/goworld/core/mesh"
 	"github.com/johanhenriksson/goworld/core/object"
+	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/engine/uniform"
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/framebuffer"
 	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/renderpass"
 	"github.com/johanhenriksson/goworld/render/renderpass/attachment"
-	"github.com/johanhenriksson/goworld/render/vulkan"
 
 	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
 type ForwardPass struct {
-	target vulkan.Target
-	app    vulkan.App
+	target engine.Target
+	app    engine.App
 	pass   renderpass.T
 	fbuf   framebuffer.Array
 
@@ -30,9 +30,9 @@ type ForwardPass struct {
 var _ draw.Pass = &ForwardPass{}
 
 func NewForwardPass(
-	app vulkan.App,
-	target vulkan.Target,
-	depth vulkan.Target,
+	app engine.App,
+	target engine.Target,
+	depth engine.Target,
 	shadows Shadow,
 ) *ForwardPass {
 	pass := renderpass.New(app.Device(), renderpass.Args{

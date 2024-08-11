@@ -5,9 +5,9 @@ import (
 
 	"github.com/johanhenriksson/goworld/core/draw"
 	"github.com/johanhenriksson/goworld/core/object"
+	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/sync"
-	"github.com/johanhenriksson/goworld/render/vulkan"
 
 	"github.com/vkngwrapper/core/v2/core1_0"
 )
@@ -26,7 +26,7 @@ type Node interface {
 
 type node struct {
 	name       string
-	app        vulkan.App
+	app        engine.App
 	pass       draw.Pass
 	after      map[string]edge
 	before     map[string]edge
@@ -40,7 +40,7 @@ type edge struct {
 	signal []sync.Semaphore
 }
 
-func newNode(app vulkan.App, name string, pass draw.Pass) *node {
+func newNode(app engine.App, name string, pass draw.Pass) *node {
 	return &node{
 		app:        app,
 		name:       name,

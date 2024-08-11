@@ -6,6 +6,7 @@ import (
 
 	"github.com/johanhenriksson/goworld/core/draw"
 	"github.com/johanhenriksson/goworld/core/object"
+	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/math"
 	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/math/random"
@@ -21,7 +22,6 @@ import (
 	"github.com/johanhenriksson/goworld/render/shader"
 	"github.com/johanhenriksson/goworld/render/texture"
 	"github.com/johanhenriksson/goworld/render/vertex"
-	"github.com/johanhenriksson/goworld/render/vulkan"
 
 	"github.com/vkngwrapper/core/v2/core1_0"
 )
@@ -29,7 +29,7 @@ import (
 const SSAOSamples = 32
 
 type AmbientOcclusionPass struct {
-	app  vulkan.App
+	app  engine.App
 	pass renderpass.T
 	fbuf framebuffer.Array
 	mat  *material.Material[*AmbientOcclusionDescriptors]
@@ -63,7 +63,7 @@ type AmbientOcclusionDescriptors struct {
 	Params   *descriptor.Uniform[AmbientOcclusionParams]
 }
 
-func NewAmbientOcclusionPass(app vulkan.App, target vulkan.Target, gbuffer GeometryBuffer) *AmbientOcclusionPass {
+func NewAmbientOcclusionPass(app engine.App, target engine.Target, gbuffer GeometryBuffer) *AmbientOcclusionPass {
 	var err error
 	p := &AmbientOcclusionPass{
 		app:   app,

@@ -1,9 +1,10 @@
-package engine
+package app
 
 import (
 	"log"
 	"os"
 	"os/signal"
+	"runtime"
 )
 
 type Interrupter interface {
@@ -26,7 +27,11 @@ func NewInterrupter() Interrupter {
 	go func() {
 		for range sigint {
 			if !r.running {
-				log.Println("Kill")
+				stackdump := make([]byte, 100*1024)
+				n := runtime.Stack(stackdump, true)
+				log.Println("Goroutine dump:\n" + string(stackdump[:n]))
+
+				log.Println("Killed")
 				os.Exit(1)
 			} else {
 				log.Println("Interrupt")

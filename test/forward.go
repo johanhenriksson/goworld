@@ -8,6 +8,7 @@ import (
 	"github.com/johanhenriksson/goworld/core/light"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/engine"
+	"github.com/johanhenriksson/goworld/engine/app"
 	"github.com/johanhenriksson/goworld/engine/graph"
 	"github.com/johanhenriksson/goworld/engine/pass"
 	"github.com/johanhenriksson/goworld/geometry/cube"
@@ -19,20 +20,19 @@ import (
 	"github.com/johanhenriksson/goworld/render/image"
 	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/texture"
-	"github.com/johanhenriksson/goworld/render/vulkan"
 
 	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
-func ForwardGraph(app vulkan.App, target vulkan.Target) graph.T {
-	return graph.New(app, target, func(g graph.T, output vulkan.Target) []graph.Resource {
+func ForwardGraph(app engine.App, target engine.Target) graph.T {
+	return graph.New(app, target, func(g graph.T, output engine.Target) []graph.Resource {
 		size := output.Size()
 
 		// allocate main depth buffer
-		depth := vulkan.NewDepthTarget(app.Device(), "main-depth", size)
+		depth := engine.NewDepthTarget(app.Device(), "main-depth", size)
 
 		// main off-screen color buffer
-		offscreen := vulkan.NewColorTarget(app.Device(), "main-color", image.FormatRGBA8Unorm, size)
+		offscreen := engine.NewColorTarget(app.Device(), "main-color", image.FormatRGBA8Unorm, size)
 
 		// create geometry buffer
 		gbuffer, err := pass.NewGbuffer(app.Device(), size)
@@ -63,12 +63,13 @@ func ForwardGraph(app vulkan.App, target vulkan.Target) graph.T {
 
 var _ = Describe("forward renderer", Label("e2e"), func() {
 	It("renders correctly", func() {
-		img := engine.Frame(engine.Args{
-			Width:    512,
-			Height:   512,
-			Title:    "goworld",
-			Renderer: ForwardGraph,
-		},
+		img := app.Frame(
+			engine.Args{
+				Width:  512,
+				Height: 512,
+				Title:  "goworld",
+			},
+			ForwardGraph,
 			func(scene object.Object) {
 				object.Builder(object.Empty("Camera")).
 					Rotation(quat.Euler(30, 45, 0)).

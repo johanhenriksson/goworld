@@ -6,6 +6,7 @@ import (
 	"github.com/johanhenriksson/goworld/editor"
 	_ "github.com/johanhenriksson/goworld/editor/builtin"
 	"github.com/johanhenriksson/goworld/engine"
+	"github.com/johanhenriksson/goworld/engine/app"
 	"github.com/johanhenriksson/goworld/game/chunk"
 	"github.com/johanhenriksson/goworld/math/quat"
 	"github.com/johanhenriksson/goworld/math/vec3"
@@ -13,11 +14,13 @@ import (
 )
 
 func main() {
-	engine.Run(engine.Args{
-		Width:  1600,
-		Height: 1200,
-		Title:  "voxel editor",
-	},
+	app.Run(
+		engine.Args{
+			Width:  1600,
+			Height: 1200,
+			Title:  "voxel editor",
+		},
+		nil,
 		editor.Scene(func(scene object.Object) {
 			chk := chunk.New("editable", 16, 16, 16)
 

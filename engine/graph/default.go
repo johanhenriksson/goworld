@@ -1,15 +1,15 @@
 package graph
 
 import (
+	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/engine/pass"
-	"github.com/johanhenriksson/goworld/render/vulkan"
 
 	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
 // Instantiates the default render graph
-func Default(app vulkan.App, target vulkan.Target) T {
-	return New(app, target, func(g T, output vulkan.Target) []Resource {
+func Default(app engine.App, target engine.Target) T {
+	return New(app, target, func(g T, output engine.Target) []Resource {
 		size := output.Size()
 
 		//
@@ -17,10 +17,10 @@ func Default(app vulkan.App, target vulkan.Target) T {
 		//
 
 		// allocate main depth buffer
-		depth := vulkan.NewDepthTarget(app.Device(), "main-depth", size)
+		depth := engine.NewDepthTarget(app.Device(), "main-depth", size)
 
 		// main off-screen color buffer
-		hdrBuffer := vulkan.NewColorTarget(app.Device(), "main-color", core1_0.FormatR16G16B16A16SignedFloat, size)
+		hdrBuffer := engine.NewColorTarget(app.Device(), "main-color", core1_0.FormatR16G16B16A16SignedFloat, size)
 
 		// create geometry buffer
 		gbuffer, err := pass.NewGbuffer(app.Device(), size)
@@ -30,7 +30,7 @@ func Default(app vulkan.App, target vulkan.Target) T {
 
 		// allocate SSAO output buffer
 		ssaoFormat := core1_0.FormatR16SignedFloat
-		ssaoOutput := vulkan.NewColorTarget(app.Device(), "ssao-output", ssaoFormat, vulkan.TargetSize{
+		ssaoOutput := engine.NewColorTarget(app.Device(), "ssao-output", ssaoFormat, engine.TargetSize{
 			Width:  size.Width / 2,
 			Height: size.Height / 2,
 			Frames: size.Frames,
@@ -59,7 +59,7 @@ func Default(app vulkan.App, target vulkan.Target) T {
 
 		// ssao blur pass
 		// - wait for ssao pass before executing fragment shader
-		blurOutput := vulkan.NewColorTarget(app.Device(), "blur-output", ssaoOutput.SurfaceFormat(), ssaoOutput.Size())
+		blurOutput := engine.NewColorTarget(app.Device(), "blur-output", ssaoOutput.SurfaceFormat(), ssaoOutput.Size())
 		blur := g.Node(pass.NewBlurPass(app, blurOutput, ssaoOutput))
 		blur.After(ssao, core1_0.PipelineStageFragmentShader)
 
@@ -79,7 +79,7 @@ func Default(app vulkan.App, target vulkan.Target) T {
 		//
 
 		// post process pass
-		composition := vulkan.NewColorTarget(app.Device(), "composition", core1_0.FormatR8G8B8A8UnsignedNormalized, hdrBuffer.Size())
+		composition := engine.NewColorTarget(app.Device(), "composition", core1_0.FormatR8G8B8A8UnsignedNormalized, hdrBuffer.Size())
 		post := g.Node(pass.NewPostProcessPass(app, composition, hdrBuffer))
 		post.After(forward, core1_0.PipelineStageFragmentShader)
 

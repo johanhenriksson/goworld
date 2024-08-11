@@ -4,6 +4,7 @@ import (
 	"github.com/johanhenriksson/goworld/core/draw"
 	"github.com/johanhenriksson/goworld/core/mesh"
 	"github.com/johanhenriksson/goworld/core/object"
+	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/engine/uniform"
 	"github.com/johanhenriksson/goworld/math/shape"
 	"github.com/johanhenriksson/goworld/render/color"
@@ -12,7 +13,6 @@ import (
 	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/renderpass"
 	"github.com/johanhenriksson/goworld/render/renderpass/attachment"
-	"github.com/johanhenriksson/goworld/render/vulkan"
 
 	"github.com/vkngwrapper/core/v2/core1_0"
 )
@@ -25,9 +25,9 @@ const (
 )
 
 type DeferredGeometryPass struct {
-	target  vulkan.Target
+	target  engine.Target
 	gbuffer GeometryBuffer
-	app     vulkan.App
+	app     engine.App
 	pass    renderpass.T
 	fbuf    framebuffer.Array
 
@@ -38,8 +38,8 @@ type DeferredGeometryPass struct {
 var _ draw.Pass = (*DeferredGeometryPass)(nil)
 
 func NewDeferredGeometryPass(
-	app vulkan.App,
-	depth vulkan.Target,
+	app engine.App,
+	depth engine.Target,
 	gbuffer GeometryBuffer,
 ) *DeferredGeometryPass {
 	pass := renderpass.New(app.Device(), renderpass.Args{

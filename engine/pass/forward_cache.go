@@ -3,6 +3,7 @@ package pass
 import (
 	"fmt"
 
+	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/engine/cache"
 	"github.com/johanhenriksson/goworld/engine/uniform"
 	"github.com/johanhenriksson/goworld/render/command"
@@ -11,19 +12,18 @@ import (
 	"github.com/johanhenriksson/goworld/render/renderpass"
 	"github.com/johanhenriksson/goworld/render/shader"
 	"github.com/johanhenriksson/goworld/render/vertex"
-	"github.com/johanhenriksson/goworld/render/vulkan"
 
 	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
 type ForwardMatCache struct {
-	app    vulkan.App
+	app    engine.App
 	pass   renderpass.T
 	lookup ShadowmapLookupFn
 	frames int
 }
 
-func NewForwardMaterialCache(app vulkan.App, pass renderpass.T, frames int, lookup ShadowmapLookupFn) MaterialCache {
+func NewForwardMaterialCache(app engine.App, pass renderpass.T, frames int, lookup ShadowmapLookupFn) MaterialCache {
 	return cache.New[*material.Def, []Material](&ForwardMatCache{
 		app:    app,
 		pass:   pass,
