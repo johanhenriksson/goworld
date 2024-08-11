@@ -34,8 +34,8 @@ func DeferredGraph(app engine.App, target engine.Target) graph.T {
 		// main off-screen color buffer
 		offscreen := engine.NewColorTarget(app.Device(), "main-color", image.FormatRGBA8Unorm, size)
 
-		empty := engine.NewColorTarget(app.Device(), "main-color", image.FormatRGBA8Unorm, engine.TargetSize{
-			Width: 1, Height: 1, Frames: 1, Scale: 1,
+		occlusion := engine.NewColorTarget(app.Device(), "occlusion", image.FormatRGBA8Unorm, engine.TargetSize{
+			Width: 1, Height: 1, Scale: 1, Frames: size.Frames,
 		})
 
 		// create geometry buffer
@@ -51,16 +51,17 @@ func DeferredGraph(app engine.App, target engine.Target) graph.T {
 		deferredGeometry := g.Node(pass.NewDeferredGeometryPass(app, depth, gbuffer))
 
 		// deferred lighting
-		deferredLighting := g.Node(pass.NewDeferredLightingPass(app, offscreen, gbuffer, shadows, empty))
-		deferredLighting.After(shadowNode, core1_0.PipelineStageTopOfPipe)
-		deferredLighting.After(deferredGeometry, core1_0.PipelineStageTopOfPipe)
+		deferredLighting := g.Node(pass.NewDeferredLightingPass(app, offscreen, gbuffer, shadows, occlusion))
+		deferredLighting.After(shadowNode, core1_0.PipelineStageFragmentShader)
+		deferredLighting.After(deferredGeometry, core1_0.PipelineStageFragmentShader)
 
 		outputPass := g.Node(pass.NewOutputPass(app, output, offscreen))
-		outputPass.After(deferredLighting, core1_0.PipelineStageTopOfPipe)
+		outputPass.After(deferredLighting, core1_0.PipelineStageFragmentShader)
 
 		return []graph.Resource{
 			depth,
 			offscreen,
+			occlusion,
 			gbuffer,
 		}
 	})

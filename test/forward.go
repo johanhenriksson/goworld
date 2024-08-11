@@ -47,8 +47,8 @@ func ForwardGraph(app engine.App, target engine.Target) graph.T {
 		shadowNode := g.Node(shadows)
 
 		forward := g.Node(pass.NewForwardPass(app, offscreen, depth, shadows))
-		forward.After(depthPass, core1_0.PipelineStageTopOfPipe)
-		forward.After(shadowNode, core1_0.PipelineStageTopOfPipe)
+		forward.After(depthPass, core1_0.PipelineStageEarlyFragmentTests)
+		forward.After(shadowNode, core1_0.PipelineStageFragmentShader)
 
 		outputPass := g.Node(pass.NewOutputPass(app, output, offscreen))
 		outputPass.After(forward, core1_0.PipelineStageTopOfPipe)

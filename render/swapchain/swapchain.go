@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/device"
 	"github.com/johanhenriksson/goworld/render/image"
 	"github.com/johanhenriksson/goworld/render/sync"
@@ -18,8 +19,8 @@ import (
 type T interface {
 	device.Resource[khr_swapchain.Swapchain]
 
-	Aquire() (*Context, error)
-	Present(*Context)
+	Aquire(command.Worker) (*Context, error)
+	Present(command.Worker, *Context)
 	Resize(int, int)
 
 	Images() []image.T
@@ -147,7 +148,7 @@ func (s *swapchain) create() {
 	}
 }
 
-func (s *swapchain) Aquire() (*Context, error) {
+func (s *swapchain) Aquire(command.Worker) (*Context, error) {
 	if s.resized {
 		s.recreate()
 		s.resized = false
@@ -178,15 +179,19 @@ func (s *swapchain) Aquire() (*Context, error) {
 	return ctx, nil
 }
 
-func (s *swapchain) Present(ctx *Context) {
+func (s *swapchain) Present(worker command.Worker, ctx *Context) {
 	if ctx.RenderComplete == nil {
 		panic("context has no RenderComplete semaphore")
 	}
-	queue := s.device.Queue()
-	s.ext.QueuePresent(queue.Ptr(), khr_swapchain.PresentInfo{
-		WaitSemaphores: []core1_0.Semaphore{ctx.RenderComplete.Ptr()},
-		Swapchains:     []khr_swapchain.Swapchain{s.Ptr()},
-		ImageIndices:   []int{ctx.Index},
+	worker.Invoke(func() {
+		// ideally there would be a better way to access the correct queue from the worker
+		// however, this is the only place outside of the worker where we need to access the queue
+		queue := s.device.Queue()
+		s.ext.QueuePresent(queue.Ptr(), khr_swapchain.PresentInfo{
+			WaitSemaphores: []core1_0.Semaphore{ctx.RenderComplete.Ptr()},
+			Swapchains:     []khr_swapchain.Swapchain{s.ptr},
+			ImageIndices:   []int{ctx.Index},
+		})
 	})
 }
 
