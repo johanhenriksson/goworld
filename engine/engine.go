@@ -1,28 +1,14 @@
-package vulkan
+package engine
 
 import (
 	"github.com/johanhenriksson/goworld/engine/cache"
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/descriptor"
 	"github.com/johanhenriksson/goworld/render/device"
-	"github.com/johanhenriksson/goworld/render/vulkan/instance"
+	"github.com/johanhenriksson/goworld/render/instance"
 )
 
-type App interface {
-	Instance() instance.T
-	Device() device.T
-	Destroy()
-
-	Worker() command.Worker
-	Flush()
-
-	Pool() descriptor.Pool
-	Meshes() cache.MeshCache
-	Textures() cache.TextureCache
-	Shaders() cache.ShaderCache
-}
-
-type backend struct {
+type engine struct {
 	appName  string
 	instance instance.T
 	device   device.T
@@ -51,7 +37,7 @@ func New(appName string, deviceIndex int) App {
 
 	pool := descriptor.NewPool(device, 1000, DefaultDescriptorPools)
 
-	return &backend{
+	return &engine{
 		appName: appName,
 
 		device:   device,
@@ -64,25 +50,25 @@ func New(appName string, deviceIndex int) App {
 	}
 }
 
-func (b *backend) Instance() instance.T { return b.instance }
-func (b *backend) Device() device.T     { return b.device }
+func (b *engine) Instance() instance.T { return b.instance }
+func (b *engine) Device() device.T     { return b.device }
 
-func (b *backend) Pool() descriptor.Pool        { return b.pool }
-func (b *backend) Meshes() cache.MeshCache      { return b.meshes }
-func (b *backend) Textures() cache.TextureCache { return b.textures }
-func (b *backend) Shaders() cache.ShaderCache   { return b.shaders }
+func (b *engine) Pool() descriptor.Pool        { return b.pool }
+func (b *engine) Meshes() cache.MeshCache      { return b.meshes }
+func (b *engine) Textures() cache.TextureCache { return b.textures }
+func (b *engine) Shaders() cache.ShaderCache   { return b.shaders }
 
-func (b *backend) Worker() command.Worker {
+func (b *engine) Worker() command.Worker {
 	return b.worker
 }
 
-func (b *backend) Flush() {
+func (b *engine) Flush() {
 	// wait for all workers
 	b.worker.Flush()
 	b.device.WaitIdle()
 }
 
-func (b *backend) Destroy() {
+func (b *engine) Destroy() {
 	// flush any pending work
 	b.Flush()
 

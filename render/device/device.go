@@ -4,7 +4,7 @@ import (
 	"log"
 	"slices"
 
-	"github.com/johanhenriksson/goworld/render/vulkan/instance"
+	"github.com/johanhenriksson/goworld/render/instance"
 	"github.com/samber/lo"
 
 	"github.com/vkngwrapper/core/v2/common"

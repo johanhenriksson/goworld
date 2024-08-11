@@ -1,10 +1,10 @@
 package pass
 
 import (
+	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/render/device"
 	"github.com/johanhenriksson/goworld/render/image"
-	"github.com/johanhenriksson/goworld/render/vulkan"
 
 	"github.com/vkngwrapper/core/v2/core1_0"
 )
@@ -27,7 +27,7 @@ type gbuffer struct {
 	height   int
 }
 
-func NewGbuffer(device device.T, size vulkan.TargetSize) (GeometryBuffer, error) {
+func NewGbuffer(device device.T, size engine.TargetSize) (GeometryBuffer, error) {
 	frames, width, height := size.Frames, size.Width, size.Height
 	diffuseFmt := core1_0.FormatR8G8B8A8UnsignedNormalized
 	normalFmt := core1_0.FormatR8G8B8A8UnsignedNormalized

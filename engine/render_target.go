@@ -1,4 +1,4 @@
-package vulkan
+package engine
 
 import (
 	"fmt"
@@ -9,8 +9,6 @@ import (
 
 	"github.com/vkngwrapper/core/v2/core1_0"
 )
-
-// the render target interfaces & implementations probably dont belong in this package long-term
 
 type TargetSize struct {
 	Width  int

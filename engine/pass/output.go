@@ -6,6 +6,7 @@ import (
 
 	"github.com/johanhenriksson/goworld/core/draw"
 	"github.com/johanhenriksson/goworld/core/object"
+	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/descriptor"
 	"github.com/johanhenriksson/goworld/render/framebuffer"
@@ -15,16 +16,15 @@ import (
 	"github.com/johanhenriksson/goworld/render/shader"
 	"github.com/johanhenriksson/goworld/render/texture"
 	"github.com/johanhenriksson/goworld/render/vertex"
-	"github.com/johanhenriksson/goworld/render/vulkan"
 
 	"github.com/vkngwrapper/core/v2/core1_0"
 	"github.com/vkngwrapper/extensions/v2/khr_swapchain"
 )
 
 type OutputPass struct {
-	app      vulkan.App
+	app      engine.App
 	material *material.Material[*OutputDescriptors]
-	source   vulkan.Target
+	source   engine.Target
 
 	quad  vertex.Mesh
 	desc  []*material.Instance[*OutputDescriptors]
@@ -40,7 +40,7 @@ type OutputDescriptors struct {
 	Output *descriptor.Sampler
 }
 
-func NewOutputPass(app vulkan.App, target vulkan.Target, source vulkan.Target) *OutputPass {
+func NewOutputPass(app engine.App, target engine.Target, source engine.Target) *OutputPass {
 	log.Println("create output pass")
 	p := &OutputPass{
 		app:    app,

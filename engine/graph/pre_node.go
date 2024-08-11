@@ -6,11 +6,11 @@ import (
 	"github.com/johanhenriksson/goworld/core/camera"
 	"github.com/johanhenriksson/goworld/core/draw"
 	"github.com/johanhenriksson/goworld/core/object"
+	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/swapchain"
-	"github.com/johanhenriksson/goworld/render/vulkan"
 
 	"github.com/vkngwrapper/core/v2/core1_0"
 )
@@ -24,12 +24,12 @@ type PreDrawable interface {
 
 type preNode struct {
 	*node
-	target       vulkan.Target
+	target       engine.Target
 	cameraQuery  *object.Query[*camera.Camera]
 	predrawQuery *object.Query[PreDrawable]
 }
 
-func newPreNode(app vulkan.App, target vulkan.Target) *preNode {
+func newPreNode(app engine.App, target engine.Target) *preNode {
 	return &preNode{
 		node:         newNode(app, "Pre", nil),
 		target:       target,
@@ -45,19 +45,21 @@ func (n *preNode) Prepare(scene object.Object, time, delta float32) (*draw.Args,
 		Scale:  n.target.Scale(),
 	}
 
+	// ensure the default white texture is always available
+	n.app.Textures().Fetch(color.White)
+
 	// aquire next frame
 	ctxAvailable := make(chan *swapchain.Context)
 	n.app.Worker().Invoke(func() {
 		context, err := n.target.Aquire()
+		// warning: this will block the worker until the context is available
+		// using the worker before the context is available will cause a deadlock!
 		if err != nil {
 			ctxAvailable <- nil
 		} else {
 			ctxAvailable <- context
 		}
 	})
-
-	// ensure the default white texture is always available
-	n.app.Textures().Fetch(color.White)
 
 	// cache ticks
 	n.app.Meshes().Tick()

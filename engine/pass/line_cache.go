@@ -3,6 +3,7 @@ package pass
 import (
 	"fmt"
 
+	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/engine/cache"
 	"github.com/johanhenriksson/goworld/engine/uniform"
 	"github.com/johanhenriksson/goworld/render/command"
@@ -11,18 +12,17 @@ import (
 	"github.com/johanhenriksson/goworld/render/renderpass"
 	"github.com/johanhenriksson/goworld/render/shader"
 	"github.com/johanhenriksson/goworld/render/vertex"
-	"github.com/johanhenriksson/goworld/render/vulkan"
 
 	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
 type LineMatCache struct {
-	app    vulkan.App
+	app    engine.App
 	pass   renderpass.T
 	frames int
 }
 
-func NewLineMaterialCache(app vulkan.App, pass renderpass.T, frames int) MaterialCache {
+func NewLineMaterialCache(app engine.App, pass renderpass.T, frames int) MaterialCache {
 	return cache.New[*material.Def, []Material](&LineMatCache{
 		app:    app,
 		pass:   pass,

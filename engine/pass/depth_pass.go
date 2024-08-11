@@ -4,19 +4,19 @@ import (
 	"github.com/johanhenriksson/goworld/core/draw"
 	"github.com/johanhenriksson/goworld/core/mesh"
 	"github.com/johanhenriksson/goworld/core/object"
+	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/engine/uniform"
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/framebuffer"
 	"github.com/johanhenriksson/goworld/render/renderpass"
 	"github.com/johanhenriksson/goworld/render/renderpass/attachment"
-	"github.com/johanhenriksson/goworld/render/vulkan"
 
 	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
 type DepthPass struct {
-	app   vulkan.App
-	depth vulkan.Target
+	app   engine.App
+	depth engine.Target
 	pass  renderpass.T
 	fbuf  framebuffer.Array
 
@@ -27,8 +27,8 @@ type DepthPass struct {
 var _ draw.Pass = &ForwardPass{}
 
 func NewDepthPass(
-	app vulkan.App,
-	depth vulkan.Target,
+	app engine.App,
+	depth engine.Target,
 ) *DepthPass {
 	pass := renderpass.New(app.Device(), renderpass.Args{
 		Name: "Depth",

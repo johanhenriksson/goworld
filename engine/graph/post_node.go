@@ -1,18 +1,18 @@
 package graph
 
 import (
+	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/swapchain"
 	"github.com/johanhenriksson/goworld/render/sync"
-	"github.com/johanhenriksson/goworld/render/vulkan"
 )
 
 type postNode struct {
 	*node
-	target vulkan.Target
+	target engine.Target
 }
 
-func newPostNode(app vulkan.App, target vulkan.Target) *postNode {
+func newPostNode(app engine.App, target engine.Target) *postNode {
 	return &postNode{
 		node:   newNode(app, "Post", nil),
 		target: target,

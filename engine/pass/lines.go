@@ -6,6 +6,7 @@ import (
 	"github.com/johanhenriksson/goworld/core/draw"
 	"github.com/johanhenriksson/goworld/core/mesh"
 	"github.com/johanhenriksson/goworld/core/object"
+	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/engine/uniform"
 	lineShape "github.com/johanhenriksson/goworld/geometry/lines"
 	"github.com/johanhenriksson/goworld/render/command"
@@ -13,21 +14,20 @@ import (
 	"github.com/johanhenriksson/goworld/render/renderpass"
 	"github.com/johanhenriksson/goworld/render/renderpass/attachment"
 	"github.com/johanhenriksson/goworld/render/vertex"
-	"github.com/johanhenriksson/goworld/render/vulkan"
 
 	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
 type LinePass struct {
-	app       vulkan.App
-	target    vulkan.Target
+	app       engine.App
+	target    engine.Target
 	pass      renderpass.T
 	fbuf      framebuffer.Array
 	materials MaterialCache
 	meshQuery *object.Query[mesh.Mesh]
 }
 
-func NewLinePass(app vulkan.App, target vulkan.Target, depth vulkan.Target) *LinePass {
+func NewLinePass(app engine.App, target engine.Target, depth engine.Target) *LinePass {
 	log.Println("create line pass")
 
 	pass := renderpass.New(app.Device(), renderpass.Args{

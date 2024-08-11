@@ -8,13 +8,14 @@ import (
 
 	"github.com/johanhenriksson/goworld/core/draw"
 	"github.com/johanhenriksson/goworld/core/object"
+	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/render/upload"
-	"github.com/johanhenriksson/goworld/render/vulkan"
 
 	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
-type NodeFunc func(T, vulkan.Target) []Resource
+type GraphFunc func(app engine.App, target engine.Target) T
+type NodeFunc func(T, engine.Target) []Resource
 
 // The render graph is responsible for synchronization between
 // different render nodes.
@@ -32,8 +33,8 @@ type Resource interface {
 }
 
 type graph struct {
-	app       vulkan.App
-	target    vulkan.Target
+	app       engine.App
+	target    engine.Target
 	pre       *preNode
 	post      *postNode
 	nodes     []Node
@@ -42,7 +43,7 @@ type graph struct {
 	resources []Resource
 }
 
-func New(app vulkan.App, output vulkan.Target, init NodeFunc) T {
+func New(app engine.App, output engine.Target, init NodeFunc) T {
 	g := &graph{
 		app:    app,
 		target: output,

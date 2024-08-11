@@ -3,6 +3,7 @@ package pass
 import (
 	"github.com/johanhenriksson/goworld/core/draw"
 	"github.com/johanhenriksson/goworld/core/object"
+	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/engine/cache"
 	"github.com/johanhenriksson/goworld/gui"
 	"github.com/johanhenriksson/goworld/gui/widget"
@@ -15,7 +16,6 @@ import (
 	"github.com/johanhenriksson/goworld/render/renderpass"
 	"github.com/johanhenriksson/goworld/render/renderpass/attachment"
 	"github.com/johanhenriksson/goworld/render/shader"
-	"github.com/johanhenriksson/goworld/render/vulkan"
 
 	"github.com/vkngwrapper/core/v2/core1_0"
 )
@@ -38,8 +38,8 @@ type GuiDrawable interface {
 }
 
 type GuiPass struct {
-	app    vulkan.App
-	target vulkan.Target
+	app    engine.App
+	target engine.Target
 	mat    []*material.Instance[*GuiDescriptors]
 	pass   renderpass.T
 	fbuf   framebuffer.Array
@@ -51,7 +51,7 @@ type GuiPass struct {
 
 var _ draw.Pass = &GuiPass{}
 
-func NewGuiPass(app vulkan.App, target vulkan.Target) *GuiPass {
+func NewGuiPass(app engine.App, target engine.Target) *GuiPass {
 	pass := renderpass.New(app.Device(), renderpass.Args{
 		Name: "GUI",
 		ColorAttachments: []attachment.Color{

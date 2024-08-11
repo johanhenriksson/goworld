@@ -1,4 +1,4 @@
-package vulkan
+package glfw
 
 import (
 	"fmt"
@@ -8,7 +8,11 @@ import (
 	"github.com/johanhenriksson/goworld/core/input"
 	"github.com/johanhenriksson/goworld/core/input/keys"
 	"github.com/johanhenriksson/goworld/core/input/mouse"
+	"github.com/johanhenriksson/goworld/engine"
+	"github.com/johanhenriksson/goworld/engine/window"
+	"github.com/johanhenriksson/goworld/render/device"
 	"github.com/johanhenriksson/goworld/render/image"
+	"github.com/johanhenriksson/goworld/render/instance"
 	"github.com/johanhenriksson/goworld/render/swapchain"
 
 	"github.com/go-gl/glfw/v3.3/glfw"
@@ -18,33 +22,7 @@ import (
 	khr_surface_driver "github.com/vkngwrapper/extensions/v2/khr_surface/driver"
 )
 
-type ResizeHandler func(width, height int)
-
-type Window interface {
-	Target
-
-	Title() string
-	SetTitle(string)
-
-	Poll()
-	ShouldClose() bool
-	Destroy()
-
-	SetInputHandler(input.Handler)
-}
-
-type WindowArgs struct {
-	Title         string
-	Width         int
-	Height        int
-	Frames        int
-	Vsync         bool
-	Debug         bool
-	InputHandler  input.Handler
-	ResizeHandler ResizeHandler
-}
-
-type window struct {
+type glfwWindow struct {
 	wnd   *glfw.Window
 	mouse mouse.MouseWrapper
 
@@ -56,7 +34,7 @@ type window struct {
 	surface       khr_surface.Surface
 }
 
-func NewWindow(backend App, args WindowArgs) (Window, error) {
+func NewWindow(vulkan instance.T, device device.T, args window.WindowArgs) (window.Window, error) {
 	// window creation hints.
 	glfw.WindowHint(glfw.ClientAPI, glfw.NoAPI)
 
@@ -77,27 +55,27 @@ func NewWindow(backend App, args WindowArgs) (Window, error) {
 		width, height, scale*100)
 
 	// create window surface
-	surfPtr, err := wnd.CreateWindowSurface((*driver.VkInstance)(unsafe.Pointer(backend.Instance().Ptr().Handle())), nil)
+	surfPtr, err := wnd.CreateWindowSurface((*driver.VkInstance)(unsafe.Pointer(vulkan.Ptr().Handle())), nil)
 	if err != nil {
 		panic(err)
 	}
 
 	surfaceHandle := (*khr_surface_driver.VkSurfaceKHR)(unsafe.Pointer(surfPtr))
-	surfaceExt := khr_surface.CreateExtensionFromInstance(backend.Instance().Ptr())
+	surfaceExt := khr_surface.CreateExtensionFromInstance(vulkan.Ptr())
 	surface, err := surfaceExt.CreateSurfaceFromHandle(*surfaceHandle)
 	if err != nil {
 		panic(err)
 	}
 
-	surfaceFormat, _, err := surface.PhysicalDeviceSurfaceFormats(backend.Device().Physical())
+	surfaceFormat, _, err := surface.PhysicalDeviceSurfaceFormats(device.Physical())
 	if err != nil {
 		panic(err)
 	}
 
 	// allocate swapchain
-	swap := swapchain.New(backend.Device(), args.Frames, width, height, surface, surfaceFormat[0])
+	swap := swapchain.New(device, args.Frames, width, height, surface, surfaceFormat[0])
 
-	window := &window{
+	window := &glfwWindow{
 		wnd:     wnd,
 		title:   args.Title,
 		width:   width,
@@ -127,12 +105,12 @@ func NewWindow(backend App, args WindowArgs) (Window, error) {
 	return window, nil
 }
 
-func (w *window) Poll() {
+func (w *glfwWindow) Poll() {
 	glfw.PollEvents()
 }
 
-func (w *window) Size() TargetSize {
-	return TargetSize{
+func (w *glfwWindow) Size() engine.TargetSize {
+	return engine.TargetSize{
 		Width:  w.width,
 		Height: w.height,
 		Frames: w.frames,
@@ -140,17 +118,17 @@ func (w *window) Size() TargetSize {
 	}
 }
 
-func (w *window) Width() int        { return w.width }
-func (w *window) Height() int       { return w.height }
-func (w *window) Frames() int       { return w.frames }
-func (w *window) Scale() float32    { return w.scale }
-func (w *window) ShouldClose() bool { return w.wnd.ShouldClose() }
-func (w *window) Title() string     { return w.title }
+func (w *glfwWindow) Width() int        { return w.width }
+func (w *glfwWindow) Height() int       { return w.height }
+func (w *glfwWindow) Frames() int       { return w.frames }
+func (w *glfwWindow) Scale() float32    { return w.scale }
+func (w *glfwWindow) ShouldClose() bool { return w.wnd.ShouldClose() }
+func (w *glfwWindow) Title() string     { return w.title }
 
-func (w *window) Surfaces() []image.T           { return w.swap.Images() }
-func (w *window) SurfaceFormat() core1_0.Format { return w.swap.SurfaceFormat() }
+func (w *glfwWindow) Surfaces() []image.T           { return w.swap.Images() }
+func (w *glfwWindow) SurfaceFormat() core1_0.Format { return w.swap.SurfaceFormat() }
 
-func (w *window) SetInputHandler(handler input.Handler) {
+func (w *glfwWindow) SetInputHandler(handler input.Handler) {
 	// keyboard events
 	w.wnd.SetKeyCallback(keys.KeyCallbackWrapper(handler))
 	w.wnd.SetCharCallback(keys.CharCallbackWrapper(handler))
@@ -162,20 +140,20 @@ func (w *window) SetInputHandler(handler input.Handler) {
 	w.wnd.SetScrollCallback(w.mouse.Scroll)
 }
 
-func (w *window) SetTitle(title string) {
+func (w *glfwWindow) SetTitle(title string) {
 	w.wnd.SetTitle(title)
 	w.title = title
 }
 
-func (w *window) Aquire() (*swapchain.Context, error) {
+func (w *glfwWindow) Aquire() (*swapchain.Context, error) {
 	return w.swap.Aquire()
 }
 
-func (w *window) Present(ctx *swapchain.Context) {
+func (w *glfwWindow) Present(ctx *swapchain.Context) {
 	w.swap.Present(ctx)
 }
 
-func (w *window) Destroy() {
+func (w *glfwWindow) Destroy() {
 	w.swap.Destroy()
 	w.surface.Destroy(nil)
 }

@@ -5,6 +5,7 @@ import (
 
 	"github.com/johanhenriksson/goworld/core/draw"
 	"github.com/johanhenriksson/goworld/core/object"
+	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/descriptor"
 	"github.com/johanhenriksson/goworld/render/framebuffer"
@@ -14,15 +15,14 @@ import (
 	"github.com/johanhenriksson/goworld/render/shader"
 	"github.com/johanhenriksson/goworld/render/texture"
 	"github.com/johanhenriksson/goworld/render/vertex"
-	"github.com/johanhenriksson/goworld/render/vulkan"
 	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
 type PostProcessPass struct {
 	LUT texture.Ref
 
-	app   vulkan.App
-	input vulkan.Target
+	app   engine.App
+	input engine.Target
 
 	quad  vertex.Mesh
 	mat   *material.Material[*PostProcessDescriptors]
@@ -41,7 +41,7 @@ type PostProcessDescriptors struct {
 	LUT   *descriptor.Sampler
 }
 
-func NewPostProcessPass(app vulkan.App, target vulkan.Target, input vulkan.Target) *PostProcessPass {
+func NewPostProcessPass(app engine.App, target engine.Target, input engine.Target) *PostProcessPass {
 	var err error
 	p := &PostProcessPass{
 		LUT: texture.PathRef("textures/color_grading/none.png"),
