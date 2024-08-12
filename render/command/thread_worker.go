@@ -48,10 +48,10 @@ func (tw *ThreadWorker) Invoke(callback InvokeFunc) {
 // and blocks until the callback is finished.
 func (tw *ThreadWorker) InvokeSync(callback InvokeFunc) {
 	done := make(chan struct{})
-	tw.work <- func() {
+	tw.Invoke(func() {
 		callback()
-		done <- struct{}{}
-	}
+		close(done)
+	})
 	<-done
 }
 
