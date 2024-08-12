@@ -2,7 +2,9 @@ package command
 
 import (
 	"fmt"
+	"runtime"
 	"runtime/debug"
+	"time"
 
 	"github.com/johanhenriksson/goworld/render/device"
 	"github.com/johanhenriksson/goworld/render/sync"
@@ -29,7 +31,9 @@ type worker struct {
 	queue  device.Queue
 	name   string
 	pool   *Pool
-	work   *ThreadWorker
+	work   *Channel
+
+	fences *sync.FencePool
 }
 
 func NewWorker(device *device.Device, name string, queue device.Queue) Worker {
@@ -38,12 +42,35 @@ func NewWorker(device *device.Device, name string, queue device.Queue) Worker {
 	name = fmt.Sprintf("%s:%d:%x", name, queue.FamilyIndex(), queue.Ptr().Handle())
 	device.SetDebugObjectName(driver.VulkanHandle(queue.Ptr().Handle()), core1_0.ObjectTypeQueue, name)
 
-	return &worker{
+	w := &worker{
 		device: device,
 		name:   name,
 		queue:  queue,
 		pool:   pool,
-		work:   NewThreadWorker(name, 100, true),
+		work:   NewChannel(100),
+		fences: sync.NewFencePool(device, name),
+	}
+	go w.workloop()
+	return w
+}
+
+func (w *worker) workloop() {
+	// lock the worker to its current thread
+	runtime.LockOSThread()
+
+	// work loop
+	checkFences := time.NewTicker(time.Millisecond)
+	for {
+		select {
+		case work, more := <-w.work.Recv():
+			if !more {
+				return
+			}
+			work()
+
+		case <-checkFences.C:
+			w.fences.Poll()
+		}
 	}
 }
 
@@ -96,11 +123,8 @@ func (w *worker) submit(submit SubmitInfo) {
 		buffers = []core1_0.CommandBuffer{buffer.Ptr()}
 	}
 
-	// create a cleanup callback
-	// todo: reuse fences
-	fence := sync.NewFence(w.device, submit.Marker, false)
-
 	// submit buffers to the given queue
+	fence := w.fences.Next()
 	w.queue.Ptr().Submit(fence.Ptr(), []core1_0.SubmitInfo{
 		{
 			CommandBuffers:   buffers,
@@ -110,31 +134,23 @@ func (w *worker) submit(submit SubmitInfo) {
 		},
 	})
 
-	// fire up a cleanup goroutine that will execute when the work fence is signalled
-	// todo: rewrite this without goroutine spam.
-	// idea: keep track of pending batches and check fences occasionally
-	//       at the start of each work loop, check if any fence is ready.
-	// 		 if so, run the cleanup. then reset the fence and return it to the pool
-	go func() {
-		fence.Wait()
-		fence.Destroy()
+	// clean up command buffers and run the callback once the fence is signaled
+	w.fences.Watch(fence, func() {
+		// free buffers
+		if len(buffers) > 0 {
+			w.device.Ptr().FreeCommandBuffers(buffers)
+		}
 
-		w.work.Invoke(func() {
-			// free buffers
-			if len(buffers) > 0 {
-				w.device.Ptr().FreeCommandBuffers(buffers)
-			}
-
-			// run callback (on the worker thead)
-			if submit.Callback != nil {
-				submit.Callback()
-			}
-		})
-	}()
+		// run callback (on the worker thead)
+		if submit.Callback != nil {
+			submit.Callback()
+		}
+	})
 }
 
 func (w *worker) Destroy() {
 	w.work.Stop()
+	w.fences.Destroy()
 	w.pool.Destroy()
 }
 
