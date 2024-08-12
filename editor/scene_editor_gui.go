@@ -199,7 +199,7 @@ func makeSidebarLeft(editor *App) node.T {
 			Width:   style.Px(200),
 			Height:  style.Pct(100),
 			Color:   color.RGBA(0.1, 0.1, 0.11, 0.85),
-			Padding: style.RectAll(10),
+			Padding: style.RectAll(0),
 		},
 		Children: []node.T{
 			ObjectList("scene-graph", ObjectListProps{

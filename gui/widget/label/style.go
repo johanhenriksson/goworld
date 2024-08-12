@@ -8,7 +8,7 @@ import (
 
 var DefaultFont = Font{
 	Name: "fonts/SourceSansPro-Regular.ttf",
-	Size: 14,
+	Size: 16,
 }
 var DefaultColor = color.White
 var DefaultLineHeight = Pct(100)
