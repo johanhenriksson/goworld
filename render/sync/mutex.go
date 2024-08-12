@@ -2,4 +2,4 @@ package sync
 
 import "sync"
 
-type Mutex sync.Mutex
+type Mutex = sync.Mutex
