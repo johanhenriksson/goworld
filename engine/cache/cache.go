@@ -3,7 +3,6 @@ package cache
 import (
 	"sync"
 
-	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/util"
 )
 
@@ -56,7 +55,6 @@ type line[V Value] struct {
 type cache[K Key, V Value] struct {
 	backend Backend[K, V]
 	data    map[string]*line[V]
-	worker  *command.ThreadWorker
 	lock    *sync.RWMutex
 	maxAge  int
 	async   bool
@@ -66,10 +64,12 @@ func New[K Key, V Value](backend Backend[K, V]) T[K, V] {
 	c := &cache[K, V]{
 		backend: backend,
 		data:    map[string]*line[V]{},
-		worker:  command.NewThreadWorker(backend.Name(), 100, false),
 		lock:    &sync.RWMutex{},
 		maxAge:  60 * 100,
-		async:   false,
+
+		// async caches should be a setting that can be disabled for testing purposes.
+		// with async enabled, its difficult to render a single frame deterministically
+		async: false,
 	}
 	return c
 }
@@ -192,9 +192,6 @@ func (c *cache[K, V]) Tick() {
 func (c *cache[K, V]) Destroy() {
 	c.lock.Lock()
 	defer c.lock.Unlock()
-
-	// flush any pending work
-	c.worker.Flush()
 
 	// destroy all the data in the cache
 	for _, line := range c.data {
