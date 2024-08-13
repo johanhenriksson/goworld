@@ -57,7 +57,6 @@ func (c *Mesh) generate() {
 	data := make([]vertex.C, 2*2*3*c.Segments)
 	hh := c.Height / 2
 	sangle := 2 * math.Pi / float32(c.Segments)
-	color := c.Color.Vec4()
 
 	// top
 	top := vec3.New(0, hh, 0)
@@ -77,14 +76,14 @@ func (c *Mesh) generate() {
 		bottomLeft.Y = -hh
 
 		// top face
-		data[o+0] = vertex.C{P: topLeft, N: vec3.Up, C: color}
-		data[o+1] = vertex.C{P: top, N: vec3.Up, C: color}
-		data[o+2] = vertex.C{P: topRight, N: vec3.Up, C: color}
+		data[o+0] = vertex.C{P: topLeft, N: vec3.Up, C: c.Color}
+		data[o+1] = vertex.C{P: top, N: vec3.Up, C: c.Color}
+		data[o+2] = vertex.C{P: topRight, N: vec3.Up, C: c.Color}
 
 		// bottom face
-		data[o+3] = vertex.C{P: bottomRight, N: vec3.Down, C: color}
-		data[o+4] = vertex.C{P: bottom, N: vec3.Down, C: color}
-		data[o+5] = vertex.C{P: bottomLeft, N: vec3.Down, C: color}
+		data[o+3] = vertex.C{P: bottomRight, N: vec3.Down, C: c.Color}
+		data[o+4] = vertex.C{P: bottom, N: vec3.Down, C: c.Color}
+		data[o+5] = vertex.C{P: bottomLeft, N: vec3.Down, C: c.Color}
 
 		// calculate segment normal
 		nv1 := topRight.Sub(bottomLeft)
@@ -92,14 +91,14 @@ func (c *Mesh) generate() {
 		n := vec3.Cross(nv1, nv2)
 
 		// side face 1
-		data[o+6] = vertex.C{P: topRight, N: n, C: color}
-		data[o+7] = vertex.C{P: bottomLeft, N: n, C: color}
-		data[o+8] = vertex.C{P: topLeft, N: n, C: color}
+		data[o+6] = vertex.C{P: topRight, N: n, C: c.Color}
+		data[o+7] = vertex.C{P: bottomLeft, N: n, C: c.Color}
+		data[o+8] = vertex.C{P: topLeft, N: n, C: c.Color}
 
 		// side face 2
-		data[o+9] = vertex.C{P: bottomRight, N: n, C: color}
-		data[o+10] = vertex.C{P: bottomLeft, N: n, C: color}
-		data[o+11] = vertex.C{P: topRight, N: n, C: color}
+		data[o+9] = vertex.C{P: bottomRight, N: n, C: c.Color}
+		data[o+10] = vertex.C{P: bottomLeft, N: n, C: c.Color}
+		data[o+11] = vertex.C{P: topRight, N: n, C: c.Color}
 	}
 
 	key := object.Key("cylinder", c)

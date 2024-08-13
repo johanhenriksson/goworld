@@ -20,7 +20,7 @@ import (
 )
 
 func main() {
-	app.Run(
+	app.RunEditor(
 		app.Args{
 			Width:  1600,
 			Height: 1200,

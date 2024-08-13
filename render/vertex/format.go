@@ -5,7 +5,6 @@ import (
 
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/math/vec3"
-	"github.com/johanhenriksson/goworld/math/vec4"
 	"github.com/johanhenriksson/goworld/render/color"
 )
 
@@ -13,7 +12,6 @@ func init() {
 	gob.Register(P{})
 	gob.Register(C{})
 	gob.Register(T{})
-	gob.Register(UI{})
 }
 
 // P - Position only vertex
@@ -25,9 +23,9 @@ func (v P) Position() vec3.T { return v.T }
 
 // C - Colored Vertex
 type C struct {
-	P vec3.T `vtx:"position,float,3"`
-	N vec3.T `vtx:"normal,float,3"`
-	C vec4.T `vtx:"color_0,float,4"`
+	P vec3.T  `vtx:"position,float,3"`
+	N vec3.T  `vtx:"normal,float,3"`
+	C color.T `vtx:"color_0,float,4"`
 }
 
 func (v C) Position() vec3.T { return v.P }
@@ -40,14 +38,6 @@ type T struct {
 }
 
 func (v T) Position() vec3.T { return v.P }
-
-type UI struct {
-	P vec3.T  `vtx:"position,float,3"`
-	C color.T `vtx:"color_0,float,4"`
-	T vec2.T  `vtx:"texcoord_0,float,2"`
-}
-
-func (v UI) Position() vec3.T { return v.P }
 
 func Min[V Vertex](vertices []V) vec3.T {
 	if len(vertices) == 0 {

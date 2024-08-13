@@ -65,9 +65,9 @@ func (c *Mesh) generate() {
 		n := vec3.Cross(v1t, v2t).Normalized()
 
 		o := 3 * i
-		data[o+0] = vertex.C{P: v2, N: n, C: c.Color.Vec4()}
-		data[o+1] = vertex.C{P: top, N: n, C: c.Color.Vec4()}
-		data[o+2] = vertex.C{P: v1, N: n, C: c.Color.Vec4()}
+		data[o+0] = vertex.C{P: v2, N: n, C: c.Color}
+		data[o+1] = vertex.C{P: top, N: n, C: c.Color}
+		data[o+2] = vertex.C{P: v1, N: n, C: c.Color}
 	}
 
 	// bottom
@@ -79,9 +79,9 @@ func (c *Mesh) generate() {
 		v1 := vec3.New(math.Cos(a1), 0, -math.Sin(a1)).Scaled(c.Radius)
 		v2 := vec3.New(math.Cos(a2), 0, -math.Sin(a2)).Scaled(c.Radius)
 		o := 3 * (i + c.Segments)
-		data[o+0] = vertex.C{P: v1, N: n, C: c.Color.Vec4()}
-		data[o+1] = vertex.C{P: base, N: n, C: c.Color.Vec4()}
-		data[o+2] = vertex.C{P: v2, N: n, C: c.Color.Vec4()}
+		data[o+0] = vertex.C{P: v1, N: n, C: c.Color}
+		data[o+1] = vertex.C{P: base, N: n, C: c.Color}
+		data[o+2] = vertex.C{P: v2, N: n, C: c.Color}
 	}
 
 	key := object.Key("cone", c)

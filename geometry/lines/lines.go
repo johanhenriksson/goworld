@@ -54,9 +54,9 @@ func (li *Lines) Refresh() {
 		a := &vertices[2*i+0]
 		b := &vertices[2*i+1]
 		a.P = line.Start
-		a.C = line.Color.Vec4()
+		a.C = line.Color
 		b.P = line.End
-		b.C = line.Color.Vec4()
+		b.C = line.Color
 	}
 	li.lineMesh.Update(vertices, []uint16{})
 }
