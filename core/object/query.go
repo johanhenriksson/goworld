@@ -3,7 +3,7 @@ package object
 import (
 	"sort"
 
-	"github.com/johanhenriksson/goworld/util"
+	"github.com/samber/lo"
 )
 
 type Query[K Component] struct {
@@ -100,7 +100,7 @@ func (q *Query[K]) Collect(roots ...Component) []K {
 }
 
 func (q *Query[K]) CollectObjects(roots ...Component) []Component {
-	return util.Map(NewQuery[K]().Collect(roots...), func(s K) Component { return s })
+	return lo.Map(NewQuery[K]().Collect(roots...), func(s K, _ int) Component { return s })
 }
 
 func (q *Query[K]) collect(object Component) {

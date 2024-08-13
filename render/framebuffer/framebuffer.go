@@ -6,8 +6,8 @@ import (
 	"github.com/johanhenriksson/goworld/render/renderpass"
 	"github.com/johanhenriksson/goworld/render/renderpass/attachment"
 	"github.com/johanhenriksson/goworld/render/vkerror"
-	"github.com/johanhenriksson/goworld/util"
 
+	"github.com/samber/lo"
 	"github.com/vkngwrapper/core/v2/core1_0"
 	"github.com/vkngwrapper/core/v2/driver"
 )
@@ -80,7 +80,7 @@ func New(device *device.Device, name string, width, height int, pass *renderpass
 
 	info := core1_0.FramebufferCreateInfo{
 		RenderPass:  pass.Ptr(),
-		Attachments: util.Map(views, func(v *image.View) core1_0.ImageView { return v.Ptr() }),
+		Attachments: lo.Map(views, func(v *image.View, _ int) core1_0.ImageView { return v.Ptr() }),
 		Width:       width,
 		Height:      height,
 		Layers:      1,

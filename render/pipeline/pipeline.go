@@ -9,8 +9,8 @@ import (
 	"github.com/johanhenriksson/goworld/render/shader"
 	"github.com/johanhenriksson/goworld/render/types"
 	"github.com/johanhenriksson/goworld/render/vertex"
-	"github.com/johanhenriksson/goworld/util"
 
+	"github.com/samber/lo"
 	"github.com/vkngwrapper/core/v2/core1_0"
 	"github.com/vkngwrapper/core/v2/driver"
 )
@@ -29,7 +29,7 @@ func New(device *device.Device, args Args) *Pipeline {
 	// todo: pipeline cache
 	// could probably be controlled a global setting?
 
-	modules := util.Map(args.Shader.Modules(), func(shader shader.Module) core1_0.PipelineShaderStageCreateInfo {
+	modules := lo.Map(args.Shader.Modules(), func(shader shader.Module, _ int) core1_0.PipelineShaderStageCreateInfo {
 		return core1_0.PipelineShaderStageCreateInfo{
 			Module: shader.Ptr(),
 			Name:   shader.Entrypoint(),
@@ -47,7 +47,7 @@ func New(device *device.Device, args Args) *Pipeline {
 	subpass := args.Pass.Subpass(args.Subpass)
 	log.Println("  subpass:", subpass.Name, subpass.Index())
 
-	blendStates := util.Map(subpass.ColorAttachments, func(name attachment.Name) core1_0.PipelineColorBlendAttachmentState {
+	blendStates := lo.Map(subpass.ColorAttachments, func(name attachment.Name, _ int) core1_0.PipelineColorBlendAttachmentState {
 		attach := args.Pass.Attachment(name)
 		// todo: move into attachment object
 		// or into the material/pipeline object?

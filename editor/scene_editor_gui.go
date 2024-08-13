@@ -12,7 +12,6 @@ import (
 	"github.com/johanhenriksson/goworld/gui/widget/menu"
 	"github.com/johanhenriksson/goworld/gui/widget/rect"
 	"github.com/johanhenriksson/goworld/render/color"
-	"github.com/johanhenriksson/goworld/util"
 )
 
 func makeToolbar(editor *App) node.T {
@@ -27,7 +26,7 @@ func makeToolbar(editor *App) node.T {
 			Layout:  style.Row{},
 			Padding: style.RectAll(2),
 		},
-		Children: util.Map(editor.Tools.Actions(), func(action Action) node.T {
+		Children: node.Map(editor.Tools.Actions(), func(action Action) node.T {
 			return button.New(action.Name, button.Props{
 				// Text: action.Name,
 				Icon: action.Icon,

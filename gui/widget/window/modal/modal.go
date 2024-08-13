@@ -7,7 +7,8 @@ import (
 	"github.com/johanhenriksson/goworld/gui/style"
 	"github.com/johanhenriksson/goworld/gui/widget/rect"
 	"github.com/johanhenriksson/goworld/gui/widget/window"
-	"github.com/johanhenriksson/goworld/util"
+
+	"github.com/samber/lo"
 )
 
 type Props struct {
@@ -23,7 +24,7 @@ func New(key string, props Props) node.T {
 				Title:    props.Title,
 				OnClose:  props.OnClose,
 				Floating: false,
-				Children: util.MapIdx(props.Children, modalRow),
+				Children: lo.Map(props.Children, modalRow),
 			}),
 		},
 		Style: rect.Style{

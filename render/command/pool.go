@@ -2,7 +2,8 @@ package command
 
 import (
 	"github.com/johanhenriksson/goworld/render/device"
-	"github.com/johanhenriksson/goworld/util"
+
+	"github.com/samber/lo"
 	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
@@ -49,7 +50,7 @@ func (p *Pool) AllocateBuffers(level core1_0.CommandBufferLevel, count int) []*B
 		panic(err)
 	}
 
-	return util.Map(ptrs, func(ptr core1_0.CommandBuffer) *Buffer {
+	return lo.Map(ptrs, func(ptr core1_0.CommandBuffer, _ int) *Buffer {
 		return newBuffer(p.device, p.ptr, ptr)
 	})
 }

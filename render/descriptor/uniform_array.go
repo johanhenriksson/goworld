@@ -6,8 +6,8 @@ import (
 
 	"github.com/johanhenriksson/goworld/render/buffer"
 	"github.com/johanhenriksson/goworld/render/device"
-	"github.com/johanhenriksson/goworld/util"
 
+	"github.com/samber/lo"
 	"github.com/vkngwrapper/core/v2/core1_0"
 	"github.com/vkngwrapper/extensions/v2/ext_descriptor_indexing"
 )
@@ -65,7 +65,7 @@ func (d *UniformArray[K]) write() {
 		DstBinding:      d.binding,
 		DstArrayElement: 0,
 		DescriptorType:  core1_0.DescriptorTypeUniformBuffer,
-		BufferInfo: util.Map(util.Range(0, d.Size, 1), func(i int) core1_0.DescriptorBufferInfo {
+		BufferInfo: lo.Times(d.Size, func(i int) core1_0.DescriptorBufferInfo {
 			return core1_0.DescriptorBufferInfo{
 				Buffer: d.buffer.Ptr(),
 				Offset: i * d.buffer.Stride(),

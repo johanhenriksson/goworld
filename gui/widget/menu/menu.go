@@ -9,7 +9,6 @@ import (
 	"github.com/johanhenriksson/goworld/gui/widget/label"
 	"github.com/johanhenriksson/goworld/gui/widget/rect"
 	"github.com/johanhenriksson/goworld/render/color"
-	"github.com/johanhenriksson/goworld/util"
 )
 
 type ItemProps struct {
@@ -60,7 +59,7 @@ func Menu(key string, props Props) node.T {
 				Style: rect.Style{
 					Layout: style.Row{},
 				},
-				Children: util.Map(props.Items, func(item ItemProps) node.T {
+				Children: node.Map(props.Items, func(item ItemProps) node.T {
 					return Item(item.Key, ItemProps{
 						Key:      item.Key,
 						Title:    item.Title,
@@ -106,7 +105,7 @@ func Item(key string, props ItemProps) node.T {
 				OnMouseUp:   func(e mouse.Event) { setOpen(false) },
 				OnMouseDown: func(e mouse.Event) { setOpen(false) },
 			}))
-			items = append(items, util.Map(props.Items, func(item ItemProps) node.T {
+			items = append(items, node.Map(props.Items, func(item ItemProps) node.T {
 				return Item(item.Key, ItemProps{
 					Key:      item.Key,
 					Title:    item.Title,
