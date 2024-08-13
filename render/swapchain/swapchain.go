@@ -7,8 +7,8 @@ import (
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/device"
 	"github.com/johanhenriksson/goworld/render/image"
-	"github.com/johanhenriksson/goworld/util"
 
+	"github.com/samber/lo"
 	"github.com/vkngwrapper/core/v2/core1_0"
 	"github.com/vkngwrapper/extensions/v2/khr_surface"
 	"github.com/vkngwrapper/extensions/v2/khr_swapchain"
@@ -121,7 +121,7 @@ func (s *swapchain) create() {
 	}
 
 	// create images from swapchain buffers
-	s.images = util.Map(swapimages, func(img core1_0.Image) *image.Image {
+	s.images = lo.Map(swapimages, func(img core1_0.Image, _ int) *image.Image {
 		return image.Wrap(s.device, img, image.Args{
 			Type:    core1_0.ImageType2D,
 			Width:   s.width,

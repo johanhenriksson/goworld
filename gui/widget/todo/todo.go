@@ -14,7 +14,8 @@ import (
 	"github.com/johanhenriksson/goworld/gui/widget/window"
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/render/color"
-	"github.com/johanhenriksson/goworld/util"
+
+	"github.com/samber/lo"
 )
 
 var itemRowStyle = rect.Style{
@@ -72,7 +73,7 @@ func New(key string, props Props) node.T {
 			},
 			Children: []node.T{
 				rect.New("list", rect.Props{
-					Children: util.MapIdx(items, func(text string, idx int) node.T {
+					Children: lo.Map(items, func(text string, idx int) node.T {
 						return rect.New(fmt.Sprintf("item:%d", idx), rect.Props{
 							Style: itemRowStyle,
 							Children: []node.T{

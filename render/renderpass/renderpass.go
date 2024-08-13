@@ -6,8 +6,8 @@ import (
 
 	"github.com/johanhenriksson/goworld/render/device"
 	"github.com/johanhenriksson/goworld/render/renderpass/attachment"
-	"github.com/johanhenriksson/goworld/util"
 
+	"github.com/samber/lo"
 	"github.com/vkngwrapper/core/v2/core1_0"
 	"github.com/vkngwrapper/core/v2/driver"
 )
@@ -75,7 +75,7 @@ func New(device *device.Device, args Args) *Renderpass {
 		subpasses = append(subpasses, core1_0.SubpassDescription{
 			PipelineBindPoint: core1_0.PipelineBindPointGraphics,
 
-			ColorAttachments: util.MapIdx(
+			ColorAttachments: lo.Map(
 				subpass.ColorAttachments,
 				func(name attachment.Name, i int) core1_0.AttachmentReference {
 					idx := attachmentIndices[name]
@@ -86,7 +86,7 @@ func New(device *device.Device, args Args) *Renderpass {
 					}
 				}),
 
-			InputAttachments: util.MapIdx(
+			InputAttachments: lo.Map(
 				subpass.InputAttachments,
 				func(name attachment.Name, i int) core1_0.AttachmentReference {
 					idx := attachmentIndices[name]

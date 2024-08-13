@@ -12,8 +12,8 @@ import (
 	"github.com/johanhenriksson/goworld/render/shader"
 	"github.com/johanhenriksson/goworld/render/texture"
 	"github.com/johanhenriksson/goworld/render/vertex"
-	"github.com/johanhenriksson/goworld/util"
 
+	"github.com/samber/lo"
 	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
@@ -133,5 +133,5 @@ func (m *Material[D]) Instantiate(pool *descriptor.Pool) *Instance[D] {
 }
 
 func (m *Material[D]) InstantiateMany(pool *descriptor.Pool, n int) []*Instance[D] {
-	return util.Map(util.Range(0, n, 1), func(i int) *Instance[D] { return m.Instantiate(pool) })
+	return lo.Times(n, func(i int) *Instance[D] { return m.Instantiate(pool) })
 }

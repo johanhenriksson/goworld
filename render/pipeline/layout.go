@@ -5,8 +5,8 @@ import (
 
 	"github.com/johanhenriksson/goworld/render/descriptor"
 	"github.com/johanhenriksson/goworld/render/device"
-	"github.com/johanhenriksson/goworld/util"
 
+	"github.com/samber/lo"
 	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
@@ -19,11 +19,11 @@ func NewLayout(device *device.Device, descriptors []descriptor.SetLayout, consta
 	offset := 0
 	info := core1_0.PipelineLayoutCreateInfo{
 
-		SetLayouts: util.Map(descriptors, func(desc descriptor.SetLayout) core1_0.DescriptorSetLayout {
+		SetLayouts: lo.Map(descriptors, func(desc descriptor.SetLayout, _ int) core1_0.DescriptorSetLayout {
 			return desc.Ptr()
 		}),
 
-		PushConstantRanges: util.Map(constants, func(push PushConstant) core1_0.PushConstantRange {
+		PushConstantRanges: lo.Map(constants, func(push PushConstant, _ int) core1_0.PushConstantRange {
 			size := push.Size()
 			log.Printf("push: %d bytes", size)
 			rng := core1_0.PushConstantRange{

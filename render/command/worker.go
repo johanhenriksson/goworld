@@ -8,8 +8,8 @@ import (
 
 	"github.com/johanhenriksson/goworld/render/device"
 	"github.com/johanhenriksson/goworld/render/sync"
-	"github.com/johanhenriksson/goworld/util"
 
+	"github.com/samber/lo"
 	"github.com/vkngwrapper/core/v2/core1_0"
 	"github.com/vkngwrapper/core/v2/driver"
 )
@@ -128,9 +128,9 @@ func (w *worker) submit(submit SubmitInfo) {
 	w.queue.Ptr().Submit(fence.Ptr(), []core1_0.SubmitInfo{
 		{
 			CommandBuffers:   buffers,
-			SignalSemaphores: util.Map(submit.Signal, func(sem sync.Semaphore) core1_0.Semaphore { return sem.Ptr() }),
-			WaitSemaphores:   util.Map(submit.Wait, func(w Wait) core1_0.Semaphore { return w.Semaphore.Ptr() }),
-			WaitDstStageMask: util.Map(submit.Wait, func(w Wait) core1_0.PipelineStageFlags { return w.Mask }),
+			SignalSemaphores: lo.Map(submit.Signal, func(sem sync.Semaphore, _ int) core1_0.Semaphore { return sem.Ptr() }),
+			WaitSemaphores:   lo.Map(submit.Wait, func(w Wait, _ int) core1_0.Semaphore { return w.Semaphore.Ptr() }),
+			WaitDstStageMask: lo.Map(submit.Wait, func(w Wait, _ int) core1_0.PipelineStageFlags { return w.Mask }),
 		},
 	})
 

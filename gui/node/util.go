@@ -1,6 +1,8 @@
 package node
 
-import "github.com/johanhenriksson/goworld/util"
+import (
+	"github.com/samber/lo"
+)
 
 func If(condition bool, n T) T {
 	if condition {
@@ -10,5 +12,7 @@ func If(condition bool, n T) T {
 }
 
 func Map[K any](items []K, transform func(K) T) []T {
-	return util.Map(items, transform)
+	return lo.Map(items, func(it K, _ int) T {
+		return transform(it)
+	})
 }
