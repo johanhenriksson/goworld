@@ -18,13 +18,12 @@ var TitleStyle = label.Style{
 
 	Color: RGB(1, 1, 1),
 	Font: Font{
-		Name: "fonts/SourceCodeProRegular.ttf",
 		Size: 16,
 	},
 }
 
 var TitlebarStyle = rect.Style{
-	Color:      RGBA(0, 0, 0, 0.8),
+	Color:      RGBA(0.05, 0.05, 0.05, 0.8),
 	Padding:    Px(4),
 	Layout:     Row{},
 	AlignItems: AlignCenter,

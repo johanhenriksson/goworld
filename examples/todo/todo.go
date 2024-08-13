@@ -1,9 +1,12 @@
-package todo
+package main
 
 import (
 	"fmt"
 
 	"github.com/johanhenriksson/goworld/core/input/mouse"
+	"github.com/johanhenriksson/goworld/core/object"
+	"github.com/johanhenriksson/goworld/engine/app"
+	"github.com/johanhenriksson/goworld/gui"
 	"github.com/johanhenriksson/goworld/gui/hooks"
 	"github.com/johanhenriksson/goworld/gui/node"
 	"github.com/johanhenriksson/goworld/gui/style"
@@ -14,60 +17,46 @@ import (
 	"github.com/johanhenriksson/goworld/gui/widget/window"
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/render/color"
-
 	"github.com/samber/lo"
 )
 
-var itemRowStyle = rect.Style{
-	Layout:     style.Row{},
-	AlignItems: style.AlignCenter,
-}
-
-var itemLabelStyle = label.Style{
-	Grow: style.Grow(1),
-}
-
-var removeButtonStyle = button.Style{
-	BgColor: color.Red,
-	Padding: style.Px(4),
-	Margin: style.Rect{
-		Left: 40,
-	},
-}
-
-var itemInputStyle = textbox.Style{
-	Text: label.Style{
-		Color: color.Black,
-	},
-	Bg: rect.Style{
-		Padding: style.Px(4),
-		Grow:    style.Grow(1),
-		Color:   color.White,
-	},
-}
-
-var addButtonStyle = button.Style{
-	Padding: style.Px(4),
-	BgColor: color.Green,
-	Margin: style.Rect{
-		Left: 40,
-	},
+func main() {
+	app.Run(
+		app.Args{
+			Width:  1200,
+			Height: 800,
+			Title:  "goworld: todo",
+		},
+		func(scene object.Object) {
+			object.Attach(scene, gui.New(func() node.T {
+				return rect.New("gui", rect.Props{
+					Style: rect.Style{
+						Position: style.Absolute{},
+					},
+					Children: []node.T{
+						NewTodo("todo", Props{}),
+					},
+				})
+			}))
+		},
+	)
 }
 
 type Props struct{}
 
-func New(key string, props Props) node.T {
+func NewTodo(key string, props Props) node.T {
 	return node.Component(key, props, func(props Props) node.T {
-		items, setItems := hooks.UseState([]string{})
+		items, setItems := hooks.UseState([]string{"testy", "mctestface"})
 		itemTitle, setItemTitle := hooks.UseState("")
-		addColor := color.Green
+		addStyle := addButtonStyle
 		if len(itemTitle) == 0 {
-			addColor = color.DarkGrey
+			addStyle.BgColor = color.DarkGrey
 		}
 
 		return window.New(key, window.Props{
 			Title:    "todo app",
-			Position: vec2.New(250, 400),
+			Position: vec2.New(500, 300),
+			Floating: true,
 			Style: window.Style{
 				MinWidth: style.Px(200),
 			},
@@ -94,9 +83,7 @@ func New(key string, props Props) node.T {
 					}),
 				}),
 				rect.New("entry", rect.Props{
-					Style: rect.Style{
-						Layout: style.Row{},
-					},
+					Style: itemRowStyle,
 					Children: []node.T{
 						textbox.New("title", textbox.Props{
 							Style:    itemInputStyle,
@@ -104,11 +91,8 @@ func New(key string, props Props) node.T {
 							Text:     itemTitle,
 						}),
 						button.New("add", button.Props{
-							Text: "+",
-							Style: button.Style{
-								Padding: style.Px(4),
-								BgColor: addColor,
-							},
+							Text:  "+",
+							Style: addStyle,
 							OnClick: func(e mouse.Event) {
 								if len(itemTitle) == 0 {
 									return
@@ -123,4 +107,39 @@ func New(key string, props Props) node.T {
 			},
 		})
 	})
+}
+
+var itemRowStyle = rect.Style{
+	Layout:     style.Row{},
+	Width:      style.Pct(100),
+	Grow:       style.Grow(1),
+	AlignItems: style.AlignCenter,
+	Padding:    style.Px(4),
+}
+
+var itemLabelStyle = label.Style{
+	Grow: style.Grow(1),
+}
+
+var itemInputStyle = textbox.Style{
+	Text: label.Style{
+		Color: color.Black,
+	},
+	Bg: rect.Style{
+		Padding: style.Px(4),
+		Grow:    style.Grow(1),
+		Color:   color.White,
+	},
+}
+
+var addButtonStyle = button.Style{
+	Padding:   style.Px(4),
+	BgColor:   color.RGB(0.2, 0.6, 0.4),
+	TextColor: color.White,
+}
+
+var removeButtonStyle = button.Style{
+	Padding:   style.Px(4),
+	BgColor:   window.CloseButtonStyle.BgColor,
+	TextColor: color.White,
 }
