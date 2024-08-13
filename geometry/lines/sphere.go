@@ -60,11 +60,11 @@ func (b *Sphere) refresh() {
 		a1 := float32(i+1) * angle
 		vertices = append(vertices, vertex.C{
 			P: vec3.New(0, math.Sin(a0), math.Cos(a0)).Scaled(radius),
-			C: b.xcolor.Vec4(),
+			C: b.xcolor,
 		})
 		vertices = append(vertices, vertex.C{
 			P: vec3.New(0, math.Sin(a1), math.Cos(a1)).Scaled(radius),
-			C: b.xcolor.Vec4(),
+			C: b.xcolor,
 		})
 	}
 
@@ -74,11 +74,11 @@ func (b *Sphere) refresh() {
 		a1 := float32(i+1) * angle
 		vertices = append(vertices, vertex.C{
 			P: vec3.New(math.Cos(a0), 0, math.Sin(a0)).Scaled(radius),
-			C: b.ycolor.Vec4(),
+			C: b.ycolor,
 		})
 		vertices = append(vertices, vertex.C{
 			P: vec3.New(math.Cos(a1), 0, math.Sin(a1)).Scaled(radius),
-			C: b.ycolor.Vec4(),
+			C: b.ycolor,
 		})
 	}
 
@@ -88,11 +88,11 @@ func (b *Sphere) refresh() {
 		a1 := float32(i+1) * angle
 		vertices = append(vertices, vertex.C{
 			P: vec3.New(math.Cos(a0), math.Sin(a0), 0).Scaled(radius),
-			C: b.zcolor.Vec4(),
+			C: b.zcolor,
 		})
 		vertices = append(vertices, vertex.C{
 			P: vec3.New(math.Cos(a1), math.Sin(a1), 0).Scaled(radius),
-			C: b.zcolor.Vec4(),
+			C: b.zcolor,
 		})
 	}
 

@@ -30,7 +30,7 @@ func NewWireframe(msh vertex.Mesh, clr color.T) *Wireframe {
 }
 
 func (w *Wireframe) refresh() {
-	clr := w.Color.Get().Vec4()
+	clr := w.Color.Get()
 	msh := w.Source.Get()
 	if msh == nil {
 		w.data.Update(nil, nil)

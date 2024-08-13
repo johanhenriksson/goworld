@@ -51,7 +51,7 @@ func NewBox(args BoxArgs) *Box {
 func (b *Box) refresh() {
 	halfsize := b.Extents.Get().Scaled(0.5)
 	w, h, d := halfsize.X, halfsize.Y, halfsize.Z
-	c := b.Color.Get().Vec4()
+	c := b.Color.Get()
 
 	vertices := []vertex.C{
 		// bottom square
