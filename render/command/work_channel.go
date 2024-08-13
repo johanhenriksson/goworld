@@ -1,29 +1,31 @@
 package command
 
+type WorkFunc func()
+
 type Channel struct {
 	buffer int
-	work   chan InvokeFunc
+	work   chan WorkFunc
 }
 
 func NewChannel(buffer int) *Channel {
 	return &Channel{
 		buffer: buffer,
-		work:   make(chan InvokeFunc, buffer),
+		work:   make(chan WorkFunc, buffer),
 	}
 }
 
-func (ch *Channel) Recv() <-chan InvokeFunc {
+func (ch *Channel) Recv() <-chan WorkFunc {
 	return ch.work
 }
 
 // Invoke schedules a callback to be called from the worker thread
-func (ch *Channel) Invoke(callback InvokeFunc) {
+func (ch *Channel) Invoke(callback WorkFunc) {
 	ch.work <- callback
 }
 
 // InvokeSync schedules a callback to be called on the worker thread,
 // and blocks until the callback is finished.
-func (ch *Channel) InvokeSync(callback InvokeFunc) {
+func (ch *Channel) InvokeSync(callback WorkFunc) {
 	done := make(chan struct{})
 	ch.Invoke(func() {
 		callback()
