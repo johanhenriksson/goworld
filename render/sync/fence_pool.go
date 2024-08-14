@@ -12,8 +12,8 @@ import (
 type FencePool struct {
 	name      string
 	device    *device.Device
-	available []Fence
-	waiting   []Fence
+	available []*Fence
+	waiting   []*Fence
 	callbacks []func()
 	mutex     Mutex
 }
@@ -52,7 +52,7 @@ func (w *FencePool) Poll() {
 // Next returns a fence from the pool.
 // Until the fence is added back to the pool, the caller has ownership of it.
 // If there are no fences available, a new one is allocated.
-func (w *FencePool) Next() Fence {
+func (w *FencePool) Next() *Fence {
 	w.mutex.Lock()
 	defer w.mutex.Unlock()
 
@@ -66,7 +66,7 @@ func (w *FencePool) Next() Fence {
 
 // Watch adds a fence to the pool and sets a callback to run when the fence is done.
 // The callback is run in the same goroutine as the Poll call.
-func (w *FencePool) Watch(fence Fence, callback func()) {
+func (w *FencePool) Watch(fence *Fence, callback func()) {
 	if callback == nil {
 		panic("callback cant be nil")
 	}
@@ -86,7 +86,9 @@ func (w *FencePool) Destroy() {
 
 	// wait for any pending fences
 	if len(w.waiting) > 0 {
-		w.device.Ptr().WaitForFences(true, time.Second, lo.Map(w.waiting, func(f Fence, _ int) core1_0.Fence { return f.Ptr() }))
+		w.device.Ptr().WaitForFences(true, time.Second, lo.Map(w.waiting, func(f *Fence, _ int) core1_0.Fence {
+			return f.Ptr()
+		}))
 	}
 
 	// run all pending callbacks

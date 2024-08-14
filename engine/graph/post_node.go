@@ -25,7 +25,7 @@ func (n *postNode) Present(worker command.Worker, context *swapchain.Context) {
 		Marker:   n.Name(),
 		Commands: command.Empty,
 		Wait:     n.waits(context.Index),
-		Signal:   []sync.Semaphore{context.RenderComplete},
+		Signal:   []*sync.Semaphore{context.RenderComplete},
 	})
 
 	// present

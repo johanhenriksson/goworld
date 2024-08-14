@@ -83,12 +83,12 @@ type SubmitInfo struct {
 	Commands Recorder
 	Marker   string
 	Wait     []Wait
-	Signal   []sync.Semaphore
+	Signal   []*sync.Semaphore
 	Callback func()
 }
 
 type Wait struct {
-	Semaphore sync.Semaphore
+	Semaphore *sync.Semaphore
 	Mask      core1_0.PipelineStageFlags
 }
 
@@ -128,7 +128,7 @@ func (w *worker) submit(submit SubmitInfo) {
 	w.queue.Ptr().Submit(fence.Ptr(), []core1_0.SubmitInfo{
 		{
 			CommandBuffers:   buffers,
-			SignalSemaphores: lo.Map(submit.Signal, func(sem sync.Semaphore, _ int) core1_0.Semaphore { return sem.Ptr() }),
+			SignalSemaphores: lo.Map(submit.Signal, func(sem *sync.Semaphore, _ int) core1_0.Semaphore { return sem.Ptr() }),
 			WaitSemaphores:   lo.Map(submit.Wait, func(w Wait, _ int) core1_0.Semaphore { return w.Semaphore.Ptr() }),
 			WaitDstStageMask: lo.Map(submit.Wait, func(w Wait, _ int) core1_0.PipelineStageFlags { return w.Mask }),
 		},
