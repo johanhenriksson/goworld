@@ -216,7 +216,7 @@ func (b *Buffer) CmdPushConstant(stages core1_0.ShaderStageFlags, offset int, va
 	b.ptr.CmdPushConstants(b.pipeline.Layout().Ptr(), stages, offset, valueBytes)
 }
 
-func (b *Buffer) CmdImageBarrier(srcMask, dstMask core1_0.PipelineStageFlags, image image.T, oldLayout, newLayout core1_0.ImageLayout, aspects core1_0.ImageAspectFlags, mipLevel, levels int) {
+func (b *Buffer) CmdImageBarrier(srcMask, dstMask core1_0.PipelineStageFlags, image *image.Image, oldLayout, newLayout core1_0.ImageLayout, aspects core1_0.ImageAspectFlags, mipLevel, levels int) {
 	b.ptr.CmdPipelineBarrier(core1_0.PipelineStageFlags(srcMask), core1_0.PipelineStageFlags(dstMask), core1_0.DependencyFlags(0), nil, nil, []core1_0.ImageMemoryBarrier{
 		{
 			OldLayout: oldLayout,
@@ -234,7 +234,7 @@ func (b *Buffer) CmdImageBarrier(srcMask, dstMask core1_0.PipelineStageFlags, im
 	})
 }
 
-func (b *Buffer) CmdCopyBufferToImage(source buffer.T, dst image.T, layout core1_0.ImageLayout) {
+func (b *Buffer) CmdCopyBufferToImage(source buffer.T, dst *image.Image, layout core1_0.ImageLayout) {
 	b.ptr.CmdCopyBufferToImage(source.Ptr(), dst.Ptr(), layout, []core1_0.BufferImageCopy{
 		{
 			ImageSubresource: core1_0.ImageSubresourceLayers{
@@ -250,7 +250,7 @@ func (b *Buffer) CmdCopyBufferToImage(source buffer.T, dst image.T, layout core1
 	})
 }
 
-func (b *Buffer) CmdCopyImageToBuffer(src image.T, srcLayout core1_0.ImageLayout, aspects core1_0.ImageAspectFlags, dst buffer.T) {
+func (b *Buffer) CmdCopyImageToBuffer(src *image.Image, srcLayout core1_0.ImageLayout, aspects core1_0.ImageAspectFlags, dst buffer.T) {
 	b.ptr.CmdCopyImageToBuffer(src.Ptr(), srcLayout, dst.Ptr(), []core1_0.BufferImageCopy{
 		{
 			ImageSubresource: core1_0.ImageSubresourceLayers{
@@ -266,7 +266,7 @@ func (b *Buffer) CmdCopyImageToBuffer(src image.T, srcLayout core1_0.ImageLayout
 	})
 }
 
-func (b *Buffer) CmdConvertImage(src image.T, srcLayout core1_0.ImageLayout, dst image.T, dstLayout core1_0.ImageLayout, aspects core1_0.ImageAspectFlags) {
+func (b *Buffer) CmdConvertImage(src *image.Image, srcLayout core1_0.ImageLayout, dst *image.Image, dstLayout core1_0.ImageLayout, aspects core1_0.ImageAspectFlags) {
 	b.ptr.CmdBlitImage(src.Ptr(), srcLayout, dst.Ptr(), dstLayout, []core1_0.ImageBlit{
 		{
 			SrcOffsets: [2]core1_0.Offset3D{
@@ -293,7 +293,7 @@ func (b *Buffer) CmdConvertImage(src image.T, srcLayout core1_0.ImageLayout, dst
 	}, core1_0.FilterNearest)
 }
 
-func (b *Buffer) CmdCopyImage(src image.T, srcLayout core1_0.ImageLayout, dst image.T, dstLayout core1_0.ImageLayout, aspects core1_0.ImageAspectFlags) {
+func (b *Buffer) CmdCopyImage(src *image.Image, srcLayout core1_0.ImageLayout, dst *image.Image, dstLayout core1_0.ImageLayout, aspects core1_0.ImageAspectFlags) {
 	b.ptr.CmdCopyImage(src.Ptr(), srcLayout, dst.Ptr(), dstLayout, []core1_0.ImageCopy{
 		{
 			SrcOffset: core1_0.Offset3D{X: 0, Y: 0, Z: 0},

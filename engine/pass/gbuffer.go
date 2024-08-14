@@ -72,7 +72,7 @@ func (b *gbuffer) Diffuse() image.Array  { return b.diffuse }
 func (b *gbuffer) Normal() image.Array   { return b.normal }
 func (b *gbuffer) Position() image.Array { return b.position }
 
-func (b *gbuffer) pixelOffset(pos vec2.T, img image.T, size int) int {
+func (b *gbuffer) pixelOffset(pos vec2.T, img *image.Image, size int) int {
 	denormPos := pos.Mul(img.Size().XY())
 	return size * (int(denormPos.Y)*img.Width() + int(denormPos.X))
 }

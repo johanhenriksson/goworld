@@ -13,19 +13,6 @@ import (
 
 type Array []*Image
 
-type T interface {
-	device.Resource[core1_0.Image]
-
-	Key() string
-	Memory() device.Memory
-	View(format core1_0.Format, mask core1_0.ImageAspectFlags) (*View, error)
-	Width() int
-	Height() int
-	Format() core1_0.Format
-	MipLevels() int
-	Size() vec3.T
-}
-
 type Image struct {
 	Args
 	ptr    core1_0.Image
