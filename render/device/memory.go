@@ -5,25 +5,10 @@ import (
 	"reflect"
 	"unsafe"
 
-	"github.com/johanhenriksson/goworld/util"
 	"github.com/vkngwrapper/core/v2/core1_0"
-	"github.com/vkngwrapper/core/v2/driver"
 )
 
-type Memory interface {
-	Resource[core1_0.DeviceMemory]
-	Read(offset int, data any) int
-	Write(offset int, data any) int
-	Flush()
-	Invalidate()
-}
-
-type memtype struct {
-	TypeBits uint32
-	Flags    core1_0.MemoryPropertyFlags
-}
-
-type memory struct {
+type Memory struct {
 	ptr    core1_0.DeviceMemory
 	device *Device
 	size   int
@@ -31,54 +16,27 @@ type memory struct {
 	mapPtr unsafe.Pointer
 }
 
-func alloc(device *Device, key string, req core1_0.MemoryRequirements, flags core1_0.MemoryPropertyFlags) Memory {
-	typeIdx := device.GetMemoryTypeIndex(req.MemoryTypeBits, flags)
-
-	align := int(device.GetLimits().NonCoherentAtomSize)
-	size := util.Align(int(req.Size), align)
-
-	ptr, _, err := device.Ptr().AllocateMemory(nil, core1_0.MemoryAllocateInfo{
-		AllocationSize:  size,
-		MemoryTypeIndex: typeIdx,
-	})
-	if err != nil {
-		panic(fmt.Sprintf("failed to allocate %d bytes of memory: %s", req.Size, err))
-	}
-
-	if key != "" {
-		device.SetDebugObjectName(driver.VulkanHandle(ptr.Handle()),
-			core1_0.ObjectTypeDeviceMemory, key)
-	}
-
-	return &memory{
-		device: device,
-		ptr:    ptr,
-		flags:  flags,
-		size:   size,
-	}
-}
-
-func (m *memory) isHostVisible() bool {
+func (m *Memory) isHostVisible() bool {
 	bit := core1_0.MemoryPropertyHostVisible
 	return m.flags&bit == bit
 }
 
-func (m *memory) isCoherent() bool {
+func (m *Memory) isCoherent() bool {
 	bit := core1_0.MemoryPropertyHostCoherent
 	return m.flags&bit == bit
 }
 
-func (m *memory) Ptr() core1_0.DeviceMemory {
+func (m *Memory) Ptr() core1_0.DeviceMemory {
 	return m.ptr
 }
 
-func (m *memory) Destroy() {
+func (m *Memory) Destroy() {
 	m.unmap()
 	m.ptr.Free(nil)
 	m.ptr = nil
 }
 
-func (m *memory) mmap() {
+func (m *Memory) mmap() {
 	var nullPtr unsafe.Pointer
 	if m.mapPtr != nullPtr {
 		// already mapped
@@ -92,7 +50,7 @@ func (m *memory) mmap() {
 	m.mapPtr = dst
 }
 
-func (m *memory) unmap() {
+func (m *Memory) unmap() {
 	var nullPtr unsafe.Pointer
 	if m.mapPtr == nullPtr {
 		// already unmapped
@@ -102,7 +60,7 @@ func (m *memory) unmap() {
 	m.mapPtr = nullPtr
 }
 
-func (m *memory) Write(offset int, data any) int {
+func (m *Memory) Write(offset int, data any) int {
 	if m.ptr == nil {
 		panic("write to freed memory block")
 	}
@@ -154,7 +112,7 @@ func (m *memory) Write(offset int, data any) int {
 	return size
 }
 
-func (m *memory) Read(offset int, target any) int {
+func (m *Memory) Read(offset int, target any) int {
 	if m.ptr == nil {
 		panic("read from freed memory block")
 	}
@@ -200,13 +158,13 @@ func (m *memory) Read(offset int, target any) int {
 	return size
 }
 
-func (m *memory) Flush() {
+func (m *Memory) Flush() {
 	if !m.isCoherent() {
 		m.mmap()
 		m.ptr.FlushAll()
 	}
 }
 
-func (m *memory) Invalidate() {
+func (m *Memory) Invalidate() {
 	m.ptr.InvalidateAll()
 }

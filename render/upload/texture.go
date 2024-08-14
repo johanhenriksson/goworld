@@ -31,7 +31,7 @@ func NewTextureSync(dev *device.Device, worker command.Worker, key string, img *
 	}
 
 	// allocate staging buffer
-	stage := buffer.NewShared(dev, "staging:texture", len(img.Pix))
+	stage := buffer.NewCpuLocal(dev, "staging:texture", len(img.Pix))
 
 	// write to staging buffer
 	stage.Write(0, img.Pix)

@@ -22,20 +22,20 @@ type T interface {
 	Flush()
 
 	// Memory returns a handle to the underlying memory block
-	Memory() device.Memory
+	Memory() *device.Memory
 }
 
 type Args struct {
 	Key    string
 	Size   int
 	Usage  core1_0.BufferUsageFlags
-	Memory core1_0.MemoryPropertyFlags
+	Memory device.MemoryType
 }
 
 type Buffer struct {
 	ptr    core1_0.Buffer
 	device *device.Device
-	memory device.Memory
+	memory *device.Memory
 	size   int
 }
 
@@ -62,34 +62,41 @@ func New(device *device.Device, args Args) *Buffer {
 			core1_0.ObjectTypeBuffer, args.Key)
 	}
 
-	memreq := ptr.MemoryRequirements()
-
-	mem := device.Allocate(args.Key, *memreq, args.Memory)
+	mem := device.Allocate(args.Key, args.Size, args.Memory)
 	ptr.BindBufferMemory(mem.Ptr(), 0)
 
 	return &Buffer{
 		ptr:    ptr,
 		device: device,
 		memory: mem,
-		size:   int(memreq.Size),
+		size:   int(args.Size),
 	}
 }
 
-func NewShared(device *device.Device, key string, size int) *Buffer {
-	return New(device, Args{
+func NewCpuLocal(dev *device.Device, key string, size int) *Buffer {
+	return New(dev, Args{
 		Key:    key,
 		Size:   size,
-		Usage:  core1_0.BufferUsageTransferSrc | core1_0.BufferUsageTransferDst,
-		Memory: core1_0.MemoryPropertyHostVisible | core1_0.MemoryPropertyHostCoherent,
+		Usage:  core1_0.BufferUsageTransferSrc,
+		Memory: device.MemoryTypeCPU,
 	})
 }
 
-func NewRemote(device *device.Device, key string, size int, flags core1_0.BufferUsageFlags) *Buffer {
-	return New(device, Args{
+func NewShared(dev *device.Device, key string, size int) *Buffer {
+	return New(dev, Args{
+		Key:    key,
+		Size:   size,
+		Usage:  core1_0.BufferUsageTransferSrc | core1_0.BufferUsageTransferDst,
+		Memory: device.MemoryTypeShared,
+	})
+}
+
+func NewGpuLocal(dev *device.Device, key string, size int, flags core1_0.BufferUsageFlags) *Buffer {
+	return New(dev, Args{
 		Key:    key,
 		Size:   size,
 		Usage:  core1_0.BufferUsageTransferDst | flags,
-		Memory: core1_0.MemoryPropertyDeviceLocal,
+		Memory: device.MemoryTypeGPU,
 	})
 }
 
@@ -101,7 +108,7 @@ func (b *Buffer) Size() int {
 	return b.size
 }
 
-func (b *Buffer) Memory() device.Memory {
+func (b *Buffer) Memory() *device.Memory {
 	return b.memory
 }
 

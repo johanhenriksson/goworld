@@ -19,8 +19,8 @@ type meshBlockCache struct {
 }
 
 func NewMeshBlockCache(device *device.Device, worker command.Worker, vtxSize, idxSize int) MeshCache {
-	vtxBuf := buffer.NewRemote(device, "MeshVertexBlocks", vtxSize, core1_0.BufferUsageVertexBuffer)
-	idxBuf := buffer.NewRemote(device, "MeshIndexBlocks", idxSize, core1_0.BufferUsageIndexBuffer)
+	vtxBuf := buffer.NewGpuLocal(device, "MeshVertexBlocks", vtxSize, core1_0.BufferUsageVertexBuffer)
+	idxBuf := buffer.NewGpuLocal(device, "MeshIndexBlocks", idxSize, core1_0.BufferUsageIndexBuffer)
 	return New[vertex.Mesh, *GpuMesh](&meshBlockCache{
 		device:   device,
 		worker:   worker,
@@ -56,10 +56,10 @@ func (m *meshBlockCache) Instantiate(mesh vertex.Mesh, callback func(*GpuMesh)) 
 	}
 
 	vtxSize := mesh.VertexSize() * mesh.VertexCount()
-	vtxStage = buffer.NewShared(m.device, "staging:vertex", vtxSize)
+	vtxStage = buffer.NewCpuLocal(m.device, "staging:vertex", vtxSize)
 
 	idxSize := mesh.IndexSize() * mesh.IndexCount()
-	idxStage = buffer.NewShared(m.device, "staging:index", idxSize)
+	idxStage = buffer.NewCpuLocal(m.device, "staging:index", idxSize)
 
 	// allocate buffers
 	vertexBlock, err := m.vtxAlloc.Alloc(vtxSize + mesh.VertexSize())
