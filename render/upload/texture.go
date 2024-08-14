@@ -68,7 +68,7 @@ func NewTextureSync(dev *device.Device, worker command.Worker, key string, img *
 	return tex, nil
 }
 
-func DownloadImageAsync(dev *device.Device, worker command.Worker, src image.T) (<-chan *osimage.RGBA, error) {
+func DownloadImageAsync(dev *device.Device, worker command.Worker, src *image.Image) (<-chan *osimage.RGBA, error) {
 	swizzle := false
 	switch src.Format() {
 	case core1_0.FormatB8G8R8A8UnsignedNormalized:
@@ -158,7 +158,7 @@ func DownloadImageAsync(dev *device.Device, worker command.Worker, src image.T) 
 	return done, nil
 }
 
-func DownloadImage(dev *device.Device, worker command.Worker, src image.T) (*osimage.RGBA, error) {
+func DownloadImage(dev *device.Device, worker command.Worker, src *image.Image) (*osimage.RGBA, error) {
 	img, err := DownloadImageAsync(dev, worker, src)
 	if err != nil {
 		return nil, err
