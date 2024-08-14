@@ -15,13 +15,13 @@ type IndirectDrawBuffer struct {
 
 var _ DrawIndexedBuffer = (*IndirectDrawBuffer)(nil)
 
-func NewIndirectDrawBuffer(device *device.Device, key string, size int) *IndirectDrawBuffer {
-	cmds := buffer.NewArray[DrawIndexed](device, buffer.Args{
+func NewIndirectDrawBuffer(dev *device.Device, key string, size int) *IndirectDrawBuffer {
+	cmds := buffer.NewArray[DrawIndexed](dev, buffer.Args{
 		Key:  key,
 		Size: size,
 		Usage: core1_0.BufferUsageStorageBuffer | core1_0.BufferUsageIndirectBuffer |
 			core1_0.BufferUsageTransferSrc | core1_0.BufferUsageTransferDst,
-		Memory: core1_0.MemoryPropertyDeviceLocal | core1_0.MemoryPropertyHostVisible,
+		Memory: device.MemoryTypeShared,
 	})
 	return &IndirectDrawBuffer{
 		commands: cmds,

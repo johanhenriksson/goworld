@@ -17,7 +17,7 @@ type Image struct {
 	Args
 	ptr    core1_0.Image
 	device *device.Device
-	memory device.Memory
+	memory *device.Memory
 }
 
 type Args struct {
@@ -58,7 +58,7 @@ func New2D(device *device.Device, key string, width, height int, format core1_0.
 	})
 }
 
-func New(device *device.Device, args Args) (*Image, error) {
+func New(dev *device.Device, args Args) (*Image, error) {
 	if args.Depth < 1 {
 		args.Depth = 1
 	}
@@ -84,12 +84,12 @@ func New(device *device.Device, args Args) (*Image, error) {
 		Usage:       core1_0.ImageUsageFlags(args.Usage),
 		SharingMode: args.Sharing,
 		QueueFamilyIndices: []uint32{
-			uint32(device.Queue().FamilyIndex()),
+			uint32(dev.Queue().FamilyIndex()),
 		},
 		InitialLayout: args.Layout,
 	}
 
-	ptr, result, err := device.Ptr().CreateImage(nil, info)
+	ptr, result, err := dev.Ptr().CreateImage(nil, info)
 	if err != nil {
 		return nil, err
 	}
@@ -99,16 +99,12 @@ func New(device *device.Device, args Args) (*Image, error) {
 
 	// set image debug name
 	if args.Key != "" {
-		device.SetDebugObjectName(driver.VulkanHandle(ptr.Handle()), core1_0.ObjectTypeImage, args.Key)
+		dev.SetDebugObjectName(driver.VulkanHandle(ptr.Handle()), core1_0.ObjectTypeImage, args.Key)
 	}
 
+	// todo: pass alignment?
 	memreq := ptr.MemoryRequirements()
-
-	mem := device.Allocate(args.Key, core1_0.MemoryRequirements{
-		Size:           int(memreq.Size),
-		Alignment:      int(memreq.Alignment),
-		MemoryTypeBits: memreq.MemoryTypeBits,
-	}, core1_0.MemoryPropertyFlags(args.Memory))
+	mem := dev.Allocate(args.Key, memreq.Size, device.MemoryTypeTexture)
 	result, err = ptr.BindImageMemory(mem.Ptr(), 0)
 	if err != nil {
 		ptr.Destroy(nil)
@@ -124,7 +120,7 @@ func New(device *device.Device, args Args) (*Image, error) {
 	return &Image{
 		Args:   args,
 		ptr:    ptr,
-		device: device,
+		device: dev,
 		memory: mem,
 	}, nil
 }
@@ -142,7 +138,7 @@ func (i *Image) Ptr() core1_0.Image {
 	return i.ptr
 }
 
-func (i *Image) Memory() device.Memory {
+func (i *Image) Memory() *device.Memory {
 	return i.memory
 }
 

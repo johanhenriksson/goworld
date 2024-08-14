@@ -53,10 +53,10 @@ func (m *meshCache) Instantiate(mesh vertex.Mesh, callback func(*GpuMesh)) {
 	cmds := command.NewRecorder()
 	cmds.Record(func(cmd *command.Buffer) {
 		vtxSize := mesh.VertexSize() * mesh.VertexCount()
-		vtxStage = buffer.NewShared(m.device, "staging:vertex", vtxSize)
+		vtxStage = buffer.NewCpuLocal(m.device, "staging:vertex", vtxSize)
 
 		idxSize := mesh.IndexSize() * mesh.IndexCount()
-		idxStage = buffer.NewShared(m.device, "staging:index", idxSize)
+		idxStage = buffer.NewCpuLocal(m.device, "staging:index", idxSize)
 
 		vtxStage.Write(0, mesh.VertexData())
 		vtxStage.Flush()
@@ -64,8 +64,8 @@ func (m *meshCache) Instantiate(mesh vertex.Mesh, callback func(*GpuMesh)) {
 		idxStage.Flush()
 
 		// allocate buffers
-		vtxBuffer := buffer.NewRemote(m.device, mesh.Key()+":vertex", vtxSize, core1_0.BufferUsageVertexBuffer)
-		idxBuffer := buffer.NewRemote(m.device, mesh.Key()+":index", idxSize, core1_0.BufferUsageIndexBuffer)
+		vtxBuffer := buffer.NewGpuLocal(m.device, mesh.Key()+":vertex", vtxSize, core1_0.BufferUsageVertexBuffer)
+		idxBuffer := buffer.NewGpuLocal(m.device, mesh.Key()+":index", idxSize, core1_0.BufferUsageIndexBuffer)
 		cached.Vertices = buffer.EntireBuffer(vtxBuffer)
 		cached.Indices = buffer.EntireBuffer(idxBuffer)
 

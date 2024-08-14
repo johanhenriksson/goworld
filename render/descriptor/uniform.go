@@ -19,13 +19,13 @@ type Uniform[K any] struct {
 	set     Set
 }
 
-func (d *Uniform[K]) Initialize(device *device.Device) {
+func (d *Uniform[K]) Initialize(dev *device.Device) {
 	if d.set == nil {
 		panic("descriptor must be bound first")
 	}
-	d.buffer = buffer.NewItem[K](device, buffer.Args{
+	d.buffer = buffer.NewItem[K](dev, buffer.Args{
 		Usage:  core1_0.BufferUsageUniformBuffer,
-		Memory: core1_0.MemoryPropertyDeviceLocal | core1_0.MemoryPropertyHostVisible,
+		Memory: device.MemoryTypeShared,
 	})
 	d.write()
 }

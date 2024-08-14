@@ -1,10 +1,12 @@
 package device
 
 import (
+	"fmt"
 	"log"
 	"slices"
 
 	"github.com/johanhenriksson/goworld/render/instance"
+	"github.com/johanhenriksson/goworld/util"
 	"github.com/samber/lo"
 
 	"github.com/vkngwrapper/core/v2/common"
@@ -25,12 +27,17 @@ type Device struct {
 	limits   *core1_0.PhysicalDeviceLimits
 	debug    ext_debug_utils.Extension
 
-	memtypes map[memtype]int
-	queue    Queue
+	memtypes [5]memtype
+
+	queue Queue
 }
 
 func New(instance *instance.Instance, physDevice core1_0.PhysicalDevice) (*Device, error) {
 	log.Println("creating device with extensions", deviceExtensions)
+
+	//
+	// find a suitable queue
+	//
 
 	queues := []Queue{}
 	families := physDevice.QueueFamilyProperties()
@@ -110,14 +117,78 @@ func New(instance *instance.Instance, physDevice core1_0.PhysicalDevice) (*Devic
 		ObjectType:   core1_0.ObjectTypeQueue,
 	})
 
+	//
+	// resolve memory types
+	//
+	imageMemoryTypeBits, err := getImageMemoryTypeBits(dev)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get image memory type bits: %w", err)
+	}
+	log.Println("image memory types:", imageMemoryTypeBits)
+
+	bufferMemoryTypeBits, err := getBufferMemoryTypeBits(dev)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get buffer memory type bits: %w", err)
+	}
+	log.Println("buffer memory types:", bufferMemoryTypeBits)
+
+	memtypes := [5]memtype{}
+	memtypes[0] = memtype{-1, 0}
+	memoryProperties := physDevice.MemoryProperties()
+	for i, kind := range memoryProperties.MemoryTypes {
+		log.Println("memory type", i, ":", kind.PropertyFlags)
+	}
+
+	// gpu local memory
+	memtypes[MemoryTypeGPU] = pickPreferredMemoryType(memoryProperties.MemoryTypes, bufferMemoryTypeBits,
+		core1_0.MemoryPropertyDeviceLocal, 0)
+	if memtypes[MemoryTypeGPU].Index == -1 {
+		return nil, fmt.Errorf("failed to find gpu local memory type")
+	}
+	log.Println("gpu local memory type:",
+		memtypes[MemoryTypeGPU],
+		memoryProperties.MemoryTypes[memtypes[MemoryTypeGPU].Index].PropertyFlags)
+
+	// shared memory
+	memtypes[MemoryTypeShared] = pickPreferredMemoryType(memoryProperties.MemoryTypes, bufferMemoryTypeBits,
+		core1_0.MemoryPropertyDeviceLocal|
+			core1_0.MemoryPropertyHostVisible, core1_0.MemoryPropertyHostCoherent)
+	if memtypes[MemoryTypeShared].Index == -1 {
+		return nil, fmt.Errorf("failed to find shared memory type")
+	}
+	log.Println("shared memory type:",
+		memtypes[MemoryTypeShared],
+		memoryProperties.MemoryTypes[memtypes[MemoryTypeShared].Index].PropertyFlags)
+
+	// cpu local memory
+	memtypes[MemoryTypeCPU] = pickPreferredMemoryType(memoryProperties.MemoryTypes, bufferMemoryTypeBits,
+		core1_0.MemoryPropertyHostVisible, 0)
+	if memtypes[MemoryTypeCPU].Index == -1 {
+		return nil, fmt.Errorf("failed to find cpu local memory type")
+	}
+	log.Println("cpu local memory type:",
+		memtypes[MemoryTypeCPU],
+		memoryProperties.MemoryTypes[memtypes[MemoryTypeCPU].Index].PropertyFlags)
+
+	// texture memory
+	memtypes[MemoryTypeTexture] = pickPreferredMemoryType(memoryProperties.MemoryTypes, imageMemoryTypeBits,
+		core1_0.MemoryPropertyDeviceLocal, 0)
+	if memtypes[MemoryTypeTexture].Index == -1 {
+		return nil, fmt.Errorf("failed to find texture memory type")
+	}
+	log.Println("texture memory type:",
+		memtypes[MemoryTypeTexture],
+		memoryProperties.MemoryTypes[memtypes[MemoryTypeTexture].Index].PropertyFlags)
+
 	return &Device{
 		ptr:      dev,
 		debug:    debug,
 		physical: physDevice,
 		limits:   properties.Limits,
-		memtypes: make(map[memtype]int),
+		memtypes: memtypes,
 		queue:    queue,
 	}, nil
+
 }
 
 func (d *Device) Ptr() core1_0.Device {
@@ -154,36 +225,44 @@ func (d *Device) GetDepthFormat() core1_0.Format {
 	return depthFormats[0]
 }
 
-func (d *Device) GetMemoryTypeIndex(typeBits uint32, flags core1_0.MemoryPropertyFlags) int {
-	mtype := memtype{typeBits, flags}
-	if t, ok := d.memtypes[mtype]; ok {
-		return t
-	}
-
-	props := d.physical.MemoryProperties()
-	for i, kind := range props.MemoryTypes {
-		if typeBits&1 == 1 {
-			if kind.PropertyFlags&flags == flags {
-				d.memtypes[mtype] = i
-				return i
-			}
-		}
-		typeBits >>= 1
-	}
-
-	d.memtypes[mtype] = 0
-	return 0
-}
-
 func (d *Device) GetLimits() *core1_0.PhysicalDeviceLimits {
 	return d.limits
 }
 
-func (d *Device) Allocate(key string, req core1_0.MemoryRequirements, flags core1_0.MemoryPropertyFlags) Memory {
-	if req.Size == 0 {
+func (d *Device) Allocate(key string, size int, kind MemoryType) *Memory {
+	if size == 0 {
 		panic("allocating 0 bytes of memory")
 	}
-	return alloc(d, key, req, flags)
+	if int(kind) > len(d.memtypes) || int(kind) <= 0 {
+		panic(fmt.Sprintf("invalid memory type %d", kind))
+	}
+	mtype := d.memtypes[kind]
+	if mtype.Index == -1 {
+		panic(fmt.Sprintf("memory type %d is not resolved", kind))
+	}
+
+	align := int(d.GetLimits().NonCoherentAtomSize)
+	size = util.Align(int(size), align)
+
+	ptr, _, err := d.ptr.AllocateMemory(nil, core1_0.MemoryAllocateInfo{
+		AllocationSize:  size,
+		MemoryTypeIndex: mtype.Index,
+	})
+	if err != nil {
+		panic(fmt.Sprintf("failed to allocate %d bytes of memory: %s", size, err))
+	}
+
+	if key != "" {
+		d.SetDebugObjectName(driver.VulkanHandle(ptr.Handle()),
+			core1_0.ObjectTypeDeviceMemory, key)
+	}
+
+	return &Memory{
+		device: d,
+		ptr:    ptr,
+		flags:  mtype.Flags,
+		size:   size,
+	}
 }
 
 func (d *Device) Destroy() {

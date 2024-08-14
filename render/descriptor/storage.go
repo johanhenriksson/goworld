@@ -20,7 +20,7 @@ type Storage[K comparable] struct {
 	set     Set
 }
 
-func (d *Storage[K]) Initialize(device *device.Device) {
+func (d *Storage[K]) Initialize(dev *device.Device) {
 	if d.set == nil {
 		panic("descriptor must be bound first")
 	}
@@ -28,11 +28,11 @@ func (d *Storage[K]) Initialize(device *device.Device) {
 		panic("storage descriptor size must be non-zero")
 	}
 
-	d.buffer = buffer.NewArray[K](device, buffer.Args{
+	d.buffer = buffer.NewArray[K](dev, buffer.Args{
 		Key:    d.String(),
 		Size:   d.Size,
 		Usage:  core1_0.BufferUsageStorageBuffer,
-		Memory: core1_0.MemoryPropertyDeviceLocal | core1_0.MemoryPropertyHostVisible,
+		Memory: device.MemoryTypeShared,
 	})
 	d.write()
 }
