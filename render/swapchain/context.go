@@ -9,8 +9,8 @@ import (
 
 type Context struct {
 	Index          int
-	ImageAvailable sync.Semaphore
-	RenderComplete sync.Semaphore
+	ImageAvailable *sync.Semaphore
+	RenderComplete *sync.Semaphore
 }
 
 func NewContext(dev *device.Device, index int) *Context {

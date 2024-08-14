@@ -122,7 +122,7 @@ func (i *RenderTarget) Aquire(worker command.Worker) (*swapchain.Context, error)
 	worker.Submit(command.SubmitInfo{
 		Marker:   "AquireRenderTarget",
 		Commands: command.Empty,
-		Signal: []sync.Semaphore{
+		Signal: []*sync.Semaphore{
 			context.ImageAvailable,
 		},
 	})

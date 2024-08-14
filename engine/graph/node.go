@@ -14,7 +14,7 @@ import (
 
 type Node interface {
 	After(nd Node, mask core1_0.PipelineStageFlags)
-	Before(nd Node, mask core1_0.PipelineStageFlags, signal []sync.Semaphore)
+	Before(nd Node, mask core1_0.PipelineStageFlags, signal []*sync.Semaphore)
 	Requires() []Node
 	Dependants() []Node
 
@@ -37,7 +37,7 @@ type node struct {
 type edge struct {
 	node   Node
 	mask   core1_0.PipelineStageFlags
-	signal []sync.Semaphore
+	signal []*sync.Semaphore
 }
 
 func newNode(app engine.App, name string, pass draw.Pass) *node {
@@ -74,7 +74,7 @@ func (n *node) After(nd Node, mask core1_0.PipelineStageFlags) {
 
 // Before introduces a render graph dependency, ensuring that the current node
 // will complete before the referenced node enters the given pipeline stage.
-func (n *node) Before(nd Node, mask core1_0.PipelineStageFlags, signal []sync.Semaphore) {
+func (n *node) Before(nd Node, mask core1_0.PipelineStageFlags, signal []*sync.Semaphore) {
 	if _, exists := n.before[nd.Name()]; exists {
 		return
 	}
@@ -163,8 +163,8 @@ func (n *node) waits(index int) []command.Wait {
 	return waits
 }
 
-func (n *node) signals(index int) []sync.Semaphore {
-	signals := make([]sync.Semaphore, 0, len(n.before))
+func (n *node) signals(index int) []*sync.Semaphore {
+	signals := make([]*sync.Semaphore, 0, len(n.before))
 	for _, before := range n.before {
 		if before.signal == nil {
 			// why would there be nil signals

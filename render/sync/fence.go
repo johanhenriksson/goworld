@@ -9,20 +9,12 @@ import (
 	"github.com/vkngwrapper/core/v2/driver"
 )
 
-type Fence interface {
-	device.Resource[core1_0.Fence]
-
-	Reset()
-	Wait()
-	Done() bool
-}
-
-type fence struct {
+type Fence struct {
 	device *device.Device
 	ptr    core1_0.Fence
 }
 
-func NewFence(device *device.Device, name string, signaled bool) Fence {
+func NewFence(device *device.Device, name string, signaled bool) *Fence {
 	var flags core1_0.FenceCreateFlags
 	if signaled {
 		flags = core1_0.FenceCreateSignaled
@@ -36,30 +28,30 @@ func NewFence(device *device.Device, name string, signaled bool) Fence {
 	}
 	device.SetDebugObjectName(driver.VulkanHandle(ptr.Handle()), core1_0.ObjectTypeFence, name)
 
-	return &fence{
+	return &Fence{
 		device: device,
 		ptr:    ptr,
 	}
 }
 
-func (f *fence) Ptr() core1_0.Fence {
+func (f *Fence) Ptr() core1_0.Fence {
 	return f.ptr
 }
 
-func (f *fence) Reset() {
+func (f *Fence) Reset() {
 	f.device.Ptr().ResetFences([]core1_0.Fence{f.ptr})
 }
 
-func (f *fence) Destroy() {
+func (f *Fence) Destroy() {
 	f.ptr.Destroy(nil)
 	f.ptr = nil
 }
 
-func (f *fence) Wait() {
+func (f *Fence) Wait() {
 	f.device.Ptr().WaitForFences(true, time.Hour, []core1_0.Fence{f.ptr})
 }
 
-func (f *fence) Done() bool {
+func (f *Fence) Done() bool {
 	r, err := f.ptr.Status()
 	if err != nil {
 		panic(err)
