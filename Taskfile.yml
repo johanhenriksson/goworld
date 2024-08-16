@@ -3,28 +3,12 @@ version: "3"
 tasks:
   run:
     cmds:
-      - go run ./game/cmd/main.go
+      - go run ./game/cmd/cube.go
     env:
       # required to for large ssaos on macos
       MVK_CONFIG_USE_METAL_ARGUMENT_BUFFERS: 1
       # enable synchronization validation
       VK_LAYER_ENABLES: VK_VALIDATION_FEATURE_ENABLE_SYNCHRONIZATION_VALIDATION_EXT
-      GOEXPERIMENT: loopvar
-
-  run-client:
-    cmds:
-      - go run ./game/client/cmd/main.go
-    env:
-      # required to for large ssaos on macos
-      MVK_CONFIG_USE_METAL_ARGUMENT_BUFFERS: 1
-      # enable synchronization validation
-      VK_LAYER_ENABLES: VK_VALIDATION_FEATURE_ENABLE_SYNCHRONIZATION_VALIDATION_EXT
-      GOEXPERIMENT: loopvar
-
-  run-server:
-    cmds:
-      - go run ./game/server/cmd/main.go
-    env:
       GOEXPERIMENT: loopvar
 
   build:
