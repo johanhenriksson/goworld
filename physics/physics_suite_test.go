@@ -18,13 +18,14 @@ func TestPhysics(t *testing.T) {
 
 var _ = Describe("general physics tests", func() {
 	var (
+		pool  object.Pool
 		scene object.Object
 		world *World
 	)
 
 	BeforeEach(func() {
-		scene = object.Scene()
-		world = NewWorld()
+		scene = object.Scene(pool)
+		world = NewWorld(pool)
 		object.Attach(scene, world)
 	})
 
@@ -36,9 +37,9 @@ var _ = Describe("general physics tests", func() {
 		)
 
 		BeforeEach(func() {
-			body = NewRigidBody(1)
-			box = NewBox(vec3.One)
-			obj = object.Builder(object.Empty("physics object")).
+			body = NewRigidBody(pool, 1)
+			box = NewBox(pool, vec3.One)
+			obj = object.Builder(object.Empty(pool, "physics object")).
 				Attach(body).
 				Attach(box).
 				Parent(scene).
@@ -73,9 +74,9 @@ var _ = Describe("general physics tests", func() {
 		)
 
 		BeforeEach(func() {
-			body = NewRigidBody(0)
-			box = NewBox(vec3.One)
-			obj = object.Builder(object.Empty("physics object")).
+			body = NewRigidBody(pool, 0)
+			box = NewBox(pool, vec3.One)
+			obj = object.Builder(object.Empty(pool, "physics object")).
 				Attach(body).
 				Attach(box).
 				Parent(scene).

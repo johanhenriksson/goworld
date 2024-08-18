@@ -30,8 +30,8 @@ type fragment struct {
 	FragmentArgs
 }
 
-func NewFragment(args FragmentArgs) Fragment {
-	return object.NewComponent(&fragment{
+func NewFragment(pool object.Pool, args FragmentArgs) Fragment {
+	return object.NewComponent(pool, &fragment{
 		FragmentArgs: args,
 	})
 }

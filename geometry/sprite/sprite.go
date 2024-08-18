@@ -33,9 +33,9 @@ type Args struct {
 	Texture texture.Ref
 }
 
-func New(args Args) *Mesh {
-	sprite := object.NewComponent(&Mesh{
-		Static: mesh.New(Material()),
+func New(pool object.Pool, args Args) *Mesh {
+	sprite := object.NewComponent(pool, &Mesh{
+		Static: mesh.New(pool, Material()),
 		Size:   object.NewProperty(args.Size),
 		Sprite: object.NewProperty(args.Texture),
 	})
@@ -59,12 +59,12 @@ func (m *Mesh) Serialize(encoder object.Encoder) error {
 	return err
 }
 
-func Deserialize(decoder object.Decoder) (object.Component, error) {
+func Deserialize(pool object.Pool, decoder object.Decoder) (object.Component, error) {
 	args := Args{}
 	if err := decoder.Decode(&args); err != nil {
 		return nil, err
 	}
-	return New(args), nil
+	return New(pool, args), nil
 }
 
 func (p *Mesh) generate() {

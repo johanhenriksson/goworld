@@ -33,25 +33,25 @@ type DirectionalLightEditor struct {
 }
 
 func NewDirectionalLightEditor(ctx *editor.Context, lit *light.Directional) *DirectionalLightEditor {
-	editor := object.New("DirectionalLightEditor", &DirectionalLightEditor{
-		Object: object.Ghost(lit.Name(), lit.Transform()),
+	editor := object.New(ctx.Objects, "DirectionalLightEditor", &DirectionalLightEditor{
+		Object: object.Ghost(ctx.Objects, lit.Name(), lit.Transform()),
 		target: lit,
 
-		Bounds: lines.NewBox(lines.BoxArgs{
+		Bounds: lines.NewBox(ctx.Objects, lines.BoxArgs{
 			Extents: vec3.New(10, 10, 1),
 			Color:   color.Yellow,
 		}),
 
-		Shape: physics.NewSphere(1),
-		Body:  physics.NewRigidBody(0),
-		Sprite: sprite.New(sprite.Args{
+		Shape: physics.NewSphere(ctx.Objects, 1),
+		Body:  physics.NewRigidBody(ctx.Objects, 0),
+		Sprite: sprite.New(ctx.Objects, sprite.Args{
 			Size: vec2.New(1, 1),
 			Texture: texture.PathArgsRef("editor/sprites/light.png", texture.Args{
 				Filter: texture.FilterNearest,
 			}),
 		}),
 
-		GUI: editor.PropertyEditorFragment(gui.FragmentLast, func() node.T {
+		GUI: editor.PropertyEditorFragment(ctx.Objects, gui.FragmentLast, func() node.T {
 			return editor.Inspector(
 				lit,
 				propedit.ColorField("color", "Color", propedit.ColorProps{

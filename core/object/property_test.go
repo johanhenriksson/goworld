@@ -14,8 +14,10 @@ type WithProp struct {
 
 var _ = Describe("Properties", func() {
 	var obj *WithProp
+	pool := object.NewPool()
+
 	BeforeEach(func() {
-		obj = object.NewComponent(&WithProp{
+		obj = object.NewComponent(pool, &WithProp{
 			Prop: object.NewProperty(1337),
 		})
 	})

@@ -8,12 +8,12 @@ import (
 )
 
 func Scene(f object.SceneFunc) object.SceneFunc {
-	return func(scene object.Object) {
+	return func(ctx object.Pool, scene object.Object) {
 		// create subscene in a child object
-		workspace := object.Empty("Workspace")
-		f(workspace)
+		workspace := object.Empty(ctx, "Workspace")
+		f(ctx, workspace)
 
-		editorScene := NewEditorScene(workspace, true)
+		editorScene := NewEditorScene(ctx, workspace, true)
 		object.Attach(scene, editorScene)
 	}
 }
@@ -22,16 +22,18 @@ type EditorScene struct {
 	object.Object
 	App       *App
 	Workspace object.Object
+	Objects   object.Pool
 
 	playing bool
 }
 
-func NewEditorScene(workspace object.Object, playing bool) *EditorScene {
-	app := NewApp(workspace)
+func NewEditorScene(pool object.Pool, workspace object.Object, playing bool) *EditorScene {
+	app := NewApp(pool, workspace)
 	object.Toggle(app, !playing)
 
-	return object.New("Editor", &EditorScene{
-		Object:    object.Scene(),
+	return object.New(pool, "Editor", &EditorScene{
+		Object:    object.Scene(pool),
+		Objects:   pool,
 		App:       app,
 		Workspace: workspace,
 		playing:   playing,
@@ -41,17 +43,17 @@ func NewEditorScene(workspace object.Object, playing bool) *EditorScene {
 func (s *EditorScene) Replace(workspace object.Object) {
 	parent := s.Parent()
 	object.Detach(s)
-	*s = *NewEditorScene(workspace, s.playing)
+	*s = *NewEditorScene(s.Objects, workspace, s.playing)
 	object.Attach(parent, s)
 }
 
 func (s *EditorScene) KeyEvent(e keys.Event) {
 	if e.Action() == keys.Release && e.Code() == keys.O && e.Modifier(keys.Ctrl) {
-		c, err := object.Load("scene.scn")
+		c, err := object.Load[object.Object](s.Objects, "scene.scn")
 		if err != nil {
 			panic(err)
 		}
-		s.Replace(c.(object.Object))
+		s.Replace(c)
 		log.Println("scene loaded")
 	}
 	if e.Action() == keys.Release && e.Code() == keys.S && e.Modifier(keys.Ctrl) {

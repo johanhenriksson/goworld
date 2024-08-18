@@ -10,7 +10,7 @@ func Key(prefix string, object Component) string {
 	buffer := make([]byte, p+1, p+9)
 	copy(buffer, []byte(prefix))
 	buffer[p] = '-'
-	dst := strconv.AppendUint(buffer, uint64(object.ID()), 16)
+	dst := strconv.AppendUint(buffer, uint64(object.ID()), 10)
 	return string(dst)
 }
 

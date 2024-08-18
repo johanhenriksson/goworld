@@ -15,24 +15,26 @@ type App struct {
 	World  *physics.World
 	Player *Player
 
+	objects   object.Pool
 	editors   object.Component
 	workspace object.Object
 }
 
-func NewApp(workspace object.Object) *App {
-	editor := object.New("Application", &App{
-		World: physics.NewWorld(),
+func NewApp(pool object.Pool, workspace object.Object) *App {
+	editor := object.New(pool, "Application", &App{
+		World: physics.NewWorld(pool),
 
-		Player:    NewPlayer(vec3.New(-8, 24, -8), quat.Euler(30, 45, 0)),
+		Player:    NewPlayer(pool, vec3.New(-8, 24, -8), quat.Euler(30, 45, 0)),
+		objects:   pool,
 		editors:   nil,
 		workspace: workspace,
 	})
 
-	editor.GUI = MakeGUI(editor)
+	editor.GUI = MakeGUI(pool, editor)
 	object.Attach(editor, editor.GUI)
 
 	// must be attached AFTER gui so that input events are handled in the correct order
-	editor.Tools = NewToolManager()
+	editor.Tools = NewToolManager(pool)
 	object.Attach(editor, editor.Tools)
 
 	// editor.World.Debug(true)
@@ -46,8 +48,9 @@ func (e *App) Update(scene object.Component, dt float32) {
 
 func (e *App) Refresh() {
 	context := &Context{
-		Camera: e.Player.Camera.Camera,
-		Scene:  e.workspace,
+		Objects: e.objects,
+		Camera:  e.Player.Camera.Camera,
+		Scene:   e.workspace,
 	}
 	e.editors = ConstructEditors(context, e.editors, e.workspace)
 	if e.editors.Parent() == nil {

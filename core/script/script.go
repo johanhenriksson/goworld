@@ -13,8 +13,8 @@ type script struct {
 
 type Behavior func(scene, self object.Component, dt float32)
 
-func New(fn Behavior) T {
-	return object.NewComponent(&script{
+func New(pool object.Pool, fn Behavior) T {
+	return object.NewComponent(pool, &script{
 		fn: fn,
 	})
 }

@@ -28,18 +28,18 @@ type SphereEditor struct {
 }
 
 func NewSphereEditor(ctx *editor.Context, sphere *physics.Sphere) *SphereEditor {
-	editor := object.New("PhysicsSphereEditor", &SphereEditor{
-		Object: object.Ghost(sphere.Name(), sphere.Transform()),
+	editor := object.New(ctx.Objects, "PhysicsSphereEditor", &SphereEditor{
+		Object: object.Ghost(ctx.Objects, sphere.Name(), sphere.Transform()),
 		target: sphere,
 
-		Shape: physics.NewSphere(sphere.Radius.Get()),
-		Body:  physics.NewRigidBody(0),
-		Mesh: lines.NewSphere(lines.SphereArgs{
+		Shape: physics.NewSphere(ctx.Objects, sphere.Radius.Get()),
+		Body:  physics.NewRigidBody(ctx.Objects, 0),
+		Mesh: lines.NewSphere(ctx.Objects, lines.SphereArgs{
 			Radius: sphere.Radius.Get(),
 			Color:  color.Green,
 		}),
 
-		GUI: editor.PropertyEditorFragment(gui.FragmentLast, func() node.T {
+		GUI: editor.PropertyEditorFragment(ctx.Objects, gui.FragmentLast, func() node.T {
 			return editor.Inspector(
 				sphere,
 				propedit.FloatField("radius", "Radius", propedit.FloatProps{

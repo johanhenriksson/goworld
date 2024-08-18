@@ -14,9 +14,9 @@ type Plane struct {
 	*Mesh
 }
 
-func NewObject(args Args) *Plane {
-	return object.New("Plane", &Plane{
-		Mesh: New(args),
+func NewObject(pool object.Pool, args Args) *Plane {
+	return object.New(pool, "Plane", &Plane{
+		Mesh: New(pool, args),
 	})
 }
 
@@ -33,12 +33,12 @@ type Args struct {
 	Mat  *material.Def
 }
 
-func New(args Args) *Mesh {
+func New(pool object.Pool, args Args) *Mesh {
 	if args.Mat == nil {
 		args.Mat = material.StandardForward()
 	}
-	p := object.NewComponent(&Mesh{
-		Static: mesh.New(args.Mat),
+	p := object.NewComponent(pool, &Mesh{
+		Static: mesh.New(pool, args.Mat),
 		Size:   object.NewProperty[vec2.T](args.Size),
 	})
 	p.data = vertex.NewTriangles[vertex.T, uint16](object.Key("plane", p), nil, nil)

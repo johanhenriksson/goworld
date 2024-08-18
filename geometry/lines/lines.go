@@ -19,9 +19,9 @@ type Args struct {
 	lineMesh vertex.MutableMesh[vertex.C, uint16]
 }
 
-func New(args Args) *Lines {
-	b := object.NewComponent(&Lines{
-		Static: mesh.NewLines(),
+func New(pool object.Pool, args Args) *Lines {
+	b := object.NewComponent(pool, &Lines{
+		Static: mesh.NewLines(pool),
 		Args:   args,
 	})
 	b.lineMesh = vertex.NewLines(object.Key("lines", b), []vertex.C{}, []uint16{})

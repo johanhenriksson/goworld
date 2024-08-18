@@ -20,7 +20,7 @@ type Arrow struct {
 	Hover object.Property[bool]
 }
 
-func NewArrow(clr color.T) *Arrow {
+func NewArrow(pool object.Pool, clr color.T) *Arrow {
 	height := float32(1.5)
 
 	coneRadius := height * 0.06
@@ -29,12 +29,12 @@ func NewArrow(clr color.T) *Arrow {
 	bodyHeight := 0.8 * height
 	segments := 32
 
-	arrow := object.New("Arrow", &Arrow{
+	arrow := object.New(pool, "Arrow", &Arrow{
 		Hover:     object.NewProperty(false),
-		Rigidbody: physics.NewRigidBody(0),
-		Collider:  physics.NewCompound(),
+		Rigidbody: physics.NewRigidBody(pool, 0),
+		Collider:  physics.NewCompound(pool),
 
-		Head: object.Builder(cone.NewObject(cone.Args{
+		Head: object.Builder(cone.NewObject(pool, cone.Args{
 			Mat:      material.ColoredForward(),
 			Radius:   coneRadius,
 			Height:   coneHeight,
@@ -44,7 +44,7 @@ func NewArrow(clr color.T) *Arrow {
 			Position(vec3.UnitY).
 			Create(),
 
-		Body: object.Builder(cylinder.NewObject(cylinder.Args{
+		Body: object.Builder(cylinder.NewObject(pool, cylinder.Args{
 			Mat:      material.ColoredForward(),
 			Radius:   bodyRadius,
 			Height:   bodyHeight,

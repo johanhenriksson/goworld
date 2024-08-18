@@ -14,8 +14,8 @@ func init() {
 		Name:        "Cube",
 		Path:        []string{"Geometry"},
 		Deserialize: Deserialize,
-		Create: func() (object.Component, error) {
-			return NewObject(Args{
+		Create: func(ctx object.Pool) (object.Component, error) {
+			return NewObject(ctx, Args{
 				Size: 1,
 			}), nil
 		},
@@ -24,12 +24,12 @@ func init() {
 
 type Object struct {
 	object.Object
-	*Mesh
+	Mesh *Mesh
 }
 
-func NewObject(args Args) *Object {
-	return object.New("Cube", &Object{
-		Mesh: New(args),
+func NewObject(pool object.Pool, args Args) *Object {
+	return object.New(pool, "Cube", &Object{
+		Mesh: New(pool, args),
 	})
 }
 
@@ -45,17 +45,16 @@ type Args struct {
 }
 
 // New creates a vertex colored cube mesh with a given size
-func New(args Args) *Mesh {
+func New(pool object.Pool, args Args) *Mesh {
 	if args.Mat == nil {
 		args.Mat = material.StandardForward()
 	}
-	cube := object.NewComponent(&Mesh{
-		Static: mesh.New(args.Mat),
+	c := object.NewComponent(pool, &Mesh{
+		Static: mesh.New(pool, args.Mat),
 		Args:   args,
 	})
-	// cube.SetTexture(texture.Diffuse, texture.Checker)
-	cube.generate()
-	return cube
+	c.generate()
+	return c
 }
 
 func (c *Mesh) Serialize(encoder object.Encoder) error {
@@ -65,8 +64,8 @@ func (c *Mesh) Serialize(encoder object.Encoder) error {
 	return encoder.Encode(c.Args)
 }
 
-func Deserialize(decoder object.Decoder) (object.Component, error) {
-	msh, err := mesh.Deserialize(decoder)
+func Deserialize(ctx object.Pool, decoder object.Decoder) (object.Component, error) {
+	msh, err := mesh.Deserialize(ctx, decoder)
 	if err != nil {
 		return nil, err
 	}
@@ -75,7 +74,7 @@ func Deserialize(decoder object.Decoder) (object.Component, error) {
 		return nil, err
 	}
 
-	cube := object.NewComponent(&Mesh{
+	cube := object.NewComponent(ctx, &Mesh{
 		Static: msh.(*mesh.Static),
 		Args:   args,
 	})

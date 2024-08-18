@@ -43,13 +43,13 @@ type ToolManager struct {
 	Rotater *gizmo.Rotater
 }
 
-func NewToolManager() *ToolManager {
-	return object.New("Tool Manager", &ToolManager{
-		Mover: object.Builder(gizmo.NewMover()).
+func NewToolManager(pool object.Pool) *ToolManager {
+	return object.New(pool, "Tool Manager", &ToolManager{
+		Mover: object.Builder(gizmo.NewMover(pool)).
 			Active(false).
 			Create(),
 
-		Rotater: object.Builder(gizmo.NewRotater()).
+		Rotater: object.Builder(gizmo.NewRotater(pool)).
 			Active(false).
 			Create(),
 

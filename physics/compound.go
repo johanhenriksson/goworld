@@ -24,19 +24,21 @@ type childShape struct {
 	unsub    func()
 }
 
-var _ = checkShape(NewCompound())
+var _ = checkShape(NewCompound(object.GlobalPool))
 
-func NewCompound() *Compound {
-	cmp := object.NewComponent(&Compound{
+func NewCompound(pool object.Pool) *Compound {
+	cmp := &Compound{
 		kind: CompoundShape,
-	})
-	cmp.Collider = newCollider(cmp, false)
-	return cmp
+	}
+	cmp.Collider = newCollider(pool, cmp, false)
+	return object.NewComponent(pool, cmp)
 }
 
 func (c *Compound) colliderCreate() shapeHandle {
 	return shape_new_compound(unsafe.Pointer(c))
 }
+
+func (c *Compound) colliderIsCompound() bool { return true }
 
 func (c *Compound) colliderDestroy() {
 	for _, shape := range c.shapes {

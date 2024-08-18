@@ -32,25 +32,25 @@ type PointLightEditor struct {
 }
 
 func NewPointLightEditor(ctx *editor.Context, lit *light.Point) *PointLightEditor {
-	editor := object.New("PointLightEditor", &PointLightEditor{
-		Object: object.Ghost(lit.Name(), lit.Transform()),
+	editor := object.New(ctx.Objects, "PointLightEditor", &PointLightEditor{
+		Object: object.Ghost(ctx.Objects, lit.Name(), lit.Transform()),
 		target: lit,
 
-		Bounds: lines.NewSphere(lines.SphereArgs{
+		Bounds: lines.NewSphere(ctx.Objects, lines.SphereArgs{
 			Radius: lit.Range.Get(),
 			Color:  color.Yellow,
 		}),
 
-		Shape: physics.NewSphere(1),
-		Body:  physics.NewRigidBody(0),
-		Sprite: sprite.New(sprite.Args{
+		Shape: physics.NewSphere(ctx.Objects, 1),
+		Body:  physics.NewRigidBody(ctx.Objects, 0),
+		Sprite: sprite.New(ctx.Objects, sprite.Args{
 			Size: vec2.New(1, 1),
 			Texture: texture.PathArgsRef("editor/sprites/light.png", texture.Args{
 				Filter: texture.FilterNearest,
 			}),
 		}),
 
-		GUI: editor.PropertyEditorFragment(gui.FragmentLast, func() node.T {
+		GUI: editor.PropertyEditorFragment(ctx.Objects, gui.FragmentLast, func() node.T {
 			return editor.Inspector(
 				lit,
 				propedit.ColorField("color", "Color", propedit.ColorProps{

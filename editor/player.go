@@ -23,9 +23,9 @@ type Player struct {
 	mouselook bool
 }
 
-func NewPlayer(position vec3.T, rotation quat.T) *Player {
-	p := object.Builder(object.New("Player", &Player{
-		Camera: object.Builder(camera.NewObject(camera.Args{
+func NewPlayer(pool object.Pool, position vec3.T, rotation quat.T) *Player {
+	p := object.Builder(object.New(pool, "Player", &Player{
+		Camera: object.Builder(camera.NewObject(pool, camera.Args{
 			Fov:   58.0,
 			Near:  0.1,
 			Far:   500,

@@ -7,9 +7,9 @@ type ghost struct {
 	target transform.T
 }
 
-func Ghost(name string, target transform.T) Object {
+func Ghost(pool Pool, name string, target transform.T) Object {
 	ghost := &ghost{
-		object: emptyObject("Ghost:" + name),
+		object: *emptyObject(pool, "Ghost:"+name),
 		target: target,
 	}
 	ghost.transform = target
@@ -26,9 +26,9 @@ type float struct {
 }
 
 // Floating objects are not part of the transform heirarchy
-func Float(name string) Object {
+func Floating(pool Pool, name string) Object {
 	float := &float{
-		object: emptyObject(name),
+		object: *emptyObject(pool, name),
 	}
 	float.transform.SetParent(nil)
 	return float

@@ -45,8 +45,8 @@ func makeToolbar(editor *App) node.T {
 	})
 }
 
-func MakeGUI(editor *App) gui.Manager {
-	return gui.New(func() node.T {
+func MakeGUI(pool object.Pool, editor *App) gui.Manager {
+	return gui.New(pool, func() node.T {
 		return rect.New("gui", rect.Props{
 			Children: []node.T{
 				// menu & toolbar
@@ -111,7 +111,8 @@ func makeMenu(editor *App) node.T {
 					parent = editor.Tools.Selected()[0].Target().(object.Object)
 				}
 
-				thing, err := info.Create()
+				// todo: this should be the scene object context
+				thing, err := info.Create(editor.objects)
 				if err != nil {
 					// todo: handle errors properly
 					panic("failed to create " + t.Name + ": " + err.Error())
@@ -227,8 +228,8 @@ func makeSidebarRight(editor *App) node.T {
 	})
 }
 
-func PropertyEditorFragment(position gui.FragmentPosition, render node.RenderFunc) gui.Fragment {
-	return gui.NewFragment(gui.FragmentArgs{
+func PropertyEditorFragment(pool object.Pool, position gui.FragmentPosition, render node.RenderFunc) gui.Fragment {
+	return gui.NewFragment(pool, gui.FragmentArgs{
 		Slot:     "sidebar-right:property-editor",
 		Position: position,
 		Render:   render,

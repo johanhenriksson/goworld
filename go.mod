@@ -5,7 +5,6 @@ go 1.21
 toolchain go1.21.5
 
 require (
-	capnproto.org/go/capnp/v3 v3.0.0-alpha-29
 	github.com/go-gl/glfw/v3.3/glfw v0.0.0-20211213063430-748e38ca8aec
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
 	github.com/kjk/flex v0.0.0-20171203210503-ed34d6b6a425
@@ -14,7 +13,6 @@ require (
 	github.com/onsi/ginkgo/v2 v2.11.0
 	github.com/onsi/gomega v1.27.10
 	github.com/qmuntal/gltf v0.21.0
-	github.com/quic-go/quic-go v0.45.1
 	github.com/samber/lo v1.44.0
 	github.com/vkngwrapper/core/v2 v2.1.1
 	github.com/vkngwrapper/extensions/v2 v2.1.0
@@ -39,14 +37,10 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/rogpeppe/go-internal v1.9.0 // indirect
 	github.com/stretchr/testify v1.8.4 // indirect
-	go.uber.org/mock v0.4.0 // indirect
-	golang.org/x/crypto v0.23.0 // indirect
-	golang.org/x/mod v0.17.0 // indirect
 	golang.org/x/net v0.25.0 // indirect
-	golang.org/x/sync v0.7.0 // indirect
 	golang.org/x/sys v0.20.0 // indirect
 	golang.org/x/text v0.16.0 // indirect
 	golang.org/x/tools v0.21.1-0.20240508182429-e35e4ccd0d2d // indirect
+	google.golang.org/protobuf v1.33.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	zenhack.net/go/util v0.0.0-20230414204917-531d38494cf5 // indirect
 )

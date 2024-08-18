@@ -7,7 +7,9 @@ import (
 	"github.com/johanhenriksson/goworld/core/events"
 )
 
-type PropValue interface{}
+type PropValue interface {
+	// ~int | ~uint | ~float32 | string | bool
+}
 
 type GenericProp interface {
 	Type() reflect.Type

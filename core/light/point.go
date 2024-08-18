@@ -28,8 +28,8 @@ func init() {
 	object.Register[*Point](object.TypeInfo{
 		Name:        "Point Light",
 		Deserialize: DeserializePoint,
-		Create: func() (object.Component, error) {
-			return NewPoint(PointArgs{
+		Create: func(pool object.Pool) (object.Component, error) {
+			return NewPoint(pool, PointArgs{
 				Color:     color.White,
 				Range:     10,
 				Intensity: 1,
@@ -38,8 +38,8 @@ func init() {
 	})
 }
 
-func NewPoint(args PointArgs) *Point {
-	return object.NewComponent(&Point{
+func NewPoint(pool object.Pool, args PointArgs) *Point {
+	return object.NewComponent(pool, &Point{
 		Color:     object.NewProperty(args.Color),
 		Range:     object.NewProperty(args.Range),
 		Intensity: object.NewProperty(args.Intensity),
@@ -76,24 +76,23 @@ type PointState struct {
 }
 
 func (lit *Point) Serialize(enc object.Encoder) error {
-	return enc.Encode(PointState{
-		// send help
-		ComponentState: object.NewComponentState(lit.Component),
-		PointArgs: PointArgs{
-			Color:     lit.Color.Get(),
-			Intensity: lit.Intensity.Get(),
-			Range:     lit.Range.Get(),
-		},
-	})
+	if err := object.EncodeComponent(enc, lit.Component); err != nil {
+		return err
+	}
+	return enc.Encode(*lit)
 }
 
-func DeserializePoint(dec object.Decoder) (object.Component, error) {
-	var state PointState
-	if err := dec.Decode(&state); err != nil {
+func DeserializePoint(pool object.Pool, dec object.Decoder) (object.Component, error) {
+	cmp, err := object.DecodeComponent(pool, dec)
+	if err != nil {
 		return nil, err
 	}
 
-	obj := NewPoint(state.PointArgs)
-	obj.Component = state.ComponentState.New()
-	return obj, nil
+	lit := &Point{}
+	if err := dec.Decode(lit); err != nil {
+		return nil, err
+	}
+	lit.Component = cmp
+
+	return object.NewComponent(pool, lit), nil
 }

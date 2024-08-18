@@ -37,10 +37,11 @@ func Run(args Args, scenefuncs ...object.SceneFunc) {
 	defer renderer.Destroy()
 
 	// create scene
-	scene := object.Scene(scenefuncs...)
+	pool := object.NewPool()
+	scene := object.Scene(pool, scenefuncs...)
 	wnd.SetInputHandler(scene)
 
-	object.Attach(scene, engine.NewStatsGUI())
+	object.Attach(scene, engine.NewStatsGUI(pool))
 
 	// run the render loop
 	log.Println("ready")

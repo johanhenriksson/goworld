@@ -33,6 +33,7 @@ type Directional struct {
 	Color     object.Property[color.T]
 	Intensity object.Property[float32]
 	Shadows   object.Property[bool]
+	Cascades  object.Property[int]
 
 	CascadeLambda object.Property[float32]
 	CascadeBlend  object.Property[float32]
@@ -44,8 +45,8 @@ func init() {
 	object.Register[*Directional](object.TypeInfo{
 		Name:        "Directional Light",
 		Deserialize: DeserializeDirectional,
-		Create: func() (object.Component, error) {
-			return NewDirectional(DirectionalArgs{
+		Create: func(pool object.Pool) (object.Component, error) {
+			return NewDirectional(pool, DirectionalArgs{
 				Color:     color.White,
 				Intensity: 1,
 				Shadows:   true,
@@ -55,14 +56,13 @@ func init() {
 	})
 }
 
-func NewDirectional(args DirectionalArgs) *Directional {
-	lit := object.NewComponent(&Directional{
-		cascades: make([]Cascade, args.Cascades),
-
+func NewDirectional(pool object.Pool, args DirectionalArgs) *Directional {
+	lit := object.NewComponent(pool, &Directional{
 		Color:     object.NewProperty(args.Color),
 		Intensity: object.NewProperty(args.Intensity),
 		Shadows:   object.NewProperty(args.Shadows),
 
+		Cascades:      object.NewProperty(args.Cascades),
 		CascadeLambda: object.NewProperty[float32](0.9),
 		CascadeBlend:  object.NewProperty[float32](3.0),
 	})
@@ -99,6 +99,9 @@ func nearSplitDist(cascade, cascades int, near, far, splitLambda float32) float3
 
 func (lit *Directional) PreDraw(args draw.Args, scene object.Object) error {
 	// update cascades
+	if len(lit.cascades) != lit.Cascades.Get() {
+		lit.cascades = make([]Cascade, lit.Cascades.Get())
+	}
 	for i, _ := range lit.cascades {
 		lit.cascades[i] = lit.calculateCascade(args, i, len(lit.cascades))
 	}
@@ -218,30 +221,24 @@ func (lit *Directional) ShadowProjection(mapIndex int) uniform.Camera {
 	}
 }
 
-type DirectionalState struct {
-	object.ComponentState
-	DirectionalArgs
-}
-
 func (lit *Directional) Serialize(enc object.Encoder) error {
-	return enc.Encode(DirectionalState{
-		// send help
-		ComponentState: object.NewComponentState(lit.Component),
-		DirectionalArgs: DirectionalArgs{
-			Color:     lit.Color.Get(),
-			Intensity: lit.Intensity.Get(),
-			Shadows:   lit.Shadows.Get(),
-		},
-	})
+	if err := object.EncodeComponent(enc, lit.Component); err != nil {
+		return err
+	}
+	return enc.Encode(*lit)
 }
 
-func DeserializeDirectional(dec object.Decoder) (object.Component, error) {
-	var state DirectionalState
-	if err := dec.Decode(&state); err != nil {
+func DeserializeDirectional(ctx object.Pool, dec object.Decoder) (object.Component, error) {
+	cmp, err := object.DecodeComponent(ctx, dec)
+	if err != nil {
 		return nil, err
 	}
 
-	obj := NewDirectional(state.DirectionalArgs)
-	obj.Component = state.ComponentState.New()
-	return obj, nil
+	args := &Directional{}
+	if err := dec.Decode(args); err != nil {
+		return nil, err
+	}
+	args.Component = cmp
+
+	return object.NewComponent(ctx, args), nil
 }

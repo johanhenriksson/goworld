@@ -47,10 +47,10 @@ func ConstructEditors(ctx *Context, current object.Component, target object.Comp
 			log.Println("creating default editor for", target.Name(), "of type", t.Name())
 			if obj, isObject := target.(object.Object); isObject {
 				// use default object editor
-				editor = NewObjectEditor(obj)
+				editor = NewObjectEditor(ctx.Objects, obj)
 			} else {
 				// use default component editor
-				editor = NewComponentEditor(target)
+				editor = NewComponentEditor(ctx.Objects, target)
 			}
 		}
 

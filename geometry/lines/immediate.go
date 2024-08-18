@@ -2,6 +2,7 @@ package lines
 
 import (
 	"github.com/johanhenriksson/goworld/core/mesh"
+	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render/color"
 )
@@ -17,7 +18,8 @@ type DebugLines struct {
 func (li *DebugLines) Setup(frames int) {
 	li.meshes = make([]*Lines, frames)
 	for i := range li.meshes {
-		li.meshes[i] = New(Args{})
+		// todo: fix nil context
+		li.meshes[i] = New(object.GlobalPool, Args{})
 	}
 	li.enabled = true
 }

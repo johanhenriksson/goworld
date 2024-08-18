@@ -12,8 +12,8 @@ func init() {
 		Name:        "Capsule Collider",
 		Path:        []string{"Physics"},
 		Deserialize: DeserializeCapsule,
-		Create: func() (object.Component, error) {
-			return NewCapsule(1.8, 0.3), nil
+		Create: func(ctx object.Pool) (object.Component, error) {
+			return NewCapsule(ctx, 1.8, 0.3), nil
 		},
 	})
 }
@@ -26,15 +26,15 @@ type Capsule struct {
 	Height object.Property[float32]
 }
 
-var _ = checkShape(NewCapsule(1, 1))
+var _ = checkShape(NewCapsule(object.GlobalPool, 1, 1))
 
-func NewCapsule(height, radius float32) *Capsule {
-	capsule := object.NewComponent(&Capsule{
+func NewCapsule(pool object.Pool, height, radius float32) *Capsule {
+	capsule := &Capsule{
 		kind:   CapsuleShape,
 		Radius: object.NewProperty(radius),
 		Height: object.NewProperty(height),
-	})
-	capsule.Collider = newCollider(capsule, true)
+	}
+	capsule.Collider = newCollider(pool, capsule, true)
 
 	capsule.Radius.OnChange.Subscribe(func(radius float32) {
 		capsule.refresh()
@@ -43,7 +43,7 @@ func NewCapsule(height, radius float32) *Capsule {
 		capsule.refresh()
 	})
 
-	return capsule
+	return object.NewComponent(pool, capsule)
 }
 
 func (c *Capsule) Name() string {
@@ -57,6 +57,8 @@ func (c *Capsule) String() string {
 func (c *Capsule) colliderCreate() shapeHandle {
 	return shape_new_capsule(unsafe.Pointer(c), c.Radius.Get(), c.Height.Get())
 }
+
+func (c *Capsule) colliderIsCompound() bool { return false }
 
 func (c *Capsule) colliderRefresh() {}
 func (c *Capsule) colliderDestroy() {}
@@ -73,10 +75,10 @@ func (s *Capsule) Serialize(enc object.Encoder) error {
 	})
 }
 
-func DeserializeCapsule(dec object.Decoder) (object.Component, error) {
+func DeserializeCapsule(ctx object.Pool, dec object.Decoder) (object.Component, error) {
 	var state capsuleState
 	if err := dec.Decode(&state); err != nil {
 		return nil, err
 	}
-	return NewCapsule(state.Height, state.Radius), nil
+	return NewCapsule(ctx, state.Height, state.Radius), nil
 }

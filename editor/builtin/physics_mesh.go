@@ -28,15 +28,15 @@ type PhysicsMeshEditor struct {
 }
 
 func NewPhysicsMeshEditor(ctx *editor.Context, mesh *physics.Mesh) *PhysicsMeshEditor {
-	editor := object.New("PhysicsMeshEditor", &PhysicsMeshEditor{
-		Object: object.Ghost(mesh.Name(), mesh.Transform()),
+	editor := object.New(ctx.Objects, "PhysicsMeshEditor", &PhysicsMeshEditor{
+		Object: object.Ghost(ctx.Objects, mesh.Name(), mesh.Transform()),
 		target: mesh,
 
-		Shape: physics.NewMesh(),
-		Body:  physics.NewRigidBody(0),
-		Wire:  lines.NewWireframe(mesh.Mesh.Get(), color.Green),
+		Shape: physics.NewMesh(ctx.Objects),
+		Body:  physics.NewRigidBody(ctx.Objects, 0),
+		Wire:  lines.NewWireframe(ctx.Objects, mesh.Mesh.Get(), color.Green),
 
-		GUI: editor.PropertyEditorFragment(gui.FragmentLast, func() node.T {
+		GUI: editor.PropertyEditorFragment(ctx.Objects, gui.FragmentLast, func() node.T {
 			return editor.Inspector(
 				mesh,
 			)

@@ -17,10 +17,10 @@ type Cylinder struct {
 	Collider *physics.Mesh
 }
 
-func NewObject(args Args) *Cylinder {
-	return object.New("Cylinder", &Cylinder{
-		Mesh:     New(args),
-		Collider: physics.NewMesh(),
+func NewObject(pool object.Pool, args Args) *Cylinder {
+	return object.New(pool, "Cylinder", &Cylinder{
+		Mesh:     New(pool, args),
+		Collider: physics.NewMesh(pool),
 	})
 }
 
@@ -38,12 +38,12 @@ type Args struct {
 	Color    color.T
 }
 
-func New(args Args) *Mesh {
+func New(pool object.Pool, args Args) *Mesh {
 	if args.Mat == nil {
 		args.Mat = material.ColoredForward()
 	}
-	cyllinder := object.NewComponent(&Mesh{
-		Static: mesh.New(args.Mat),
+	cyllinder := object.NewComponent(pool, &Mesh{
+		Static: mesh.New(pool, args.Mat),
 		Args:   args,
 	})
 	// this should not run on the main thread

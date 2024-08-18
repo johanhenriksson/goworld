@@ -22,9 +22,9 @@ type World struct {
 	objects []Object
 }
 
-func NewWorld() *World {
+func NewWorld(pool object.Pool) *World {
 	handle := world_new()
-	world := object.NewComponent(&World{
+	world := object.NewComponent(pool, &World{
 		handle:    handle,
 		fixedStep: 1.0 / 60.0,
 		maxSteps:  3,
