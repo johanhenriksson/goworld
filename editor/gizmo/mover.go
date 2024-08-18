@@ -50,29 +50,29 @@ type Mover struct {
 var _ Gizmo = &Mover{}
 
 // NewMover creates a new mover gizmo
-func NewMover() *Mover {
+func NewMover(pool object.Pool) *Mover {
 	side := float32(0.4)
 	planeAlpha := float32(0.33)
 
 	s := side * 0.5
 
-	g := object.New("Mover Gizmo", &Mover{
+	g := object.New(pool, "Mover Gizmo", &Mover{
 		size:        0.125,
 		sensitivity: 6,
 		hoverScale:  vec3.New(1.1, 1.1, 1.1),
 
-		X: object.Builder(NewArrow(color.Red)).
+		X: object.Builder(NewArrow(pool, color.Red)).
 			Rotation(quat.Euler(0, 0, 270)).
 			Create(),
 
-		Y: NewArrow(color.Green),
+		Y: NewArrow(pool, color.Green),
 
-		Z: object.Builder(NewArrow(color.Blue)).
+		Z: object.Builder(NewArrow(pool, color.Blue)).
 			Rotation(quat.Euler(90, 0, 0)).
 			Create(),
 
 		// XY Plane
-		XY: object.Builder(plane.NewObject(plane.Args{
+		XY: object.Builder(plane.NewObject(pool, plane.Args{
 			Size: vec2.New(side, side),
 			Mat:  material.TransparentForward(),
 		})).
@@ -82,7 +82,7 @@ func NewMover() *Mover {
 			Create(),
 
 		// XZ Plane
-		XZ: object.Builder(plane.NewObject(plane.Args{
+		XZ: object.Builder(plane.NewObject(pool, plane.Args{
 			Size: vec2.New(side, side),
 			Mat:  material.TransparentForward(),
 		})).
@@ -92,7 +92,7 @@ func NewMover() *Mover {
 			Create(),
 
 		// YZ Plane
-		YZ: object.Builder(plane.NewObject(plane.Args{
+		YZ: object.Builder(plane.NewObject(pool, plane.Args{
 			Size: vec2.New(side, side),
 			Mat:  material.TransparentForward(),
 		})).

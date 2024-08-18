@@ -13,8 +13,8 @@ func init() {
 	object.Register[*Static](object.TypeInfo{
 		Name:        "Mesh",
 		Deserialize: Deserialize,
-		Create: func() (object.Component, error) {
-			return New(nil), nil
+		Create: func(pool object.Pool) (object.Component, error) {
+			return New(pool, nil), nil
 		},
 	})
 }
@@ -56,18 +56,18 @@ type Static struct {
 }
 
 // New creates a new mesh component
-func New(mat *material.Def) *Static {
-	return NewPrimitiveMesh(vertex.Triangles, mat)
+func New(pool object.Pool, mat *material.Def) *Static {
+	return NewPrimitiveMesh(pool, vertex.Triangles, mat)
 }
 
 // NewLines creates a new line mesh component
-func NewLines() *Static {
-	return NewPrimitiveMesh(vertex.Lines, nil)
+func NewLines(pool object.Pool) *Static {
+	return NewPrimitiveMesh(pool, vertex.Lines, nil)
 }
 
 // NewPrimitiveMesh creates a new mesh composed of a given GL primitive
-func NewPrimitiveMesh(primitive vertex.Primitive, mat *material.Def) *Static {
-	m := object.NewComponent(&Static{
+func NewPrimitiveMesh(pool object.Pool, primitive vertex.Primitive, mat *material.Def) *Static {
+	m := object.NewComponent(pool, &Static{
 		mat:       mat,
 		matId:     material.Hash(mat),
 		textures:  make(map[texture.Slot]texture.Ref),
@@ -141,13 +141,13 @@ func (m *Static) Serialize(enc object.Encoder) error {
 	})
 }
 
-func Deserialize(dec object.Decoder) (object.Component, error) {
+func Deserialize(pool object.Pool, dec object.Decoder) (object.Component, error) {
 	var state MeshState
 	if err := dec.Decode(&state); err != nil {
 		return nil, err
 	}
 
-	obj := NewPrimitiveMesh(state.Primitive, &state.Material)
+	obj := NewPrimitiveMesh(pool, state.Primitive, &state.Material)
 	obj.Component = state.ComponentState.New()
 	obj.textures = state.TexSlots
 	return obj, nil

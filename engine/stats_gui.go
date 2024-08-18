@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"runtime"
 
+	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/gui"
 	"github.com/johanhenriksson/goworld/gui/node"
 	"github.com/johanhenriksson/goworld/gui/style"
@@ -12,11 +13,11 @@ import (
 	"github.com/johanhenriksson/goworld/render/color"
 )
 
-func NewStatsGUI() gui.Fragment {
+func NewStatsGUI(pool object.Pool) gui.Fragment {
 	lastAlloc := uint64(0)
 	timer := NewFrameCounter(100)
 
-	return gui.NewFragment(gui.FragmentArgs{
+	return gui.NewFragment(pool, gui.FragmentArgs{
 		Slot: "gui",
 		Render: func() node.T {
 			timer.Update()

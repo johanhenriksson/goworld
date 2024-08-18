@@ -30,15 +30,15 @@ type Args struct {
 }
 
 // New creates a new camera component.
-func New(args Args) *Camera {
-	return object.NewComponent(&Camera{
+func New(pool object.Pool, args Args) *Camera {
+	return object.NewComponent(pool, &Camera{
 		Args: args,
 	})
 }
 
-func NewObject(args Args) *Object {
-	return object.New("Camera", &Object{
-		Camera: New(args),
+func NewObject(pool object.Pool, args Args) *Object {
+	return object.New(pool, "Camera", &Object{
+		Camera: New(pool, args),
 	})
 }
 

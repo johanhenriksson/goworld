@@ -42,16 +42,16 @@ type Rotater struct {
 var _ Gizmo = &Rotater{}
 
 // NewRotater creates a new mover gizmo
-func NewRotater() *Rotater {
-	g := object.New("Rotater Gizmo", &Rotater{
+func NewRotater(pool object.Pool) *Rotater {
+	g := object.New(pool, "Rotater Gizmo", &Rotater{
 		size: 0.1,
 
-		Sphere: lines.NewSphere(lines.SphereArgs{
+		Sphere: lines.NewSphere(pool, lines.SphereArgs{
 			Radius: 1,
 			Color:  color.Purple,
 		}),
-		Shape:     physics.NewSphere(1),
-		Rigidbody: physics.NewRigidBody(0),
+		Shape:     physics.NewSphere(pool, 1),
+		Rigidbody: physics.NewRigidBody(pool, 0),
 	})
 
 	g.Rigidbody.Layer.Set(2)

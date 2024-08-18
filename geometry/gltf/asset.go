@@ -14,21 +14,21 @@ import (
 	"github.com/qmuntal/gltf"
 )
 
-func Load(path string) object.Component {
+func Load(pool object.Pool, path string) object.Component {
 	assetPath := fmt.Sprintf("assets/%s", path)
 	doc, _ := gltf.Open(assetPath)
 
 	// load default scene
 	scene := doc.Scenes[*doc.Scene]
 
-	return loadScene(doc, scene)
+	return loadScene(pool, doc, scene)
 }
 
-func loadScene(doc *gltf.Document, scene *gltf.Scene) object.Component {
-	root := object.Empty(scene.Name)
+func loadScene(pool object.Pool, doc *gltf.Document, scene *gltf.Scene) object.Component {
+	root := object.Empty(pool, scene.Name)
 
 	for _, nodeId := range scene.Nodes {
-		node := loadNode(doc, doc.Nodes[nodeId])
+		node := loadNode(pool, doc, doc.Nodes[nodeId])
 		object.Attach(root, node)
 	}
 
@@ -38,14 +38,14 @@ func loadScene(doc *gltf.Document, scene *gltf.Scene) object.Component {
 	return root
 }
 
-func loadNode(doc *gltf.Document, node *gltf.Node) object.Component {
-	obj := object.Empty(node.Name)
+func loadNode(pool object.Pool, doc *gltf.Document, node *gltf.Node) object.Component {
+	obj := object.Empty(pool, node.Name)
 
 	// mesh components
 	if node.Mesh != nil {
 		msh := doc.Meshes[*node.Mesh]
 		for _, primitive := range msh.Primitives {
-			renderer := loadPrimitive(doc, msh.Name, primitive)
+			renderer := loadPrimitive(pool, doc, msh.Name, primitive)
 			object.Attach(obj, renderer)
 		}
 	}
@@ -57,13 +57,13 @@ func loadNode(doc *gltf.Document, node *gltf.Node) object.Component {
 
 	// child objects
 	for _, child := range node.Children {
-		object.Attach(obj, loadNode(doc, doc.Nodes[child]))
+		object.Attach(obj, loadNode(pool, doc, doc.Nodes[child]))
 	}
 
 	return obj
 }
 
-func loadPrimitive(doc *gltf.Document, name string, primitive *gltf.Primitive) mesh.Mesh {
+func loadPrimitive(pool object.Pool, doc *gltf.Document, name string, primitive *gltf.Primitive) mesh.Mesh {
 	kind := mapPrimitiveType(primitive.Mode)
 
 	// create interleaved buffers
@@ -87,7 +87,7 @@ func loadPrimitive(doc *gltf.Document, name string, primitive *gltf.Primitive) m
 	}
 
 	// create mesh component
-	mesh := mesh.NewPrimitiveMesh(kind, nil)
+	mesh := mesh.NewPrimitiveMesh(pool, kind, nil)
 	mesh.VertexData.Set(gmesh)
 	return mesh
 }

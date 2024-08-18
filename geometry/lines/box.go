@@ -13,9 +13,9 @@ type BoxObject struct {
 	*Box
 }
 
-func NewBoxObject(args BoxArgs) *BoxObject {
-	return object.New("Box", &BoxObject{
-		Box: NewBox(args),
+func NewBoxObject(pool object.Pool, args BoxArgs) *BoxObject {
+	return object.New(pool, "Box", &BoxObject{
+		Box: NewBox(pool, args),
 	})
 }
 
@@ -35,9 +35,9 @@ type BoxArgs struct {
 	Color   color.T
 }
 
-func NewBox(args BoxArgs) *Box {
-	b := object.NewComponent(&Box{
-		Static:  mesh.NewLines(),
+func NewBox(pool object.Pool, args BoxArgs) *Box {
+	b := object.NewComponent(pool, &Box{
+		Static:  mesh.NewLines(pool),
 		Extents: object.NewProperty(args.Extents),
 		Color:   object.NewProperty(args.Color),
 	})

@@ -11,7 +11,8 @@ import (
 
 type Collider struct {
 	object.Component
-	colliderImpl
+
+	cmp colliderImpl
 
 	handle    shapeHandle
 	changed   events.Event[Shape]
@@ -22,22 +23,22 @@ type Collider struct {
 }
 
 type colliderImpl interface {
+	Shape
+
 	colliderCreate() shapeHandle
 	colliderRefresh()
 	colliderDestroy()
 	colliderIsCompound() bool
 }
 
-var _ Shape = &Collider{}
-
-func newCollider(impl colliderImpl, scaled bool) *Collider {
-	col := object.NewComponent(&Collider{
-		colliderImpl: impl,
-		scaled:       scaled,
+func newCollider(pool object.Pool, impl colliderImpl, scaled bool) *Collider {
+	col := object.NewComponent(pool, &Collider{
+		cmp:    impl,
+		scaled: scaled,
 	})
 
 	// create initial handle
-	col.handle = col.colliderCreate()
+	col.handle = col.cmp.colliderCreate()
 
 	runtime.SetFinalizer(col, func(b *Collider) {
 		b.destroy()
@@ -55,7 +56,7 @@ func (c *Collider) shape() shapeHandle {
 
 func (c *Collider) scale() vec3.T {
 	if c.scaled {
-		return c.Transform().WorldScale()
+		return c.cmp.Transform().WorldScale()
 	}
 	return vec3.One
 }
@@ -65,8 +66,8 @@ func (c *Collider) OnEnable() {
 	if c.unsubTf != nil {
 		panic("should not be subscribed")
 	}
-	c.unsubTf = c.Transform().OnChange().Subscribe(c.transformRefresh)
-	c.transformRefresh(c.Transform())
+	c.unsubTf = c.cmp.Transform().OnChange().Subscribe(c.transformRefresh)
+	c.transformRefresh(c.cmp.Transform())
 }
 
 func (c *Collider) OnDisable() {
@@ -84,19 +85,19 @@ func (c *Collider) transformRefresh(t transform.T) {
 	shape_scaling_set(c.handle, newScale)
 
 	// raising OnChange is technically not required since we dont recreate the shape
-	c.OnChange().Emit(c)
+	c.OnChange().Emit(c.cmp)
 }
 
 func (c *Collider) refresh() {
 	c.destroy()
-	c.handle = c.colliderCreate()
-	c.colliderRefresh()
+	c.handle = c.cmp.colliderCreate()
+	c.cmp.colliderRefresh()
 	shape_scaling_set(c.handle, c.scale())
-	c.OnChange().Emit(c)
+	c.OnChange().Emit(c.cmp)
 }
 
 func (c *Collider) destroy() {
-	c.colliderDestroy()
+	c.cmp.colliderDestroy()
 	if c.handle != nil {
 		shape_delete(&c.handle)
 	}

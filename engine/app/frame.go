@@ -30,7 +30,8 @@ func Frame(args Args, scenefuncs ...object.SceneFunc) *osimage.RGBA {
 	defer renderer.Destroy()
 
 	// create scene
-	scene := object.Scene(scenefuncs...)
+	pool := object.NewPool()
+	scene := object.Scene(pool, scenefuncs...)
 
 	scene.Update(scene, 0)
 	renderer.Draw(scene, 0, 0)

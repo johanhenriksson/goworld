@@ -6,24 +6,24 @@ func init() {
 	Register[*scene](TypeInfo{
 		Name:        "Scene",
 		Deserialize: deserializeScene,
-		Create: func() (Component, error) {
-			return Scene(), nil
+		Create: func(pool Pool) (Component, error) {
+			return Scene(pool), nil
 		},
 	})
 }
 
-type SceneFunc func(Object)
+type SceneFunc func(Pool, Object)
 
 type scene struct {
 	Object
 }
 
-func Scene(funcs ...SceneFunc) Object {
+func Scene(pool Pool, funcs ...SceneFunc) Object {
 	s := &scene{
-		Object: Empty("Scene"),
+		Object: Empty(pool, "Scene"),
 	}
 	for _, f := range funcs {
-		f(s)
+		f(pool, s)
 	}
 	return s
 }
@@ -41,7 +41,7 @@ func (s *scene) Serialize(enc Encoder) error {
 	return nil
 }
 
-func deserializeScene(dec Decoder) (Component, error) {
+func deserializeScene(pool Pool, dec Decoder) (Component, error) {
 	log.Println("deserialize scene")
-	return Scene(), nil
+	return Scene(pool), nil
 }

@@ -30,8 +30,8 @@ type manager struct {
 	supressNextRelease bool
 }
 
-func New(renderNodes node.RenderFunc) Manager {
-	return object.NewComponent(&manager{
+func New(pool object.Pool, renderNodes node.RenderFunc) Manager {
+	return object.NewComponent(pool, &manager{
 		viewport: draw.Viewport{
 			Scale: 1,
 		},

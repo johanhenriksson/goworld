@@ -18,36 +18,36 @@ import (
 )
 
 func main() {
-	app.RunEditor(
+	app.Run(
 		app.Args{
 			Width:  1200,
 			Height: 800,
 			Title:  "goworld: cube",
 		},
-		func(scene object.Object) {
+		func(pool object.Pool, scene object.Object) {
 			rot := float32(45)
-			box := cube.New(cube.Args{
+			box := cube.New(pool, cube.Args{
 				Size: 1,
 				Mat:  material.StandardDeferred(),
 			})
 			box.SetTexture(texture.Diffuse, random.Choice(color.DefaultPalette))
 
-			object.Builder(object.Empty("Cube")).
-				Position(vec3.New(0, 0.5, 0)).
+			object.Builder(object.Empty(pool, "Cube")).
+				Position(vec3.T{Y: 0.5}).
 				Attach(box).
-				Attach(script.New(func(scene, self object.Component, dt float32) {
+				Attach(script.New(pool, func(scene, self object.Component, dt float32) {
 					rot += dt * 360.0 / 6
 					self.Parent().Transform().SetRotation(quat.Euler(0, rot, 0))
 				})).
 				Parent(scene).
 				Create()
 
-			ground := plane.New(plane.Args{
+			ground := plane.New(pool, plane.Args{
 				Size: vec2.New(10, 10),
 				Mat:  material.StandardDeferred(),
 			})
 			ground.SetTexture(texture.Diffuse, color.White)
-			object.Builder(object.Empty("Ground")).
+			object.Builder(object.Empty(pool, "Ground")).
 				Attach(ground).
 				Parent(scene).
 				Create()
@@ -55,8 +55,8 @@ func main() {
 			// directional light
 			object.Attach(
 				scene,
-				object.Builder(object.Empty("Sun")).
-					Attach(light.NewDirectional(light.DirectionalArgs{
+				object.Builder(object.Empty(pool, "Sun")).
+					Attach(light.NewDirectional(pool, light.DirectionalArgs{
 						Intensity: 1.3,
 						Color:     color.RGB(1, 1, 1),
 						Shadows:   true,
@@ -66,12 +66,12 @@ func main() {
 					Rotation(quat.Euler(45, 0, 0)).
 					Create())
 
-			object.Builder(object.Empty("Camera")).
+			object.Builder(object.Empty(pool, "Camera")).
 				Rotation(quat.Euler(30, 45, 0)).
 				Position(vec3.New(0, 0.5, 0)).
 				Attach(
-					object.Builder(object.Empty("Eye")).
-						Attach(camera.New(camera.Args{
+					object.Builder(object.Empty(pool, "Eye")).
+						Attach(camera.New(pool, camera.Args{
 							Fov:   60,
 							Near:  0.1,
 							Far:   100,

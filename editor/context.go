@@ -6,6 +6,7 @@ import (
 )
 
 type Context struct {
-	Camera *camera.Camera
-	Scene  object.Object
+	Objects object.Pool
+	Camera  *camera.Camera
+	Scene   object.Object
 }

@@ -17,8 +17,8 @@ type WorldEditor struct {
 
 func NewWorldEditor(ctx *editor.Context, world *physics.World) *WorldEditor {
 	world.Debug(false)
-	return object.NewComponent(&WorldEditor{
-		ComponentEditor: editor.NewComponentEditor(world),
+	return object.NewComponent(ctx.Objects, &WorldEditor{
+		ComponentEditor: editor.NewComponentEditor(ctx.Objects, world),
 		target:          world,
 	})
 }

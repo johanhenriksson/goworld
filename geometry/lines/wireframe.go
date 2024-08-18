@@ -16,9 +16,9 @@ type Wireframe struct {
 	offset float32
 }
 
-func NewWireframe(msh vertex.Mesh, clr color.T) *Wireframe {
-	w := object.NewComponent(&Wireframe{
-		Static: mesh.NewLines(),
+func NewWireframe(pool object.Pool, msh vertex.Mesh, clr color.T) *Wireframe {
+	w := object.NewComponent(pool, &Wireframe{
+		Static: mesh.NewLines(pool),
 		Color:  object.NewProperty(clr),
 		Source: object.NewProperty(msh),
 	})

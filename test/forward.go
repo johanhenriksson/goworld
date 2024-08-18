@@ -71,13 +71,13 @@ var _ = Describe("forward renderer", Label("e2e"), func() {
 				Title:    "goworld",
 				Renderer: ForwardGraph,
 			},
-			func(scene object.Object) {
-				object.Builder(object.Empty("Camera")).
+			func(pool object.Pool, scene object.Object) {
+				object.Builder(object.Empty(pool, "Camera")).
 					Rotation(quat.Euler(30, 45, 0)).
 					Position(vec3.New(0, 1, 0)).
 					Attach(
-						object.Builder(object.Empty("Eye")).
-							Attach(camera.New(camera.Args{
+						object.Builder(object.Empty(pool, "Eye")).
+							Attach(camera.New(pool, camera.Args{
 								Fov:   60,
 								Near:  0.1,
 								Far:   100,
@@ -89,14 +89,14 @@ var _ = Describe("forward renderer", Label("e2e"), func() {
 					Parent(scene).
 					Create()
 
-				object.Builder(plane.NewObject(plane.Args{
+				object.Builder(plane.NewObject(pool, plane.Args{
 					Size: vec2.New(5, 5),
 				})).
 					Parent(scene).
 					Texture(texture.Diffuse, color.White).
 					Create()
 
-				object.Builder(cube.NewObject(cube.Args{
+				object.Builder(cube.NewObject(pool, cube.Args{
 					Size: 1,
 					Mat:  material.StandardForward(),
 				})).
@@ -109,8 +109,8 @@ var _ = Describe("forward renderer", Label("e2e"), func() {
 				rot := float32(45)
 				object.Attach(
 					scene,
-					object.Builder(object.Empty("Sun")).
-						Attach(light.NewDirectional(light.DirectionalArgs{
+					object.Builder(object.Empty(pool, "Sun")).
+						Attach(light.NewDirectional(pool, light.DirectionalArgs{
 							Intensity: 1,
 							Color:     color.RGB(1, 1, 1),
 							Shadows:   true,

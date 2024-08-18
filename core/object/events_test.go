@@ -22,10 +22,11 @@ func (e *EventTester) OnDisable() { e.OnDisableCalls++ }
 var _ = Describe("events test", func() {
 	var scene object.Object
 	var tester *EventTester
+	pool := object.NewPool()
 
 	BeforeEach(func() {
-		scene = object.Scene()
-		tester = object.New("Tester", &EventTester{})
+		scene = object.Scene(pool)
+		tester = object.New(pool, "Tester", &EventTester{})
 		Expect(tester.Active()).To(BeFalse())
 	})
 
@@ -37,14 +38,14 @@ var _ = Describe("events test", func() {
 		})
 
 		It("does not activate when attached to a parent thats not attached to a scene", func() {
-			parent := object.Empty("")
+			parent := object.Empty(pool, "")
 			object.Attach(parent, tester)
 			Expect(tester.OnEnableCalls).To(Equal(0))
 			Expect(tester.Active()).To(BeFalse())
 		})
 
 		It("recursively activates when attached to a scene", func() {
-			parent := object.Empty("")
+			parent := object.Empty(pool, "")
 			object.Attach(parent, tester)
 			object.Attach(scene, parent)
 			Expect(tester.OnEnableCalls).To(Equal(1))
@@ -76,7 +77,7 @@ var _ = Describe("events test", func() {
 		})
 
 		It("recursively deactivates children when detaching", func() {
-			parent := object.Empty("")
+			parent := object.Empty(pool, "")
 			object.Attach(parent, tester)
 			object.Attach(scene, parent)
 			object.Detach(parent)
@@ -92,7 +93,7 @@ var _ = Describe("events test", func() {
 		})
 
 		It("deactivates but does not disable recurisvely", func() {
-			parent := object.Empty("")
+			parent := object.Empty(pool, "")
 			object.Attach(parent, tester)
 			object.Attach(scene, parent)
 			object.Disable(parent)

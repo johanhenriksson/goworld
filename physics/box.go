@@ -13,8 +13,8 @@ func init() {
 		Name:        "Box Collider",
 		Path:        []string{"Physics"},
 		Deserialize: DeserializeBox,
-		Create: func() (object.Component, error) {
-			return NewBox(vec3.One), nil
+		Create: func(ctx object.Pool) (object.Component, error) {
+			return NewBox(ctx, vec3.One), nil
 		},
 	})
 }
@@ -26,21 +26,21 @@ type Box struct {
 	Extents object.Property[vec3.T]
 }
 
-var _ = checkShape(NewBox(vec3.Zero))
+var _ = checkShape(NewBox(object.GlobalPool, vec3.Zero))
 
-func NewBox(size vec3.T) *Box {
-	box := object.NewComponent(&Box{
+func NewBox(pool object.Pool, size vec3.T) *Box {
+	box := &Box{
 		kind:    BoxShape,
 		Extents: object.NewProperty(size),
-	})
-	box.Collider = newCollider(box, true)
+	}
+	box.Collider = newCollider(pool, box, true)
 
 	// resize shape when extents are modified
 	box.Extents.OnChange.Subscribe(func(t vec3.T) {
 		box.refresh()
 	})
 
-	return box
+	return object.NewComponent(pool, box)
 }
 
 func (b *Box) Name() string {
@@ -55,6 +55,8 @@ func (b *Box) colliderCreate() shapeHandle {
 	return shape_new_box(unsafe.Pointer(b), b.Extents.Get().Scaled(0.5))
 }
 
+func (b *Box) colliderIsCompound() bool { return false }
+
 func (b *Box) colliderRefresh() {}
 func (b *Box) colliderDestroy() {}
 
@@ -68,10 +70,10 @@ func (s *Box) Serialize(enc object.Encoder) error {
 	})
 }
 
-func DeserializeBox(dec object.Decoder) (object.Component, error) {
+func DeserializeBox(ctx object.Pool, dec object.Decoder) (object.Component, error) {
 	var state boxState
 	if err := dec.Decode(&state); err != nil {
 		return nil, err
 	}
-	return NewBox(state.Extents), nil
+	return NewBox(ctx, state.Extents), nil
 }

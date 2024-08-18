@@ -16,14 +16,14 @@ type ComponentEditor struct {
 
 var _ T = &ComponentEditor{}
 
-func NewComponentEditor(target object.Component) *ComponentEditor {
+func NewComponentEditor(pool object.Pool, target object.Component) *ComponentEditor {
 	props := object.Properties(target)
 	editors := make([]node.T, 0, len(props))
-	return object.New("ComponentEditor", &ComponentEditor{
-		Object: object.Ghost(target.Name(), target.Transform()),
+	return object.New(pool, "ComponentEditor", &ComponentEditor{
+		Object: object.Ghost(pool, target.Name(), target.Transform()),
 		target: target,
 
-		GUI: PropertyEditorFragment(gui.FragmentLast, func() node.T {
+		GUI: PropertyEditorFragment(pool, gui.FragmentLast, func() node.T {
 			editors = editors[:0]
 			for _, prop := range props {
 				if editor := propedit.ForType(prop.Type()); editor != nil {

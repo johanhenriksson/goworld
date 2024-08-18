@@ -13,8 +13,8 @@ func init() {
 		Name:        "Mesh Collider",
 		Path:        []string{"Physics"},
 		Deserialize: DeserializeMesh,
-		Create: func() (object.Component, error) {
-			return NewMesh(), nil
+		Create: func(ctx object.Pool) (object.Component, error) {
+			return NewMesh(ctx), nil
 		},
 	})
 }
@@ -30,25 +30,23 @@ type Mesh struct {
 	Mesh object.Property[vertex.Mesh]
 }
 
-var _ = checkShape(NewMesh())
+var _ = checkShape(NewMesh(object.GlobalPool))
 
 var emptyMesh = vertex.NewTriangles[vertex.P, uint32]("emptyMeshCollider", []vertex.P{{}}, []uint32{0, 0, 0})
 
-func NewMesh() *Mesh {
-	mesh := object.NewComponent(&Mesh{
+func NewMesh(pool object.Pool) *Mesh {
+	mesh := &Mesh{
 		kind: MeshShape,
-
 		Mesh: object.NewProperty[vertex.Mesh](nil),
-	})
-
-	mesh.Collider = newCollider(mesh, true)
+	}
+	mesh.Collider = newCollider(pool, mesh, true)
 
 	// refresh physics mesh when the mesh property is changed
 	mesh.Mesh.OnChange.Subscribe(func(m vertex.Mesh) {
 		mesh.refresh()
 	})
 
-	return mesh
+	return object.NewComponent(pool, mesh)
 }
 
 func (m *Mesh) colliderCreate() shapeHandle {
@@ -65,6 +63,8 @@ func (m *Mesh) colliderCreate() shapeHandle {
 }
 
 func (m *Mesh) colliderRefresh() {}
+
+func (m *Mesh) colliderIsCompound() bool { return false }
 
 func (m *Mesh) colliderDestroy() {
 	if m.meshHandle != nil {
@@ -104,6 +104,6 @@ func (m *Mesh) Serialize(enc object.Encoder) error {
 	return nil
 }
 
-func DeserializeMesh(dec object.Decoder) (object.Component, error) {
-	return NewMesh(), nil
+func DeserializeMesh(ctx object.Pool, dec object.Decoder) (object.Component, error) {
+	return NewMesh(ctx), nil
 }

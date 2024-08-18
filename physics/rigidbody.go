@@ -14,8 +14,8 @@ func init() {
 		Name:        "Rigidbody",
 		Path:        []string{"Physics"},
 		Deserialize: DeserializeRigidBody,
-		Create: func() (object.Component, error) {
-			return NewRigidBody(1), nil
+		Create: func(ctx object.Pool) (object.Component, error) {
+			return NewRigidBody(ctx, 1), nil
 		},
 	})
 }
@@ -36,8 +36,8 @@ type RigidBody struct {
 	shunsub func()
 }
 
-func NewRigidBody(mass float32) *RigidBody {
-	body := object.NewComponent(&RigidBody{
+func NewRigidBody(pool object.Pool, mass float32) *RigidBody {
+	body := object.NewComponent(pool, &RigidBody{
 		mass: mass,
 
 		Mass:  object.NewProperty[float32](mass),
@@ -170,11 +170,11 @@ func (b *RigidBody) Serialize(enc object.Encoder) error {
 	})
 }
 
-func DeserializeRigidBody(dec object.Decoder) (object.Component, error) {
+func DeserializeRigidBody(ctx object.Pool, dec object.Decoder) (object.Component, error) {
 	var state RigidbodyState
 	if err := dec.Decode(&state); err != nil {
 		return nil, err
 	}
 	// todo: layer masks etc
-	return NewRigidBody(state.Mass), nil
+	return NewRigidBody(ctx, state.Mass), nil
 }

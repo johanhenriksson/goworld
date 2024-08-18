@@ -20,18 +20,18 @@ type Character struct {
 	tfparent transform.T
 }
 
-func NewCharacter(height, radius, stepHeight float32) *Character {
-	shape := NewCapsule(height, radius)
+func NewCharacter(pool object.Pool, height, radius, stepHeight float32) *Character {
+	shape := NewCapsule(pool, height, radius)
 	handle := character_new(shape.shape(), stepHeight)
-	character := object.NewComponent(&Character{
+	character := &Character{
 		handle: handle,
 		shape:  shape,
 		step:   stepHeight,
-	})
+	}
 	runtime.SetFinalizer(character, func(c *Character) {
 		character_delete(&c.handle)
 	})
-	return character
+	return object.NewComponent(pool, character)
 }
 
 func (c *Character) pullState() {

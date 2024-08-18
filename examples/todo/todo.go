@@ -27,8 +27,8 @@ func main() {
 			Height: 800,
 			Title:  "goworld: todo",
 		},
-		func(scene object.Object) {
-			object.Attach(scene, gui.New(func() node.T {
+		func(pool object.Pool, scene object.Object) {
+			object.Attach(scene, gui.New(pool, func() node.T {
 				return rect.New("gui", rect.Props{
 					Style: rect.Style{
 						Position: style.Absolute{},

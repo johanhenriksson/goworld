@@ -4,8 +4,8 @@ import (
 	"reflect"
 )
 
-type CreateFn func() (Component, error)
-type DeserializeFn func(Decoder) (Component, error)
+type CreateFn func(Context) (Component, error)
+type DeserializeFn func(Context, Decoder) (Component, error)
 
 type TypeInfo struct {
 	Name        string
@@ -26,8 +26,8 @@ func typeName(obj any) string {
 func init() {
 	Register[*object](TypeInfo{
 		Name: "Object",
-		Create: func() (Component, error) {
-			return Empty("Object"), nil
+		Create: func(pool Pool) (Component, error) {
+			return Empty(pool, "Object"), nil
 		},
 		Deserialize: DeserializeObject,
 	})

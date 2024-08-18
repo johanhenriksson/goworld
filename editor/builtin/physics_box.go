@@ -29,18 +29,18 @@ type BoxEditor struct {
 }
 
 func NewBoxEditor(ctx *editor.Context, box *physics.Box) *BoxEditor {
-	editor := object.New("PhysicsBoxEditor", &BoxEditor{
-		Object: object.Ghost(box.Name(), box.Transform()),
+	editor := object.New(ctx.Objects, "PhysicsBoxEditor", &BoxEditor{
+		Object: object.Ghost(ctx.Objects, box.Name(), box.Transform()),
 		target: box,
 
-		Shape: physics.NewBox(box.Extents.Get()),
-		Body:  physics.NewRigidBody(0),
-		Mesh: lines.NewBox(lines.BoxArgs{
+		Shape: physics.NewBox(ctx.Objects, box.Extents.Get()),
+		Body:  physics.NewRigidBody(ctx.Objects, 0),
+		Mesh: lines.NewBox(ctx.Objects, lines.BoxArgs{
 			Extents: box.Extents.Get(),
 			Color:   color.Green,
 		}),
 
-		GUI: editor.PropertyEditorFragment(gui.FragmentLast, func() node.T {
+		GUI: editor.PropertyEditorFragment(ctx.Objects, gui.FragmentLast, func() node.T {
 			return editor.Inspector(
 				box,
 				propedit.Vec3Field("extents", "Extents", propedit.Vec3Props{

@@ -44,7 +44,7 @@ func (m *MemorySerializer) Decode(target any) error {
 	return nil
 }
 
-func Copy(obj Component) Component {
+func Copy[T Component](pool Pool, obj T) T {
 	buffer := &MemorySerializer{}
 
 	err := Serialize(buffer, obj)
@@ -52,7 +52,7 @@ func Copy(obj Component) Component {
 		panic(err)
 	}
 
-	kopy, err := Deserialize(buffer)
+	kopy, err := Deserialize[T](pool, buffer)
 	if err != nil {
 		panic(err)
 	}
@@ -69,18 +69,19 @@ func Save(key string, obj Component) error {
 	return assets.Write(key, buf.Bytes())
 }
 
-func Load(key string) (Component, error) {
+func Load[T Component](pool Pool, key string) (T, error) {
 	data, err := assets.Read(key)
 	if err != nil {
-		return nil, err
+		var empty T
+		return empty, err
 	}
 	buf := bytes.NewBuffer(data)
 	dec := gob.NewDecoder(buf)
-	return Deserialize(dec)
+	return Deserialize[T](pool, dec)
 }
 
 type ComponentState struct {
-	ID      uint
+	ID      Handle
 	Name    string
 	Enabled bool
 }
@@ -126,16 +127,30 @@ func Serialize(enc Encoder, obj Component) error {
 	return serializable.Serialize(enc)
 }
 
-func Deserialize(decoder Decoder) (Component, error) {
-	var kind string
+var kind string
+
+func Deserialize[T Component](pool Pool, decoder Decoder) (T, error) {
+	pool = newMappingPool(pool)
+	var empty T
 	if err := decoder.Decode(&kind); err != nil {
-		return nil, err
+		return empty, err
 	}
 	typ, exists := types[kind]
 	if !exists {
-		return nil, fmt.Errorf("%w: no deserializer for %s", ErrSerialize, kind)
+		return empty, fmt.Errorf("%w: no deserializer for %s", ErrSerialize, kind)
 	}
-	return typ.Deserialize(decoder)
+
+	tctx := newMappingPool(pool)
+	cmp, err := typ.Deserialize(tctx, decoder)
+	if err != nil {
+		return empty, err
+	}
+
+	cast, ok := cmp.(T)
+	if !ok {
+		return empty, fmt.Errorf("%w: %s is not of type %T", ErrSerialize, kind, empty)
+	}
+	return cast, nil
 }
 
 func (o *object) Serialize(enc Encoder) error {
@@ -172,24 +187,39 @@ func (o *object) Serialize(enc Encoder) error {
 	return nil
 }
 
-func DeserializeObject(dec Decoder) (Component, error) {
+func DeserializeObject(ctx Pool, dec Decoder) (Component, error) {
 	var data ObjectState
 	if err := dec.Decode(&data); err != nil {
 		return nil, err
 	}
-	obj := Empty(data.Name)
+	obj := emptyObject(ctx, data.Name)
+	obj.component = *data.ComponentState.New().(*component)
 	obj.setEnabled(data.Enabled)
 	obj.Transform().SetPosition(data.Position)
 	obj.Transform().SetRotation(data.Rotation)
 	obj.Transform().SetScale(data.Scale)
+	ctx.assign(obj)
 
 	// deserialize children
 	for i := 0; i < data.Children; i++ {
-		child, err := Deserialize(dec)
+		child, err := Deserialize[Component](ctx, dec)
 		if err != nil {
 			return nil, err
 		}
 		Attach(obj, child)
 	}
 	return obj, nil
+}
+
+func EncodeComponent(enc Encoder, cmp Component) error {
+	state := NewComponentState(cmp)
+	return enc.Encode(state)
+}
+
+func DecodeComponent(pool Pool, dec Decoder) (Component, error) {
+	var data ComponentState
+	if err := dec.Decode(&data); err != nil {
+		return nil, err
+	}
+	return data.New(), nil
 }

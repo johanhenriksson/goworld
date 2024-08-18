@@ -8,7 +8,7 @@ import (
 
 type Component interface {
 	// ID returns a unique identifier for this object.
-	ID() uint
+	ID() Handle
 
 	// Name is used to identify the object within the scene.
 	Name() string
@@ -27,12 +27,14 @@ type Component interface {
 	// Note that the object can still be inactive if an ancestor is disabled.
 	Enabled() bool
 
-	// Update the object. Called on every frame.
+	// Update the component. Called on every frame.
 	Update(Component, float32)
 
 	// Destroy the object
 	Destroy()
 
+	context() Pool
+	setID(Pool, Handle)
 	setName(string)
 	setParent(Object)
 	setEnabled(bool) bool
@@ -40,8 +42,9 @@ type Component interface {
 }
 
 type component struct {
-	id      uint
+	id      Handle
 	name    string
+	ctx     Pool
 	enabled bool
 	active  bool
 	parent  Object
@@ -49,7 +52,6 @@ type component struct {
 
 func emptyComponent(name string) component {
 	return component{
-		id:      ID(),
 		name:    name,
 		enabled: true,
 		active:  false,
@@ -57,9 +59,10 @@ func emptyComponent(name string) component {
 }
 
 // componentType caches a reference to Component's reflect.Type
-var componentType = reflect.TypeOf((*Component)(nil)).Elem()
+var componentType = reflect.TypeOf((*Component)(nil)).Elem()     // Component
+var baseComponentType = reflect.TypeOf((*component)(nil)).Elem() // component
 
-func NewComponent[K Component](cmp K) K {
+func NewComponent[K Component](pool Pool, cmp K) K {
 	t := reflect.TypeOf(cmp).Elem()
 	v := reflect.ValueOf(cmp).Elem()
 
@@ -86,26 +89,38 @@ func NewComponent[K Component](cmp K) K {
 			}
 		} else if _, isComponent := value.Interface().(Component); isComponent {
 			// this object extends some other non-base object
+			if value.IsZero() {
+				panic("base component is not initialized")
+			}
 		} else {
 			// its not an object, move on
 			continue
 		}
 
+		if baseIdx >= 0 {
+			panic("struct embeds multiple Components")
+		}
 		baseIdx = i
 	}
 	if baseIdx < 0 {
 		panic("struct does not embed a Component")
 	}
 
+	// assign context handle
+	pool.assign(cmp)
+
 	return cmp
 }
 
-func (b *component) ID() uint {
-	return b.id
+func (b *component) ID() Handle { return b.id }
+func (b *component) setID(pool Pool, id Handle) {
+	b.id = id
+	b.ctx = pool
 }
 
-func (b *component) Update(scene Component, dt float32) {
-}
+func (b *component) context() Pool { return b.ctx }
+
+func (b *component) Update(scene Component, dt float32) {}
 
 func (b *component) Transform() transform.T {
 	if b.parent == nil {
@@ -138,5 +153,10 @@ func (b *component) String() string   { return b.Name() }
 func (o *component) Destroy() {
 	if o.parent != nil {
 		o.parent.detach(o)
+	}
+
+	if o.ctx != nil {
+		o.ctx.release(o.id)
+		o.ctx = nil
 	}
 }

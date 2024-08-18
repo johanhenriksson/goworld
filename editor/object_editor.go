@@ -18,12 +18,12 @@ type ObjectEditor struct {
 
 var _ T = &ObjectEditor{}
 
-func NewObjectEditor(target object.Object) *ObjectEditor {
-	return object.New("ObjectEditor", &ObjectEditor{
-		Object: object.Ghost(target.Name(), target.Transform()),
+func NewObjectEditor(pool object.Pool, target object.Object) *ObjectEditor {
+	return object.New(pool, "ObjectEditor", &ObjectEditor{
+		Object: object.Ghost(pool, target.Name(), target.Transform()),
 		target: target,
 
-		GUI: PropertyEditorFragment(gui.FragmentLast, func() node.T {
+		GUI: PropertyEditorFragment(pool, gui.FragmentLast, func() node.T {
 			return Inspector(
 				target,
 				propedit.BoolField("enabled", "Enabled", propedit.BoolProps{
