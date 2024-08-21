@@ -1,43 +1,124 @@
-package object_test
+package object
 
 import (
 	. "github.com/johanhenriksson/goworld/test/util"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-
-	"github.com/johanhenriksson/goworld/core/object"
 )
 
 var _ = Describe("serialization", func() {
-	var ctx object.Pool
+	type ObjectWithComponent struct {
+		Object
 
-	It("serializes basic objects", func() {
-		a0 := object.Empty(ctx, "A")
-		a1 := object.Copy(ctx, a0)
+		// Reference to a component that is a direct child of the object
+		Pointer Component
 
-		Expect(a1.Name()).To(Equal(a0.Name()))
-		Expect(a1.Enabled()).To(Equal(a0.Enabled()))
-		Expect(a1.Transform().Position()).To(ApproxVec3(a0.Transform().Position()))
-		Expect(a1.Transform().Rotation()).To(ApproxQuat(a0.Transform().Rotation()))
-		Expect(a1.Transform().Scale()).To(ApproxVec3(a0.Transform().Scale()))
+		// Reference to any component in the scene
+		Ref Reference[Component]
+
+		Value Property[int]
+	}
+
+	var pool Pool
+	BeforeEach(func() {
+		pool = NewPool()
+		Register[*ObjectWithComponent](TypeInfo{})
 	})
 
-	It("serializes nested objects", func() {
-		a0 := object.Builder(object.Empty(ctx, "Parent")).
-			Attach(object.Empty(ctx, "Child 1")).
-			Attach(object.Empty(ctx, "Child 2")).
-			Create()
+	Context("objects", func() {
+		It("serializes basic objects", func() {
+			a0 := Empty(pool, "A")
+			a1 := Copy(pool, a0)
 
-		a1 := object.Copy(ctx, a0).(object.Object)
-		children := a1.Children()
-		Expect(len(children)).To(Equal(2))
-		Expect(children[0].Name()).To(Equal("Child 1"))
-		Expect(children[1].Name()).To(Equal("Child 2"))
+			Expect(a1.Name()).To(Equal(a0.Name()))
+			Expect(a1.Enabled()).To(Equal(a0.Enabled()))
+			Expect(a1.Transform().Position()).To(ApproxVec3(a0.Transform().Position()))
+			Expect(a1.Transform().Rotation()).To(ApproxQuat(a0.Transform().Rotation()))
+			Expect(a1.Transform().Scale()).To(ApproxVec3(a0.Transform().Scale()))
+		})
+
+		It("serializes nested objects", func() {
+			a0 := Builder(Empty(pool, "Parent")).
+				Attach(Empty(pool, "Child 1")).
+				Attach(Empty(pool, "Child 2")).
+				Create()
+
+			a1 := Copy(pool, a0).(Object)
+			children := a1.Children()
+			Expect(len(children)).To(Equal(2))
+			Expect(children[0].Name()).To(Equal("Child 1"))
+			Expect(children[1].Name()).To(Equal("Child 2"))
+		})
+
+		It("serializes scenes", func() {
+			a0 := Scene(pool)
+			a1 := Copy(pool, a0)
+			Expect(a1.Name()).To(Equal("Scene"))
+		})
+
+		It("serializes child references", func() {
+			obj := New(pool, "ObjectWithComponent", &ObjectWithComponent{
+				Pointer: Empty(pool, "Child"),
+				Value:   NewProperty(123),
+			})
+			obj.Ref.Set(obj.Pointer)
+
+			enc := &MemorySerializer{}
+			Serialize(enc, obj)
+
+			// object header
+			// child type
+			// child object header
+			// child
+			// object
+			// reference to Thing
+			// reference prop -> null
+			// value prop -> 0
+			Expect(enc.Stream).To(HaveLen(8))
+
+			obj, err := Deserialize[*ObjectWithComponent](pool, enc)
+			Expect(err).ToNot(HaveOccurred())
+
+			// pointer should be set and point to the child
+			Expect(obj.Pointer).ToNot(BeNil())
+			Expect(obj.Children()).To(HaveLen(1))
+			Expect(obj.Pointer.ID()).To(Equal(obj.Children()[0].ID()))
+
+			// value should be preserved
+			Expect(obj.Value.Get()).To(Equal(123))
+
+			// reference should be set and point to the child
+			targetRef, ok := obj.Ref.Get()
+			Expect(ok).To(BeTrue())
+			Expect(targetRef.ID()).To(Equal(obj.Pointer.ID()))
+		})
 	})
 
-	It("serializes scenes", func() {
-		a0 := object.Scene(ctx)
-		a1 := object.Copy(ctx, a0)
-		Expect(a1.Name()).To(Equal("Scene"))
+	Context("components", func() {
+		type A struct {
+			Component
+		}
+		type B struct {
+			*A
+		}
+
+		BeforeEach(func() {
+			Register[*A](TypeInfo{})
+			Register[*B](TypeInfo{})
+		})
+
+		It("serializes base components", func() {
+			a0 := NewComponent(pool, &A{})
+			a1 := Copy(pool, a0)
+			Expect(a1).ToNot(BeNil())
+		})
+
+		It("serializes derived components", func() {
+			b0 := NewComponent(pool, &B{
+				A: NewComponent(pool, &A{}),
+			})
+			b1 := Copy(pool, b0)
+			Expect(b1).ToNot(BeNil())
+		})
 	})
 })
