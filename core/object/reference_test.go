@@ -1,64 +1,68 @@
-package object_test
+package object
 
 import (
+	"reflect"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-
-	"github.com/johanhenriksson/goworld/core/object"
 )
 
 type ObjectWithReference struct {
-	object.Object
-	Reference object.Reference[object.Object]
+	Object
+	Reference Reference[Object]
 }
 
-var _ object.Serializable = (*ObjectWithReference)(nil)
+var _ = Describe("", func() {
+	var pool Pool
+	var a *ObjectWithReference
+	var b Object
 
-func (o *ObjectWithReference) Serialize(enc object.Encoder) error {
-	if err := object.Serialize(enc, o.Object); err != nil {
-		return err
-	}
-	if err := o.Reference.Serialize(enc); err != nil {
-		return err
-	}
-	return nil
-}
-
-func DeserializeObjectWithReference(ctx object.Pool, dec object.Decoder) (object.Component, error) {
-	obj, err := object.Deserialize[object.Object](ctx, dec)
-	if err != nil {
-		return nil, err
-	}
-	o := &ObjectWithReference{
-		Object: obj,
-	}
-	o.Reference, err = object.DeserializeReference[object.Object](ctx, dec)
-	return o, err
-}
-
-var _ = FDescribe("", func() {
 	BeforeEach(func() {
-		object.Register[*ObjectWithReference](object.TypeInfo{
-			Name:        "ObjectWithReference",
-			Deserialize: DeserializeObjectWithReference,
-		})
+		Register[*ObjectWithReference](TypeInfo{})
+
+		pool = NewPool()
+		a = New(pool, "a", &ObjectWithReference{})
+		b = Empty(pool, "b")
+		Attach(a, b)
+		a.Reference.Set(b)
+	})
+
+	It("encodes references", func() {
+		s := &MemorySerializer{}
+		val := reflect.ValueOf(a).Elem()
+		err := encodeReferences(s, val)
+		Expect(err).To(BeNil())
+
+		Expect(s.Stream).To(HaveLen(1))
+
+		err = decodeReferences(pool, s, val)
+		Expect(err).To(BeNil())
+
+		ref, ok := a.Reference.Get()
+		Expect(ok).To(BeTrue())
+		Expect(ref.ID()).To(Equal(b.ID()))
+	})
+
+	It("serializes empty references", func() {
+		obj := New(pool, "obj", &ObjectWithReference{})
+		out := Copy(pool, obj)
+		Expect(out).ToNot(BeNil())
+		Expect(out.Children()).To(HaveLen(0))
+		ref, ok := out.Reference.Get()
+		Expect(ok).To(BeFalse())
+		Expect(ref).To(BeNil())
 	})
 
 	It("serializes correctly", func() {
-		ctx := object.NewPool()
-		a := object.New(ctx, "a", &ObjectWithReference{})
-		b := object.Empty(ctx, "b")
-		object.Attach(a, b)
-		a.Reference.Set(b)
+		sa := Copy(pool, a)
 
-		sa := object.Copy(ctx, a)
 		Expect(sa.ID()).ToNot(Equal(a.ID()))
 		Expect(sa.Children()).To(HaveLen(1))
 
 		sbref, ok := sa.Reference.Get()
 		Expect(ok).To(BeTrue(), "handle should be valid")
 
-		sb := sa.Children()[0].(object.Object)
+		sb := sa.Children()[0].(Object)
 		Expect(sb.ID()).To(Equal(sbref.ID()))
 	})
 })
