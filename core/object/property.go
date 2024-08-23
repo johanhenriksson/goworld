@@ -17,11 +17,6 @@ type GenericProp interface {
 	SetAny(any)
 }
 
-type ValueProp interface {
-	GenericProp
-	setValue(any)
-}
-
 type Property[T PropValue] struct {
 	value T
 	def   T
@@ -31,7 +26,6 @@ type Property[T PropValue] struct {
 }
 
 var _ GenericProp = &Property[int]{}
-var _ ValueProp = &Property[int]{}
 
 func NewProperty[T PropValue](def T) Property[T] {
 	var empty T
@@ -59,10 +53,6 @@ func (p *Property[T]) SetAny(value any) {
 	if cast, ok := value.(T); ok {
 		p.Set(cast)
 	}
-}
-
-func (p *Property[T]) setValue(value any) {
-	p.value = value.(T)
 }
 
 func (p *Property[T]) String() string {
@@ -116,40 +106,15 @@ func Properties(target Component) []PropInfo {
 // serialization
 //
 
-type valueProp struct {
-	Value any
+func (p *Property[T]) Serialize(enc Encoder) error {
+	return enc.Encode(p.value)
 }
 
-func encodeProperties(enc Encoder, val reflect.Value) error {
-	// property
-	// .Addr() since property methods have pointer receivers
-	for i := 0; i < val.NumField(); i++ {
-		if val.Field(i).Addr().Type().Implements(valuePropType) {
-			var value any
-			if prop, ok := val.Field(i).Addr().Interface().(GenericProp); ok {
-				value = prop.GetAny()
-			}
-			if err := enc.Encode(valueProp{
-				Value: value,
-			}); err != nil {
-				return err
-			}
-		}
+func (p *Property[T]) Deserialize(pool Pool, dec Decoder) error {
+	var value T
+	if err := dec.Decode(&value); err != nil {
+		return err
 	}
-	return nil
-}
-
-func decodeProperties(pool Pool, dec Decoder, val reflect.Value) error {
-	// property
-	// .Addr() since property methods have pointer receivers
-	for i := 0; i < val.NumField(); i++ {
-		if val.Field(i).Addr().Type().Implements(valuePropType) {
-			var prop valueProp
-			if err := dec.Decode(&prop); err != nil {
-				return err
-			}
-			val.Field(i).Addr().Interface().(ValueProp).setValue(prop.Value)
-		}
-	}
+	p.value = value
 	return nil
 }

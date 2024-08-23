@@ -8,9 +8,8 @@ import (
 
 func init() {
 	object.Register[*Sphere](object.TypeInfo{
-		Name:        "Sphere Collider",
-		Path:        []string{"Physics"},
-		Deserialize: DeserializeSphere,
+		Name: "Sphere Collider",
+		Path: []string{"Physics"},
 		Create: func(ctx object.Pool) (object.Component, error) {
 			return NewSphere(ctx, 1), nil
 		},
@@ -49,21 +48,3 @@ func (s *Sphere) colliderIsCompound() bool { return false }
 
 func (s *Sphere) colliderRefresh() {}
 func (s *Sphere) colliderDestroy() {}
-
-type sphereState struct {
-	Radius float32
-}
-
-func (s *Sphere) Serialize(enc object.Encoder) error {
-	return enc.Encode(sphereState{
-		Radius: s.Radius.Get(),
-	})
-}
-
-func DeserializeSphere(ctx object.Pool, dec object.Decoder) (object.Component, error) {
-	var state sphereState
-	if err := dec.Decode(&state); err != nil {
-		return nil, err
-	}
-	return NewSphere(ctx, state.Radius), nil
-}

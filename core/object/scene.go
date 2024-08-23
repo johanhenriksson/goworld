@@ -1,11 +1,8 @@
 package object
 
-import "log"
-
 func init() {
 	Register[*scene](TypeInfo{
-		Name:        "Scene",
-		Deserialize: deserializeScene,
+		Name: "Scene",
 		Create: func(pool Pool) (Component, error) {
 			return Scene(pool), nil
 		},
@@ -34,14 +31,4 @@ func (s *scene) Active() bool {
 
 func (s *scene) setActive(bool) bool {
 	return true
-}
-
-func (s *scene) Serialize(enc Encoder) error {
-	log.Println("serialize scene")
-	return nil
-}
-
-func deserializeScene(pool Pool, dec Decoder) (Component, error) {
-	log.Println("deserialize scene")
-	return Scene(pool), nil
 }

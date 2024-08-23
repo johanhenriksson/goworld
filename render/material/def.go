@@ -1,6 +1,7 @@
 package material
 
 import (
+	"encoding/gob"
 	"strconv"
 
 	"github.com/johanhenriksson/goworld/render/vertex"
@@ -31,6 +32,10 @@ type Def struct {
 	Transparent  bool
 
 	id ID
+}
+
+func init() {
+	gob.Register(&Def{})
 }
 
 func (d *Def) Hash() ID {

@@ -12,9 +12,7 @@ import (
 )
 
 func init() {
-	object.Register[*Mesh](object.TypeInfo{
-		Deserialize: Deserialize,
-	})
+	object.Register[*Mesh](object.TypeInfo{})
 }
 
 // Sprite is a single segment, one-sided 3D plane
@@ -49,22 +47,6 @@ func New(pool object.Pool, args Args) *Mesh {
 	})
 
 	return sprite
-}
-
-func (m *Mesh) Serialize(encoder object.Encoder) error {
-	err := encoder.Encode(&Args{
-		Size:    m.Size.Get(),
-		Texture: m.Sprite.Get(),
-	})
-	return err
-}
-
-func Deserialize(pool object.Pool, decoder object.Decoder) (object.Component, error) {
-	args := Args{}
-	if err := decoder.Decode(&args); err != nil {
-		return nil, err
-	}
-	return New(pool, args), nil
 }
 
 func (p *Mesh) generate() {

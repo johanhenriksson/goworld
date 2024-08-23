@@ -10,6 +10,7 @@ type Pool interface {
 	assign(Component)
 	remap(Handle) Handle
 	release(Handle)
+	unwrap() Pool
 }
 
 type context struct {
@@ -31,7 +32,6 @@ func (c *context) Resolve(h Handle) (Component, bool) {
 
 func (c *context) assign(obj Component) {
 	handle := c.remap(obj.ID())
-	log.Println("added", typeName(obj), "to pool with handle", handle)
 	obj.setID(c, handle)
 	c.handles[handle] = obj
 }
@@ -45,6 +45,10 @@ func (c *context) remap(h Handle) Handle {
 		return h
 	}
 	return c.nextHandle()
+}
+
+func (c *context) unwrap() Pool {
+	return c
 }
 
 func (c *context) nextHandle() Handle {
@@ -91,4 +95,8 @@ func (c *mappingPool) remap(h Handle) Handle {
 	newHandle := c.Pool.remap(0) // remap(0) returns a new handle
 	c.mapping[h] = newHandle
 	return newHandle
+}
+
+func (c *mappingPool) unwrap() Pool {
+	return c.Pool
 }

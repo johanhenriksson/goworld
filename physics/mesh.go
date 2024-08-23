@@ -10,9 +10,8 @@ import (
 
 func init() {
 	object.Register[*Mesh](object.TypeInfo{
-		Name:        "Mesh Collider",
-		Path:        []string{"Physics"},
-		Deserialize: DeserializeMesh,
+		Name: "Mesh Collider",
+		Path: []string{"Physics"},
 		Create: func(ctx object.Pool) (object.Component, error) {
 			return NewMesh(ctx), nil
 		},
@@ -98,12 +97,4 @@ func (m *Mesh) OnDisable() {
 		m.unsub = nil
 	}
 	m.Collider.OnDisable()
-}
-
-func (m *Mesh) Serialize(enc object.Encoder) error {
-	return nil
-}
-
-func DeserializeMesh(ctx object.Pool, dec object.Decoder) (object.Component, error) {
-	return NewMesh(ctx), nil
 }

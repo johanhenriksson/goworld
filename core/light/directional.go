@@ -43,8 +43,7 @@ var _ T = &Directional{}
 
 func init() {
 	object.Register[*Directional](object.TypeInfo{
-		Name:        "Directional Light",
-		Deserialize: DeserializeDirectional,
+		Name: "Directional Light",
 		Create: func(pool object.Pool) (object.Component, error) {
 			return NewDirectional(pool, DirectionalArgs{
 				Color:     color.White,
@@ -219,26 +218,4 @@ func (lit *Directional) ShadowProjection(mapIndex int) uniform.Camera {
 		Eye:         vec4.Extend(lit.Transform().Position(), 0),
 		Forward:     vec4.Extend(lit.Transform().Forward(), 0),
 	}
-}
-
-func (lit *Directional) Serialize(enc object.Encoder) error {
-	if err := object.EncodeComponent(enc, lit.Component); err != nil {
-		return err
-	}
-	return enc.Encode(*lit)
-}
-
-func DeserializeDirectional(ctx object.Pool, dec object.Decoder) (object.Component, error) {
-	cmp, err := object.DecodeComponent(ctx, dec)
-	if err != nil {
-		return nil, err
-	}
-
-	args := &Directional{}
-	if err := dec.Decode(args); err != nil {
-		return nil, err
-	}
-	args.Component = cmp
-
-	return object.NewComponent(ctx, args), nil
 }
