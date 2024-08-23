@@ -1,6 +1,8 @@
 package mesh
 
 import (
+	"fmt"
+
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/math/shape"
 	"github.com/johanhenriksson/goworld/math/vec3"
@@ -11,8 +13,7 @@ import (
 
 func init() {
 	object.Register[*Static](object.TypeInfo{
-		Name:        "Mesh",
-		Deserialize: Deserialize,
+		Name: "Mesh",
 		Create: func(pool object.Pool) (object.Component, error) {
 			return New(pool, nil), nil
 		},
@@ -41,19 +42,20 @@ type Mesh interface {
 type Static struct {
 	object.Component
 
-	primitive vertex.Primitive
-	shadows   bool
-	mat       *material.Def
-	matId     material.ID
-
-	textures map[texture.Slot]texture.Ref
+	matId material.ID
 
 	// bounding radius
 	center vec3.T
 	radius float32
 
-	VertexData object.Property[vertex.Mesh]
+	Prim        object.Property[vertex.Primitive]
+	CastsShadow object.Property[bool]
+	Mat         object.Property[*material.Def]
+	Textures    object.Dict[texture.Slot, texture.Ref]
+	VertexData  object.Property[vertex.Mesh]
 }
+
+var _ Mesh = (*Static)(nil)
 
 // New creates a new mesh component
 func New(pool object.Pool, mat *material.Def) *Static {
@@ -68,13 +70,13 @@ func NewLines(pool object.Pool) *Static {
 // NewPrimitiveMesh creates a new mesh composed of a given GL primitive
 func NewPrimitiveMesh(pool object.Pool, primitive vertex.Primitive, mat *material.Def) *Static {
 	m := object.NewComponent(pool, &Static{
-		mat:       mat,
-		matId:     material.Hash(mat),
-		textures:  make(map[texture.Slot]texture.Ref),
-		primitive: primitive,
-		shadows:   true,
+		Mat:         object.NewProperty(mat),
+		CastsShadow: object.NewProperty(true),
+		Prim:        object.NewProperty(primitive),
+		Textures:    object.NewDict[texture.Slot, texture.Ref](),
+		VertexData:  object.NewProperty[vertex.Mesh](nil),
 
-		VertexData: object.NewProperty[vertex.Mesh](nil),
+		matId: material.Hash(mat),
 	})
 	m.VertexData.OnChange.Subscribe(func(data vertex.Mesh) {
 		// refresh bounding sphere
@@ -90,27 +92,29 @@ func (m *Static) Name() string {
 	return "Mesh"
 }
 
-func (m *Static) Primitive() vertex.Primitive         { return m.primitive }
+func (m *Static) Primitive() vertex.Primitive         { return m.Prim.Get() }
 func (m *Static) Mesh() *object.Property[vertex.Mesh] { return &m.VertexData }
 
 func (m *Static) Texture(slot texture.Slot) texture.Ref {
-	return m.textures[slot]
+	t, exists := m.Textures.Get(slot)
+	if !exists {
+		panic(fmt.Errorf("texture slot %s does not exist", slot))
+	}
+	return t
 }
 
 func (m *Static) SetTexture(slot texture.Slot, ref texture.Ref) {
-	m.textures[slot] = ref
+	m.Textures.Set(slot, ref)
 }
 
 func (m *Static) CastShadows() bool {
-	return m.primitive == vertex.Triangles && m.shadows && !m.mat.Transparent
-}
-
-func (m *Static) SetShadows(shadows bool) {
-	m.shadows = shadows
+	return m.Prim.Get() == vertex.Triangles &&
+		m.CastsShadow.Get() &&
+		!m.Mat.Get().Transparent
 }
 
 func (m *Static) Material() *material.Def {
-	return m.mat
+	return m.Mat.Get()
 }
 
 func (m *Static) MaterialID() material.ID {
@@ -122,33 +126,4 @@ func (m *Static) BoundingSphere() shape.Sphere {
 		Center: m.Transform().WorldPosition().Add(m.center),
 		Radius: m.radius,
 	}
-}
-
-type MeshState struct {
-	object.ComponentState
-	Primitive vertex.Primitive
-	Material  material.Def
-	TexSlots  map[texture.Slot]texture.Ref
-}
-
-func (m *Static) Serialize(enc object.Encoder) error {
-	return enc.Encode(MeshState{
-		// send help
-		ComponentState: object.NewComponentState(m.Component),
-		Primitive:      m.primitive,
-		Material:       *m.Material(),
-		TexSlots:       m.textures,
-	})
-}
-
-func Deserialize(pool object.Pool, dec object.Decoder) (object.Component, error) {
-	var state MeshState
-	if err := dec.Decode(&state); err != nil {
-		return nil, err
-	}
-
-	obj := NewPrimitiveMesh(pool, state.Primitive, &state.Material)
-	obj.Component = state.ComponentState.New()
-	obj.textures = state.TexSlots
-	return obj, nil
 }

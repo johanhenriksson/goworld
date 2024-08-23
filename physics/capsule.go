@@ -9,9 +9,8 @@ import (
 
 func init() {
 	object.Register[*Capsule](object.TypeInfo{
-		Name:        "Capsule Collider",
-		Path:        []string{"Physics"},
-		Deserialize: DeserializeCapsule,
+		Name: "Capsule Collider",
+		Path: []string{"Physics"},
 		Create: func(ctx object.Pool) (object.Component, error) {
 			return NewCapsule(ctx, 1.8, 0.3), nil
 		},
@@ -62,23 +61,3 @@ func (c *Capsule) colliderIsCompound() bool { return false }
 
 func (c *Capsule) colliderRefresh() {}
 func (c *Capsule) colliderDestroy() {}
-
-type capsuleState struct {
-	Radius float32
-	Height float32
-}
-
-func (s *Capsule) Serialize(enc object.Encoder) error {
-	return enc.Encode(capsuleState{
-		Height: s.Height.Get(),
-		Radius: s.Radius.Get(),
-	})
-}
-
-func DeserializeCapsule(ctx object.Pool, dec object.Decoder) (object.Component, error) {
-	var state capsuleState
-	if err := dec.Decode(&state); err != nil {
-		return nil, err
-	}
-	return NewCapsule(ctx, state.Height, state.Radius), nil
-}

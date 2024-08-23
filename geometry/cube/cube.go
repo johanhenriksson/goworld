@@ -11,9 +11,8 @@ import (
 
 func init() {
 	object.Register[*Mesh](object.TypeInfo{
-		Name:        "Cube",
-		Path:        []string{"Geometry"},
-		Deserialize: Deserialize,
+		Name: "Cube",
+		Path: []string{"Geometry"},
 		Create: func(ctx object.Pool) (object.Component, error) {
 			return NewObject(ctx, Args{
 				Size: 1,
@@ -22,21 +21,25 @@ func init() {
 	})
 }
 
-type Object struct {
+type CubeObject struct {
 	object.Object
 	Mesh *Mesh
 }
 
-func NewObject(pool object.Pool, args Args) *Object {
-	return object.New(pool, "Cube", &Object{
+func NewObject(pool object.Pool, args Args) *CubeObject {
+	return object.New(pool, "Cube", &CubeObject{
 		Mesh: New(pool, args),
 	})
 }
 
 // Mesh is a vertex colored cube mesh
 type Mesh struct {
+	// these are actually dynamic meshes, but since they generate so quickly
+	// it might not make sense to generate in the background
 	*mesh.Static
-	Args
+
+	Size object.Property[float32]
+	Mat  object.Property[*material.Def]
 }
 
 type Args struct {
@@ -51,39 +54,23 @@ func New(pool object.Pool, args Args) *Mesh {
 	}
 	c := object.NewComponent(pool, &Mesh{
 		Static: mesh.New(pool, args.Mat),
-		Args:   args,
+		Size:   object.NewProperty(args.Size),
+		Mat:    object.NewProperty(args.Mat),
 	})
+	c.Size.OnChange.Subscribe(func(size float32) {
+		c.generate()
+	})
+	// todo: subscribe to material changes
 	c.generate()
 	return c
 }
 
-func (c *Mesh) Serialize(encoder object.Encoder) error {
-	if err := c.Static.Serialize(encoder); err != nil {
-		return err
-	}
-	return encoder.Encode(c.Args)
-}
-
-func Deserialize(ctx object.Pool, decoder object.Decoder) (object.Component, error) {
-	msh, err := mesh.Deserialize(ctx, decoder)
-	if err != nil {
-		return nil, err
-	}
-	var args Args
-	if err := decoder.Decode(&args); err != nil {
-		return nil, err
-	}
-
-	cube := object.NewComponent(ctx, &Mesh{
-		Static: msh.(*mesh.Static),
-		Args:   args,
-	})
-	cube.generate()
-	return cube, nil
-}
-
 func (c *Mesh) generate() {
-	s := c.Size / 2
+	s := c.Size.Get() / 2
+	if s < 0 {
+		// return an empty mesh?
+		s = 0
+	}
 
 	topLeft := vec2.New(0, 0)
 	topRight := vec2.New(1, 0)

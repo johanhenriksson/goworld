@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"reflect"
 	"slices"
 
@@ -16,8 +15,12 @@ import (
 	"github.com/johanhenriksson/goworld/math/vec3"
 )
 
-var refPropType = reflect.TypeOf((*ReferenceProp)(nil)).Elem()
-var valuePropType = reflect.TypeOf((*ValueProp)(nil)).Elem()
+var ErrSerialize = errors.New("serialization error")
+
+type Serializable interface {
+	Serialize(Encoder) error
+	Deserialize(Pool, Decoder) error
+}
 
 type Decoder interface {
 	Decode(e any) error
@@ -27,28 +30,7 @@ type Encoder interface {
 	Encode(data any) error
 }
 
-type Serializable interface {
-	Serialize(Encoder) error
-}
-
-type MemorySerializer struct {
-	Stream []any
-	index  int
-}
-
-func (m *MemorySerializer) Encode(data any) error {
-	m.Stream = append(m.Stream, data)
-	return nil
-}
-
-func (m *MemorySerializer) Decode(target any) error {
-	if m.index >= len(m.Stream) {
-		return io.EOF
-	}
-	reflect.ValueOf(target).Elem().Set(reflect.ValueOf(m.Stream[m.index]))
-	m.index++
-	return nil
-}
+var serializableType = reflect.TypeOf((*Serializable)(nil)).Elem()
 
 func Copy[T Component](pool Pool, obj T) T {
 	buffer := &MemorySerializer{}
@@ -86,37 +68,27 @@ func Load[T Component](pool Pool, key string) (T, error) {
 	return Deserialize[T](pool, dec)
 }
 
-type ComponentState struct {
+type componentState struct {
 	ID      Handle
 	Name    string
 	Enabled bool
 }
 
-func NewComponentState(c Component) ComponentState {
-	return ComponentState{
+func newComponentState(c Component) componentState {
+	return componentState{
 		ID:      c.ID(),
 		Name:    c.Name(),
 		Enabled: c.Enabled(),
 	}
 }
 
-func (c ComponentState) New() Component {
-	return &component{
-		id:      c.ID,
-		name:    c.Name,
-		enabled: c.Enabled,
-	}
-}
-
-type ObjectState struct {
-	ComponentState
+type objectState struct {
+	componentState
 	Position vec3.T
 	Rotation quat.T
 	Scale    vec3.T
 	Children int
 }
-
-var ErrSerialize = errors.New("serialization error")
 
 type serializationHeader struct {
 	Type   string
@@ -133,20 +105,20 @@ func Serialize(enc Encoder, obj Component) error {
 }
 
 func serializeItem(enc Encoder, item Component, depth int) error {
+	kind := typeName(item)
+	if _, exists := types[kind]; !exists {
+		return fmt.Errorf("%w: type %s is not serializable", ErrSerialize, kind)
+	}
 	if obj, isObject := item.(Object); isObject {
-		_, err := serializeObject(enc, obj, depth)
-		return err
+		return serializeObject(enc, obj, depth)
 	} else {
 		return serializeComponent(enc, item, depth)
 	}
 }
 
-func serializeObject(enc Encoder, obj Object, depth int) ([]Component, error) {
+func serializeObject(enc Encoder, obj Object, depth int) error {
 	val := reflect.ValueOf(obj).Elem()
 	vtype := reflect.TypeOf(obj).Elem()
-
-	log.Println(depth, "serializing object of type", typeName(obj))
-	defer log.Println(depth, "end object")
 
 	// object header
 	enc.Encode(serializationHeader{
@@ -156,73 +128,50 @@ func serializeObject(enc Encoder, obj Object, depth int) ([]Component, error) {
 	})
 
 	if vtype == baseObjectType {
-		return encodeBaseObject(enc, obj, depth)
-	}
+		// object base
+		if err := enc.Encode(objectState{
+			componentState: newComponentState(obj),
+			Position:       obj.Transform().Position(),
+			Rotation:       obj.Transform().Rotation(),
+			Scale:          obj.Transform().Scale(),
+			Children:       len(obj.Children()),
+		}); err != nil {
+			return err
+		}
 
-	// embedded object
-	var err error
-	var children []Component
-	for i := 0; i < vtype.NumField(); i++ {
-		if vtype.Field(i).Anonymous {
-			log.Println(depth, "object base of type", vtype.Field(i).Name)
-			base := val.Field(i).Interface().(Object)
-			if children, err = serializeObject(enc, base, depth+1); err != nil {
-				return nil, err
+		// children
+		for _, child := range obj.Children() {
+			if err := serializeItem(enc, child, depth+1); err != nil {
+				return err
 			}
-			break
+		}
+	} else {
+		// embedded object
+		var base Object
+		for i := 0; i < vtype.NumField(); i++ {
+			if vtype.Field(i).Anonymous {
+				base = val.Field(i).Interface().(Object)
+				if err := serializeObject(enc, base, depth+1); err != nil {
+					return err
+				}
+				break
+			}
+		}
+
+		if err := encodePointers(enc, val, base.Children()); err != nil {
+			return err
+		}
+		if err := encodeFields(enc, val); err != nil {
+			return err
 		}
 	}
 
-	if err := encodePointers(enc, val, children); err != nil {
-		return nil, err
-	}
-	if err := encodeReferences(enc, val); err != nil {
-		return nil, err
-	}
-	if err := encodeProperties(enc, val); err != nil {
-		return nil, err
-	}
-
-	return children, nil
-}
-
-func encodeBaseObject(enc Encoder, obj Object, depth int) ([]Component, error) {
-	// count serializable children
-	children := make([]Component, 0, len(obj.Children()))
-	for _, child := range obj.Children() {
-		if _, ok := child.(Serializable); ok {
-			children = append(children, child)
-		}
-	}
-
-	// object base
-	if err := enc.Encode(ObjectState{
-		ComponentState: NewComponentState(obj),
-		Position:       obj.Transform().Position(),
-		Rotation:       obj.Transform().Rotation(),
-		Scale:          obj.Transform().Scale(),
-		Children:       len(children),
-	}); err != nil {
-		return nil, err
-	}
-
-	// children
-	for i, child := range children {
-		log.Println(depth, "child", i)
-		if err := serializeItem(enc, child, depth+1); err != nil {
-			return nil, err
-		}
-	}
-
-	return children, nil
+	return nil
 }
 
 func serializeComponent(enc Encoder, cmp Component, depth int) error {
 	val := reflect.ValueOf(cmp).Elem()
 	vtype := reflect.TypeOf(cmp).Elem()
-
-	log.Println(depth, "serializing component of type", typeName(cmp))
-	defer log.Println(depth, "end component")
 
 	// object header
 	enc.Encode(serializationHeader{
@@ -232,25 +181,23 @@ func serializeComponent(enc Encoder, cmp Component, depth int) error {
 	})
 
 	if vtype == baseComponentType {
-		return enc.Encode(NewComponentState(cmp))
-	}
-
-	for i := 0; i < vtype.NumField(); i++ {
-		if vtype.Field(i).Anonymous {
-			log.Println(depth, "component base of type", vtype.Field(i).Name)
-			base := val.Field(i).Interface().(Component)
-			if err := serializeComponent(enc, base, depth+1); err != nil {
-				return err
+		// base component
+		return enc.Encode(newComponentState(cmp))
+	} else {
+		// embedded component
+		for i := 0; i < vtype.NumField(); i++ {
+			if vtype.Field(i).Anonymous {
+				base := val.Field(i).Interface().(Component)
+				if err := serializeComponent(enc, base, depth+1); err != nil {
+					return err
+				}
+				break
 			}
-			break
 		}
-	}
 
-	if err := encodeReferences(enc, val); err != nil {
-		return err
-	}
-	if err := encodeProperties(enc, val); err != nil {
-		return err
+		if err := encodeFields(enc, val); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -273,7 +220,7 @@ func Deserialize[T Component](pool Pool, decoder Decoder) (T, error) {
 	return cast, nil
 }
 
-func deserializeItem(pool Pool, dec Decoder, depth int) (Component, error) {
+func deserializeItem(pool Pool, dec Decoder, depth int) (result Component, err error) {
 	var header serializationHeader
 	if err := dec.Decode(&header); err != nil {
 		return nil, err
@@ -284,16 +231,10 @@ func deserializeItem(pool Pool, dec Decoder, depth int) (Component, error) {
 		return nil, fmt.Errorf("%w: unknown type %s", ErrSerialize, header.Type)
 	}
 
-	var err error
-	var result Component
 	if header.Object {
-		log.Println(depth, "deserializing object", header.Type)
 		result, err = deserializeObject(pool, dec, typeInfo, depth)
-		log.Println(depth, "end object")
 	} else {
-		log.Println(depth, "deserializing component", header.Type)
 		result, err = deserializeComponent(pool, dec, typeInfo, depth)
-		log.Println(depth, "end object")
 	}
 	if err != nil {
 		return nil, err
@@ -304,19 +245,18 @@ func deserializeItem(pool Pool, dec Decoder, depth int) (Component, error) {
 }
 
 func deserializeObject(pool Pool, dec Decoder, typ TypeInfo, depth int) (Object, error) {
-	var base Object
 	if typ.rtype == baseObjectType {
 		return decodeBaseObject(pool, dec, depth)
-	} else {
-		dbase, err := deserializeItem(pool, dec, depth+1)
-		if err != nil {
-			return nil, err
-		}
-		var isObject bool
-		base, isObject = dbase.(Object)
-		if !isObject {
-			return nil, fmt.Errorf("%w: %s is not an object", ErrSerialize, typeName(dbase))
-		}
+	}
+
+	// decode base object
+	dbase, err := deserializeItem(pool, dec, depth+1)
+	if err != nil {
+		return nil, err
+	}
+	base, isObject := dbase.(Object)
+	if !isObject {
+		return nil, fmt.Errorf("%w: %s is not an object", ErrSerialize, typeName(dbase))
 	}
 
 	// create object of the desired type
@@ -326,10 +266,7 @@ func deserializeObject(pool Pool, dec Decoder, typ TypeInfo, depth int) (Object,
 	if err := decodePointers(pool, dec, obj, base.Children()); err != nil {
 		return nil, err
 	}
-	if err := decodeReferences(pool, dec, obj); err != nil {
-		return nil, err
-	}
-	if err := decodeProperties(pool, dec, obj); err != nil {
+	if err := decodeFields(pool, dec, obj); err != nil {
 		return nil, err
 	}
 
@@ -338,7 +275,7 @@ func deserializeObject(pool Pool, dec Decoder, typ TypeInfo, depth int) (Object,
 }
 
 func decodeBaseObject(pool Pool, dec Decoder, depth int) (Object, error) {
-	var data ObjectState
+	var data objectState
 	if err := dec.Decode(&data); err != nil {
 		return nil, err
 	}
@@ -354,7 +291,6 @@ func decodeBaseObject(pool Pool, dec Decoder, depth int) (Object, error) {
 
 	// children
 	for i := 0; i < data.Children; i++ {
-		log.Println(depth, "child", i)
 		child, err := deserializeItem(pool, dec, depth+1)
 		if err != nil {
 			return nil, err
@@ -366,29 +302,29 @@ func decodeBaseObject(pool Pool, dec Decoder, depth int) (Object, error) {
 }
 
 func deserializeComponent(pool Pool, dec Decoder, typ TypeInfo, depth int) (Component, error) {
-	var base Component
 	if typ.rtype == baseComponentType {
-		var state ComponentState
+		var state componentState
 		if err := dec.Decode(&state); err != nil {
 			return nil, err
 		}
-		return state.New(), nil
-	} else {
-		var err error
-		base, err = deserializeItem(pool, dec, depth+1)
-		if err != nil {
-			return nil, err
-		}
+		return &component{
+			id:      state.ID,
+			name:    state.Name,
+			enabled: state.Enabled,
+		}, nil
+	}
+
+	// decode component base
+	base, err := deserializeItem(pool, dec, depth+1)
+	if err != nil {
+		return nil, err
 	}
 
 	// create object of the desired type
 	obj := reflect.New(typ.rtype).Elem()
 	setBase(obj, base)
 
-	if err := decodeReferences(pool, dec, obj); err != nil {
-		return nil, err
-	}
-	if err := decodeProperties(pool, dec, obj); err != nil {
+	if err := decodeFields(pool, dec, obj); err != nil {
 		return nil, err
 	}
 
@@ -407,6 +343,49 @@ func setBase(obj reflect.Value, base any) {
 		}
 	}
 	panic("object has no base")
+}
+
+//
+// serializable fields
+//
+
+func decodeFields(pool Pool, dec Decoder, obj reflect.Value) error {
+	for i := 0; i < obj.Type().NumField(); i++ {
+		field := obj.Type().Field(i)
+		if field.Anonymous {
+			continue
+		}
+		ftype := obj.Field(i).Addr().Type()
+		if !ftype.Implements(serializableType) {
+			continue
+		}
+
+		// instantiate & deserialize field
+		fieldval := reflect.New(field.Type)
+		serializer := fieldval.Interface().(Serializable)
+		if err := serializer.Deserialize(pool, dec); err != nil {
+			return err
+		}
+		obj.Field(i).Set(fieldval.Elem())
+	}
+	return nil
+}
+
+func encodeFields(enc Encoder, val reflect.Value) error {
+	for i := 0; i < val.Type().NumField(); i++ {
+		if val.Type().Field(i).Anonymous {
+			continue
+		}
+		ftype := val.Field(i).Addr().Type()
+
+		if ftype.Implements(serializableType) {
+			serializable := val.Field(i).Addr().Interface().(Serializable)
+			if err := serializable.Serialize(enc); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 //
@@ -430,7 +409,6 @@ func encodePointers(enc Encoder, obj reflect.Value, children []Component) error 
 		if obj.Field(i).Type().Implements(componentType) {
 			index := -1
 			if cmp, ok := obj.Field(i).Interface().(Component); ok {
-				log.Println("direct reference")
 				index = slices.Index(children, cmp)
 			}
 			if err := enc.Encode(childRef{
@@ -466,54 +444,21 @@ func decodePointers(pool Pool, dec Decoder, obj reflect.Value, children []Compon
 	return nil
 }
 
-//
-// deprecated
-//
+type MemorySerializer struct {
+	Stream []any
+	index  int
+}
 
-func (o *object) Serialize(enc Encoder) error {
-	log.Println("old object serialize!")
-	children := 0
-	for _, child := range o.children {
-		if _, ok := child.(Serializable); ok {
-			kind := typeName(child)
-			if _, registered := types[kind]; !registered {
-				continue
-			}
-			children++
-		}
-	}
-
-	if err := enc.Encode(ObjectState{
-		ComponentState: NewComponentState(o),
-		Position:       o.transform.Position(),
-		Rotation:       o.transform.Rotation(),
-		Scale:          o.transform.Scale(),
-		Children:       children,
-	}); err != nil {
-		return err
-	}
-
-	// serialize children
-	for _, child := range o.children {
-		if err := Serialize(enc, child); err != nil {
-			if errors.Is(err, ErrSerialize) {
-				continue
-			}
-			return err
-		}
-	}
+func (m *MemorySerializer) Encode(data any) error {
+	m.Stream = append(m.Stream, data)
 	return nil
 }
 
-func EncodeComponent(enc Encoder, cmp Component) error {
-	state := NewComponentState(cmp)
-	return enc.Encode(state)
-}
-
-func DecodeComponent(pool Pool, dec Decoder) (Component, error) {
-	var data ComponentState
-	if err := dec.Decode(&data); err != nil {
-		return nil, err
+func (m *MemorySerializer) Decode(target any) error {
+	if m.index >= len(m.Stream) {
+		return io.EOF
 	}
-	return data.New(), nil
+	reflect.ValueOf(target).Elem().Set(reflect.ValueOf(m.Stream[m.index]))
+	m.index++
+	return nil
 }

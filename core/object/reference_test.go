@@ -1,15 +1,13 @@
 package object
 
 import (
-	"reflect"
-
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
 
 type ObjectWithReference struct {
 	Object
-	Reference Reference[Object]
+	Reference Ref[Object]
 }
 
 var _ = Describe("", func() {
@@ -25,22 +23,6 @@ var _ = Describe("", func() {
 		b = Empty(pool, "b")
 		Attach(a, b)
 		a.Reference.Set(b)
-	})
-
-	It("encodes references", func() {
-		s := &MemorySerializer{}
-		val := reflect.ValueOf(a).Elem()
-		err := encodeReferences(s, val)
-		Expect(err).To(BeNil())
-
-		Expect(s.Stream).To(HaveLen(1))
-
-		err = decodeReferences(pool, s, val)
-		Expect(err).To(BeNil())
-
-		ref, ok := a.Reference.Get()
-		Expect(ok).To(BeTrue())
-		Expect(ref.ID()).To(Equal(b.ID()))
 	})
 
 	It("serializes empty references", func() {

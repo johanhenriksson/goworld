@@ -26,8 +26,7 @@ var _ T = &Point{}
 
 func init() {
 	object.Register[*Point](object.TypeInfo{
-		Name:        "Point Light",
-		Deserialize: DeserializePoint,
+		Name: "Point Light",
 		Create: func(pool object.Pool) (object.Component, error) {
 			return NewPoint(pool, PointArgs{
 				Color:     color.White,
@@ -68,31 +67,4 @@ func (lit *Point) Shadowmaps() int {
 
 func (lit *Point) ShadowProjection(mapIndex int) uniform.Camera {
 	panic("todo")
-}
-
-type PointState struct {
-	object.ComponentState
-	PointArgs
-}
-
-func (lit *Point) Serialize(enc object.Encoder) error {
-	if err := object.EncodeComponent(enc, lit.Component); err != nil {
-		return err
-	}
-	return enc.Encode(*lit)
-}
-
-func DeserializePoint(pool object.Pool, dec object.Decoder) (object.Component, error) {
-	cmp, err := object.DecodeComponent(pool, dec)
-	if err != nil {
-		return nil, err
-	}
-
-	lit := &Point{}
-	if err := dec.Decode(lit); err != nil {
-		return nil, err
-	}
-	lit.Component = cmp
-
-	return object.NewComponent(pool, lit), nil
 }

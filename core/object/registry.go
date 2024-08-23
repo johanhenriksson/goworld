@@ -5,14 +5,12 @@ import (
 )
 
 type CreateFn func(Pool) (Component, error)
-type DeserializeFn func(Pool, Decoder) (Component, error)
 
 type TypeInfo struct {
-	Name        string
-	Path        []string
-	Create      CreateFn
-	Deserialize DeserializeFn
-	rtype       reflect.Type
+	Name   string
+	Path   []string
+	Create CreateFn
+	rtype  reflect.Type
 }
 
 type Registry map[string]TypeInfo
@@ -45,9 +43,6 @@ func Register[T any](info TypeInfo) {
 	if info.Name == "" {
 		info.Name = kind
 	}
-	// if info.Deserialize == nil {
-	// 	panic("no deserializer for " + info.Name)
-	// }
 	types[kind] = info
 }
 

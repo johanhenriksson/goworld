@@ -11,9 +11,8 @@ import (
 
 func init() {
 	object.Register[*RigidBody](object.TypeInfo{
-		Name:        "Rigidbody",
-		Path:        []string{"Physics"},
-		Deserialize: DeserializeRigidBody,
+		Name: "Rigidbody",
+		Path: []string{"Physics"},
 		Create: func(ctx object.Pool) (object.Component, error) {
 			return NewRigidBody(ctx, 1), nil
 		},
@@ -154,27 +153,4 @@ func (b *RigidBody) destroy() {
 
 func (b *RigidBody) Kinematic() bool {
 	return b.mass <= 0
-}
-
-type RigidbodyState struct {
-	Mass  float32
-	Layer Mask
-	Mask  Mask
-}
-
-func (b *RigidBody) Serialize(enc object.Encoder) error {
-	return enc.Encode(RigidbodyState{
-		Mass:  b.Mass.Get(),
-		Layer: b.Layer.Get(),
-		Mask:  b.Mask.Get(),
-	})
-}
-
-func DeserializeRigidBody(ctx object.Pool, dec object.Decoder) (object.Component, error) {
-	var state RigidbodyState
-	if err := dec.Decode(&state); err != nil {
-		return nil, err
-	}
-	// todo: layer masks etc
-	return NewRigidBody(ctx, state.Mass), nil
 }
