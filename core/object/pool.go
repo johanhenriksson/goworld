@@ -32,7 +32,7 @@ func (c *context) Resolve(h Handle) (Component, bool) {
 
 func (c *context) assign(obj Component) {
 	handle := c.remap(obj.ID())
-	obj.setID(c, handle)
+	obj.setHandle(c, handle)
 	c.handles[handle] = obj
 }
 
@@ -84,7 +84,7 @@ func (c *mappingPool) assign(obj Component) {
 		panic("translating context should only be used for deserialization")
 	}
 	newHandle := c.remap(handle)
-	obj.setID(c, newHandle)
+	obj.setHandle(c, newHandle)
 	c.Pool.assign(obj)
 }
 

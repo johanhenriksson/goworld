@@ -3,7 +3,7 @@ package builtin
 import (
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/core/light"
-	"github.com/johanhenriksson/goworld/core/object"
+	. "github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/editor"
 	"github.com/johanhenriksson/goworld/editor/propedit"
 	"github.com/johanhenriksson/goworld/geometry/lines"
@@ -17,11 +17,11 @@ import (
 )
 
 func init() {
-	editor.Register(&light.Point{}, NewPointLightEditor)
+	editor.RegisterEditor(&light.Point{}, NewPointLightEditor)
 }
 
 type PointLightEditor struct {
-	object.Object
+	Object
 	target *light.Point
 
 	Shape  *physics.Sphere
@@ -32,8 +32,8 @@ type PointLightEditor struct {
 }
 
 func NewPointLightEditor(ctx *editor.Context, lit *light.Point) *PointLightEditor {
-	editor := object.New(ctx.Objects, "PointLightEditor", &PointLightEditor{
-		Object: object.Ghost(ctx.Objects, lit.Name(), lit.Transform()),
+	editor := NewObject(ctx.Objects, "PointLightEditor", &PointLightEditor{
+		Object: Ghost(ctx.Objects, lit.Name(), lit.Transform()),
 		target: lit,
 
 		Bounds: lines.NewSphere(ctx.Objects, lines.SphereArgs{
@@ -79,16 +79,16 @@ func NewPointLightEditor(ctx *editor.Context, lit *light.Point) *PointLightEdito
 	return editor
 }
 
-func (e *PointLightEditor) Target() object.Component { return e.target }
+func (e *PointLightEditor) Target() Component { return e.target }
 
 func (e *PointLightEditor) Select(ev mouse.Event) {
-	object.Enable(e.GUI)
-	object.Enable(e.Bounds)
+	Enable(e.GUI)
+	Enable(e.Bounds)
 }
 
 func (e *PointLightEditor) Deselect(ev mouse.Event) bool {
-	object.Disable(e.GUI)
-	object.Disable(e.Bounds)
+	Disable(e.GUI)
+	Disable(e.Bounds)
 	return true
 }
 

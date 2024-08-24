@@ -44,7 +44,7 @@ func Empty(pool Pool, name string) Object {
 	return obj
 }
 
-func New[K Object](pool Pool, name string, obj K) K {
+func NewObject[K Object](pool Pool, name string, obj K) K {
 	t := reflect.TypeOf(obj).Elem()
 	v := reflect.ValueOf(obj).Elem()
 

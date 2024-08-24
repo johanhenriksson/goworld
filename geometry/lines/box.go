@@ -2,27 +2,27 @@ package lines
 
 import (
 	"github.com/johanhenriksson/goworld/core/mesh"
-	"github.com/johanhenriksson/goworld/core/object"
+	. "github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/vertex"
 )
 
 type BoxObject struct {
-	object.Object
-	*Box
+	Object
+	Box *Box
 }
 
-func NewBoxObject(pool object.Pool, args BoxArgs) *BoxObject {
-	return object.New(pool, "Box", &BoxObject{
+func NewBoxObject(pool Pool, args BoxArgs) *BoxObject {
+	return NewObject(pool, "Box", &BoxObject{
 		Box: NewBox(pool, args),
 	})
 }
 
 type Box struct {
 	*mesh.Static
-	Extents object.Property[vec3.T]
-	Color   object.Property[color.T]
+	Extents Property[vec3.T]
+	Color   Property[color.T]
 
 	data vertex.MutableMesh[vertex.C, uint16]
 }
@@ -35,13 +35,13 @@ type BoxArgs struct {
 	Color   color.T
 }
 
-func NewBox(pool object.Pool, args BoxArgs) *Box {
-	b := object.NewComponent(pool, &Box{
+func NewBox(pool Pool, args BoxArgs) *Box {
+	b := NewComponent(pool, &Box{
 		Static:  mesh.NewLines(pool),
-		Extents: object.NewProperty(args.Extents),
-		Color:   object.NewProperty(args.Color),
+		Extents: NewProperty(args.Extents),
+		Color:   NewProperty(args.Color),
 	})
-	b.data = vertex.NewLines[vertex.C, uint16](object.Key("box", b), nil, nil)
+	b.data = vertex.NewLines[vertex.C, uint16](Key("box", b), nil, nil)
 	b.Extents.OnChange.Subscribe(func(vec3.T) { b.refresh() })
 	b.Color.OnChange.Subscribe(func(color.T) { b.refresh() })
 	b.refresh()

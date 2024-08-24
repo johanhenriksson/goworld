@@ -1,7 +1,7 @@
 package editor
 
 import (
-	"github.com/johanhenriksson/goworld/core/object"
+	. "github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/gui"
 	"github.com/johanhenriksson/goworld/math/quat"
 	"github.com/johanhenriksson/goworld/math/vec3"
@@ -9,19 +9,19 @@ import (
 )
 
 type App struct {
-	object.Object
+	Object
 	GUI    gui.Manager
 	Tools  *ToolManager
 	World  *physics.World
 	Player *Player
 
-	objects   object.Pool
-	editors   object.Component
-	workspace object.Object
+	objects   Pool
+	editors   Component
+	workspace Object
 }
 
-func NewApp(pool object.Pool, workspace object.Object) *App {
-	editor := object.New(pool, "Application", &App{
+func NewApp(pool Pool, workspace Object) *App {
+	editor := NewObject(pool, "Application", &App{
 		World: physics.NewWorld(pool),
 
 		Player:    NewPlayer(pool, vec3.New(-8, 24, -8), quat.Euler(30, 45, 0)),
@@ -31,17 +31,17 @@ func NewApp(pool object.Pool, workspace object.Object) *App {
 	})
 
 	editor.GUI = MakeGUI(pool, editor)
-	object.Attach(editor, editor.GUI)
+	Attach(editor, editor.GUI)
 
 	// must be attached AFTER gui so that input events are handled in the correct order
 	editor.Tools = NewToolManager(pool)
-	object.Attach(editor, editor.Tools)
+	Attach(editor, editor.Tools)
 
 	// editor.World.Debug(true)
 	return editor
 }
 
-func (e *App) Update(scene object.Component, dt float32) {
+func (e *App) Update(scene Component, dt float32) {
 	e.Object.Update(scene, dt)
 	e.Refresh()
 }
@@ -54,12 +54,12 @@ func (e *App) Refresh() {
 	}
 	e.editors = ConstructEditors(context, e.editors, e.workspace)
 	if e.editors.Parent() == nil {
-		object.Attach(e, e.editors)
+		Attach(e, e.editors)
 	}
 }
 
-func (e *App) Lookup(obj object.Object) T {
-	editor, _ := object.NewQuery[T]().Where(func(e T) bool {
+func (e *App) Lookup(obj Object) T {
+	editor, _ := NewQuery[T]().Where(func(e T) bool {
 		return e.Target() == obj
 	}).First(e.editors)
 	return editor

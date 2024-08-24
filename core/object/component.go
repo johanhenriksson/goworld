@@ -10,6 +10,9 @@ type Component interface {
 	// ID returns a unique identifier for this object.
 	ID() Handle
 
+	// Pool returns the object pool this object belongs to.
+	Pool() Pool
+
 	// Name is used to identify the object within the scene.
 	Name() string
 
@@ -33,8 +36,7 @@ type Component interface {
 	// Destroy the object
 	Destroy()
 
-	context() Pool
-	setID(Pool, Handle)
+	setHandle(Pool, Handle)
 	setName(string)
 	setParent(Object)
 	setEnabled(bool) bool
@@ -113,12 +115,12 @@ func NewComponent[K Component](pool Pool, cmp K) K {
 }
 
 func (b *component) ID() Handle { return b.id }
-func (b *component) setID(pool Pool, id Handle) {
+func (b *component) setHandle(pool Pool, id Handle) {
 	b.id = id
 	b.ctx = pool
 }
 
-func (b *component) context() Pool { return b.ctx }
+func (b *component) Pool() Pool { return b.ctx }
 
 func (b *component) Update(scene Component, dt float32) {}
 

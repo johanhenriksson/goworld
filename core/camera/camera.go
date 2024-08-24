@@ -11,13 +11,16 @@ import (
 // Camera Group
 type Object struct {
 	object.Object
-	*Camera
+	Camera *Camera
 }
 
 // Camera Component
 type Camera struct {
 	object.Component
-	Args
+
+	Fov  object.Property[float32]
+	Near object.Property[float32]
+	Far  object.Property[float32]
 
 	state draw.Camera
 }
@@ -32,12 +35,14 @@ type Args struct {
 // New creates a new camera component.
 func New(pool object.Pool, args Args) *Camera {
 	return object.NewComponent(pool, &Camera{
-		Args: args,
+		Fov:  object.NewProperty(args.Fov),
+		Near: object.NewProperty(args.Near),
+		Far:  object.NewProperty(args.Far),
 	})
 }
 
 func NewObject(pool object.Pool, args Args) *Object {
-	return object.New(pool, "Camera", &Object{
+	return object.NewObject(pool, "Camera", &Object{
 		Camera: New(pool, args),
 	})
 }
@@ -71,12 +76,12 @@ func (cam *Camera) Refresh(viewport draw.Viewport) draw.Camera {
 
 	cam.state.Viewport = viewport
 	cam.state.Aspect = viewport.Aspect()
-	cam.state.Near = cam.Near
-	cam.state.Far = cam.Far
-	cam.state.Fov = cam.Fov
+	cam.state.Near = cam.Near.Get()
+	cam.state.Far = cam.Far.Get()
+	cam.state.Fov = cam.Fov.Get()
 
 	// update view & view-projection matrices
-	cam.state.Proj = mat4.Perspective(cam.Fov, cam.state.Aspect, cam.Near, cam.Far)
+	cam.state.Proj = mat4.Perspective(cam.state.Fov, cam.state.Aspect, cam.state.Near, cam.state.Far)
 
 	// calculate the view matrix.
 	// should be the inverse of the cameras transform matrix

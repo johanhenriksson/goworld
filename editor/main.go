@@ -4,35 +4,35 @@ import (
 	"log"
 
 	"github.com/johanhenriksson/goworld/core/input/keys"
-	"github.com/johanhenriksson/goworld/core/object"
+	. "github.com/johanhenriksson/goworld/core/object"
 )
 
-func Scene(f object.SceneFunc) object.SceneFunc {
-	return func(ctx object.Pool, scene object.Object) {
+func WrapScene(f SceneFunc) SceneFunc {
+	return func(ctx Pool, scene Object) {
 		// create subscene in a child object
-		workspace := object.Empty(ctx, "Workspace")
+		workspace := Empty(ctx, "Workspace")
 		f(ctx, workspace)
 
 		editorScene := NewEditorScene(ctx, workspace, true)
-		object.Attach(scene, editorScene)
+		Attach(scene, editorScene)
 	}
 }
 
 type EditorScene struct {
-	object.Object
+	Object
 	App       *App
-	Workspace object.Object
-	Objects   object.Pool
+	Workspace Object
+	Objects   Pool
 
 	playing bool
 }
 
-func NewEditorScene(pool object.Pool, workspace object.Object, playing bool) *EditorScene {
+func NewEditorScene(pool Pool, workspace Object, playing bool) *EditorScene {
 	app := NewApp(pool, workspace)
-	object.Toggle(app, !playing)
+	Toggle(app, !playing)
 
-	return object.New(pool, "Editor", &EditorScene{
-		Object:    object.Scene(pool),
+	return NewObject(pool, "Editor", &EditorScene{
+		Object:    Scene(pool),
 		Objects:   pool,
 		App:       app,
 		Workspace: workspace,
@@ -40,16 +40,16 @@ func NewEditorScene(pool object.Pool, workspace object.Object, playing bool) *Ed
 	})
 }
 
-func (s *EditorScene) Replace(workspace object.Object) {
+func (s *EditorScene) Replace(workspace Object) {
 	parent := s.Parent()
-	object.Detach(s)
+	Detach(s)
 	*s = *NewEditorScene(s.Objects, workspace, s.playing)
-	object.Attach(parent, s)
+	Attach(parent, s)
 }
 
 func (s *EditorScene) KeyEvent(e keys.Event) {
 	if e.Action() == keys.Release && e.Code() == keys.O && e.Modifier(keys.Ctrl) {
-		c, err := object.Load[object.Object](s.Objects, "scene.scn")
+		c, err := Load[Object](s.Objects, "scene.scn")
 		if err != nil {
 			panic(err)
 		}
@@ -57,20 +57,20 @@ func (s *EditorScene) KeyEvent(e keys.Event) {
 		log.Println("scene loaded")
 	}
 	if e.Action() == keys.Release && e.Code() == keys.S && e.Modifier(keys.Ctrl) {
-		if err := object.Save("scene.scn", s.Workspace); err != nil {
+		if err := Save("scene.scn", s.Workspace); err != nil {
 			panic(err)
 		}
 		log.Println("scene saved")
 	}
 	if e.Action() == keys.Release && e.Code() == keys.H {
-		object.Toggle(s.App, s.playing)
+		Toggle(s.App, s.playing)
 		s.playing = !s.playing
 	} else {
 		s.Object.KeyEvent(e)
 	}
 }
 
-func (s *EditorScene) Update(scene object.Component, dt float32) {
+func (s *EditorScene) Update(scene Component, dt float32) {
 	if s.playing {
 		s.Workspace.Update(scene, dt)
 	} else {

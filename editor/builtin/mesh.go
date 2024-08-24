@@ -14,7 +14,7 @@ import (
 )
 
 func init() {
-	editor.Register(&mesh.Static{}, NewMeshEditor)
+	editor.RegisterEditor(&mesh.Static{}, NewMeshEditor)
 }
 
 type MeshEditor struct {
@@ -29,7 +29,7 @@ type MeshEditor struct {
 }
 
 func NewMeshEditor(ctx *editor.Context, mesh *mesh.Static) *MeshEditor {
-	editor := object.New(ctx.Objects, "MeshEditor", &MeshEditor{
+	editor := object.NewObject(ctx.Objects, "MeshEditor", &MeshEditor{
 		Object: object.Ghost(ctx.Objects, mesh.Name(), mesh.Transform()),
 		target: mesh,
 

@@ -2,7 +2,7 @@ package builtin
 
 import (
 	"github.com/johanhenriksson/goworld/core/input/mouse"
-	"github.com/johanhenriksson/goworld/core/object"
+	. "github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/editor"
 	"github.com/johanhenriksson/goworld/editor/propedit"
 	"github.com/johanhenriksson/goworld/geometry/lines"
@@ -13,11 +13,11 @@ import (
 )
 
 func init() {
-	editor.Register(&physics.Sphere{}, NewSphereEditor)
+	editor.RegisterEditor(&physics.Sphere{}, NewSphereEditor)
 }
 
 type SphereEditor struct {
-	object.Object
+	Object
 	target *physics.Sphere
 
 	Shape *physics.Sphere
@@ -28,8 +28,8 @@ type SphereEditor struct {
 }
 
 func NewSphereEditor(ctx *editor.Context, sphere *physics.Sphere) *SphereEditor {
-	editor := object.New(ctx.Objects, "PhysicsSphereEditor", &SphereEditor{
-		Object: object.Ghost(ctx.Objects, sphere.Name(), sphere.Transform()),
+	editor := NewObject(ctx.Objects, "PhysicsSphereEditor", &SphereEditor{
+		Object: Ghost(ctx.Objects, sphere.Name(), sphere.Transform()),
 		target: sphere,
 
 		Shape: physics.NewSphere(ctx.Objects, sphere.Radius.Get()),
@@ -59,17 +59,17 @@ func NewSphereEditor(ctx *editor.Context, sphere *physics.Sphere) *SphereEditor 
 	return editor
 }
 
-func (e *SphereEditor) Target() object.Component { return e.target }
+func (e *SphereEditor) Target() Component { return e.target }
 
 func (e *SphereEditor) Select(ev mouse.Event) {
-	object.Enable(e.GUI)
-	object.Enable(e.Mesh)
+	Enable(e.GUI)
+	Enable(e.Mesh)
 }
 
 func (e *SphereEditor) Deselect(ev mouse.Event) bool {
 	// todo: check with editor if we can deselect?
-	object.Disable(e.GUI)
-	object.Disable(e.Mesh)
+	Disable(e.GUI)
+	Disable(e.Mesh)
 	return true
 }
 

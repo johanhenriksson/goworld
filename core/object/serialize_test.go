@@ -14,7 +14,7 @@ var _ = Describe("serialization", func() {
 		Pointer Component
 
 		// Reference to any component in the scene
-		Ref Reference[Component]
+		Ref Ref[Component]
 
 		Value Property[int]
 	}
@@ -57,7 +57,7 @@ var _ = Describe("serialization", func() {
 		})
 
 		It("serializes child references", func() {
-			obj := New(pool, "ObjectWithComponent", &ObjectWithComponent{
+			obj := NewObject(pool, "ObjectWithComponent", &ObjectWithComponent{
 				Pointer: Empty(pool, "Child"),
 				Value:   NewProperty(123),
 			})

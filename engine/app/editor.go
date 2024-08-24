@@ -7,5 +7,5 @@ import (
 )
 
 func RunEditor(args Args, scenefunc object.SceneFunc) {
-	Run(args, editor.Scene(scenefunc))
+	Run(args, editor.WrapScene(scenefunc))
 }
