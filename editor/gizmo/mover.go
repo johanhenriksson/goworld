@@ -3,7 +3,7 @@ package gizmo
 import (
 	"github.com/johanhenriksson/goworld/core/draw"
 	"github.com/johanhenriksson/goworld/core/input/mouse"
-	"github.com/johanhenriksson/goworld/core/object"
+	. "github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/core/transform"
 	"github.com/johanhenriksson/goworld/geometry/plane"
 	"github.com/johanhenriksson/goworld/math"
@@ -19,7 +19,7 @@ import (
 
 // Mover Gizmo can be used to reposition objects in the 3D scene.
 type Mover struct {
-	object.Object
+	Object
 
 	target transform.T
 
@@ -50,29 +50,29 @@ type Mover struct {
 var _ Gizmo = &Mover{}
 
 // NewMover creates a new mover gizmo
-func NewMover(pool object.Pool) *Mover {
+func NewMover(pool Pool) *Mover {
 	side := float32(0.4)
 	planeAlpha := float32(0.33)
 
 	s := side * 0.5
 
-	g := object.New(pool, "Mover Gizmo", &Mover{
+	g := NewObject(pool, "Mover Gizmo", &Mover{
 		size:        0.125,
 		sensitivity: 6,
 		hoverScale:  vec3.New(1.1, 1.1, 1.1),
 
-		X: object.Builder(NewArrow(pool, color.Red)).
+		X: Builder(NewArrow(pool, color.Red)).
 			Rotation(quat.Euler(0, 0, 270)).
 			Create(),
 
 		Y: NewArrow(pool, color.Green),
 
-		Z: object.Builder(NewArrow(pool, color.Blue)).
+		Z: Builder(NewArrow(pool, color.Blue)).
 			Rotation(quat.Euler(90, 0, 0)).
 			Create(),
 
 		// XY Plane
-		XY: object.Builder(plane.NewObject(pool, plane.Args{
+		XY: Builder(plane.New(pool, plane.Args{
 			Size: vec2.New(side, side),
 			Mat:  material.TransparentForward(),
 		})).
@@ -82,7 +82,7 @@ func NewMover(pool object.Pool) *Mover {
 			Create(),
 
 		// XZ Plane
-		XZ: object.Builder(plane.NewObject(pool, plane.Args{
+		XZ: Builder(plane.New(pool, plane.Args{
 			Size: vec2.New(side, side),
 			Mat:  material.TransparentForward(),
 		})).
@@ -92,7 +92,7 @@ func NewMover(pool object.Pool) *Mover {
 			Create(),
 
 		// YZ Plane
-		YZ: object.Builder(plane.NewObject(pool, plane.Args{
+		YZ: Builder(plane.New(pool, plane.Args{
 			Size: vec2.New(side, side),
 			Mat:  material.TransparentForward(),
 		})).
@@ -194,7 +194,7 @@ func (g *Mover) Hover(hovering bool, shape physics.Shape) {
 	}
 }
 
-func (g *Mover) PreDraw(args draw.Args, scene object.Object) error {
+func (g *Mover) PreDraw(args draw.Args, scene Object) error {
 	g.eye = args.Camera.Position
 	g.fov = args.Camera.Fov
 	g.vp = args.Camera.ViewProj
@@ -202,8 +202,8 @@ func (g *Mover) PreDraw(args draw.Args, scene object.Object) error {
 	return nil
 }
 
-func (g *Mover) Update(scene object.Component, dt float32) {
-	g.Object.Update(scene, dt)
+func (g *Mover) Update(scene Component, dt float32) {
+	g.Update(scene, dt)
 
 	// the gizmo should be displayed at the same size irrespectively of its distance to the camera.
 	// we can undo the effects of perspective projection by measuring how much a vector would be "squeezed"

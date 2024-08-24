@@ -1,7 +1,7 @@
 package gizmo
 
 import (
-	"github.com/johanhenriksson/goworld/core/object"
+	. "github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/geometry/cone"
 	"github.com/johanhenriksson/goworld/geometry/cylinder"
 	"github.com/johanhenriksson/goworld/math/vec3"
@@ -11,16 +11,16 @@ import (
 )
 
 type Arrow struct {
-	object.Object
+	Object
 	Rigidbody *physics.RigidBody
 	Head      *cone.Cone
 	Body      *cylinder.Cylinder
 	Collider  *physics.Compound
 
-	Hover object.Property[bool]
+	Hover Property[bool]
 }
 
-func NewArrow(pool object.Pool, clr color.T) *Arrow {
+func NewArrow(pool Pool, clr color.T) *Arrow {
 	height := float32(1.5)
 
 	coneRadius := height * 0.06
@@ -29,12 +29,12 @@ func NewArrow(pool object.Pool, clr color.T) *Arrow {
 	bodyHeight := 0.8 * height
 	segments := 32
 
-	arrow := object.New(pool, "Arrow", &Arrow{
-		Hover:     object.NewProperty(false),
+	arrow := NewObject(pool, "Arrow", &Arrow{
+		Hover:     NewProperty(false),
 		Rigidbody: physics.NewRigidBody(pool, 0),
 		Collider:  physics.NewCompound(pool),
 
-		Head: object.Builder(cone.NewObject(pool, cone.Args{
+		Head: Builder(cone.New(pool, cone.Args{
 			Mat:      material.ColoredForward(),
 			Radius:   coneRadius,
 			Height:   coneHeight,
@@ -44,7 +44,7 @@ func NewArrow(pool object.Pool, clr color.T) *Arrow {
 			Position(vec3.UnitY).
 			Create(),
 
-		Body: object.Builder(cylinder.NewObject(pool, cylinder.Args{
+		Body: Builder(cylinder.New(pool, cylinder.Args{
 			Mat:      material.ColoredForward(),
 			Radius:   bodyRadius,
 			Height:   bodyHeight,

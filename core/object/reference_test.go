@@ -19,14 +19,14 @@ var _ = Describe("", func() {
 		Register[*ObjectWithReference](TypeInfo{})
 
 		pool = NewPool()
-		a = New(pool, "a", &ObjectWithReference{})
+		a = NewObject(pool, "a", &ObjectWithReference{})
 		b = Empty(pool, "b")
 		Attach(a, b)
 		a.Reference.Set(b)
 	})
 
 	It("serializes empty references", func() {
-		obj := New(pool, "obj", &ObjectWithReference{})
+		obj := NewObject(pool, "obj", &ObjectWithReference{})
 		out := Copy(pool, obj)
 		Expect(out).ToNot(BeNil())
 		Expect(out.Children()).To(HaveLen(0))

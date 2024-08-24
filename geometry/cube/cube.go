@@ -1,8 +1,9 @@
 package cube
 
 import (
+	. "github.com/johanhenriksson/goworld/core/object"
+
 	"github.com/johanhenriksson/goworld/core/mesh"
-	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render/material"
@@ -10,11 +11,11 @@ import (
 )
 
 func init() {
-	object.Register[*Mesh](object.TypeInfo{
+	Register[*Mesh](TypeInfo{
 		Name: "Cube",
 		Path: []string{"Geometry"},
-		Create: func(ctx object.Pool) (object.Component, error) {
-			return NewObject(ctx, Args{
+		Create: func(ctx Pool) (Component, error) {
+			return New(ctx, Args{
 				Size: 1,
 			}), nil
 		},
@@ -22,13 +23,13 @@ func init() {
 }
 
 type CubeObject struct {
-	object.Object
+	Object
 	Mesh *Mesh
 }
 
-func NewObject(pool object.Pool, args Args) *CubeObject {
-	return object.New(pool, "Cube", &CubeObject{
-		Mesh: New(pool, args),
+func New(pool Pool, args Args) *CubeObject {
+	return NewObject(pool, "Cube", &CubeObject{
+		Mesh: NewMesh(pool, args),
 	})
 }
 
@@ -38,8 +39,8 @@ type Mesh struct {
 	// it might not make sense to generate in the background
 	*mesh.Static
 
-	Size object.Property[float32]
-	Mat  object.Property[*material.Def]
+	Size Property[float32]
+	Mat  Property[*material.Def]
 }
 
 type Args struct {
@@ -47,15 +48,15 @@ type Args struct {
 	Size float32
 }
 
-// New creates a vertex colored cube mesh with a given size
-func New(pool object.Pool, args Args) *Mesh {
+// NewMesh creates a vertex colored cube mesh with a given size
+func NewMesh(pool Pool, args Args) *Mesh {
 	if args.Mat == nil {
 		args.Mat = material.StandardForward()
 	}
-	c := object.NewComponent(pool, &Mesh{
+	c := NewComponent(pool, &Mesh{
 		Static: mesh.New(pool, args.Mat),
-		Size:   object.NewProperty(args.Size),
-		Mat:    object.NewProperty(args.Mat),
+		Size:   NewProperty(args.Size),
+		Mat:    NewProperty(args.Mat),
 	})
 	c.Size.OnChange.Subscribe(func(size float32) {
 		c.generate()
@@ -135,7 +136,7 @@ func (c *Mesh) generate() {
 		20, 22, 23,
 	}
 
-	key := object.Key("cube", c)
+	key := Key("cube", c)
 	mesh := vertex.NewTriangles(key, vertices, indices)
 	c.VertexData.Set(mesh)
 }

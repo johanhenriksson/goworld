@@ -57,6 +57,8 @@ type Static struct {
 
 var _ Mesh = (*Static)(nil)
 
+// todo: this needs an argument struct
+
 // New creates a new mesh component
 func New(pool object.Pool, mat *material.Def) *Static {
 	return NewPrimitiveMesh(pool, vertex.Triangles, mat)

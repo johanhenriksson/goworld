@@ -21,7 +21,7 @@ func typeOf[K object.Component](obj K) reflect.Type {
 }
 
 // Register an Editor constructor for a given object type
-func Register[K object.Component, E T](obj K, constructor func(*Context, K) E) {
+func RegisterEditor[K object.Component, E T](obj K, constructor func(*Context, K) E) {
 	t := typeOf[K](obj)
 	log.Println("register editor for", t.Name())
 	editors[t] = func(ctx *Context, obj object.Component) T {

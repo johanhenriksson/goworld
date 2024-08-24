@@ -6,7 +6,7 @@ import (
 	"github.com/johanhenriksson/goworld/core/draw"
 	"github.com/johanhenriksson/goworld/core/input/keys"
 	"github.com/johanhenriksson/goworld/core/input/mouse"
-	"github.com/johanhenriksson/goworld/core/object"
+	. "github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/editor/gizmo"
 	"github.com/johanhenriksson/goworld/gui/widget/icon"
 	"github.com/johanhenriksson/goworld/math/mat4"
@@ -15,7 +15,7 @@ import (
 )
 
 type Tool interface {
-	object.Component
+	Component
 	CanDeselect() bool
 	ToolMouseEvent(e mouse.Event, hover physics.RaycastHit)
 }
@@ -31,8 +31,8 @@ type Action struct {
 }
 
 type ToolManager struct {
-	object.Object
-	scene    object.Object
+	Object
+	scene    Object
 	selected []T
 	tool     Tool
 	camera   mat4.T
@@ -43,13 +43,13 @@ type ToolManager struct {
 	Rotater *gizmo.Rotater
 }
 
-func NewToolManager(pool object.Pool) *ToolManager {
-	return object.New(pool, "Tool Manager", &ToolManager{
-		Mover: object.Builder(gizmo.NewMover(pool)).
+func NewToolManager(pool Pool) *ToolManager {
+	return NewObject(pool, "Tool Manager", &ToolManager{
+		Mover: Builder(gizmo.NewMover(pool)).
 			Active(false).
 			Create(),
 
-		Rotater: object.Builder(gizmo.NewRotater(pool)).
+		Rotater: Builder(gizmo.NewRotater(pool)).
 			Active(false).
 			Create(),
 
@@ -69,7 +69,7 @@ func (m *ToolManager) MouseEvent(e mouse.Event) {
 	near := vpi.TransformPoint(vec3.New(cursor.X, cursor.Y, 0))
 	far := vpi.TransformPoint(vec3.New(cursor.X, cursor.Y, 1))
 
-	world := object.GetInParents[*physics.World](m)
+	world := GetInParents[*physics.World](m)
 	if world == nil {
 		return
 	}
@@ -92,7 +92,7 @@ func (m *ToolManager) MouseEvent(e mouse.Event) {
 		return
 	}
 
-	editor := object.GetInParents[T](hit.Shape)
+	editor := GetInParents[T](hit.Shape)
 
 	// if nothing is selected, or CanDeselect() is true,
 	// look for something else to select.
@@ -158,14 +158,14 @@ func (m *ToolManager) UseTool(tool Tool) {
 
 	// deselect tool
 	if m.tool != nil {
-		object.Disable(m.tool)
+		Disable(m.tool)
 		m.tool = nil
 	}
 
 	// activate the new tool if its different
 	if !sameTool && tool != nil {
 		m.tool = tool
-		object.Enable(m.tool)
+		Enable(m.tool)
 	}
 }
 
@@ -184,7 +184,7 @@ func (m *ToolManager) setSelect(e mouse.Event, component T) bool {
 	// todo: refactor to enable ALL component editors on the object group
 	// group := collider.Parent()
 
-	// editors := object.Children(group)
+	// editors := Children(group)
 
 	// deselect
 	if m.selected != nil {
@@ -203,7 +203,7 @@ func (m *ToolManager) setSelect(e mouse.Event, component T) bool {
 	// select
 	if component != nil {
 		group := component
-		_, ok := component.Target().(object.Object)
+		_, ok := component.Target().(Object)
 		if !ok {
 			group, ok = component.Parent().(T)
 			if !ok {
@@ -219,7 +219,7 @@ func (m *ToolManager) setSelect(e mouse.Event, component T) bool {
 		// select child component editors
 		for _, child := range group.Children() {
 			if childEdit, ok := child.(T); ok {
-				if _, isObject := childEdit.Target().(object.Object); isObject {
+				if _, isObject := childEdit.Target().(Object); isObject {
 					continue
 				}
 				childEdit.Select(e)
@@ -230,19 +230,19 @@ func (m *ToolManager) setSelect(e mouse.Event, component T) bool {
 	return true
 }
 
-func (m *ToolManager) PreDraw(args draw.Args, scene object.Object) error {
+func (m *ToolManager) PreDraw(args draw.Args, scene Object) error {
 	m.scene = scene
 	m.camera = args.Camera.ViewProj
 	m.viewport = args.Camera.Viewport
 	return nil
 }
 
-func (m *ToolManager) MoveTool(obj object.Component) {
+func (m *ToolManager) MoveTool(obj Component) {
 	m.UseTool(m.Mover)
 	m.Mover.SetTarget(obj.Transform())
 }
 
-func (m *ToolManager) RotateTool(obj object.Component) {
+func (m *ToolManager) RotateTool(obj Component) {
 	m.UseTool(m.Rotater)
 	m.Rotater.SetTarget(obj.Transform())
 }

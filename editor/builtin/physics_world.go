@@ -7,7 +7,7 @@ import (
 )
 
 func init() {
-	editor.Register(&physics.World{}, NewWorldEditor)
+	editor.RegisterEditor(&physics.World{}, NewWorldEditor)
 }
 
 type WorldEditor struct {

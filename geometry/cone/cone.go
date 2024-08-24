@@ -2,7 +2,7 @@ package cone
 
 import (
 	"github.com/johanhenriksson/goworld/core/mesh"
-	"github.com/johanhenriksson/goworld/core/object"
+	. "github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/math"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/physics"
@@ -12,14 +12,14 @@ import (
 )
 
 type Cone struct {
-	object.Object
-	*Mesh
+	Object
+	Mesh     *Mesh
 	Collider *physics.Mesh
 }
 
-func NewObject(pool object.Pool, args Args) *Cone {
-	return object.New(pool, "Cone", &Cone{
-		Mesh:     New(pool, args),
+func New(pool Pool, args Args) *Cone {
+	return NewObject(pool, "Cone", &Cone{
+		Mesh:     NewMesh(pool, args),
 		Collider: physics.NewMesh(pool),
 	})
 }
@@ -27,7 +27,10 @@ func NewObject(pool object.Pool, args Args) *Cone {
 // A Cone is a forward rendered colored cone mesh
 type Mesh struct {
 	*mesh.Static
-	Args
+	Radius   Property[float32]
+	Height   Property[float32]
+	Segments Property[int]
+	Color    Property[color.T]
 }
 
 type Args struct {
@@ -38,53 +41,64 @@ type Args struct {
 	Color    color.T
 }
 
-func New(pool object.Pool, args Args) *Mesh {
+func NewMesh(pool Pool, args Args) *Mesh {
 	if args.Mat == nil {
 		args.Mat = material.ColoredForward()
 	}
-	cone := object.NewComponent(pool, &Mesh{
-		Static: mesh.New(pool, args.Mat),
-		Args:   args,
+	cone := NewComponent(pool, &Mesh{
+		Static:   mesh.New(pool, args.Mat),
+		Radius:   NewProperty(args.Radius),
+		Height:   NewProperty(args.Height),
+		Segments: NewProperty(args.Segments),
+		Color:    NewProperty(args.Color),
 	})
+	cone.Radius.OnChange.Subscribe(func(radius float32) { cone.generate() })
+	cone.Height.OnChange.Subscribe(func(height float32) { cone.generate() })
+	cone.Segments.OnChange.Subscribe(func(segments int) { cone.generate() })
+	cone.Color.OnChange.Subscribe(func(color color.T) { cone.generate() })
 	cone.generate()
 	return cone
 }
 
 func (c *Mesh) generate() {
-	data := make([]vertex.C, 6*c.Segments)
+	radius, height := c.Radius.Get(), c.Height.Get()
+	color := c.Color.Get()
+	segments := c.Segments.Get()
+
+	data := make([]vertex.C, 6*segments)
 
 	// cone
-	top := vec3.New(0, c.Height, 0)
-	sangle := 2 * math.Pi / float32(c.Segments)
-	for i := 0; i < c.Segments; i++ {
+	top := vec3.New(0, height, 0)
+	sangle := 2 * math.Pi / float32(segments)
+	for i := 0; i < segments; i++ {
 		a1 := sangle * (float32(i) + 0.5)
 		a2 := sangle * (float32(i) + 1.5)
-		v1 := vec3.New(math.Cos(a1), 0, -math.Sin(a1)).Scaled(c.Radius)
-		v2 := vec3.New(math.Cos(a2), 0, -math.Sin(a2)).Scaled(c.Radius)
+		v1 := vec3.New(math.Cos(a1), 0, -math.Sin(a1)).Scaled(radius)
+		v2 := vec3.New(math.Cos(a2), 0, -math.Sin(a2)).Scaled(radius)
 		v1t, v2t := top.Sub(v1), top.Sub(v2)
 		n := vec3.Cross(v1t, v2t).Normalized()
 
 		o := 3 * i
-		data[o+0] = vertex.C{P: v2, N: n, C: c.Color}
-		data[o+1] = vertex.C{P: top, N: n, C: c.Color}
-		data[o+2] = vertex.C{P: v1, N: n, C: c.Color}
+		data[o+0] = vertex.C{P: v2, N: n, C: color}
+		data[o+1] = vertex.C{P: top, N: n, C: color}
+		data[o+2] = vertex.C{P: v1, N: n, C: color}
 	}
 
 	// bottom
 	base := vec3.Zero
 	n := vec3.New(0, -1, 0)
-	for i := 0; i < c.Segments; i++ {
+	for i := 0; i < segments; i++ {
 		a1 := sangle * (float32(i) + 0.5)
 		a2 := sangle * (float32(i) + 1.5)
-		v1 := vec3.New(math.Cos(a1), 0, -math.Sin(a1)).Scaled(c.Radius)
-		v2 := vec3.New(math.Cos(a2), 0, -math.Sin(a2)).Scaled(c.Radius)
-		o := 3 * (i + c.Segments)
-		data[o+0] = vertex.C{P: v1, N: n, C: c.Color}
-		data[o+1] = vertex.C{P: base, N: n, C: c.Color}
-		data[o+2] = vertex.C{P: v2, N: n, C: c.Color}
+		v1 := vec3.New(math.Cos(a1), 0, -math.Sin(a1)).Scaled(radius)
+		v2 := vec3.New(math.Cos(a2), 0, -math.Sin(a2)).Scaled(radius)
+		o := 3 * (i + segments)
+		data[o+0] = vertex.C{P: v1, N: n, C: color}
+		data[o+1] = vertex.C{P: base, N: n, C: color}
+		data[o+2] = vertex.C{P: v2, N: n, C: color}
 	}
 
-	key := object.Key("cone", c)
+	key := Key("cone", c)
 	mesh := vertex.NewTriangles(key, data, []uint16{})
 	c.VertexData.Set(mesh)
 }

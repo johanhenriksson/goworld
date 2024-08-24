@@ -2,28 +2,41 @@ package plane
 
 import (
 	"github.com/johanhenriksson/goworld/core/mesh"
-	"github.com/johanhenriksson/goworld/core/object"
+	. "github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/vertex"
 )
 
-type Plane struct {
-	object.Object
-	*Mesh
+func init() {
+	Register[*Mesh](TypeInfo{
+		Name: "Plane",
+		Path: []string{"Geometry"},
+		Create: func(ctx Pool) (Component, error) {
+			return New(ctx, Args{
+				Mat:  material.StandardDeferred(),
+				Size: vec2.New(1, 1),
+			}), nil
+		},
+	})
 }
 
-func NewObject(pool object.Pool, args Args) *Plane {
-	return object.New(pool, "Plane", &Plane{
-		Mesh: New(pool, args),
+type Plane struct {
+	Object
+	Mesh *Mesh
+}
+
+func New(pool Pool, args Args) *Plane {
+	return NewObject(pool, "Plane", &Plane{
+		Mesh: NewMesh(pool, args),
 	})
 }
 
 // Plane is a single segment, two-sided 3D plane
 type Mesh struct {
 	*mesh.Static
-	Size object.Property[vec2.T]
+	Size Property[vec2.T]
 
 	data vertex.MutableMesh[vertex.T, uint16]
 }
@@ -33,15 +46,15 @@ type Args struct {
 	Mat  *material.Def
 }
 
-func New(pool object.Pool, args Args) *Mesh {
+func NewMesh(pool Pool, args Args) *Mesh {
 	if args.Mat == nil {
 		args.Mat = material.StandardForward()
 	}
-	p := object.NewComponent(pool, &Mesh{
+	p := NewComponent(pool, &Mesh{
 		Static: mesh.New(pool, args.Mat),
-		Size:   object.NewProperty[vec2.T](args.Size),
+		Size:   NewProperty[vec2.T](args.Size),
 	})
-	p.data = vertex.NewTriangles[vertex.T, uint16](object.Key("plane", p), nil, nil)
+	p.data = vertex.NewTriangles[vertex.T, uint16](Key("plane", p), nil, nil)
 	p.Size.OnChange.Subscribe(func(f vec2.T) { p.refresh() })
 	p.refresh()
 	return p

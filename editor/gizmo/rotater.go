@@ -3,7 +3,7 @@ package gizmo
 import (
 	"github.com/johanhenriksson/goworld/core/draw"
 	"github.com/johanhenriksson/goworld/core/input/mouse"
-	"github.com/johanhenriksson/goworld/core/object"
+	. "github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/core/transform"
 	"github.com/johanhenriksson/goworld/geometry/lines"
 	"github.com/johanhenriksson/goworld/math"
@@ -16,7 +16,7 @@ import (
 
 // Rotater Gizmo can be used to reposition objects in the 3D scene.
 type Rotater struct {
-	object.Object
+	Object
 
 	target transform.T
 
@@ -42,8 +42,8 @@ type Rotater struct {
 var _ Gizmo = &Rotater{}
 
 // NewRotater creates a new mover gizmo
-func NewRotater(pool object.Pool) *Rotater {
-	g := object.New(pool, "Rotater Gizmo", &Rotater{
+func NewRotater(pool Pool) *Rotater {
+	g := NewObject(pool, "Rotater Gizmo", &Rotater{
 		size: 0.1,
 
 		Sphere: lines.NewSphere(pool, lines.SphereArgs{
@@ -116,7 +116,7 @@ func (g *Rotater) Hover(hovering bool, shape physics.Shape) {
 
 }
 
-func (g *Rotater) PreDraw(args draw.Args, scene object.Object) error {
+func (g *Rotater) PreDraw(args draw.Args, scene Object) error {
 	g.eye = args.Camera.Position
 	g.fov = args.Camera.Fov
 	g.vp = args.Camera.ViewProj
@@ -124,8 +124,8 @@ func (g *Rotater) PreDraw(args draw.Args, scene object.Object) error {
 	return nil
 }
 
-func (g *Rotater) Update(scene object.Component, dt float32) {
-	g.Object.Update(scene, dt)
+func (g *Rotater) Update(scene Component, dt float32) {
+	g.Update(scene, dt)
 
 	// the gizmo should be displayed at the same size irrespectively of its distance to the camera.
 	// we can undo the effects of perspective projection by measuring how much a vector would be "squeezed"

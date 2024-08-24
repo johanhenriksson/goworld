@@ -4,7 +4,7 @@ import (
 	"github.com/johanhenriksson/goworld/core/camera"
 	"github.com/johanhenriksson/goworld/core/input/keys"
 	"github.com/johanhenriksson/goworld/core/input/mouse"
-	"github.com/johanhenriksson/goworld/core/object"
+	. "github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/math"
 	"github.com/johanhenriksson/goworld/math/quat"
 	"github.com/johanhenriksson/goworld/math/vec2"
@@ -13,7 +13,7 @@ import (
 )
 
 type Player struct {
-	object.Object
+	Object
 	Camera   *camera.Object
 	Speed    float32
 	Friction vec3.T
@@ -23,9 +23,9 @@ type Player struct {
 	mouselook bool
 }
 
-func NewPlayer(pool object.Pool, position vec3.T, rotation quat.T) *Player {
-	p := object.Builder(object.New(pool, "Player", &Player{
-		Camera: object.Builder(camera.NewObject(pool, camera.Args{
+func NewPlayer(pool Pool, position vec3.T, rotation quat.T) *Player {
+	p := Builder(NewObject(pool, "Player", &Player{
+		Camera: Builder(camera.NewObject(pool, camera.Args{
 			Fov:   58.0,
 			Near:  0.1,
 			Far:   500,
@@ -46,7 +46,7 @@ func (p *Player) KeyEvent(e keys.Event) {
 	p.keys.KeyEvent(e)
 }
 
-func (p *Player) Update(scene object.Component, dt float32) {
+func (p *Player) Update(scene Component, dt float32) {
 	move := vec3.Zero
 	moving := false
 	if p.keys.Down(keys.W) && p.keys.Up(keys.S) {

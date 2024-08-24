@@ -3,7 +3,7 @@ package builtin
 import (
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/core/light"
-	"github.com/johanhenriksson/goworld/core/object"
+	. "github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/editor"
 	"github.com/johanhenriksson/goworld/editor/propedit"
 	"github.com/johanhenriksson/goworld/geometry/lines"
@@ -18,11 +18,11 @@ import (
 )
 
 func init() {
-	editor.Register(&light.Directional{}, NewDirectionalLightEditor)
+	editor.RegisterEditor(&light.Directional{}, NewDirectionalLightEditor)
 }
 
 type DirectionalLightEditor struct {
-	object.Object
+	Object
 	target *light.Directional
 
 	Shape  *physics.Sphere
@@ -33,8 +33,8 @@ type DirectionalLightEditor struct {
 }
 
 func NewDirectionalLightEditor(ctx *editor.Context, lit *light.Directional) *DirectionalLightEditor {
-	editor := object.New(ctx.Objects, "DirectionalLightEditor", &DirectionalLightEditor{
-		Object: object.Ghost(ctx.Objects, lit.Name(), lit.Transform()),
+	editor := NewObject(ctx.Objects, "DirectionalLightEditor", &DirectionalLightEditor{
+		Object: Ghost(ctx.Objects, lit.Name(), lit.Transform()),
 		target: lit,
 
 		Bounds: lines.NewBox(ctx.Objects, lines.BoxArgs{
@@ -69,16 +69,16 @@ func NewDirectionalLightEditor(ctx *editor.Context, lit *light.Directional) *Dir
 	return editor
 }
 
-func (e *DirectionalLightEditor) Target() object.Component { return e.target }
+func (e *DirectionalLightEditor) Target() Component { return e.target }
 
 func (e *DirectionalLightEditor) Select(ev mouse.Event) {
-	object.Enable(e.GUI)
-	object.Enable(e.Bounds)
+	Enable(e.GUI)
+	Enable(e.Bounds)
 }
 
 func (e *DirectionalLightEditor) Deselect(ev mouse.Event) bool {
-	object.Disable(e.GUI)
-	object.Disable(e.Bounds)
+	Disable(e.GUI)
+	Disable(e.Bounds)
 	return true
 }
 

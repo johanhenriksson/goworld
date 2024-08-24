@@ -3,7 +3,7 @@ package editor
 import (
 	"github.com/johanhenriksson/goworld/core/input/keys"
 	"github.com/johanhenriksson/goworld/core/input/mouse"
-	"github.com/johanhenriksson/goworld/core/object"
+	. "github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/editor/propedit"
 	"github.com/johanhenriksson/goworld/gui"
 	"github.com/johanhenriksson/goworld/gui/node"
@@ -11,16 +11,16 @@ import (
 )
 
 type ObjectEditor struct {
-	object.Object
-	target object.Object
+	Object
+	target Object
 	GUI    gui.Fragment
 }
 
 var _ T = &ObjectEditor{}
 
-func NewObjectEditor(pool object.Pool, target object.Object) *ObjectEditor {
-	return object.New(pool, "ObjectEditor", &ObjectEditor{
-		Object: object.Ghost(pool, target.Name(), target.Transform()),
+func NewObjectEditor(pool Pool, target Object) *ObjectEditor {
+	return NewObject(pool, "ObjectEditor", &ObjectEditor{
+		Object: Ghost(pool, target.Name(), target.Transform()),
 		target: target,
 
 		GUI: PropertyEditorFragment(pool, gui.FragmentLast, func() node.T {
@@ -29,7 +29,7 @@ func NewObjectEditor(pool object.Pool, target object.Object) *ObjectEditor {
 				propedit.BoolField("enabled", "Enabled", propedit.BoolProps{
 					Value: target.Enabled(),
 					OnChange: func(b bool) {
-						object.Toggle(target, b)
+						Toggle(target, b)
 					},
 				}),
 				propedit.Transform("transform", target.Transform()),
@@ -38,15 +38,15 @@ func NewObjectEditor(pool object.Pool, target object.Object) *ObjectEditor {
 	})
 }
 
-func (e *ObjectEditor) Target() object.Component { return e.target }
+func (e *ObjectEditor) Target() Component { return e.target }
 
 func (e *ObjectEditor) Select(ev mouse.Event) {
-	object.Enable(e.GUI)
+	Enable(e.GUI)
 }
 
 func (e *ObjectEditor) Deselect(ev mouse.Event) bool {
 	// todo: check with editor if we can deselect?
-	object.Disable(e.GUI)
+	Disable(e.GUI)
 	return true
 }
 
@@ -78,9 +78,9 @@ func (e *ObjectEditor) Actions() []Action {
 					return
 				}
 
-				editor, hit := object.NewQuery[T]().Where(func(e T) bool {
+				editor, hit := NewQuery[T]().Where(func(e T) bool {
 					return e.Target() == parent
-				}).First(object.Root(e))
+				}).First(Root(e))
 				if !hit {
 					return
 				}
@@ -91,7 +91,7 @@ func (e *ObjectEditor) Actions() []Action {
 	}
 }
 
-func (e *ObjectEditor) Update(scene object.Component, dt float32) {
+func (e *ObjectEditor) Update(scene Component, dt float32) {
 	e.Object.Update(scene, dt)
 	if updatable, ok := e.target.(EditorUpdater); ok {
 		updatable.EditorUpdate(scene, dt)

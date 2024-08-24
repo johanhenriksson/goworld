@@ -20,7 +20,7 @@ var _ GenericProp = &Ref[Component]{}
 func NewRef[T Component](cmp T) Ref[T] {
 	return Ref[T]{
 		Property: NewProperty(cmp.ID()),
-		pool:     cmp.context().unwrap(),
+		pool:     cmp.Pool().unwrap(),
 	}
 }
 
@@ -52,7 +52,7 @@ func (r *Ref[T]) Get() (T, bool) {
 
 func (r *Ref[T]) Set(cmp T) {
 	r.Property.Set(cmp.ID())
-	r.pool = cmp.context().unwrap()
+	r.pool = cmp.Pool().unwrap()
 }
 
 func (r *Ref[T]) Serialize(enc Encoder) error {

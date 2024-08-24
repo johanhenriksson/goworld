@@ -2,7 +2,7 @@ package builtin
 
 import (
 	"github.com/johanhenriksson/goworld/core/input/mouse"
-	"github.com/johanhenriksson/goworld/core/object"
+	. "github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/editor"
 	"github.com/johanhenriksson/goworld/geometry/lines"
 	"github.com/johanhenriksson/goworld/gui"
@@ -13,11 +13,11 @@ import (
 )
 
 func init() {
-	editor.Register(&physics.Mesh{}, NewPhysicsMeshEditor)
+	editor.RegisterEditor(&physics.Mesh{}, NewPhysicsMeshEditor)
 }
 
 type PhysicsMeshEditor struct {
-	object.Object
+	Object
 	mesh vertex.Mesh
 
 	target *physics.Mesh
@@ -28,8 +28,8 @@ type PhysicsMeshEditor struct {
 }
 
 func NewPhysicsMeshEditor(ctx *editor.Context, mesh *physics.Mesh) *PhysicsMeshEditor {
-	editor := object.New(ctx.Objects, "PhysicsMeshEditor", &PhysicsMeshEditor{
-		Object: object.Ghost(ctx.Objects, mesh.Name(), mesh.Transform()),
+	editor := NewObject(ctx.Objects, "PhysicsMeshEditor", &PhysicsMeshEditor{
+		Object: Ghost(ctx.Objects, mesh.Name(), mesh.Transform()),
 		target: mesh,
 
 		Shape: physics.NewMesh(ctx.Objects),
@@ -53,17 +53,17 @@ func NewPhysicsMeshEditor(ctx *editor.Context, mesh *physics.Mesh) *PhysicsMeshE
 	return editor
 }
 
-func (e *PhysicsMeshEditor) Target() object.Component { return e.target }
+func (e *PhysicsMeshEditor) Target() Component { return e.target }
 
 func (e *PhysicsMeshEditor) Select(ev mouse.Event) {
-	object.Enable(e.GUI)
-	object.Enable(e.Wire)
+	Enable(e.GUI)
+	Enable(e.Wire)
 }
 
 func (e *PhysicsMeshEditor) Deselect(ev mouse.Event) bool {
 	// todo: check with editor if we can deselect?
-	object.Disable(e.GUI)
-	object.Disable(e.Wire)
+	Disable(e.GUI)
+	Disable(e.Wire)
 	return true
 }
 

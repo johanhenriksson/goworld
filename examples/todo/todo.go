@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/johanhenriksson/goworld/core/input/mouse"
-	"github.com/johanhenriksson/goworld/core/object"
+	. "github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/engine/app"
 	"github.com/johanhenriksson/goworld/gui"
 	"github.com/johanhenriksson/goworld/gui/hooks"
@@ -17,6 +17,7 @@ import (
 	"github.com/johanhenriksson/goworld/gui/widget/window"
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/render/color"
+
 	"github.com/samber/lo"
 )
 
@@ -27,8 +28,8 @@ func main() {
 			Height: 800,
 			Title:  "goworld: todo",
 		},
-		func(pool object.Pool, scene object.Object) {
-			object.Attach(scene, gui.New(pool, func() node.T {
+		func(pool Pool, scene Object) {
+			Attach(scene, gui.New(pool, func() node.T {
 				return rect.New("gui", rect.Props{
 					Style: rect.Style{
 						Position: style.Absolute{},
