@@ -22,7 +22,7 @@ var _ = Describe("serialization", func() {
 	var pool Pool
 	BeforeEach(func() {
 		pool = NewPool()
-		Register[*ObjectWithComponent](TypeInfo{})
+		Register[*ObjectWithComponent](Type{})
 	})
 
 	Context("objects", func() {
@@ -103,8 +103,8 @@ var _ = Describe("serialization", func() {
 		}
 
 		BeforeEach(func() {
-			Register[*A](TypeInfo{})
-			Register[*B](TypeInfo{})
+			Register[*A](Type{})
+			Register[*B](Type{})
 		})
 
 		It("serializes base components", func() {

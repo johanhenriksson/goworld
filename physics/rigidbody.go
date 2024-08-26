@@ -10,7 +10,7 @@ import (
 )
 
 func init() {
-	object.Register[*RigidBody](object.TypeInfo{
+	object.Register[*RigidBody](object.Type{
 		Name: "Rigidbody",
 		Path: []string{"Physics"},
 		Create: func(ctx object.Pool) (object.Component, error) {

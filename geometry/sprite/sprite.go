@@ -12,7 +12,7 @@ import (
 )
 
 func init() {
-	object.Register[*Mesh](object.TypeInfo{})
+	object.Register[*Mesh](object.Type{})
 }
 
 // Sprite is a single segment, one-sided 3D plane

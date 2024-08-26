@@ -244,7 +244,7 @@ func deserializeItem(pool Pool, dec Decoder, depth int) (result Component, err e
 	return result, nil
 }
 
-func deserializeObject(pool Pool, dec Decoder, typ TypeInfo, depth int) (Object, error) {
+func deserializeObject(pool Pool, dec Decoder, typ *Type, depth int) (Object, error) {
 	if typ.rtype == baseObjectType {
 		return decodeBaseObject(pool, dec, depth)
 	}
@@ -301,7 +301,7 @@ func decodeBaseObject(pool Pool, dec Decoder, depth int) (Object, error) {
 	return base, nil
 }
 
-func deserializeComponent(pool Pool, dec Decoder, typ TypeInfo, depth int) (Component, error) {
+func deserializeComponent(pool Pool, dec Decoder, typ *Type, depth int) (Component, error) {
 	if typ.rtype == baseComponentType {
 		var state componentState
 		if err := dec.Decode(&state); err != nil {

@@ -12,7 +12,7 @@ import (
 )
 
 func init() {
-	object.Register[*Static](object.TypeInfo{
+	object.Register[*Static](object.Type{
 		Name: "Mesh",
 		Create: func(pool object.Pool) (object.Component, error) {
 			return New(pool, nil), nil
