@@ -12,7 +12,7 @@ import (
 )
 
 func init() {
-	Register[*Mesh](TypeInfo{
+	Register[*Mesh](Type{
 		Name: "Cyllinder",
 		Path: []string{"Geometry"},
 		Create: func(ctx Pool) (Component, error) {

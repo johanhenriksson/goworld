@@ -7,7 +7,7 @@ import (
 )
 
 func init() {
-	object.Register[*Sphere](object.TypeInfo{
+	object.Register[*Sphere](object.Type{
 		Name: "Sphere Collider",
 		Path: []string{"Physics"},
 		Create: func(ctx object.Pool) (object.Component, error) {

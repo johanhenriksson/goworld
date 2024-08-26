@@ -25,7 +25,7 @@ type Point struct {
 var _ T = &Point{}
 
 func init() {
-	object.Register[*Point](object.TypeInfo{
+	object.Register[*Point](object.Type{
 		Name: "Point Light",
 		Create: func(pool object.Pool) (object.Component, error) {
 			return NewPoint(pool, PointArgs{

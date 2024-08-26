@@ -1,7 +1,7 @@
 package object
 
 func init() {
-	Register[*scene](TypeInfo{
+	Register[*scene](Type{
 		Name: "Scene",
 		Create: func(pool Pool) (Component, error) {
 			return Scene(pool), nil

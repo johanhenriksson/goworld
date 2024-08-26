@@ -10,7 +10,7 @@ import (
 )
 
 func init() {
-	Register[*Mesh](TypeInfo{
+	Register[*Mesh](Type{
 		Name: "Plane",
 		Path: []string{"Geometry"},
 		Create: func(ctx Pool) (Component, error) {
@@ -25,6 +25,7 @@ func init() {
 type Plane struct {
 	Object
 	Mesh *Mesh
+	Size Property[float32]
 }
 
 func New(pool Pool, args Args) *Plane {

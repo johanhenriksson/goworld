@@ -16,7 +16,7 @@ var _ = Describe("", func() {
 	var b Object
 
 	BeforeEach(func() {
-		Register[*ObjectWithReference](TypeInfo{})
+		Register[*ObjectWithReference](Type{})
 
 		pool = NewPool()
 		a = NewObject(pool, "a", &ObjectWithReference{})

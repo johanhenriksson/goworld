@@ -42,7 +42,7 @@ type Directional struct {
 var _ T = &Directional{}
 
 func init() {
-	object.Register[*Directional](object.TypeInfo{
+	object.Register[*Directional](object.Type{
 		Name: "Directional Light",
 		Create: func(pool object.Pool) (object.Component, error) {
 			return NewDirectional(pool, DirectionalArgs{

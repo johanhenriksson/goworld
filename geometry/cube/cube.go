@@ -11,7 +11,7 @@ import (
 )
 
 func init() {
-	Register[*Mesh](TypeInfo{
+	Register[*Mesh](Type{
 		Name: "Cube",
 		Path: []string{"Geometry"},
 		Create: func(ctx Pool) (Component, error) {

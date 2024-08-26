@@ -8,7 +8,7 @@ import (
 )
 
 func init() {
-	object.Register[*Capsule](object.TypeInfo{
+	object.Register[*Capsule](object.Type{
 		Name: "Capsule Collider",
 		Path: []string{"Physics"},
 		Create: func(ctx object.Pool) (object.Component, error) {
