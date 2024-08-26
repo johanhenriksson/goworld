@@ -1,6 +1,6 @@
 package object
 
-import "log"
+import "sync"
 
 var GlobalPool = NewPool()
 
@@ -16,6 +16,7 @@ type Pool interface {
 type context struct {
 	handles map[Handle]Component
 	next    Handle
+	mutex   sync.RWMutex
 }
 
 func NewPool() Pool {
@@ -26,17 +27,23 @@ func NewPool() Pool {
 }
 
 func (c *context) Resolve(h Handle) (Component, bool) {
+	c.mutex.RLock()
+	defer c.mutex.RUnlock()
 	obj, ok := c.handles[h]
 	return obj, ok
 }
 
 func (c *context) assign(obj Component) {
 	handle := c.remap(obj.ID())
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
 	obj.setHandle(c, handle)
 	c.handles[handle] = obj
 }
 
 func (c *context) release(h Handle) {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
 	delete(c.handles, h)
 }
 
@@ -52,6 +59,8 @@ func (c *context) unwrap() Pool {
 }
 
 func (c *context) nextHandle() Handle {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
 	handle := c.next
 	c.next++
 	return handle
