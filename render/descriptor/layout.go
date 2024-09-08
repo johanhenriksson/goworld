@@ -51,10 +51,11 @@ func New[S Set](device *device.Device, set S, shader *shader.Shader) *Layout[S] 
 		binding := descriptor.LayoutBinding(index)
 		bindings = append(bindings, binding)
 		flags := descriptor.BindingFlags()
-		bindFlags = append(bindFlags, flags)
 
-		// always allow updating while pending
-		flags = flags | ext_descriptor_indexing.DescriptorBindingUpdateUnusedWhilePending
+		// always allow update while pending
+		flags |= ext_descriptor_indexing.DescriptorBindingUpdateUnusedWhilePending
+
+		bindFlags = append(bindFlags, flags)
 
 		if flags&ext_descriptor_indexing.DescriptorBindingUpdateAfterBind == ext_descriptor_indexing.DescriptorBindingUpdateAfterBind {
 			createFlags |= ext_descriptor_indexing.DescriptorSetLayoutCreateUpdateAfterBindPool
