@@ -111,7 +111,7 @@ func NewPostProcessPass(app engine.App, target engine.Target, input engine.Targe
 		})
 
 	frames := input.Frames()
-	p.fbufs, err = framebuffer.NewArray(frames, app.Device(), "blur", target.Width(), target.Height(), p.pass)
+	p.fbufs, err = framebuffer.NewArray(frames, app.Device(), "postprocess", target.Width(), target.Height(), p.pass)
 	if err != nil {
 		panic(err)
 	}
