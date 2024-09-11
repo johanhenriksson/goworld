@@ -55,13 +55,13 @@ func (r *Ref[T]) Set(cmp T) {
 	r.pool = cmp.Pool().unwrap()
 }
 
-func (r *Ref[T]) Serialize(enc Encoder) error {
-	return enc.Encode(r.Property.value)
-}
-
 //
 // serialization
 //
+
+func (r *Ref[T]) Serialize(enc Encoder) error {
+	return enc.Encode(r.Property.value)
+}
 
 func (r *Ref[T]) Deserialize(pool Pool, dec Decoder) error {
 	if err := r.Property.Deserialize(pool, dec); err != nil {

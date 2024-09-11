@@ -1,7 +1,9 @@
 package object
 
 import (
+	"iter"
 	"reflect"
+	"slices"
 
 	"github.com/johanhenriksson/goworld/core/input"
 	"github.com/johanhenriksson/goworld/core/input/keys"
@@ -13,8 +15,14 @@ type Object interface {
 	Component
 	input.Handler
 
-	// Children returns a slice containing the objects children.
-	Children() []Component
+	// Children iterates over the objects children.
+	Children() iter.Seq[Component]
+
+	// Child returns the child at the given index.
+	Child(index int) Component
+
+	// Len returns the number of children attached to the object.
+	Len() int
 
 	attach(...Component)
 	detach(Component)
@@ -157,8 +165,16 @@ func (g *object) Update(scene Component, dt float32) {
 	}
 }
 
-func (g *object) Children() []Component {
-	return g.children
+func (g *object) Len() int {
+	return len(g.children)
+}
+
+func (g *object) Child(index int) Component {
+	return g.children[index]
+}
+
+func (g *object) Children() iter.Seq[Component] {
+	return slices.Values(g.children)
 }
 
 func (g *object) attach(children ...Component) {
@@ -230,10 +246,8 @@ func (g *object) MouseEvent(e mouse.Event) {
 func (o *object) Destroy() {
 	// iterate over a copy of the child slice, since it will be mutated
 	// when the child detaches itself during destruction
-	children := make([]Component, len(o.Children()))
-	copy(children, o.Children()[:])
-
-	for _, child := range o.Children() {
+	children := slices.Collect(o.Children())
+	for _, child := range children {
 		child.Destroy()
 	}
 

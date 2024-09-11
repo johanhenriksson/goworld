@@ -73,7 +73,7 @@ func (q *Query[K]) first(root Component) (K, bool) {
 		}
 	}
 	if group, ok := root.(Object); ok {
-		for _, child := range group.Children() {
+		for child := range group.Children() {
 			if match, found := q.first(child); found {
 				return match, true
 			}
@@ -113,7 +113,7 @@ func (q *Query[K]) collect(object Component) {
 		}
 	}
 	if group, ok := object.(Object); ok {
-		for _, child := range group.Children() {
+		for child := range group.Children() {
 			q.collect(child)
 		}
 	}

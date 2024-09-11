@@ -66,7 +66,7 @@ func Shapes(cmp object.Component) []Shape {
 			group = cmp.Parent()
 		}
 	}
-	for _, child := range group.Children() {
+	for child := range group.Children() {
 		if child == cmp {
 			continue
 		}

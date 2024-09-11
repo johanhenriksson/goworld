@@ -1,6 +1,8 @@
 package object
 
 import (
+	"slices"
+
 	. "github.com/johanhenriksson/goworld/test/util"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -44,7 +46,7 @@ var _ = Describe("serialization", func() {
 				Create()
 
 			a1 := Copy(pool, a0).(Object)
-			children := a1.Children()
+			children := slices.Collect(a1.Children())
 			Expect(len(children)).To(Equal(2))
 			Expect(children[0].Name()).To(Equal("Child 1"))
 			Expect(children[1].Name()).To(Equal("Child 2"))
@@ -81,8 +83,8 @@ var _ = Describe("serialization", func() {
 
 			// pointer should be set and point to the child
 			Expect(obj.Pointer).ToNot(BeNil())
-			Expect(obj.Children()).To(HaveLen(1))
-			Expect(obj.Pointer.ID()).To(Equal(obj.Children()[0].ID()))
+			Expect(obj.Len()).To(Equal(1))
+			Expect(obj.Pointer.ID()).To(Equal(obj.Child(0).ID()))
 
 			// value should be preserved
 			Expect(obj.Value.Get()).To(Equal(123))

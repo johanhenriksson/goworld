@@ -217,7 +217,7 @@ func (m *ToolManager) setSelect(e mouse.Event, component T) bool {
 		m.selected = append(m.selected, group)
 
 		// select child component editors
-		for _, child := range group.Children() {
+		for child := range group.Children() {
 			if childEdit, ok := child.(T); ok {
 				if _, isObject := childEdit.Target().(Object); isObject {
 					continue

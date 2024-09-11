@@ -1,7 +1,9 @@
 package object
 
+import "iter"
+
 // Returns all the children of an object. Returns the empty slice if the object is a component.
-func Children(object Component) []Component {
+func Children(object Component) iter.Seq[Component] {
 	if group, ok := object.(Object); ok {
 		return group.Children()
 	}
@@ -10,9 +12,8 @@ func Children(object Component) []Component {
 
 // Returns the child objects attached to an object
 func Subgroups(object Component) []Object {
-	children := Children(object)
-	groups := make([]Object, 0, len(children))
-	for _, child := range children {
+	groups := make([]Object, 0, 8)
+	for child := range Children(object) {
 		if group, ok := child.(Object); ok {
 			groups = append(groups, group)
 		}
@@ -22,9 +23,8 @@ func Subgroups(object Component) []Object {
 
 // Returns the components attached to an object
 func Components(object Component) []Component {
-	children := Children(object)
-	components := make([]Component, 0, len(children))
-	for _, child := range children {
+	components := make([]Component, 0, 8)
+	for child := range Children(object) {
 		_, group := child.(Object)
 		if !group {
 			components = append(components, child)
@@ -123,7 +123,7 @@ func Get[K Component](self Component) K {
 	if !group.Enabled() {
 		return empty
 	}
-	for _, child := range group.Children() {
+	for child := range group.Children() {
 		if child == self {
 			continue
 		}
@@ -153,7 +153,7 @@ func GetAll[K Component](self Component) []K {
 	if hit, ok := group.(K); ok {
 		results = append(results, hit)
 	}
-	for _, child := range group.Children() {
+	for child := range group.Children() {
 		if !child.Enabled() {
 			continue
 		}
@@ -176,7 +176,7 @@ func GetInParents[K Component](self Component) K {
 		if hit, ok := group.(K); ok {
 			return hit
 		}
-		for _, child := range group.Children() {
+		for child := range group.Children() {
 			if child == self {
 				continue
 			}
@@ -205,7 +205,7 @@ func GetAllInParents[K Component](self Component) []K {
 		if hit, ok := group.(K); ok {
 			results = append(results, hit)
 		}
-		for _, child := range group.Children() {
+		for child := range group.Children() {
 			if child == self {
 				continue
 			}
@@ -241,7 +241,7 @@ func GetInChildren[K Component](self Component) K {
 		group = todo[0]
 		todo = todo[1:]
 
-		for _, child := range group.Children() {
+		for child := range group.Children() {
 			if child == self {
 				continue
 			}
@@ -280,7 +280,7 @@ func GetAllInChildren[K Component](self Component) []K {
 		group = todo[0]
 		todo = todo[1:]
 
-		for _, child := range group.Children() {
+		for child := range group.Children() {
 			if child == self {
 				continue
 			}

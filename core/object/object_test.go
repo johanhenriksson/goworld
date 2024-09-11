@@ -56,15 +56,15 @@ var _ = Describe("Object", func() {
 		b := Empty(pool, "B")
 
 		Attach(a, b)
-		Expect(a.Children()).To(HaveLen(1))
+		Expect(a.Len()).To(Equal(1))
 		Expect(a.Parent()).To(BeNil())
-		Expect(b.Children()).To(HaveLen(0))
+		Expect(b.Len()).To(Equal(0))
 		Expect(b.Parent()).To(Equal(a))
 
 		Detach(b)
-		Expect(a.Children()).To(HaveLen(0))
+		Expect(a.Len()).To(Equal(0))
 		Expect(a.Parent()).To(BeNil())
-		Expect(b.Children()).To(HaveLen(0))
+		Expect(b.Len()).To(Equal(0))
 		Expect(b.Parent()).To(BeNil())
 	})
 
@@ -75,7 +75,7 @@ var _ = Describe("Object", func() {
 		a := NewObject(pool, "A", &A{
 			B: b,
 		})
-		Expect(a.Children()).To(HaveLen(1))
+		Expect(a.Len()).To(Equal(1))
 		Expect(b.Parent()).To(Equal(a))
 	})
 

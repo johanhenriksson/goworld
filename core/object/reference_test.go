@@ -29,7 +29,7 @@ var _ = Describe("", func() {
 		obj := NewObject(pool, "obj", &ObjectWithReference{})
 		out := Copy(pool, obj)
 		Expect(out).ToNot(BeNil())
-		Expect(out.Children()).To(HaveLen(0))
+		Expect(out.Len()).To(Equal(0))
 		ref, ok := out.Reference.Get()
 		Expect(ok).To(BeFalse())
 		Expect(ref).To(BeNil())
@@ -39,12 +39,12 @@ var _ = Describe("", func() {
 		sa := Copy(pool, a)
 
 		Expect(sa.ID()).ToNot(Equal(a.ID()))
-		Expect(sa.Children()).To(HaveLen(1))
+		Expect(sa.Len()).To(Equal(1))
 
 		sbref, ok := sa.Reference.Get()
 		Expect(ok).To(BeTrue(), "handle should be valid")
 
-		sb := sa.Children()[0].(Object)
+		sb := sa.Child(0).(Object)
 		Expect(sb.ID()).To(Equal(sbref.ID()))
 	})
 })

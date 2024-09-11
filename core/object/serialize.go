@@ -128,19 +128,21 @@ func serializeObject(enc Encoder, obj Object, depth int) error {
 	})
 
 	if vtype == baseObjectType {
+		children := slices.Collect(obj.Children())
+
 		// object base
 		if err := enc.Encode(objectState{
 			componentState: newComponentState(obj),
 			Position:       obj.Transform().Position(),
 			Rotation:       obj.Transform().Rotation(),
 			Scale:          obj.Transform().Scale(),
-			Children:       len(obj.Children()),
+			Children:       len(children),
 		}); err != nil {
 			return err
 		}
 
 		// children
-		for _, child := range obj.Children() {
+		for _, child := range children {
 			if err := serializeItem(enc, child, depth+1); err != nil {
 				return err
 			}
@@ -158,7 +160,8 @@ func serializeObject(enc Encoder, obj Object, depth int) error {
 			}
 		}
 
-		if err := encodePointers(enc, val, base.Children()); err != nil {
+		children := slices.Collect(base.Children())
+		if err := encodePointers(enc, val, children); err != nil {
 			return err
 		}
 		if err := encodeFields(enc, val); err != nil {
@@ -263,7 +266,8 @@ func deserializeObject(pool Pool, dec Decoder, typ *Type, depth int) (Object, er
 	obj := reflect.New(typ.rtype).Elem()
 	setBase(obj, base)
 
-	if err := decodePointers(pool, dec, obj, base.Children()); err != nil {
+	children := slices.Collect(base.Children())
+	if err := decodePointers(pool, dec, obj, children); err != nil {
 		return nil, err
 	}
 	if err := decodeFields(pool, dec, obj); err != nil {

@@ -59,7 +59,7 @@ func ConstructEditors(ctx *Context, current object.Component, target object.Comp
 	}
 
 	existingEditors := map[object.Component]T{}
-	for _, child := range editor.Children() {
+	for child := range editor.Children() {
 		childEdit, isEdit := child.(T)
 		if !isEdit {
 			continue
@@ -67,7 +67,7 @@ func ConstructEditors(ctx *Context, current object.Component, target object.Comp
 		existingEditors[childEdit.Target()] = childEdit
 	}
 
-	for _, child := range object.Children(target) {
+	for child := range object.Children(target) {
 		current, exists := existingEditors[child]
 		if exists {
 			ConstructEditors(ctx, current, child)
