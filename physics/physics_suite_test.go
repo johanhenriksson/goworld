@@ -24,6 +24,7 @@ var _ = Describe("general physics tests", func() {
 	)
 
 	BeforeEach(func() {
+		pool = object.NewPool()
 		scene = object.Scene(pool)
 		world = NewWorld(pool)
 		object.Attach(scene, world)
