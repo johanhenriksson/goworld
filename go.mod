@@ -1,8 +1,8 @@
 module github.com/johanhenriksson/goworld
 
-go 1.21
+go 1.23
 
-toolchain go1.21.5
+toolchain go1.23.1
 
 require (
 	github.com/go-gl/glfw/v3.3/glfw v0.0.0-20211213063430-748e38ca8aec
