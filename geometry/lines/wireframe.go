@@ -41,7 +41,7 @@ func (w *Wireframe) refresh() {
 	indices := make([]uint32, 0, msh.IndexCount()*2)
 	vertices := make([]vertex.C, 0, msh.VertexCount())
 
-	msh.Triangles(func(t vertex.Triangle) {
+	for t := range msh.Triangles() {
 		index := uint32(len(vertices))
 		offset := t.Normal().Scaled(w.offset)
 		vertices = append(vertices, vertex.C{P: t.A.Add(offset), C: clr}) // +0
@@ -51,7 +51,7 @@ func (w *Wireframe) refresh() {
 		indices = append(indices, index+0, index+1) // A-B
 		indices = append(indices, index+1, index+2) // B-C
 		indices = append(indices, index+2, index+0) // C-A
-	})
+	}
 
 	w.data.Update(vertices, indices)
 	w.VertexData.Set(w.data)

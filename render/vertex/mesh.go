@@ -1,6 +1,7 @@
 package vertex
 
 import (
+	"iter"
 	"reflect"
 
 	"github.com/johanhenriksson/goworld/math/vec3"
@@ -20,8 +21,8 @@ type Mesh interface {
 	Min() vec3.T
 	Max() vec3.T
 
-	Positions(func(vec3.T))
-	Triangles(iter func(Triangle))
+	Positions() iter.Seq[vec3.T]
+	Triangles() iter.Seq[Triangle]
 }
 
 type Vertex interface {
@@ -70,20 +71,28 @@ func (m *mesh[V, I]) String() string       { return m.key }
 func (m *mesh[V, I]) Min() vec3.T          { return m.min }
 func (m *mesh[V, I]) Max() vec3.T          { return m.max }
 
-func (m *mesh[V, I]) Positions(iter func(vec3.T)) {
-	for _, index := range m.indices {
-		vertex := m.vertices[index]
-		iter(vertex.Position())
+func (m *mesh[V, I]) Positions() iter.Seq[vec3.T] {
+	return func(yield func(vec3.T) bool) {
+		for _, index := range m.indices {
+			vertex := m.vertices[index]
+			if !yield(vertex.Position()) {
+				break
+			}
+		}
 	}
 }
 
-func (m *mesh[V, I]) Triangles(iter func(Triangle)) {
-	for i := 0; i+3 < len(m.indices); i += 3 {
-		iter(Triangle{
-			A: m.vertices[m.indices[i+0]].Position(),
-			B: m.vertices[m.indices[i+1]].Position(),
-			C: m.vertices[m.indices[i+2]].Position(),
-		})
+func (m *mesh[V, I]) Triangles() iter.Seq[Triangle] {
+	return func(yield func(Triangle) bool) {
+		for i := 0; i+3 < len(m.indices); i += 3 {
+			if !yield(Triangle{
+				A: m.vertices[m.indices[i+0]].Position(),
+				B: m.vertices[m.indices[i+1]].Position(),
+				C: m.vertices[m.indices[i+2]].Position(),
+			}) {
+				break
+			}
+		}
 	}
 }
 

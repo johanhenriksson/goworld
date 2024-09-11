@@ -9,7 +9,7 @@ func CollisionMesh(mesh Mesh) Mesh {
 	indexMap := make(map[vec3.T]uint32, mesh.IndexCount())
 	vertexdata := make([]P, 0, mesh.VertexCount()/4)
 	indexdata := make([]uint32, 0, mesh.IndexCount())
-	mesh.Positions(func(p vec3.T) {
+	for p := range mesh.Positions() {
 		// check if the vertex position already has an index
 		// todo: tolerance
 		index, exists := indexMap[p]
@@ -21,7 +21,7 @@ func CollisionMesh(mesh Mesh) Mesh {
 		}
 		// store vertex index
 		indexdata = append(indexdata, index)
-	})
+	}
 
 	return NewTriangles[P, uint32](mesh.Key(), vertexdata, indexdata)
 }
