@@ -19,17 +19,17 @@ var _ T = &ComponentEditor{}
 func NewComponentEditor(pool Pool, target Component) *ComponentEditor {
 	props := Properties(target)
 	editors := make([]node.T, 0, len(props))
+	for _, prop := range props {
+		if editor := propedit.ForType(prop.Type()); editor != nil {
+			editors = append(editors, editor(prop.Key, prop.Name, prop))
+		}
+	}
+
 	return NewObject(pool, "ComponentEditor", &ComponentEditor{
 		Object: Ghost(pool, target.Name(), target.Transform()),
 		target: target,
 
 		GUI: PropertyEditorFragment(pool, gui.FragmentLast, func() node.T {
-			editors = editors[:0]
-			for _, prop := range props {
-				if editor := propedit.ForType(prop.Type()); editor != nil {
-					editors = append(editors, editor(prop.Key, prop.Name, prop))
-				}
-			}
 			return Inspector(
 				target,
 				editors...,
