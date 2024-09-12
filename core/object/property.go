@@ -86,7 +86,6 @@ func Properties(target Component) []PropInfo {
 		}
 
 		value := v.Field(i)
-
 		if prop, isProp := value.Addr().Interface().(GenericProp); isProp {
 			// todo: tags
 

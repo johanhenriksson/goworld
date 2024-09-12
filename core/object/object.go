@@ -248,12 +248,12 @@ func (o *object) Destroy() {
 	// when the child detaches itself during destruction
 	children := slices.Collect(o.Children())
 	for _, child := range children {
-		child.Destroy()
+		child.destroy()
 	}
 
 	if o.parent != nil {
 		o.parent.detach(o)
 	}
 
-	o.component.Destroy()
+	o.component.destroy()
 }

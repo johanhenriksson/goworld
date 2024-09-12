@@ -33,14 +33,12 @@ type Component interface {
 	// Update the component. Called on every frame.
 	Update(Component, float32)
 
-	// Destroy the object
-	Destroy()
-
 	setHandle(Pool, Handle)
 	setName(string)
 	setParent(Object)
 	setEnabled(bool) bool
 	setActive(bool) bool
+	destroy()
 }
 
 type component struct {
@@ -152,11 +150,7 @@ func (b *component) setName(n string) { b.name = n }
 func (b *component) Name() string     { return b.name }
 func (b *component) String() string   { return b.Name() }
 
-func (o *component) Destroy() {
-	if o.parent != nil {
-		o.parent.detach(o)
-	}
-
+func (o *component) destroy() {
 	if o.ctx != nil {
 		o.ctx.release(o.id)
 		o.ctx = nil

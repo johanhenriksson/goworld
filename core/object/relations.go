@@ -99,6 +99,15 @@ func Toggle(object Component, enabled bool) {
 	}
 }
 
+func Destroy(object Component) {
+	if object == nil {
+		return
+	}
+	Disable(object)
+	Detach(object)
+	object.destroy()
+}
+
 // Root returns the first ancestor of the given component/object
 func Root(obj Component) Component {
 	for obj.Parent() != nil {
