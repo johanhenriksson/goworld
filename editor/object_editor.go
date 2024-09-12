@@ -19,20 +19,32 @@ type ObjectEditor struct {
 var _ T = &ObjectEditor{}
 
 func NewObjectEditor(pool Pool, target Object) *ObjectEditor {
+	props := Properties(target)
+	editors := make([]node.T, 2, len(props)+2)
+
 	return NewObject(pool, "ObjectEditor", &ObjectEditor{
 		Object: Ghost(pool, target.Name(), target.Transform()),
 		target: target,
 
 		GUI: PropertyEditorFragment(pool, gui.FragmentLast, func() node.T {
+			editors = editors[:2]
+			editors[0] = propedit.BoolField("enabled", "Enabled", propedit.BoolProps{
+				Value: target.Enabled(),
+				OnChange: func(b bool) {
+					Toggle(target, b)
+				},
+			})
+			editors[1] = propedit.Transform("transform", target.Transform())
+
+			for _, prop := range props {
+				if editor := propedit.ForType(prop.Type()); editor != nil {
+					editors = append(editors, editor(prop.Key, prop.Name, prop))
+				}
+			}
+
 			return Inspector(
 				target,
-				propedit.BoolField("enabled", "Enabled", propedit.BoolProps{
-					Value: target.Enabled(),
-					OnChange: func(b bool) {
-						Toggle(target, b)
-					},
-				}),
-				propedit.Transform("transform", target.Transform()),
+				editors...,
 			)
 		}),
 	})

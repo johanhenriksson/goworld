@@ -1,13 +1,16 @@
 package object
 
-import "iter"
+import (
+	"iter"
+	"slices"
+)
 
 // Returns all the children of an object. Returns the empty slice if the object is a component.
 func Children(object Component) iter.Seq[Component] {
 	if group, ok := object.(Object); ok {
 		return group.Children()
 	}
-	return nil
+	return slices.Values(([]Component)(nil))
 }
 
 // Returns the child objects attached to an object
