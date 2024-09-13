@@ -8,14 +8,14 @@ import (
 	"github.com/golang/freetype/truetype"
 	fontlib "golang.org/x/image/font"
 
-	"github.com/johanhenriksson/goworld/assets"
+	"github.com/johanhenriksson/goworld/assets/fs"
 	"github.com/johanhenriksson/goworld/util"
 )
 
 var parseCache map[string]*truetype.Font = make(map[string]*truetype.Font, 32)
 var faceCache map[string]*Font = make(map[string]*Font, 128)
 
-func loadTruetypeFont(filename string) (*truetype.Font, error) {
+func loadTruetypeFont(assets fs.Filesystem, filename string) (*truetype.Font, error) {
 	// check parsed font cache
 	if fnt, exists := parseCache[filename]; exists {
 		return fnt, nil
@@ -36,13 +36,13 @@ func loadTruetypeFont(filename string) (*truetype.Font, error) {
 	return fnt, nil
 }
 
-func Load(filename string, size int, scale float32) *Font {
+func Load(assets fs.Filesystem, filename string, size int, scale float32) *Font {
 	key := fmt.Sprintf("%s:%dx%.2f", filename, size, scale)
 	if font, exists := faceCache[key]; exists {
 		return font
 	}
 
-	ttf, err := loadTruetypeFont(filename)
+	ttf, err := loadTruetypeFont(assets, filename)
 	if err != nil {
 		panic(err)
 	}

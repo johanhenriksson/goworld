@@ -92,7 +92,7 @@ func NewOutputPass(app engine.App, target engine.Target, source engine.Target) *
 	p.material = material.New(
 		app.Device(),
 		material.Args{
-			Shader:     app.Shaders().Fetch(shader.NewRef("output")),
+			Shader:     app.Shaders().Fetch(shader.Ref("output")),
 			Pass:       p.pass,
 			Pointers:   vertex.ParsePointers(vertex.T{}),
 			DepthTest:  false,

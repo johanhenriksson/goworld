@@ -8,7 +8,7 @@ import (
 	// image codecs
 	_ "image/png"
 
-	"github.com/johanhenriksson/goworld/assets"
+	"github.com/johanhenriksson/goworld/assets/fs"
 	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
@@ -19,7 +19,7 @@ type Data struct {
 	Buffer []byte
 }
 
-func LoadFile(file string) (*Data, error) {
+func LoadFile(assets fs.Filesystem, file string) (*Data, error) {
 	imgdata, err := assets.Read(file)
 	if err != nil {
 		return nil, err

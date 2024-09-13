@@ -9,6 +9,8 @@ import (
 	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
+// the key must be a reference, not the mesh itself
+
 type MeshCache T[vertex.Mesh, *GpuMesh]
 
 type meshCache struct {

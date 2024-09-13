@@ -6,12 +6,14 @@ import (
 	"fmt"
 	"io"
 	"os"
+
+	"github.com/johanhenriksson/goworld/assets/fs"
 )
 
 //go:embed builtin/*
 var builtinFs embed.FS
 
-var BuiltinFilesystem Filesystem = &builtinFilesystem{}
+var BuiltinFilesystem fs.Filesystem = &builtinFilesystem{}
 
 type builtinFilesystem struct{}
 

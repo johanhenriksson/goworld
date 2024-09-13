@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"image/color"
 
+	"github.com/johanhenriksson/goworld/assets/fs"
 	"github.com/johanhenriksson/goworld/math"
 	"github.com/johanhenriksson/goworld/math/byte4"
 	"github.com/johanhenriksson/goworld/math/vec3"
@@ -37,8 +38,6 @@ func init() {
 type T struct {
 	R, G, B, A float32
 }
-
-var _ texture.Ref = T{}
 
 // Color4 creates a color struct from its RGBA components
 func RGBA(r, g, b, a float32) T {
@@ -177,7 +176,7 @@ func Lerp(a, b T, f float32) T {
 func (c T) Key() string  { return c.Hex() }
 func (c T) Version() int { return 1 }
 
-func (c T) ImageData() *image.Data {
+func (c T) LoadImage(fs.Filesystem) *image.Data {
 	rgba := c.Byte4()
 	return &image.Data{
 		Width:  1,

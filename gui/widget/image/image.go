@@ -1,6 +1,7 @@
 package image
 
 import (
+	"github.com/johanhenriksson/goworld/assets"
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/engine/cache"
 	"github.com/johanhenriksson/goworld/gui/node"
@@ -8,18 +9,17 @@ import (
 	"github.com/johanhenriksson/goworld/gui/widget"
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/render/color"
-	"github.com/johanhenriksson/goworld/render/texture"
 	"github.com/kjk/flex"
 )
 
 type T interface {
 	widget.T
-	Image() texture.Ref
+	Image() assets.Texture
 }
 
 type Props struct {
 	Style   Style
-	Image   texture.Ref
+	Image   assets.Texture
 	OnClick mouse.Callback
 }
 
@@ -94,7 +94,7 @@ func (i *image) measure(node *flex.Node, width float32, widthMode flex.MeasureMo
 // Styles
 //
 
-func (i *image) Image() texture.Ref { return i.props.Image }
+func (i *image) Image() assets.Texture { return i.props.Image }
 
 //
 // Draw

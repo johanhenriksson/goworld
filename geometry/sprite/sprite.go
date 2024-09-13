@@ -3,6 +3,7 @@ package sprite
 import (
 	"fmt"
 
+	"github.com/johanhenriksson/goworld/assets"
 	"github.com/johanhenriksson/goworld/core/mesh"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/math/vec2"
@@ -19,7 +20,7 @@ func init() {
 type Mesh struct {
 	*mesh.Static
 	Size   object.Property[vec2.T]
-	Sprite object.Property[texture.Ref]
+	Sprite object.Property[assets.Texture]
 
 	mesh vertex.MutableMesh[vertex.T, uint16]
 }
@@ -28,7 +29,7 @@ var _ mesh.Mesh = &Mesh{}
 
 type Args struct {
 	Size    vec2.T
-	Texture texture.Ref
+	Texture assets.Texture
 }
 
 func New(pool object.Pool, args Args) *Mesh {
@@ -42,7 +43,7 @@ func New(pool object.Pool, args Args) *Mesh {
 	sprite.generate()
 
 	sprite.SetTexture(texture.Diffuse, args.Texture)
-	sprite.Sprite.OnChange.Subscribe(func(tex texture.Ref) {
+	sprite.Sprite.OnChange.Subscribe(func(tex assets.Texture) {
 		sprite.SetTexture(texture.Diffuse, tex)
 	})
 

@@ -3,6 +3,7 @@ package texture
 import (
 	"encoding/gob"
 
+	"github.com/johanhenriksson/goworld/assets/fs"
 	"github.com/johanhenriksson/goworld/render/image"
 )
 
@@ -13,17 +14,6 @@ func init() {
 	gob.Register(Args{})
 }
 
-type Ref interface {
-	Key() string
-	Version() int
-
-	// ImageData is called by texture caches and loaders, and should return the image data.
-	// todo: This interface is a bit too simple as it does not allow us to pass
-	//       formats, filters and aspects.
-	ImageData() *image.Data
-	TextureArgs() Args
-}
-
 type pathRef struct {
 	Path string
 	Args Args
@@ -31,7 +21,7 @@ type pathRef struct {
 	img *image.Data
 }
 
-func PathRef(path string) Ref {
+func PathRef(path string) *pathRef {
 	return &pathRef{
 		Path: path,
 		Args: Args{
@@ -41,7 +31,7 @@ func PathRef(path string) Ref {
 	}
 }
 
-func PathArgsRef(path string, args Args) Ref {
+func PathArgsRef(path string, args Args) *pathRef {
 	return &pathRef{
 		Path: path,
 		Args: args,
@@ -51,12 +41,12 @@ func PathArgsRef(path string, args Args) Ref {
 func (r *pathRef) Key() string  { return r.Path } // todo: this must include arguments somehow
 func (r *pathRef) Version() int { return 1 }
 
-func (r *pathRef) ImageData() *image.Data {
+func (r *pathRef) LoadImage(assets fs.Filesystem) *image.Data {
 	if r.img != nil {
 		return r.img
 	}
 	var err error
-	r.img, err = image.LoadFile(r.Path)
+	r.img, err = image.LoadFile(assets, r.Path)
 	if err != nil {
 		panic(err)
 	}

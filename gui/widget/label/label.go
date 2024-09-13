@@ -1,6 +1,7 @@
 package label
 
 import (
+	"github.com/johanhenriksson/goworld/assets"
 	"github.com/johanhenriksson/goworld/core/input/keys"
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/gui/node"
@@ -126,7 +127,7 @@ func (l *label) invalidate() {
 		if fontSize == 0 {
 			fontSize = DefaultFont.Size
 		}
-		l.font = font.Load(fontName, fontSize, l.scale)
+		l.font = font.Load(assets.FS, fontName, fontSize, l.scale)
 	}
 
 	// recalculate text size

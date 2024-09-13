@@ -3,7 +3,7 @@ version: "3"
 tasks:
   run:
     cmds:
-      - go run ./game/cmd/cube.go
+      - go run ./examples/cube
     env:
       # required to for large ssaos on macos
       MVK_CONFIG_USE_METAL_ARGUMENT_BUFFERS: 1

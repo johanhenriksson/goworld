@@ -5,17 +5,24 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+
+	"github.com/johanhenriksson/goworld/assets/fs"
 )
 
 var ErrNotFound = fmt.Errorf("not found")
 
-var assetFs Filesystem
+var FS fs.Filesystem
 
 const AssetFolderEnv = "ASSET_PATH"
 
+type Asset interface {
+	Key() string
+	Version() int
+}
+
 func init() {
-	layeredFs := NewLayeredFilesystem(BuiltinFilesystem)
-	assetFs = layeredFs
+	layeredFs := fs.NewLayered(BuiltinFilesystem)
+	FS = layeredFs
 
 	// look for a local asset path
 	assetFolderName := "assets"
@@ -28,18 +35,10 @@ func init() {
 	}
 	if localAssetPath, err := FindFileInParents(assetFolderName, cwd); err == nil {
 		log.Println("adding local file system layer rooted at", localAssetPath)
-		layeredFs.Push(NewLocalFilesystem(localAssetPath))
+		layeredFs.Push(fs.NewLocal(localAssetPath))
 	} else {
 		log.Println("no local asset path found")
 	}
-}
-
-func Read(key string) ([]byte, error) {
-	return assetFs.Read(key)
-}
-
-func Write(key string, data []byte) error {
-	return assetFs.Write(key, data)
 }
 
 func FindFileInParents(name, path string) (string, error) {

@@ -39,7 +39,7 @@ func NewLightShader(app engine.App, pass *renderpass.Renderpass, gbuffer Geometr
 	mat := material.New(
 		app.Device(),
 		material.Args{
-			Shader:    app.Shaders().Fetch(shader.NewRef("light")),
+			Shader:    app.Shaders().Fetch(shader.Ref("light")),
 			Pass:      pass,
 			Subpass:   LightingSubpass,
 			Pointers:  vertex.ParsePointers(vertex.T{}),

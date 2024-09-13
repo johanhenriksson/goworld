@@ -1,6 +1,7 @@
 package font
 
 import (
+	"github.com/johanhenriksson/goworld/assets/fs"
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/render/image"
 	"github.com/johanhenriksson/goworld/render/texture"
@@ -16,12 +17,10 @@ type Glyph struct {
 	Mask    *image.Data
 }
 
-var _ texture.Ref = &Glyph{}
-
 func (r *Glyph) Key() string  { return r.key }
 func (r *Glyph) Version() int { return 1 }
 
-func (r *Glyph) ImageData() *image.Data {
+func (r *Glyph) LoadImage(fs.Filesystem) *image.Data {
 	return r.Mask
 }
 

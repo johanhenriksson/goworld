@@ -55,7 +55,7 @@ func (m *DeferredMatCache) Instantiate(def *material.Def, callback func([]Materi
 	pointers := vertex.ParsePointers(def.VertexFormat)
 
 	// fetch shader from cache
-	shader := m.app.Shaders().Fetch(shader.NewRef(def.Shader))
+	shader := m.app.Shaders().Fetch(shader.Ref(def.Shader))
 
 	// create material
 	mat := material.New(

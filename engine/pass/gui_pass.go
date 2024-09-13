@@ -110,7 +110,7 @@ func NewGuiPass(app engine.App, target engine.Target) *GuiPass {
 	frames := target.Frames()
 	mat := material.New(app.Device(), material.Args{
 		Pass:       pass,
-		Shader:     app.Shaders().Fetch(shader.NewRef("ui_quad")),
+		Shader:     app.Shaders().Fetch(shader.Ref("ui_quad")),
 		DepthTest:  true,
 		DepthWrite: true,
 	}, &GuiDescriptors{

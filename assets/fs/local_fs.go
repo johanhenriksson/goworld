@@ -1,4 +1,4 @@
-package assets
+package fs
 
 import (
 	"errors"
@@ -8,21 +8,21 @@ import (
 	"path/filepath"
 )
 
-type LocalFilesystem struct {
+type Local struct {
 	root string
 }
 
-var _ Filesystem = (*LocalFilesystem)(nil)
+var _ Filesystem = (*Local)(nil)
 
-func NewLocalFilesystem(root string) *LocalFilesystem {
-	return &LocalFilesystem{root: root}
+func NewLocal(root string) *Local {
+	return &Local{root: root}
 }
 
-func (fs *LocalFilesystem) path(key string) string {
+func (fs *Local) path(key string) string {
 	return filepath.Join(fs.root, key)
 }
 
-func (fs *LocalFilesystem) Read(key string) ([]byte, error) {
+func (fs *Local) Read(key string) ([]byte, error) {
 	path := fs.path(key)
 	fp, err := os.Open(path)
 	if err != nil {
@@ -41,7 +41,7 @@ func (fs *LocalFilesystem) Read(key string) ([]byte, error) {
 	return data, nil
 }
 
-func (fs *LocalFilesystem) Write(key string, data []byte) error {
+func (fs *Local) Write(key string, data []byte) error {
 	path := fs.path(key)
 	file, err := os.Create(path)
 	if err != nil {

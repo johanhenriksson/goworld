@@ -3,7 +3,7 @@ package shader
 import (
 	"encoding/json"
 
-	"github.com/johanhenriksson/goworld/assets"
+	"github.com/johanhenriksson/goworld/assets/fs"
 	"github.com/johanhenriksson/goworld/render/texture"
 	"github.com/johanhenriksson/goworld/render/types"
 )
@@ -34,7 +34,7 @@ func (d *Details) ParseInputs() (Inputs, error) {
 	return inputs, nil
 }
 
-func ReadDetails(path string) (*Details, error) {
+func ReadDetails(assets fs.Filesystem, path string) (*Details, error) {
 	data, err := assets.Read(path)
 	if err != nil {
 		return nil, err
