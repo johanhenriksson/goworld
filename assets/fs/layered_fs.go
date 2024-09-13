@@ -1,31 +1,31 @@
-package assets
+package fs
 
 import (
 	"fmt"
 	"slices"
 )
 
-type LayeredFilesystem struct {
+type Layered struct {
 	layers []Filesystem
 }
 
-var _ Filesystem = (*LayeredFilesystem)(nil)
+var _ Filesystem = (*Layered)(nil)
 
-func NewLayeredFilesystem(layers ...Filesystem) *LayeredFilesystem {
-	return &LayeredFilesystem{layers: layers}
+func NewLayered(layers ...Filesystem) *Layered {
+	return &Layered{layers: layers}
 }
 
 // Push adds a layer to the top of the filesystem stack
-func (fs *LayeredFilesystem) Push(layer Filesystem) {
+func (fs *Layered) Push(layer Filesystem) {
 	fs.layers = slices.Insert(fs.layers, 0, layer)
 }
 
 // Pop removes the top layer from the filesystem stack
-func (fs *LayeredFilesystem) Pop() {
+func (fs *Layered) Pop() {
 	fs.layers = slices.Delete(fs.layers, 0, 1)
 }
 
-func (fs *LayeredFilesystem) Read(key string) ([]byte, error) {
+func (fs *Layered) Read(key string) ([]byte, error) {
 	for _, layer := range fs.layers {
 		data, err := layer.Read(key)
 		if err == nil {
@@ -35,7 +35,7 @@ func (fs *LayeredFilesystem) Read(key string) ([]byte, error) {
 	return nil, fmt.Errorf("asset %s %w", key, ErrNotFound)
 }
 
-func (fs *LayeredFilesystem) Write(key string, data []byte) error {
+func (fs *Layered) Write(key string, data []byte) error {
 	if len(fs.layers) == 0 {
 		return fmt.Errorf("no layers in filesystem")
 	}

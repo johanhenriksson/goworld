@@ -3,6 +3,7 @@ package shader
 import (
 	"fmt"
 
+	"github.com/johanhenriksson/goworld/assets/fs"
 	"github.com/johanhenriksson/goworld/render/device"
 	"github.com/johanhenriksson/goworld/render/texture"
 	"github.com/johanhenriksson/goworld/render/types"
@@ -37,10 +38,10 @@ type Shader struct {
 	textures []texture.Slot
 }
 
-func New(device *device.Device, path string) *Shader {
+func New(device *device.Device, assets fs.Filesystem, path string) *Shader {
 	// todo: inputs & descriptors should be obtained from SPIR-V reflection
 	detailsPath := fmt.Sprintf("shaders/%s.json", path)
-	details, err := ReadDetails(detailsPath)
+	details, err := ReadDetails(assets, detailsPath)
 	if err != nil {
 		panic(fmt.Sprintf("failed to load shader details %s: %s", detailsPath, err))
 	}
@@ -51,8 +52,8 @@ func New(device *device.Device, path string) *Shader {
 	}
 
 	modules := []Module{
-		NewModule(device, fmt.Sprintf("shaders/%s.vs.glsl", path), StageVertex),
-		NewModule(device, fmt.Sprintf("shaders/%s.fs.glsl", path), StageFragment),
+		NewModule(device, assets, fmt.Sprintf("shaders/%s.vs.glsl", path), StageVertex),
+		NewModule(device, assets, fmt.Sprintf("shaders/%s.fs.glsl", path), StageFragment),
 	}
 
 	return &Shader{

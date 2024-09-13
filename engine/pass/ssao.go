@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"unsafe"
 
+	"github.com/johanhenriksson/goworld/assets/fs"
 	"github.com/johanhenriksson/goworld/core/draw"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/engine"
@@ -116,7 +117,7 @@ func NewAmbientOcclusionPass(app engine.App, target engine.Target, gbuffer Geome
 	p.mat = material.New(
 		app.Device(),
 		material.Args{
-			Shader:     app.Shaders().Fetch(shader.NewRef("ssao")),
+			Shader:     app.Shaders().Fetch(shader.Ref("ssao")),
 			Pass:       p.pass,
 			Pointers:   vertex.ParsePointers(vertex.T{}),
 			DepthTest:  false,
@@ -264,7 +265,7 @@ func NewHemisphereNoise(width, height int) *HemisphereNoise {
 func (n *HemisphereNoise) Key() string  { return n.key }
 func (n *HemisphereNoise) Version() int { return 1 }
 
-func (n *HemisphereNoise) ImageData() *image.Data {
+func (n *HemisphereNoise) LoadImage(fs.Filesystem) *image.Data {
 	buffer := make([]vec4.T, 4*n.Width*n.Height)
 	for i := range buffer {
 		buffer[i] = vec4.Extend(vec3.Random(

@@ -1,14 +1,15 @@
 package cache
 
 import (
+	"github.com/johanhenriksson/goworld/assets"
 	"github.com/johanhenriksson/goworld/render/device"
 	"github.com/johanhenriksson/goworld/render/shader"
 )
 
-type ShaderCache T[shader.Ref, *shader.Shader]
+type ShaderCache T[assets.Shader, *shader.Shader]
 
 func NewShaderCache(dev *device.Device) ShaderCache {
-	return New[shader.Ref, *shader.Shader](&shaders{
+	return New[assets.Shader, *shader.Shader](&shaders{
 		device: dev,
 	})
 }
@@ -21,10 +22,10 @@ func (s *shaders) Name() string {
 	return "Shaders"
 }
 
-func (s *shaders) Instantiate(key shader.Ref, callback func(*shader.Shader)) {
+func (s *shaders) Instantiate(key assets.Shader, callback func(*shader.Shader)) {
 	// load shader in a background goroutine
 	go func() {
-		shader := key.Load(s.device)
+		shader := key.LoadShader(assets.FS, s.device)
 		callback(shader)
 	}()
 }

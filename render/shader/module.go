@@ -1,6 +1,7 @@
 package shader
 
 import (
+	"github.com/johanhenriksson/goworld/assets/fs"
 	"github.com/johanhenriksson/goworld/render/device"
 
 	"github.com/vkngwrapper/core/v2/core1_0"
@@ -20,12 +21,12 @@ type shader_module struct {
 	stage  ShaderStage
 }
 
-func NewModule(device *device.Device, path string, stage ShaderStage) Module {
+func NewModule(device *device.Device, assets fs.Filesystem, path string, stage ShaderStage) Module {
 	if device == nil {
 		panic("device is nil")
 	}
 
-	bytecode, err := LoadOrCompile(path, stage)
+	bytecode, err := LoadOrCompile(assets, path, stage)
 	if err != nil {
 		panic(err)
 	}

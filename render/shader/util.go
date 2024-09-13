@@ -10,7 +10,7 @@ import (
 	"regexp"
 	"unsafe"
 
-	"github.com/johanhenriksson/goworld/assets"
+	"github.com/johanhenriksson/goworld/assets/fs"
 )
 
 var ErrCompileFailed = errors.New("shader compilation error")
@@ -29,11 +29,11 @@ func sliceUint32(data []byte) []uint32 {
 	return (*[m / 4]uint32)(unsafe.Pointer((*sliceHeader)(unsafe.Pointer(&data)).Data))[:len(data)/4]
 }
 
-func LoadOrCompile(path string, stage ShaderStage) ([]byte, error) {
+func LoadOrCompile(assets fs.Filesystem, path string, stage ShaderStage) ([]byte, error) {
 	spvPath := fmt.Sprintf("%s.spv", path)
 	source, err := assets.Read(spvPath)
-	if errors.Is(err, assets.ErrNotFound) {
-		return Compile(path, stage)
+	if errors.Is(err, fs.ErrNotFound) {
+		return Compile(assets, path, stage)
 	}
 	if err != nil {
 		return nil, err
@@ -42,7 +42,7 @@ func LoadOrCompile(path string, stage ShaderStage) ([]byte, error) {
 	return source, nil
 }
 
-func Compile(path string, stage ShaderStage) ([]byte, error) {
+func Compile(assets fs.Filesystem, path string, stage ShaderStage) ([]byte, error) {
 	stageflag := ""
 	switch stage {
 	case StageFragment:
@@ -53,7 +53,7 @@ func Compile(path string, stage ShaderStage) ([]byte, error) {
 		stageflag = "-fshader-stage=compute"
 	}
 
-	source, err := LoadSource(path, []string{"shaders"})
+	source, err := LoadSource(assets, path, []string{"shaders"})
 	if err != nil {
 		return nil, err
 	}
@@ -86,13 +86,13 @@ func Compile(path string, stage ShaderStage) ([]byte, error) {
 	return bytecode.Bytes(), nil
 }
 
-func LoadSource(path string, includePaths []string) ([]byte, error) {
+func LoadSource(assets fs.Filesystem, path string, includePaths []string) ([]byte, error) {
 	source, err := assets.Read(path)
-	if errors.Is(err, assets.ErrNotFound) {
+	if errors.Is(err, fs.ErrNotFound) {
 		for _, includePath := range includePaths {
 			includePathFile := filepath.Join(includePath, path)
 			source, err = assets.Read(includePathFile)
-			if errors.Is(err, assets.ErrNotFound) {
+			if errors.Is(err, fs.ErrNotFound) {
 				continue
 			} else if err != nil {
 				return nil, err
@@ -119,7 +119,7 @@ func LoadSource(path string, includePaths []string) ([]byte, error) {
 		}
 
 		// recursively load the included file
-		includeSource, err := LoadSource(includeFile[1], includePaths)
+		includeSource, err := LoadSource(assets, includeFile[1], includePaths)
 		if err != nil {
 			return nil, err
 		}

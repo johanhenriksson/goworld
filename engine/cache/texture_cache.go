@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"github.com/johanhenriksson/goworld/assets"
 	"github.com/johanhenriksson/goworld/render/buffer"
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/device"
@@ -10,10 +11,10 @@ import (
 	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
-type TextureCache T[texture.Ref, *texture.Texture]
+type TextureCache T[assets.Texture, *texture.Texture]
 
 func NewTextureCache(device *device.Device, worker command.Worker) TextureCache {
-	return New[texture.Ref, *texture.Texture](&textures{
+	return New[assets.Texture, *texture.Texture](&textures{
 		device: device,
 		worker: worker,
 	})
@@ -24,7 +25,7 @@ type textures struct {
 	worker command.Worker
 }
 
-func (t *textures) Instantiate(ref texture.Ref, callback func(*texture.Texture)) {
+func (t *textures) Instantiate(ref assets.Texture, callback func(*texture.Texture)) {
 	var stage *buffer.Buffer
 	var tex *texture.Texture
 
@@ -32,7 +33,7 @@ func (t *textures) Instantiate(ref texture.Ref, callback func(*texture.Texture))
 	cmds := command.NewRecorder()
 	cmds.Record(func(cmd *command.Buffer) {
 		// load image data
-		img := ref.ImageData()
+		img := ref.LoadImage(assets.FS)
 
 		// args & defaults
 		args := ref.TextureArgs()

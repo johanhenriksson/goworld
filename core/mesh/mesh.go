@@ -3,6 +3,7 @@ package mesh
 import (
 	"fmt"
 
+	"github.com/johanhenriksson/goworld/assets"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/math/shape"
 	"github.com/johanhenriksson/goworld/math/vec3"
@@ -28,7 +29,7 @@ type Mesh interface {
 	Material() *material.Def
 	MaterialID() material.ID
 
-	Texture(texture.Slot) texture.Ref
+	Texture(texture.Slot) assets.Texture
 
 	// Bounding sphere used for view frustum culling
 	BoundingSphere() shape.Sphere
@@ -51,7 +52,7 @@ type Static struct {
 	Prim        object.Property[vertex.Primitive]
 	CastsShadow object.Property[bool]
 	Mat         object.Property[*material.Def]
-	Textures    object.Dict[texture.Slot, texture.Ref]
+	Textures    object.Dict[texture.Slot, assets.Texture]
 	VertexData  object.Property[vertex.Mesh]
 }
 
@@ -75,7 +76,7 @@ func NewPrimitiveMesh(pool object.Pool, primitive vertex.Primitive, mat *materia
 		Mat:         object.NewProperty(mat),
 		CastsShadow: object.NewProperty(true),
 		Prim:        object.NewProperty(primitive),
-		Textures:    object.NewDict[texture.Slot, texture.Ref](),
+		Textures:    object.NewDict[texture.Slot, assets.Texture](),
 		VertexData:  object.NewProperty[vertex.Mesh](nil),
 
 		matId: material.Hash(mat),
@@ -97,7 +98,7 @@ func (m *Static) Name() string {
 func (m *Static) Primitive() vertex.Primitive         { return m.Prim.Get() }
 func (m *Static) Mesh() *object.Property[vertex.Mesh] { return &m.VertexData }
 
-func (m *Static) Texture(slot texture.Slot) texture.Ref {
+func (m *Static) Texture(slot texture.Slot) assets.Texture {
 	t, exists := m.Textures.Get(slot)
 	if !exists {
 		panic(fmt.Errorf("texture slot %s does not exist", slot))
@@ -105,7 +106,7 @@ func (m *Static) Texture(slot texture.Slot) texture.Ref {
 	return t
 }
 
-func (m *Static) SetTexture(slot texture.Slot, ref texture.Ref) {
+func (m *Static) SetTexture(slot texture.Slot, ref assets.Texture) {
 	m.Textures.Set(slot, ref)
 }
 

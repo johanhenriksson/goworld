@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"github.com/johanhenriksson/goworld/assets"
 	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/descriptor"
 	"github.com/johanhenriksson/goworld/render/texture"
@@ -31,7 +32,7 @@ type SamplerHandle struct {
 }
 
 type SamplerCache interface {
-	T[texture.Ref, *SamplerHandle]
+	T[assets.Texture, *SamplerHandle]
 
 	// Assign a handle to a texture directly
 	Assign(*texture.Texture) *SamplerHandle
@@ -96,7 +97,7 @@ func (s *samplers) assignHandle(ref Keyed) *SamplerHandle {
 	return handle
 }
 
-func (s *samplers) TryFetch(ref texture.Ref) (*SamplerHandle, bool) {
+func (s *samplers) TryFetch(ref assets.Texture) (*SamplerHandle, bool) {
 	handle := s.assignHandle(ref)
 	var exists bool
 	if handle.Texture, exists = s.textures.TryFetch(ref); exists {
@@ -105,7 +106,7 @@ func (s *samplers) TryFetch(ref texture.Ref) (*SamplerHandle, bool) {
 	return nil, false
 }
 
-func (s *samplers) Fetch(ref texture.Ref) *SamplerHandle {
+func (s *samplers) Fetch(ref assets.Texture) *SamplerHandle {
 	handle := s.assignHandle(ref)
 	handle.Texture = s.textures.Fetch(ref)
 	return handle

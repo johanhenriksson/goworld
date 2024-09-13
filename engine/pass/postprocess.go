@@ -3,6 +3,7 @@ package pass
 import (
 	"fmt"
 
+	"github.com/johanhenriksson/goworld/assets"
 	"github.com/johanhenriksson/goworld/core/draw"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/engine"
@@ -19,7 +20,7 @@ import (
 )
 
 type PostProcessPass struct {
-	LUT texture.Ref
+	LUT assets.Texture
 
 	app   engine.App
 	input engine.Target
@@ -95,7 +96,7 @@ func NewPostProcessPass(app engine.App, target engine.Target, input engine.Targe
 	p.mat = material.New(
 		app.Device(),
 		material.Args{
-			Shader:     app.Shaders().Fetch(shader.NewRef("postprocess")),
+			Shader:     app.Shaders().Fetch(shader.Ref("postprocess")),
 			Pass:       p.pass,
 			Pointers:   vertex.ParsePointers(vertex.T{}),
 			DepthTest:  false,

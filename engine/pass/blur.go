@@ -90,7 +90,7 @@ func NewBlurPass(app engine.App, output engine.Target, input engine.Target) *Blu
 	p.material = material.New(
 		app.Device(),
 		material.Args{
-			Shader:     app.Shaders().Fetch(shader.NewRef("blur")),
+			Shader:     app.Shaders().Fetch(shader.Ref("blur")),
 			Pass:       p.pass,
 			Pointers:   vertex.ParsePointers(vertex.T{}),
 			DepthTest:  false,
