@@ -17,18 +17,21 @@ type Glyph struct {
 	Mask    *image.Data
 }
 
+//
+// assets.Texture implementation
+//
+
 func (r *Glyph) Key() string  { return r.key }
 func (r *Glyph) Version() int { return 1 }
 
-func (r *Glyph) LoadImage(fs.Filesystem) *image.Data {
-	return r.Mask
-}
-
-func (r *Glyph) TextureArgs() texture.Args {
-	return texture.Args{
-		Filter:  texture.FilterLinear,
-		Wrap:    texture.WrapBorder,
-		Border:  core1_0.BorderColorFloatTransparentBlack,
-		Mipmaps: false,
+func (r *Glyph) LoadTexture(fs.Filesystem) *texture.Data {
+	return &texture.Data{
+		Image: r.Mask,
+		Args: texture.Args{
+			Filter:  texture.FilterLinear,
+			Wrap:    texture.WrapBorder,
+			Border:  core1_0.BorderColorFloatTransparentBlack,
+			Mipmaps: false,
+		},
 	}
 }

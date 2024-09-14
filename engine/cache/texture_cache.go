@@ -33,34 +33,31 @@ func (t *textures) Instantiate(ref assets.Texture, callback func(*texture.Textur
 	cmds := command.NewRecorder()
 	cmds.Record(func(cmd *command.Buffer) {
 		// load image data
-		img := ref.LoadImage(assets.FS)
-
-		// args & defaults
-		args := ref.TextureArgs()
+		data := ref.LoadTexture(assets.FS)
 
 		// allocate texture
 		var err error
-		tex, err = texture.New(t.device, ref.Key(), img.Width, img.Height, img.Format, args)
+		tex, err = texture.New(t.device, ref.Key(), data.Image.Width, data.Image.Height, data.Image.Format, data.Args)
 		if err != nil {
 			panic(err)
 		}
 
 		// allocate staging buffer
-		stage = buffer.NewCpuLocal(t.device, "staging:texture", len(img.Buffer))
+		stage = buffer.NewCpuLocal(t.device, "staging:texture", len(data.Image.Buffer))
 
 		// write to staging buffer
-		stage.Write(0, img.Buffer)
+		stage.Write(0, data.Image.Buffer)
 		stage.Flush()
 
 		mipLevels := 1
-		if args.Mipmaps {
+		if data.Args.Mipmaps {
 			// verify that the format supports linear filtering
-			format := t.device.GetFormatProperties(img.Format)
+			format := t.device.GetFormatProperties(data.Image.Format)
 			if format.OptimalTilingFeatures&core1_0.FormatFeatureSampledImageFilterLinear == 0 {
 				panic("cant generate mipmaps: texture format does not support linear filtering")
 			}
 
-			mipLevels = image.MipLevels(img.Width, img.Height)
+			mipLevels = image.MipLevels(data.Image.Width, data.Image.Height)
 		}
 
 		cmd.CmdImageBarrier(
@@ -74,8 +71,8 @@ func (t *textures) Instantiate(ref assets.Texture, callback func(*texture.Textur
 		cmd.CmdCopyBufferToImage(stage, tex.Image(), core1_0.ImageLayoutTransferDstOptimal)
 
 		// generate mipmaps
-		mipWidth := img.Width
-		mipHeight := img.Height
+		mipWidth := data.Image.Width
+		mipHeight := data.Image.Height
 		for dstLevel := 1; dstLevel < mipLevels; dstLevel++ {
 			srcLevel := dstLevel - 1
 			dstWidth := max(1, mipWidth/2)

@@ -14,11 +14,16 @@ func init() {
 	gob.Register(Args{})
 }
 
+type Data struct {
+	Args
+	Image *image.Data
+}
+
 type pathRef struct {
 	Path string
 	Args Args
 
-	img *image.Data
+	data *Data
 }
 
 func PathRef(path string) *pathRef {
@@ -41,18 +46,22 @@ func PathArgsRef(path string, args Args) *pathRef {
 func (r *pathRef) Key() string  { return r.Path } // todo: this must include arguments somehow
 func (r *pathRef) Version() int { return 1 }
 
-func (r *pathRef) LoadImage(assets fs.Filesystem) *image.Data {
-	if r.img != nil {
-		return r.img
+func (r *pathRef) LoadTexture(assets fs.Filesystem) *Data {
+	// caching
+	// todo: move somewhere else where its easier to keep track of cached data
+	if r.data != nil {
+		return r.data
 	}
-	var err error
-	r.img, err = image.LoadFile(assets, r.Path)
+
+	// load image
+	img, err := image.LoadFile(assets, r.Path)
 	if err != nil {
 		panic(err)
 	}
-	return r.img
-}
 
-func (r *pathRef) TextureArgs() Args {
-	return r.Args
+	r.data = &Data{
+		Image: img,
+		Args:  r.Args,
+	}
+	return r.data
 }
