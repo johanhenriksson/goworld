@@ -170,27 +170,26 @@ func Lerp(a, b T, f float32) T {
 }
 
 //
-// implement texture reference interface, so that colors may be easily loaded as textures
+// implement assets.Texture interface, so that colors may be easily loaded as textures
 //
 
 func (c T) Key() string  { return c.Hex() }
 func (c T) Version() int { return 1 }
 
-func (c T) LoadImage(fs.Filesystem) *image.Data {
+func (c T) LoadTexture(fs.Filesystem) *texture.Data {
 	rgba := c.Byte4()
-	return &image.Data{
-		Width:  1,
-		Height: 1,
-		Format: image.FormatRGBA8Unorm,
-		Buffer: []byte{
-			rgba.X, rgba.Y, rgba.Z, rgba.W,
+	return &texture.Data{
+		Image: &image.Data{
+			Width:  1,
+			Height: 1,
+			Format: image.FormatRGBA8Unorm,
+			Buffer: []byte{
+				rgba.X, rgba.Y, rgba.Z, rgba.W,
+			},
 		},
-	}
-}
-
-func (c T) TextureArgs() texture.Args {
-	return texture.Args{
-		Filter: texture.FilterNearest,
-		Wrap:   texture.WrapClamp,
+		Args: texture.Args{
+			Filter: texture.FilterNearest,
+			Wrap:   texture.WrapClamp,
+		},
 	}
 }

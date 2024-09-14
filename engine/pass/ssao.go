@@ -265,7 +265,7 @@ func NewHemisphereNoise(width, height int) *HemisphereNoise {
 func (n *HemisphereNoise) Key() string  { return n.key }
 func (n *HemisphereNoise) Version() int { return 1 }
 
-func (n *HemisphereNoise) LoadImage(fs.Filesystem) *image.Data {
+func (n *HemisphereNoise) LoadTexture(fs.Filesystem) *texture.Data {
 	buffer := make([]vec4.T, 4*n.Width*n.Height)
 	for i := range buffer {
 		buffer[i] = vec4.Extend(vec3.Random(
@@ -278,17 +278,16 @@ func (n *HemisphereNoise) LoadImage(fs.Filesystem) *image.Data {
 	ptr := (*byte)(unsafe.Pointer(&buffer[0]))
 	bytes := unsafe.Slice(ptr, int(unsafe.Sizeof(vec4.T{}))*len(buffer))
 
-	return &image.Data{
-		Width:  n.Width,
-		Height: n.Height,
-		Format: core1_0.FormatR32G32B32A32SignedFloat,
-		Buffer: bytes,
-	}
-}
-
-func (n *HemisphereNoise) TextureArgs() texture.Args {
-	return texture.Args{
-		Filter: texture.FilterNearest,
-		Wrap:   texture.WrapRepeat,
+	return &texture.Data{
+		Image: &image.Data{
+			Width:  n.Width,
+			Height: n.Height,
+			Format: core1_0.FormatR32G32B32A32SignedFloat,
+			Buffer: bytes,
+		},
+		Args: texture.Args{
+			Filter: texture.FilterNearest,
+			Wrap:   texture.WrapRepeat,
+		},
 	}
 }
