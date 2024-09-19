@@ -10,7 +10,7 @@ import (
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/descriptor"
 	"github.com/johanhenriksson/goworld/render/framebuffer"
-	"github.com/johanhenriksson/goworld/render/material"
+	"github.com/johanhenriksson/goworld/render/pipeline"
 	"github.com/johanhenriksson/goworld/render/renderpass"
 	"github.com/johanhenriksson/goworld/render/renderpass/attachment"
 	"github.com/johanhenriksson/goworld/render/shader"
@@ -26,7 +26,7 @@ type PostProcessPass struct {
 	input engine.Target
 
 	quad   vertex.Mesh
-	mat    *material.Material
+	pipe   *pipeline.Pipeline
 	layout *descriptor.Layout[*PostProcessDescriptors]
 	desc   []*PostProcessDescriptors
 	fbufs  framebuffer.Array
@@ -102,9 +102,9 @@ func NewPostProcessPass(app engine.App, target engine.Target, input engine.Targe
 			Stages: core1_0.StageFragment,
 		},
 	})
-	p.mat = material.New(
+	p.pipe = pipeline.New(
 		app.Device(),
-		material.Args{
+		pipeline.Args{
 			Shader:     app.Shaders().Fetch(shader.Ref("postprocess")),
 			Pass:       p.pass,
 			Pointers:   vertex.ParsePointers(vertex.T{}),
@@ -143,15 +143,14 @@ func (p *PostProcessPass) Record(cmds command.Recorder, args draw.Args, scene ob
 
 	// refresh color lut
 	lutTex := p.app.Textures().Fetch(p.LUT)
+	desc := p.desc[args.Frame]
+	desc.LUT.Set(lutTex)
 
+	// todo: theres not much point recording this every frame
 	cmds.Record(func(cmd *command.Buffer) {
 		cmd.CmdBeginRenderPass(p.pass, p.fbufs[args.Frame])
-
-		p.mat.Bind(cmd)
-		desc := p.desc[args.Frame]
+		cmd.CmdBindGraphicsPipeline(p.pipe)
 		cmd.CmdBindGraphicsDescriptor(0, desc)
-		desc.LUT.Set(lutTex)
-
 		quad.Bind(cmd)
 		quad.Draw(cmd, 0)
 		cmd.CmdEndRenderPass()
@@ -171,6 +170,6 @@ func (p *PostProcessPass) Destroy() {
 	}
 	p.fbufs.Destroy()
 	p.pass.Destroy()
-	p.mat.Destroy()
+	p.pipe.Destroy()
 	p.layout.Destroy()
 }

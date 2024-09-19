@@ -5,7 +5,7 @@ import (
 	"github.com/johanhenriksson/goworld/engine/uniform"
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/descriptor"
-	"github.com/johanhenriksson/goworld/render/material"
+	"github.com/johanhenriksson/goworld/render/pipeline"
 	"github.com/johanhenriksson/goworld/render/renderpass"
 	"github.com/johanhenriksson/goworld/render/shader"
 	"github.com/johanhenriksson/goworld/render/texture"
@@ -26,7 +26,7 @@ type LightDescriptors struct {
 }
 
 type LightShader struct {
-	mat         *material.Material
+	pipe        *pipeline.Pipeline
 	layout      *descriptor.Layout[*LightDescriptors]
 	descriptors []*LightDescriptors
 
@@ -62,9 +62,9 @@ func NewLightShader(app engine.App, pass *renderpass.Renderpass, gbuffer Geometr
 			Count:  32,
 		},
 	})
-	mat := material.New(
+	mat := pipeline.New(
 		app.Device(),
-		material.Args{
+		pipeline.Args{
 			Shader:    app.Shaders().Fetch(shader.Ref("light")),
 			Pass:      pass,
 			Subpass:   LightingSubpass,
@@ -117,7 +117,7 @@ func NewLightShader(app engine.App, pass *renderpass.Renderpass, gbuffer Geometr
 	}
 
 	return &LightShader{
-		mat:         mat,
+		pipe:        mat,
 		layout:      dlayout,
 		descriptors: descriptors,
 
@@ -128,9 +128,9 @@ func NewLightShader(app engine.App, pass *renderpass.Renderpass, gbuffer Geometr
 	}
 }
 
-func (ls *LightShader) Bind(buf *command.Buffer, frame int) {
-	ls.mat.Bind(buf)
-	buf.CmdBindGraphicsDescriptor(0, ls.descriptors[frame])
+func (ls *LightShader) Bind(cmd *command.Buffer, frame int) {
+	cmd.CmdBindGraphicsPipeline(ls.pipe)
+	cmd.CmdBindGraphicsDescriptor(0, ls.descriptors[frame])
 }
 func (ls *LightShader) Descriptors(frame int) *LightDescriptors {
 	return ls.descriptors[frame]
@@ -152,6 +152,6 @@ func (ls *LightShader) Destroy() {
 	for _, desc := range ls.descriptors {
 		desc.Destroy()
 	}
-	ls.mat.Destroy()
+	ls.pipe.Destroy()
 	ls.layout.Destroy()
 }

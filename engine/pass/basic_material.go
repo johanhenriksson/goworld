@@ -8,6 +8,7 @@ import (
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/descriptor"
 	"github.com/johanhenriksson/goworld/render/material"
+	"github.com/johanhenriksson/goworld/render/pipeline"
 )
 
 type BasicDescriptors struct {
@@ -20,7 +21,7 @@ type BasicDescriptors struct {
 // They can be used for various untextured objects, such
 // as shadow/depth passes and lines.
 type BasicMaterial struct {
-	Material    *material.Material
+	Pipeline    *pipeline.Pipeline
 	Descriptors *BasicDescriptors
 	Objects     *ObjectBuffer
 	Meshes      cache.MeshCache
@@ -41,7 +42,7 @@ func (m *BasicMaterial) Begin(camera uniform.Camera, lights []light.T) {
 
 func (m *BasicMaterial) Bind(cmds command.Recorder) {
 	cmds.Record(func(cmd *command.Buffer) {
-		m.Material.Bind(cmd)
+		cmd.CmdBindGraphicsPipeline(m.Pipeline)
 		cmd.CmdBindGraphicsDescriptor(0, m.Descriptors)
 		m.Commands.BeginDrawIndirect()
 	})
@@ -76,6 +77,6 @@ func (m *BasicMaterial) End() {
 
 func (m *BasicMaterial) Destroy() {
 	m.Descriptors.Destroy()
-	m.Material.Destroy()
+	m.Pipeline.Destroy()
 	m.Commands.Destroy()
 }

@@ -9,6 +9,7 @@ import (
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/descriptor"
 	"github.com/johanhenriksson/goworld/render/material"
+	"github.com/johanhenriksson/goworld/render/pipeline"
 	"github.com/johanhenriksson/goworld/render/renderpass"
 	"github.com/johanhenriksson/goworld/render/shader"
 	"github.com/johanhenriksson/goworld/render/vertex"
@@ -55,9 +56,9 @@ func (m *DepthMatCache) Instantiate(def *material.Def, callback func([]Material)
 	shader := m.app.Shaders().Fetch(shader.Ref("depth"))
 
 	// create material
-	mat := material.New(
+	pipe := pipeline.New(
 		m.app.Device(),
-		material.Args{
+		pipeline.Args{
 			Shader:     shader,
 			Pass:       m.pass,
 			Subpass:    MainSubpass,
@@ -76,7 +77,7 @@ func (m *DepthMatCache) Instantiate(def *material.Def, callback func([]Material)
 		desc := m.layout.Instantiate(m.app.Pool())
 		instances[i] = &BasicMaterial{
 			id:          def.Hash(),
-			Material:    mat,
+			Pipeline:    pipe,
 			Descriptors: desc,
 			Objects:     NewObjectBuffer(desc.Objects.Size),
 			Meshes:      m.app.Meshes(),

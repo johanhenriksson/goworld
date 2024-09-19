@@ -8,6 +8,7 @@ import (
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/descriptor"
 	"github.com/johanhenriksson/goworld/render/material"
+	"github.com/johanhenriksson/goworld/render/pipeline"
 )
 
 type DeferredDescriptors struct {
@@ -18,7 +19,7 @@ type DeferredDescriptors struct {
 }
 
 type DeferredMaterial struct {
-	Material    *material.Material
+	Pipeline    *pipeline.Pipeline
 	Layout      *descriptor.SetLayout
 	Descriptors *DeferredDescriptors
 	Objects     *ObjectBuffer
@@ -41,7 +42,7 @@ func (m *DeferredMaterial) Begin(camera uniform.Camera, lights []light.T) {
 
 func (m *DeferredMaterial) Bind(cmds command.Recorder) {
 	cmds.Record(func(cmd *command.Buffer) {
-		m.Material.Bind(cmd)
+		cmd.CmdBindGraphicsPipeline(m.Pipeline)
 		cmd.CmdBindGraphicsDescriptor(0, m.Descriptors)
 		m.Commands.BeginDrawIndirect()
 	})
@@ -53,8 +54,8 @@ func (m *DeferredMaterial) Draw(cmds command.Recorder, msh mesh.Mesh) {
 		return
 	}
 
-	textures := m.Material.TextureSlots()
-	textureIds := AssignMeshTextures(m.Textures, msh, textures)
+	slots := m.Pipeline.Shader().Textures()
+	textureIds := AssignMeshTextures(m.Textures, msh, slots)
 
 	instanceId := m.Objects.Store(uniform.Object{
 		Model:    msh.Transform().Matrix(),
@@ -80,7 +81,7 @@ func (m *DeferredMaterial) End() {
 }
 
 func (m *DeferredMaterial) Destroy() {
-	m.Material.Destroy()
 	m.Descriptors.Destroy()
+	m.Pipeline.Destroy()
 	m.Commands.Destroy()
 }

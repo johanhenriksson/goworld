@@ -8,6 +8,7 @@ import (
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/descriptor"
 	"github.com/johanhenriksson/goworld/render/material"
+	"github.com/johanhenriksson/goworld/render/pipeline"
 )
 
 type ForwardDescriptors struct {
@@ -19,7 +20,7 @@ type ForwardDescriptors struct {
 }
 
 type ForwardMaterial struct {
-	Material    *material.Material
+	Pipeline    *pipeline.Pipeline
 	Descriptors *ForwardDescriptors
 	Objects     *ObjectBuffer
 	Lights      *LightBuffer
@@ -55,7 +56,7 @@ func (m *ForwardMaterial) Begin(camera uniform.Camera, lights []light.T) {
 
 func (m *ForwardMaterial) Bind(cmds command.Recorder) {
 	cmds.Record(func(cmd *command.Buffer) {
-		m.Material.Bind(cmd)
+		cmd.CmdBindGraphicsPipeline(m.Pipeline)
 		cmd.CmdBindGraphicsDescriptor(0, m.Descriptors)
 		m.Commands.BeginDrawIndirect()
 	})
@@ -67,7 +68,7 @@ func (m *ForwardMaterial) Draw(cmds command.Recorder, msh mesh.Mesh) {
 		return
 	}
 
-	textures := m.Material.TextureSlots()
+	textures := m.Pipeline.Shader().Textures()
 	textureIds := AssignMeshTextures(m.Textures, msh, textures)
 
 	instanceId := m.Objects.Store(uniform.Object{
@@ -95,6 +96,6 @@ func (m *ForwardMaterial) End() {
 
 func (m *ForwardMaterial) Destroy() {
 	m.Descriptors.Destroy()
-	m.Material.Destroy()
+	m.Pipeline.Destroy()
 	m.Commands.Destroy()
 }
