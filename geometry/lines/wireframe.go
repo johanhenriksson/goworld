@@ -1,6 +1,7 @@
 package lines
 
 import (
+	"github.com/johanhenriksson/goworld/assets"
 	"github.com/johanhenriksson/goworld/core/mesh"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/render/color"
@@ -10,20 +11,20 @@ import (
 type Wireframe struct {
 	*mesh.Static
 	Color  object.Property[color.T]
-	Source object.Property[vertex.Mesh]
+	Source object.Property[assets.Mesh]
 
 	data   vertex.MutableMesh[vertex.C, uint32]
 	offset float32
 }
 
-func NewWireframe(pool object.Pool, msh vertex.Mesh, clr color.T) *Wireframe {
+func NewWireframe(pool object.Pool, msh assets.Mesh, clr color.T) *Wireframe {
 	w := object.NewComponent(pool, &Wireframe{
-		Static: mesh.NewLines(pool),
+		Static: mesh.New(pool, nil),
 		Color:  object.NewProperty(clr),
 		Source: object.NewProperty(msh),
 	})
 	w.Color.OnChange.Subscribe(func(color.T) { w.refresh() })
-	w.Source.OnChange.Subscribe(func(vertex.Mesh) { w.refresh() })
+	w.Source.OnChange.Subscribe(func(assets.Mesh) { w.refresh() })
 	w.data = vertex.NewLines[vertex.C, uint32](object.Key("wireframe", w), nil, nil)
 	w.refresh()
 	return w
@@ -31,12 +32,17 @@ func NewWireframe(pool object.Pool, msh vertex.Mesh, clr color.T) *Wireframe {
 
 func (w *Wireframe) refresh() {
 	clr := w.Color.Get()
-	msh := w.Source.Get()
-	if msh == nil {
+	ref := w.Source.Get()
+	if ref == nil {
 		w.data.Update(nil, nil)
 		w.VertexData.Set(w.data)
 		return
 	}
+
+	// this is only slightly illegal since we actually need access to the mesh data
+	// ideally wireframe should be done using another method that doesn't require
+	// the mesh data to be manually converted to lines
+	msh := ref.LoadMesh(assets.FS)
 
 	indices := make([]uint32, 0, msh.IndexCount()*2)
 	vertices := make([]vertex.C, 0, msh.VertexCount())

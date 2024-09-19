@@ -9,7 +9,7 @@ import (
 	"reflect"
 	"slices"
 
-	"github.com/johanhenriksson/goworld/assets"
+	"github.com/johanhenriksson/goworld/assets/fs"
 	"github.com/johanhenriksson/goworld/core/transform"
 	"github.com/johanhenriksson/goworld/math/quat"
 	"github.com/johanhenriksson/goworld/math/vec3"
@@ -48,7 +48,7 @@ func Copy[T Component](pool Pool, obj T) T {
 	return kopy
 }
 
-func Save(key string, obj Component) error {
+func Save(assets fs.Filesystem, key string, obj Component) error {
 	buf := &bytes.Buffer{}
 	enc := gob.NewEncoder(buf)
 	if err := Serialize(enc, obj); err != nil {
@@ -57,7 +57,7 @@ func Save(key string, obj Component) error {
 	return assets.Write(key, buf.Bytes())
 }
 
-func Load[T Component](pool Pool, key string) (T, error) {
+func Load[T Component](pool Pool, assets fs.Filesystem, key string) (T, error) {
 	data, err := assets.Read(key)
 	if err != nil {
 		var empty T

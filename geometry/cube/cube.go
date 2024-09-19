@@ -1,6 +1,9 @@
 package cube
 
 import (
+	"fmt"
+
+	"github.com/johanhenriksson/goworld/assets/fs"
 	. "github.com/johanhenriksson/goworld/core/object"
 
 	"github.com/johanhenriksson/goworld/core/mesh"
@@ -24,7 +27,7 @@ func init() {
 
 type CubeObject struct {
 	Object
-	Mesh *Mesh
+	Mesh *mesh.Static
 }
 
 func New(pool Pool, args Args) *CubeObject {
@@ -38,9 +41,6 @@ type Mesh struct {
 	// these are actually dynamic meshes, but since they generate so quickly
 	// it might not make sense to generate in the background
 	*mesh.Static
-
-	Size Property[float32]
-	Mat  Property[*material.Def]
 }
 
 type Args struct {
@@ -49,30 +49,32 @@ type Args struct {
 }
 
 // NewMesh creates a vertex colored cube mesh with a given size
-func NewMesh(pool Pool, args Args) *Mesh {
+func NewMesh(pool Pool, args Args) *mesh.Static {
 	if args.Mat == nil {
 		args.Mat = material.StandardForward()
 	}
-	c := NewComponent(pool, &Mesh{
-		Static: mesh.New(pool, args.Mat),
-		Size:   NewProperty(args.Size),
-		Mat:    NewProperty(args.Mat),
-	})
-	c.Size.OnChange.Subscribe(func(size float32) {
-		c.generate()
-	})
-	// todo: subscribe to material changes
-	c.generate()
-	return c
+	m := mesh.New(pool, args.Mat)
+	m.VertexData.Set(newCube(args.Size))
+	return m
 }
 
-func (c *Mesh) generate() {
-	s := c.Size.Get() / 2
-	if s < 0 {
-		// return an empty mesh?
-		s = 0
-	}
+type cube struct {
+	key     string
+	version int
+	mesh    vertex.MutableMesh[vertex.T, uint16]
+	size    float32
+}
 
+func newCube(size float32) *cube {
+	return &cube{
+		key:     fmt.Sprintf("cube(%f)", size),
+		version: 1,
+		size:    size,
+	}
+}
+
+func (c *cube) generate() vertex.Mesh {
+	s := c.size
 	topLeft := vec2.New(0, 0)
 	topRight := vec2.New(1, 0)
 	bottomLeft := vec2.New(0, 1)
@@ -136,7 +138,19 @@ func (c *Mesh) generate() {
 		20, 22, 23,
 	}
 
-	key := Key("cube", c)
-	mesh := vertex.NewTriangles(key, vertices, indices)
-	c.VertexData.Set(mesh)
+	return vertex.NewTriangles(c.key, vertices, indices)
+}
+
+func (c *cube) Key() string  { return c.key }
+func (c *cube) Version() int { return c.version }
+
+func (c *cube) LoadMesh(fs fs.Filesystem) vertex.Mesh {
+	// what is responsible for caching the result of this?
+	// ideally, if the mesh already exists, the key/version will be the same and cause a cache hit before this is called
+	// if store the result here, it will be cached once in every reference!
+
+	// sidenote: we do have access to the file system
+	// so we could potentially load a mesh from a file here, avoiding re-generation of heavier assets
+
+	return c.generate()
 }

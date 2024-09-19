@@ -111,11 +111,54 @@ func (p *DeferredGeometryPass) Record(cmds command.Recorder, args draw.Args, sce
 
 	frustum := shape.FrustumFromMatrix(args.Camera.ViewProj)
 
+	// we would like to collect all objects at an earlier stage.
+	// only traverse the scene graph once, and filter the objects based on the pass when generating indirect draw commands.
+	// ideally all passes would share the same objects descriptor
+	// and only changed objects would have their uniform data updated
+	//
+	// when traversing the scene graph, lookup meshes from the gpu cache.
+	// if the mesh is not ready, skip it.
+	//
+	// the object buffer should contain all data required to render the object.
+	// model matrix, texture ids, bounding boxes, etc.
+	// this will be useful later as we move more functionality to the gpu
+	//
+	// problems to solve:
+	// - how to have global uniform data (camera, lights, etc) that is shared between all passes?
+	//   its currently deeply embedded into the material structs, and instantiated for each material
+	// - once the object buffer is filled, the engine is ready to run updates for the next frame.
+	//   how can we run this concurrently?
+
 	objects := p.meshQuery.
 		Reset().
 		Where(isDrawDeferred).
 		Where(frustumCulled(&frustum)).
 		Collect(scene)
+
+	// meshes := make([]Drawable, 0, len(objects))
+	// for _, obj := range objects {
+	// 	mesh, ok := p.app.Meshes().TryFetch(obj.Mesh())
+	// 	if !ok {
+	// 		continue
+	// 	}
+	//
+	// 	obj.Material().TextureSlots
+	// 	textureIds := AssignMeshTextures(m.Textures, obj, textures)
+	//
+	// 	drawable := DrawableMesh{
+	// 		GpuMesh:  mesh,
+	// 		model:    obj.Transform().Matrix(),
+	// 		textures: textureIds,
+	// 	}
+	//
+	// 	// frustum culling
+	// 	bounds := drawable.Bounds()
+	// 	if !frustum.IntersectsSphere(&bounds) {
+	// 		continue
+	// 	}
+	//
+	// 	meshes = append(meshes, drawable)
+	// }
 
 	cam := uniform.CameraFromArgs(args)
 	groups := MaterialGroups(p.materials, args.Frame, objects)
@@ -148,7 +191,8 @@ func isDrawDeferred(m mesh.Mesh) bool {
 
 func frustumCulled(frustum *shape.Frustum) func(mesh.Mesh) bool {
 	return func(m mesh.Mesh) bool {
-		bounds := m.BoundingSphere()
-		return frustum.IntersectsSphere(&bounds)
+		return true
+		// bounds := m.BoundingSphere()
+		// return frustum.IntersectsSphere(&bounds)
 	}
 }

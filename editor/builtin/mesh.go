@@ -1,6 +1,7 @@
 package builtin
 
 import (
+	"github.com/johanhenriksson/goworld/assets"
 	"github.com/johanhenriksson/goworld/core/input/mouse"
 	"github.com/johanhenriksson/goworld/core/mesh"
 	"github.com/johanhenriksson/goworld/core/object"
@@ -46,7 +47,7 @@ func NewMeshEditor(ctx *editor.Context, mesh *mesh.Static) *MeshEditor {
 
 	// grab reference to mesh shape & subscribe to changes
 	editor.Shape.Mesh.Set(mesh.VertexData.Get())
-	mesh.VertexData.OnChange.Subscribe(func(m vertex.Mesh) {
+	mesh.VertexData.OnChange.Subscribe(func(m assets.Mesh) {
 		editor.Shape.Mesh.Set(m)
 		editor.Wire.Source.Set(m)
 	})

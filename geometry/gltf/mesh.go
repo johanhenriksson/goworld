@@ -3,6 +3,8 @@ package gltf
 import (
 	"iter"
 
+	"github.com/johanhenriksson/goworld/assets/fs"
+	"github.com/johanhenriksson/goworld/math/shape"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render/vertex"
 )
@@ -28,9 +30,10 @@ func (m *gltfMesh) VertexCount() int { return len(m.vertices) / m.VertexSize() }
 func (m *gltfMesh) VertexSize() int  { return m.pointers.Stride() }
 func (m *gltfMesh) VertexData() any  { return m.vertices }
 
-func (m *gltfMesh) Positions() iter.Seq[vec3.T] { panic("not implemented") }
-
+func (m *gltfMesh) Positions() iter.Seq[vec3.T]          { panic("not implemented") }
 func (m *gltfMesh) Triangles() iter.Seq[vertex.Triangle] { panic("not implemented") }
+func (m *gltfMesh) Bounds(vec3.T) shape.Sphere           { panic("not implemented") }
+func (m *gltfMesh) LoadMesh(fs.Filesystem) vertex.Mesh   { return m }
 
 func (m *gltfMesh) Min() vec3.T { panic("not implemented") }
 func (m *gltfMesh) Max() vec3.T { panic("not implemented") }

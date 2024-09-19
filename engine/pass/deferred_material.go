@@ -45,7 +45,7 @@ func (m *DeferredMaterial) Bind(cmds command.Recorder) {
 }
 
 func (m *DeferredMaterial) Draw(cmds command.Recorder, msh mesh.Mesh) {
-	gpuMesh, meshReady := m.Meshes.TryFetch(msh.Mesh().Get())
+	gpuMesh, meshReady := m.Meshes.TryFetch(msh.Mesh())
 	if !meshReady {
 		return
 	}

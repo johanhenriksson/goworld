@@ -37,7 +37,7 @@ type BoxArgs struct {
 
 func NewBox(pool Pool, args BoxArgs) *Box {
 	b := NewComponent(pool, &Box{
-		Static:  mesh.NewLines(pool),
+		Static:  mesh.New(pool, nil),
 		Extents: NewProperty(args.Extents),
 		Color:   NewProperty(args.Color),
 	})

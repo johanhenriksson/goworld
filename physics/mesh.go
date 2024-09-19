@@ -1,8 +1,10 @@
 package physics
 
 import (
+	"log"
 	"unsafe"
 
+	"github.com/johanhenriksson/goworld/assets"
 	"github.com/johanhenriksson/goworld/core/mesh"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/render/vertex"
@@ -24,9 +26,11 @@ type Mesh struct {
 
 	collision  vertex.Mesh
 	meshHandle meshHandle
-	unsub      func()
 
-	Mesh object.Property[vertex.Mesh]
+	Mesh object.Property[assets.Mesh]
+
+	key     string
+	version int
 }
 
 var _ = checkShape(NewMesh(object.GlobalPool))
@@ -36,13 +40,13 @@ var emptyMesh = vertex.NewTriangles[vertex.P, uint32]("emptyMeshCollider", []ver
 func NewMesh(pool object.Pool) *Mesh {
 	mesh := &Mesh{
 		kind: MeshShape,
-		Mesh: object.NewProperty[vertex.Mesh](nil),
+		Mesh: object.NewProperty[assets.Mesh](nil),
 	}
 	mesh.Collider = newCollider(pool, mesh, true)
 
 	// refresh physics mesh when the mesh property is changed
-	mesh.Mesh.OnChange.Subscribe(func(m vertex.Mesh) {
-		mesh.refresh()
+	mesh.Mesh.OnChange.Subscribe(func(m assets.Mesh) {
+		mesh.checkMesh()
 	})
 
 	return object.NewComponent(pool, mesh)
@@ -50,10 +54,12 @@ func NewMesh(pool object.Pool) *Mesh {
 
 func (m *Mesh) colliderCreate() shapeHandle {
 	// generate an optmized collision mesh from the given mesh
-	mesh := m.Mesh.Get()
-	if mesh == nil || mesh.IndexCount() == 0 {
-		mesh = emptyMesh
+	ref := m.Mesh.Get()
+	var mesh vertex.Mesh = emptyMesh
+	if ref != nil {
+		mesh = ref.LoadMesh(assets.FS)
 	}
+	log.Println("creating physics mesh", m.key, "tris:", mesh.IndexCount()/3)
 
 	m.collision = vertex.CollisionMesh(mesh)
 	m.meshHandle = mesh_new(m.collision)
@@ -76,25 +82,45 @@ func (m *Mesh) Name() string {
 }
 
 func (m *Mesh) OnEnable() {
+	log.Println("physics mesh enabled", m.key)
 	if m.Mesh.Get() == nil {
 		if mesh := object.Get[mesh.Mesh](m); mesh != nil {
-			m.Mesh.Set(mesh.Mesh().Get())
-			if m.unsub != nil {
-				m.unsub()
-				m.unsub = nil
-			}
-			m.unsub = mesh.Mesh().OnChange.Subscribe(func(update vertex.Mesh) {
-				m.Mesh.Set(update)
-			})
+			m.Mesh.Set(mesh.Mesh())
+		} else {
+			log.Println("mesh not found")
 		}
+	} else {
+		log.Println("mesh is set")
 	}
 	m.Collider.OnEnable()
 }
 
-func (m *Mesh) OnDisable() {
-	if m.unsub != nil {
-		m.unsub()
-		m.unsub = nil
+func (m *Mesh) checkMesh() {
+	// watch for changes to the ref, and trigger a refresh if needed
+	if ref := m.Mesh.Get(); ref != nil {
+		if m.key != ref.Key() || m.version != ref.Version() {
+			log.Println("physics mesh updated", m.key)
+			m.key = ref.Key()
+			m.version = ref.Version()
+			m.refresh()
+		}
+	} else if m.key != "" {
+		log.Println("physics mesh removed", m.key)
+		m.key = ""
+		m.version = 0
+		m.Mesh.Set(nil)
 	}
+}
+
+func (m *Mesh) Update(scene object.Component, dt float32) {
+	m.checkMesh()
+	m.Collider.Update(scene, dt)
+}
+
+func (m *Mesh) EditorUpdate(scene object.Component, dt float32) {
+	m.checkMesh()
+}
+
+func (m *Mesh) OnDisable() {
 	m.Collider.OnDisable()
 }

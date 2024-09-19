@@ -4,6 +4,7 @@ import (
 	"encoding/gob"
 	"strconv"
 
+	"github.com/johanhenriksson/goworld/assets/fs"
 	"github.com/johanhenriksson/goworld/render/vertex"
 
 	"github.com/mitchellh/hashstructure/v2"
@@ -56,6 +57,10 @@ func (d *Def) Key() string {
 
 func (d *Def) Version() int {
 	return 1
+}
+
+func (d *Def) LoadMaterial(fs.Filesystem) *Def {
+	return d
 }
 
 func Hash(def *Def) ID {
