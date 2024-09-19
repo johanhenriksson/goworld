@@ -111,7 +111,7 @@ func NewBlurPass(app engine.App, output engine.Target, input engine.Target) *Blu
 		panic(err)
 	}
 
-	p.desc = make([]*BlurDescriptors, frames)
+	p.desc = p.layout.InstantiateMany(app.Pool(), frames)
 	p.tex = make(texture.Array, frames)
 	for i := range p.tex {
 		key := fmt.Sprintf("blur-%d", i)
@@ -123,7 +123,6 @@ func NewBlurPass(app engine.App, output engine.Target, input engine.Target) *Blu
 			// todo: clean up
 			panic(err)
 		}
-		p.desc[i] = p.layout.Instantiate(app.Pool())
 		p.desc[i].Input.Set(p.tex[i])
 	}
 

@@ -113,7 +113,7 @@ func NewOutputPass(app engine.App, target engine.Target, source engine.Target) *
 		panic(err)
 	}
 
-	p.desc = make([]*OutputDescriptors, frames)
+	p.desc = p.layout.InstantiateMany(app.Pool(), frames)
 	p.tex = make(texture.Array, frames)
 	for i := range p.tex {
 		key := fmt.Sprintf("gbuffer-output-%d", i)
@@ -125,7 +125,6 @@ func NewOutputPass(app engine.App, target engine.Target, source engine.Target) *
 			// todo: clean up
 			panic(err)
 		}
-		p.desc[i] = p.layout.Instantiate(app.Pool())
 		p.desc[i].Output.Set(p.tex[i])
 	}
 

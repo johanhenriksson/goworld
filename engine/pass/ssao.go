@@ -183,7 +183,7 @@ func NewAmbientOcclusionPass(app engine.App, target engine.Target, gbuffer Geome
 
 	// todo: if we shuffle the kernel, it would be ok to use fewer samples
 
-	p.desc = make([]*AmbientOcclusionDescriptors, target.Frames())
+	p.desc = p.layout.InstantiateMany(app.Pool(), target.Frames())
 	p.position = make(texture.Array, target.Frames())
 	p.normal = make(texture.Array, target.Frames())
 	for i := 0; i < target.Frames(); i++ {
@@ -196,7 +196,6 @@ func NewAmbientOcclusionPass(app engine.App, target engine.Target, gbuffer Geome
 			// todo: clean up
 			panic(err)
 		}
-		p.desc[i] = p.layout.Instantiate(app.Pool())
 		p.desc[i].Position.Set(p.position[i])
 
 		normKey := fmt.Sprintf("ssao-normal-%d", i)

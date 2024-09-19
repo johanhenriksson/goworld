@@ -119,7 +119,7 @@ func NewPostProcessPass(app engine.App, target engine.Target, input engine.Targe
 		panic(err)
 	}
 
-	p.desc = make([]*PostProcessDescriptors, frames)
+	p.desc = p.layout.InstantiateMany(app.Pool(), frames)
 	p.inputTex = make(texture.Array, frames)
 	for i := 0; i < input.Frames(); i++ {
 		inputKey := fmt.Sprintf("post-input-%d", i)
@@ -131,7 +131,6 @@ func NewPostProcessPass(app engine.App, target engine.Target, input engine.Targe
 			// todo: clean up
 			panic(err)
 		}
-		p.desc[i] = p.layout.Instantiate(app.Pool())
 		p.desc[i].Input.Set(p.inputTex[i])
 	}
 

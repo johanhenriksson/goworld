@@ -124,7 +124,7 @@ func NewGuiPass(app engine.App, target engine.Target) *GuiPass {
 	})
 
 	frames := target.Frames()
-	mat := pipeline.New(app.Device(), pipeline.Args{
+	pipe := pipeline.New(app.Device(), pipeline.Args{
 		Pass:       pass,
 		Shader:     app.Shaders().Fetch(shader.Ref("ui_quad")),
 		DepthTest:  true,
@@ -136,11 +136,10 @@ func NewGuiPass(app engine.App, target engine.Target) *GuiPass {
 		panic(err)
 	}
 
-	desc := make([]*GuiDescriptors, frames)
+	desc := dlayout.InstantiateMany(app.Pool(), frames)
 	textures := make([]cache.SamplerCache, frames)
 	quads := make([]*widget.QuadBuffer, frames)
 	for i := 0; i < frames; i++ {
-		desc[i] = dlayout.Instantiate(app.Pool())
 		textures[i] = cache.NewSamplerCache(app.Textures(), desc[i].Textures)
 		quads[i] = widget.NewQuadBuffer(10000)
 	}
@@ -148,7 +147,7 @@ func NewGuiPass(app engine.App, target engine.Target) *GuiPass {
 	return &GuiPass{
 		app:      app,
 		target:   target,
-		pipe:     mat,
+		pipe:     pipe,
 		desc:     desc,
 		layout:   dlayout,
 		pass:     pass,
