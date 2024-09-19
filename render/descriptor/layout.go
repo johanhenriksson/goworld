@@ -119,6 +119,14 @@ func (d *Layout[S]) Instantiate(pool *Pool) S {
 	return copy
 }
 
+func (d *Layout[S]) InstantiateMany(pool *Pool, count int) []S {
+	sets := make([]S, count)
+	for i := range sets {
+		sets[i] = d.Instantiate(pool)
+	}
+	return sets
+}
+
 func (d *Layout[S]) Destroy() {
 	// todo: allocated sets should probably clean up themselves
 	for _, desc := range d.allocated {
