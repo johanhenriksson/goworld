@@ -12,7 +12,12 @@ type Resolver interface {
 	Descriptor(string) (int, bool)
 }
 
-func ParseDescriptorStruct[S Set](template S) (map[string]Descriptor, error) {
+type DescriptorBinding struct {
+	Name string
+	Descriptor
+}
+
+func ParseDescriptorStruct[S Set](template S) ([]Descriptor, error) {
 	ptr := reflect.ValueOf(template)
 	if ptr.Kind() != reflect.Pointer {
 		return nil, fmt.Errorf("%w: template must be a pointer to struct", ErrDescriptorType)
@@ -24,7 +29,7 @@ func ParseDescriptorStruct[S Set](template S) (map[string]Descriptor, error) {
 		return nil, fmt.Errorf("%w: template %s must be a pointer to struct", ErrDescriptorType, structName)
 	}
 
-	descriptors := make(map[string]Descriptor)
+	descriptors := make([]Descriptor, 0, templateStruct.NumField())
 	for i := 0; i < templateStruct.NumField(); i++ {
 		fieldName := templateStruct.Type().Field(i).Name
 		templateField := templateStruct.Field(i)
@@ -61,7 +66,7 @@ func ParseDescriptorStruct[S Set](template S) (map[string]Descriptor, error) {
 				}
 			}
 
-			descriptors[fieldName] = descriptor
+			descriptors = append(descriptors, descriptor)
 		}
 	}
 
@@ -70,7 +75,7 @@ func ParseDescriptorStruct[S Set](template S) (map[string]Descriptor, error) {
 
 // CopyDescriptorStruct instantiates a descriptor struct according to the given template.
 // Assumes that the template has passed validation beforehand.
-func CopyDescriptorStruct[S Set](template S, blank Set, resolver Resolver) (S, []Descriptor) {
+func CopyDescriptorStruct[S Set](template S, blank Set) (S, []Descriptor) {
 	// dereference
 	ptr := reflect.ValueOf(template)
 	templateStruct := ptr.Elem()
@@ -100,10 +105,7 @@ func CopyDescriptorStruct[S Set](template S, blank Set, resolver Resolver) (S, [
 			descriptor := valueCopy.Interface().(Descriptor)
 
 			// bind it to our blank descriptor set
-			binding, exists := resolver.Descriptor(fieldName)
-			if !exists {
-				panic(fmt.Errorf("unresolved descriptor: %s", fieldName))
-			}
+			binding := len(descriptors)
 			descriptor.Bind(blank, binding)
 			descriptors = append(descriptors, descriptor)
 		}
