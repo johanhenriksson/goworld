@@ -16,8 +16,10 @@
   "Bindings": {
     "Camera": 0,
     "Objects": 1,
-    "Lights": 2,
-    "Textures": 3
+    "Textures": 2,
+    "Lights": 3
   },
-  "Textures": ["diffuse"]
+  "Textures": [
+    "diffuse"
+  ]
 }

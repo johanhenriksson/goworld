@@ -4,7 +4,6 @@ import (
 	"log"
 
 	"github.com/johanhenriksson/goworld/render/device"
-	"github.com/johanhenriksson/goworld/render/shader"
 
 	"github.com/vkngwrapper/core/v2/common"
 	"github.com/vkngwrapper/core/v2/core1_0"
@@ -23,15 +22,15 @@ type SetLayout interface {
 
 type Layout[S Set] struct {
 	device    *device.Device
-	shader    *shader.Shader
 	ptr       core1_0.DescriptorSetLayout
+	name      string
 	set       S
 	allocated []Descriptor
 	maxCount  int
 	counts    map[core1_0.DescriptorType]int
 }
 
-func New[S Set](device *device.Device, set S, shader *shader.Shader) *Layout[S] {
+func New[S Set](device *device.Device, name string, set S) *Layout[S] {
 	descriptors, err := ParseDescriptorStruct(set)
 	if err != nil {
 		panic(err)
@@ -43,11 +42,7 @@ func New[S Set](device *device.Device, set S, shader *shader.Shader) *Layout[S] 
 	bindings := make([]core1_0.DescriptorSetLayoutBinding, 0, len(descriptors))
 	bindFlags := make([]ext_descriptor_indexing.DescriptorBindingFlags, 0, len(descriptors))
 	counts := make(map[core1_0.DescriptorType]int)
-	for name, descriptor := range descriptors {
-		index, exists := shader.Descriptor(name)
-		if !exists {
-			panic("unresolved descriptor")
-		}
+	for index, descriptor := range descriptors {
 		binding := descriptor.LayoutBinding(index)
 		bindings = append(bindings, binding)
 		flags := descriptor.BindingFlags()
@@ -63,10 +58,10 @@ func New[S Set](device *device.Device, set S, shader *shader.Shader) *Layout[S] 
 
 		if variable, ok := descriptor.(VariableDescriptor); ok {
 			maxCount = variable.MaxCount()
-			log.Printf("  %s -> %s x0-%d\n", name, descriptor, maxCount)
+			// log.Printf("  %s -> %s x0-%d\n", descriptor.Name, descriptor, maxCount)
 			counts[binding.DescriptorType] = maxCount
 		} else {
-			log.Printf("  %s -> %s x%d\n", name, descriptor, binding.DescriptorCount)
+			// log.Printf("  %s -> %s x%d\n", descriptor.Name, descriptor, binding.DescriptorCount)
 			counts[binding.DescriptorType] = binding.DescriptorCount
 		}
 	}
@@ -86,12 +81,12 @@ func New[S Set](device *device.Device, set S, shader *shader.Shader) *Layout[S] 
 		panic(err)
 	}
 
-	device.SetDebugObjectName(driver.VulkanHandle(ptr.Handle()), core1_0.ObjectTypeDescriptorSetLayout, shader.Name())
+	device.SetDebugObjectName(driver.VulkanHandle(ptr.Handle()), core1_0.ObjectTypeDescriptorSetLayout, name)
 
 	return &Layout[S]{
 		device:   device,
-		shader:   shader,
 		ptr:      ptr,
+		name:     name,
 		set:      set,
 		maxCount: maxCount,
 		counts:   counts,
@@ -99,7 +94,7 @@ func New[S Set](device *device.Device, set S, shader *shader.Shader) *Layout[S] 
 }
 
 func (d *Layout[S]) Name() string {
-	return d.shader.Name()
+	return d.name
 }
 
 func (d *Layout[S]) Ptr() core1_0.DescriptorSetLayout {
@@ -116,7 +111,7 @@ func (d *Layout[S]) VariableCount() int {
 
 func (d *Layout[S]) Instantiate(pool *Pool) S {
 	set := pool.Allocate(d)
-	copy, descriptors := CopyDescriptorStruct(d.set, set, d.shader)
+	copy, descriptors := CopyDescriptorStruct(d.set, set)
 	for _, descriptor := range descriptors {
 		descriptor.Initialize(d.device)
 		d.allocated = append(d.allocated, descriptor)

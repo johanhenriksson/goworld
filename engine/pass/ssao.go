@@ -58,10 +58,10 @@ type AmbientOcclusionParams struct {
 
 type AmbientOcclusionDescriptors struct {
 	descriptor.Set
+	Params   *descriptor.Uniform[AmbientOcclusionParams]
 	Position *descriptor.Sampler
 	Normal   *descriptor.Sampler
 	Noise    *descriptor.Sampler
-	Params   *descriptor.Uniform[AmbientOcclusionParams]
 }
 
 func NewAmbientOcclusionPass(app engine.App, target engine.Target, gbuffer GeometryBuffer) *AmbientOcclusionPass {

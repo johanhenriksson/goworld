@@ -67,7 +67,7 @@ func New[D descriptor.Set](device *device.Device, args Args, descriptors D) *Mat
 
 	// create new descriptor set layout
 	// ... this could be cached ...
-	descLayout := descriptor.New(device, descriptors, args.Shader)
+	descLayout := descriptor.New(device, args.Shader.Name(), descriptors)
 
 	// crete pipeline layout
 	// ... this could be cached ...

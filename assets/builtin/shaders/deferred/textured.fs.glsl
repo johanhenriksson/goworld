@@ -4,7 +4,7 @@
 #include "lib/deferred_fragment.glsl"
 
 OBJECT(1, object)
-SAMPLER_ARRAY(3, textures)
+SAMPLER_ARRAY(2, textures)
 
 void main() 
 {
