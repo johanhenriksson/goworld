@@ -17,7 +17,7 @@ import (
 	"github.com/johanhenriksson/goworld/render/descriptor"
 	"github.com/johanhenriksson/goworld/render/framebuffer"
 	"github.com/johanhenriksson/goworld/render/image"
-	"github.com/johanhenriksson/goworld/render/material"
+	"github.com/johanhenriksson/goworld/render/pipeline"
 	"github.com/johanhenriksson/goworld/render/renderpass"
 	"github.com/johanhenriksson/goworld/render/renderpass/attachment"
 	"github.com/johanhenriksson/goworld/render/shader"
@@ -33,7 +33,7 @@ type AmbientOcclusionPass struct {
 	app    engine.App
 	pass   *renderpass.Renderpass
 	fbuf   framebuffer.Array
-	mat    *material.Material
+	pipe   *pipeline.Pipeline
 	layout *descriptor.Layout[*AmbientOcclusionDescriptors]
 	desc   []*AmbientOcclusionDescriptors
 	quad   vertex.Mesh
@@ -130,9 +130,9 @@ func NewAmbientOcclusionPass(app engine.App, target engine.Target, gbuffer Geome
 		},
 	})
 
-	p.mat = material.New(
+	p.pipe = pipeline.New(
 		app.Device(),
-		material.Args{
+		pipeline.Args{
 			Shader:     app.Shaders().Fetch(shader.Ref("ssao")),
 			Pass:       p.pass,
 			Pointers:   vertex.ParsePointers(vertex.T{}),
@@ -217,22 +217,22 @@ func NewAmbientOcclusionPass(app engine.App, target engine.Target, gbuffer Geome
 func (p *AmbientOcclusionPass) Record(cmds command.Recorder, args draw.Args, scene object.Component) {
 	quad := p.app.Meshes().Fetch(p.quad)
 	noiseTex := p.app.Textures().Fetch(p.noise)
+	desc := p.desc[args.Frame]
+	desc.Noise.Set(noiseTex)
+	desc.Params.Set(AmbientOcclusionParams{
+		Projection: args.Camera.Proj,
+		Kernel:     p.kernel,
+		Samples:    32,
+		Scale:      p.scale,
+		Radius:     0.4,
+		Bias:       0.02,
+		Power:      2.6,
+	})
 
 	cmds.Record(func(cmd *command.Buffer) {
 		cmd.CmdBeginRenderPass(p.pass, p.fbuf[args.Frame])
-		desc := p.desc[args.Frame]
-		p.mat.Bind(cmd)
+		cmd.CmdBindGraphicsPipeline(p.pipe)
 		cmd.CmdBindGraphicsDescriptor(0, desc)
-		desc.Noise.Set(noiseTex)
-		desc.Params.Set(AmbientOcclusionParams{
-			Projection: args.Camera.Proj,
-			Kernel:     p.kernel,
-			Samples:    32,
-			Scale:      p.scale,
-			Radius:     0.4,
-			Bias:       0.02,
-			Power:      2.6,
-		})
 		quad.Bind(cmd)
 		quad.Draw(cmd, 0)
 		cmd.CmdEndRenderPass()
@@ -249,7 +249,7 @@ func (p *AmbientOcclusionPass) Destroy() {
 		p.position[i].Destroy()
 		p.normal[i].Destroy()
 	}
-	p.mat.Destroy()
+	p.pipe.Destroy()
 	p.layout.Destroy()
 }
 

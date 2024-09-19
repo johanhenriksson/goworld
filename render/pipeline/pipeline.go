@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/johanhenriksson/goworld/render/descriptor"
 	"github.com/johanhenriksson/goworld/render/device"
 	"github.com/johanhenriksson/goworld/render/renderpass/attachment"
 	"github.com/johanhenriksson/goworld/render/shader"
@@ -22,12 +23,32 @@ type Pipeline struct {
 	args   Args
 }
 
-func New(device *device.Device, args Args) *Pipeline {
+func New(device *device.Device, args Args, descriptors ...descriptor.SetLayout) *Pipeline {
+	if device == nil {
+		panic("device is nil")
+	}
+	if args.Shader == nil {
+		panic("shader is nil")
+	}
+
 	args.defaults()
-	log.Println("creating pipeline", args.Key)
+
+	key := fmt.Sprintf("%s/%s", args.Pass.Name(), args.Shader.Name())
+	log.Println("creating pipeline", key)
+
+	// todo: cache layouts
+	layout := NewLayout(device, descriptors, args.Constants)
 
 	// todo: pipeline cache
-	// could probably be controlled a global setting?
+
+	for i, ptr := range args.Pointers {
+		if index, kind, exists := args.Shader.Input(ptr.Name); exists {
+			ptr.Bind(index, kind)
+			args.Pointers[i] = ptr
+		} else {
+			log.Printf("no attribute in shader %s\n", ptr.Name)
+		}
+	}
 
 	modules := lo.Map(args.Shader.Modules(), func(shader shader.Module, _ int) core1_0.PipelineShaderStageCreateInfo {
 		return core1_0.PipelineShaderStageCreateInfo{
@@ -68,7 +89,7 @@ func New(device *device.Device, args Args) *Pipeline {
 
 	info := core1_0.GraphicsPipelineCreateInfo{
 		// layout
-		Layout:  args.Layout.Ptr(),
+		Layout:  layout.Ptr(),
 		Subpass: subpass.Index(),
 
 		// render pass
@@ -172,14 +193,14 @@ func New(device *device.Device, args Args) *Pipeline {
 		panic("failed to create pipeline")
 	}
 
-	if args.Key != "" {
-		device.SetDebugObjectName(driver.VulkanHandle(ptrs[0].Handle()), core1_0.ObjectTypePipeline, args.Key)
+	if key != "" {
+		device.SetDebugObjectName(driver.VulkanHandle(ptrs[0].Handle()), core1_0.ObjectTypePipeline, key)
 	}
 
 	return &Pipeline{
 		ptr:    ptrs[0],
 		device: device,
-		layout: args.Layout,
+		layout: layout,
 		args:   args,
 	}
 }
@@ -188,13 +209,23 @@ func (p *Pipeline) Ptr() core1_0.Pipeline {
 	return p.ptr
 }
 
+func (p *Pipeline) Shader() *shader.Shader {
+	return p.args.Shader
+}
+
 func (p *Pipeline) Layout() *Layout {
 	return p.layout
 }
 
 func (p *Pipeline) Destroy() {
-	p.ptr.Destroy(nil)
-	p.ptr = nil
+	if p.ptr != nil {
+		p.ptr.Destroy(nil)
+		p.ptr = nil
+	}
+	if p.layout != nil {
+		p.layout.Destroy()
+		p.layout = nil
+	}
 }
 
 func pointersToVertexInput(ptrs vertex.Pointers, binding int) *core1_0.PipelineVertexInputStateCreateInfo {

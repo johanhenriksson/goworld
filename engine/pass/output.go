@@ -10,7 +10,7 @@ import (
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/descriptor"
 	"github.com/johanhenriksson/goworld/render/framebuffer"
-	"github.com/johanhenriksson/goworld/render/material"
+	"github.com/johanhenriksson/goworld/render/pipeline"
 	"github.com/johanhenriksson/goworld/render/renderpass"
 	"github.com/johanhenriksson/goworld/render/renderpass/attachment"
 	"github.com/johanhenriksson/goworld/render/shader"
@@ -22,9 +22,9 @@ import (
 )
 
 type OutputPass struct {
-	app      engine.App
-	material *material.Material
-	source   engine.Target
+	app    engine.App
+	pipe   *pipeline.Pipeline
+	source engine.Target
 
 	quad   vertex.Mesh
 	desc   []*OutputDescriptors
@@ -95,9 +95,9 @@ func NewOutputPass(app engine.App, target engine.Target, source engine.Target) *
 			Stages: core1_0.StageFragment,
 		},
 	})
-	p.material = material.New(
+	p.pipe = pipeline.New(
 		app.Device(),
-		material.Args{
+		pipeline.Args{
 			Shader:     app.Shaders().Fetch(shader.Ref("output")),
 			Pass:       p.pass,
 			Pointers:   vertex.ParsePointers(vertex.T{}),
@@ -137,7 +137,7 @@ func (p *OutputPass) Record(cmds command.Recorder, args draw.Args, scene object.
 
 	cmds.Record(func(cmd *command.Buffer) {
 		cmd.CmdBeginRenderPass(p.pass, p.fbufs[args.Frame])
-		p.material.Bind(cmd)
+		cmd.CmdBindGraphicsPipeline(p.pipe)
 		cmd.CmdBindGraphicsDescriptor(0, p.desc[args.Frame])
 		quad.Bind(cmd)
 		quad.Draw(cmd, 0)
@@ -158,6 +158,6 @@ func (p *OutputPass) Destroy() {
 	}
 	p.fbufs.Destroy()
 	p.pass.Destroy()
-	p.material.Destroy()
+	p.pipe.Destroy()
 	p.layout.Destroy()
 }

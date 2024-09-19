@@ -9,6 +9,7 @@ import (
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/descriptor"
 	"github.com/johanhenriksson/goworld/render/material"
+	"github.com/johanhenriksson/goworld/render/pipeline"
 	"github.com/johanhenriksson/goworld/render/renderpass"
 	"github.com/johanhenriksson/goworld/render/shader"
 	"github.com/johanhenriksson/goworld/render/vertex"
@@ -59,9 +60,9 @@ func (m *DeferredMatCache) Instantiate(def *material.Def, callback func([]Materi
 	shader := m.app.Shaders().Fetch(shader.Ref(def.Shader))
 
 	// create material
-	mat := material.New(
+	pipe := pipeline.New(
 		m.app.Device(),
-		material.Args{
+		pipeline.Args{
 			Shader:     shader,
 			Pass:       m.pass,
 			Subpass:    MainSubpass,
@@ -80,7 +81,7 @@ func (m *DeferredMatCache) Instantiate(def *material.Def, callback func([]Materi
 		textures := cache.NewSamplerCache(m.app.Textures(), desc.Textures)
 		instances[i] = &DeferredMaterial{
 			id:          def.Hash(),
-			Material:    mat,
+			Pipeline:    pipe,
 			Descriptors: desc,
 			Objects:     NewObjectBuffer(desc.Objects.Size),
 			Textures:    textures,

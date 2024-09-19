@@ -9,6 +9,7 @@ import (
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/descriptor"
 	"github.com/johanhenriksson/goworld/render/material"
+	"github.com/johanhenriksson/goworld/render/pipeline"
 	"github.com/johanhenriksson/goworld/render/renderpass"
 	"github.com/johanhenriksson/goworld/render/shader"
 	"github.com/johanhenriksson/goworld/render/vertex"
@@ -65,9 +66,9 @@ func (m *ForwardMatCache) Instantiate(def *material.Def, callback func([]Materia
 	shader := m.app.Shaders().Fetch(shader.Ref(def.Shader))
 
 	// create material
-	mat := material.New(
+	pipe := pipeline.New(
 		m.app.Device(),
-		material.Args{
+		pipeline.Args{
 			Shader:     shader,
 			Pass:       m.pass,
 			Subpass:    MainSubpass,
@@ -88,7 +89,7 @@ func (m *ForwardMatCache) Instantiate(def *material.Def, callback func([]Materia
 
 		instances[i] = &ForwardMaterial{
 			id:          def.Hash(),
-			Material:    mat,
+			Pipeline:    pipe,
 			Descriptors: desc,
 			Objects:     NewObjectBuffer(desc.Objects.Size),
 			Lights:      NewLightBuffer(desc.Lights.Size),

@@ -12,7 +12,7 @@ import (
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/descriptor"
 	"github.com/johanhenriksson/goworld/render/framebuffer"
-	"github.com/johanhenriksson/goworld/render/material"
+	"github.com/johanhenriksson/goworld/render/pipeline"
 	"github.com/johanhenriksson/goworld/render/renderpass"
 	"github.com/johanhenriksson/goworld/render/renderpass/attachment"
 	"github.com/johanhenriksson/goworld/render/shader"
@@ -40,7 +40,7 @@ type GuiDrawable interface {
 type GuiPass struct {
 	app    engine.App
 	target engine.Target
-	mat    *material.Material
+	pipe   *pipeline.Pipeline
 	layout *descriptor.Layout[*GuiDescriptors]
 	desc   []*GuiDescriptors
 	pass   *renderpass.Renderpass
@@ -124,7 +124,7 @@ func NewGuiPass(app engine.App, target engine.Target) *GuiPass {
 	})
 
 	frames := target.Frames()
-	mat := material.New(app.Device(), material.Args{
+	mat := pipeline.New(app.Device(), pipeline.Args{
 		Pass:       pass,
 		Shader:     app.Shaders().Fetch(shader.Ref("ui_quad")),
 		DepthTest:  true,
@@ -148,7 +148,7 @@ func NewGuiPass(app engine.App, target engine.Target) *GuiPass {
 	return &GuiPass{
 		app:      app,
 		target:   target,
-		mat:      mat,
+		pipe:     mat,
 		desc:     desc,
 		layout:   dlayout,
 		pass:     pass,
@@ -217,7 +217,7 @@ func (p *GuiPass) Record(cmds command.Recorder, args draw.Args, scene object.Com
 	// todo: use draw indirect
 	cmds.Record(func(cmd *command.Buffer) {
 		cmd.CmdBeginRenderPass(p.pass, p.fbuf[args.Frame])
-		p.mat.Bind(cmd)
+		cmd.CmdBindGraphicsPipeline(p.pipe)
 		cmd.CmdBindGraphicsDescriptor(0, desc)
 
 		cmd.CmdDraw(command.Draw{
@@ -243,7 +243,7 @@ func (p *GuiPass) Destroy() {
 	for _, desc := range p.desc {
 		desc.Destroy()
 	}
-	p.mat.Destroy()
+	p.pipe.Destroy()
 	p.layout.Destroy()
 	p.fbuf.Destroy()
 	p.pass.Destroy()

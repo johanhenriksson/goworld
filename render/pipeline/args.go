@@ -3,6 +3,7 @@ package pipeline
 import (
 	"reflect"
 
+	"github.com/johanhenriksson/goworld/render/descriptor"
 	"github.com/johanhenriksson/goworld/render/renderpass"
 	"github.com/johanhenriksson/goworld/render/shader"
 	"github.com/johanhenriksson/goworld/render/vertex"
@@ -11,12 +12,12 @@ import (
 )
 
 type Args struct {
-	Key      string
-	Pass     *renderpass.Renderpass
-	Subpass  renderpass.Name
-	Layout   *Layout
-	Shader   *shader.Shader
-	Pointers vertex.Pointers
+	Pass      *renderpass.Renderpass
+	Subpass   renderpass.Name
+	Layout    *descriptor.SetLayout
+	Shader    *shader.Shader
+	Pointers  vertex.Pointers
+	Constants []PushConstant
 
 	Primitive       vertex.Primitive
 	PolygonFillMode core1_0.PolygonMode
