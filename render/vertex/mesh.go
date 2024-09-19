@@ -4,12 +4,15 @@ import (
 	"iter"
 	"reflect"
 
+	"github.com/johanhenriksson/goworld/assets/fs"
+	"github.com/johanhenriksson/goworld/math/shape"
 	"github.com/johanhenriksson/goworld/math/vec3"
 )
 
 type Mesh interface {
 	Key() string
 	Version() int
+
 	Primitive() Primitive
 	Pointers() Pointers
 	VertexCount() int
@@ -18,11 +21,18 @@ type Mesh interface {
 	IndexCount() int
 	IndexData() any
 	IndexSize() int
+
 	Min() vec3.T
 	Max() vec3.T
 
+	// Bounds returns a bounding sphere containing the mesh, centered at the given origin.
+	Bounds(vec3.T) shape.Sphere
+
 	Positions() iter.Seq[vec3.T]
 	Triangles() iter.Seq[Triangle]
+
+	// Self-referential
+	LoadMesh(fs.Filesystem) Mesh
 }
 
 type Vertex interface {
@@ -51,6 +61,8 @@ type mesh[V Vertex, I Index] struct {
 	indices    []I
 	min        vec3.T
 	max        vec3.T
+	center     vec3.T
+	radius     float32
 }
 
 var _ Mesh = &mesh[P, uint8]{}
@@ -96,6 +108,13 @@ func (m *mesh[V, I]) Triangles() iter.Seq[Triangle] {
 	}
 }
 
+func (m *mesh[V, I]) Bounds(origin vec3.T) shape.Sphere {
+	return shape.Sphere{
+		Center: origin.Add(m.center),
+		Radius: m.radius,
+	}
+}
+
 func (m *mesh[V, I]) Update(vertices []V, indices []I) {
 	if len(indices) == 0 {
 		indices = make([]I, len(vertices))
@@ -107,10 +126,18 @@ func (m *mesh[V, I]) Update(vertices []V, indices []I) {
 	// update mesh bounds
 	m.min = Min(vertices)
 	m.max = Max(vertices)
+	m.center = m.max.Sub(m.min).Scaled(0.5)
+	m.radius = m.center.Length()
 
 	m.vertices = vertices
 	m.indices = indices
 	m.version++
+}
+
+// LoadMesh returns the mesh itself.
+// Implementing LoadMesh ensures that the mesh satisfies the assets.Mesh interface.
+func (m *mesh[V, I]) LoadMesh(fs.Filesystem) Mesh {
+	return m
 }
 
 func NewMesh[V Vertex, I Index](key string, primitive Primitive, vertices []V, indices []I) MutableMesh[V, I] {

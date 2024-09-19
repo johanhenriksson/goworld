@@ -1,10 +1,10 @@
 package cache
 
 import (
+	"github.com/johanhenriksson/goworld/assets"
 	"github.com/johanhenriksson/goworld/render/buffer"
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/device"
-	"github.com/johanhenriksson/goworld/render/vertex"
 
 	"github.com/vkngwrapper/core/v2/core1_0"
 )
@@ -21,7 +21,7 @@ type meshBlockCache struct {
 func NewMeshBlockCache(device *device.Device, worker command.Worker, vtxSize, idxSize int) MeshCache {
 	vtxBuf := buffer.NewGpuLocal(device, "MeshVertexBlocks", vtxSize, core1_0.BufferUsageVertexBuffer)
 	idxBuf := buffer.NewGpuLocal(device, "MeshIndexBlocks", idxSize, core1_0.BufferUsageIndexBuffer)
-	return New[vertex.Mesh, *GpuMesh](&meshBlockCache{
+	return New[assets.Mesh, *GpuMesh](&meshBlockCache{
 		device:   device,
 		worker:   worker,
 		vtxData:  vtxBuf,
@@ -31,9 +31,11 @@ func NewMeshBlockCache(device *device.Device, worker command.Worker, vtxSize, id
 	})
 }
 
-func (m *meshBlockCache) Instantiate(mesh vertex.Mesh, callback func(*GpuMesh)) {
+func (m *meshBlockCache) Instantiate(ref assets.Mesh, callback func(*GpuMesh)) {
 	var cached *GpuMesh
 	var vtxStage, idxStage buffer.T
+
+	mesh := ref.LoadMesh(assets.FS)
 
 	var idxType core1_0.IndexType
 	switch mesh.IndexSize() {
@@ -48,9 +50,9 @@ func (m *meshBlockCache) Instantiate(mesh vertex.Mesh, callback func(*GpuMesh)) 
 	if mesh.IndexCount() == 0 {
 		// special case for empty mesh
 		callback(&GpuMesh{
-			Key:        mesh.Key(),
-			IndexCount: mesh.IndexCount(),
-			IndexType:  idxType,
+			key:        mesh.Key(),
+			indexCount: mesh.IndexCount(),
+			indexType:  idxType,
 		})
 		return
 	}
@@ -75,14 +77,14 @@ func (m *meshBlockCache) Instantiate(mesh vertex.Mesh, callback func(*GpuMesh)) 
 	idxOffset := buffer.Align(indexBlock.Offset(), mesh.IndexSize())
 
 	cached = &GpuMesh{
-		Key:       mesh.Key(),
-		IndexType: idxType,
-		Vertices:  vertexBlock,
-		Indices:   indexBlock,
+		key:       mesh.Key(),
+		indexType: idxType,
+		vertices:  vertexBlock,
+		indices:   indexBlock,
 
-		IndexCount:   mesh.IndexCount(),
-		VertexOffset: vtxOffset / mesh.VertexSize(),
-		IndexOffset:  idxOffset / mesh.IndexSize(),
+		indexCount:   mesh.IndexCount(),
+		vertexOffset: vtxOffset / mesh.VertexSize(),
+		indexOffset:  idxOffset / mesh.IndexSize(),
 	}
 
 	cmds := command.NewRecorder()
@@ -92,11 +94,11 @@ func (m *meshBlockCache) Instantiate(mesh vertex.Mesh, callback func(*GpuMesh)) 
 		idxStage.Write(0, mesh.IndexData())
 		idxStage.Flush()
 
-		cmd.CmdCopyBuffer(vtxStage, cached.Vertices.Buffer(), core1_0.BufferCopy{
+		cmd.CmdCopyBuffer(vtxStage, cached.vertices.Buffer(), core1_0.BufferCopy{
 			Size:      vtxSize,
 			DstOffset: vtxOffset,
 		})
-		cmd.CmdCopyBuffer(idxStage, cached.Indices.Buffer(), core1_0.BufferCopy{
+		cmd.CmdCopyBuffer(idxStage, cached.indices.Buffer(), core1_0.BufferCopy{
 			Size:      idxSize,
 			DstOffset: idxOffset,
 		})
@@ -113,13 +115,13 @@ func (m *meshBlockCache) Instantiate(mesh vertex.Mesh, callback func(*GpuMesh)) 
 }
 
 func (m *meshBlockCache) Delete(mesh *GpuMesh) {
-	if mesh.IndexCount == 0 {
+	if mesh.indexCount == 0 {
 		return
 	}
-	if err := m.vtxAlloc.Free(mesh.Vertices); err != nil {
+	if err := m.vtxAlloc.Free(mesh.vertices); err != nil {
 		panic(err)
 	}
-	if err := m.idxAlloc.Free(mesh.Indices); err != nil {
+	if err := m.idxAlloc.Free(mesh.indices); err != nil {
 		panic(err)
 	}
 }

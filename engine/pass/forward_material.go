@@ -60,7 +60,7 @@ func (m *ForwardMaterial) Bind(cmds command.Recorder) {
 }
 
 func (m *ForwardMaterial) Draw(cmds command.Recorder, msh mesh.Mesh) {
-	gpuMesh, meshReady := m.Meshes.TryFetch(msh.Mesh().Get())
+	gpuMesh, meshReady := m.Meshes.TryFetch(msh.Mesh())
 	if !meshReady {
 		return
 	}

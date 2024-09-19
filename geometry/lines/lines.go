@@ -21,7 +21,7 @@ type Args struct {
 
 func New(pool object.Pool, args Args) *Lines {
 	b := object.NewComponent(pool, &Lines{
-		Static: mesh.NewLines(pool),
+		Static: mesh.New(pool, nil),
 		Args:   args,
 	})
 	b.lineMesh = vertex.NewLines(object.Key("lines", b), []vertex.C{}, []uint16{})

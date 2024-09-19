@@ -3,10 +3,49 @@ package pass
 import (
 	"github.com/johanhenriksson/goworld/core/light"
 	"github.com/johanhenriksson/goworld/core/mesh"
+	"github.com/johanhenriksson/goworld/engine/cache"
 	"github.com/johanhenriksson/goworld/engine/uniform"
+	"github.com/johanhenriksson/goworld/math/mat4"
+	"github.com/johanhenriksson/goworld/math/shape"
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/material"
 )
+
+type Drawable interface {
+	Key() string
+	Version() int
+
+	Bind(cmd *command.Buffer)
+	Draw(cmd command.DrawIndexedBuffer, instanceOffset int)
+	DrawInstanced(cmd command.DrawIndexedBuffer, instanceOffset, instanceCount int)
+
+	Model() mat4.T
+	MaterialID() material.ID
+	Material() *material.Def
+	Textures() uniform.TextureIds
+
+	Bounds() shape.Sphere
+}
+
+type DrawableMesh struct {
+	*cache.GpuMesh
+	model    mat4.T
+	material *material.Def
+	textures uniform.TextureIds
+}
+
+func (m DrawableMesh) Model() mat4.T                  { return m.model }
+func (m DrawableMesh) Material() *material.Def        { return m.material }
+func (m DrawableMesh) MaterialID() material.ID        { return m.material.Hash() }
+func (m DrawableMesh) TextureIds() uniform.TextureIds { return m.textures }
+
+func (m DrawableMesh) Bounds() shape.Sphere {
+	b := m.GpuMesh.Bounds()
+	return shape.Sphere{
+		Center: b.Center.Add(m.model.Origin()),
+		Radius: b.Radius,
+	}
+}
 
 type DrawGroup struct {
 	ID       material.ID

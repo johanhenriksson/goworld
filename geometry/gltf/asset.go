@@ -87,7 +87,7 @@ func loadPrimitive(pool object.Pool, doc *gltf.Document, name string, primitive 
 	}
 
 	// create mesh component
-	mesh := mesh.NewPrimitiveMesh(pool, kind, nil)
+	mesh := mesh.New(pool, nil)
 	mesh.VertexData.Set(gmesh)
 	return mesh
 }

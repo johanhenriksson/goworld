@@ -27,7 +27,7 @@ type SphereArgs struct {
 
 func NewSphere(pool object.Pool, args SphereArgs) *Sphere {
 	b := object.NewComponent(pool, &Sphere{
-		Static: mesh.NewLines(pool),
+		Static: mesh.New(pool, nil),
 		Radius: object.NewProperty(args.Radius),
 		Color:  object.NewProperty(args.Color),
 	})

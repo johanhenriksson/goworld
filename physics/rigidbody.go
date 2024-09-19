@@ -78,6 +78,8 @@ func (b *RigidBody) OnEnable() {
 		if b.shape == nil {
 			log.Println("Rigidbody", b.Parent().Name(), ": no shape in siblings")
 			return
+		} else {
+			log.Println("Rigidbody", b.Parent().Name(), ": using shape", b.shape.Name())
 		}
 	}
 
@@ -88,6 +90,7 @@ func (b *RigidBody) OnEnable() {
 		if b.handle == nil {
 			panic("rigidbody shape set to nil")
 		}
+		log.Println("Rigidbody", b.Parent().Name(), ": shape changed to", s.Name())
 		rigidbody_shape_set(b.handle, s.shape())
 	})
 
@@ -101,6 +104,7 @@ func (b *RigidBody) OnEnable() {
 	b.world = object.GetInParents[*World](b)
 	if b.world != nil {
 		b.world.addRigidBody(b, b.Layer.Get(), b.Mask.Get())
+		log.Println("Rigidbody", b.Parent().Name(), ": added to physics world")
 
 		// detach object transform from parent
 		if !b.Kinematic() {
