@@ -22,6 +22,9 @@ type Property[T PropValue] struct {
 	def   T
 	kind  reflect.Type
 
+	// OnChange executes callbacks every time the property value is changed.
+	// The callback is called with the new value.
+	// Only the propertys owner object should subscribe to this event.
 	OnChange events.Event[T]
 }
 
@@ -105,15 +108,46 @@ func Properties(target Component) []PropInfo {
 // serialization
 //
 
+type EncodedProp interface {
+	Encode() ([]byte, error)
+	Decode([]byte) (PropValue, error)
+}
+
+var encodedPropType = reflect.TypeOf((EncodedProp)(nil))
+
 func (p *Property[T]) Serialize(enc Encoder) error {
-	return enc.Encode(p.value)
+	if reflect.TypeOf(p.value).Implements(encodedPropType) {
+		// use the custom serialization
+		encoder := reflect.ValueOf(p.value).Interface().(EncodedProp)
+		bytes, err := encoder.Encode()
+		if err != nil {
+			return err
+		}
+		return enc.Encode(bytes)
+	} else {
+		// use the default serialization
+		return enc.Encode(p.value)
+	}
 }
 
 func (p *Property[T]) Deserialize(pool Pool, dec Decoder) error {
-	var value T
-	if err := dec.Decode(&value); err != nil {
-		return err
+	if reflect.TypeOf(p.value).Implements(encodedPropType) {
+		// use the custom serialization
+		decoder := reflect.ValueOf(p.value).Interface().(EncodedProp)
+		var bytes []byte
+		value, err := decoder.Decode(bytes)
+		if err != nil {
+			return err
+		}
+		p.value = value.(T)
+		return nil
+	} else {
+		// use the default serialization
+		var value T
+		if err := dec.Decode(&value); err != nil {
+			return err
+		}
+		p.value = value
+		return nil
 	}
-	p.value = value
-	return nil
 }
