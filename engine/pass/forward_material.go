@@ -19,7 +19,7 @@ type ForwardDescriptors struct {
 }
 
 type ForwardMaterial struct {
-	Material    *material.Material[*ForwardDescriptors]
+	Material    *material.Material
 	Descriptors *ForwardDescriptors
 	Objects     *ObjectBuffer
 	Lights      *LightBuffer

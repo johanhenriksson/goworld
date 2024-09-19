@@ -18,7 +18,7 @@ type DeferredDescriptors struct {
 }
 
 type DeferredMaterial struct {
-	Material    *material.Material[*DeferredDescriptors]
+	Material    *material.Material
 	Layout      *descriptor.SetLayout
 	Descriptors *DeferredDescriptors
 	Objects     *ObjectBuffer

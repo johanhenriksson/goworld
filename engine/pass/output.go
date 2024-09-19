@@ -23,7 +23,7 @@ import (
 
 type OutputPass struct {
 	app      engine.App
-	material *material.Material[*OutputDescriptors]
+	material *material.Material
 	source   engine.Target
 
 	quad   vertex.Mesh
@@ -95,7 +95,7 @@ func NewOutputPass(app engine.App, target engine.Target, source engine.Target) *
 			Stages: core1_0.StageFragment,
 		},
 	})
-	p.material = material.New[*OutputDescriptors](
+	p.material = material.New(
 		app.Device(),
 		material.Args{
 			Shader:     app.Shaders().Fetch(shader.Ref("output")),

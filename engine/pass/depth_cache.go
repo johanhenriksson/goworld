@@ -55,7 +55,7 @@ func (m *DepthMatCache) Instantiate(def *material.Def, callback func([]Material)
 	shader := m.app.Shaders().Fetch(shader.Ref("depth"))
 
 	// create material
-	mat := material.New[*BasicDescriptors](
+	mat := material.New(
 		m.app.Device(),
 		material.Args{
 			Shader:     shader,

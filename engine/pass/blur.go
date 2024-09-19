@@ -21,7 +21,7 @@ import (
 
 type BlurPass struct {
 	app      engine.App
-	material *material.Material[*BlurDescriptors]
+	material *material.Material
 	input    engine.Target
 
 	quad   vertex.Mesh
@@ -94,7 +94,7 @@ func NewBlurPass(app engine.App, output engine.Target, input engine.Target) *Blu
 		},
 	}
 	p.layout = descriptor.NewLayout(app.Device(), "Blur", desc)
-	p.material = material.New[*BlurDescriptors](
+	p.material = material.New(
 		app.Device(),
 		material.Args{
 			Shader:     app.Shaders().Fetch(shader.Ref("blur")),

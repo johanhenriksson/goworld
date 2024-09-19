@@ -33,7 +33,7 @@ type AmbientOcclusionPass struct {
 	app    engine.App
 	pass   *renderpass.Renderpass
 	fbuf   framebuffer.Array
-	mat    *material.Material[*AmbientOcclusionDescriptors]
+	mat    *material.Material
 	layout *descriptor.Layout[*AmbientOcclusionDescriptors]
 	desc   []*AmbientOcclusionDescriptors
 	quad   vertex.Mesh
@@ -130,7 +130,7 @@ func NewAmbientOcclusionPass(app engine.App, target engine.Target, gbuffer Geome
 		},
 	})
 
-	p.mat = material.New[*AmbientOcclusionDescriptors](
+	p.mat = material.New(
 		app.Device(),
 		material.Args{
 			Shader:     app.Shaders().Fetch(shader.Ref("ssao")),

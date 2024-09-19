@@ -55,7 +55,7 @@ func (m *ShadowMatCache) Instantiate(def *material.Def, callback func([]Material
 	shader := m.app.Shaders().Fetch(shader.Ref("shadow"))
 
 	// create material
-	mat := material.New[*BasicDescriptors](
+	mat := material.New(
 		m.app.Device(),
 		material.Args{
 			Shader:     shader,
