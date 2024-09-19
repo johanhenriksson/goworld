@@ -50,6 +50,7 @@ func (m *DeferredMatCache) Instantiate(def *material.Def, callback func([]Materi
 			Count:  100,
 		},
 	}
+	dlayout := descriptor.NewLayout(m.app.Device(), "Deferred", desc)
 
 	// read vertex pointers from vertex format
 	pointers := vertex.ParsePointers(def.VertexFormat)
@@ -72,21 +73,22 @@ func (m *DeferredMatCache) Instantiate(def *material.Def, callback func([]Materi
 			Primitive:  def.Primitive,
 			CullMode:   def.CullMode,
 		},
-		desc)
+		dlayout)
 
 	instances := make([]Material, m.frames)
 	for i := range instances {
-		instance := mat.Instantiate(m.app.Pool())
-		textures := cache.NewSamplerCache(m.app.Textures(), instance.Descriptors().Textures)
+		desc := dlayout.Instantiate(m.app.Pool())
+		textures := cache.NewSamplerCache(m.app.Textures(), desc.Textures)
 		instances[i] = &DeferredMaterial{
-			id:       def.Hash(),
-			Instance: instance,
-			Objects:  NewObjectBuffer(instance.Descriptors().Objects.Size),
-			Textures: textures,
-			Meshes:   m.app.Meshes(),
+			id:          def.Hash(),
+			Material:    mat,
+			Descriptors: desc,
+			Objects:     NewObjectBuffer(desc.Objects.Size),
+			Textures:    textures,
+			Meshes:      m.app.Meshes(),
 			Commands: command.NewIndirectDrawBuffer(m.app.Device(),
 				fmt.Sprintf("DeferredCommands:%d", i),
-				instance.Descriptors().Objects.Size),
+				desc.Objects.Size),
 		}
 	}
 

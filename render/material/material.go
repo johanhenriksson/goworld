@@ -13,7 +13,6 @@ import (
 	"github.com/johanhenriksson/goworld/render/texture"
 	"github.com/johanhenriksson/goworld/render/vertex"
 
-	"github.com/samber/lo"
 	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
@@ -44,7 +43,7 @@ type Args struct {
 	CullMode   vertex.CullMode
 }
 
-func New[D descriptor.Set](device *device.Device, args Args, descriptors D) *Material[D] {
+func New[D descriptor.Set](device *device.Device, args Args, descLayout *descriptor.Layout[D]) *Material[D] {
 	if device == nil {
 		panic("device is nil")
 	}
@@ -67,16 +66,17 @@ func New[D descriptor.Set](device *device.Device, args Args, descriptors D) *Mat
 
 	// create new descriptor set layout
 	// ... this could be cached ...
-	descLayout := descriptor.New(device, args.Shader.Name(), descriptors)
+	// todo: this ought to happen somewhere else
+	// descLayout := descriptor.NewLayout(device, args.Shader.Name(), descriptors)
 
-	// crete pipeline layout
+	// crete pipeline pipelineLayout
 	// ... this could be cached ...
-	layout := pipeline.NewLayout(device, []descriptor.SetLayout{descLayout}, args.Constants)
+	pipelineLayout := pipeline.NewLayout(device, []descriptor.SetLayout{descLayout}, args.Constants)
 
 	pipelineName := fmt.Sprintf("%s/%s", args.Pass.Name(), args.Shader.Name())
 	pipe := pipeline.New(device, pipeline.Args{
 		Key:      pipelineName,
-		Layout:   layout,
+		Layout:   pipelineLayout,
 		Pass:     args.Pass,
 		Subpass:  args.Subpass,
 		Shader:   args.Shader,
@@ -95,7 +95,7 @@ func New[D descriptor.Set](device *device.Device, args Args, descriptors D) *Mat
 		shader: args.Shader,
 
 		dlayout: descLayout,
-		playout: layout,
+		playout: pipelineLayout,
 		pipe:    pipe,
 		pass:    args.Pass,
 	}
@@ -122,16 +122,4 @@ func (m *Material[D]) Destroy() {
 		m.pipe.Destroy()
 		m.pipe = nil
 	}
-}
-
-func (m *Material[D]) Instantiate(pool *descriptor.Pool) *Instance[D] {
-	set := m.dlayout.Instantiate(pool)
-	return &Instance[D]{
-		material: m,
-		set:      set,
-	}
-}
-
-func (m *Material[D]) InstantiateMany(pool *descriptor.Pool, n int) []*Instance[D] {
-	return lo.Times(n, func(i int) *Instance[D] { return m.Instantiate(pool) })
 }

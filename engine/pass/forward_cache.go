@@ -56,6 +56,7 @@ func (m *ForwardMatCache) Instantiate(def *material.Def, callback func([]Materia
 			Count:  100,
 		},
 	}
+	dlayout := descriptor.NewLayout(m.app.Device(), "Forward", desc)
 
 	// read vertex pointers from vertex format
 	pointers := vertex.ParsePointers(def.VertexFormat)
@@ -78,24 +79,25 @@ func (m *ForwardMatCache) Instantiate(def *material.Def, callback func([]Materia
 			Primitive:  def.Primitive,
 			CullMode:   def.CullMode,
 		},
-		desc)
+		dlayout)
 
 	instances := make([]Material, m.frames)
 	for i := range instances {
-		instance := mat.Instantiate(m.app.Pool())
-		textures := cache.NewSamplerCache(m.app.Textures(), instance.Descriptors().Textures)
+		desc := dlayout.Instantiate(m.app.Pool())
+		textures := cache.NewSamplerCache(m.app.Textures(), desc.Textures)
 
 		instances[i] = &ForwardMaterial{
-			id:       def.Hash(),
-			Instance: instance,
-			Objects:  NewObjectBuffer(desc.Objects.Size),
-			Lights:   NewLightBuffer(desc.Lights.Size),
-			Shadows:  NewShadowCache(textures, m.lookup),
-			Textures: textures,
-			Meshes:   m.app.Meshes(),
+			id:          def.Hash(),
+			Material:    mat,
+			Descriptors: desc,
+			Objects:     NewObjectBuffer(desc.Objects.Size),
+			Lights:      NewLightBuffer(desc.Lights.Size),
+			Shadows:     NewShadowCache(textures, m.lookup),
+			Textures:    textures,
+			Meshes:      m.app.Meshes(),
 			Commands: command.NewIndirectDrawBuffer(m.app.Device(),
 				fmt.Sprintf("ForwardCommands:%d", i),
-				instance.Descriptors().Objects.Size),
+				desc.Objects.Size),
 		}
 	}
 

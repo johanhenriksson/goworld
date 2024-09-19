@@ -18,11 +18,12 @@ type DeferredDescriptors struct {
 }
 
 type DeferredMaterial struct {
-	Instance *material.Instance[*DeferredDescriptors]
-	Objects  *ObjectBuffer
-	Textures cache.SamplerCache
-	Meshes   cache.MeshCache
-	Commands *command.IndirectDrawBuffer
+	Material    *material.Material[*DeferredDescriptors]
+	Descriptors *DeferredDescriptors
+	Objects     *ObjectBuffer
+	Textures    cache.SamplerCache
+	Meshes      cache.MeshCache
+	Commands    *command.IndirectDrawBuffer
 
 	id material.ID
 }
@@ -32,14 +33,15 @@ func (m *DeferredMaterial) ID() material.ID {
 }
 
 func (m *DeferredMaterial) Begin(camera uniform.Camera, lights []light.T) {
-	m.Instance.Descriptors().Camera.Set(camera)
+	m.Descriptors.Camera.Set(camera)
 	m.Objects.Reset()
 	m.Commands.Reset()
 }
 
 func (m *DeferredMaterial) Bind(cmds command.Recorder) {
 	cmds.Record(func(cmd *command.Buffer) {
-		m.Instance.Bind(cmd)
+		m.Material.Bind(cmd)
+		cmd.CmdBindGraphicsDescriptor(m.Descriptors)
 		m.Commands.BeginDrawIndirect()
 	})
 }
@@ -50,7 +52,7 @@ func (m *DeferredMaterial) Draw(cmds command.Recorder, msh mesh.Mesh) {
 		return
 	}
 
-	textures := m.Instance.Material().TextureSlots()
+	textures := m.Material.TextureSlots()
 	textureIds := AssignMeshTextures(m.Textures, msh, textures)
 
 	instanceId := m.Objects.Store(uniform.Object{
@@ -71,12 +73,12 @@ func (m *DeferredMaterial) Unbind(cmds command.Recorder) {
 }
 
 func (m *DeferredMaterial) End() {
-	m.Objects.Flush(m.Instance.Descriptors().Objects)
+	m.Objects.Flush(m.Descriptors.Objects)
 	m.Textures.Flush()
 	m.Commands.Flush()
 }
 
 func (m *DeferredMaterial) Destroy() {
-	m.Instance.Material().Destroy()
+	m.Material.Destroy()
 	m.Commands.Destroy()
 }

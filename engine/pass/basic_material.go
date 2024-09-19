@@ -20,10 +20,11 @@ type BasicDescriptors struct {
 // They can be used for various untextured objects, such
 // as shadow/depth passes and lines.
 type BasicMaterial struct {
-	Instance *material.Instance[*BasicDescriptors]
-	Objects  *ObjectBuffer
-	Meshes   cache.MeshCache
-	Commands *command.IndirectDrawBuffer
+	Material    *material.Material[*BasicDescriptors]
+	Descriptors *BasicDescriptors
+	Objects     *ObjectBuffer
+	Meshes      cache.MeshCache
+	Commands    *command.IndirectDrawBuffer
 
 	id material.ID
 }
@@ -33,14 +34,15 @@ func (m *BasicMaterial) ID() material.ID {
 }
 
 func (m *BasicMaterial) Begin(camera uniform.Camera, lights []light.T) {
-	m.Instance.Descriptors().Camera.Set(camera)
+	m.Descriptors.Camera.Set(camera)
 	m.Objects.Reset()
 	m.Commands.Reset()
 }
 
 func (m *BasicMaterial) Bind(cmds command.Recorder) {
 	cmds.Record(func(cmd *command.Buffer) {
-		m.Instance.Bind(cmd)
+		m.Material.Bind(cmd)
+		cmd.CmdBindGraphicsDescriptor(m.Descriptors)
 		m.Commands.BeginDrawIndirect()
 	})
 }
@@ -68,11 +70,11 @@ func (m *BasicMaterial) Unbind(cmds command.Recorder) {
 }
 
 func (m *BasicMaterial) End() {
-	m.Objects.Flush(m.Instance.Descriptors().Objects)
+	m.Objects.Flush(m.Descriptors.Objects)
 	m.Commands.Flush()
 }
 
 func (m *BasicMaterial) Destroy() {
-	m.Instance.Material().Destroy()
+	m.Material.Destroy()
 	m.Commands.Destroy()
 }

@@ -26,8 +26,8 @@ type LightDescriptors struct {
 }
 
 type LightShader struct {
-	mat       *material.Material[*LightDescriptors]
-	instances []*material.Instance[*LightDescriptors]
+	mat         *material.Material[*LightDescriptors]
+	descriptors []*LightDescriptors
 
 	diffuseTex   texture.Array
 	normalTex    texture.Array
@@ -36,6 +36,31 @@ type LightShader struct {
 }
 
 func NewLightShader(app engine.App, pass *renderpass.Renderpass, gbuffer GeometryBuffer, occlusion engine.Target) *LightShader {
+	dlayout := descriptor.NewLayout(app.Device(), "Lighting", &LightDescriptors{
+		Camera: &descriptor.Uniform[uniform.Camera]{
+			Stages: core1_0.StageFragment,
+		},
+		Lights: &descriptor.Storage[uniform.Light]{
+			Stages: core1_0.StageFragment,
+			Size:   256,
+		},
+		Diffuse: &descriptor.Sampler{
+			Stages: core1_0.StageFragment,
+		},
+		Normal: &descriptor.Sampler{
+			Stages: core1_0.StageFragment,
+		},
+		Position: &descriptor.Sampler{
+			Stages: core1_0.StageFragment,
+		},
+		Occlusion: &descriptor.Sampler{
+			Stages: core1_0.StageFragment,
+		},
+		Shadow: &descriptor.SamplerArray{
+			Stages: core1_0.StageFragment,
+			Count:  32,
+		},
+	})
 	mat := material.New(
 		app.Device(),
 		material.Args{
@@ -45,40 +70,16 @@ func NewLightShader(app engine.App, pass *renderpass.Renderpass, gbuffer Geometr
 			Pointers:  vertex.ParsePointers(vertex.T{}),
 			DepthTest: false,
 		},
-		&LightDescriptors{
-			Camera: &descriptor.Uniform[uniform.Camera]{
-				Stages: core1_0.StageFragment,
-			},
-			Lights: &descriptor.Storage[uniform.Light]{
-				Stages: core1_0.StageFragment,
-				Size:   256,
-			},
-			Diffuse: &descriptor.Sampler{
-				Stages: core1_0.StageFragment,
-			},
-			Normal: &descriptor.Sampler{
-				Stages: core1_0.StageFragment,
-			},
-			Position: &descriptor.Sampler{
-				Stages: core1_0.StageFragment,
-			},
-			Occlusion: &descriptor.Sampler{
-				Stages: core1_0.StageFragment,
-			},
-			Shadow: &descriptor.SamplerArray{
-				Stages: core1_0.StageFragment,
-				Count:  32,
-			},
-		})
+		dlayout)
 
 	frames := gbuffer.Frames()
-	lightsh := mat.InstantiateMany(app.Pool(), frames)
 
 	var err error
 	diffuseTex := make(texture.Array, frames)
 	normalTex := make(texture.Array, frames)
 	positionTex := make(texture.Array, frames)
 	occlusionTex := make(texture.Array, frames)
+	descriptors := make([]*LightDescriptors, frames)
 	for i := 0; i < frames; i++ {
 		diffuseTex[i], err = texture.FromImage(app.Device(), "deferred-diffuse", gbuffer.Diffuse()[i], texture.Args{
 			Filter: texture.FilterNearest,
@@ -105,16 +106,18 @@ func NewLightShader(app engine.App, pass *renderpass.Renderpass, gbuffer Geometr
 			panic(err)
 		}
 
-		lightDesc := lightsh[i].Descriptors()
+		lightDesc := dlayout.Instantiate(app.Pool())
 		lightDesc.Diffuse.Set(diffuseTex[i])
 		lightDesc.Normal.Set(normalTex[i])
 		lightDesc.Position.Set(positionTex[i])
 		lightDesc.Occlusion.Set(occlusionTex[i])
+
+		descriptors[i] = lightDesc
 	}
 
 	return &LightShader{
-		mat:       mat,
-		instances: lightsh,
+		mat:         mat,
+		descriptors: descriptors,
 
 		diffuseTex:   diffuseTex,
 		normalTex:    normalTex,
@@ -124,10 +127,11 @@ func NewLightShader(app engine.App, pass *renderpass.Renderpass, gbuffer Geometr
 }
 
 func (ls *LightShader) Bind(buf *command.Buffer, frame int) {
-	ls.instances[frame].Bind(buf)
+	ls.mat.Bind(buf)
+	buf.CmdBindGraphicsDescriptor(ls.descriptors[frame])
 }
 func (ls *LightShader) Descriptors(frame int) *LightDescriptors {
-	return ls.instances[frame].Descriptors()
+	return ls.descriptors[frame]
 }
 
 func (ls *LightShader) Destroy() {

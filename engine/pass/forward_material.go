@@ -19,13 +19,14 @@ type ForwardDescriptors struct {
 }
 
 type ForwardMaterial struct {
-	Instance *material.Instance[*ForwardDescriptors]
-	Objects  *ObjectBuffer
-	Lights   *LightBuffer
-	Shadows  *ShadowCache
-	Textures cache.SamplerCache
-	Meshes   cache.MeshCache
-	Commands *command.IndirectDrawBuffer
+	Material    *material.Material[*ForwardDescriptors]
+	Descriptors *ForwardDescriptors
+	Objects     *ObjectBuffer
+	Lights      *LightBuffer
+	Shadows     *ShadowCache
+	Textures    cache.SamplerCache
+	Meshes      cache.MeshCache
+	Commands    *command.IndirectDrawBuffer
 
 	id material.ID
 }
@@ -35,7 +36,7 @@ func (m *ForwardMaterial) ID() material.ID {
 }
 
 func (m *ForwardMaterial) Begin(camera uniform.Camera, lights []light.T) {
-	m.Instance.Descriptors().Camera.Set(camera)
+	m.Descriptors.Camera.Set(camera)
 
 	// multiple calls to this reset in a single frame will cause weird behaviour
 	// we need to split this function somehow in order to be able to do depth sorting etc
@@ -48,13 +49,14 @@ func (m *ForwardMaterial) Begin(camera uniform.Camera, lights []light.T) {
 		for _, lit := range lights {
 			m.Lights.Store(lit.LightData(m.Shadows))
 		}
-		m.Lights.Flush(m.Instance.Descriptors().Lights)
+		m.Lights.Flush(m.Descriptors.Lights)
 	}
 }
 
 func (m *ForwardMaterial) Bind(cmds command.Recorder) {
 	cmds.Record(func(cmd *command.Buffer) {
-		m.Instance.Bind(cmd)
+		m.Material.Bind(cmd)
+		cmd.CmdBindGraphicsDescriptor(m.Descriptors)
 		m.Commands.BeginDrawIndirect()
 	})
 }
@@ -65,7 +67,7 @@ func (m *ForwardMaterial) Draw(cmds command.Recorder, msh mesh.Mesh) {
 		return
 	}
 
-	textures := m.Instance.Material().TextureSlots()
+	textures := m.Material.TextureSlots()
 	textureIds := AssignMeshTextures(m.Textures, msh, textures)
 
 	instanceId := m.Objects.Store(uniform.Object{
@@ -86,12 +88,12 @@ func (m *ForwardMaterial) Unbind(cmds command.Recorder) {
 }
 
 func (m *ForwardMaterial) End() {
-	m.Objects.Flush(m.Instance.Descriptors().Objects)
+	m.Objects.Flush(m.Descriptors.Objects)
 	m.Textures.Flush()
 	m.Commands.Flush()
 }
 
 func (m *ForwardMaterial) Destroy() {
-	m.Instance.Material().Destroy()
+	m.Material.Destroy()
 	m.Commands.Destroy()
 }
