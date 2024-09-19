@@ -240,6 +240,9 @@ func (p *AmbientOcclusionPass) Record(cmds command.Recorder, args draw.Args, sce
 }
 
 func (p *AmbientOcclusionPass) Destroy() {
+	for _, desc := range p.desc {
+		desc.Destroy()
+	}
 	p.pass.Destroy()
 	p.fbuf.Destroy()
 	for i := 0; i < len(p.position); i++ {

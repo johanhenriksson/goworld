@@ -15,3 +15,7 @@ func (s *SetMock) Ptr() core1_0.DescriptorSet {
 
 func (s *SetMock) Write(write core1_0.WriteDescriptorSet) {
 }
+
+func (s *SetMock) Destroy() {}
+
+func (s *SetMock) adopt(Descriptor) {}

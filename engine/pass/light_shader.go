@@ -149,6 +149,9 @@ func (ls *LightShader) Destroy() {
 	for _, view := range ls.occlusionTex {
 		view.Destroy()
 	}
+	for _, desc := range ls.descriptors {
+		desc.Destroy()
+	}
 	ls.mat.Destroy()
 	ls.layout.Destroy()
 }

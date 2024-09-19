@@ -8,11 +8,20 @@ import (
 )
 
 type Descriptor interface {
-	Initialize(*device.Device)
-	LayoutBinding(int) core1_0.DescriptorSetLayoutBinding
+	// Initialize the descriptor with the provided device, set, and binding index.
+	// This is called automatically during Set instantiation.
+	Initialize(dev *device.Device, set Set, binding int)
+
 	BindingFlags() ext_descriptor_indexing.DescriptorBindingFlags
-	Bind(Set, int)
+
+	// Destroy the descriptor.
+	// Releasing any resources it owns, such as uniform buffers.
 	Destroy()
+
+	// LayoutBinding returns a descriptor set layout binding for this descriptor
+	// using the provided binding index. This is useful for creating descriptor
+	// set layouts including this descriptor.
+	LayoutBinding(int) core1_0.DescriptorSetLayoutBinding
 }
 
 type VariableDescriptor interface {

@@ -75,6 +75,7 @@ func (m *BasicMaterial) End() {
 }
 
 func (m *BasicMaterial) Destroy() {
+	m.Descriptors.Destroy()
 	m.Material.Destroy()
 	m.Commands.Destroy()
 }

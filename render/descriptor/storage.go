@@ -20,13 +20,15 @@ type Storage[K comparable] struct {
 	set     Set
 }
 
-func (d *Storage[K]) Initialize(dev *device.Device) {
-	if d.set == nil {
-		panic("descriptor must be bound first")
-	}
+var _ Descriptor = (*Storage[any])(nil)
+
+func (d *Storage[K]) Initialize(dev *device.Device, set Set, binding int) {
 	if d.Size == 0 {
 		panic("storage descriptor size must be non-zero")
 	}
+
+	d.set = set
+	d.binding = binding
 
 	d.buffer = buffer.NewArray[K](dev, buffer.Args{
 		Key:    d.String(),
@@ -50,11 +52,6 @@ func (d *Storage[K]) Destroy() {
 	}
 }
 
-func (d *Storage[K]) Bind(set Set, binding int) {
-	d.set = set
-	d.binding = binding
-}
-
 func (d *Storage[K]) Set(index int, data K) {
 	d.buffer.Set(index, data)
 }
@@ -64,7 +61,6 @@ func (d *Storage[K]) SetRange(offset int, data []K) {
 }
 
 func (d *Storage[K]) LayoutBinding(binding int) core1_0.DescriptorSetLayoutBinding {
-	d.binding = binding
 	return core1_0.DescriptorSetLayoutBinding{
 		Binding:         binding,
 		DescriptorType:  core1_0.DescriptorTypeStorageBuffer,

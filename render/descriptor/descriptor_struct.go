@@ -104,9 +104,6 @@ func CopyDescriptorStruct[S Set](template S, blank Set) (S, []Descriptor) {
 			// cast the copied value to a Descriptor interface
 			descriptor := valueCopy.Interface().(Descriptor)
 
-			// bind it to our blank descriptor set
-			binding := len(descriptors)
-			descriptor.Bind(blank, binding)
 			descriptors = append(descriptors, descriptor)
 		}
 	}

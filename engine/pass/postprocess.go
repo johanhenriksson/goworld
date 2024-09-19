@@ -166,6 +166,9 @@ func (p *PostProcessPass) Destroy() {
 	for _, tex := range p.inputTex {
 		tex.Destroy()
 	}
+	for _, desc := range p.desc {
+		desc.Destroy()
+	}
 	p.fbufs.Destroy()
 	p.pass.Destroy()
 	p.mat.Destroy()

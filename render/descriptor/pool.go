@@ -41,7 +41,8 @@ func (p *Pool) Recreate() {
 	p.Destroy()
 
 	info := core1_0.DescriptorPoolCreateInfo{
-		Flags:     ext_descriptor_indexing.DescriptorPoolCreateUpdateAfterBind,
+		Flags: core1_0.DescriptorPoolCreateFreeDescriptorSet |
+			ext_descriptor_indexing.DescriptorPoolCreateUpdateAfterBind,
 		PoolSizes: p.sizes,
 		MaxSets:   p.maxSets,
 	}
