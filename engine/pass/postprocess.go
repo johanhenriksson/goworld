@@ -26,7 +26,7 @@ type PostProcessPass struct {
 	input engine.Target
 
 	quad   vertex.Mesh
-	mat    *material.Material[*PostProcessDescriptors]
+	mat    *material.Material
 	layout *descriptor.Layout[*PostProcessDescriptors]
 	desc   []*PostProcessDescriptors
 	fbufs  framebuffer.Array
@@ -102,7 +102,7 @@ func NewPostProcessPass(app engine.App, target engine.Target, input engine.Targe
 			Stages: core1_0.StageFragment,
 		},
 	})
-	p.mat = material.New[*PostProcessDescriptors](
+	p.mat = material.New(
 		app.Device(),
 		material.Args{
 			Shader:     app.Shaders().Fetch(shader.Ref("postprocess")),

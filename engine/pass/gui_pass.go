@@ -40,7 +40,7 @@ type GuiDrawable interface {
 type GuiPass struct {
 	app    engine.App
 	target engine.Target
-	mat    *material.Material[*GuiDescriptors]
+	mat    *material.Material
 	layout *descriptor.Layout[*GuiDescriptors]
 	desc   []*GuiDescriptors
 	pass   *renderpass.Renderpass
@@ -124,7 +124,7 @@ func NewGuiPass(app engine.App, target engine.Target) *GuiPass {
 	})
 
 	frames := target.Frames()
-	mat := material.New[*GuiDescriptors](app.Device(), material.Args{
+	mat := material.New(app.Device(), material.Args{
 		Pass:       pass,
 		Shader:     app.Shaders().Fetch(shader.Ref("ui_quad")),
 		DepthTest:  true,

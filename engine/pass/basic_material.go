@@ -20,7 +20,7 @@ type BasicDescriptors struct {
 // They can be used for various untextured objects, such
 // as shadow/depth passes and lines.
 type BasicMaterial struct {
-	Material    *material.Material[*BasicDescriptors]
+	Material    *material.Material
 	Descriptors *BasicDescriptors
 	Objects     *ObjectBuffer
 	Meshes      cache.MeshCache

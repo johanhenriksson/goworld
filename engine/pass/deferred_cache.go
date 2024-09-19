@@ -59,7 +59,7 @@ func (m *DeferredMatCache) Instantiate(def *material.Def, callback func([]Materi
 	shader := m.app.Shaders().Fetch(shader.Ref(def.Shader))
 
 	// create material
-	mat := material.New[*DeferredDescriptors](
+	mat := material.New(
 		m.app.Device(),
 		material.Args{
 			Shader:     shader,

@@ -65,7 +65,7 @@ func (m *ForwardMatCache) Instantiate(def *material.Def, callback func([]Materia
 	shader := m.app.Shaders().Fetch(shader.Ref(def.Shader))
 
 	// create material
-	mat := material.New[*ForwardDescriptors](
+	mat := material.New(
 		m.app.Device(),
 		material.Args{
 			Shader:     shader,

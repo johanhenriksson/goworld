@@ -17,7 +17,7 @@ import (
 )
 
 // Materials combine pipelines and descriptors into a common unit.
-type Material[D descriptor.Set] struct {
+type Material struct {
 	device  *device.Device
 	shader  *shader.Shader
 	playout *pipeline.Layout
@@ -42,7 +42,7 @@ type Args struct {
 	CullMode   vertex.CullMode
 }
 
-func New[D descriptor.Set](device *device.Device, args Args, descriptors ...descriptor.SetLayout) *Material[D] {
+func New(device *device.Device, args Args, descriptors ...descriptor.SetLayout) *Material {
 	if device == nil {
 		panic("device is nil")
 	}
@@ -89,7 +89,7 @@ func New[D descriptor.Set](device *device.Device, args Args, descriptors ...desc
 		CullMode:   args.CullMode,
 	})
 
-	return &Material[D]{
+	return &Material{
 		device:  device,
 		shader:  args.Shader,
 		playout: pipelineLayout,
@@ -98,15 +98,15 @@ func New[D descriptor.Set](device *device.Device, args Args, descriptors ...desc
 	}
 }
 
-func (m *Material[D]) Bind(cmd *command.Buffer) {
+func (m *Material) Bind(cmd *command.Buffer) {
 	cmd.CmdBindGraphicsPipeline(m.pipe)
 }
 
-func (m *Material[D]) TextureSlots() []texture.Slot {
+func (m *Material) TextureSlots() []texture.Slot {
 	return m.shader.Textures()
 }
 
-func (m *Material[D]) Destroy() {
+func (m *Material) Destroy() {
 	if m.playout != nil {
 		m.playout.Destroy()
 		m.playout = nil
