@@ -222,7 +222,7 @@ func (p *AmbientOcclusionPass) Record(cmds command.Recorder, args draw.Args, sce
 		cmd.CmdBeginRenderPass(p.pass, p.fbuf[args.Frame])
 		desc := p.desc[args.Frame]
 		p.mat.Bind(cmd)
-		cmd.CmdBindGraphicsDescriptor(desc)
+		cmd.CmdBindGraphicsDescriptor(0, desc)
 		desc.Noise.Set(noiseTex)
 		desc.Params.Set(AmbientOcclusionParams{
 			Projection: args.Camera.Proj,

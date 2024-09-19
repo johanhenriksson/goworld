@@ -218,7 +218,7 @@ func (p *GuiPass) Record(cmds command.Recorder, args draw.Args, scene object.Com
 	cmds.Record(func(cmd *command.Buffer) {
 		cmd.CmdBeginRenderPass(p.pass, p.fbuf[args.Frame])
 		p.mat.Bind(cmd)
-		cmd.CmdBindGraphicsDescriptor(desc)
+		cmd.CmdBindGraphicsDescriptor(0, desc)
 
 		cmd.CmdDraw(command.Draw{
 			// the gui quad shader does not use any vertex attribute data.
