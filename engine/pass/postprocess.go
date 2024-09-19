@@ -25,11 +25,12 @@ type PostProcessPass struct {
 	app   engine.App
 	input engine.Target
 
-	quad  vertex.Mesh
-	mat   *material.Material[*PostProcessDescriptors]
-	desc  []*PostProcessDescriptors
-	fbufs framebuffer.Array
-	pass  *renderpass.Renderpass
+	quad   vertex.Mesh
+	mat    *material.Material[*PostProcessDescriptors]
+	layout *descriptor.Layout[*PostProcessDescriptors]
+	desc   []*PostProcessDescriptors
+	fbufs  framebuffer.Array
+	pass   *renderpass.Renderpass
 
 	inputTex texture.Array
 }
@@ -93,7 +94,7 @@ func NewPostProcessPass(app engine.App, target engine.Target, input engine.Targe
 		},
 	})
 
-	dlayout := descriptor.NewLayout(app.Device(), "PostProcess", &PostProcessDescriptors{
+	p.layout = descriptor.NewLayout(app.Device(), "PostProcess", &PostProcessDescriptors{
 		Input: &descriptor.Sampler{
 			Stages: core1_0.StageFragment,
 		},
@@ -101,7 +102,7 @@ func NewPostProcessPass(app engine.App, target engine.Target, input engine.Targe
 			Stages: core1_0.StageFragment,
 		},
 	})
-	p.mat = material.New(
+	p.mat = material.New[*PostProcessDescriptors](
 		app.Device(),
 		material.Args{
 			Shader:     app.Shaders().Fetch(shader.Ref("postprocess")),
@@ -110,7 +111,7 @@ func NewPostProcessPass(app engine.App, target engine.Target, input engine.Targe
 			DepthTest:  false,
 			DepthWrite: false,
 		},
-		dlayout)
+		p.layout)
 
 	frames := input.Frames()
 	p.fbufs, err = framebuffer.NewArray(frames, app.Device(), "postprocess", target.Width(), target.Height(), p.pass)
@@ -130,7 +131,7 @@ func NewPostProcessPass(app engine.App, target engine.Target, input engine.Targe
 			// todo: clean up
 			panic(err)
 		}
-		p.desc[i] = dlayout.Instantiate(app.Pool())
+		p.desc[i] = p.layout.Instantiate(app.Pool())
 		p.desc[i].Input.Set(p.inputTex[i])
 	}
 
@@ -168,4 +169,5 @@ func (p *PostProcessPass) Destroy() {
 	p.fbufs.Destroy()
 	p.pass.Destroy()
 	p.mat.Destroy()
+	p.layout.Destroy()
 }

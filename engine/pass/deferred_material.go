@@ -19,6 +19,7 @@ type DeferredDescriptors struct {
 
 type DeferredMaterial struct {
 	Material    *material.Material[*DeferredDescriptors]
+	Layout      *descriptor.SetLayout
 	Descriptors *DeferredDescriptors
 	Objects     *ObjectBuffer
 	Textures    cache.SamplerCache

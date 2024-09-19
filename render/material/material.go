@@ -19,7 +19,6 @@ import (
 // Materials combine pipelines and descriptors into a common unit.
 type Material[D descriptor.Set] struct {
 	device  *device.Device
-	dlayout *descriptor.Layout[D]
 	shader  *shader.Shader
 	playout *pipeline.Layout
 	pipe    *pipeline.Pipeline
@@ -43,7 +42,7 @@ type Args struct {
 	CullMode   vertex.CullMode
 }
 
-func New[D descriptor.Set](device *device.Device, args Args, descLayout *descriptor.Layout[D]) *Material[D] {
+func New[D descriptor.Set](device *device.Device, args Args, descriptors ...descriptor.SetLayout) *Material[D] {
 	if device == nil {
 		panic("device is nil")
 	}
@@ -71,7 +70,7 @@ func New[D descriptor.Set](device *device.Device, args Args, descLayout *descrip
 
 	// crete pipeline pipelineLayout
 	// ... this could be cached ...
-	pipelineLayout := pipeline.NewLayout(device, []descriptor.SetLayout{descLayout}, args.Constants)
+	pipelineLayout := pipeline.NewLayout(device, descriptors, args.Constants)
 
 	pipelineName := fmt.Sprintf("%s/%s", args.Pass.Name(), args.Shader.Name())
 	pipe := pipeline.New(device, pipeline.Args{
@@ -91,10 +90,8 @@ func New[D descriptor.Set](device *device.Device, args Args, descLayout *descrip
 	})
 
 	return &Material[D]{
-		device: device,
-		shader: args.Shader,
-
-		dlayout: descLayout,
+		device:  device,
+		shader:  args.Shader,
 		playout: pipelineLayout,
 		pipe:    pipe,
 		pass:    args.Pass,
@@ -110,10 +107,6 @@ func (m *Material[D]) TextureSlots() []texture.Slot {
 }
 
 func (m *Material[D]) Destroy() {
-	if m.dlayout != nil {
-		m.dlayout.Destroy()
-		m.dlayout = nil
-	}
 	if m.playout != nil {
 		m.playout.Destroy()
 		m.playout = nil

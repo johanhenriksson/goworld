@@ -27,6 +27,7 @@ type LightDescriptors struct {
 
 type LightShader struct {
 	mat         *material.Material[*LightDescriptors]
+	layout      *descriptor.Layout[*LightDescriptors]
 	descriptors []*LightDescriptors
 
 	diffuseTex   texture.Array
@@ -61,7 +62,7 @@ func NewLightShader(app engine.App, pass *renderpass.Renderpass, gbuffer Geometr
 			Count:  32,
 		},
 	})
-	mat := material.New(
+	mat := material.New[*LightDescriptors](
 		app.Device(),
 		material.Args{
 			Shader:    app.Shaders().Fetch(shader.Ref("light")),
@@ -117,6 +118,7 @@ func NewLightShader(app engine.App, pass *renderpass.Renderpass, gbuffer Geometr
 
 	return &LightShader{
 		mat:         mat,
+		layout:      dlayout,
 		descriptors: descriptors,
 
 		diffuseTex:   diffuseTex,
@@ -148,4 +150,5 @@ func (ls *LightShader) Destroy() {
 		view.Destroy()
 	}
 	ls.mat.Destroy()
+	ls.layout.Destroy()
 }

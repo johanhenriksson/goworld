@@ -30,12 +30,13 @@ import (
 const SSAOSamples = 32
 
 type AmbientOcclusionPass struct {
-	app  engine.App
-	pass *renderpass.Renderpass
-	fbuf framebuffer.Array
-	mat  *material.Material[*AmbientOcclusionDescriptors]
-	desc []*AmbientOcclusionDescriptors
-	quad vertex.Mesh
+	app    engine.App
+	pass   *renderpass.Renderpass
+	fbuf   framebuffer.Array
+	mat    *material.Material[*AmbientOcclusionDescriptors]
+	layout *descriptor.Layout[*AmbientOcclusionDescriptors]
+	desc   []*AmbientOcclusionDescriptors
+	quad   vertex.Mesh
 
 	scale    float32
 	position texture.Array
@@ -114,7 +115,7 @@ func NewAmbientOcclusionPass(app engine.App, target engine.Target, gbuffer Geome
 		},
 	})
 
-	dlayout := descriptor.NewLayout(app.Device(), "ssao", &AmbientOcclusionDescriptors{
+	p.layout = descriptor.NewLayout(app.Device(), "ssao", &AmbientOcclusionDescriptors{
 		Position: &descriptor.Sampler{
 			Stages: core1_0.StageFragment,
 		},
@@ -129,7 +130,7 @@ func NewAmbientOcclusionPass(app engine.App, target engine.Target, gbuffer Geome
 		},
 	})
 
-	p.mat = material.New(
+	p.mat = material.New[*AmbientOcclusionDescriptors](
 		app.Device(),
 		material.Args{
 			Shader:     app.Shaders().Fetch(shader.Ref("ssao")),
@@ -138,7 +139,7 @@ func NewAmbientOcclusionPass(app engine.App, target engine.Target, gbuffer Geome
 			DepthTest:  false,
 			DepthWrite: false,
 		},
-		dlayout)
+		p.layout)
 
 	p.fbuf, err = framebuffer.NewArray(target.Frames(), app.Device(), "ssao", target.Width(), target.Height(), p.pass)
 	if err != nil {
@@ -195,7 +196,7 @@ func NewAmbientOcclusionPass(app engine.App, target engine.Target, gbuffer Geome
 			// todo: clean up
 			panic(err)
 		}
-		p.desc[i] = dlayout.Instantiate(app.Pool())
+		p.desc[i] = p.layout.Instantiate(app.Pool())
 		p.desc[i].Position.Set(p.position[i])
 
 		normKey := fmt.Sprintf("ssao-normal-%d", i)
@@ -246,6 +247,7 @@ func (p *AmbientOcclusionPass) Destroy() {
 		p.normal[i].Destroy()
 	}
 	p.mat.Destroy()
+	p.layout.Destroy()
 }
 
 func (p *AmbientOcclusionPass) Name() string {

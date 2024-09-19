@@ -19,14 +19,25 @@ import (
 type ShadowMatCache struct {
 	app    engine.App
 	pass   *renderpass.Renderpass
+	layout *descriptor.Layout[*BasicDescriptors]
 	frames int
 }
 
 func NewShadowMaterialMaker(app engine.App, pass *renderpass.Renderpass, frames int) MaterialCache {
+	layout := descriptor.NewLayout(app.Device(), "Shadows", &BasicDescriptors{
+		Camera: &descriptor.Uniform[uniform.Camera]{
+			Stages: core1_0.StageAll,
+		},
+		Objects: &descriptor.Storage[uniform.Object]{
+			Stages: core1_0.StageAll,
+			Size:   2000,
+		},
+	})
 	return cache.New[*material.Def, []Material](&ShadowMatCache{
 		app:    app,
 		pass:   pass,
 		frames: frames,
+		layout: layout,
 	})
 }
 
@@ -37,16 +48,6 @@ func (m *ShadowMatCache) Instantiate(def *material.Def, callback func([]Material
 		def = &material.Def{}
 	}
 
-	dlayout := descriptor.NewLayout(m.app.Device(), "Shadows", &BasicDescriptors{
-		Camera: &descriptor.Uniform[uniform.Camera]{
-			Stages: core1_0.StageAll,
-		},
-		Objects: &descriptor.Storage[uniform.Object]{
-			Stages: core1_0.StageAll,
-			Size:   2000,
-		},
-	})
-
 	// read vertex pointers from vertex format
 	pointers := vertex.ParsePointers(def.VertexFormat)
 
@@ -54,7 +55,7 @@ func (m *ShadowMatCache) Instantiate(def *material.Def, callback func([]Material
 	shader := m.app.Shaders().Fetch(shader.Ref("shadow"))
 
 	// create material
-	mat := material.New(
+	mat := material.New[*BasicDescriptors](
 		m.app.Device(),
 		material.Args{
 			Shader:     shader,
@@ -68,11 +69,11 @@ func (m *ShadowMatCache) Instantiate(def *material.Def, callback func([]Material
 			DepthClamp: true,
 			Primitive:  def.Primitive,
 		},
-		dlayout)
+		m.layout)
 
 	instances := make([]Material, m.frames)
 	for i := range instances {
-		desc := dlayout.Instantiate(m.app.Pool())
+		desc := m.layout.Instantiate(m.app.Pool())
 		instances[i] = &BasicMaterial{
 			id:          def.Hash(),
 			Material:    mat,
@@ -89,6 +90,7 @@ func (m *ShadowMatCache) Instantiate(def *material.Def, callback func([]Material
 }
 
 func (m *ShadowMatCache) Destroy() {
+	m.layout.Destroy()
 }
 
 func (m *ShadowMatCache) Delete(mat []Material) {
