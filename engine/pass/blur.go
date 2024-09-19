@@ -151,6 +151,9 @@ func (p *BlurPass) Destroy() {
 	for _, tex := range p.tex {
 		tex.Destroy()
 	}
+	for _, desc := range p.desc {
+		desc.Destroy()
+	}
 	p.fbufs.Destroy()
 	p.pass.Destroy()
 	p.material.Destroy()

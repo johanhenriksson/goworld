@@ -240,6 +240,9 @@ func (p *GuiPass) Name() string {
 }
 
 func (p *GuiPass) Destroy() {
+	for _, desc := range p.desc {
+		desc.Destroy()
+	}
 	p.mat.Destroy()
 	p.layout.Destroy()
 	p.fbuf.Destroy()

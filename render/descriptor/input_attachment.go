@@ -19,9 +19,11 @@ type InputAttachment struct {
 	set     Set
 }
 
-var _ Descriptor = &InputAttachment{}
+var _ Descriptor = (*InputAttachment)(nil)
 
-func (d *InputAttachment) Initialize(device *device.Device) {
+func (d *InputAttachment) Initialize(device *device.Device, set Set, binding int) {
+	d.set = set
+	d.binding = binding
 	if d.Layout == 0 {
 		d.Layout = core1_0.ImageLayoutShaderReadOnlyOptimal
 	}
@@ -33,18 +35,12 @@ func (d *InputAttachment) String() string {
 
 func (d *InputAttachment) Destroy() {}
 
-func (d *InputAttachment) Bind(set Set, binding int) {
-	d.set = set
-	d.binding = binding
-}
-
 func (d *InputAttachment) Set(view image.View) {
 	d.view = view.Ptr()
 	d.write()
 }
 
 func (d *InputAttachment) LayoutBinding(binding int) core1_0.DescriptorSetLayoutBinding {
-	d.binding = binding
 	return core1_0.DescriptorSetLayoutBinding{
 		Binding:         binding,
 		DescriptorType:  core1_0.DescriptorTypeInputAttachment,

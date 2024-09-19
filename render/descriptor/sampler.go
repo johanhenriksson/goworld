@@ -19,20 +19,18 @@ type Sampler struct {
 	set     Set
 }
 
-var _ Descriptor = &Sampler{}
+var _ Descriptor = (*Sampler)(nil)
 
-func (d *Sampler) Initialize(device *device.Device) {}
+func (d *Sampler) Initialize(device *device.Device, set Set, binding int) {
+	d.set = set
+	d.binding = binding
+}
 
 func (d *Sampler) String() string {
 	return fmt.Sprintf("Sampler:%d", d.binding)
 }
 
 func (d *Sampler) Destroy() {}
-
-func (d *Sampler) Bind(set Set, binding int) {
-	d.set = set
-	d.binding = binding
-}
 
 func (d *Sampler) Set(tex *texture.Texture) {
 	d.sampler = tex.Ptr()
@@ -41,7 +39,6 @@ func (d *Sampler) Set(tex *texture.Texture) {
 }
 
 func (d *Sampler) LayoutBinding(binding int) core1_0.DescriptorSetLayoutBinding {
-	d.binding = binding
 	return core1_0.DescriptorSetLayoutBinding{
 		Binding:         binding,
 		DescriptorType:  core1_0.DescriptorTypeCombinedImageSampler,

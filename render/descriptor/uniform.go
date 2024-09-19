@@ -19,10 +19,11 @@ type Uniform[K any] struct {
 	set     Set
 }
 
-func (d *Uniform[K]) Initialize(dev *device.Device) {
-	if d.set == nil {
-		panic("descriptor must be bound first")
-	}
+var _ Descriptor = (*Uniform[any])(nil)
+
+func (d *Uniform[K]) Initialize(dev *device.Device, set Set, binding int) {
+	d.set = set
+	d.binding = binding
 	d.buffer = buffer.NewItem[K](dev, buffer.Args{
 		Usage:  core1_0.BufferUsageUniformBuffer,
 		Memory: device.MemoryTypeShared,
@@ -41,11 +42,6 @@ func (d *Uniform[K]) Destroy() {
 		d.buffer.Destroy()
 		d.buffer = nil
 	}
-}
-
-func (d *Uniform[K]) Bind(set Set, binding int) {
-	d.set = set
-	d.binding = binding
 }
 
 func (d *Uniform[K]) Set(data K) {
@@ -68,7 +64,6 @@ func (d *Uniform[K]) write() {
 }
 
 func (d *Uniform[K]) LayoutBinding(binding int) core1_0.DescriptorSetLayoutBinding {
-	d.binding = binding
 	return core1_0.DescriptorSetLayoutBinding{
 		Binding:         binding,
 		DescriptorType:  core1_0.DescriptorTypeUniformBuffer,

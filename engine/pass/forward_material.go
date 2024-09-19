@@ -94,6 +94,7 @@ func (m *ForwardMaterial) End() {
 }
 
 func (m *ForwardMaterial) Destroy() {
+	m.Descriptors.Destroy()
 	m.Material.Destroy()
 	m.Commands.Destroy()
 }

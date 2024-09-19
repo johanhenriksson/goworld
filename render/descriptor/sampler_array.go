@@ -24,12 +24,16 @@ type SamplerArray struct {
 	writes []core1_0.WriteDescriptorSet
 }
 
-var _ Descriptor = &SamplerArray{}
+var _ Descriptor = (*SamplerArray)(nil)
+var _ VariableDescriptor = (*SamplerArray)(nil)
 
-func (d *SamplerArray) Initialize(device *device.Device) {
+func (d *SamplerArray) Initialize(device *device.Device, set Set, binding int) {
 	if d.Count == 0 {
 		panic("sampler array has count 0")
 	}
+
+	d.set = set
+	d.binding = binding
 
 	d.sampler = make([]core1_0.Sampler, d.Count)
 	d.view = make([]core1_0.ImageView, d.Count)
@@ -43,13 +47,7 @@ func (d *SamplerArray) String() string {
 
 func (d *SamplerArray) Destroy() {}
 
-func (d *SamplerArray) Bind(set Set, binding int) {
-	d.set = set
-	d.binding = binding
-}
-
 func (d *SamplerArray) LayoutBinding(binding int) core1_0.DescriptorSetLayoutBinding {
-	d.binding = binding
 	return core1_0.DescriptorSetLayoutBinding{
 		Binding:         binding,
 		DescriptorType:  core1_0.DescriptorTypeCombinedImageSampler,

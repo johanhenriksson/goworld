@@ -81,5 +81,6 @@ func (m *DeferredMaterial) End() {
 
 func (m *DeferredMaterial) Destroy() {
 	m.Material.Destroy()
+	m.Descriptors.Destroy()
 	m.Commands.Destroy()
 }

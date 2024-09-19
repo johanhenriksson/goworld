@@ -21,10 +21,12 @@ type UniformArray[K any] struct {
 	set     Set
 }
 
-func (d *UniformArray[K]) Initialize(dev *device.Device) {
-	if d.set == nil {
-		panic("descriptor must be bound first")
-	}
+var _ Descriptor = (*UniformArray[any])(nil)
+
+func (d *UniformArray[K]) Initialize(dev *device.Device, set Set, binding int) {
+	d.set = set
+	d.binding = binding
+
 	d.buffer = buffer.NewArray[K](dev, buffer.Args{
 		Key:    d.String(),
 		Size:   d.Size,
@@ -45,11 +47,6 @@ func (d *UniformArray[K]) Destroy() {
 		d.buffer.Destroy()
 		d.buffer = nil
 	}
-}
-
-func (d *UniformArray[K]) Bind(set Set, binding int) {
-	d.set = set
-	d.binding = binding
 }
 
 func (d *UniformArray[K]) Set(index int, data K) {
@@ -76,7 +73,6 @@ func (d *UniformArray[K]) write() {
 }
 
 func (d *UniformArray[K]) LayoutBinding(binding int) core1_0.DescriptorSetLayoutBinding {
-	d.binding = binding
 	return core1_0.DescriptorSetLayoutBinding{
 		Binding:         binding,
 		DescriptorType:  core1_0.DescriptorTypeUniformBuffer,

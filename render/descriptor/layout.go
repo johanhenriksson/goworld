@@ -112,9 +112,9 @@ func (d *Layout[S]) VariableCount() int {
 func (d *Layout[S]) Instantiate(pool *Pool) S {
 	set := pool.Allocate(d)
 	copy, descriptors := CopyDescriptorStruct(d.set, set)
-	for _, descriptor := range descriptors {
-		descriptor.Initialize(d.device)
-		d.allocated = append(d.allocated, descriptor)
+	for binding, descriptor := range descriptors {
+		descriptor.Initialize(pool.device, set, binding)
+		set.adopt(descriptor)
 	}
 	return copy
 }
