@@ -42,7 +42,7 @@ func (m *BasicMaterial) Begin(camera uniform.Camera, lights []light.T) {
 func (m *BasicMaterial) Bind(cmds command.Recorder) {
 	cmds.Record(func(cmd *command.Buffer) {
 		m.Material.Bind(cmd)
-		cmd.CmdBindGraphicsDescriptor(m.Descriptors)
+		cmd.CmdBindGraphicsDescriptor(0, m.Descriptors)
 		m.Commands.BeginDrawIndirect()
 	})
 }

@@ -130,7 +130,7 @@ func NewLightShader(app engine.App, pass *renderpass.Renderpass, gbuffer Geometr
 
 func (ls *LightShader) Bind(buf *command.Buffer, frame int) {
 	ls.mat.Bind(buf)
-	buf.CmdBindGraphicsDescriptor(ls.descriptors[frame])
+	buf.CmdBindGraphicsDescriptor(0, ls.descriptors[frame])
 }
 func (ls *LightShader) Descriptors(frame int) *LightDescriptors {
 	return ls.descriptors[frame]

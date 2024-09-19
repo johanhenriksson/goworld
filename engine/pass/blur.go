@@ -136,7 +136,7 @@ func (p *BlurPass) Record(cmds command.Recorder, args draw.Args, scene object.Co
 	cmds.Record(func(cmd *command.Buffer) {
 		cmd.CmdBeginRenderPass(p.pass, p.fbufs[args.Frame])
 		p.material.Bind(cmd)
-		cmd.CmdBindGraphicsDescriptor(p.desc[args.Frame])
+		cmd.CmdBindGraphicsDescriptor(0, p.desc[args.Frame])
 		quad.Bind(cmd)
 		quad.Draw(cmd, 0)
 		cmd.CmdEndRenderPass()

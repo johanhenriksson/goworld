@@ -89,11 +89,11 @@ func (b *Buffer) CmdBindGraphicsPipeline(pipe *pipeline.Pipeline) {
 	b.pipeline = pipe
 }
 
-func (b *Buffer) CmdBindGraphicsDescriptor(set descriptor.Set) {
+func (b *Buffer) CmdBindGraphicsDescriptor(index int, set descriptor.Set) {
 	if b.pipeline == nil {
 		panic("bind graphics pipeline first")
 	}
-	b.ptr.CmdBindDescriptorSets(core1_0.PipelineBindPointGraphics, b.pipeline.Layout().Ptr(), 0, []core1_0.DescriptorSet{set.Ptr()}, nil)
+	b.ptr.CmdBindDescriptorSets(core1_0.PipelineBindPointGraphics, b.pipeline.Layout().Ptr(), index, []core1_0.DescriptorSet{set.Ptr()}, nil)
 }
 
 func (b *Buffer) CmdBindVertexBuffer(vtx buffer.T, offset int) {

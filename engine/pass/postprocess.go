@@ -149,7 +149,7 @@ func (p *PostProcessPass) Record(cmds command.Recorder, args draw.Args, scene ob
 
 		p.mat.Bind(cmd)
 		desc := p.desc[args.Frame]
-		cmd.CmdBindGraphicsDescriptor(desc)
+		cmd.CmdBindGraphicsDescriptor(0, desc)
 		desc.LUT.Set(lutTex)
 
 		quad.Bind(cmd)
