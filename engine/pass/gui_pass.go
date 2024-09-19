@@ -41,6 +41,7 @@ type GuiPass struct {
 	app    engine.App
 	target engine.Target
 	mat    *material.Material[*GuiDescriptors]
+	layout *descriptor.Layout[*GuiDescriptors]
 	desc   []*GuiDescriptors
 	pass   *renderpass.Renderpass
 	fbuf   framebuffer.Array
@@ -123,7 +124,7 @@ func NewGuiPass(app engine.App, target engine.Target) *GuiPass {
 	})
 
 	frames := target.Frames()
-	mat := material.New(app.Device(), material.Args{
+	mat := material.New[*GuiDescriptors](app.Device(), material.Args{
 		Pass:       pass,
 		Shader:     app.Shaders().Fetch(shader.Ref("ui_quad")),
 		DepthTest:  true,
@@ -149,6 +150,7 @@ func NewGuiPass(app engine.App, target engine.Target) *GuiPass {
 		target:   target,
 		mat:      mat,
 		desc:     desc,
+		layout:   dlayout,
 		pass:     pass,
 		fbuf:     fbufs,
 		textures: textures,
@@ -239,6 +241,7 @@ func (p *GuiPass) Name() string {
 
 func (p *GuiPass) Destroy() {
 	p.mat.Destroy()
+	p.layout.Destroy()
 	p.fbuf.Destroy()
 	p.pass.Destroy()
 }

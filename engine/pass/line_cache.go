@@ -19,14 +19,25 @@ import (
 type LineMatCache struct {
 	app    engine.App
 	pass   *renderpass.Renderpass
+	layout *descriptor.Layout[*BasicDescriptors]
 	frames int
 }
 
 func NewLineMaterialCache(app engine.App, pass *renderpass.Renderpass, frames int) MaterialCache {
+	layout := descriptor.NewLayout(app.Device(), "Lines", &BasicDescriptors{
+		Camera: &descriptor.Uniform[uniform.Camera]{
+			Stages: core1_0.StageAll,
+		},
+		Objects: &descriptor.Storage[uniform.Object]{
+			Stages: core1_0.StageAll,
+			Size:   2000,
+		},
+	})
 	return cache.New[*material.Def, []Material](&LineMatCache{
 		app:    app,
 		pass:   pass,
 		frames: frames,
+		layout: layout,
 	})
 }
 
@@ -43,18 +54,8 @@ func (m *LineMatCache) Instantiate(def *material.Def, callback func([]Material))
 	// fetch shader from cache
 	shader := m.app.Shaders().Fetch(shader.Ref(def.Shader))
 
-	dlayout := descriptor.NewLayout(m.app.Device(), "Lines", &BasicDescriptors{
-		Camera: &descriptor.Uniform[uniform.Camera]{
-			Stages: core1_0.StageAll,
-		},
-		Objects: &descriptor.Storage[uniform.Object]{
-			Stages: core1_0.StageAll,
-			Size:   2000,
-		},
-	})
-
 	// create material
-	mat := material.New(
+	mat := material.New[*BasicDescriptors](
 		m.app.Device(),
 		material.Args{
 			Shader:     shader,
@@ -68,11 +69,11 @@ func (m *LineMatCache) Instantiate(def *material.Def, callback func([]Material))
 			Primitive:  def.Primitive,
 			CullMode:   def.CullMode,
 		},
-		dlayout)
+		m.layout)
 
 	instances := make([]Material, m.frames)
 	for i := range instances {
-		desc := dlayout.Instantiate(m.app.Pool())
+		desc := m.layout.Instantiate(m.app.Pool())
 		instances[i] = &BasicMaterial{
 			id:          def.Hash(),
 			Material:    mat,
@@ -89,6 +90,7 @@ func (m *LineMatCache) Instantiate(def *material.Def, callback func([]Material))
 }
 
 func (m *LineMatCache) Destroy() {
+	m.layout.Destroy()
 }
 
 func (m *LineMatCache) Delete(mat []Material) {

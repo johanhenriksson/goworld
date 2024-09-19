@@ -19,25 +19,12 @@ import (
 type DeferredMatCache struct {
 	app    engine.App
 	pass   *renderpass.Renderpass
+	layout *descriptor.Layout[*DeferredDescriptors]
 	frames int
 }
 
 func NewDeferredMaterialCache(app engine.App, pass *renderpass.Renderpass, frames int) MaterialCache {
-	return cache.New[*material.Def, []Material](&DeferredMatCache{
-		app:    app,
-		pass:   pass,
-		frames: frames,
-	})
-}
-
-func (m *DeferredMatCache) Name() string { return "DeferredMaterials" }
-
-func (m *DeferredMatCache) Instantiate(def *material.Def, callback func([]Material)) {
-	if def == nil {
-		def = material.StandardDeferred()
-	}
-
-	desc := &DeferredDescriptors{
+	layout := descriptor.NewLayout(app.Device(), "Deferred", &DeferredDescriptors{
 		Camera: &descriptor.Uniform[uniform.Camera]{
 			Stages: core1_0.StageAll,
 		},
@@ -49,8 +36,21 @@ func (m *DeferredMatCache) Instantiate(def *material.Def, callback func([]Materi
 			Stages: core1_0.StageFragment,
 			Count:  100,
 		},
+	})
+	return cache.New[*material.Def, []Material](&DeferredMatCache{
+		app:    app,
+		pass:   pass,
+		frames: frames,
+		layout: layout,
+	})
+}
+
+func (m *DeferredMatCache) Name() string { return "DeferredMaterials" }
+
+func (m *DeferredMatCache) Instantiate(def *material.Def, callback func([]Material)) {
+	if def == nil {
+		def = material.StandardDeferred()
 	}
-	dlayout := descriptor.NewLayout(m.app.Device(), "Deferred", desc)
 
 	// read vertex pointers from vertex format
 	pointers := vertex.ParsePointers(def.VertexFormat)
@@ -59,7 +59,7 @@ func (m *DeferredMatCache) Instantiate(def *material.Def, callback func([]Materi
 	shader := m.app.Shaders().Fetch(shader.Ref(def.Shader))
 
 	// create material
-	mat := material.New(
+	mat := material.New[*DeferredDescriptors](
 		m.app.Device(),
 		material.Args{
 			Shader:     shader,
@@ -72,12 +72,11 @@ func (m *DeferredMatCache) Instantiate(def *material.Def, callback func([]Materi
 			DepthFunc:  def.DepthFunc,
 			Primitive:  def.Primitive,
 			CullMode:   def.CullMode,
-		},
-		dlayout)
+		}, m.layout)
 
 	instances := make([]Material, m.frames)
 	for i := range instances {
-		desc := dlayout.Instantiate(m.app.Pool())
+		desc := m.layout.Instantiate(m.app.Pool())
 		textures := cache.NewSamplerCache(m.app.Textures(), desc.Textures)
 		instances[i] = &DeferredMaterial{
 			id:          def.Hash(),
@@ -96,7 +95,7 @@ func (m *DeferredMatCache) Instantiate(def *material.Def, callback func([]Materi
 }
 
 func (m *DeferredMatCache) Destroy() {
-
+	m.layout.Destroy()
 }
 
 func (m *DeferredMatCache) Delete(mat []Material) {

@@ -19,27 +19,13 @@ import (
 type ForwardMatCache struct {
 	app    engine.App
 	pass   *renderpass.Renderpass
+	layout *descriptor.Layout[*ForwardDescriptors]
 	lookup ShadowmapLookupFn
 	frames int
 }
 
 func NewForwardMaterialCache(app engine.App, pass *renderpass.Renderpass, frames int, lookup ShadowmapLookupFn) MaterialCache {
-	return cache.New[*material.Def, []Material](&ForwardMatCache{
-		app:    app,
-		pass:   pass,
-		lookup: lookup,
-		frames: frames,
-	})
-}
-
-func (m *ForwardMatCache) Name() string { return "ForwardMaterials" }
-
-func (m *ForwardMatCache) Instantiate(def *material.Def, callback func([]Material)) {
-	if def == nil {
-		def = material.StandardForward()
-	}
-
-	desc := &ForwardDescriptors{
+	layout := descriptor.NewLayout(app.Device(), "Forward", &ForwardDescriptors{
 		Camera: &descriptor.Uniform[uniform.Camera]{
 			Stages: core1_0.StageAll,
 		},
@@ -55,8 +41,22 @@ func (m *ForwardMatCache) Instantiate(def *material.Def, callback func([]Materia
 			Stages: core1_0.StageFragment,
 			Count:  100,
 		},
+	})
+	return cache.New[*material.Def, []Material](&ForwardMatCache{
+		app:    app,
+		pass:   pass,
+		lookup: lookup,
+		frames: frames,
+		layout: layout,
+	})
+}
+
+func (m *ForwardMatCache) Name() string { return "ForwardMaterials" }
+
+func (m *ForwardMatCache) Instantiate(def *material.Def, callback func([]Material)) {
+	if def == nil {
+		def = material.StandardForward()
 	}
-	dlayout := descriptor.NewLayout(m.app.Device(), "Forward", desc)
 
 	// read vertex pointers from vertex format
 	pointers := vertex.ParsePointers(def.VertexFormat)
@@ -65,7 +65,7 @@ func (m *ForwardMatCache) Instantiate(def *material.Def, callback func([]Materia
 	shader := m.app.Shaders().Fetch(shader.Ref(def.Shader))
 
 	// create material
-	mat := material.New(
+	mat := material.New[*ForwardDescriptors](
 		m.app.Device(),
 		material.Args{
 			Shader:     shader,
@@ -79,11 +79,11 @@ func (m *ForwardMatCache) Instantiate(def *material.Def, callback func([]Materia
 			Primitive:  def.Primitive,
 			CullMode:   def.CullMode,
 		},
-		dlayout)
+		m.layout)
 
 	instances := make([]Material, m.frames)
 	for i := range instances {
-		desc := dlayout.Instantiate(m.app.Pool())
+		desc := m.layout.Instantiate(m.app.Pool())
 		textures := cache.NewSamplerCache(m.app.Textures(), desc.Textures)
 
 		instances[i] = &ForwardMaterial{
@@ -105,7 +105,7 @@ func (m *ForwardMatCache) Instantiate(def *material.Def, callback func([]Materia
 }
 
 func (m *ForwardMatCache) Destroy() {
-
+	m.layout.Destroy()
 }
 
 func (m *ForwardMatCache) Delete(mat []Material) {

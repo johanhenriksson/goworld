@@ -26,11 +26,12 @@ type OutputPass struct {
 	material *material.Material[*OutputDescriptors]
 	source   engine.Target
 
-	quad  vertex.Mesh
-	desc  []*OutputDescriptors
-	tex   texture.Array
-	fbufs framebuffer.Array
-	pass  *renderpass.Renderpass
+	quad   vertex.Mesh
+	desc   []*OutputDescriptors
+	layout *descriptor.Layout[*OutputDescriptors]
+	tex    texture.Array
+	fbufs  framebuffer.Array
+	pass   *renderpass.Renderpass
 }
 
 var _ draw.Pass = &OutputPass{}
@@ -89,12 +90,12 @@ func NewOutputPass(app engine.App, target engine.Target, source engine.Target) *
 		},
 	})
 
-	dlayout := descriptor.NewLayout(app.Device(), "Output", &OutputDescriptors{
+	p.layout = descriptor.NewLayout(app.Device(), "Output", &OutputDescriptors{
 		Output: &descriptor.Sampler{
 			Stages: core1_0.StageFragment,
 		},
 	})
-	p.material = material.New(
+	p.material = material.New[*OutputDescriptors](
 		app.Device(),
 		material.Args{
 			Shader:     app.Shaders().Fetch(shader.Ref("output")),
@@ -103,7 +104,7 @@ func NewOutputPass(app engine.App, target engine.Target, source engine.Target) *
 			DepthTest:  false,
 			DepthWrite: false,
 		},
-		dlayout)
+		p.layout)
 
 	frames := target.Frames()
 	var err error
@@ -124,7 +125,7 @@ func NewOutputPass(app engine.App, target engine.Target, source engine.Target) *
 			// todo: clean up
 			panic(err)
 		}
-		p.desc[i] = dlayout.Instantiate(app.Pool())
+		p.desc[i] = p.layout.Instantiate(app.Pool())
 		p.desc[i].Output.Set(p.tex[i])
 	}
 
@@ -155,4 +156,5 @@ func (p *OutputPass) Destroy() {
 	p.fbufs.Destroy()
 	p.pass.Destroy()
 	p.material.Destroy()
+	p.layout.Destroy()
 }

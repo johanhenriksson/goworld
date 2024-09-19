@@ -24,11 +24,12 @@ type BlurPass struct {
 	material *material.Material[*BlurDescriptors]
 	input    engine.Target
 
-	quad  vertex.Mesh
-	desc  []*BlurDescriptors
-	tex   texture.Array
-	fbufs framebuffer.Array
-	pass  *renderpass.Renderpass
+	quad   vertex.Mesh
+	layout *descriptor.Layout[*BlurDescriptors]
+	desc   []*BlurDescriptors
+	tex    texture.Array
+	fbufs  framebuffer.Array
+	pass   *renderpass.Renderpass
 }
 
 var _ draw.Pass = &BlurPass{}
@@ -92,8 +93,8 @@ func NewBlurPass(app engine.App, output engine.Target, input engine.Target) *Blu
 			Stages: core1_0.StageFragment,
 		},
 	}
-	dlayout := descriptor.NewLayout(app.Device(), "Blur", desc)
-	p.material = material.New(
+	p.layout = descriptor.NewLayout(app.Device(), "Blur", desc)
+	p.material = material.New[*BlurDescriptors](
 		app.Device(),
 		material.Args{
 			Shader:     app.Shaders().Fetch(shader.Ref("blur")),
@@ -102,7 +103,7 @@ func NewBlurPass(app engine.App, output engine.Target, input engine.Target) *Blu
 			DepthTest:  false,
 			DepthWrite: false,
 		},
-		dlayout)
+		p.layout)
 
 	var err error
 	p.fbufs, err = framebuffer.NewArray(frames, app.Device(), "blur", output.Width(), output.Height(), p.pass)
@@ -122,7 +123,7 @@ func NewBlurPass(app engine.App, output engine.Target, input engine.Target) *Blu
 			// todo: clean up
 			panic(err)
 		}
-		p.desc[i] = dlayout.Instantiate(app.Pool())
+		p.desc[i] = p.layout.Instantiate(app.Pool())
 		p.desc[i].Input.Set(p.tex[i])
 	}
 
@@ -153,4 +154,5 @@ func (p *BlurPass) Destroy() {
 	p.fbufs.Destroy()
 	p.pass.Destroy()
 	p.material.Destroy()
+	p.layout.Destroy()
 }
