@@ -17,16 +17,16 @@ var BuiltinFilesystem fs.Filesystem = &builtinFilesystem{}
 
 type builtinFilesystem struct{}
 
-func (fs *builtinFilesystem) Read(key string) ([]byte, error) {
+func (bfs *builtinFilesystem) Read(key string) ([]byte, error) {
 	file, err := builtinFs.Open("builtin/" + key)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
-			return nil, fmt.Errorf("asset %s %w", key, ErrNotFound)
+			return nil, fmt.Errorf("builtin asset %s %w", key, fs.ErrNotFound)
 		}
 	}
 	return io.ReadAll(file)
 }
 
-func (fs *builtinFilesystem) Write(key string, data []byte) error {
-	return fmt.Errorf("cant write to immutable file system")
+func (_ *builtinFilesystem) Write(key string, data []byte) error {
+	return fmt.Errorf("%w: cant write to builtin file system", fs.ErrImmutable)
 }

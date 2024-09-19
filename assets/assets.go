@@ -1,7 +1,6 @@
 package assets
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -9,8 +8,8 @@ import (
 	"github.com/johanhenriksson/goworld/assets/fs"
 )
 
-var ErrNotFound = fmt.Errorf("not found")
-
+// FS is the global asset filesystem
+// todo: remove this global variable to avoid the temptation of using it everywhere
 var FS fs.Filesystem
 
 const AssetFolderEnv = "ASSET_PATH"
@@ -53,7 +52,7 @@ func FindFileInParents(name, path string) (string, error) {
 	}
 	parentPath := filepath.Dir(path)
 	if parentPath == path {
-		return "", ErrNotFound
+		return "", fs.ErrNotFound
 	}
 	return FindFileInParents(name, parentPath)
 }

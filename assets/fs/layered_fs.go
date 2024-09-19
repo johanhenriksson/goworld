@@ -1,6 +1,7 @@
 package fs
 
 import (
+	"errors"
 	"fmt"
 	"slices"
 )
@@ -39,6 +40,14 @@ func (fs *Layered) Write(key string, data []byte) error {
 	if len(fs.layers) == 0 {
 		return fmt.Errorf("no layers in filesystem")
 	}
-	// write to the top layer
-	return fs.layers[0].Write(key, data)
+	for _, layer := range fs.layers {
+		err := layer.Write(key, data)
+		if errors.Is(err, ErrImmutable) {
+			// skip immutable layers
+			continue
+		} else if err != nil {
+			return err
+		}
+	}
+	return fmt.Errorf("%w: no mutable layers in filesystem", ErrImmutable)
 }
