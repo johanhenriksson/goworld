@@ -25,7 +25,7 @@ type BlurPass struct {
 	input    engine.Target
 
 	quad  vertex.Mesh
-	desc  []*material.Instance[*BlurDescriptors]
+	desc  []*BlurDescriptors
 	tex   texture.Array
 	fbufs framebuffer.Array
 	pass  *renderpass.Renderpass
@@ -87,6 +87,12 @@ func NewBlurPass(app engine.App, output engine.Target, input engine.Target) *Blu
 		},
 	})
 
+	desc := &BlurDescriptors{
+		Input: &descriptor.Sampler{
+			Stages: core1_0.StageFragment,
+		},
+	}
+	dlayout := descriptor.NewLayout(app.Device(), "Blur", desc)
 	p.material = material.New(
 		app.Device(),
 		material.Args{
@@ -96,11 +102,7 @@ func NewBlurPass(app engine.App, output engine.Target, input engine.Target) *Blu
 			DepthTest:  false,
 			DepthWrite: false,
 		},
-		&BlurDescriptors{
-			Input: &descriptor.Sampler{
-				Stages: core1_0.StageFragment,
-			},
-		})
+		dlayout)
 
 	var err error
 	p.fbufs, err = framebuffer.NewArray(frames, app.Device(), "blur", output.Width(), output.Height(), p.pass)
@@ -108,7 +110,7 @@ func NewBlurPass(app engine.App, output engine.Target, input engine.Target) *Blu
 		panic(err)
 	}
 
-	p.desc = p.material.InstantiateMany(app.Pool(), frames)
+	p.desc = make([]*BlurDescriptors, frames)
 	p.tex = make(texture.Array, frames)
 	for i := range p.tex {
 		key := fmt.Sprintf("blur-%d", i)
@@ -120,7 +122,8 @@ func NewBlurPass(app engine.App, output engine.Target, input engine.Target) *Blu
 			// todo: clean up
 			panic(err)
 		}
-		p.desc[i].Descriptors().Input.Set(p.tex[i])
+		p.desc[i] = dlayout.Instantiate(app.Pool())
+		p.desc[i].Input.Set(p.tex[i])
 	}
 
 	return p
@@ -131,7 +134,8 @@ func (p *BlurPass) Record(cmds command.Recorder, args draw.Args, scene object.Co
 
 	cmds.Record(func(cmd *command.Buffer) {
 		cmd.CmdBeginRenderPass(p.pass, p.fbufs[args.Frame])
-		p.desc[args.Frame].Bind(cmd)
+		p.material.Bind(cmd)
+		cmd.CmdBindGraphicsDescriptor(p.desc[args.Frame])
 		quad.Bind(cmd)
 		quad.Draw(cmd, 0)
 		cmd.CmdEndRenderPass()

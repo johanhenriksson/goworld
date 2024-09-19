@@ -34,7 +34,7 @@ type AmbientOcclusionPass struct {
 	pass *renderpass.Renderpass
 	fbuf framebuffer.Array
 	mat  *material.Material[*AmbientOcclusionDescriptors]
-	desc []*material.Instance[*AmbientOcclusionDescriptors]
+	desc []*AmbientOcclusionDescriptors
 	quad vertex.Mesh
 
 	scale    float32
@@ -114,6 +114,21 @@ func NewAmbientOcclusionPass(app engine.App, target engine.Target, gbuffer Geome
 		},
 	})
 
+	dlayout := descriptor.NewLayout(app.Device(), "ssao", &AmbientOcclusionDescriptors{
+		Position: &descriptor.Sampler{
+			Stages: core1_0.StageFragment,
+		},
+		Normal: &descriptor.Sampler{
+			Stages: core1_0.StageFragment,
+		},
+		Noise: &descriptor.Sampler{
+			Stages: core1_0.StageFragment,
+		},
+		Params: &descriptor.Uniform[AmbientOcclusionParams]{
+			Stages: core1_0.StageFragment,
+		},
+	})
+
 	p.mat = material.New(
 		app.Device(),
 		material.Args{
@@ -123,20 +138,7 @@ func NewAmbientOcclusionPass(app engine.App, target engine.Target, gbuffer Geome
 			DepthTest:  false,
 			DepthWrite: false,
 		},
-		&AmbientOcclusionDescriptors{
-			Position: &descriptor.Sampler{
-				Stages: core1_0.StageFragment,
-			},
-			Normal: &descriptor.Sampler{
-				Stages: core1_0.StageFragment,
-			},
-			Noise: &descriptor.Sampler{
-				Stages: core1_0.StageFragment,
-			},
-			Params: &descriptor.Uniform[AmbientOcclusionParams]{
-				Stages: core1_0.StageFragment,
-			},
-		})
+		dlayout)
 
 	p.fbuf, err = framebuffer.NewArray(target.Frames(), app.Device(), "ssao", target.Width(), target.Height(), p.pass)
 	if err != nil {
@@ -180,7 +182,7 @@ func NewAmbientOcclusionPass(app engine.App, target engine.Target, gbuffer Geome
 
 	// todo: if we shuffle the kernel, it would be ok to use fewer samples
 
-	p.desc = p.mat.InstantiateMany(app.Pool(), target.Frames())
+	p.desc = make([]*AmbientOcclusionDescriptors, target.Frames())
 	p.position = make(texture.Array, target.Frames())
 	p.normal = make(texture.Array, target.Frames())
 	for i := 0; i < target.Frames(); i++ {
@@ -193,7 +195,8 @@ func NewAmbientOcclusionPass(app engine.App, target engine.Target, gbuffer Geome
 			// todo: clean up
 			panic(err)
 		}
-		p.desc[i].Descriptors().Position.Set(p.position[i])
+		p.desc[i] = dlayout.Instantiate(app.Pool())
+		p.desc[i].Position.Set(p.position[i])
 
 		normKey := fmt.Sprintf("ssao-normal-%d", i)
 		p.normal[i], err = texture.FromImage(app.Device(), normKey, gbuffer.Normal()[i], texture.Args{
@@ -204,7 +207,7 @@ func NewAmbientOcclusionPass(app engine.App, target engine.Target, gbuffer Geome
 			// todo: clean up
 			panic(err)
 		}
-		p.desc[i].Descriptors().Normal.Set(p.normal[i])
+		p.desc[i].Normal.Set(p.normal[i])
 	}
 
 	return p
@@ -216,9 +219,11 @@ func (p *AmbientOcclusionPass) Record(cmds command.Recorder, args draw.Args, sce
 
 	cmds.Record(func(cmd *command.Buffer) {
 		cmd.CmdBeginRenderPass(p.pass, p.fbuf[args.Frame])
-		p.desc[args.Frame].Bind(cmd)
-		p.desc[args.Frame].Descriptors().Noise.Set(noiseTex)
-		p.desc[args.Frame].Descriptors().Params.Set(AmbientOcclusionParams{
+		desc := p.desc[args.Frame]
+		p.mat.Bind(cmd)
+		cmd.CmdBindGraphicsDescriptor(desc)
+		desc.Noise.Set(noiseTex)
+		desc.Params.Set(AmbientOcclusionParams{
 			Projection: args.Camera.Proj,
 			Kernel:     p.kernel,
 			Samples:    32,

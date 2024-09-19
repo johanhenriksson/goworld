@@ -27,7 +27,7 @@ type PostProcessPass struct {
 
 	quad  vertex.Mesh
 	mat   *material.Material[*PostProcessDescriptors]
-	desc  []*material.Instance[*PostProcessDescriptors]
+	desc  []*PostProcessDescriptors
 	fbufs framebuffer.Array
 	pass  *renderpass.Renderpass
 
@@ -93,6 +93,14 @@ func NewPostProcessPass(app engine.App, target engine.Target, input engine.Targe
 		},
 	})
 
+	dlayout := descriptor.NewLayout(app.Device(), "PostProcess", &PostProcessDescriptors{
+		Input: &descriptor.Sampler{
+			Stages: core1_0.StageFragment,
+		},
+		LUT: &descriptor.Sampler{
+			Stages: core1_0.StageFragment,
+		},
+	})
 	p.mat = material.New(
 		app.Device(),
 		material.Args{
@@ -102,14 +110,7 @@ func NewPostProcessPass(app engine.App, target engine.Target, input engine.Targe
 			DepthTest:  false,
 			DepthWrite: false,
 		},
-		&PostProcessDescriptors{
-			Input: &descriptor.Sampler{
-				Stages: core1_0.StageFragment,
-			},
-			LUT: &descriptor.Sampler{
-				Stages: core1_0.StageFragment,
-			},
-		})
+		dlayout)
 
 	frames := input.Frames()
 	p.fbufs, err = framebuffer.NewArray(frames, app.Device(), "postprocess", target.Width(), target.Height(), p.pass)
@@ -117,7 +118,7 @@ func NewPostProcessPass(app engine.App, target engine.Target, input engine.Targe
 		panic(err)
 	}
 
-	p.desc = p.mat.InstantiateMany(app.Pool(), frames)
+	p.desc = make([]*PostProcessDescriptors, frames)
 	p.inputTex = make(texture.Array, frames)
 	for i := 0; i < input.Frames(); i++ {
 		inputKey := fmt.Sprintf("post-input-%d", i)
@@ -129,7 +130,8 @@ func NewPostProcessPass(app engine.App, target engine.Target, input engine.Targe
 			// todo: clean up
 			panic(err)
 		}
-		p.desc[i].Descriptors().Input.Set(p.inputTex[i])
+		p.desc[i] = dlayout.Instantiate(app.Pool())
+		p.desc[i].Input.Set(p.inputTex[i])
 	}
 
 	return p
@@ -144,9 +146,10 @@ func (p *PostProcessPass) Record(cmds command.Recorder, args draw.Args, scene ob
 	cmds.Record(func(cmd *command.Buffer) {
 		cmd.CmdBeginRenderPass(p.pass, p.fbufs[args.Frame])
 
+		p.mat.Bind(cmd)
 		desc := p.desc[args.Frame]
-		desc.Bind(cmd)
-		desc.Descriptors().LUT.Set(lutTex)
+		cmd.CmdBindGraphicsDescriptor(desc)
+		desc.LUT.Set(lutTex)
 
 		quad.Bind(cmd)
 		quad.Draw(cmd, 0)

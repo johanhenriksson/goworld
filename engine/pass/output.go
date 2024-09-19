@@ -27,7 +27,7 @@ type OutputPass struct {
 	source   engine.Target
 
 	quad  vertex.Mesh
-	desc  []*material.Instance[*OutputDescriptors]
+	desc  []*OutputDescriptors
 	tex   texture.Array
 	fbufs framebuffer.Array
 	pass  *renderpass.Renderpass
@@ -89,6 +89,11 @@ func NewOutputPass(app engine.App, target engine.Target, source engine.Target) *
 		},
 	})
 
+	dlayout := descriptor.NewLayout(app.Device(), "Output", &OutputDescriptors{
+		Output: &descriptor.Sampler{
+			Stages: core1_0.StageFragment,
+		},
+	})
 	p.material = material.New(
 		app.Device(),
 		material.Args{
@@ -98,11 +103,7 @@ func NewOutputPass(app engine.App, target engine.Target, source engine.Target) *
 			DepthTest:  false,
 			DepthWrite: false,
 		},
-		&OutputDescriptors{
-			Output: &descriptor.Sampler{
-				Stages: core1_0.StageFragment,
-			},
-		})
+		dlayout)
 
 	frames := target.Frames()
 	var err error
@@ -111,7 +112,7 @@ func NewOutputPass(app engine.App, target engine.Target, source engine.Target) *
 		panic(err)
 	}
 
-	p.desc = p.material.InstantiateMany(app.Pool(), frames)
+	p.desc = make([]*OutputDescriptors, frames)
 	p.tex = make(texture.Array, frames)
 	for i := range p.tex {
 		key := fmt.Sprintf("gbuffer-output-%d", i)
@@ -123,7 +124,8 @@ func NewOutputPass(app engine.App, target engine.Target, source engine.Target) *
 			// todo: clean up
 			panic(err)
 		}
-		p.desc[i].Descriptors().Output.Set(p.tex[i])
+		p.desc[i] = dlayout.Instantiate(app.Pool())
+		p.desc[i].Output.Set(p.tex[i])
 	}
 
 	return p
@@ -134,7 +136,8 @@ func (p *OutputPass) Record(cmds command.Recorder, args draw.Args, scene object.
 
 	cmds.Record(func(cmd *command.Buffer) {
 		cmd.CmdBeginRenderPass(p.pass, p.fbufs[args.Frame])
-		p.desc[args.Frame].Bind(cmd)
+		p.material.Bind(cmd)
+		cmd.CmdBindGraphicsDescriptor(p.desc[args.Frame])
 		quad.Bind(cmd)
 		quad.Draw(cmd, 0)
 		cmd.CmdEndRenderPass()

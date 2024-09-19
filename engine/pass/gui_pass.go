@@ -40,7 +40,8 @@ type GuiDrawable interface {
 type GuiPass struct {
 	app    engine.App
 	target engine.Target
-	mat    []*material.Instance[*GuiDescriptors]
+	mat    *material.Material[*GuiDescriptors]
+	desc   []*GuiDescriptors
 	pass   *renderpass.Renderpass
 	fbuf   framebuffer.Array
 
@@ -107,13 +108,7 @@ func NewGuiPass(app engine.App, target engine.Target) *GuiPass {
 		},
 	})
 
-	frames := target.Frames()
-	mat := material.New(app.Device(), material.Args{
-		Pass:       pass,
-		Shader:     app.Shaders().Fetch(shader.Ref("ui_quad")),
-		DepthTest:  true,
-		DepthWrite: true,
-	}, &GuiDescriptors{
+	dlayout := descriptor.NewLayout(app.Device(), "gui", &GuiDescriptors{
 		Config: &descriptor.Uniform[GuiConfig]{
 			Stages: core1_0.StageAll,
 		},
@@ -125,17 +120,27 @@ func NewGuiPass(app engine.App, target engine.Target) *GuiPass {
 			Stages: core1_0.StageFragment,
 			Count:  1000,
 		},
-	}).InstantiateMany(app.Pool(), target.Frames())
+	})
+
+	frames := target.Frames()
+	mat := material.New(app.Device(), material.Args{
+		Pass:       pass,
+		Shader:     app.Shaders().Fetch(shader.Ref("ui_quad")),
+		DepthTest:  true,
+		DepthWrite: true,
+	}, dlayout)
 
 	fbufs, err := framebuffer.NewArray(frames, app.Device(), "gui", target.Width(), target.Height(), pass)
 	if err != nil {
 		panic(err)
 	}
 
+	desc := make([]*GuiDescriptors, frames)
 	textures := make([]cache.SamplerCache, frames)
 	quads := make([]*widget.QuadBuffer, frames)
 	for i := 0; i < frames; i++ {
-		textures[i] = cache.NewSamplerCache(app.Textures(), mat[i].Descriptors().Textures)
+		desc[i] = dlayout.Instantiate(app.Pool())
+		textures[i] = cache.NewSamplerCache(app.Textures(), desc[i].Textures)
 		quads[i] = widget.NewQuadBuffer(10000)
 	}
 
@@ -143,6 +148,7 @@ func NewGuiPass(app engine.App, target engine.Target) *GuiPass {
 		app:      app,
 		target:   target,
 		mat:      mat,
+		desc:     desc,
 		pass:     pass,
 		fbuf:     fbufs,
 		textures: textures,
@@ -152,7 +158,7 @@ func NewGuiPass(app engine.App, target engine.Target) *GuiPass {
 }
 
 func (p *GuiPass) Record(cmds command.Recorder, args draw.Args, scene object.Component) {
-	mat := p.mat[args.Frame]
+	desc := p.desc[args.Frame]
 
 	size := vec2.NewI(args.Camera.Viewport.Width, args.Camera.Viewport.Height)
 	scale := args.Camera.Viewport.Scale
@@ -190,7 +196,7 @@ func (p *GuiPass) Record(cmds command.Recorder, args draw.Args, scene object.Com
 	// todo: collect and depth sort
 
 	// write quad instance data
-	mat.Descriptors().Quads.SetRange(0, qb.Data)
+	desc.Quads.SetRange(0, qb.Data)
 
 	// find maximum z
 	zmax := float32(0)
@@ -199,7 +205,7 @@ func (p *GuiPass) Record(cmds command.Recorder, args draw.Args, scene object.Com
 	}
 
 	// update config uniform
-	mat.Descriptors().Config.Set(GuiConfig{
+	desc.Config.Set(GuiConfig{
 		Resolution: size,
 		ZMax:       zmax,
 	})
@@ -209,7 +215,8 @@ func (p *GuiPass) Record(cmds command.Recorder, args draw.Args, scene object.Com
 	// todo: use draw indirect
 	cmds.Record(func(cmd *command.Buffer) {
 		cmd.CmdBeginRenderPass(p.pass, p.fbuf[args.Frame])
-		mat.Bind(cmd)
+		p.mat.Bind(cmd)
+		cmd.CmdBindGraphicsDescriptor(desc)
 
 		cmd.CmdDraw(command.Draw{
 			// the gui quad shader does not use any vertex attribute data.
@@ -231,7 +238,7 @@ func (p *GuiPass) Name() string {
 }
 
 func (p *GuiPass) Destroy() {
-	p.mat[0].Material().Destroy()
+	p.mat.Destroy()
 	p.fbuf.Destroy()
 	p.pass.Destroy()
 }

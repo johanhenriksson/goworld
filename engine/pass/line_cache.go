@@ -37,7 +37,13 @@ func (m *LineMatCache) Instantiate(def *material.Def, callback func([]Material))
 		def = material.Lines()
 	}
 
-	desc := &BasicDescriptors{
+	// read vertex pointers from vertex format
+	pointers := vertex.ParsePointers(def.VertexFormat)
+
+	// fetch shader from cache
+	shader := m.app.Shaders().Fetch(shader.Ref(def.Shader))
+
+	dlayout := descriptor.NewLayout(m.app.Device(), "Lines", &BasicDescriptors{
 		Camera: &descriptor.Uniform[uniform.Camera]{
 			Stages: core1_0.StageAll,
 		},
@@ -45,13 +51,7 @@ func (m *LineMatCache) Instantiate(def *material.Def, callback func([]Material))
 			Stages: core1_0.StageAll,
 			Size:   2000,
 		},
-	}
-
-	// read vertex pointers from vertex format
-	pointers := vertex.ParsePointers(def.VertexFormat)
-
-	// fetch shader from cache
-	shader := m.app.Shaders().Fetch(shader.Ref(def.Shader))
+	})
 
 	// create material
 	mat := material.New(
@@ -68,16 +68,17 @@ func (m *LineMatCache) Instantiate(def *material.Def, callback func([]Material))
 			Primitive:  def.Primitive,
 			CullMode:   def.CullMode,
 		},
-		desc)
+		dlayout)
 
 	instances := make([]Material, m.frames)
 	for i := range instances {
-		instance := mat.Instantiate(m.app.Pool())
+		desc := dlayout.Instantiate(m.app.Pool())
 		instances[i] = &BasicMaterial{
-			id:       def.Hash(),
-			Instance: instance,
-			Objects:  NewObjectBuffer(desc.Objects.Size),
-			Meshes:   m.app.Meshes(),
+			id:          def.Hash(),
+			Material:    mat,
+			Descriptors: desc,
+			Objects:     NewObjectBuffer(desc.Objects.Size),
+			Meshes:      m.app.Meshes(),
 			Commands: command.NewIndirectDrawBuffer(m.app.Device(),
 				fmt.Sprintf("LineCommands:%d", i),
 				desc.Objects.Size),

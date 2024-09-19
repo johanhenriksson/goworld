@@ -30,7 +30,7 @@ type Layout[S Set] struct {
 	counts    map[core1_0.DescriptorType]int
 }
 
-func New[S Set](device *device.Device, name string, set S) *Layout[S] {
+func NewLayout[S Set](device *device.Device, name string, set S) *Layout[S] {
 	descriptors, err := ParseDescriptorStruct(set)
 	if err != nil {
 		panic(err)

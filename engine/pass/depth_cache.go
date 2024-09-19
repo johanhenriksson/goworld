@@ -37,7 +37,7 @@ func (m *DepthMatCache) Instantiate(def *material.Def, callback func([]Material)
 		def = &material.Def{}
 	}
 
-	desc := &BasicDescriptors{
+	dlayout := descriptor.NewLayout(m.app.Device(), "Depth", &BasicDescriptors{
 		Camera: &descriptor.Uniform[uniform.Camera]{
 			Stages: core1_0.StageAll,
 		},
@@ -45,7 +45,7 @@ func (m *DepthMatCache) Instantiate(def *material.Def, callback func([]Material)
 			Stages: core1_0.StageAll,
 			Size:   10000,
 		},
-	}
+	})
 
 	// read vertex pointers from vertex format
 	pointers := vertex.ParsePointers(def.VertexFormat)
@@ -68,16 +68,17 @@ func (m *DepthMatCache) Instantiate(def *material.Def, callback func([]Material)
 			DepthClamp: def.DepthClamp,
 			Primitive:  def.Primitive,
 		},
-		desc)
+		dlayout)
 
 	instances := make([]Material, m.frames)
 	for i := range instances {
-		instance := mat.Instantiate(m.app.Pool())
+		desc := dlayout.Instantiate(m.app.Pool())
 		instances[i] = &BasicMaterial{
-			id:       def.Hash(),
-			Instance: instance,
-			Objects:  NewObjectBuffer(desc.Objects.Size),
-			Meshes:   m.app.Meshes(),
+			id:          def.Hash(),
+			Material:    mat,
+			Descriptors: desc,
+			Objects:     NewObjectBuffer(desc.Objects.Size),
+			Meshes:      m.app.Meshes(),
 			Commands: command.NewIndirectDrawBuffer(m.app.Device(),
 				fmt.Sprintf("DepthCommands:%d", i),
 				desc.Objects.Size),
