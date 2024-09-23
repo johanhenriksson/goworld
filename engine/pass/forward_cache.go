@@ -18,41 +18,60 @@ import (
 )
 
 type ForwardMatCache struct {
-	app    engine.App
-	pass   *renderpass.Renderpass
-	lookup ShadowmapLookupFn
-	frames int
+	app     engine.App
+	pass    *renderpass.Renderpass
+	shaders cache.ShaderCache
+	meshes  cache.MeshCache
+	frames  int
 
 	pipeLayout *pipeline.Layout
 	descLayout *descriptor.Layout[*ForwardDescriptors]
+
+	descriptors []*ForwardDescriptors
+	objects     *ObjectBuffer
+	lights      *LightBuffer
+	shadows     *ShadowCache
+	textures    cache.SamplerCache
 }
 
-func NewForwardMaterialCache(app engine.App, pass *renderpass.Renderpass, frames int, lookup ShadowmapLookupFn) MaterialCache {
+func NewForwardMaterialCache(app engine.App, pass *renderpass.Renderpass, frames int, textures cache.SamplerCache, objects *ObjectBuffer, lights *LightBuffer, shadows *ShadowCache) MaterialCache {
+
+	// these are actually the global/pass descriptors
 	descLayout := descriptor.NewLayout(app.Device(), "Forward", &ForwardDescriptors{
 		Camera: &descriptor.Uniform[uniform.Camera]{
 			Stages: core1_0.StageAll,
 		},
 		Objects: &descriptor.Storage[uniform.Object]{
 			Stages: core1_0.StageAll,
-			Size:   20000,
+			Size:   objects.Size(),
 		},
 		Lights: &descriptor.Storage[uniform.Light]{
 			Stages: core1_0.StageAll,
-			Size:   256,
+			Size:   lights.Size(),
 		},
 		Textures: &descriptor.SamplerArray{
 			Stages: core1_0.StageFragment,
-			Count:  100,
+			Count:  textures.Size(),
 		},
 	})
 	pipeLayout := pipeline.NewLayout(app.Device(), []descriptor.SetLayout{descLayout}, []pipeline.PushConstant{})
+
+	descriptors := descLayout.InstantiateMany(app.Pool(), frames)
+
 	return cache.New[*material.Def, []Material](&ForwardMatCache{
 		app:        app,
 		pass:       pass,
-		lookup:     lookup,
+		shaders:    app.Shaders(),
+		meshes:     app.Meshes(),
 		frames:     frames,
 		descLayout: descLayout,
 		pipeLayout: pipeLayout,
+
+		descriptors: descriptors,
+		objects:     objects,
+		lights:      lights,
+		textures:    textures,
+		shadows:     shadows,
 	})
 }
 
@@ -67,7 +86,7 @@ func (m *ForwardMatCache) Instantiate(def *material.Def, callback func([]Materia
 	pointers := vertex.ParsePointers(def.VertexFormat)
 
 	// fetch shader from cache
-	shader := m.app.Shaders().Fetch(shader.Ref(def.Shader))
+	shader := m.shaders.Fetch(shader.Ref(def.Shader))
 
 	// create material
 	pipe := pipeline.New(
@@ -88,21 +107,24 @@ func (m *ForwardMatCache) Instantiate(def *material.Def, callback func([]Materia
 
 	instances := make([]Material, m.frames)
 	for i := range instances {
-		desc := m.descLayout.Instantiate(m.app.Pool())
-		textures := cache.NewSamplerCache(m.app.Textures(), desc.Textures)
-
 		instances[i] = &ForwardMaterial{
+			// material instance details:
+
 			id:          def.Hash(),
 			Pipeline:    pipe,
-			Descriptors: desc,
-			Objects:     NewObjectBuffer(desc.Objects.Size),
-			Lights:      NewLightBuffer(desc.Lights.Size),
-			Shadows:     NewShadowCache(textures, m.lookup),
-			Textures:    textures,
-			Meshes:      m.app.Meshes(),
+			Descriptors: m.descriptors[i], // per-material descriptors
+
+			// this could come from somewhere else:
+
 			Commands: command.NewIndirectDrawBuffer(m.app.Device(),
 				fmt.Sprintf("ForwardCommands:%d", i),
-				desc.Objects.Size),
+				m.descriptors[i].Objects.Size),
+
+			Objects:  m.objects,
+			Lights:   m.lights,
+			Shadows:  m.shadows,
+			Textures: m.textures,
+			Meshes:   m.meshes,
 		}
 	}
 
@@ -110,6 +132,10 @@ func (m *ForwardMatCache) Instantiate(def *material.Def, callback func([]Materia
 }
 
 func (m *ForwardMatCache) Destroy() {
+	m.textures.Destroy()
+	for _, desc := range m.descriptors {
+		desc.Destroy()
+	}
 	m.pipeLayout.Destroy()
 	m.descLayout.Destroy()
 }

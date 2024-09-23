@@ -60,7 +60,7 @@ func NewLightShader(app engine.App, pass *renderpass.Renderpass, gbuffer Geometr
 		},
 		Shadow: &descriptor.SamplerArray{
 			Stages: core1_0.StageFragment,
-			Count:  32,
+			Count:  256,
 		},
 	})
 	playout := pipeline.NewLayout(app.Device(), []descriptor.SetLayout{dlayout}, []pipeline.PushConstant{})

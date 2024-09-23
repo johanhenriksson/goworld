@@ -79,7 +79,7 @@ func (m *DeferredMaterial) Unbind(cmds command.Recorder) {
 
 func (m *DeferredMaterial) End() {
 	m.Objects.Flush(m.Descriptors.Objects)
-	m.Textures.Flush()
+	m.Textures.Flush(m.Descriptors.Textures)
 	m.Commands.Flush()
 }
 

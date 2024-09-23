@@ -6,6 +6,7 @@ import (
 	"github.com/johanhenriksson/goworld/core/mesh"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/engine"
+	"github.com/johanhenriksson/goworld/engine/cache"
 	"github.com/johanhenriksson/goworld/engine/uniform"
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/framebuffer"
@@ -22,6 +23,11 @@ type ForwardPass struct {
 	pass   *renderpass.Renderpass
 	fbuf   framebuffer.Array
 
+	textures cache.SamplerCache
+	objects  *ObjectBuffer
+	lights   *LightBuffer
+	shadows  *ShadowCache
+
 	materials  MaterialCache
 	meshQuery  *object.Query[mesh.Mesh]
 	lightQuery *object.Query[light.T]
@@ -33,7 +39,7 @@ func NewForwardPass(
 	app engine.App,
 	target engine.Target,
 	depth engine.Target,
-	shadows *Shadowpass,
+	shadowPass *Shadowpass,
 ) *ForwardPass {
 	pass := renderpass.New(app.Device(), renderpass.Args{
 		Name: "Forward",
@@ -73,21 +79,73 @@ func NewForwardPass(
 		panic(err)
 	}
 
+	// todo: arguments
+	maxLights := 256
+	maxTextures := 100
+	maxObjects := 1000
+
+	textures := cache.NewSamplerCache(app.Textures(), maxTextures)
+	objects := NewObjectBuffer(maxObjects)
+	lights := NewLightBuffer(maxLights)
+	shadows := NewShadowCache(textures, shadowPass.Shadowmap)
+
 	return &ForwardPass{
 		target: target,
 		app:    app,
 		pass:   pass,
 		fbuf:   fbuf,
 
-		materials:  NewForwardMaterialCache(app, pass, target.Frames(), shadows.Shadowmap),
+		objects:    objects,
+		lights:     lights,
+		textures:   textures,
+		shadows:    shadows,
+		materials:  NewForwardMaterialCache(app, pass, target.Frames(), textures, objects, lights, shadows),
 		meshQuery:  object.NewQuery[mesh.Mesh](),
 		lightQuery: object.NewQuery[light.T](),
 	}
 }
 
+// premise:
+// - its reasonable to have a separate object buffer for each render pass.
+//   this is because there is no overlap between the objects that are rendered in each pass.
+//   however, it might be faster to do a single descriptor set write
+// - two phases:
+//   - collect: gather objects that will be rendered. synchronized between update/render
+//   - record: record commands for each object. runs on the render thread
+
+type Context struct{}
+
+func (p *ForwardPass) Collect(ctx *Context, scene object.Component) {
+	//
+	// opaque := p.meshQuery.
+	// 	Reset().
+	// 	Where(isDrawForward).
+	// 	Where(isTransparent(false)).
+	// 	Collect(scene)
+	//
+	// for _, mesh := range opaque {
+	// 	gpuMesh, ok := p.app.Meshes().TryFetch(mesh.Mesh())
+	// 	if !ok {
+	// 		continue
+	// 	}
+	//
+	// 	// material
+	// 	p.materials.TryFetch(mesh.Material())
+	//
+	// }
+}
+
+// Record2 records commands for each object in the render context
+func (p *ForwardPass) Record2(cmds command.Recorder, ctx *Context) {
+}
+
 func (p *ForwardPass) Record(cmds command.Recorder, args draw.Args, scene object.Component) {
 	cam := uniform.CameraFromArgs(args)
 	lights := p.lightQuery.Reset().Collect(scene)
+
+	// clear object buffer
+	p.lights.Reset()
+	p.objects.Reset()
 
 	cmds.Record(func(cmd *command.Buffer) {
 		cmd.CmdBeginRenderPass(p.pass, p.fbuf[args.Frame])
@@ -121,6 +179,7 @@ func (p *ForwardPass) Name() string {
 }
 
 func (p *ForwardPass) Destroy() {
+	p.textures.Destroy()
 	p.fbuf.Destroy()
 	p.pass.Destroy()
 	p.materials.Destroy()

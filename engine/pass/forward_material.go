@@ -39,9 +39,6 @@ func (m *ForwardMaterial) ID() material.ID {
 func (m *ForwardMaterial) Begin(camera uniform.Camera, lights []light.T) {
 	m.Descriptors.Camera.Set(camera)
 
-	// multiple calls to this reset in a single frame will cause weird behaviour
-	// we need to split this function somehow in order to be able to do depth sorting etc
-	m.Objects.Reset()
 	m.Commands.Reset()
 
 	if len(lights) > 0 {
@@ -56,8 +53,11 @@ func (m *ForwardMaterial) Begin(camera uniform.Camera, lights []light.T) {
 
 func (m *ForwardMaterial) Bind(cmds command.Recorder) {
 	cmds.Record(func(cmd *command.Buffer) {
-		cmd.CmdBindGraphicsPipeline(m.Pipeline)
+
+		// we actually want to do this once
 		cmd.CmdBindGraphicsDescriptor(m.Pipeline.Layout(), 0, m.Descriptors)
+
+		cmd.CmdBindGraphicsPipeline(m.Pipeline)
 		m.Commands.BeginDrawIndirect()
 	})
 }
@@ -90,7 +90,7 @@ func (m *ForwardMaterial) Unbind(cmds command.Recorder) {
 
 func (m *ForwardMaterial) End() {
 	m.Objects.Flush(m.Descriptors.Objects)
-	m.Textures.Flush()
+	m.Textures.Flush(m.Descriptors.Textures)
 	m.Commands.Flush()
 }
 

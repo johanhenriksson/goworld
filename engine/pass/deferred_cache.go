@@ -27,32 +27,30 @@ type DeferredMatCache struct {
 	// per-frame data
 
 	descriptors []*DeferredDescriptors
-	textures    []cache.SamplerCache
-	objects     []*ObjectBuffer
+	textures    cache.SamplerCache
+	objects     *ObjectBuffer
 }
 
 func NewDeferredMaterialCache(app engine.App, pass *renderpass.Renderpass, frames int) MaterialCache {
+	maxTextures := 100
+	maxObjects := 2000
 	layout := descriptor.NewLayout(app.Device(), "Deferred", &DeferredDescriptors{
 		Camera: &descriptor.Uniform[uniform.Camera]{
 			Stages: core1_0.StageAll,
 		},
 		Objects: &descriptor.Storage[uniform.Object]{
 			Stages: core1_0.StageAll,
-			Size:   2000,
+			Size:   maxObjects,
 		},
 		Textures: &descriptor.SamplerArray{
 			Stages: core1_0.StageFragment,
-			Count:  100,
+			Count:  maxTextures,
 		},
 	})
 
 	descriptors := layout.InstantiateMany(app.Pool(), frames)
-	textures := make([]cache.SamplerCache, frames)
-	objects := make([]*ObjectBuffer, frames)
-	for i := range descriptors {
-		textures[i] = cache.NewSamplerCache(app.Textures(), descriptors[i].Textures)
-		objects[i] = NewObjectBuffer(descriptors[i].Objects.Size)
-	}
+	textures := cache.NewSamplerCache(app.Textures(), maxTextures)
+	objects := NewObjectBuffer(maxObjects)
 
 	pipeLayout := pipeline.NewLayout(app.Device(), []descriptor.SetLayout{layout}, []pipeline.PushConstant{})
 
@@ -111,8 +109,8 @@ func (m *DeferredMatCache) Instantiate(def *material.Def, callback func([]Materi
 
 			Pipeline:    pipe,
 			Descriptors: m.descriptors[i], // shared
-			Objects:     m.objects[i],     // shared
-			Textures:    m.textures[i],    // shared
+			Objects:     m.objects,        // shared
+			Textures:    m.textures,       // shared
 			Meshes:      m.app.Meshes(),   // maybe accessed in some other way? perhaps passed to Draw()?
 			Commands: command.NewIndirectDrawBuffer(m.app.Device(),
 				fmt.Sprintf("DeferredCommands:%d", i),
@@ -124,6 +122,10 @@ func (m *DeferredMatCache) Instantiate(def *material.Def, callback func([]Materi
 }
 
 func (m *DeferredMatCache) Destroy() {
+	m.textures.Destroy()
+	for _, desc := range m.descriptors {
+		desc.Destroy()
+	}
 	m.pipeLayout.Destroy()
 	m.descLayout.Destroy()
 }

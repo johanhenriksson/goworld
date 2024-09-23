@@ -48,8 +48,8 @@ type GuiPass struct {
 	pipeLayout *pipeline.Layout
 	descLayout *descriptor.Layout[*GuiDescriptors]
 
-	textures []cache.SamplerCache
-	quads    []*widget.QuadBuffer
+	textures cache.SamplerCache
+	quads    *widget.QuadBuffer
 	guiQuery *object.Query[gui.Manager]
 }
 
@@ -140,13 +140,11 @@ func NewGuiPass(app engine.App, target engine.Target) *GuiPass {
 		panic(err)
 	}
 
+	maxTextures := 256
+	maxQuads := 10000
 	desc := dlayout.InstantiateMany(app.Pool(), frames)
-	textures := make([]cache.SamplerCache, frames)
-	quads := make([]*widget.QuadBuffer, frames)
-	for i := 0; i < frames; i++ {
-		textures[i] = cache.NewSamplerCache(app.Textures(), desc[i].Textures)
-		quads[i] = widget.NewQuadBuffer(10000)
-	}
+	textures := cache.NewSamplerCache(app.Textures(), maxTextures)
+	quads := widget.NewQuadBuffer(maxQuads)
 
 	return &GuiPass{
 		app:      app,
@@ -171,13 +169,11 @@ func (p *GuiPass) Record(cmds command.Recorder, args draw.Args, scene object.Com
 	scale := args.Camera.Viewport.Scale
 	size = size.Scaled(1 / scale)
 
-	textures := p.textures[args.Frame]
-
 	uiArgs := widget.DrawArgs{
 		Time:     args.Time,
 		Delta:    args.Delta,
 		Commands: cmds,
-		Textures: textures,
+		Textures: p.textures,
 		Viewport: draw.Viewport{
 			Width:  int(size.X),
 			Height: int(size.Y),
@@ -186,28 +182,27 @@ func (p *GuiPass) Record(cmds command.Recorder, args draw.Args, scene object.Com
 	}
 
 	// clear quad buffer
-	qb := p.quads[args.Frame]
-	qb.Reset()
+	p.quads.Reset()
 
 	// query scene for gui managers
 	guis := p.guiQuery.
 		Reset().
 		Collect(scene)
 	for _, gui := range guis {
-		gui.DrawUI(uiArgs, qb)
+		gui.DrawUI(uiArgs, p.quads)
 	}
 
 	// update sampler cache
-	textures.Flush()
+	p.textures.Flush(desc.Textures)
 
 	// todo: collect and depth sort
 
 	// write quad instance data
-	desc.Quads.SetRange(0, qb.Data)
+	desc.Quads.SetRange(0, p.quads.Data)
 
 	// find maximum z
 	zmax := float32(0)
-	for _, quad := range qb.Data {
+	for _, quad := range p.quads.Data {
 		zmax = math.Max(zmax, quad.ZIndex)
 	}
 
@@ -233,7 +228,7 @@ func (p *GuiPass) Record(cmds command.Recorder, args draw.Args, scene object.Com
 
 			// run an instance for each quad
 			InstanceOffset: uint32(0),
-			InstanceCount:  uint32(len(qb.Data)),
+			InstanceCount:  uint32(len(p.quads.Data)),
 		})
 
 		cmd.CmdEndRenderPass()

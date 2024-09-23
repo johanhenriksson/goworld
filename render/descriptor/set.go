@@ -33,7 +33,6 @@ func (s *set) Write(write core1_0.WriteDescriptorSet) {
 }
 
 func (s *set) Destroy() {
-	s.ptr.Free()
 	for _, d := range s.items {
 		d.Destroy()
 	}

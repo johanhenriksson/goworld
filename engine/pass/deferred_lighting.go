@@ -96,13 +96,15 @@ func NewDeferredLightingPass(
 
 	lightsh := NewLightShader(app, pass, gbuffer, occlusion)
 
+	maxLights := 256
+	maxShadowTextures := maxLights
 	samplers := make([]cache.SamplerCache, target.Frames())
 	lightbufs := make([]*LightBuffer, target.Frames())
 	shadowmaps := make([]*ShadowCache, target.Frames())
 	for i := range lightbufs {
-		samplers[i] = cache.NewSamplerCache(app.Textures(), lightsh.Descriptors(i).Shadow)
+		samplers[i] = cache.NewSamplerCache(app.Textures(), maxShadowTextures)
 		shadowmaps[i] = NewShadowCache(samplers[i], shadows.Shadowmap)
-		lightbufs[i] = NewLightBuffer(256)
+		lightbufs[i] = NewLightBuffer(maxLights)
 	}
 
 	return &DeferredLightPass{
@@ -136,7 +138,7 @@ func (p *DeferredLightPass) Record(cmds command.Recorder, args draw.Args, scene 
 	}
 
 	lightbuf.Flush(desc.Lights)
-	shadows.Flush()
+	shadows.Flush(desc.Shadow)
 
 	quad := p.app.Meshes().Fetch(p.quad)
 	cmds.Record(func(cmd *command.Buffer) {
