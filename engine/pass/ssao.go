@@ -30,13 +30,15 @@ import (
 const SSAOSamples = 32
 
 type AmbientOcclusionPass struct {
-	app    engine.App
-	pass   *renderpass.Renderpass
-	fbuf   framebuffer.Array
-	pipe   *pipeline.Pipeline
-	layout *descriptor.Layout[*AmbientOcclusionDescriptors]
-	desc   []*AmbientOcclusionDescriptors
-	quad   vertex.Mesh
+	app  engine.App
+	pass *renderpass.Renderpass
+	fbuf framebuffer.Array
+	desc []*AmbientOcclusionDescriptors
+	quad vertex.Mesh
+
+	pipeline   *pipeline.Pipeline
+	pipeLayout *pipeline.Layout
+	descLayout *descriptor.Layout[*AmbientOcclusionDescriptors]
 
 	scale    float32
 	position texture.Array
@@ -115,7 +117,7 @@ func NewAmbientOcclusionPass(app engine.App, target engine.Target, gbuffer Geome
 		},
 	})
 
-	p.layout = descriptor.NewLayout(app.Device(), "ssao", &AmbientOcclusionDescriptors{
+	p.descLayout = descriptor.NewLayout(app.Device(), "ssao", &AmbientOcclusionDescriptors{
 		Position: &descriptor.Sampler{
 			Stages: core1_0.StageFragment,
 		},
@@ -129,17 +131,18 @@ func NewAmbientOcclusionPass(app engine.App, target engine.Target, gbuffer Geome
 			Stages: core1_0.StageFragment,
 		},
 	})
+	p.pipeLayout = pipeline.NewLayout(app.Device(), []descriptor.SetLayout{p.descLayout}, nil)
 
-	p.pipe = pipeline.New(
+	p.pipeline = pipeline.New(
 		app.Device(),
 		pipeline.Args{
+			Layout:     p.pipeLayout,
 			Shader:     app.Shaders().Fetch(shader.Ref("ssao")),
 			Pass:       p.pass,
 			Pointers:   vertex.ParsePointers(vertex.T{}),
 			DepthTest:  false,
 			DepthWrite: false,
-		},
-		p.layout)
+		})
 
 	p.fbuf, err = framebuffer.NewArray(target.Frames(), app.Device(), "ssao", target.Width(), target.Height(), p.pass)
 	if err != nil {
@@ -183,7 +186,7 @@ func NewAmbientOcclusionPass(app engine.App, target engine.Target, gbuffer Geome
 
 	// todo: if we shuffle the kernel, it would be ok to use fewer samples
 
-	p.desc = p.layout.InstantiateMany(app.Pool(), target.Frames())
+	p.desc = p.descLayout.InstantiateMany(app.Pool(), target.Frames())
 	p.position = make(texture.Array, target.Frames())
 	p.normal = make(texture.Array, target.Frames())
 	for i := 0; i < target.Frames(); i++ {
@@ -230,8 +233,8 @@ func (p *AmbientOcclusionPass) Record(cmds command.Recorder, args draw.Args, sce
 
 	cmds.Record(func(cmd *command.Buffer) {
 		cmd.CmdBeginRenderPass(p.pass, p.fbuf[args.Frame])
-		cmd.CmdBindGraphicsPipeline(p.pipe)
-		cmd.CmdBindGraphicsDescriptor(0, desc)
+		cmd.CmdBindGraphicsPipeline(p.pipeline)
+		cmd.CmdBindGraphicsDescriptor(p.pipeline.Layout(), 0, desc)
 		quad.Bind(cmd)
 		quad.Draw(cmd, 0)
 		cmd.CmdEndRenderPass()
@@ -248,8 +251,9 @@ func (p *AmbientOcclusionPass) Destroy() {
 		p.position[i].Destroy()
 		p.normal[i].Destroy()
 	}
-	p.pipe.Destroy()
-	p.layout.Destroy()
+	p.pipeline.Destroy()
+	p.pipeLayout.Destroy()
+	p.descLayout.Destroy()
 }
 
 func (p *AmbientOcclusionPass) Name() string {

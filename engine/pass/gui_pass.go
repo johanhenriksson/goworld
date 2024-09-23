@@ -40,11 +40,13 @@ type GuiDrawable interface {
 type GuiPass struct {
 	app    engine.App
 	target engine.Target
-	pipe   *pipeline.Pipeline
-	layout *descriptor.Layout[*GuiDescriptors]
 	desc   []*GuiDescriptors
 	pass   *renderpass.Renderpass
 	fbuf   framebuffer.Array
+
+	pipeline   *pipeline.Pipeline
+	pipeLayout *pipeline.Layout
+	descLayout *descriptor.Layout[*GuiDescriptors]
 
 	textures []cache.SamplerCache
 	quads    []*widget.QuadBuffer
@@ -122,14 +124,16 @@ func NewGuiPass(app engine.App, target engine.Target) *GuiPass {
 			Count:  1000,
 		},
 	})
+	playout := pipeline.NewLayout(app.Device(), []descriptor.SetLayout{dlayout}, nil)
 
 	frames := target.Frames()
 	pipe := pipeline.New(app.Device(), pipeline.Args{
 		Pass:       pass,
+		Layout:     playout,
 		Shader:     app.Shaders().Fetch(shader.Ref("ui_quad")),
 		DepthTest:  true,
 		DepthWrite: true,
-	}, dlayout)
+	})
 
 	fbufs, err := framebuffer.NewArray(frames, app.Device(), "gui", target.Width(), target.Height(), pass)
 	if err != nil {
@@ -147,14 +151,16 @@ func NewGuiPass(app engine.App, target engine.Target) *GuiPass {
 	return &GuiPass{
 		app:      app,
 		target:   target,
-		pipe:     pipe,
 		desc:     desc,
-		layout:   dlayout,
 		pass:     pass,
 		fbuf:     fbufs,
 		textures: textures,
 		quads:    quads,
 		guiQuery: object.NewQuery[gui.Manager](),
+
+		pipeline:   pipe,
+		pipeLayout: playout,
+		descLayout: dlayout,
 	}
 }
 
@@ -216,8 +222,8 @@ func (p *GuiPass) Record(cmds command.Recorder, args draw.Args, scene object.Com
 	// todo: use draw indirect
 	cmds.Record(func(cmd *command.Buffer) {
 		cmd.CmdBeginRenderPass(p.pass, p.fbuf[args.Frame])
-		cmd.CmdBindGraphicsPipeline(p.pipe)
-		cmd.CmdBindGraphicsDescriptor(0, desc)
+		cmd.CmdBindGraphicsPipeline(p.pipeline)
+		cmd.CmdBindGraphicsDescriptor(p.pipeline.Layout(), 0, desc)
 
 		cmd.CmdDraw(command.Draw{
 			// the gui quad shader does not use any vertex attribute data.
@@ -242,8 +248,9 @@ func (p *GuiPass) Destroy() {
 	for _, desc := range p.desc {
 		desc.Destroy()
 	}
-	p.pipe.Destroy()
-	p.layout.Destroy()
+	p.pipeline.Destroy()
+	p.pipeLayout.Destroy()
+	p.descLayout.Destroy()
 	p.fbuf.Destroy()
 	p.pass.Destroy()
 }

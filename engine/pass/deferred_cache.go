@@ -18,10 +18,17 @@ import (
 )
 
 type DeferredMatCache struct {
-	app    engine.App
-	pass   *renderpass.Renderpass
-	layout *descriptor.Layout[*DeferredDescriptors]
-	frames int
+	app        engine.App
+	pass       *renderpass.Renderpass
+	frames     int
+	pipeLayout *pipeline.Layout
+	descLayout *descriptor.Layout[*DeferredDescriptors]
+
+	// per-frame data
+
+	descriptors []*DeferredDescriptors
+	textures    []cache.SamplerCache
+	objects     []*ObjectBuffer
 }
 
 func NewDeferredMaterialCache(app engine.App, pass *renderpass.Renderpass, frames int) MaterialCache {
@@ -38,11 +45,27 @@ func NewDeferredMaterialCache(app engine.App, pass *renderpass.Renderpass, frame
 			Count:  100,
 		},
 	})
+
+	descriptors := layout.InstantiateMany(app.Pool(), frames)
+	textures := make([]cache.SamplerCache, frames)
+	objects := make([]*ObjectBuffer, frames)
+	for i := range descriptors {
+		textures[i] = cache.NewSamplerCache(app.Textures(), descriptors[i].Textures)
+		objects[i] = NewObjectBuffer(descriptors[i].Objects.Size)
+	}
+
+	pipeLayout := pipeline.NewLayout(app.Device(), []descriptor.SetLayout{layout}, []pipeline.PushConstant{})
+
 	return cache.New[*material.Def, []Material](&DeferredMatCache{
-		app:    app,
-		pass:   pass,
-		frames: frames,
-		layout: layout,
+		app:        app,
+		pass:       pass,
+		frames:     frames,
+		pipeLayout: pipeLayout,
+		descLayout: layout,
+
+		descriptors: descriptors,
+		textures:    textures,
+		objects:     objects,
 	})
 }
 
@@ -64,6 +87,7 @@ func (m *DeferredMatCache) Instantiate(def *material.Def, callback func([]Materi
 		m.app.Device(),
 		pipeline.Args{
 			Shader:     shader,
+			Layout:     m.pipeLayout,
 			Pass:       m.pass,
 			Subpass:    MainSubpass,
 			Pointers:   pointers,
@@ -73,22 +97,26 @@ func (m *DeferredMatCache) Instantiate(def *material.Def, callback func([]Materi
 			DepthFunc:  def.DepthFunc,
 			Primitive:  def.Primitive,
 			CullMode:   def.CullMode,
-		}, m.layout)
+		})
+
+	// all deferred materials can use the same descriptors, object buffer and sampler cache.
+	// all of the materials should use the same pipeline layout, and the descriptors should be bound to it, once.
+	// finally, record an indirect draw call for each material instance.
 
 	instances := make([]Material, m.frames)
 	for i := range instances {
-		desc := m.layout.Instantiate(m.app.Pool())
-		textures := cache.NewSamplerCache(m.app.Textures(), desc.Textures)
 		instances[i] = &DeferredMaterial{
-			id:          def.Hash(),
+			id:    def.Hash(),
+			slots: shader.Textures(),
+
 			Pipeline:    pipe,
-			Descriptors: desc,
-			Objects:     NewObjectBuffer(desc.Objects.Size),
-			Textures:    textures,
-			Meshes:      m.app.Meshes(),
+			Descriptors: m.descriptors[i], // shared
+			Objects:     m.objects[i],     // shared
+			Textures:    m.textures[i],    // shared
+			Meshes:      m.app.Meshes(),   // maybe accessed in some other way? perhaps passed to Draw()?
 			Commands: command.NewIndirectDrawBuffer(m.app.Device(),
 				fmt.Sprintf("DeferredCommands:%d", i),
-				desc.Objects.Size),
+				m.descriptors[i].Objects.Size),
 		}
 	}
 
@@ -96,7 +124,8 @@ func (m *DeferredMatCache) Instantiate(def *material.Def, callback func([]Materi
 }
 
 func (m *DeferredMatCache) Destroy() {
-	m.layout.Destroy()
+	m.pipeLayout.Destroy()
+	m.descLayout.Destroy()
 }
 
 func (m *DeferredMatCache) Delete(mat []Material) {

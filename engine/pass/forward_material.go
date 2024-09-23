@@ -57,7 +57,7 @@ func (m *ForwardMaterial) Begin(camera uniform.Camera, lights []light.T) {
 func (m *ForwardMaterial) Bind(cmds command.Recorder) {
 	cmds.Record(func(cmd *command.Buffer) {
 		cmd.CmdBindGraphicsPipeline(m.Pipeline)
-		cmd.CmdBindGraphicsDescriptor(0, m.Descriptors)
+		cmd.CmdBindGraphicsDescriptor(m.Pipeline.Layout(), 0, m.Descriptors)
 		m.Commands.BeginDrawIndirect()
 	})
 }

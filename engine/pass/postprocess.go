@@ -25,13 +25,14 @@ type PostProcessPass struct {
 	app   engine.App
 	input engine.Target
 
-	quad   vertex.Mesh
-	pipe   *pipeline.Pipeline
-	layout *descriptor.Layout[*PostProcessDescriptors]
-	desc   []*PostProcessDescriptors
-	fbufs  framebuffer.Array
-	pass   *renderpass.Renderpass
+	pipeline   *pipeline.Pipeline
+	pipeLayout *pipeline.Layout
+	descLayout *descriptor.Layout[*PostProcessDescriptors]
 
+	quad     vertex.Mesh
+	desc     []*PostProcessDescriptors
+	fbufs    framebuffer.Array
+	pass     *renderpass.Renderpass
 	inputTex texture.Array
 }
 
@@ -94,7 +95,7 @@ func NewPostProcessPass(app engine.App, target engine.Target, input engine.Targe
 		},
 	})
 
-	p.layout = descriptor.NewLayout(app.Device(), "PostProcess", &PostProcessDescriptors{
+	p.descLayout = descriptor.NewLayout(app.Device(), "PostProcess", &PostProcessDescriptors{
 		Input: &descriptor.Sampler{
 			Stages: core1_0.StageFragment,
 		},
@@ -102,16 +103,17 @@ func NewPostProcessPass(app engine.App, target engine.Target, input engine.Targe
 			Stages: core1_0.StageFragment,
 		},
 	})
-	p.pipe = pipeline.New(
+	p.pipeLayout = pipeline.NewLayout(app.Device(), []descriptor.SetLayout{p.descLayout}, nil)
+	p.pipeline = pipeline.New(
 		app.Device(),
 		pipeline.Args{
+			Layout:     p.pipeLayout,
 			Shader:     app.Shaders().Fetch(shader.Ref("postprocess")),
 			Pass:       p.pass,
 			Pointers:   vertex.ParsePointers(vertex.T{}),
 			DepthTest:  false,
 			DepthWrite: false,
-		},
-		p.layout)
+		})
 
 	frames := input.Frames()
 	p.fbufs, err = framebuffer.NewArray(frames, app.Device(), "postprocess", target.Width(), target.Height(), p.pass)
@@ -119,7 +121,7 @@ func NewPostProcessPass(app engine.App, target engine.Target, input engine.Targe
 		panic(err)
 	}
 
-	p.desc = p.layout.InstantiateMany(app.Pool(), frames)
+	p.desc = p.descLayout.InstantiateMany(app.Pool(), frames)
 	p.inputTex = make(texture.Array, frames)
 	for i := 0; i < input.Frames(); i++ {
 		inputKey := fmt.Sprintf("post-input-%d", i)
@@ -148,8 +150,8 @@ func (p *PostProcessPass) Record(cmds command.Recorder, args draw.Args, scene ob
 	// todo: theres not much point recording this every frame
 	cmds.Record(func(cmd *command.Buffer) {
 		cmd.CmdBeginRenderPass(p.pass, p.fbufs[args.Frame])
-		cmd.CmdBindGraphicsPipeline(p.pipe)
-		cmd.CmdBindGraphicsDescriptor(0, desc)
+		cmd.CmdBindGraphicsPipeline(p.pipeline)
+		cmd.CmdBindGraphicsDescriptor(p.pipeLayout, 0, desc)
 		quad.Bind(cmd)
 		quad.Draw(cmd, 0)
 		cmd.CmdEndRenderPass()
@@ -169,6 +171,7 @@ func (p *PostProcessPass) Destroy() {
 	}
 	p.fbufs.Destroy()
 	p.pass.Destroy()
-	p.pipe.Destroy()
-	p.layout.Destroy()
+	p.pipeline.Destroy()
+	p.pipeLayout.Destroy()
+	p.descLayout.Destroy()
 }
