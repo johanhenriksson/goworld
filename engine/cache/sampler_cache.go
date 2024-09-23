@@ -9,11 +9,11 @@ import (
 
 type samplers struct {
 	textures    TextureCache
-	desc        *descriptor.SamplerArray
 	reverse     map[string]*SamplerHandle
 	free        map[int]bool
 	descriptors texture.Array
 	next        int
+	size        int
 
 	// the max age must be shorter than the max life of the texture cache.
 	// if using a per-frame sampler cache, then the max life time should be
@@ -37,30 +37,43 @@ type SamplerCache interface {
 	// Assign a handle to a texture directly
 	Assign(*texture.Texture) *SamplerHandle
 
-	// Writes descriptor updates to the backing Sampler Array.
-	Flush()
+	// Writes descriptor values to the given Sampler Array.
+	Flush(*descriptor.SamplerArray)
+
+	// Size returns the maximum number of samplers in the cache.
+	Size() int
 }
 
-func NewSamplerCache(textures TextureCache, desc *descriptor.SamplerArray) SamplerCache {
+func NewSamplerCache(textures TextureCache, size int) SamplerCache {
 	samplers := &samplers{
 		textures:    textures,
-		desc:        desc,
-		reverse:     make(map[string]*SamplerHandle, 1000),
-		free:        make(map[int]bool, 100),
-		descriptors: make(texture.Array, desc.Count),
+		reverse:     make(map[string]*SamplerHandle, size),
+		free:        make(map[int]bool, size),
+		descriptors: make(texture.Array, size),
 		next:        0,
+		size:        size,
 		maxAge:      textures.MaxAge() / 4,
 		blank:       textures.Fetch(color.White),
 	}
 
-	// ensure id 0 is always blank
+	// ensure id 0 is always blank/white
 	samplers.assignHandle(color.White)
+
+	// initialize descriptors with blank texture
+	// todo: maybe use an error texture
+	for i := range samplers.descriptors {
+		samplers.descriptors[i] = samplers.blank
+	}
 
 	return samplers
 }
 
 func (s *samplers) MaxAge() int {
 	return s.maxAge
+}
+
+func (s *samplers) Size() int {
+	return s.size
 }
 
 func (s *samplers) nextID() int {
@@ -72,7 +85,7 @@ func (s *samplers) nextID() int {
 
 	// allocate new handle
 	id := s.next
-	if id >= s.desc.Count {
+	if id >= s.size {
 		panic("out of handles")
 	}
 	s.next++
@@ -100,42 +113,33 @@ func (s *samplers) assignHandle(ref Keyed) *SamplerHandle {
 func (s *samplers) TryFetch(ref assets.Texture) (*SamplerHandle, bool) {
 	handle := s.assignHandle(ref)
 	var exists bool
-	if handle.Texture, exists = s.textures.TryFetch(ref); exists {
-		return handle, true
+	handle.Texture, exists = s.textures.TryFetch(ref)
+	if !exists {
+		return nil, false
 	}
-	return nil, false
+
+	s.descriptors[handle.ID] = handle.Texture
+	return handle, true
 }
 
 func (s *samplers) Fetch(ref assets.Texture) *SamplerHandle {
 	handle := s.assignHandle(ref)
 	handle.Texture = s.textures.Fetch(ref)
+	s.descriptors[handle.ID] = handle.Texture
 	return handle
 }
 
 func (s *samplers) Assign(tex *texture.Texture) *SamplerHandle {
 	handle := s.assignHandle(tex)
 	handle.Texture = tex
+	s.descriptors[handle.ID] = tex
 	return handle
 }
 
-func (s *samplers) Flush() {
+func (s *samplers) Flush(samplers *descriptor.SamplerArray) {
 	s.Tick()
 
-	for _, handle := range s.reverse {
-		tex := handle.Texture
-		if tex == nil {
-			continue
-		}
-
-		if s.descriptors[handle.ID] == tex {
-			// texture hasnt changed, nothing to do.
-			continue
-		}
-
-		// texture has changed! update descriptor
-		s.descriptors[handle.ID] = tex
-		s.desc.Set(handle.ID, tex)
-	}
+	samplers.SetRange(0, s.descriptors)
 }
 
 func (s *samplers) Tick() {
@@ -153,8 +157,7 @@ func (s *samplers) Tick() {
 
 			// overwrite descriptor with blank texture
 			handle.Texture = s.blank
-			s.descriptors[handle.ID] = nil
-			s.desc.Set(handle.ID, s.blank)
+			s.descriptors[handle.ID] = s.blank
 		}
 	}
 }

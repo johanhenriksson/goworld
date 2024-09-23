@@ -82,17 +82,11 @@ func (b *Buffer) CmdCopyBuffer(src, dst buffer.T, regions ...core1_0.BufferCopy)
 }
 
 func (b *Buffer) CmdBindGraphicsPipeline(pipe *pipeline.Pipeline) {
-	// if b.pipeline != nil && b.pipeline.Ptr() == pipe.Ptr() {
-	// 	return
-	// }
 	b.ptr.CmdBindPipeline(core1_0.PipelineBindPointGraphics, pipe.Ptr())
 	b.pipeline = pipe
 }
 
 func (b *Buffer) CmdBindGraphicsDescriptor(layout *pipeline.Layout, index int, set descriptor.Set) {
-	if b.pipeline == nil {
-		panic("bind graphics pipeline first")
-	}
 	b.ptr.CmdBindDescriptorSets(core1_0.PipelineBindPointGraphics, layout.Ptr(), index, []core1_0.DescriptorSet{set.Ptr()}, nil)
 }
 

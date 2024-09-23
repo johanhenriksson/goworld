@@ -128,7 +128,8 @@ func (p *Shadowpass) createShadowmap(light light.T) Shadowmap {
 		cascades[i].Frame = fbuf
 
 		// each light cascade needs its own shadow materials - or rather, their own descriptors
-		// cheating a bit by creating entire materials for each light, fix it later.
+		// cheating a bit by creating entire materials for each light
+		// todo: optimize this later.
 		mats := NewShadowMaterialMaker(p.app, p.pass, p.target.Frames())
 		cascades[i].Mats = mats
 	}

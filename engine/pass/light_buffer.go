@@ -34,6 +34,10 @@ func NewLightBuffer(capacity int) *LightBuffer {
 	}
 }
 
+func (b *LightBuffer) Size() int {
+	return cap(b.buffer) - 1
+}
+
 func (b *LightBuffer) Flush(desc *descriptor.Storage[uniform.Light]) {
 	// settings is stored in the first element of the buffer
 	// it excludes the first element containing the light settings

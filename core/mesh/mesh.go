@@ -96,6 +96,9 @@ func (m *Static) SetTexture(slot texture.Slot, ref assets.Texture) {
 func (m *Static) CastShadows() bool {
 	if ref := m.VertexData.Get(); ref != nil {
 		mat := m.Mat.Get()
+		if mat == nil {
+			return false
+		}
 		return m.CastsShadow.Get() &&
 			mat.Primitive == vertex.Triangles &&
 			!mat.Transparent

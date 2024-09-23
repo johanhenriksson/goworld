@@ -111,7 +111,9 @@ func (p *LinePass) Destroy() {
 
 func isDrawLines(m mesh.Mesh) bool {
 	if ref := m.Mesh(); ref != nil {
-		return m.Material().Primitive == vertex.Lines
+		if mat := m.Material(); mat != nil {
+			return m.Material().Primitive == vertex.Lines
+		}
 	}
 	return false
 }

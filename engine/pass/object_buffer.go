@@ -15,6 +15,10 @@ func NewObjectBuffer(capacity int) *ObjectBuffer {
 	}
 }
 
+func (b *ObjectBuffer) Size() int {
+	return cap(b.buffer)
+}
+
 func (b *ObjectBuffer) Flush(desc *descriptor.Storage[uniform.Object]) {
 	desc.SetRange(0, b.buffer)
 }
@@ -23,8 +27,8 @@ func (b *ObjectBuffer) Reset() {
 	b.buffer = b.buffer[:0]
 }
 
-func (b *ObjectBuffer) Store(light uniform.Object) int {
+func (b *ObjectBuffer) Store(obj uniform.Object) int {
 	index := len(b.buffer)
-	b.buffer = append(b.buffer, light)
+	b.buffer = append(b.buffer, obj)
 	return index
 }

@@ -3,12 +3,12 @@ package pass
 import (
 	"github.com/johanhenriksson/goworld/core/light"
 	"github.com/johanhenriksson/goworld/engine/cache"
+	"github.com/johanhenriksson/goworld/render/descriptor"
 )
 
 type ShadowCache struct {
 	samplers cache.SamplerCache
 	lookup   ShadowmapLookupFn
-	shared   bool
 }
 
 var _ light.ShadowmapStore = &ShadowCache{}
@@ -17,7 +17,6 @@ func NewShadowCache(samplers cache.SamplerCache, lookup ShadowmapLookupFn) *Shad
 	return &ShadowCache{
 		samplers: samplers,
 		lookup:   lookup,
-		shared:   true,
 	}
 }
 
@@ -31,6 +30,6 @@ func (s *ShadowCache) Lookup(lit light.T, cascade int) (int, bool) {
 }
 
 // Flush the underlying sampler cache
-func (s *ShadowCache) Flush() {
-	s.samplers.Flush()
+func (s *ShadowCache) Flush(samplers *descriptor.SamplerArray) {
+	s.samplers.Flush(samplers)
 }
