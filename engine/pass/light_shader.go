@@ -26,8 +26,9 @@ type LightDescriptors struct {
 }
 
 type LightShader struct {
-	pipe        *pipeline.Pipeline
-	layout      *descriptor.Layout[*LightDescriptors]
+	pipeline    *pipeline.Pipeline
+	pipeLayout  *pipeline.Layout
+	descLayout  *descriptor.Layout[*LightDescriptors]
 	descriptors []*LightDescriptors
 
 	diffuseTex   texture.Array
@@ -62,16 +63,17 @@ func NewLightShader(app engine.App, pass *renderpass.Renderpass, gbuffer Geometr
 			Count:  32,
 		},
 	})
-	mat := pipeline.New(
+	playout := pipeline.NewLayout(app.Device(), []descriptor.SetLayout{dlayout}, []pipeline.PushConstant{})
+	pipe := pipeline.New(
 		app.Device(),
 		pipeline.Args{
+			Layout:    playout,
 			Shader:    app.Shaders().Fetch(shader.Ref("light")),
 			Pass:      pass,
 			Subpass:   LightingSubpass,
 			Pointers:  vertex.ParsePointers(vertex.T{}),
 			DepthTest: false,
-		},
-		dlayout)
+		})
 
 	frames := gbuffer.Frames()
 
@@ -117,8 +119,9 @@ func NewLightShader(app engine.App, pass *renderpass.Renderpass, gbuffer Geometr
 	}
 
 	return &LightShader{
-		pipe:        mat,
-		layout:      dlayout,
+		pipeline:    pipe,
+		pipeLayout:  playout,
+		descLayout:  dlayout,
 		descriptors: descriptors,
 
 		diffuseTex:   diffuseTex,
@@ -129,8 +132,8 @@ func NewLightShader(app engine.App, pass *renderpass.Renderpass, gbuffer Geometr
 }
 
 func (ls *LightShader) Bind(cmd *command.Buffer, frame int) {
-	cmd.CmdBindGraphicsPipeline(ls.pipe)
-	cmd.CmdBindGraphicsDescriptor(0, ls.descriptors[frame])
+	cmd.CmdBindGraphicsPipeline(ls.pipeline)
+	cmd.CmdBindGraphicsDescriptor(ls.pipeline.Layout(), 0, ls.descriptors[frame])
 }
 func (ls *LightShader) Descriptors(frame int) *LightDescriptors {
 	return ls.descriptors[frame]
@@ -152,6 +155,7 @@ func (ls *LightShader) Destroy() {
 	for _, desc := range ls.descriptors {
 		desc.Destroy()
 	}
-	ls.pipe.Destroy()
-	ls.layout.Destroy()
+	ls.pipeline.Destroy()
+	ls.pipeLayout.Destroy()
+	ls.descLayout.Destroy()
 }

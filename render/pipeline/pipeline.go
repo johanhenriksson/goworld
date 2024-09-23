@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/johanhenriksson/goworld/render/descriptor"
 	"github.com/johanhenriksson/goworld/render/device"
 	"github.com/johanhenriksson/goworld/render/renderpass/attachment"
 	"github.com/johanhenriksson/goworld/render/shader"
@@ -19,11 +18,10 @@ import (
 type Pipeline struct {
 	ptr    core1_0.Pipeline
 	device *device.Device
-	layout *Layout
 	args   Args
 }
 
-func New(device *device.Device, args Args, descriptors ...descriptor.SetLayout) *Pipeline {
+func New(device *device.Device, args Args) *Pipeline {
 	if device == nil {
 		panic("device is nil")
 	}
@@ -35,9 +33,6 @@ func New(device *device.Device, args Args, descriptors ...descriptor.SetLayout) 
 
 	key := fmt.Sprintf("%s/%s", args.Pass.Name(), args.Shader.Name())
 	log.Println("creating pipeline", key)
-
-	// todo: cache layouts
-	layout := NewLayout(device, descriptors, args.Constants)
 
 	// todo: pipeline cache
 
@@ -89,7 +84,7 @@ func New(device *device.Device, args Args, descriptors ...descriptor.SetLayout) 
 
 	info := core1_0.GraphicsPipelineCreateInfo{
 		// layout
-		Layout:  layout.Ptr(),
+		Layout:  args.Layout.Ptr(),
 		Subpass: subpass.Index(),
 
 		// render pass
@@ -200,7 +195,6 @@ func New(device *device.Device, args Args, descriptors ...descriptor.SetLayout) 
 	return &Pipeline{
 		ptr:    ptrs[0],
 		device: device,
-		layout: layout,
 		args:   args,
 	}
 }
@@ -214,17 +208,13 @@ func (p *Pipeline) Shader() *shader.Shader {
 }
 
 func (p *Pipeline) Layout() *Layout {
-	return p.layout
+	return p.args.Layout
 }
 
 func (p *Pipeline) Destroy() {
 	if p.ptr != nil {
 		p.ptr.Destroy(nil)
 		p.ptr = nil
-	}
-	if p.layout != nil {
-		p.layout.Destroy()
-		p.layout = nil
 	}
 }
 

@@ -9,6 +9,7 @@ import (
 	"github.com/johanhenriksson/goworld/render/descriptor"
 	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/pipeline"
+	"github.com/johanhenriksson/goworld/render/texture"
 )
 
 type DeferredDescriptors struct {
@@ -20,14 +21,14 @@ type DeferredDescriptors struct {
 
 type DeferredMaterial struct {
 	Pipeline    *pipeline.Pipeline
-	Layout      *descriptor.SetLayout
 	Descriptors *DeferredDescriptors
 	Objects     *ObjectBuffer
 	Textures    cache.SamplerCache
 	Meshes      cache.MeshCache
 	Commands    *command.IndirectDrawBuffer
 
-	id material.ID
+	id    material.ID
+	slots []texture.Slot
 }
 
 func (m *DeferredMaterial) ID() material.ID {
@@ -36,6 +37,8 @@ func (m *DeferredMaterial) ID() material.ID {
 
 func (m *DeferredMaterial) Begin(camera uniform.Camera, lights []light.T) {
 	m.Descriptors.Camera.Set(camera)
+	// todo: assign global descriptors
+
 	m.Objects.Reset()
 	m.Commands.Reset()
 }
@@ -43,7 +46,7 @@ func (m *DeferredMaterial) Begin(camera uniform.Camera, lights []light.T) {
 func (m *DeferredMaterial) Bind(cmds command.Recorder) {
 	cmds.Record(func(cmd *command.Buffer) {
 		cmd.CmdBindGraphicsPipeline(m.Pipeline)
-		cmd.CmdBindGraphicsDescriptor(0, m.Descriptors)
+		cmd.CmdBindGraphicsDescriptor(m.Pipeline.Layout(), 0, m.Descriptors)
 		m.Commands.BeginDrawIndirect()
 	})
 }
@@ -54,14 +57,14 @@ func (m *DeferredMaterial) Draw(cmds command.Recorder, msh mesh.Mesh) {
 		return
 	}
 
-	slots := m.Pipeline.Shader().Textures()
-	textureIds := AssignMeshTextures(m.Textures, msh, slots)
+	textureIds := AssignMeshTextures(m.Textures, msh, m.slots)
 
 	instanceId := m.Objects.Store(uniform.Object{
 		Model:    msh.Transform().Matrix(),
 		Textures: textureIds,
 	})
 
+	// this is really the only thing that should be in the draw call
 	cmds.Record(func(cmd *command.Buffer) {
 		gpuMesh.Bind(cmd)
 		gpuMesh.Draw(m.Commands, instanceId)

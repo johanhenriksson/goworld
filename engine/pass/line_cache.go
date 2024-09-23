@@ -20,12 +20,14 @@ import (
 type LineMatCache struct {
 	app    engine.App
 	pass   *renderpass.Renderpass
-	layout *descriptor.Layout[*BasicDescriptors]
 	frames int
+
+	descLayout *descriptor.Layout[*BasicDescriptors]
+	pipeLayout *pipeline.Layout
 }
 
 func NewLineMaterialCache(app engine.App, pass *renderpass.Renderpass, frames int) MaterialCache {
-	layout := descriptor.NewLayout(app.Device(), "Lines", &BasicDescriptors{
+	descLayout := descriptor.NewLayout(app.Device(), "Lines", &BasicDescriptors{
 		Camera: &descriptor.Uniform[uniform.Camera]{
 			Stages: core1_0.StageAll,
 		},
@@ -34,11 +36,13 @@ func NewLineMaterialCache(app engine.App, pass *renderpass.Renderpass, frames in
 			Size:   2000,
 		},
 	})
+	pipeLayout := pipeline.NewLayout(app.Device(), []descriptor.SetLayout{descLayout}, []pipeline.PushConstant{})
 	return cache.New[*material.Def, []Material](&LineMatCache{
-		app:    app,
-		pass:   pass,
-		frames: frames,
-		layout: layout,
+		app:        app,
+		pass:       pass,
+		frames:     frames,
+		descLayout: descLayout,
+		pipeLayout: pipeLayout,
 	})
 }
 
@@ -60,6 +64,7 @@ func (m *LineMatCache) Instantiate(def *material.Def, callback func([]Material))
 		m.app.Device(),
 		pipeline.Args{
 			Shader:     shader,
+			Layout:     m.pipeLayout,
 			Pass:       m.pass,
 			Subpass:    MainSubpass,
 			Pointers:   pointers,
@@ -69,12 +74,11 @@ func (m *LineMatCache) Instantiate(def *material.Def, callback func([]Material))
 			DepthFunc:  def.DepthFunc,
 			Primitive:  def.Primitive,
 			CullMode:   def.CullMode,
-		},
-		m.layout)
+		})
 
 	instances := make([]Material, m.frames)
 	for i := range instances {
-		desc := m.layout.Instantiate(m.app.Pool())
+		desc := m.descLayout.Instantiate(m.app.Pool())
 		instances[i] = &BasicMaterial{
 			id:          def.Hash(),
 			Pipeline:    pipe,
@@ -91,7 +95,8 @@ func (m *LineMatCache) Instantiate(def *material.Def, callback func([]Material))
 }
 
 func (m *LineMatCache) Destroy() {
-	m.layout.Destroy()
+	m.pipeLayout.Destroy()
+	m.descLayout.Destroy()
 }
 
 func (m *LineMatCache) Delete(mat []Material) {

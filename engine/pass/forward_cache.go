@@ -20,13 +20,15 @@ import (
 type ForwardMatCache struct {
 	app    engine.App
 	pass   *renderpass.Renderpass
-	layout *descriptor.Layout[*ForwardDescriptors]
 	lookup ShadowmapLookupFn
 	frames int
+
+	pipeLayout *pipeline.Layout
+	descLayout *descriptor.Layout[*ForwardDescriptors]
 }
 
 func NewForwardMaterialCache(app engine.App, pass *renderpass.Renderpass, frames int, lookup ShadowmapLookupFn) MaterialCache {
-	layout := descriptor.NewLayout(app.Device(), "Forward", &ForwardDescriptors{
+	descLayout := descriptor.NewLayout(app.Device(), "Forward", &ForwardDescriptors{
 		Camera: &descriptor.Uniform[uniform.Camera]{
 			Stages: core1_0.StageAll,
 		},
@@ -43,12 +45,14 @@ func NewForwardMaterialCache(app engine.App, pass *renderpass.Renderpass, frames
 			Count:  100,
 		},
 	})
+	pipeLayout := pipeline.NewLayout(app.Device(), []descriptor.SetLayout{descLayout}, []pipeline.PushConstant{})
 	return cache.New[*material.Def, []Material](&ForwardMatCache{
-		app:    app,
-		pass:   pass,
-		lookup: lookup,
-		frames: frames,
-		layout: layout,
+		app:        app,
+		pass:       pass,
+		lookup:     lookup,
+		frames:     frames,
+		descLayout: descLayout,
+		pipeLayout: pipeLayout,
 	})
 }
 
@@ -70,6 +74,7 @@ func (m *ForwardMatCache) Instantiate(def *material.Def, callback func([]Materia
 		m.app.Device(),
 		pipeline.Args{
 			Shader:     shader,
+			Layout:     m.pipeLayout,
 			Pass:       m.pass,
 			Subpass:    MainSubpass,
 			Pointers:   pointers,
@@ -79,12 +84,11 @@ func (m *ForwardMatCache) Instantiate(def *material.Def, callback func([]Materia
 			DepthFunc:  def.DepthFunc,
 			Primitive:  def.Primitive,
 			CullMode:   def.CullMode,
-		},
-		m.layout)
+		})
 
 	instances := make([]Material, m.frames)
 	for i := range instances {
-		desc := m.layout.Instantiate(m.app.Pool())
+		desc := m.descLayout.Instantiate(m.app.Pool())
 		textures := cache.NewSamplerCache(m.app.Textures(), desc.Textures)
 
 		instances[i] = &ForwardMaterial{
@@ -106,7 +110,8 @@ func (m *ForwardMatCache) Instantiate(def *material.Def, callback func([]Materia
 }
 
 func (m *ForwardMatCache) Destroy() {
-	m.layout.Destroy()
+	m.pipeLayout.Destroy()
+	m.descLayout.Destroy()
 }
 
 func (m *ForwardMatCache) Delete(mat []Material) {

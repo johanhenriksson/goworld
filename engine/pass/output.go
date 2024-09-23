@@ -23,15 +23,17 @@ import (
 
 type OutputPass struct {
 	app    engine.App
-	pipe   *pipeline.Pipeline
 	source engine.Target
 
-	quad   vertex.Mesh
-	desc   []*OutputDescriptors
-	layout *descriptor.Layout[*OutputDescriptors]
-	tex    texture.Array
-	fbufs  framebuffer.Array
-	pass   *renderpass.Renderpass
+	pipeline   *pipeline.Pipeline
+	pipeLayout *pipeline.Layout
+	descLayout *descriptor.Layout[*OutputDescriptors]
+
+	quad  vertex.Mesh
+	desc  []*OutputDescriptors
+	tex   texture.Array
+	fbufs framebuffer.Array
+	pass  *renderpass.Renderpass
 }
 
 var _ draw.Pass = &OutputPass{}
@@ -90,21 +92,22 @@ func NewOutputPass(app engine.App, target engine.Target, source engine.Target) *
 		},
 	})
 
-	p.layout = descriptor.NewLayout(app.Device(), "Output", &OutputDescriptors{
+	p.descLayout = descriptor.NewLayout(app.Device(), "Output", &OutputDescriptors{
 		Output: &descriptor.Sampler{
 			Stages: core1_0.StageFragment,
 		},
 	})
-	p.pipe = pipeline.New(
+	p.pipeLayout = pipeline.NewLayout(app.Device(), []descriptor.SetLayout{p.descLayout}, nil)
+	p.pipeline = pipeline.New(
 		app.Device(),
 		pipeline.Args{
+			Layout:     p.pipeLayout,
 			Shader:     app.Shaders().Fetch(shader.Ref("output")),
 			Pass:       p.pass,
 			Pointers:   vertex.ParsePointers(vertex.T{}),
 			DepthTest:  false,
 			DepthWrite: false,
-		},
-		p.layout)
+		})
 
 	frames := target.Frames()
 	var err error
@@ -113,7 +116,7 @@ func NewOutputPass(app engine.App, target engine.Target, source engine.Target) *
 		panic(err)
 	}
 
-	p.desc = p.layout.InstantiateMany(app.Pool(), frames)
+	p.desc = p.descLayout.InstantiateMany(app.Pool(), frames)
 	p.tex = make(texture.Array, frames)
 	for i := range p.tex {
 		key := fmt.Sprintf("gbuffer-output-%d", i)
@@ -136,8 +139,8 @@ func (p *OutputPass) Record(cmds command.Recorder, args draw.Args, scene object.
 
 	cmds.Record(func(cmd *command.Buffer) {
 		cmd.CmdBeginRenderPass(p.pass, p.fbufs[args.Frame])
-		cmd.CmdBindGraphicsPipeline(p.pipe)
-		cmd.CmdBindGraphicsDescriptor(0, p.desc[args.Frame])
+		cmd.CmdBindGraphicsPipeline(p.pipeline)
+		cmd.CmdBindGraphicsDescriptor(p.pipeline.Layout(), 0, p.desc[args.Frame])
 		quad.Bind(cmd)
 		quad.Draw(cmd, 0)
 		cmd.CmdEndRenderPass()
@@ -157,6 +160,7 @@ func (p *OutputPass) Destroy() {
 	}
 	p.fbufs.Destroy()
 	p.pass.Destroy()
-	p.pipe.Destroy()
-	p.layout.Destroy()
+	p.pipeline.Destroy()
+	p.pipeLayout.Destroy()
+	p.descLayout.Destroy()
 }

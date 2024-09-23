@@ -21,15 +21,17 @@ import (
 
 type BlurPass struct {
 	app   engine.App
-	pipe  *pipeline.Pipeline
 	input engine.Target
 
-	quad   vertex.Mesh
-	layout *descriptor.Layout[*BlurDescriptors]
-	desc   []*BlurDescriptors
-	tex    texture.Array
-	fbufs  framebuffer.Array
-	pass   *renderpass.Renderpass
+	quad  vertex.Mesh
+	desc  []*BlurDescriptors
+	tex   texture.Array
+	fbufs framebuffer.Array
+	pass  *renderpass.Renderpass
+
+	pipeline   *pipeline.Pipeline
+	pipeLayout *pipeline.Layout
+	descLayout *descriptor.Layout[*BlurDescriptors]
 }
 
 var _ draw.Pass = &BlurPass{}
@@ -93,17 +95,18 @@ func NewBlurPass(app engine.App, output engine.Target, input engine.Target) *Blu
 			Stages: core1_0.StageFragment,
 		},
 	}
-	p.layout = descriptor.NewLayout(app.Device(), "Blur", desc)
-	p.pipe = pipeline.New(
+	p.descLayout = descriptor.NewLayout(app.Device(), "Blur", desc)
+	p.pipeLayout = pipeline.NewLayout(app.Device(), []descriptor.SetLayout{p.descLayout}, nil)
+	p.pipeline = pipeline.New(
 		app.Device(),
 		pipeline.Args{
 			Shader:     app.Shaders().Fetch(shader.Ref("blur")),
+			Layout:     p.pipeLayout,
 			Pass:       p.pass,
 			Pointers:   vertex.ParsePointers(vertex.T{}),
 			DepthTest:  false,
 			DepthWrite: false,
-		},
-		p.layout)
+		})
 
 	var err error
 	p.fbufs, err = framebuffer.NewArray(frames, app.Device(), "blur", output.Width(), output.Height(), p.pass)
@@ -111,7 +114,7 @@ func NewBlurPass(app engine.App, output engine.Target, input engine.Target) *Blu
 		panic(err)
 	}
 
-	p.desc = p.layout.InstantiateMany(app.Pool(), frames)
+	p.desc = p.descLayout.InstantiateMany(app.Pool(), frames)
 	p.tex = make(texture.Array, frames)
 	for i := range p.tex {
 		key := fmt.Sprintf("blur-%d", i)
@@ -134,8 +137,8 @@ func (p *BlurPass) Record(cmds command.Recorder, args draw.Args, scene object.Co
 
 	cmds.Record(func(cmd *command.Buffer) {
 		cmd.CmdBeginRenderPass(p.pass, p.fbufs[args.Frame])
-		cmd.CmdBindGraphicsPipeline(p.pipe)
-		cmd.CmdBindGraphicsDescriptor(0, p.desc[args.Frame])
+		cmd.CmdBindGraphicsPipeline(p.pipeline)
+		cmd.CmdBindGraphicsDescriptor(p.pipeline.Layout(), 0, p.desc[args.Frame])
 		quad.Bind(cmd)
 		quad.Draw(cmd, 0)
 		cmd.CmdEndRenderPass()
@@ -155,6 +158,7 @@ func (p *BlurPass) Destroy() {
 	}
 	p.fbufs.Destroy()
 	p.pass.Destroy()
-	p.pipe.Destroy()
-	p.layout.Destroy()
+	p.pipeline.Destroy()
+	p.pipeLayout.Destroy()
+	p.descLayout.Destroy()
 }
