@@ -9,10 +9,9 @@ OBJECT(1, object)
 
 // Attributes
 IN(0, vec3, position)
-IN(1, float, tex_x)
-IN(2, vec3, normal)
-IN(3, float, tex_y)
-IN(4, vec4, color)
+IN(1, vec3, normal)
+IN(2, vec2, tex)
+IN(3, vec4, color)
 
 void main() 
 {
@@ -20,7 +19,7 @@ void main()
 	mat4 mv = camera.View * object.model;
 
 	// textures
-	out_color.xy = vec2(in_tex_x, in_tex_y);
+	out_color.xy = in_tex;
 
 	// gbuffer position
 	out_position = (mv * vec4(in_position, 1)).xyz;

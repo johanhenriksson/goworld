@@ -15,6 +15,7 @@ import (
 	"github.com/vkngwrapper/core/v2/driver"
 	"github.com/vkngwrapper/extensions/v2/ext_debug_utils"
 	"github.com/vkngwrapper/extensions/v2/ext_descriptor_indexing"
+	"github.com/vkngwrapper/extensions/v2/ext_scalar_block_layout"
 	"github.com/vkngwrapper/extensions/v2/khr_buffer_device_address"
 )
 
@@ -71,8 +72,14 @@ func New(instance *instance.Instance, physDevice core1_0.PhysicalDevice) (*Devic
 	queue := mostSpecificQueue(core1_0.QueueGraphics | core1_0.QueueTransfer)
 	log.Println("worker queue:", queue)
 
+	scalarLayoutFeatures := ext_scalar_block_layout.PhysicalDeviceScalarBlockLayoutFeatures{
+		ScalarBlockLayout: true,
+	}
+
 	bufferAddressFeatures := khr_buffer_device_address.PhysicalDeviceBufferDeviceAddressFeatures{
 		BufferDeviceAddress: true,
+
+		NextOptions: common.NextOptions{Next: scalarLayoutFeatures},
 	}
 
 	indexingFeatures := ext_descriptor_indexing.PhysicalDeviceDescriptorIndexingFeatures{

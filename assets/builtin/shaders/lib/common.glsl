@@ -4,6 +4,7 @@
 #extension GL_EXT_buffer_reference : enable
 #extension GL_EXT_buffer_reference2 : enable
 #extension GL_EXT_shader_explicit_arithmetic_types_int64 : require
+#extension GL_EXT_scalar_block_layout : require
 
 #define MAX_TEXTURES 16
 
