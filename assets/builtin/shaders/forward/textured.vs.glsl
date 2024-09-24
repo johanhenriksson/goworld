@@ -7,7 +7,6 @@
 CAMERA(0, camera)
 OBJECT(1, object)
 
-
 VERTEX_BUFFER(Vertex)
 INDEX_BUFFER(uint)
 
@@ -18,7 +17,7 @@ void main()
 	Vertex v = get_vertex_indexed(object.vertexBuffer, object.indexBuffer);
 
 	// texture coords
-	out_color.xy = vec2(v.tex_x, v.tex_y);
+	out_color.xy = v.tex;
 
 	// gbuffer view position
 	out_view_position = (camera.View * object.model * vec4(v.position, 1)).xyz;

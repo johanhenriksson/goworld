@@ -4,12 +4,8 @@
 			"Index": 0,
 			"Type": "float"
 		},
-		"tex_x": {
-			"Index": 1,
-			"Type": "float"
-		},
-		"tex_y": {
-			"Index": 3,
+		"tex": {
+			"Index": 2,
 			"Type": "float"
 		}
 	},
