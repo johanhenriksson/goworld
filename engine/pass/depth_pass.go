@@ -77,7 +77,7 @@ func (p *DepthPass) Record(cmds command.Recorder, args draw.Args, scene object.C
 
 	cam := uniform.CameraFromArgs(args)
 	groups := MaterialGroups(p.materials, args.Frame, opaque)
-	groups.Draw(cmds, cam, nil)
+	groups.Draw(cmds, cam)
 
 	cmds.Record(func(cmd *command.Buffer) {
 		cmd.CmdEndRenderPass()

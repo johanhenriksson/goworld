@@ -168,7 +168,7 @@ func (p *Shadowpass) Record(cmds command.Recorder, args draw.Args, scene object.
 			// todo: frustum cull meshes using light frustum
 
 			groups := MaterialGroups(cascade.Mats, args.Frame, meshes)
-			groups.Draw(cmds, camera, nil)
+			groups.Draw(cmds, camera)
 
 			cmds.Record(func(cmd *command.Buffer) {
 				cmd.CmdEndRenderPass()
