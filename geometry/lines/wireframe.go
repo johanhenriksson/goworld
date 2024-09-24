@@ -13,7 +13,7 @@ type Wireframe struct {
 	Color  object.Property[color.T]
 	Source object.Property[assets.Mesh]
 
-	data   vertex.MutableMesh[vertex.C, uint32]
+	data   vertex.MutableMesh[vertex.Vertex, uint32]
 	offset float32
 }
 
@@ -25,7 +25,7 @@ func NewWireframe(pool object.Pool, msh assets.Mesh, clr color.T) *Wireframe {
 	})
 	w.Color.OnChange.Subscribe(func(color.T) { w.refresh() })
 	w.Source.OnChange.Subscribe(func(assets.Mesh) { w.refresh() })
-	w.data = vertex.NewLines[vertex.C, uint32](object.Key("wireframe", w), nil, nil)
+	w.data = vertex.NewLines[vertex.Vertex, uint32](object.Key("wireframe", w), nil, nil)
 	w.refresh()
 	return w
 }
@@ -45,14 +45,14 @@ func (w *Wireframe) refresh() {
 	msh := ref.LoadMesh(assets.FS)
 
 	indices := make([]uint32, 0, msh.IndexCount()*2)
-	vertices := make([]vertex.C, 0, msh.VertexCount())
+	vertices := make([]vertex.Vertex, 0, msh.VertexCount())
 
 	for t := range msh.Triangles() {
 		index := uint32(len(vertices))
 		offset := t.Normal().Scaled(w.offset)
-		vertices = append(vertices, vertex.C{P: t.A.Add(offset), C: clr}) // +0
-		vertices = append(vertices, vertex.C{P: t.B.Add(offset), C: clr}) // +1
-		vertices = append(vertices, vertex.C{P: t.C.Add(offset), C: clr}) // +2
+		vertices = append(vertices, vertex.Vertex{P: t.A.Add(offset), C: clr}) // +0
+		vertices = append(vertices, vertex.Vertex{P: t.B.Add(offset), C: clr}) // +1
+		vertices = append(vertices, vertex.Vertex{P: t.C.Add(offset), C: clr}) // +2
 
 		indices = append(indices, index+0, index+1) // A-B
 		indices = append(indices, index+1, index+2) // B-C

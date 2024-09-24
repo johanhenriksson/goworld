@@ -35,22 +35,22 @@ type Mesh interface {
 	LoadMesh(fs.Filesystem) Mesh
 }
 
-type Vertex interface {
+type VertexFormat interface {
 	Position() vec3.T
 }
 
-type Index interface {
+type IndexFormat interface {
 	uint8 | uint16 | uint32
 }
 
-type MutableMesh[V Vertex, I Index] interface {
+type MutableMesh[V VertexFormat, I IndexFormat] interface {
 	Mesh
 	Vertices() []V
 	Indices() []I
 	Update(vertices []V, indices []I)
 }
 
-type mesh[V Vertex, I Index] struct {
+type mesh[V VertexFormat, I IndexFormat] struct {
 	key        string
 	version    int
 	indexsize  int
@@ -65,7 +65,7 @@ type mesh[V Vertex, I Index] struct {
 	radius     float32
 }
 
-var _ Mesh = &mesh[P, uint8]{}
+var _ Mesh = &mesh[Vertex, uint8]{}
 
 func (m *mesh[V, I]) Key() string          { return m.key }
 func (m *mesh[V, I]) Version() int         { return m.version }
@@ -140,7 +140,7 @@ func (m *mesh[V, I]) LoadMesh(fs.Filesystem) Mesh {
 	return m
 }
 
-func NewMesh[V Vertex, I Index](key string, primitive Primitive, vertices []V, indices []I) MutableMesh[V, I] {
+func NewMesh[V VertexFormat, I IndexFormat](key string, primitive Primitive, vertices []V, indices []I) MutableMesh[V, I] {
 	var vertex V
 	var index I
 	ptrs := ParsePointers(vertex)
@@ -162,10 +162,10 @@ func NewMesh[V Vertex, I Index](key string, primitive Primitive, vertices []V, i
 	return mesh
 }
 
-func NewTriangles[V Vertex, I Index](key string, vertices []V, indices []I) MutableMesh[V, I] {
+func NewTriangles[V VertexFormat, I IndexFormat](key string, vertices []V, indices []I) MutableMesh[V, I] {
 	return NewMesh(key, Triangles, vertices, indices)
 }
 
-func NewLines[T Vertex, K Index](key string, vertices []T, indices []K) MutableMesh[T, K] {
+func NewLines[T VertexFormat, K IndexFormat](key string, vertices []T, indices []K) MutableMesh[T, K] {
 	return NewMesh(key, Lines, vertices, indices)
 }

@@ -4,6 +4,7 @@ import (
 	"github.com/johanhenriksson/goworld/core/mesh"
 	. "github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/math"
+	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/physics"
 	"github.com/johanhenriksson/goworld/render/color"
@@ -84,7 +85,7 @@ func (c *Mesh) generate() {
 	segments := c.Segments.Get()
 	color := c.Color.Get()
 
-	data := make([]vertex.C, 2*2*3*segments)
+	data := make([]vertex.Vertex, 2*2*3*segments)
 	hh := height / 2
 	sangle := 2 * math.Pi / float32(segments)
 
@@ -106,14 +107,14 @@ func (c *Mesh) generate() {
 		bottomLeft.Y = -hh
 
 		// top face
-		data[o+0] = vertex.C{P: topLeft, N: vec3.Up, C: color}
-		data[o+1] = vertex.C{P: top, N: vec3.Up, C: color}
-		data[o+2] = vertex.C{P: topRight, N: vec3.Up, C: color}
+		data[o+0] = vertex.New(topLeft, vec3.Up, vec2.Zero, color)
+		data[o+1] = vertex.New(top, vec3.Up, vec2.Zero, color)
+		data[o+2] = vertex.New(topRight, vec3.Up, vec2.Zero, color)
 
 		// bottom face
-		data[o+3] = vertex.C{P: bottomRight, N: vec3.Down, C: color}
-		data[o+4] = vertex.C{P: bottom, N: vec3.Down, C: color}
-		data[o+5] = vertex.C{P: bottomLeft, N: vec3.Down, C: color}
+		data[o+3] = vertex.New(bottomRight, vec3.Down, vec2.Zero, color)
+		data[o+4] = vertex.New(bottom, vec3.Down, vec2.Zero, color)
+		data[o+5] = vertex.New(bottomLeft, vec3.Down, vec2.Zero, color)
 
 		// calculate segment normal
 		nv1 := topRight.Sub(bottomLeft)
@@ -121,14 +122,14 @@ func (c *Mesh) generate() {
 		n := vec3.Cross(nv1, nv2)
 
 		// side face 1
-		data[o+6] = vertex.C{P: topRight, N: n, C: color}
-		data[o+7] = vertex.C{P: bottomLeft, N: n, C: color}
-		data[o+8] = vertex.C{P: topLeft, N: n, C: color}
+		data[o+6] = vertex.New(topRight, n, vec2.Zero, color)
+		data[o+7] = vertex.New(bottomLeft, n, vec2.Zero, color)
+		data[o+8] = vertex.New(topLeft, n, vec2.Zero, color)
 
 		// side face 2
-		data[o+9] = vertex.C{P: bottomRight, N: n, C: color}
-		data[o+10] = vertex.C{P: bottomLeft, N: n, C: color}
-		data[o+11] = vertex.C{P: topRight, N: n, C: color}
+		data[o+9] = vertex.New(bottomRight, n, vec2.Zero, color)
+		data[o+10] = vertex.New(bottomLeft, n, vec2.Zero, color)
+		data[o+11] = vertex.New(topRight, n, vec2.Zero, color)
 	}
 
 	key := Key("cylinder", c)

@@ -7,7 +7,7 @@ STORAGE_BUFFER(1, Object, objects)
 Object object = objects.item[gl_InstanceIndex];
 
 IN(0, vec3, position)
-IN(1, vec4, color)
+IN(4, vec4, color)
 OUT(0, vec3, color)
 
 out gl_PerVertex 

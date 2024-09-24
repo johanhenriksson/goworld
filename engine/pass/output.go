@@ -104,7 +104,7 @@ func NewOutputPass(app engine.App, target engine.Target, source engine.Target) *
 			Layout:     p.pipeLayout,
 			Shader:     app.Shaders().Fetch(shader.Ref("output")),
 			Pass:       p.pass,
-			Pointers:   vertex.ParsePointers(vertex.T{}),
+			Pointers:   vertex.ParsePointers(vertex.Vertex{}),
 			DepthTest:  false,
 			DepthWrite: false,
 		})

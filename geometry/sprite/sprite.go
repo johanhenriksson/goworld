@@ -8,6 +8,7 @@ import (
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/math/vec3"
+	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/texture"
 	"github.com/johanhenriksson/goworld/render/vertex"
 )
@@ -22,7 +23,7 @@ type Mesh struct {
 	Size   object.Property[vec2.T]
 	Sprite object.Property[assets.Texture]
 
-	mesh vertex.MutableMesh[vertex.T, uint16]
+	mesh vertex.MutableMesh[vertex.Vertex, uint16]
 }
 
 var _ mesh.Mesh = &Mesh{}
@@ -39,7 +40,7 @@ func New(pool object.Pool, args Args) *Mesh {
 		Sprite: object.NewProperty(args.Texture),
 	})
 
-	sprite.mesh = vertex.NewTriangles[vertex.T, uint16](fmt.Sprintf("sprite_%.2f_%.2f", args.Size.X, args.Size.Y), nil, nil)
+	sprite.mesh = vertex.NewTriangles[vertex.Vertex, uint16](fmt.Sprintf("sprite_%.2f_%.2f", args.Size.X, args.Size.Y), nil, nil)
 	sprite.generate()
 
 	sprite.SetTexture(texture.Diffuse, args.Texture)
@@ -52,11 +53,11 @@ func New(pool object.Pool, args Args) *Mesh {
 
 func (p *Mesh) generate() {
 	w, h := p.Size.Get().X, p.Size.Get().Y
-	vertices := []vertex.T{
-		{P: vec3.New(-0.5*w, -0.5*h, 0), T: vec2.New(0, 1)},
-		{P: vec3.New(0.5*w, 0.5*h, 0), T: vec2.New(1, 0)},
-		{P: vec3.New(-0.5*w, 0.5*h, 0), T: vec2.New(0, 0)},
-		{P: vec3.New(0.5*w, -0.5*h, 0), T: vec2.New(1, 1)},
+	vertices := []vertex.Vertex{
+		vertex.New(vec3.New(-0.5*w, -0.5*h, 0), vec3.Zero, vec2.Zero, color.White),
+		vertex.New(vec3.New(0.5*w, 0.5*h, 0), vec3.Zero, vec2.Zero, color.White),
+		vertex.New(vec3.New(-0.5*w, 0.5*h, 0), vec3.Zero, vec2.Zero, color.White),
+		vertex.New(vec3.New(0.5*w, -0.5*h, 0), vec3.Zero, vec2.Zero, color.White),
 	}
 	indices := []uint16{
 		0, 1, 2,

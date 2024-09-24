@@ -5,6 +5,7 @@ import (
 	. "github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/math/vec3"
+	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/vertex"
 )
@@ -39,7 +40,7 @@ type Mesh struct {
 	*mesh.Static
 	Size Property[vec2.T]
 
-	data vertex.MutableMesh[vertex.T, uint16]
+	data vertex.MutableMesh[vertex.Vertex, uint16]
 }
 
 type Args struct {
@@ -55,7 +56,7 @@ func NewMesh(pool Pool, args Args) *Mesh {
 		Static: mesh.New(pool, args.Mat),
 		Size:   NewProperty[vec2.T](args.Size),
 	})
-	p.data = vertex.NewTriangles[vertex.T, uint16](Key("plane", p), nil, nil)
+	p.data = vertex.NewTriangles[vertex.Vertex, uint16](Key("plane", p), nil, nil)
 	p.Size.OnChange.Subscribe(func(f vec2.T) { p.refresh() })
 	p.refresh()
 	return p
@@ -66,16 +67,16 @@ func (p *Mesh) refresh() {
 	y := float32(0.001)
 
 	uv := p.Size.Get().Scaled(1.0 / 8)
-	vertices := []vertex.T{
-		{P: vec3.New(-s.X, y, -s.Y), N: vec3.UnitY, T: vec2.New(0, uv.Y)},   // o1
-		{P: vec3.New(s.X, y, -s.Y), N: vec3.UnitY, T: vec2.New(uv.X, uv.Y)}, // x1
-		{P: vec3.New(-s.X, y, s.Y), N: vec3.UnitY, T: vec2.New(0, 0)},       // z1
-		{P: vec3.New(s.X, y, s.Y), N: vec3.UnitY, T: vec2.New(uv.X, 0)},     // d1
+	vertices := []vertex.Vertex{
+		vertex.New(vec3.New(-s.X, y, -s.Y), vec3.UnitY, vec2.New(0, uv.Y), color.White),   // o1
+		vertex.New(vec3.New(s.X, y, -s.Y), vec3.UnitY, vec2.New(uv.X, uv.Y), color.White), // x1
+		vertex.New(vec3.New(-s.X, y, s.Y), vec3.UnitY, vec2.New(0, 0), color.White),       // z1
+		vertex.New(vec3.New(s.X, y, s.Y), vec3.UnitY, vec2.New(uv.X, 0), color.White),     // d1
 
-		{P: vec3.New(-s.X, -y, -s.Y), N: vec3.UnitYN, T: vec2.New(0, uv.Y)},   // o2
-		{P: vec3.New(s.X, -y, -s.Y), N: vec3.UnitYN, T: vec2.New(uv.X, uv.Y)}, // x2
-		{P: vec3.New(-s.X, -y, s.Y), N: vec3.UnitYN, T: vec2.New(0, 0)},       // z2
-		{P: vec3.New(s.X, -y, s.Y), N: vec3.UnitYN, T: vec2.New(uv.X, 0)},     // d2
+		vertex.New(vec3.New(-s.X, -y, -s.Y), vec3.UnitYN, vec2.New(0, uv.Y), color.White),   // o2
+		vertex.New(vec3.New(s.X, -y, -s.Y), vec3.UnitYN, vec2.New(uv.X, uv.Y), color.White), // x2
+		vertex.New(vec3.New(-s.X, -y, s.Y), vec3.UnitYN, vec2.New(0, 0), color.White),       // z2
+		vertex.New(vec3.New(s.X, -y, s.Y), vec3.UnitYN, vec2.New(uv.X, 0), color.White),     // d2
 	}
 
 	indices := []uint16{

@@ -35,7 +35,7 @@ type Mesh struct {
 
 var _ = checkShape(NewMesh(object.GlobalPool))
 
-var emptyMesh = vertex.NewTriangles[vertex.P, uint32]("emptyMeshCollider", []vertex.P{{}}, []uint32{0, 0, 0})
+var emptyMesh = vertex.NewTriangles[Vertex, uint32]("emptyMeshCollider", []Vertex{{}}, []uint32{0, 0, 0})
 
 func NewMesh(pool object.Pool) *Mesh {
 	mesh := &Mesh{
@@ -61,7 +61,7 @@ func (m *Mesh) colliderCreate() shapeHandle {
 	}
 	log.Println("creating physics mesh", m.key, "tris:", mesh.IndexCount()/3)
 
-	m.collision = vertex.CollisionMesh(mesh)
+	m.collision = CollisionMesh(mesh)
 	m.meshHandle = mesh_new(m.collision)
 
 	return shape_new_triangle_mesh(unsafe.Pointer(m), m.meshHandle)

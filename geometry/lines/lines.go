@@ -16,7 +16,7 @@ type Lines struct {
 type Args struct {
 	Lines []Line
 
-	lineMesh vertex.MutableMesh[vertex.C, uint16]
+	lineMesh vertex.MutableMesh[vertex.Vertex, uint16]
 }
 
 func New(pool object.Pool, args Args) *Lines {
@@ -24,7 +24,7 @@ func New(pool object.Pool, args Args) *Lines {
 		Static: mesh.New(pool, nil),
 		Args:   args,
 	})
-	b.lineMesh = vertex.NewLines(object.Key("lines", b), []vertex.C{}, []uint16{})
+	b.lineMesh = vertex.NewLines(object.Key("lines", b), []vertex.Vertex{}, []uint16{})
 	b.VertexData.Set(b.lineMesh)
 	b.Refresh()
 	return b
@@ -48,7 +48,7 @@ func (li *Lines) Count() int {
 
 func (li *Lines) Refresh() {
 	count := len(li.Lines)
-	vertices := make([]vertex.C, 2*count)
+	vertices := make([]vertex.Vertex, 2*count)
 	for i := 0; i < count; i++ {
 		line := li.Lines[i]
 		a := &vertices[2*i+0]

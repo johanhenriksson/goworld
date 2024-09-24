@@ -13,7 +13,7 @@ func StandardDeferred() *Def {
 	return &Def{
 		Pass:         Deferred,
 		Shader:       "deferred/textured",
-		VertexFormat: vertex.T{},
+		VertexFormat: vertex.Vertex{},
 		DepthTest:    true,
 		DepthWrite:   true,
 		Primitive:    vertex.Triangles,
@@ -25,7 +25,7 @@ func StandardForward() *Def {
 	return &Def{
 		Pass:         Forward,
 		Shader:       "forward/textured",
-		VertexFormat: vertex.T{},
+		VertexFormat: vertex.Vertex{},
 		DepthTest:    true,
 		DepthWrite:   true,
 		DepthFunc:    core1_0.CompareOpLessOrEqual,
@@ -39,7 +39,7 @@ func TransparentForward() *Def {
 	return &Def{
 		Pass:         Forward,
 		Shader:       "forward/textured",
-		VertexFormat: vertex.T{},
+		VertexFormat: vertex.Vertex{},
 		DepthTest:    true,
 		DepthWrite:   true,
 		DepthFunc:    core1_0.CompareOpLessOrEqual,
@@ -53,7 +53,7 @@ func ColoredForward() *Def {
 	return &Def{
 		Pass:         Forward,
 		Shader:       "forward/color",
-		VertexFormat: vertex.C{},
+		VertexFormat: vertex.Vertex{},
 		DepthTest:    true,
 		DepthWrite:   true,
 		DepthFunc:    core1_0.CompareOpLessOrEqual,
@@ -66,7 +66,7 @@ func Lines() *Def {
 	return &Def{
 		Shader:       "lines",
 		Pass:         "lines",
-		VertexFormat: vertex.C{},
+		VertexFormat: vertex.Vertex{},
 		Primitive:    vertex.Lines,
 		DepthTest:    true,
 		DepthWrite:   false,

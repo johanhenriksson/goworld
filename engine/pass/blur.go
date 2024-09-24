@@ -103,7 +103,7 @@ func NewBlurPass(app engine.App, output engine.Target, input engine.Target) *Blu
 			Shader:     app.Shaders().Fetch(shader.Ref("blur")),
 			Layout:     p.pipeLayout,
 			Pass:       p.pass,
-			Pointers:   vertex.ParsePointers(vertex.T{}),
+			Pointers:   vertex.ParsePointers(vertex.Vertex{}),
 			DepthTest:  false,
 			DepthWrite: false,
 		})

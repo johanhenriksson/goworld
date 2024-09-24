@@ -61,7 +61,7 @@ func NewMesh(pool Pool, args Args) *mesh.Static {
 type cube struct {
 	key     string
 	version int
-	mesh    vertex.MutableMesh[vertex.T, uint16]
+	mesh    vertex.MutableMesh[vertex.Vertex, uint16]
 	size    float32
 }
 
@@ -74,48 +74,48 @@ func newCube(size float32) *cube {
 }
 
 func (c *cube) generate() vertex.Mesh {
-	s := c.size
+	s := c.size / 2
 	topLeft := vec2.New(0, 0)
 	topRight := vec2.New(1, 0)
 	bottomLeft := vec2.New(0, 1)
 	bottomRight := vec2.New(1, 1)
 
-	vertices := []vertex.T{
+	vertices := []vertex.Vertex{
 		// X+
-		{P: vec3.New(s, -s, s), N: vec3.UnitX, T: bottomRight}, // 0
-		{P: vec3.New(s, -s, -s), N: vec3.UnitX, T: bottomLeft}, // 1
-		{P: vec3.New(s, s, -s), N: vec3.UnitX, T: topLeft},     // 2
-		{P: vec3.New(s, s, s), N: vec3.UnitX, T: topRight},     // 3
+		vertex.T(vec3.New(s, -s, s), vec3.UnitX, bottomRight), // 0
+		vertex.T(vec3.New(s, -s, -s), vec3.UnitX, bottomLeft), // 1
+		vertex.T(vec3.New(s, s, -s), vec3.UnitX, topLeft),     // 2
+		vertex.T(vec3.New(s, s, s), vec3.UnitX, topRight),     // 3
 
 		// X-
-		{P: vec3.New(-s, -s, -s), N: vec3.UnitXN, T: bottomRight}, // 4
-		{P: vec3.New(-s, -s, s), N: vec3.UnitXN, T: bottomLeft},   // 5
-		{P: vec3.New(-s, s, s), N: vec3.UnitXN, T: topLeft},       // 6
-		{P: vec3.New(-s, s, -s), N: vec3.UnitXN, T: topRight},     // 7
+		vertex.T(vec3.New(-s, -s, -s), vec3.UnitXN, bottomRight), // 4
+		vertex.T(vec3.New(-s, -s, s), vec3.UnitXN, bottomLeft),   // 5
+		vertex.T(vec3.New(-s, s, s), vec3.UnitXN, topLeft),       // 6
+		vertex.T(vec3.New(-s, s, -s), vec3.UnitXN, topRight),     // 7
 
 		// Y+
-		{P: vec3.New(s, s, -s), N: vec3.UnitY, T: bottomRight}, // 8
-		{P: vec3.New(-s, s, -s), N: vec3.UnitY, T: bottomLeft}, // 9
-		{P: vec3.New(-s, s, s), N: vec3.UnitY, T: topLeft},     // 10
-		{P: vec3.New(s, s, s), N: vec3.UnitY, T: topRight},     // 11
+		vertex.T(vec3.New(s, s, -s), vec3.UnitY, bottomRight), // 8
+		vertex.T(vec3.New(-s, s, -s), vec3.UnitY, bottomLeft), // 9
+		vertex.T(vec3.New(-s, s, s), vec3.UnitY, topLeft),     // 10
+		vertex.T(vec3.New(s, s, s), vec3.UnitY, topRight),     // 11
 
 		// Y-
-		{P: vec3.New(-s, -s, -s), N: vec3.UnitYN, T: bottomRight}, // 12
-		{P: vec3.New(s, -s, -s), N: vec3.UnitYN, T: bottomLeft},   // 13
-		{P: vec3.New(s, -s, s), N: vec3.UnitYN, T: topLeft},       // 14
-		{P: vec3.New(-s, -s, s), N: vec3.UnitYN, T: topRight},     // 15
+		vertex.T(vec3.New(-s, -s, -s), vec3.UnitYN, bottomRight), // 12
+		vertex.T(vec3.New(s, -s, -s), vec3.UnitYN, bottomLeft),   // 13
+		vertex.T(vec3.New(s, -s, s), vec3.UnitYN, topLeft),       // 14
+		vertex.T(vec3.New(-s, -s, s), vec3.UnitYN, topRight),     // 15
 
 		// Z+
-		{P: vec3.New(-s, -s, s), N: vec3.UnitZ, T: bottomRight}, // 16
-		{P: vec3.New(s, -s, s), N: vec3.UnitZ, T: bottomLeft},   // 17
-		{P: vec3.New(s, s, s), N: vec3.UnitZ, T: topLeft},       // 18
-		{P: vec3.New(-s, s, s), N: vec3.UnitZ, T: topRight},     // 19
+		vertex.T(vec3.New(-s, -s, s), vec3.UnitZ, bottomRight), // 16
+		vertex.T(vec3.New(s, -s, s), vec3.UnitZ, bottomLeft),   // 17
+		vertex.T(vec3.New(s, s, s), vec3.UnitZ, topLeft),       // 18
+		vertex.T(vec3.New(-s, s, s), vec3.UnitZ, topRight),     // 19
 
 		// Z-
-		{P: vec3.New(s, -s, -s), N: vec3.UnitZN, T: bottomRight}, // 20
-		{P: vec3.New(-s, -s, -s), N: vec3.UnitZN, T: bottomLeft}, // 21
-		{P: vec3.New(-s, s, -s), N: vec3.UnitZN, T: topLeft},     // 22
-		{P: vec3.New(s, s, -s), N: vec3.UnitZN, T: topRight},     // 23
+		vertex.T(vec3.New(s, -s, -s), vec3.UnitZN, bottomRight), // 20
+		vertex.T(vec3.New(-s, -s, -s), vec3.UnitZN, bottomLeft), // 21
+		vertex.T(vec3.New(-s, s, -s), vec3.UnitZN, topLeft),     // 22
+		vertex.T(vec3.New(s, s, -s), vec3.UnitZN, topRight),     // 23
 	}
 
 	indices := []uint16{

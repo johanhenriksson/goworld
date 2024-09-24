@@ -4,8 +4,12 @@
 			"Index": 0,
 			"Type": "float"
 		},
-		"texcoord_0": {
+		"tex_x": {
 			"Index": 1,
+			"Type": "float"
+		},
+		"tex_y": {
+			"Index": 3,
 			"Type": "float"
 		}
 	},

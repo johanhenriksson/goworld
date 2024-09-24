@@ -110,7 +110,7 @@ func NewPostProcessPass(app engine.App, target engine.Target, input engine.Targe
 			Layout:     p.pipeLayout,
 			Shader:     app.Shaders().Fetch(shader.Ref("postprocess")),
 			Pass:       p.pass,
-			Pointers:   vertex.ParsePointers(vertex.T{}),
+			Pointers:   vertex.ParsePointers(vertex.Vertex{}),
 			DepthTest:  false,
 			DepthWrite: false,
 		})
