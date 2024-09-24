@@ -1,7 +1,6 @@
 package pass
 
 import (
-	"github.com/johanhenriksson/goworld/core/light"
 	"github.com/johanhenriksson/goworld/core/mesh"
 	"github.com/johanhenriksson/goworld/engine/cache"
 	"github.com/johanhenriksson/goworld/engine/uniform"
@@ -23,7 +22,7 @@ type DeferredMaterial struct {
 	Pipeline    *pipeline.Pipeline
 	Descriptors *DeferredDescriptors
 	Objects     *ObjectBuffer
-	Textures    cache.SamplerCache
+	textures    cache.SamplerCache
 	Meshes      cache.MeshCache
 	Commands    *command.IndirectDrawBuffer
 
@@ -31,11 +30,10 @@ type DeferredMaterial struct {
 	slots []texture.Slot
 }
 
-func (m *DeferredMaterial) ID() material.ID {
-	return m.id
-}
+func (m *DeferredMaterial) ID() material.ID          { return m.id }
+func (m *DeferredMaterial) Textures() []texture.Slot { return m.slots }
 
-func (m *DeferredMaterial) Begin(camera uniform.Camera, lights []light.T) {
+func (m *DeferredMaterial) Begin(camera uniform.Camera) {
 	m.Descriptors.Camera.Set(camera)
 	// todo: assign global descriptors
 
@@ -57,7 +55,7 @@ func (m *DeferredMaterial) Draw(cmds command.Recorder, msh mesh.Mesh) {
 		return
 	}
 
-	textureIds := AssignMeshTextures(m.Textures, msh, m.slots)
+	textureIds := AssignMeshTextures(m.textures, msh, m.slots)
 
 	instanceId := m.Objects.Store(uniform.Object{
 		Model:    msh.Transform().Matrix(),
@@ -79,7 +77,7 @@ func (m *DeferredMaterial) Unbind(cmds command.Recorder) {
 
 func (m *DeferredMaterial) End() {
 	m.Objects.Flush(m.Descriptors.Objects)
-	m.Textures.Flush(m.Descriptors.Textures)
+	m.textures.Flush(m.Descriptors.Textures)
 	m.Commands.Flush()
 }
 

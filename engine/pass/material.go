@@ -1,7 +1,6 @@
 package pass
 
 import (
-	"github.com/johanhenriksson/goworld/core/light"
 	"github.com/johanhenriksson/goworld/core/mesh"
 	"github.com/johanhenriksson/goworld/engine/cache"
 	"github.com/johanhenriksson/goworld/engine/uniform"
@@ -15,11 +14,12 @@ type MaterialCache cache.T[*material.Def, []Material]
 // Material implements render logic for a specific material.
 type Material interface {
 	ID() material.ID
+	Textures() []texture.Slot
 	Destroy()
 
 	// Begin is called prior to recording, once per frame.
 	// Its purpose is to clear object buffers and set up per-frame data such as cameras & lighting.
-	Begin(uniform.Camera, []light.T)
+	Begin(uniform.Camera)
 
 	// End is called after all draw groups have been processed.
 	// It runs once per frame and is primarily responsible for flushing uniform buffers.

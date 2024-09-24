@@ -9,13 +9,23 @@ import (
 	"github.com/johanhenriksson/goworld/engine/cache"
 	"github.com/johanhenriksson/goworld/engine/uniform"
 	"github.com/johanhenriksson/goworld/render/command"
+	"github.com/johanhenriksson/goworld/render/descriptor"
 	"github.com/johanhenriksson/goworld/render/framebuffer"
 	"github.com/johanhenriksson/goworld/render/material"
+	"github.com/johanhenriksson/goworld/render/pipeline"
 	"github.com/johanhenriksson/goworld/render/renderpass"
 	"github.com/johanhenriksson/goworld/render/renderpass/attachment"
 
 	"github.com/vkngwrapper/core/v2/core1_0"
 )
+
+type ForwardDescriptors struct {
+	descriptor.Set
+	Camera   *descriptor.Uniform[uniform.Camera]
+	Objects  *descriptor.Storage[uniform.Object]
+	Lights   *descriptor.Storage[uniform.Light]
+	Textures *descriptor.SamplerArray
+}
 
 type ForwardPass struct {
 	target engine.Target
@@ -23,12 +33,17 @@ type ForwardPass struct {
 	pass   *renderpass.Renderpass
 	fbuf   framebuffer.Array
 
-	textures cache.SamplerCache
-	objects  *ObjectBuffer
-	lights   *LightBuffer
-	shadows  *ShadowCache
+	layout      *pipeline.Layout
+	descLayout  *descriptor.Layout[*ForwardDescriptors]
+	descriptors []*ForwardDescriptors
+	textures    cache.SamplerCache
+	objects     *ObjectBuffer
+	lights      *LightBuffer
+	shadows     *ShadowCache
+	groups      map[material.ID]*MatGroup
+	commands    []*command.IndirectDrawBuffer
 
-	materials  MaterialCache
+	materials  cache.T[*material.Def, *Pipeline]
 	meshQuery  *object.Query[mesh.Mesh]
 	lightQuery *object.Query[light.T]
 }
@@ -89,17 +104,50 @@ func NewForwardPass(
 	lights := NewLightBuffer(maxLights)
 	shadows := NewShadowCache(textures, shadowPass.Shadowmap)
 
+	// todo: these could probably be global descriptors
+	// pass descriptor layout
+	descLayout := descriptor.NewLayout(app.Device(), "Forward", &ForwardDescriptors{
+		Camera: &descriptor.Uniform[uniform.Camera]{
+			Stages: core1_0.StageAll,
+		},
+		Objects: &descriptor.Storage[uniform.Object]{
+			Stages: core1_0.StageAll,
+			Size:   objects.Size(),
+		},
+		Lights: &descriptor.Storage[uniform.Light]{
+			Stages: core1_0.StageAll,
+			Size:   lights.Size(),
+		},
+		Textures: &descriptor.SamplerArray{
+			Stages: core1_0.StageFragment,
+			Count:  textures.Size(),
+		},
+	})
+	descriptors := descLayout.InstantiateMany(app.Pool(), target.Frames())
+	layout := pipeline.NewLayout(app.Device(), []descriptor.SetLayout{descLayout}, nil)
+
+	commands := make([]*command.IndirectDrawBuffer, target.Frames())
+	for i := range commands {
+		commands[i] = command.NewIndirectDrawBuffer(app.Device(), "Forward", objects.Size())
+	}
+
 	return &ForwardPass{
 		target: target,
 		app:    app,
 		pass:   pass,
 		fbuf:   fbuf,
 
-		objects:    objects,
-		lights:     lights,
-		textures:   textures,
-		shadows:    shadows,
-		materials:  NewForwardMaterialCache(app, pass, target.Frames(), textures, objects, lights, shadows),
+		layout:      layout,
+		descLayout:  descLayout,
+		descriptors: descriptors,
+		objects:     objects,
+		lights:      lights,
+		textures:    textures,
+		shadows:     shadows,
+		groups:      make(map[material.ID]*MatGroup, 32),
+		commands:    commands,
+
+		materials:  NewPipelineCache(app, pass, target.Frames(), layout),
 		meshQuery:  object.NewQuery[mesh.Mesh](),
 		lightQuery: object.NewQuery[light.T](),
 	}
@@ -113,62 +161,135 @@ func NewForwardPass(
 //   - collect: gather objects that will be rendered. synchronized between update/render
 //   - record: record commands for each object. runs on the render thread
 
-type Context struct{}
-
-func (p *ForwardPass) Collect(ctx *Context, scene object.Component) {
-	//
-	// opaque := p.meshQuery.
-	// 	Reset().
-	// 	Where(isDrawForward).
-	// 	Where(isTransparent(false)).
-	// 	Collect(scene)
-	//
-	// for _, mesh := range opaque {
-	// 	gpuMesh, ok := p.app.Meshes().TryFetch(mesh.Mesh())
-	// 	if !ok {
-	// 		continue
-	// 	}
-	//
-	// 	// material
-	// 	p.materials.TryFetch(mesh.Material())
-	//
-	// }
+type MatGroup struct {
+	Material *Pipeline
+	Objects  []int
 }
 
-// Record2 records commands for each object in the render context
-func (p *ForwardPass) Record2(cmds command.Recorder, ctx *Context) {
+func (m *MatGroup) Clear() {
+	m.Objects = m.Objects[:0]
+}
+
+func (m *MatGroup) Add(mat *Pipeline, obj int) {
+	m.Material = mat
+	m.Objects = append(m.Objects, obj)
 }
 
 func (p *ForwardPass) Record(cmds command.Recorder, args draw.Args, scene object.Component) {
-	cam := uniform.CameraFromArgs(args)
+	p.Collect(args, scene)
+	p.Record2(cmds, args)
+}
+
+// Within Collect, the render is allowed to query the scene.
+// While Collect is executing, the scene is guaranteed to be in a consistent state.
+// References to scene objects are valid until the end of the Collect function.
+func (p *ForwardPass) Collect(args draw.Args, scene object.Component) {
+	//
+	// phase 1: collect
+	//
+	desc := p.descriptors[args.Frame]
+
 	lights := p.lightQuery.Reset().Collect(scene)
 
+	// update camera descriptor
+	cam := uniform.CameraFromArgs(args)
+	desc.Camera.Set(cam)
+
 	// clear object buffer
-	p.lights.Reset()
 	p.objects.Reset()
 
-	cmds.Record(func(cmd *command.Buffer) {
-		cmd.CmdBeginRenderPass(p.pass, p.fbuf[args.Frame])
-	})
+	// fill light buffer
+	p.lights.Reset()
+	for _, lit := range lights {
+		p.lights.Store(lit.LightData(p.shadows))
+	}
+	p.lights.Flush(desc.Lights)
 
 	// opaque pass
-	opaque := p.meshQuery.
+	opaqueQuery := p.meshQuery.
 		Reset().
 		Where(isDrawForward).
 		Where(isTransparent(false)).
 		Collect(scene)
-	groups := MaterialGroups(p.materials, args.Frame, opaque)
-	groups.Draw(cmds, cam, lights)
+
+	// empty material groups
+	for _, group := range p.groups {
+		group.Clear()
+	}
+
+	for _, msh := range opaqueQuery {
+		gpuMesh, meshReady := p.app.Meshes().TryFetch(msh.Mesh())
+		if !meshReady {
+			continue
+		}
+
+		mat, matReady := p.materials.TryFetch(msh.Material())
+		if !matReady {
+			continue
+		}
+
+		// this could happen inside the mesh cache!
+		// basically *GpuMesh could be the entire uniform object
+		textureIds := AssignMeshTextures(p.textures, msh, mat.slots)
+
+		// todo: store the gpu pointer to the mesh data here
+		objectId := p.objects.Store(uniform.Object{
+			Model:    msh.Transform().Matrix(),
+			Textures: textureIds,
+			Mesh:     gpuMesh,
+		})
+
+		if _, ok := p.groups[mat.id]; !ok {
+			p.groups[mat.id] = &MatGroup{
+				Objects: make([]int, 0, 32),
+			}
+		}
+		p.groups[mat.id].Add(mat, objectId)
+	}
+
+	// opaque := MaterialGroups(p.materials, args.Frame, opaqueQuery)
 
 	// transparent pass
-	transparent := p.meshQuery.
-		Reset().
-		Where(isDrawForward).
-		Where(isTransparent(true)).
-		Collect(scene)
-	groups = DepthSortGroups(p.materials, args.Frame, cam, transparent)
-	groups.Draw(cmds, cam, lights)
+	// transparentQuery := p.meshQuery.
+	// 	Reset().
+	// 	Where(isDrawForward).
+	// 	Where(isTransparent(true)).
+	// 	Collect(scene)
+	// transparent := DepthSortGroups(p.materials, args.Frame, cam, transparentQuery)
 
+	// flush descriptors
+	p.lights.Flush(desc.Lights)
+	p.objects.Flush(desc.Objects)
+	p.textures.Flush(desc.Textures)
+}
+
+// Record2 records commands for each object in the render context
+// Record2 runs in parallel with scene updates
+func (p *ForwardPass) Record2(cmds command.Recorder, args draw.Args) {
+	desc := p.descriptors[args.Frame]
+	indirect := p.commands[args.Frame]
+
+	indirect.Reset()
+	cmds.Record(func(cmd *command.Buffer) {
+		cmd.CmdBeginRenderPass(p.pass, p.fbuf[args.Frame])
+		cmd.CmdBindGraphicsDescriptor(p.layout, 0, desc)
+	})
+	cmds.Record(func(cmd *command.Buffer) {
+		for _, group := range p.groups {
+			group.Material.Bind(cmd)
+			indirect.BeginDrawIndirect()
+			for _, obj := range group.Objects {
+				// awkwardly retrieve the mesh pointer from the object buffer
+				// this will happen on the GPU in the future
+				m := p.objects.buffer[obj]
+				m.Mesh.Bind(cmd)
+				m.Mesh.Draw(indirect, obj)
+			}
+			indirect.EndDrawIndirect(cmd)
+		}
+	})
+	// opaque.Draw(cmds, cam, lights)
+	// transparent.Draw(cmds, cam, lights)
 	cmds.Record(func(cmd *command.Buffer) {
 		cmd.CmdEndRenderPass()
 	})
@@ -182,6 +303,14 @@ func (p *ForwardPass) Destroy() {
 	p.textures.Destroy()
 	p.fbuf.Destroy()
 	p.pass.Destroy()
+	for _, desc := range p.descriptors {
+		desc.Destroy()
+	}
+	for _, commands := range p.commands {
+		commands.Destroy()
+	}
+	p.layout.Destroy()
+	p.descLayout.Destroy()
 	p.materials.Destroy()
 }
 

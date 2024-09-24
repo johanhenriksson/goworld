@@ -9,6 +9,7 @@ const float gamma = 2.2;
 struct Object {
 	mat4 model;
 	uint textures[MAX_TEXTURES];
+	uint bar[2]; // reserved for BAR vertex pointer
 };
 
 #define SAMPLER_ARRAY(idx,name) \

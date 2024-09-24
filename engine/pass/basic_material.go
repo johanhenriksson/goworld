@@ -1,7 +1,6 @@
 package pass
 
 import (
-	"github.com/johanhenriksson/goworld/core/light"
 	"github.com/johanhenriksson/goworld/core/mesh"
 	"github.com/johanhenriksson/goworld/engine/cache"
 	"github.com/johanhenriksson/goworld/engine/uniform"
@@ -9,6 +8,7 @@ import (
 	"github.com/johanhenriksson/goworld/render/descriptor"
 	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/pipeline"
+	"github.com/johanhenriksson/goworld/render/texture"
 )
 
 type BasicDescriptors struct {
@@ -30,11 +30,10 @@ type BasicMaterial struct {
 	id material.ID
 }
 
-func (m *BasicMaterial) ID() material.ID {
-	return m.id
-}
+func (m *BasicMaterial) ID() material.ID          { return m.id }
+func (m *BasicMaterial) Textures() []texture.Slot { return nil }
 
-func (m *BasicMaterial) Begin(camera uniform.Camera, lights []light.T) {
+func (m *BasicMaterial) Begin(camera uniform.Camera) {
 	m.Descriptors.Camera.Set(camera)
 	m.Objects.Reset()
 	m.Commands.Reset()

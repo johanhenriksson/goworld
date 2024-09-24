@@ -92,7 +92,7 @@ func (p *LinePass) Record(cmds command.Recorder, args draw.Args, scene object.Co
 
 	cam := uniform.CameraFromArgs(args)
 	groups := MaterialGroups(p.materials, args.Frame, lines)
-	groups.Draw(cmds, cam, nil)
+	groups.Draw(cmds, cam)
 
 	cmds.Record(func(cmd *command.Buffer) {
 		cmd.CmdEndRenderPass()

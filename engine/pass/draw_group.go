@@ -1,7 +1,6 @@
 package pass
 
 import (
-	"github.com/johanhenriksson/goworld/core/light"
 	"github.com/johanhenriksson/goworld/core/mesh"
 	"github.com/johanhenriksson/goworld/engine/cache"
 	"github.com/johanhenriksson/goworld/engine/uniform"
@@ -55,10 +54,10 @@ type DrawGroup struct {
 
 type DrawGroups []DrawGroup
 
-func (groups DrawGroups) Draw(cmds command.Recorder, camera uniform.Camera, lights []light.T) {
+func (groups DrawGroups) Draw(cmds command.Recorder, camera uniform.Camera) {
 	// todo: this can happen multiple times per frame if there are multiple draw groups for the same material.
 	for _, group := range groups {
-		group.Material.Begin(camera, lights)
+		group.Material.Begin(camera)
 	}
 
 	for _, group := range groups {

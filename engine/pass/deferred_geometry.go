@@ -162,7 +162,7 @@ func (p *DeferredGeometryPass) Record(cmds command.Recorder, args draw.Args, sce
 
 	cam := uniform.CameraFromArgs(args)
 	groups := MaterialGroups(p.materials, args.Frame, objects)
-	groups.Draw(cmds, cam, nil)
+	groups.Draw(cmds, cam)
 
 	cmds.Record(func(cmd *command.Buffer) {
 		cmd.CmdEndRenderPass()

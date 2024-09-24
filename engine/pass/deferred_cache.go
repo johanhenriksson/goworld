@@ -110,7 +110,7 @@ func (m *DeferredMatCache) Instantiate(def *material.Def, callback func([]Materi
 			Pipeline:    pipe,
 			Descriptors: m.descriptors[i], // shared
 			Objects:     m.objects,        // shared
-			Textures:    m.textures,       // shared
+			textures:    m.textures,       // shared
 			Meshes:      m.app.Meshes(),   // maybe accessed in some other way? perhaps passed to Draw()?
 			Commands: command.NewIndirectDrawBuffer(m.app.Device(),
 				fmt.Sprintf("DeferredCommands:%d", i),
