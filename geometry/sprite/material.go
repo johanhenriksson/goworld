@@ -11,7 +11,7 @@ func Material() *material.Def {
 	return &material.Def{
 		Pass:         material.Forward,
 		Shader:       "forward/sprite",
-		VertexFormat: vertex.T{},
+		VertexFormat: vertex.Vertex{},
 		DepthTest:    true,
 		DepthWrite:   true,
 		DepthFunc:    core1_0.CompareOpLessOrEqual,

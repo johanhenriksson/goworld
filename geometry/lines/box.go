@@ -24,7 +24,7 @@ type Box struct {
 	Extents Property[vec3.T]
 	Color   Property[color.T]
 
-	data vertex.MutableMesh[vertex.C, uint16]
+	data vertex.MutableMesh[vertex.Vertex, uint16]
 }
 
 // Args are kinda like props
@@ -41,7 +41,7 @@ func NewBox(pool Pool, args BoxArgs) *Box {
 		Extents: NewProperty(args.Extents),
 		Color:   NewProperty(args.Color),
 	})
-	b.data = vertex.NewLines[vertex.C, uint16](Key("box", b), nil, nil)
+	b.data = vertex.NewLines[vertex.Vertex, uint16](Key("box", b), nil, nil)
 	b.Extents.OnChange.Subscribe(func(vec3.T) { b.refresh() })
 	b.Color.OnChange.Subscribe(func(color.T) { b.refresh() })
 	b.refresh()
@@ -53,7 +53,7 @@ func (b *Box) refresh() {
 	w, h, d := halfsize.X, halfsize.Y, halfsize.Z
 	c := b.Color.Get()
 
-	vertices := []vertex.C{
+	vertices := []vertex.Vertex{
 		// bottom square
 		{P: vec3.New(-w, -h, -d), C: c}, // 0
 		{P: vec3.New(+w, -h, -d), C: c}, // 1

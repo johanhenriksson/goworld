@@ -8,14 +8,14 @@ import (
 	"github.com/johanhenriksson/goworld/render/vertex"
 )
 
-type Generator[V vertex.Vertex, I vertex.Index] func() Data[V, I]
+type Generator[V vertex.VertexFormat, I vertex.IndexFormat] func() Data[V, I]
 
-type Data[V vertex.Vertex, I vertex.Index] struct {
+type Data[V vertex.VertexFormat, I vertex.IndexFormat] struct {
 	Vertices []V
 	Indices  []I
 }
 
-type Dynamic[V vertex.Vertex, I vertex.Index] struct {
+type Dynamic[V vertex.VertexFormat, I vertex.IndexFormat] struct {
 	*Static
 
 	name     string
@@ -24,7 +24,7 @@ type Dynamic[V vertex.Vertex, I vertex.Index] struct {
 	meshdata vertex.MutableMesh[V, I]
 }
 
-func NewDynamic[V vertex.Vertex, I vertex.Index](pool object.Pool, name string, mat *material.Def, fn Generator[V, I]) *Dynamic[V, I] {
+func NewDynamic[V vertex.VertexFormat, I vertex.IndexFormat](pool object.Pool, name string, mat *material.Def, fn Generator[V, I]) *Dynamic[V, I] {
 	m := &Dynamic[V, I]{
 		Static:  New(pool, mat),
 		name:    name,

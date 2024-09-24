@@ -2,12 +2,12 @@ package vertex
 
 type Args interface{}
 
-type GeneratedMesh[A Args, V Vertex, I Index] interface {
+type GeneratedMesh[A Args, V VertexFormat, I IndexFormat] interface {
 	Mesh
 	Update(A)
 }
 
-type generated[A Args, V Vertex, I Index] struct {
+type generated[A Args, V VertexFormat, I IndexFormat] struct {
 	Mesh
 	key       string
 	version   int
@@ -15,7 +15,7 @@ type generated[A Args, V Vertex, I Index] struct {
 	generator func(A) (V, I)
 }
 
-func NewGenerated[A Args, V Vertex, I Index](key string, args A, generator func(A) (V, I)) GeneratedMesh[A, V, I] {
+func NewGenerated[A Args, V VertexFormat, I IndexFormat](key string, args A, generator func(A) (V, I)) GeneratedMesh[A, V, I] {
 	return &generated[A, V, I]{
 		key:       key,
 		version:   1,

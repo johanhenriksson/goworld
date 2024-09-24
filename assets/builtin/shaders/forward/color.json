@@ -4,12 +4,20 @@
       "Index": 0,
       "Type": "float"
     },
-    "normal": {
+    "tex_x": {
       "Index": 1,
       "Type": "float"
     },
-    "color_0": {
+    "normal": {
       "Index": 2,
+      "Type": "float"
+    },
+    "tex_y": {
+      "Index": 3,
+      "Type": "float"
+    },
+    "color": {
+      "Index": 4,
       "Type": "float"
     }
   },

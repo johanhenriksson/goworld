@@ -4,8 +4,8 @@
       "Index": 0,
       "Type": "float"
     },
-    "color_0": {
-      "Index": 1,
+    "color": {
+      "Index": 4,
       "Type": "float"
     }
   },

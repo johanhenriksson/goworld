@@ -5,11 +5,12 @@ import (
 	"github.com/johanhenriksson/goworld/core/light"
 	. "github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/core/script"
+	"github.com/johanhenriksson/goworld/editor"
+	_ "github.com/johanhenriksson/goworld/editor/builtin"
 	"github.com/johanhenriksson/goworld/engine/app"
 	"github.com/johanhenriksson/goworld/geometry/cube"
 	"github.com/johanhenriksson/goworld/geometry/plane"
 	"github.com/johanhenriksson/goworld/math/quat"
-	"github.com/johanhenriksson/goworld/math/random"
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render/color"
@@ -24,13 +25,13 @@ func main() {
 			Height: 800,
 			Title:  "goworld: cube",
 		},
-		func(pool Pool, scene Object) {
+		editor.WrapScene(func(pool Pool, scene Object) {
 			rot := float32(45)
 			box := cube.New(pool, cube.Args{
 				Size: 1,
-				Mat:  material.StandardDeferred(),
+				Mat:  material.StandardForward(),
 			})
-			box.Mesh.SetTexture(texture.Diffuse, random.Choice(color.DefaultPalette))
+			box.Mesh.SetTexture(texture.Diffuse, texture.Checker) // random.Choice(color.DefaultPalette))
 
 			Builder(Empty(pool, "Cube")).
 				Position(vec3.T{Y: 0.5}).
@@ -82,6 +83,6 @@ func main() {
 				).
 				Parent(scene).
 				Create()
-		},
+		}),
 	)
 }

@@ -139,7 +139,7 @@ func NewAmbientOcclusionPass(app engine.App, target engine.Target, gbuffer Geome
 			Layout:     p.pipeLayout,
 			Shader:     app.Shaders().Fetch(shader.Ref("ssao")),
 			Pass:       p.pass,
-			Pointers:   vertex.ParsePointers(vertex.T{}),
+			Pointers:   vertex.ParsePointers(vertex.Vertex{}),
 			DepthTest:  false,
 			DepthWrite: false,
 		})

@@ -5,6 +5,7 @@ import (
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/math/vec3"
+	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/texture"
 	"github.com/johanhenriksson/goworld/render/vertex"
@@ -14,7 +15,7 @@ type Mesh struct {
 	*mesh.Static
 	Subdivisions object.Property[int]
 
-	data vertex.MutableMesh[vertex.T, uint16]
+	data vertex.MutableMesh[vertex.Vertex, uint16]
 }
 
 func New(pool object.Pool, mat *material.Def) *Mesh {
@@ -23,7 +24,7 @@ func New(pool object.Pool, mat *material.Def) *Mesh {
 		Subdivisions: object.NewProperty(3),
 	})
 	m.SetTexture(texture.Diffuse, texture.Checker)
-	m.data = vertex.NewTriangles[vertex.T, uint16](object.Key("sphere", m), nil, nil)
+	m.data = vertex.NewTriangles[vertex.Vertex, uint16](object.Key("sphere", m), nil, nil)
 	m.Subdivisions.OnChange.Subscribe(func(int) { m.refresh() })
 	m.refresh()
 	return m
@@ -32,23 +33,11 @@ func New(pool object.Pool, mat *material.Def) *Mesh {
 func (m *Mesh) refresh() {
 	tris := icosphere(m.Subdivisions.Get())
 
-	vertices := []vertex.T{}
+	vertices := []vertex.Vertex{}
 	for _, tri := range tris {
-		vertices = append(vertices, vertex.T{
-			P: tri.A,
-			N: tri.A,
-			T: vec2.New(0, 0),
-		})
-		vertices = append(vertices, vertex.T{
-			P: tri.B,
-			N: tri.B,
-			T: vec2.New(0, 0),
-		})
-		vertices = append(vertices, vertex.T{
-			P: tri.C,
-			N: tri.C,
-			T: vec2.New(0, 0),
-		})
+		vertices = append(vertices, vertex.New(tri.A, tri.A, vec2.Zero, color.White))
+		vertices = append(vertices, vertex.New(tri.B, tri.B, vec2.Zero, color.White))
+		vertices = append(vertices, vertex.New(tri.C, tri.C, vec2.Zero, color.White))
 	}
 
 	m.data.Update(vertices, nil)

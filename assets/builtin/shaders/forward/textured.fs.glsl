@@ -9,6 +9,14 @@ OBJECT(1, object)
 LIGHTS(2, lights)
 SAMPLER_ARRAY(3, textures)
 
+struct Vertex {
+	vec3 position;
+	float uv_x;
+	vec3 normal;
+	float uv_y;
+	vec4 color;
+};
+
 void main() 
 {
 	vec2 texcoord0 = in_color.xy;

@@ -4,6 +4,7 @@ import (
 	"github.com/johanhenriksson/goworld/core/mesh"
 	. "github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/math"
+	"github.com/johanhenriksson/goworld/math/vec2"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/physics"
 	"github.com/johanhenriksson/goworld/render/color"
@@ -65,7 +66,7 @@ func (c *Mesh) generate() {
 	color := c.Color.Get()
 	segments := c.Segments.Get()
 
-	data := make([]vertex.C, 6*segments)
+	data := make([]vertex.Vertex, 6*segments)
 
 	// cone
 	top := vec3.New(0, height, 0)
@@ -79,9 +80,9 @@ func (c *Mesh) generate() {
 		n := vec3.Cross(v1t, v2t).Normalized()
 
 		o := 3 * i
-		data[o+0] = vertex.C{P: v2, N: n, C: color}
-		data[o+1] = vertex.C{P: top, N: n, C: color}
-		data[o+2] = vertex.C{P: v1, N: n, C: color}
+		data[o+0] = vertex.New(v2, n, vec2.Zero, color)
+		data[o+1] = vertex.New(top, n, vec2.Zero, color)
+		data[o+2] = vertex.New(v1, n, vec2.Zero, color)
 	}
 
 	// bottom
@@ -93,9 +94,9 @@ func (c *Mesh) generate() {
 		v1 := vec3.New(math.Cos(a1), 0, -math.Sin(a1)).Scaled(radius)
 		v2 := vec3.New(math.Cos(a2), 0, -math.Sin(a2)).Scaled(radius)
 		o := 3 * (i + segments)
-		data[o+0] = vertex.C{P: v1, N: n, C: color}
-		data[o+1] = vertex.C{P: base, N: n, C: color}
-		data[o+2] = vertex.C{P: v2, N: n, C: color}
+		data[o+0] = vertex.New(v1, n, vec2.Zero, color)
+		data[o+1] = vertex.New(base, n, vec2.Zero, color)
+		data[o+2] = vertex.New(v2, n, vec2.Zero, color)
 	}
 
 	key := Key("cone", c)

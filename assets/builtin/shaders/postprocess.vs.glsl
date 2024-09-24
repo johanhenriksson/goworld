@@ -3,7 +3,8 @@
 #include "lib/common.glsl"
 
 IN(0, vec3, position)
-IN(1, vec2, texcoord)
+IN(1, float, tex_x)
+IN(3, float, tex_y)
 OUT(0, vec2, texcoord)
 
 out gl_PerVertex 
@@ -13,6 +14,6 @@ out gl_PerVertex
 
 void main() 
 {
-	out_texcoord = in_texcoord;
+	out_texcoord = vec2(in_tex_x, in_tex_y);
 	gl_Position = vec4(in_position, 1);
 }

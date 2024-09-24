@@ -9,37 +9,41 @@ import (
 )
 
 func init() {
-	gob.Register(P{})
-	gob.Register(C{})
-	gob.Register(T{})
+	gob.Register(Vertex{})
 }
 
-// P - Position only vertex
-type P struct {
-	vec3.T `vtx:"position,float,3"`
+// Standard vertex format
+type Vertex struct {
+	P  vec3.T  `vtx:"position,float,3"`
+	Tx float32 `vtx:"tex_x,float,1"`
+	N  vec3.T  `vtx:"normal,float,3"`
+	Ty float32 `vtx:"tex_y,float,1"`
+	C  color.T `vtx:"color,float,4"`
 }
 
-func (v P) Position() vec3.T { return v.T }
+func (v Vertex) Position() vec3.T { return v.P }
 
-// C - Colored Vertex
-type C struct {
-	P vec3.T  `vtx:"position,float,3"`
-	N vec3.T  `vtx:"normal,float,3"`
-	C color.T `vtx:"color_0,float,4"`
+// New creates a new vertex with position, normal, texture coordinates and color
+func New(p vec3.T, n vec3.T, t vec2.T, c color.T) Vertex {
+	return Vertex{P: p, Tx: t.X, N: n, Ty: t.Y, C: c}
 }
 
-func (v C) Position() vec3.T { return v.P }
-
-// T - Textured Vertex
-type T struct {
-	P vec3.T `vtx:"position,float,3"`
-	N vec3.T `vtx:"normal,float,3"`
-	T vec2.T `vtx:"texcoord_0,float,2"`
+// P defines a vertex with a position
+func P(p vec3.T) Vertex {
+	return Vertex{P: p, C: color.White}
 }
 
-func (v T) Position() vec3.T { return v.P }
+// C defines a vertex with a position and color
+func C(p vec3.T, n vec3.T, c color.T) Vertex {
+	return Vertex{P: p, N: n, C: c}
+}
 
-func Min[V Vertex](vertices []V) vec3.T {
+// T defines a vertex with a position, normal and texture coordinates
+func T(p vec3.T, n vec3.T, t vec2.T) Vertex {
+	return Vertex{P: p, N: n, Tx: t.X, Ty: t.Y, C: color.White}
+}
+
+func Min[V VertexFormat](vertices []V) vec3.T {
 	if len(vertices) == 0 {
 		return vec3.Zero
 	}
@@ -50,7 +54,7 @@ func Min[V Vertex](vertices []V) vec3.T {
 	return min
 }
 
-func Max[V Vertex](vertices []V) vec3.T {
+func Max[V VertexFormat](vertices []V) vec3.T {
 	if len(vertices) == 0 {
 		return vec3.Zero
 	}

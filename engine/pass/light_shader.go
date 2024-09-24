@@ -71,7 +71,7 @@ func NewLightShader(app engine.App, pass *renderpass.Renderpass, gbuffer Geometr
 			Shader:    app.Shaders().Fetch(shader.Ref("light")),
 			Pass:      pass,
 			Subpass:   LightingSubpass,
-			Pointers:  vertex.ParsePointers(vertex.T{}),
+			Pointers:  vertex.ParsePointers(vertex.Vertex{}),
 			DepthTest: false,
 		})
 

@@ -8,8 +8,10 @@ OBJECT(1, object)
 
 // Attributes
 IN(0, vec3, position)
-IN(1, vec3, normal)
-IN(2, vec2, texcoord)
+IN(1, float, tex_x)
+IN(2, vec3, normal)
+IN(3, float, tex_y)
+IN(4, vec4, color)
 
 void main() 
 {
@@ -29,7 +31,7 @@ void main()
 		up * in_position.y;
 
 	// texture coords
-	out_color.xy = in_texcoord;
+	out_color.xy = vec2(in_tex_x, in_tex_y);
 
 	// gbuffer view position
 	out_view_position = (camera.View * vec4(out_world_position.xyz, 1.0)).xyz;
