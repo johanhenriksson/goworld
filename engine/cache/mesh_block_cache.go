@@ -51,7 +51,7 @@ func (m *meshBlockCache) Instantiate(ref assets.Mesh, callback func(*GpuMesh)) {
 		// special case for empty mesh
 		callback(&GpuMesh{
 			key:        mesh.Key(),
-			indexCount: mesh.IndexCount(),
+			IndexCount: mesh.IndexCount(),
 			indexType:  idxType,
 		})
 		return
@@ -79,12 +79,12 @@ func (m *meshBlockCache) Instantiate(ref assets.Mesh, callback func(*GpuMesh)) {
 	cached = &GpuMesh{
 		key:       mesh.Key(),
 		indexType: idxType,
-		vertices:  vertexBlock,
-		indices:   indexBlock,
+		Vertices:  vertexBlock,
+		Indices:   indexBlock,
 
-		indexCount:   mesh.IndexCount(),
-		vertexOffset: vtxOffset / mesh.VertexSize(),
-		indexOffset:  idxOffset / mesh.IndexSize(),
+		IndexCount:   mesh.IndexCount(),
+		VertexOffset: vtxOffset / mesh.VertexSize(),
+		IndexOffset:  idxOffset / mesh.IndexSize(),
 	}
 
 	cmds := command.NewRecorder()
@@ -94,11 +94,11 @@ func (m *meshBlockCache) Instantiate(ref assets.Mesh, callback func(*GpuMesh)) {
 		idxStage.Write(0, mesh.IndexData())
 		idxStage.Flush()
 
-		cmd.CmdCopyBuffer(vtxStage, cached.vertices.Buffer(), core1_0.BufferCopy{
+		cmd.CmdCopyBuffer(vtxStage, cached.Vertices.Buffer(), core1_0.BufferCopy{
 			Size:      vtxSize,
 			DstOffset: vtxOffset,
 		})
-		cmd.CmdCopyBuffer(idxStage, cached.indices.Buffer(), core1_0.BufferCopy{
+		cmd.CmdCopyBuffer(idxStage, cached.Indices.Buffer(), core1_0.BufferCopy{
 			Size:      idxSize,
 			DstOffset: idxOffset,
 		})
@@ -115,13 +115,13 @@ func (m *meshBlockCache) Instantiate(ref assets.Mesh, callback func(*GpuMesh)) {
 }
 
 func (m *meshBlockCache) Delete(mesh *GpuMesh) {
-	if mesh.indexCount == 0 {
+	if mesh.IndexCount == 0 {
 		return
 	}
-	if err := m.vtxAlloc.Free(mesh.vertices); err != nil {
+	if err := m.vtxAlloc.Free(mesh.Vertices); err != nil {
 		panic(err)
 	}
-	if err := m.idxAlloc.Free(mesh.indices); err != nil {
+	if err := m.idxAlloc.Free(mesh.Indices); err != nil {
 		panic(err)
 	}
 }

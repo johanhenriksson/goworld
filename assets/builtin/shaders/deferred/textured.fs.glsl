@@ -1,6 +1,7 @@
 #version 450
 
 #include "lib/common.glsl"
+#include "lib/objects.glsl"
 #include "lib/deferred_fragment.glsl"
 
 OBJECT(1, object)

@@ -85,7 +85,7 @@ func (m *ShadowMatCache) Instantiate(def *material.Def, callback func([]Material
 			Descriptors: desc,
 			Objects:     NewObjectBuffer(desc.Objects.Size),
 			Meshes:      m.app.Meshes(),
-			Commands: command.NewIndirectDrawBuffer(m.app.Device(),
+			Commands: command.NewIndirectIndexedDrawBuffer(m.app.Device(),
 				fmt.Sprintf("ShadowCommands:%d", i),
 				desc.Objects.Size),
 		}

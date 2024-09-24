@@ -230,13 +230,15 @@ func (p *ForwardPass) Collect(args draw.Args, scene object.Component) {
 
 		// this could happen inside the mesh cache!
 		// basically *GpuMesh could be the entire uniform object
+		// or even the entire object buffer similar to the sampler cache?
 		textureIds := AssignMeshTextures(p.textures, msh, mat.slots)
 
-		// todo: store the gpu pointer to the mesh data here
 		objectId := p.objects.Store(uniform.Object{
 			Model:    msh.Transform().Matrix(),
 			Textures: textureIds,
-			Mesh:     gpuMesh,
+			Vertices: gpuMesh.Vertices.Address(),
+			Indices:  gpuMesh.Indices.Address(),
+			Count:    uint32(gpuMesh.IndexCount),
 		})
 
 		if _, ok := p.groups[mat.id]; !ok {
@@ -266,24 +268,30 @@ func (p *ForwardPass) Collect(args draw.Args, scene object.Component) {
 // Record2 records commands for each object in the render context
 // Record2 runs in parallel with scene updates
 func (p *ForwardPass) Record2(cmds command.Recorder, args draw.Args) {
-	desc := p.descriptors[args.Frame]
+	descriptors := p.descriptors[args.Frame]
 	indirect := p.commands[args.Frame]
+	framebuf := p.fbuf[args.Frame]
 
 	indirect.Reset()
 	cmds.Record(func(cmd *command.Buffer) {
-		cmd.CmdBeginRenderPass(p.pass, p.fbuf[args.Frame])
-		cmd.CmdBindGraphicsDescriptor(p.layout, 0, desc)
+		cmd.CmdBeginRenderPass(p.pass, framebuf)
+		cmd.CmdBindGraphicsDescriptor(p.layout, 0, descriptors)
 	})
 	cmds.Record(func(cmd *command.Buffer) {
 		for _, group := range p.groups {
 			group.Material.Bind(cmd)
 			indirect.BeginDrawIndirect()
 			for _, obj := range group.Objects {
-				// awkwardly retrieve the mesh pointer from the object buffer
-				// this will happen on the GPU in the future
+				// awkwardly retrieve the index count from the object buffer
+				// todo: store count along with the object handle instead
+
 				m := p.objects.buffer[obj]
-				m.Mesh.Bind(cmd)
-				m.Mesh.Draw(indirect, obj)
+				indirect.CmdDraw(command.Draw{
+					VertexCount:    uint32(m.Count), // hmm
+					InstanceCount:  1,
+					VertexOffset:   0,
+					InstanceOffset: uint32(obj),
+				})
 			}
 			indirect.EndDrawIndirect(cmd)
 		}

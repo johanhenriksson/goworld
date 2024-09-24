@@ -1,6 +1,7 @@
 #version 450
 
 #include "lib/common.glsl"
+#include "lib/objects.glsl"
 
 CAMERA(0, camera)
 STORAGE_BUFFER(1, Object, objects)

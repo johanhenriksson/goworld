@@ -43,12 +43,12 @@ func (m *meshCache) Instantiate(ref assets.Mesh, callback func(*GpuMesh)) {
 
 	cached = &GpuMesh{
 		key:          mesh.Key(),
-		indexCount:   mesh.IndexCount(),
+		IndexCount:   mesh.IndexCount(),
 		indexType:    idxType,
-		indexOffset:  0,
-		vertexOffset: 0,
+		IndexOffset:  0,
+		VertexOffset: 0,
 	}
-	if cached.indexCount == 0 {
+	if cached.IndexCount == 0 {
 		// special case for empty meshes
 		callback(cached)
 		return
@@ -70,13 +70,13 @@ func (m *meshCache) Instantiate(ref assets.Mesh, callback func(*GpuMesh)) {
 		// allocate buffers
 		vtxBuffer := buffer.NewGpuLocal(m.device, mesh.Key()+":vertex", vtxSize, core1_0.BufferUsageVertexBuffer)
 		idxBuffer := buffer.NewGpuLocal(m.device, mesh.Key()+":index", idxSize, core1_0.BufferUsageIndexBuffer)
-		cached.vertices = buffer.EntireBuffer(vtxBuffer)
-		cached.indices = buffer.EntireBuffer(idxBuffer)
+		cached.Vertices = buffer.EntireBuffer(vtxBuffer)
+		cached.Indices = buffer.EntireBuffer(idxBuffer)
 
-		cmd.CmdCopyBuffer(vtxStage, cached.vertices.Buffer(), core1_0.BufferCopy{
+		cmd.CmdCopyBuffer(vtxStage, cached.Vertices.Buffer(), core1_0.BufferCopy{
 			Size: vtxSize,
 		})
-		cmd.CmdCopyBuffer(idxStage, cached.indices.Buffer(), core1_0.BufferCopy{
+		cmd.CmdCopyBuffer(idxStage, cached.Indices.Buffer(), core1_0.BufferCopy{
 			Size: idxSize,
 		})
 	})
@@ -92,11 +92,11 @@ func (m *meshCache) Instantiate(ref assets.Mesh, callback func(*GpuMesh)) {
 }
 
 func (m *meshCache) Delete(mesh *GpuMesh) {
-	if mesh.indexCount == 0 {
+	if mesh.IndexCount == 0 {
 		return
 	}
-	mesh.vertices.Buffer().Destroy()
-	mesh.indices.Buffer().Destroy()
+	mesh.Vertices.Buffer().Destroy()
+	mesh.Indices.Buffer().Destroy()
 }
 
 func (m *meshCache) Destroy() {}

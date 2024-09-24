@@ -61,7 +61,7 @@ func NewMesh(pool Pool, args Args) *mesh.Static {
 type cube struct {
 	key     string
 	version int
-	mesh    vertex.MutableMesh[vertex.Vertex, uint16]
+	mesh    vertex.MutableMesh[vertex.Vertex, uint32]
 	size    float32
 }
 
@@ -118,7 +118,7 @@ func (c *cube) generate() vertex.Mesh {
 		vertex.T(vec3.New(s, s, -s), vec3.UnitZN, topRight),     // 23
 	}
 
-	indices := []uint16{
+	indices := []uint32{
 		0, 1, 2,
 		0, 2, 3,
 

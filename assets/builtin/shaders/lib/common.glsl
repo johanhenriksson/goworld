@@ -1,26 +1,13 @@
 #extension GL_ARB_separate_shader_objects : require
 #extension GL_ARB_shading_language_420pack : require
 #extension GL_EXT_nonuniform_qualifier : require
-// #extension GL_EXT_buffer_reference : require
+#extension GL_EXT_buffer_reference : enable
+#extension GL_EXT_buffer_reference2 : enable
+#extension GL_EXT_shader_explicit_arithmetic_types_int64 : require
 
 #define MAX_TEXTURES 16
 
 const float gamma = 2.2;
-
-// layout(buffer_reference, std430) readonly buffer VertexBuffer {
-// 	vec4 vertex[];
-// };
-// layout (buffer_reference, std430) readonly buffer IndexBuffer {
-// 	uint index[];
-// };
-
-struct Object {
-	mat4 model;
-	uint textures[MAX_TEXTURES];
-	uint[2] bar;
-	// VertexBuffer vertexBuffer;
-	// IndexBuffer indexBuffer;
-};
 
 #define SAMPLER_ARRAY(idx,name) \
 	layout (binding = idx) uniform sampler2D[] name; \

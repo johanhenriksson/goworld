@@ -1,31 +1,31 @@
 #version 450
 
 #include "lib/common.glsl"
+#include "lib/objects.glsl"
 #include "lib/forward_vertex.glsl"
 
 CAMERA(0, camera)
 OBJECT(1, object)
 
-// Attributes
-IN(0, vec3, position)
-IN(1, float, tex_x)
-IN(2, vec3, normal)
-IN(3, float, tex_y)
-IN(4, vec4, color)
+
+VERTEX_BUFFER(Vertex)
+INDEX_BUFFER(uint)
 
 void main() 
 {
-	out_object = gl_InstanceIndex;
+	out_object = get_object_index();
+
+	Vertex v = get_vertex_indexed(object.vertexBuffer, object.indexBuffer);
 
 	// texture coords
-	out_color.xy = vec2(in_tex_x, in_tex_y);
+	out_color.xy = vec2(v.tex_x, v.tex_y);
 
 	// gbuffer view position
-	out_view_position = (camera.View * object.model * vec4(in_position.xyz, 1.0)).xyz;
-	out_world_position = (object.model * vec4(in_position.xyz, 1.0)).xyz;
+	out_view_position = (camera.View * object.model * vec4(v.position, 1)).xyz;
+	out_world_position = (object.model * vec4(v.position, 1)).xyz;
 
 	// world normal
-	out_world_normal = normalize((object.model * vec4(in_normal, 0.0)).xyz);
+	out_world_normal = normalize((object.model * vec4(v.normal, 0)).xyz);
 
 	// vertex clip space position
 	gl_Position = camera.Proj * vec4(out_view_position, 1);
