@@ -5,6 +5,7 @@ import (
 
 	"github.com/vkngwrapper/core/v2/core1_0"
 	"github.com/vkngwrapper/core/v2/driver"
+	"github.com/vkngwrapper/extensions/v2/khr_buffer_device_address"
 )
 
 type T interface {
@@ -23,6 +24,8 @@ type T interface {
 
 	// Memory returns a handle to the underlying memory block
 	Memory() *device.Memory
+
+	Address() device.Address
 }
 
 type Args struct {
@@ -33,16 +36,19 @@ type Args struct {
 }
 
 type Buffer struct {
-	ptr    core1_0.Buffer
-	device *device.Device
-	memory *device.Memory
-	size   int
+	ptr     core1_0.Buffer
+	device  *device.Device
+	memory  *device.Memory
+	address device.Address
+	size    int
 }
 
 func New(device *device.Device, args Args) *Buffer {
 	if args.Size == 0 {
 		panic("buffer size cant be 0")
 	}
+
+	args.Usage |= khr_buffer_device_address.BufferUsageShaderDeviceAddress
 
 	ptr, _, err := device.Ptr().CreateBuffer(nil, core1_0.BufferCreateInfo{
 		Flags:       0,
@@ -65,11 +71,17 @@ func New(device *device.Device, args Args) *Buffer {
 	mem := device.Allocate(args.Key, args.Size, args.Memory)
 	ptr.BindBufferMemory(mem.Ptr(), 0)
 
+	addr, err := device.GetBufferAddress(ptr)
+	if err != nil {
+		panic(err)
+	}
+
 	return &Buffer{
-		ptr:    ptr,
-		device: device,
-		memory: mem,
-		size:   int(args.Size),
+		ptr:     ptr,
+		device:  device,
+		memory:  mem,
+		size:    int(args.Size),
+		address: addr,
 	}
 }
 
@@ -126,6 +138,11 @@ func (b *Buffer) Write(offset int, data any) int {
 
 func (b *Buffer) Read(offset int, data any) int {
 	return b.memory.Read(offset, data)
+}
+
+// Returns a GPU address for the buffer
+func (b *Buffer) Address() device.Address {
+	return b.address
 }
 
 func (b *Buffer) Flush() {

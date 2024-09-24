@@ -11,9 +11,11 @@ import (
 
 	"github.com/vkngwrapper/core/v2/common"
 	"github.com/vkngwrapper/core/v2/core1_0"
+	"github.com/vkngwrapper/core/v2/core1_1"
 	"github.com/vkngwrapper/core/v2/driver"
 	"github.com/vkngwrapper/extensions/v2/ext_debug_utils"
 	"github.com/vkngwrapper/extensions/v2/ext_descriptor_indexing"
+	"github.com/vkngwrapper/extensions/v2/khr_buffer_device_address"
 )
 
 type Resource[T any] interface {
@@ -24,12 +26,13 @@ type Resource[T any] interface {
 type Device struct {
 	physical core1_0.PhysicalDevice
 	ptr      core1_0.Device
-	limits   *core1_0.PhysicalDeviceLimits
-	debug    ext_debug_utils.Extension
+	limits   core1_0.PhysicalDeviceLimits
 
+	debug   ext_debug_utils.Extension
+	address khr_buffer_device_address.Extension
+
+	queue    Queue
 	memtypes [5]memtype
-
-	queue Queue
 }
 
 func New(instance *instance.Instance, physDevice core1_0.PhysicalDevice) (*Device, error) {
@@ -68,6 +71,10 @@ func New(instance *instance.Instance, physDevice core1_0.PhysicalDevice) (*Devic
 	queue := mostSpecificQueue(core1_0.QueueGraphics | core1_0.QueueTransfer)
 	log.Println("worker queue:", queue)
 
+	bufferAddressFeatures := khr_buffer_device_address.PhysicalDeviceBufferDeviceAddressFeatures{
+		BufferDeviceAddress: true,
+	}
+
 	indexingFeatures := ext_descriptor_indexing.PhysicalDeviceDescriptorIndexingFeatures{
 		ShaderSampledImageArrayNonUniformIndexing:          true,
 		RuntimeDescriptorArray:                             true,
@@ -78,9 +85,11 @@ func New(instance *instance.Instance, physDevice core1_0.PhysicalDevice) (*Devic
 		DescriptorBindingSampledImageUpdateAfterBind:       true,
 		DescriptorBindingStorageBufferUpdateAfterBind:      true,
 		DescriptorBindingStorageTexelBufferUpdateAfterBind: true,
+
+		NextOptions: common.NextOptions{Next: bufferAddressFeatures},
 	}
+
 	dev, _, err := physDevice.CreateDevice(nil, core1_0.DeviceCreateInfo{
-		NextOptions:           common.NextOptions{Next: indexingFeatures},
 		EnabledExtensionNames: deviceExtensions,
 		QueueCreateInfos: []core1_0.DeviceQueueCreateInfo{
 			{
@@ -92,9 +101,12 @@ func New(instance *instance.Instance, physDevice core1_0.PhysicalDevice) (*Devic
 			IndependentBlend: true,
 			DepthClamp:       true,
 
+			ShaderInt64: true,
+
 			MultiDrawIndirect:         true,
 			DrawIndirectFirstInstance: true,
 		},
+		NextOptions: common.NextOptions{Next: indexingFeatures},
 	})
 	if err != nil {
 		return nil, err
@@ -116,6 +128,8 @@ func New(instance *instance.Instance, physDevice core1_0.PhysicalDevice) (*Devic
 		ObjectHandle: driver.VulkanHandle(queue.Ptr().Handle()),
 		ObjectType:   core1_0.ObjectTypeQueue,
 	})
+
+	address := khr_buffer_device_address.CreateExtensionFromDevice(dev)
 
 	//
 	// resolve memory types
@@ -183,8 +197,9 @@ func New(instance *instance.Instance, physDevice core1_0.PhysicalDevice) (*Devic
 	return &Device{
 		ptr:      dev,
 		debug:    debug,
+		address:  address,
 		physical: physDevice,
-		limits:   properties.Limits,
+		limits:   *properties.Limits,
 		memtypes: memtypes,
 		queue:    queue,
 	}, nil
@@ -225,7 +240,7 @@ func (d *Device) GetDepthFormat() core1_0.Format {
 	return depthFormats[0]
 }
 
-func (d *Device) GetLimits() *core1_0.PhysicalDeviceLimits {
+func (d *Device) GetLimits() core1_0.PhysicalDeviceLimits {
 	return d.limits
 }
 
@@ -247,6 +262,11 @@ func (d *Device) Allocate(key string, size int, kind MemoryType) *Memory {
 	ptr, _, err := d.ptr.AllocateMemory(nil, core1_0.MemoryAllocateInfo{
 		AllocationSize:  size,
 		MemoryTypeIndex: mtype.Index,
+		NextOptions: common.NextOptions{
+			Next: core1_1.MemoryAllocateFlagsInfo{
+				Flags: khr_buffer_device_address.MemoryAllocateDeviceAddress,
+			},
+		},
 	})
 	if err != nil {
 		panic(fmt.Sprintf("failed to allocate %d bytes of memory: %s", size, err))
@@ -280,4 +300,14 @@ func (d *Device) SetDebugObjectName(handle driver.VulkanHandle, objType core1_0.
 		ObjectHandle: handle,
 		ObjectType:   objType,
 	})
+}
+
+func (d *Device) GetBufferAddress(buffer core1_0.Buffer) (Address, error) {
+	addr, err := d.address.GetBufferDeviceAddress(d.ptr, khr_buffer_device_address.BufferDeviceAddressInfo{
+		Buffer: buffer,
+	})
+	if err != nil {
+		return 0, err
+	}
+	return Address(addr), nil
 }

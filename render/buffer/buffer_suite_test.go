@@ -26,6 +26,7 @@ var _ buffer.T = (*mockBuffer)(nil)
 func (d *mockBuffer) Size() int                      { return d.size }
 func (d *mockBuffer) Ptr() core1_0.Buffer            { return nil }
 func (d *mockBuffer) Memory() *device.Memory         { return nil }
+func (d *mockBuffer) Address() device.Address        { return device.InvalidAddress }
 func (d *mockBuffer) Read(offset int, data any) int  { return 0 }
 func (d *mockBuffer) Write(offset int, data any) int { return 0 }
 

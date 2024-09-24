@@ -1,26 +1,5 @@
 {
-  "Inputs": {
-    "position": {
-      "Index": 0,
-      "Type": "float"
-    },
-    "tex_x": {
-      "Index": 1,
-      "Type": "float"
-    },
-    "normal": {
-      "Index": 2,
-      "Type": "float"
-    },
-    "tex_y": {
-      "Index": 3,
-      "Type": "float"
-    },
-    "color": {
-      "Index": 4,
-      "Type": "float"
-    }
-  },
+  "Inputs": {},
   "Bindings": {
     "Camera": 0,
     "Objects": 1,

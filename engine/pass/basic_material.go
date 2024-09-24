@@ -25,7 +25,7 @@ type BasicMaterial struct {
 	Descriptors *BasicDescriptors
 	Objects     *ObjectBuffer
 	Meshes      cache.MeshCache
-	Commands    *command.IndirectDrawBuffer
+	Commands    *command.IndirectIndexedDrawBuffer
 
 	id material.ID
 }

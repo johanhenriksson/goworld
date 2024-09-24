@@ -2,6 +2,8 @@ package buffer
 
 import (
 	"errors"
+
+	"github.com/johanhenriksson/goworld/render/device"
 )
 
 var ErrOutOfMemory = errors.New("out of memory")
@@ -25,6 +27,10 @@ func EntireBuffer(buffer T) Block {
 func (b *Block) Buffer() T   { return b.buffer }
 func (b *Block) Size() int   { return b.size }
 func (b *Block) Offset() int { return b.offset }
+
+func (b *Block) Address() device.Address {
+	return b.buffer.Address() + device.Address(b.offset)
+}
 
 func isPowerOfTwo(x uint) bool {
 	return (x & (x - 1)) == 0

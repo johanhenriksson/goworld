@@ -63,7 +63,8 @@ func Compile(assets fs.Filesystem, path string, stage ShaderStage) ([]byte, erro
 	errors := &bytes.Buffer{}
 	args := []string{
 		stageflag,
-		"-O",      // optimize SPIR-V
+		"--target-spv=spv1.5",
+		// "-O",      // optimize SPIR-V
 		"-o", "-", // output file: standard out
 		"-", // input file: standard in
 	}
