@@ -128,7 +128,7 @@ func NewForwardPass(
 	objects := NewObjectBuffer(maxObjects)
 	lights := NewLightBuffer(maxLights)
 	shadows := NewShadowCache(textures, shadowPass.Shadowmap)
-	pipelines := cache.NewPipelineCache(app.Device(), app.Shaders(), pass, target.Frames(), layout)
+	pipelines := cache.NewPipelineCache(app.Device(), app.Shaders(), pass, layout)
 
 	commands := make([]*command.IndirectDrawBuffer, target.Frames())
 	for i := range commands {
