@@ -40,7 +40,7 @@ type Mesh struct {
 	*mesh.Static
 	Size Property[vec2.T]
 
-	data vertex.MutableMesh[vertex.Vertex, uint16]
+	data vertex.MutableMesh[vertex.Vertex, uint32]
 }
 
 type Args struct {
@@ -56,7 +56,7 @@ func NewMesh(pool Pool, args Args) *Mesh {
 		Static: mesh.New(pool, args.Mat),
 		Size:   NewProperty[vec2.T](args.Size),
 	})
-	p.data = vertex.NewTriangles[vertex.Vertex, uint16](Key("plane", p), nil, nil)
+	p.data = vertex.NewTriangles[vertex.Vertex, uint32](Key("plane", p), nil, nil)
 	p.Size.OnChange.Subscribe(func(f vec2.T) { p.refresh() })
 	p.refresh()
 	return p
@@ -79,7 +79,7 @@ func (p *Mesh) refresh() {
 		vertex.New(vec3.New(s.X, -y, s.Y), vec3.UnitYN, vec2.New(uv.X, 0), color.White),     // d2
 	}
 
-	indices := []uint16{
+	indices := []uint32{
 		0, 2, 1, 1, 2, 3, // top
 		5, 6, 4, 7, 6, 5, // bottom
 	}

@@ -133,6 +133,6 @@ func (c *Mesh) generate() {
 	}
 
 	key := Key("cylinder", c)
-	mesh := vertex.NewTriangles(key, data, []uint16{})
+	mesh := vertex.NewTriangles(key, data, []uint32{})
 	c.VertexData.Set(mesh)
 }

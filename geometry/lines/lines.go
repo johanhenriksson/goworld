@@ -16,7 +16,7 @@ type Lines struct {
 type Args struct {
 	Lines []Line
 
-	lineMesh vertex.MutableMesh[vertex.Vertex, uint16]
+	lineMesh vertex.MutableMesh[vertex.Vertex, uint32]
 }
 
 func New(pool object.Pool, args Args) *Lines {
@@ -24,7 +24,7 @@ func New(pool object.Pool, args Args) *Lines {
 		Static: mesh.New(pool, nil),
 		Args:   args,
 	})
-	b.lineMesh = vertex.NewLines(object.Key("lines", b), []vertex.Vertex{}, []uint16{})
+	b.lineMesh = vertex.NewLines(object.Key("lines", b), []vertex.Vertex{}, []uint32{})
 	b.VertexData.Set(b.lineMesh)
 	b.Refresh()
 	return b
@@ -58,5 +58,5 @@ func (li *Lines) Refresh() {
 		b.P = line.End
 		b.C = line.Color
 	}
-	li.lineMesh.Update(vertices, []uint16{})
+	li.lineMesh.Update(vertices, []uint32{})
 }
