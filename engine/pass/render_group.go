@@ -24,6 +24,8 @@ func (r RenderObject) DrawIndirect() command.Draw {
 
 		// Vertex count is actually the number of indices, since indexing is implemented in the shader
 		VertexCount: uint32(r.Indices),
+
+		VertexOffset: 0,
 	}
 }
 
@@ -35,6 +37,7 @@ type RenderGroup struct {
 }
 
 func (m *RenderGroup) Clear() {
+	clear(m.Objects)
 	m.Objects = m.Objects[:0]
 }
 
@@ -59,10 +62,9 @@ func NewRenderPlan() *RenderPlan {
 
 // Clear the rendre plan, preserving the allocated memory
 func (r *RenderPlan) Clear() {
-	for i, g := range r.groups {
-		g.Clear()
-		r.groups[i] = g
-	}
+	clear(r.mapping)
+	clear(r.groups)
+	r.groups = r.groups[:0]
 }
 
 // Add an object to the end of the render plan
@@ -92,6 +94,17 @@ func (r *RenderPlan) Add(pipe *cache.Pipeline, object RenderObject) {
 	r.AddOrdered(pipe, object)
 }
 
-func (r *RenderPlan) Groups() []RenderGroup {
-	return r.groups
+func (r *RenderPlan) Draw(cmd *command.Buffer, indirect *command.IndirectDrawBuffer) {
+	indirect.Reset()
+	for _, group := range r.groups {
+		if len(group.Objects) == 0 {
+			continue
+		}
+		group.Pipeline.Bind(cmd)
+		indirect.BeginDrawIndirect()
+		for _, obj := range group.Objects {
+			indirect.CmdDraw(obj.DrawIndirect())
+		}
+		indirect.EndDrawIndirect(cmd)
+	}
 }

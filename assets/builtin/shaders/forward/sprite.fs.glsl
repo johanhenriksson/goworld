@@ -22,12 +22,16 @@ SAMPLER_ARRAY(3, textures)
 void main() 
 {
 	uint texture0 = object.textures[TEX_SLOT_DIFFUSE];
-	vec4 albedo = texture_array(textures, texture0, in_texcoord) * in_color;
-
-	if (albedo.a < 0.1) { 
+	vec4 albedo = texture_array(textures, texture0, in_texcoord);
+	if (albedo.a < 0.01) { 
 		discard; 
 	}
 
+	// apply tint
+	vec3 tint = mix(vec3(1), in_color.rgb, in_color.a);
+	albedo = vec4(albedo.rgb * tint, albedo.a);
+
+	// calculate lighting
 	int lightCount = lights.settings.Count;
 	vec3 lightColor = ambientLight(lights.settings, 1);
 	for(int i = 0; i < lightCount; i++) {

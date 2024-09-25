@@ -294,14 +294,7 @@ func (p *ForwardPass) Record(cmds command.Recorder, args draw.Args, scene object
 		indirect.Reset()
 		cmd.CmdBeginRenderPass(p.pass, framebuf)
 		cmd.CmdBindGraphicsDescriptor(p.layout, 0, descriptors)
-		for _, group := range p.plan.Groups() {
-			group.Pipeline.Bind(cmd)
-			indirect.BeginDrawIndirect()
-			for _, obj := range group.Objects {
-				indirect.CmdDraw(obj.DrawIndirect())
-			}
-			indirect.EndDrawIndirect(cmd)
-		}
+		p.plan.Draw(cmd, indirect)
 		cmd.CmdEndRenderPass()
 	})
 }

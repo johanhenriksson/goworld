@@ -5,12 +5,15 @@ import (
 	"github.com/johanhenriksson/goworld/core/mesh"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/engine"
+	"github.com/johanhenriksson/goworld/engine/cache"
 	"github.com/johanhenriksson/goworld/engine/uniform"
 	"github.com/johanhenriksson/goworld/math/shape"
 	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/command"
+	"github.com/johanhenriksson/goworld/render/descriptor"
 	"github.com/johanhenriksson/goworld/render/framebuffer"
 	"github.com/johanhenriksson/goworld/render/material"
+	"github.com/johanhenriksson/goworld/render/pipeline"
 	"github.com/johanhenriksson/goworld/render/renderpass"
 	"github.com/johanhenriksson/goworld/render/renderpass/attachment"
 
@@ -24,6 +27,13 @@ const (
 	OutputAttachment   attachment.Name = "output"
 )
 
+type DeferredDescriptors struct {
+	descriptor.Set
+	Camera   *descriptor.Uniform[uniform.Camera]
+	Objects  *descriptor.Storage[uniform.Object]
+	Textures *descriptor.SamplerArray
+}
+
 type DeferredGeometryPass struct {
 	target  engine.Target
 	gbuffer GeometryBuffer
@@ -31,7 +41,16 @@ type DeferredGeometryPass struct {
 	pass    *renderpass.Renderpass
 	fbuf    framebuffer.Array
 
-	materials MaterialCache
+	layout      *pipeline.Layout
+	descLayout  *descriptor.Layout[*DeferredDescriptors]
+	descriptors []*DeferredDescriptors
+	textures    cache.SamplerCache
+	objects     *ObjectBuffer
+	plan        *RenderPlan
+	commands    []*command.IndirectDrawBuffer
+
+	meshes    cache.MeshCache
+	pipelines cache.PipelineCache
 	meshQuery *object.Query[mesh.Mesh]
 }
 
@@ -42,6 +61,9 @@ func NewDeferredGeometryPass(
 	depth engine.Target,
 	gbuffer GeometryBuffer,
 ) *DeferredGeometryPass {
+	maxTextures := 100
+	maxObjects := 1000
+
 	pass := renderpass.New(app.Device(), renderpass.Args{
 		Name: "Deferred Geometry",
 		ColorAttachments: []attachment.Color{
@@ -90,81 +112,121 @@ func NewDeferredGeometryPass(
 		panic(err)
 	}
 
+	// todo: these could probably be global descriptors
+	// pass descriptor layout
+	descLayout := descriptor.NewLayout(app.Device(), "DeferredGeometry", &DeferredDescriptors{
+		Camera: &descriptor.Uniform[uniform.Camera]{
+			Stages: core1_0.StageAll,
+		},
+		Objects: &descriptor.Storage[uniform.Object]{
+			Stages: core1_0.StageAll,
+			Size:   maxObjects,
+		},
+		Textures: &descriptor.SamplerArray{
+			Stages: core1_0.StageFragment,
+			Count:  maxTextures,
+		},
+	})
+	descriptors := descLayout.InstantiateMany(app.Pool(), gbuffer.Frames())
+	layout := pipeline.NewLayout(app.Device(), []descriptor.SetLayout{descLayout}, nil)
+
+	textures := cache.NewSamplerCache(app.Textures(), maxTextures)
+	objects := NewObjectBuffer(maxObjects)
+	pipelines := cache.NewPipelineCache(app.Device(), app.Shaders(), pass, gbuffer.Frames(), layout)
+
+	commands := make([]*command.IndirectDrawBuffer, gbuffer.Frames())
+	for i := range commands {
+		commands[i] = command.NewIndirectDrawBuffer(app.Device(), "Deferred", objects.Size())
+	}
+
 	app.Textures().Fetch(color.White)
 
 	return &DeferredGeometryPass{
 		gbuffer: gbuffer,
-		app:     app,
 		pass:    pass,
+		fbuf:    fbuf,
 
-		fbuf: fbuf,
+		layout:      layout,
+		descLayout:  descLayout,
+		descriptors: descriptors,
+		objects:     objects,
+		textures:    textures,
+		commands:    commands,
+		plan:        NewRenderPlan(),
 
-		materials: NewDeferredMaterialCache(app, pass, gbuffer.Frames()),
+		pipelines: pipelines,
+		meshes:    app.Meshes(),
 		meshQuery: object.NewQuery[mesh.Mesh](),
 	}
 }
 
+func (p *DeferredGeometryPass) fetch(mesh mesh.Mesh) (*cache.GpuMesh, *cache.Pipeline, bool) {
+	gpuMesh, meshReady := p.meshes.TryFetch(mesh.Mesh())
+	if !meshReady {
+		return nil, nil, false
+	}
+
+	mat, matReady := p.pipelines.TryFetch(mesh.Material())
+	if !matReady {
+		return nil, nil, false
+	}
+
+	return gpuMesh, mat, true
+}
+
 func (p *DeferredGeometryPass) Record(cmds command.Recorder, args draw.Args, scene object.Component) {
-	cmds.Record(func(cmd *command.Buffer) {
-		cmd.CmdBeginRenderPass(p.pass, p.fbuf[args.Frame])
-	})
+	descriptors := p.descriptors[args.Frame]
+	indirect := p.commands[args.Frame]
+	framebuf := p.fbuf[args.Frame]
 
-	frustum := shape.FrustumFromMatrix(args.Camera.ViewProj)
+	// update camera descriptor
+	cam := uniform.CameraFromArgs(args)
+	descriptors.Camera.Set(cam)
 
-	// we would like to collect all objects at an earlier stage.
-	// only traverse the scene graph once, and filter the objects based on the pass when generating indirect draw commands.
-	// ideally all passes would share the same objects descriptor
-	// and only changed objects would have their uniform data updated
-	//
-	// when traversing the scene graph, lookup meshes from the gpu cache.
-	// if the mesh is not ready, skip it.
-	//
-	// the object buffer should contain all data required to render the object.
-	// model matrix, texture ids, bounding boxes, etc.
-	// this will be useful later as we move more functionality to the gpu
-	//
-	// problems to solve:
-	// - how to have global uniform data (camera, lights, etc) that is shared between all passes?
-	//   its currently deeply embedded into the material structs, and instantiated for each material
-	// - once the object buffer is filled, the engine is ready to run updates for the next frame.
-	//   how can we run this concurrently?
+	// clear object buffer
+	p.objects.Reset()
 
+	// collect all objects
 	objects := p.meshQuery.
 		Reset().
 		Where(isDrawDeferred).
-		Where(frustumCulled(&frustum)).
 		Collect(scene)
 
-	// meshes := make([]Drawable, 0, len(objects))
-	// for _, obj := range objects {
-	// 	mesh, ok := p.app.Meshes().TryFetch(obj.Mesh())
-	// 	if !ok {
-	// 		continue
-	// 	}
-	//
-	// 	obj.Material().TextureSlots
-	// 	textureIds := AssignMeshTextures(m.Textures, obj, textures)
-	//
-	// 	drawable := DrawableMesh{
-	// 		GpuMesh:  mesh,
-	// 		model:    obj.Transform().Matrix(),
-	// 		textures: textureIds,
-	// 	}
-	//
-	// 	// frustum culling
-	// 	bounds := drawable.Bounds()
-	// 	if !frustum.IntersectsSphere(&bounds) {
-	// 		continue
-	// 	}
-	//
-	// 	meshes = append(meshes, drawable)
-	// }
+	// clear render plan
+	p.plan.Clear()
 
-	cam := uniform.CameraFromArgs(args)
-	groups := MaterialGroups(p.materials, args.Frame, objects)
-	groups.Draw(cmds, cam)
+	for _, meshObject := range objects {
+		mesh, pipeline, ready := p.fetch(meshObject)
+		if !ready {
+			continue
+		}
+
+		// this could happen inside the mesh cache!
+		// basically *GpuMesh could be the entire uniform object
+		// or even the entire object buffer similar to the sampler cache?
+		textureIds := AssignMeshTextures(p.textures, meshObject, pipeline.Slots)
+
+		objectId := p.objects.Store(uniform.Object{
+			Model:    meshObject.Transform().Matrix(),
+			Textures: textureIds,
+			Vertices: mesh.Vertices.Address(),
+			Indices:  mesh.Indices.Address(),
+		})
+
+		p.plan.Add(pipeline, RenderObject{
+			Handle:  objectId,
+			Indices: mesh.IndexCount,
+		})
+	}
+
+	// flush descriptors
+	p.objects.Flush(descriptors.Objects)
+	p.textures.Flush(descriptors.Textures)
 
 	cmds.Record(func(cmd *command.Buffer) {
+		cmd.CmdBeginRenderPass(p.pass, framebuf)
+		cmd.CmdBindGraphicsDescriptor(p.layout, 0, descriptors)
+		p.plan.Draw(cmd, indirect)
 		cmd.CmdEndRenderPass()
 	})
 }
@@ -174,17 +236,25 @@ func (p *DeferredGeometryPass) Name() string {
 }
 
 func (p *DeferredGeometryPass) Destroy() {
-	p.materials.Destroy()
-	p.materials = nil
+	p.textures.Destroy()
 	p.fbuf.Destroy()
-	p.fbuf = nil
 	p.pass.Destroy()
-	p.pass = nil
+	for _, desc := range p.descriptors {
+		desc.Destroy()
+	}
+	for _, commands := range p.commands {
+		commands.Destroy()
+	}
+	p.layout.Destroy()
+	p.descLayout.Destroy()
+	p.pipelines.Destroy()
 }
 
 func isDrawDeferred(m mesh.Mesh) bool {
-	if mat := m.Material(); mat != nil {
-		return mat.Pass == material.Deferred
+	if ref := m.Mesh(); ref != nil {
+		if mat := m.Material(); mat != nil {
+			return mat.Pass == material.Deferred
+		}
 	}
 	return false
 }

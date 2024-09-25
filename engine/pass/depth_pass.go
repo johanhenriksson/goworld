@@ -5,7 +5,6 @@ import (
 	"github.com/johanhenriksson/goworld/core/mesh"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/engine"
-	"github.com/johanhenriksson/goworld/engine/uniform"
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/framebuffer"
 	"github.com/johanhenriksson/goworld/render/renderpass"
@@ -66,18 +65,18 @@ func NewDepthPass(
 }
 
 func (p *DepthPass) Record(cmds command.Recorder, args draw.Args, scene object.Component) {
-	opaque := p.meshQuery.
-		Reset().
-		Where(isDrawDeferred).
-		Collect(scene)
+	// opaque := p.meshQuery.
+	// 	Reset().
+	// 	Where(isDrawDeferred).
+	// 	Collect(scene)
 
 	cmds.Record(func(cmd *command.Buffer) {
 		cmd.CmdBeginRenderPass(p.pass, p.fbuf[args.Frame])
 	})
 
-	cam := uniform.CameraFromArgs(args)
-	groups := MaterialGroups(p.materials, args.Frame, opaque)
-	groups.Draw(cmds, cam)
+	// cam := uniform.CameraFromArgs(args)
+	// groups := MaterialGroups(p.materials, args.Frame, opaque)
+	// groups.Draw(cmds, cam)
 
 	cmds.Record(func(cmd *command.Buffer) {
 		cmd.CmdEndRenderPass()
