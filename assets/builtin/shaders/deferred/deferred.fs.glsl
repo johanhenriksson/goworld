@@ -15,11 +15,8 @@ OUT(0, vec4, diffuse)
 OUT(1, vec4, normal)
 OUT(2, vec4, position)
 
-// OBJECT(1, object, in_object)
+OBJECT(1, object, in_object)
 SAMPLER_ARRAY(2, textures)
-
-layout (scalar, binding = 1) readonly buffer uniform_objects { Object item[]; } _sb_objects;
-Object object = _sb_objects.item[in_object];
 
 void main() 
 {

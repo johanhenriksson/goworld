@@ -132,7 +132,7 @@ func NewDeferredGeometryPass(
 
 	textures := cache.NewSamplerCache(app.Textures(), maxTextures)
 	objects := NewObjectBuffer(maxObjects)
-	pipelines := cache.NewPipelineCache(app.Device(), app.Shaders(), pass, gbuffer.Frames(), layout)
+	pipelines := cache.NewPipelineCache(app.Device(), app.Shaders(), pass, layout)
 
 	commands := make([]*command.IndirectDrawBuffer, gbuffer.Frames())
 	for i := range commands {

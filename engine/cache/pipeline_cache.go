@@ -31,16 +31,14 @@ type pipelineCache struct {
 	device  *device.Device
 	pass    *renderpass.Renderpass
 	shaders ShaderCache
-	frames  int
 	layout  *pipeline.Layout
 }
 
-func NewPipelineCache(dev *device.Device, shaders ShaderCache, pass *renderpass.Renderpass, frames int, layout *pipeline.Layout) PipelineCache {
+func NewPipelineCache(dev *device.Device, shaders ShaderCache, pass *renderpass.Renderpass, layout *pipeline.Layout) PipelineCache {
 	return New[*material.Def, *Pipeline](&pipelineCache{
 		device:  dev,
 		pass:    pass,
 		shaders: shaders,
-		frames:  frames,
 		layout:  layout,
 	})
 }
