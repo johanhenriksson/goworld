@@ -54,10 +54,10 @@ func New(pool object.Pool, args Args) *Mesh {
 func (p *Mesh) generate() {
 	w, h := p.Size.Get().X, p.Size.Get().Y
 	vertices := []vertex.Vertex{
-		vertex.New(vec3.New(-0.5*w, -0.5*h, 0), vec3.Zero, vec2.Zero, color.White),
-		vertex.New(vec3.New(0.5*w, 0.5*h, 0), vec3.Zero, vec2.Zero, color.White),
-		vertex.New(vec3.New(-0.5*w, 0.5*h, 0), vec3.Zero, vec2.Zero, color.White),
-		vertex.New(vec3.New(0.5*w, -0.5*h, 0), vec3.Zero, vec2.Zero, color.White),
+		vertex.New(vec3.New(-0.5*w, -0.5*h, 0), vec3.Zero, vec2.New(0, 1), color.White),
+		vertex.New(vec3.New(0.5*w, 0.5*h, 0), vec3.Zero, vec2.New(1, 0), color.White),
+		vertex.New(vec3.New(-0.5*w, 0.5*h, 0), vec3.Zero, vec2.New(0, 0), color.White),
+		vertex.New(vec3.New(0.5*w, -0.5*h, 0), vec3.Zero, vec2.New(1, 1), color.White),
 	}
 	indices := []uint32{
 		0, 1, 2,

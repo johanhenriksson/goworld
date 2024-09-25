@@ -1,3 +1,6 @@
+#define TEX_SLOT_DIFFUSE 0
+#define TEX_SLOT_NORMAL 1
+
 // Standard engine vertex format
 // Size: 48 bytes
 struct Vertex {
@@ -22,3 +25,7 @@ struct Object {
 
 #define VERTEX_BUFFER(VertexType) layout(buffer_reference, scalar, buffer_reference_align=4) readonly buffer VertexBuffer { VertexType vertex; };
 #define INDEX_BUFFER(IndexType) layout(buffer_reference, scalar, buffer_reference_align=4) readonly buffer IndexBuffer { IndexType index; };
+
+#define OBJECT(bind,name,handle) \
+	layout (scalar, binding = bind) readonly buffer uniform_ ## name { Object item[]; } _sb_ ## name; \
+		Object name = _sb_ ## name.item[handle];

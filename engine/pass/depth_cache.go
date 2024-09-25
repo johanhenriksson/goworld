@@ -57,7 +57,7 @@ func (m *DepthMatCache) Instantiate(def *material.Def, callback func([]Material)
 	pointers := vertex.ParsePointers(def.VertexFormat)
 
 	// fetch shader from cache
-	shader := m.app.Shaders().Fetch(shader.Ref("depth"))
+	shader := m.app.Shaders().Fetch(shader.Ref("pass/depth"))
 
 	// create material
 	pipe := pipeline.New(

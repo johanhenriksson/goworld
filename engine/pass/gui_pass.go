@@ -130,7 +130,7 @@ func NewGuiPass(app engine.App, target engine.Target) *GuiPass {
 	pipe := pipeline.New(app.Device(), pipeline.Args{
 		Pass:       pass,
 		Layout:     playout,
-		Shader:     app.Shaders().Fetch(shader.Ref("ui_quad")),
+		Shader:     app.Shaders().Fetch(shader.Ref("pass/ui_quad")),
 		DepthTest:  true,
 		DepthWrite: true,
 	})

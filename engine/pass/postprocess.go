@@ -108,7 +108,7 @@ func NewPostProcessPass(app engine.App, target engine.Target, input engine.Targe
 		app.Device(),
 		pipeline.Args{
 			Layout:     p.pipeLayout,
-			Shader:     app.Shaders().Fetch(shader.Ref("postprocess")),
+			Shader:     app.Shaders().Fetch(shader.Ref("pass/postprocess")),
 			Pass:       p.pass,
 			Pointers:   vertex.ParsePointers(vertex.Vertex{}),
 			DepthTest:  false,
