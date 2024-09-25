@@ -7,6 +7,17 @@ import (
 	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
+type Draw struct {
+	VertexCount    uint32
+	InstanceCount  uint32
+	VertexOffset   int32
+	InstanceOffset uint32
+}
+
+type DrawBuffer interface {
+	CmdDraw(Draw)
+}
+
 type IndirectDrawBuffer struct {
 	commands    *buffer.Array[Draw]
 	nextIndex   int

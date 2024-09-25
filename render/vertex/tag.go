@@ -59,6 +59,10 @@ func ParsePointers(data interface{}) Pointers {
 	pointers := make(Pointers, 0, el.NumField())
 	for i := 0; i < el.NumField(); i++ {
 		f := el.Field(i)
+		if f.Name == "_" {
+			// skip struct layout fields
+			continue
+		}
 		tagstr := f.Tag.Get("vtx")
 		if tagstr == "skip" {
 			continue

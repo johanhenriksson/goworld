@@ -7,15 +7,27 @@ import (
 	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
-type IndirectIndexedDrawBuffer struct {
+type DrawIndexed struct {
+	IndexCount     uint32
+	InstanceCount  uint32
+	IndexOffset    uint32
+	VertexOffset   int32
+	InstanceOffset uint32
+}
+
+type DrawIndexedBuffer interface {
+	CmdDrawIndexed(DrawIndexed)
+}
+
+type IndirectDrawIndexedBuffer struct {
 	commands    *buffer.Array[DrawIndexed]
 	nextIndex   int
 	batchOffset int
 }
 
-var _ DrawIndexedBuffer = (*IndirectIndexedDrawBuffer)(nil)
+var _ DrawIndexedBuffer = (*IndirectDrawIndexedBuffer)(nil)
 
-func NewIndirectIndexedDrawBuffer(dev *device.Device, key string, size int) *IndirectIndexedDrawBuffer {
+func NewIndirectDrawIndexedBuffer(dev *device.Device, key string, size int) *IndirectDrawIndexedBuffer {
 	cmds := buffer.NewArray[DrawIndexed](dev, buffer.Args{
 		Key:  key,
 		Size: size,
@@ -23,21 +35,21 @@ func NewIndirectIndexedDrawBuffer(dev *device.Device, key string, size int) *Ind
 			core1_0.BufferUsageTransferSrc | core1_0.BufferUsageTransferDst,
 		Memory: device.MemoryTypeShared,
 	})
-	return &IndirectIndexedDrawBuffer{
+	return &IndirectDrawIndexedBuffer{
 		commands: cmds,
 	}
 }
 
-func (i *IndirectIndexedDrawBuffer) Reset() {
+func (i *IndirectDrawIndexedBuffer) Reset() {
 	i.nextIndex = 0
 	i.batchOffset = 0
 }
 
-func (i *IndirectIndexedDrawBuffer) BeginDrawIndirect() {
+func (i *IndirectDrawIndexedBuffer) BeginDrawIndirect() {
 	i.batchOffset = i.nextIndex
 }
 
-func (i *IndirectIndexedDrawBuffer) CmdDrawIndexed(cmd DrawIndexed) {
+func (i *IndirectDrawIndexedBuffer) CmdDrawIndexed(cmd DrawIndexed) {
 	if cmd.IndexCount == 0 {
 		return
 	}
@@ -48,7 +60,7 @@ func (i *IndirectIndexedDrawBuffer) CmdDrawIndexed(cmd DrawIndexed) {
 	i.nextIndex++
 }
 
-func (i *IndirectIndexedDrawBuffer) EndDrawIndirect(cmd *Buffer) {
+func (i *IndirectDrawIndexedBuffer) EndDrawIndirect(cmd *Buffer) {
 	batchCount := i.nextIndex - i.batchOffset
 	if batchCount == 0 {
 		return
@@ -57,10 +69,10 @@ func (i *IndirectIndexedDrawBuffer) EndDrawIndirect(cmd *Buffer) {
 	cmd.CmdDrawIndexedIndirect(i.commands, i.batchOffset*i.commands.Stride(), batchCount, i.commands.Stride())
 }
 
-func (i *IndirectIndexedDrawBuffer) Flush() {
+func (i *IndirectDrawIndexedBuffer) Flush() {
 	i.commands.Flush()
 }
 
-func (i *IndirectIndexedDrawBuffer) Destroy() {
+func (i *IndirectDrawIndexedBuffer) Destroy() {
 	i.commands.Destroy()
 }

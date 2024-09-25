@@ -85,7 +85,7 @@ func (m *DepthMatCache) Instantiate(def *material.Def, callback func([]Material)
 			Descriptors: desc,
 			Objects:     NewObjectBuffer(desc.Objects.Size),
 			Meshes:      m.app.Meshes(),
-			Commands: command.NewIndirectIndexedDrawBuffer(m.app.Device(),
+			Commands: command.NewIndirectDrawIndexedBuffer(m.app.Device(),
 				fmt.Sprintf("DepthCommands:%d", i),
 				desc.Objects.Size),
 		}

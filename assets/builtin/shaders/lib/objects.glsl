@@ -1,3 +1,5 @@
+// Standard engine vertex format
+// Size: 48 bytes
 struct Vertex {
 	vec3 position;
 	vec3 normal;
@@ -9,11 +11,8 @@ struct Object {
 	mat4 model;
 	uint textures[MAX_TEXTURES];
 
-	uint64_t vertexBuffer;
-	uint64_t indexBuffer;
-	
-	uint count;
-	uint _pad; // pad to 8 bytes
+	uint64_t vertexPtr;
+	uint64_t indexPtr;
 };
 
 #define get_object_index() (gl_InstanceIndex)
