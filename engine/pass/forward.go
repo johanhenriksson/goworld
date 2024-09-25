@@ -29,7 +29,6 @@ type ForwardDescriptors struct {
 
 type ForwardPass struct {
 	target engine.Target
-	app    engine.App
 	pass   *renderpass.Renderpass
 	fbuf   framebuffer.Array
 
@@ -40,9 +39,10 @@ type ForwardPass struct {
 	objects     *ObjectBuffer
 	lights      *LightBuffer
 	shadows     *ShadowCache
-	groups      map[material.ID]*MatGroup
+	plan        *RenderPlan
 	commands    []*command.IndirectDrawBuffer
 
+	meshes     cache.MeshCache
 	materials  cache.T[*material.Def, *Pipeline]
 	meshQuery  *object.Query[mesh.Mesh]
 	lightQuery *object.Query[light.T]
@@ -133,7 +133,6 @@ func NewForwardPass(
 
 	return &ForwardPass{
 		target: target,
-		app:    app,
 		pass:   pass,
 		fbuf:   fbuf,
 
@@ -144,70 +143,48 @@ func NewForwardPass(
 		lights:      lights,
 		textures:    textures,
 		shadows:     shadows,
-		groups:      make(map[material.ID]*MatGroup, 32),
 		commands:    commands,
+		plan:        NewRenderPlan(),
 
+		meshes:     app.Meshes(),
 		materials:  NewPipelineCache(app, pass, target.Frames(), layout),
 		meshQuery:  object.NewQuery[mesh.Mesh](),
 		lightQuery: object.NewQuery[light.T](),
 	}
 }
 
-// premise:
-// - its reasonable to have a separate object buffer for each render pass.
-//   this is because there is no overlap between the objects that are rendered in each pass.
-//   however, it might be faster to do a single descriptor set write
-// - two phases:
-//   - collect: gather objects that will be rendered. synchronized between update/render
-//   - record: record commands for each object. runs on the render thread
+func (p *ForwardPass) fetch(mesh mesh.Mesh) (*cache.GpuMesh, *Pipeline, bool) {
+	gpuMesh, meshReady := p.meshes.TryFetch(mesh.Mesh())
+	if !meshReady {
+		return nil, nil, false
+	}
 
-type MatObject struct {
-	Handle  int
-	Indices int
-}
+	mat, matReady := p.materials.TryFetch(mesh.Material())
+	if !matReady {
+		return nil, nil, false
+	}
 
-type MatGroup struct {
-	Material *Pipeline
-	Objects  []MatObject
-}
-
-func (m *MatGroup) Clear() {
-	m.Objects = m.Objects[:0]
-}
-
-func (m *MatGroup) Add(mat *Pipeline, handle, indices int) {
-	m.Material = mat
-	m.Objects = append(m.Objects, MatObject{
-		Handle:  handle,
-		Indices: indices,
-	})
+	return gpuMesh, mat, true
 }
 
 func (p *ForwardPass) Record(cmds command.Recorder, args draw.Args, scene object.Component) {
-	p.Collect(args, scene)
-	p.Record2(cmds, args)
-}
-
-// Within Collect, the render is allowed to query the scene.
-// While Collect is executing, the scene is guaranteed to be in a consistent state.
-// References to scene objects are valid until the end of the Collect function.
-func (p *ForwardPass) Collect(args draw.Args, scene object.Component) {
 	descriptors := p.descriptors[args.Frame]
-
-	lights := p.lightQuery.Reset().Collect(scene)
+	indirect := p.commands[args.Frame]
+	framebuf := p.fbuf[args.Frame]
 
 	// update camera descriptor
 	cam := uniform.CameraFromArgs(args)
 	descriptors.Camera.Set(cam)
 
-	// clear object buffer
-	p.objects.Reset()
-
 	// fill light buffer
+	lights := p.lightQuery.Reset().Collect(scene)
 	p.lights.Reset()
 	for _, lit := range lights {
 		p.lights.Store(lit.LightData(p.shadows))
 	}
+
+	// clear object buffer
+	p.objects.Reset()
 
 	// opaque pass
 	opaqueQuery := p.meshQuery.
@@ -216,82 +193,85 @@ func (p *ForwardPass) Collect(args draw.Args, scene object.Component) {
 		Where(isTransparent(false)).
 		Collect(scene)
 
-	// empty material groups
-	for _, group := range p.groups {
-		group.Clear()
-	}
+	// clear render plan
+	p.plan.Clear()
 
-	for _, msh := range opaqueQuery {
-		gpuMesh, meshReady := p.app.Meshes().TryFetch(msh.Mesh())
-		if !meshReady {
-			continue
-		}
-
-		mat, matReady := p.materials.TryFetch(msh.Material())
-		if !matReady {
+	for _, meshObject := range opaqueQuery {
+		mesh, pipeline, ready := p.fetch(meshObject)
+		if !ready {
 			continue
 		}
 
 		// this could happen inside the mesh cache!
 		// basically *GpuMesh could be the entire uniform object
 		// or even the entire object buffer similar to the sampler cache?
-		textureIds := AssignMeshTextures(p.textures, msh, mat.slots)
+		textureIds := AssignMeshTextures(p.textures, meshObject, pipeline.slots)
 
 		objectId := p.objects.Store(uniform.Object{
-			Model:    msh.Transform().Matrix(),
+			Model:    meshObject.Transform().Matrix(),
 			Textures: textureIds,
-			Vertices: gpuMesh.Vertices.Address(),
-			Indices:  gpuMesh.Indices.Address(),
+			Vertices: mesh.Vertices.Address(),
+			Indices:  mesh.Indices.Address(),
 		})
 
-		if _, ok := p.groups[mat.id]; !ok {
-			p.groups[mat.id] = &MatGroup{
-				Objects: make([]MatObject, 0, 32),
-			}
-		}
-		p.groups[mat.id].Add(mat, objectId, gpuMesh.IndexCount)
+		p.plan.Add(pipeline, RenderObject{
+			Handle:  objectId,
+			Indices: mesh.IndexCount,
+		})
 	}
 
-	// opaque := MaterialGroups(p.materials, args.Frame, opaqueQuery)
-
 	// transparent pass
-	// transparentQuery := p.meshQuery.
-	// 	Reset().
-	// 	Where(isDrawForward).
-	// 	Where(isTransparent(true)).
-	// 	Collect(scene)
+	transparentQuery := p.meshQuery.
+		Reset().
+		Where(isDrawForward).
+		Where(isTransparent(true)).
+		Collect(scene)
+
+	// todo: depth sort transparent meshes
 	// transparent := DepthSortGroups(p.materials, args.Frame, cam, transparentQuery)
+
+	for _, meshObject := range transparentQuery {
+		mesh, pipeline, ready := p.fetch(meshObject)
+		if !ready {
+			continue
+		}
+
+		// this could happen inside the mesh cache!
+		// basically *GpuMesh could be the entire uniform object
+		// or even the entire object buffer similar to the sampler cache?
+		textureIds := AssignMeshTextures(p.textures, meshObject, pipeline.slots)
+
+		objectId := p.objects.Store(uniform.Object{
+			Model:    meshObject.Transform().Matrix(),
+			Textures: textureIds,
+			Vertices: mesh.Vertices.Address(),
+			Indices:  mesh.Indices.Address(),
+		})
+
+		p.plan.AddOrdered(pipeline, RenderObject{
+			Handle:  objectId,
+			Indices: mesh.IndexCount,
+		})
+	}
 
 	// flush descriptors
 	p.lights.Flush(descriptors.Lights)
 	p.objects.Flush(descriptors.Objects)
 	p.textures.Flush(descriptors.Textures)
-}
 
-// Record2 records commands for each object in the render context
-// Record2 runs in parallel with scene updates
-func (p *ForwardPass) Record2(cmds command.Recorder, args draw.Args) {
-	descriptors := p.descriptors[args.Frame]
-	indirect := p.commands[args.Frame]
-	framebuf := p.fbuf[args.Frame]
+	//
+	// phase 2: record commands
+	//
 
 	cmds.Record(func(cmd *command.Buffer) {
 		indirect.Reset()
 		cmd.CmdBeginRenderPass(p.pass, framebuf)
 		cmd.CmdBindGraphicsDescriptor(p.layout, 0, descriptors)
-		for _, group := range p.groups {
-			group.Material.Bind(cmd)
+		for _, group := range p.plan.Groups() {
+			group.Pipeline.Bind(cmd)
 			indirect.BeginDrawIndirect()
 			for _, obj := range group.Objects {
-				indirect.CmdDraw(command.Draw{
-					InstanceCount: 1,
-
-					// InstanceOffset is the index of the object properties in the object buffer
-					InstanceOffset: uint32(obj.Handle),
-
-					// Vertex count is actually the number of indices, since indexing is implemented in the shader
-					VertexCount: uint32(obj.Indices),
-				})
+				indirect.CmdDraw(obj.DrawIndirect())
 			}
 			indirect.EndDrawIndirect(cmd)
 		}
