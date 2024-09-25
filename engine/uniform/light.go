@@ -2,6 +2,7 @@ package uniform
 
 import (
 	"fmt"
+	"structs"
 	"unsafe"
 
 	"github.com/johanhenriksson/goworld/math/mat4"
@@ -13,6 +14,8 @@ const ShadowCascades = 4
 const LightPadding = 74
 
 type Light struct {
+	_ structs.HostLayout
+
 	ViewProj  [ShadowCascades]mat4.T
 	Shadowmap [ShadowCascades]uint32
 	Distance  [ShadowCascades]float32
@@ -25,6 +28,8 @@ type Light struct {
 }
 
 type LightSettings struct {
+	_ structs.HostLayout
+
 	AmbientColor       color.T
 	AmbientIntensity   float32
 	Count              int32

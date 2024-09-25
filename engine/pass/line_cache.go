@@ -85,7 +85,7 @@ func (m *LineMatCache) Instantiate(def *material.Def, callback func([]Material))
 			Descriptors: desc,
 			Objects:     NewObjectBuffer(desc.Objects.Size),
 			Meshes:      m.app.Meshes(),
-			Commands: command.NewIndirectIndexedDrawBuffer(m.app.Device(),
+			Commands: command.NewIndirectDrawIndexedBuffer(m.app.Device(),
 				fmt.Sprintf("LineCommands:%d", i),
 				desc.Objects.Size),
 		}

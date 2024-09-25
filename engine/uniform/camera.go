@@ -1,6 +1,8 @@
 package uniform
 
 import (
+	"structs"
+
 	"github.com/johanhenriksson/goworld/core/draw"
 	"github.com/johanhenriksson/goworld/math/mat4"
 	"github.com/johanhenriksson/goworld/math/vec2"
@@ -8,6 +10,8 @@ import (
 )
 
 type Camera struct {
+	_ structs.HostLayout
+
 	Proj        mat4.T
 	View        mat4.T
 	ViewProj    mat4.T

@@ -161,18 +161,26 @@ func NewForwardPass(
 //   - collect: gather objects that will be rendered. synchronized between update/render
 //   - record: record commands for each object. runs on the render thread
 
+type MatObject struct {
+	Handle  int
+	Indices int
+}
+
 type MatGroup struct {
 	Material *Pipeline
-	Objects  []int
+	Objects  []MatObject
 }
 
 func (m *MatGroup) Clear() {
 	m.Objects = m.Objects[:0]
 }
 
-func (m *MatGroup) Add(mat *Pipeline, obj int) {
+func (m *MatGroup) Add(mat *Pipeline, handle, indices int) {
 	m.Material = mat
-	m.Objects = append(m.Objects, obj)
+	m.Objects = append(m.Objects, MatObject{
+		Handle:  handle,
+		Indices: indices,
+	})
 }
 
 func (p *ForwardPass) Record(cmds command.Recorder, args draw.Args, scene object.Component) {
@@ -184,16 +192,13 @@ func (p *ForwardPass) Record(cmds command.Recorder, args draw.Args, scene object
 // While Collect is executing, the scene is guaranteed to be in a consistent state.
 // References to scene objects are valid until the end of the Collect function.
 func (p *ForwardPass) Collect(args draw.Args, scene object.Component) {
-	//
-	// phase 1: collect
-	//
-	desc := p.descriptors[args.Frame]
+	descriptors := p.descriptors[args.Frame]
 
 	lights := p.lightQuery.Reset().Collect(scene)
 
 	// update camera descriptor
 	cam := uniform.CameraFromArgs(args)
-	desc.Camera.Set(cam)
+	descriptors.Camera.Set(cam)
 
 	// clear object buffer
 	p.objects.Reset()
@@ -203,7 +208,6 @@ func (p *ForwardPass) Collect(args draw.Args, scene object.Component) {
 	for _, lit := range lights {
 		p.lights.Store(lit.LightData(p.shadows))
 	}
-	p.lights.Flush(desc.Lights)
 
 	// opaque pass
 	opaqueQuery := p.meshQuery.
@@ -238,15 +242,14 @@ func (p *ForwardPass) Collect(args draw.Args, scene object.Component) {
 			Textures: textureIds,
 			Vertices: gpuMesh.Vertices.Address(),
 			Indices:  gpuMesh.Indices.Address(),
-			Count:    uint32(gpuMesh.IndexCount),
 		})
 
 		if _, ok := p.groups[mat.id]; !ok {
 			p.groups[mat.id] = &MatGroup{
-				Objects: make([]int, 0, 32),
+				Objects: make([]MatObject, 0, 32),
 			}
 		}
-		p.groups[mat.id].Add(mat, objectId)
+		p.groups[mat.id].Add(mat, objectId, gpuMesh.IndexCount)
 	}
 
 	// opaque := MaterialGroups(p.materials, args.Frame, opaqueQuery)
@@ -260,9 +263,9 @@ func (p *ForwardPass) Collect(args draw.Args, scene object.Component) {
 	// transparent := DepthSortGroups(p.materials, args.Frame, cam, transparentQuery)
 
 	// flush descriptors
-	p.lights.Flush(desc.Lights)
-	p.objects.Flush(desc.Objects)
-	p.textures.Flush(desc.Textures)
+	p.lights.Flush(descriptors.Lights)
+	p.objects.Flush(descriptors.Objects)
+	p.textures.Flush(descriptors.Textures)
 }
 
 // Record2 records commands for each object in the render context
@@ -272,33 +275,26 @@ func (p *ForwardPass) Record2(cmds command.Recorder, args draw.Args) {
 	indirect := p.commands[args.Frame]
 	framebuf := p.fbuf[args.Frame]
 
-	indirect.Reset()
 	cmds.Record(func(cmd *command.Buffer) {
+		indirect.Reset()
 		cmd.CmdBeginRenderPass(p.pass, framebuf)
 		cmd.CmdBindGraphicsDescriptor(p.layout, 0, descriptors)
-	})
-	cmds.Record(func(cmd *command.Buffer) {
 		for _, group := range p.groups {
 			group.Material.Bind(cmd)
 			indirect.BeginDrawIndirect()
 			for _, obj := range group.Objects {
-				// awkwardly retrieve the index count from the object buffer
-				// todo: store count along with the object handle instead
-
-				m := p.objects.buffer[obj]
 				indirect.CmdDraw(command.Draw{
-					VertexCount:    uint32(m.Count), // hmm
-					InstanceCount:  1,
-					VertexOffset:   0,
-					InstanceOffset: uint32(obj),
+					InstanceCount: 1,
+
+					// InstanceOffset is the index of the object properties in the object buffer
+					InstanceOffset: uint32(obj.Handle),
+
+					// Vertex count is actually the number of indices, since indexing is implemented in the shader
+					VertexCount: uint32(obj.Indices),
 				})
 			}
 			indirect.EndDrawIndirect(cmd)
 		}
-	})
-	// opaque.Draw(cmds, cam, lights)
-	// transparent.Draw(cmds, cam, lights)
-	cmds.Record(func(cmd *command.Buffer) {
 		cmd.CmdEndRenderPass()
 	})
 }

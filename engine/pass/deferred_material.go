@@ -24,7 +24,7 @@ type DeferredMaterial struct {
 	Objects     *ObjectBuffer
 	textures    cache.SamplerCache
 	Meshes      cache.MeshCache
-	Commands    *command.IndirectIndexedDrawBuffer
+	Commands    *command.IndirectDrawIndexedBuffer
 
 	id    material.ID
 	slots []texture.Slot
