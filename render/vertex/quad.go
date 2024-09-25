@@ -12,7 +12,7 @@ func ScreenQuad(key string) Mesh {
 		T(vec3.New(1, 1, 0), vec3.Zero, vec2.New(1, 1)),
 		T(vec3.New(-1, 1, 0), vec3.Zero, vec2.New(0, 1)),
 		T(vec3.New(1, -1, 0), vec3.Zero, vec2.New(1, 0)),
-	}, []uint16{
+	}, []uint32{
 		0, 1, 2,
 		0, 3, 1,
 	})

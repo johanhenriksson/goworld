@@ -100,6 +100,6 @@ func (c *Mesh) generate() {
 	}
 
 	key := Key("cone", c)
-	mesh := vertex.NewTriangles(key, data, []uint16{})
+	mesh := vertex.NewTriangles(key, data, []uint32{})
 	c.VertexData.Set(mesh)
 }

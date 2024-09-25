@@ -15,7 +15,7 @@ type Mesh struct {
 	*mesh.Static
 	Subdivisions object.Property[int]
 
-	data vertex.MutableMesh[vertex.Vertex, uint16]
+	data vertex.MutableMesh[vertex.Vertex, uint32]
 }
 
 func New(pool object.Pool, mat *material.Def) *Mesh {
@@ -24,7 +24,7 @@ func New(pool object.Pool, mat *material.Def) *Mesh {
 		Subdivisions: object.NewProperty(3),
 	})
 	m.SetTexture(texture.Diffuse, texture.Checker)
-	m.data = vertex.NewTriangles[vertex.Vertex, uint16](object.Key("sphere", m), nil, nil)
+	m.data = vertex.NewTriangles[vertex.Vertex, uint32](object.Key("sphere", m), nil, nil)
 	m.Subdivisions.OnChange.Subscribe(func(int) { m.refresh() })
 	m.refresh()
 	return m

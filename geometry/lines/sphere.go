@@ -14,7 +14,7 @@ type Sphere struct {
 	Radius object.Property[float32]
 	Color  object.Property[color.T]
 
-	data   vertex.MutableMesh[vertex.Vertex, uint16]
+	data   vertex.MutableMesh[vertex.Vertex, uint32]
 	xcolor color.T
 	ycolor color.T
 	zcolor color.T
@@ -36,7 +36,7 @@ func NewSphere(pool object.Pool, args SphereArgs) *Sphere {
 		b.SetAxisColors(c, c, c)
 		b.refresh()
 	})
-	b.data = vertex.NewLines[vertex.Vertex, uint16](object.Key("sphere", b), nil, nil)
+	b.data = vertex.NewLines[vertex.Vertex, uint32](object.Key("sphere", b), nil, nil)
 	b.SetAxisColors(args.Color, args.Color, args.Color)
 	return b
 }
