@@ -1,6 +1,8 @@
 package pass
 
 import (
+	"sort"
+
 	"github.com/johanhenriksson/goworld/core/draw"
 	"github.com/johanhenriksson/goworld/core/light"
 	"github.com/johanhenriksson/goworld/core/mesh"
@@ -8,6 +10,7 @@ import (
 	"github.com/johanhenriksson/goworld/engine"
 	"github.com/johanhenriksson/goworld/engine/cache"
 	"github.com/johanhenriksson/goworld/engine/uniform"
+	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/descriptor"
 	"github.com/johanhenriksson/goworld/render/framebuffer"
@@ -56,6 +59,11 @@ func NewForwardPass(
 	depth engine.Target,
 	shadowPass *Shadowpass,
 ) *ForwardPass {
+	// todo: arguments/settings
+	maxLights := 256
+	maxTextures := 100
+	maxObjects := 1000
+
 	pass := renderpass.New(app.Device(), renderpass.Args{
 		Name: "Forward",
 		ColorAttachments: []attachment.Color{
@@ -94,16 +102,6 @@ func NewForwardPass(
 		panic(err)
 	}
 
-	// todo: arguments
-	maxLights := 256
-	maxTextures := 100
-	maxObjects := 1000
-
-	textures := cache.NewSamplerCache(app.Textures(), maxTextures)
-	objects := NewObjectBuffer(maxObjects)
-	lights := NewLightBuffer(maxLights)
-	shadows := NewShadowCache(textures, shadowPass.Shadowmap)
-
 	// todo: these could probably be global descriptors
 	// pass descriptor layout
 	descLayout := descriptor.NewLayout(app.Device(), "Forward", &ForwardDescriptors{
@@ -112,19 +110,25 @@ func NewForwardPass(
 		},
 		Objects: &descriptor.Storage[uniform.Object]{
 			Stages: core1_0.StageAll,
-			Size:   objects.Size(),
+			Size:   maxObjects,
 		},
 		Lights: &descriptor.Storage[uniform.Light]{
 			Stages: core1_0.StageAll,
-			Size:   lights.Size(),
+			Size:   maxLights,
 		},
 		Textures: &descriptor.SamplerArray{
 			Stages: core1_0.StageFragment,
-			Count:  textures.Size(),
+			Count:  maxTextures,
 		},
 	})
 	descriptors := descLayout.InstantiateMany(app.Pool(), target.Frames())
 	layout := pipeline.NewLayout(app.Device(), []descriptor.SetLayout{descLayout}, nil)
+
+	textures := cache.NewSamplerCache(app.Textures(), maxTextures)
+	objects := NewObjectBuffer(maxObjects)
+	lights := NewLightBuffer(maxLights)
+	shadows := NewShadowCache(textures, shadowPass.Shadowmap)
+	pipelines := cache.NewPipelineCache(app.Device(), app.Shaders(), pass, target.Frames(), layout)
 
 	commands := make([]*command.IndirectDrawBuffer, target.Frames())
 	for i := range commands {
@@ -146,8 +150,8 @@ func NewForwardPass(
 		commands:    commands,
 		plan:        NewRenderPlan(),
 
+		pipelines:  pipelines,
 		meshes:     app.Meshes(),
-		pipelines:  cache.NewPipelineCache(app.Device(), app.Shaders(), pass, target.Frames(), layout),
 		meshQuery:  object.NewQuery[mesh.Mesh](),
 		lightQuery: object.NewQuery[light.T](),
 	}
@@ -165,6 +169,37 @@ func (p *ForwardPass) fetch(mesh mesh.Mesh) (*cache.GpuMesh, *cache.Pipeline, bo
 	}
 
 	return gpuMesh, mat, true
+}
+
+type transparentObject struct {
+	Mesh     mesh.Mesh
+	GpuMesh  *cache.GpuMesh
+	Pipeline *cache.Pipeline
+}
+
+func (p *ForwardPass) depthSort(objects []mesh.Mesh, eye vec3.T) []transparentObject {
+	meshes := make([]transparentObject, 0, len(objects))
+	for _, meshObject := range objects {
+		mesh, pipeline, ready := p.fetch(meshObject)
+		if !ready {
+			continue
+		}
+
+		meshes = append(meshes, transparentObject{
+			Mesh:     meshObject,
+			GpuMesh:  mesh,
+			Pipeline: pipeline,
+		})
+	}
+	sort.SliceStable(meshes, func(i, j int) bool {
+		// return true if meshes[i] is closer than meshes[j]
+		pi, pj := meshes[i].Mesh.Transform().WorldPosition(), meshes[j].Mesh.Transform().WorldPosition()
+		bi, bj := meshes[i].GpuMesh.Bounds(), meshes[j].GpuMesh.Bounds()
+		di := vec3.Distance(eye, bi.Center.Add(pi)) - bi.Radius
+		dj := vec3.Distance(eye, bj.Center.Add(pj)) - bj.Radius
+		return di < dj
+	})
+	return meshes
 }
 
 func (p *ForwardPass) Record(cmds command.Recorder, args draw.Args, scene object.Component) {
@@ -227,30 +262,22 @@ func (p *ForwardPass) Record(cmds command.Recorder, args draw.Args, scene object
 		Where(isTransparent(true)).
 		Collect(scene)
 
-	// todo: depth sort transparent meshes
-	// transparent := DepthSortGroups(p.materials, args.Frame, cam, transparentQuery)
+	// depth sort transparent meshes
+	transparentObjects := p.depthSort(transparentQuery, args.Camera.Position)
 
-	for _, meshObject := range transparentQuery {
-		mesh, pipeline, ready := p.fetch(meshObject)
-		if !ready {
-			continue
-		}
-
-		// this could happen inside the mesh cache!
-		// basically *GpuMesh could be the entire uniform object
-		// or even the entire object buffer similar to the sampler cache?
-		textureIds := AssignMeshTextures(p.textures, meshObject, pipeline.Slots)
+	for _, t := range transparentObjects {
+		textureIds := AssignMeshTextures(p.textures, t.Mesh, t.Pipeline.Slots)
 
 		objectId := p.objects.Store(uniform.Object{
-			Model:    meshObject.Transform().Matrix(),
+			Model:    t.Mesh.Transform().Matrix(),
 			Textures: textureIds,
-			Vertices: mesh.Vertices.Address(),
-			Indices:  mesh.Indices.Address(),
+			Vertices: t.GpuMesh.Vertices.Address(),
+			Indices:  t.GpuMesh.Indices.Address(),
 		})
 
-		p.plan.AddOrdered(pipeline, RenderObject{
+		p.plan.AddOrdered(t.Pipeline, RenderObject{
 			Handle:  objectId,
-			Indices: mesh.IndexCount,
+			Indices: t.GpuMesh.IndexCount,
 		})
 	}
 
