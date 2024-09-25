@@ -110,21 +110,22 @@ func (d *Layout[S]) VariableCount() int {
 }
 
 func (d *Layout[S]) Instantiate(pool *Pool) S {
-	set := pool.Allocate(d)
-	copy, descriptors := CopyDescriptorStruct(d.set, set)
-	for binding, descriptor := range descriptors {
-		descriptor.Initialize(pool.device, set, binding)
-		set.adopt(descriptor)
-	}
-	return copy
+	sets := d.InstantiateMany(pool, 1)
+	return sets[0]
 }
 
 func (d *Layout[S]) InstantiateMany(pool *Pool, count int) []S {
-	sets := make([]S, count)
+	sets := pool.AllocateMany(d, count)
+	structs := make([]S, count)
 	for i := range sets {
-		sets[i] = d.Instantiate(pool)
+		copy, descriptors := CopyDescriptorStruct(d.set, sets[i])
+		for binding, descriptor := range descriptors {
+			descriptor.Initialize(pool.device, sets[i], binding)
+			sets[i].adopt(descriptor)
+		}
+		structs[i] = copy
 	}
-	return sets
+	return structs
 }
 
 func (d *Layout[S]) Destroy() {
