@@ -12,7 +12,7 @@ import (
 func StandardDeferred() *Def {
 	return &Def{
 		Pass:         Deferred,
-		Shader:       "deferred/textured",
+		Shader:       "deferred/deferred",
 		VertexFormat: vertex.Vertex{},
 		DepthTest:    true,
 		DepthWrite:   true,
