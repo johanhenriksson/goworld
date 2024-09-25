@@ -1,6 +1,7 @@
 package pass
 
 import (
+	"github.com/johanhenriksson/goworld/engine/cache"
 	"github.com/johanhenriksson/goworld/render/command"
 	"github.com/johanhenriksson/goworld/render/material"
 )
@@ -29,7 +30,7 @@ func (r RenderObject) DrawIndirect() command.Draw {
 // RenderGroup is a batch of objects that share the same material.
 // All the objects in a group will be rendered using a single indirect draw call.
 type RenderGroup struct {
-	Pipeline *Pipeline
+	Pipeline *cache.Pipeline
 	Objects  []RenderObject
 }
 
@@ -37,7 +38,7 @@ func (m *RenderGroup) Clear() {
 	m.Objects = m.Objects[:0]
 }
 
-func (m *RenderGroup) Add(mat *Pipeline, object RenderObject) {
+func (m *RenderGroup) Add(mat *cache.Pipeline, object RenderObject) {
 	m.Pipeline = mat
 	m.Objects = append(m.Objects, object)
 }
@@ -66,9 +67,9 @@ func (r *RenderPlan) Clear() {
 
 // Add an object to the end of the render plan
 // If the material is already in the last item in the plan, the object will be added to the existing group
-func (r *RenderPlan) AddOrdered(pipe *Pipeline, object RenderObject) {
+func (r *RenderPlan) AddOrdered(pipe *cache.Pipeline, object RenderObject) {
 	index := len(r.groups)
-	if index > 0 && r.groups[index-1].Pipeline.id == pipe.id {
+	if index > 0 && r.groups[index-1].Pipeline.ID == pipe.ID {
 		r.groups[index-1].Add(pipe, object)
 		return
 	}
@@ -76,15 +77,15 @@ func (r *RenderPlan) AddOrdered(pipe *Pipeline, object RenderObject) {
 		Pipeline: nil,
 		Objects:  make([]RenderObject, 0, 32),
 	})
-	r.mapping[pipe.id] = index
+	r.mapping[pipe.ID] = index
 	r.groups[index].Add(pipe, object)
 }
 
 // Add an object to the render plan
 // If the material is already in the plan, the object will be added to the existing group
 // Otherwise a new group will be created
-func (r *RenderPlan) Add(pipe *Pipeline, object RenderObject) {
-	if index, exists := r.mapping[pipe.id]; exists {
+func (r *RenderPlan) Add(pipe *cache.Pipeline, object RenderObject) {
+	if index, exists := r.mapping[pipe.ID]; exists {
 		r.groups[index].Add(pipe, object)
 		return
 	}

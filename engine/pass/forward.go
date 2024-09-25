@@ -43,7 +43,7 @@ type ForwardPass struct {
 	commands    []*command.IndirectDrawBuffer
 
 	meshes     cache.MeshCache
-	materials  cache.T[*material.Def, *Pipeline]
+	pipelines  cache.PipelineCache
 	meshQuery  *object.Query[mesh.Mesh]
 	lightQuery *object.Query[light.T]
 }
@@ -147,19 +147,19 @@ func NewForwardPass(
 		plan:        NewRenderPlan(),
 
 		meshes:     app.Meshes(),
-		materials:  NewPipelineCache(app, pass, target.Frames(), layout),
+		pipelines:  cache.NewPipelineCache(app.Device(), app.Shaders(), pass, target.Frames(), layout),
 		meshQuery:  object.NewQuery[mesh.Mesh](),
 		lightQuery: object.NewQuery[light.T](),
 	}
 }
 
-func (p *ForwardPass) fetch(mesh mesh.Mesh) (*cache.GpuMesh, *Pipeline, bool) {
+func (p *ForwardPass) fetch(mesh mesh.Mesh) (*cache.GpuMesh, *cache.Pipeline, bool) {
 	gpuMesh, meshReady := p.meshes.TryFetch(mesh.Mesh())
 	if !meshReady {
 		return nil, nil, false
 	}
 
-	mat, matReady := p.materials.TryFetch(mesh.Material())
+	mat, matReady := p.pipelines.TryFetch(mesh.Material())
 	if !matReady {
 		return nil, nil, false
 	}
@@ -205,7 +205,7 @@ func (p *ForwardPass) Record(cmds command.Recorder, args draw.Args, scene object
 		// this could happen inside the mesh cache!
 		// basically *GpuMesh could be the entire uniform object
 		// or even the entire object buffer similar to the sampler cache?
-		textureIds := AssignMeshTextures(p.textures, meshObject, pipeline.slots)
+		textureIds := AssignMeshTextures(p.textures, meshObject, pipeline.Slots)
 
 		objectId := p.objects.Store(uniform.Object{
 			Model:    meshObject.Transform().Matrix(),
@@ -239,7 +239,7 @@ func (p *ForwardPass) Record(cmds command.Recorder, args draw.Args, scene object
 		// this could happen inside the mesh cache!
 		// basically *GpuMesh could be the entire uniform object
 		// or even the entire object buffer similar to the sampler cache?
-		textureIds := AssignMeshTextures(p.textures, meshObject, pipeline.slots)
+		textureIds := AssignMeshTextures(p.textures, meshObject, pipeline.Slots)
 
 		objectId := p.objects.Store(uniform.Object{
 			Model:    meshObject.Transform().Matrix(),
@@ -295,7 +295,7 @@ func (p *ForwardPass) Destroy() {
 	}
 	p.layout.Destroy()
 	p.descLayout.Destroy()
-	p.materials.Destroy()
+	p.pipelines.Destroy()
 }
 
 func isDrawForward(m mesh.Mesh) bool {

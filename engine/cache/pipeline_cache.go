@@ -1,9 +1,8 @@
-package pass
+package cache
 
 import (
-	"github.com/johanhenriksson/goworld/engine"
-	"github.com/johanhenriksson/goworld/engine/cache"
 	"github.com/johanhenriksson/goworld/render/command"
+	"github.com/johanhenriksson/goworld/render/device"
 	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/pipeline"
 	"github.com/johanhenriksson/goworld/render/renderpass"
@@ -13,8 +12,8 @@ import (
 )
 
 type Pipeline struct {
-	id       material.ID
-	slots    []texture.Slot
+	ID       material.ID
+	Slots    []texture.Slot
 	pipeline *pipeline.Pipeline
 }
 
@@ -26,27 +25,29 @@ func (m *Pipeline) Destroy() {
 	m.pipeline.Destroy()
 }
 
-type PipelineCache struct {
-	app     engine.App
+type PipelineCache T[*material.Def, *Pipeline]
+
+type pipelineCache struct {
+	device  *device.Device
 	pass    *renderpass.Renderpass
-	shaders cache.ShaderCache
+	shaders ShaderCache
 	frames  int
 	layout  *pipeline.Layout
 }
 
-func NewPipelineCache(app engine.App, pass *renderpass.Renderpass, frames int, layout *pipeline.Layout) cache.T[*material.Def, *Pipeline] {
-	return cache.New[*material.Def, *Pipeline](&PipelineCache{
-		app:     app,
+func NewPipelineCache(dev *device.Device, shaders ShaderCache, pass *renderpass.Renderpass, frames int, layout *pipeline.Layout) PipelineCache {
+	return New[*material.Def, *Pipeline](&pipelineCache{
+		device:  dev,
 		pass:    pass,
-		shaders: app.Shaders(),
+		shaders: shaders,
 		frames:  frames,
 		layout:  layout,
 	})
 }
 
-func (m *PipelineCache) Name() string { return "ForwardMaterials" }
+func (m *pipelineCache) Name() string { return "ForwardMaterials" }
 
-func (m *PipelineCache) Instantiate(def *material.Def, callback func(*Pipeline)) {
+func (m *pipelineCache) Instantiate(def *material.Def, callback func(*Pipeline)) {
 	if def == nil {
 		def = material.StandardForward()
 	}
@@ -59,12 +60,12 @@ func (m *PipelineCache) Instantiate(def *material.Def, callback func(*Pipeline))
 
 	// create material
 	pipe := pipeline.New(
-		m.app.Device(),
+		m.device,
 		pipeline.Args{
 			Shader:     shader,
 			Layout:     m.layout,
 			Pass:       m.pass,
-			Subpass:    MainSubpass,
+			Subpass:    "main",
 			Pointers:   pointers,
 			DepthTest:  def.DepthTest,
 			DepthWrite: def.DepthWrite,
@@ -75,15 +76,15 @@ func (m *PipelineCache) Instantiate(def *material.Def, callback func(*Pipeline))
 		})
 
 	callback(&Pipeline{
-		id:       def.Hash(),
-		slots:    shader.Textures(),
+		ID:       def.Hash(),
+		Slots:    shader.Textures(),
 		pipeline: pipe,
 	})
 }
 
-func (m *PipelineCache) Destroy() {
+func (m *pipelineCache) Destroy() {
 }
 
-func (m *PipelineCache) Delete(mat *Pipeline) {
+func (m *pipelineCache) Delete(mat *Pipeline) {
 	mat.Destroy()
 }
