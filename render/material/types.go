@@ -24,7 +24,7 @@ func StandardDeferred() *Def {
 func StandardForward() *Def {
 	return &Def{
 		Pass:         Forward,
-		Shader:       "forward/textured",
+		Shader:       "forward/forward",
 		VertexFormat: vertex.Vertex{},
 		DepthTest:    true,
 		DepthWrite:   true,
@@ -46,19 +46,6 @@ func TransparentForward() *Def {
 		Primitive:    vertex.Triangles,
 		CullMode:     vertex.CullBack,
 		Transparent:  true,
-	}
-}
-
-func ColoredForward() *Def {
-	return &Def{
-		Pass:         Forward,
-		Shader:       "forward/color",
-		VertexFormat: vertex.Vertex{},
-		DepthTest:    true,
-		DepthWrite:   true,
-		DepthFunc:    core1_0.CompareOpLessOrEqual,
-		Primitive:    vertex.Triangles,
-		CullMode:     vertex.CullBack,
 	}
 }
 

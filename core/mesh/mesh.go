@@ -1,11 +1,10 @@
 package mesh
 
 import (
-	"fmt"
-
 	"github.com/johanhenriksson/goworld/assets"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/math/vec3"
+	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/texture"
 	"github.com/johanhenriksson/goworld/render/vertex"
@@ -84,7 +83,7 @@ func (m *Static) Mesh() assets.Mesh {
 func (m *Static) Texture(slot texture.Slot) assets.Texture {
 	t, exists := m.Textures.Get(slot)
 	if !exists {
-		panic(fmt.Errorf("texture slot %s does not exist", slot))
+		return color.White
 	}
 	return t
 }

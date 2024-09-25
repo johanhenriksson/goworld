@@ -35,7 +35,7 @@ func NewArrow(pool Pool, clr color.T) *Arrow {
 		Collider:  physics.NewCompound(pool),
 
 		Head: Builder(cone.New(pool, cone.Args{
-			Mat:      material.ColoredForward(),
+			Mat:      material.StandardForward(),
 			Radius:   coneRadius,
 			Height:   coneHeight,
 			Segments: segments,
@@ -45,7 +45,7 @@ func NewArrow(pool Pool, clr color.T) *Arrow {
 			Create(),
 
 		Body: Builder(cylinder.New(pool, cylinder.Args{
-			Mat:      material.ColoredForward(),
+			Mat:      material.StandardForward(),
 			Radius:   bodyRadius,
 			Height:   bodyHeight,
 			Segments: segments,
