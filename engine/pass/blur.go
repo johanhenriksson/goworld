@@ -100,7 +100,7 @@ func NewBlurPass(app engine.App, output engine.Target, input engine.Target) *Blu
 	p.pipeline = pipeline.New(
 		app.Device(),
 		pipeline.Args{
-			Shader:     app.Shaders().Fetch(shader.Ref("blur")),
+			Shader:     app.Shaders().Fetch(shader.Ref("pass/blur")),
 			Layout:     p.pipeLayout,
 			Pass:       p.pass,
 			Pointers:   vertex.ParsePointers(vertex.Vertex{}),

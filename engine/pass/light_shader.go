@@ -68,7 +68,7 @@ func NewLightShader(app engine.App, pass *renderpass.Renderpass, gbuffer Geometr
 		app.Device(),
 		pipeline.Args{
 			Layout:    playout,
-			Shader:    app.Shaders().Fetch(shader.Ref("light")),
+			Shader:    app.Shaders().Fetch(shader.Ref("pass/light")),
 			Pass:      pass,
 			Subpass:   LightingSubpass,
 			Pointers:  vertex.ParsePointers(vertex.Vertex{}),

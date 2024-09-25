@@ -137,7 +137,7 @@ func NewAmbientOcclusionPass(app engine.App, target engine.Target, gbuffer Geome
 		app.Device(),
 		pipeline.Args{
 			Layout:     p.pipeLayout,
-			Shader:     app.Shaders().Fetch(shader.Ref("ssao")),
+			Shader:     app.Shaders().Fetch(shader.Ref("pass/ssao")),
 			Pass:       p.pass,
 			Pointers:   vertex.ParsePointers(vertex.Vertex{}),
 			DepthTest:  false,
@@ -186,10 +186,12 @@ func NewAmbientOcclusionPass(app engine.App, target engine.Target, gbuffer Geome
 
 	// todo: if we shuffle the kernel, it would be ok to use fewer samples
 
+	noiseTex := p.app.Textures().Fetch(p.noise)
+
 	p.desc = p.descLayout.InstantiateMany(app.Pool(), target.Frames())
 	p.position = make(texture.Array, target.Frames())
 	p.normal = make(texture.Array, target.Frames())
-	for i := 0; i < target.Frames(); i++ {
+	for i, desc := range p.desc {
 		posKey := fmt.Sprintf("ssao-position-%d", i)
 		p.position[i], err = texture.FromImage(app.Device(), posKey, gbuffer.Position()[i], texture.Args{
 			Filter: texture.FilterNearest,
@@ -210,17 +212,20 @@ func NewAmbientOcclusionPass(app engine.App, target engine.Target, gbuffer Geome
 			// todo: clean up
 			panic(err)
 		}
-		p.desc[i].Normal.Set(p.normal[i])
+		desc.Normal.Set(p.normal[i])
+
+		desc.Noise.Set(noiseTex)
 	}
 
 	return p
 }
 
 func (p *AmbientOcclusionPass) Record(cmds command.Recorder, args draw.Args, scene object.Component) {
+	// refresh noise texture
+	p.app.Textures().Fetch(p.noise)
+
 	quad := p.app.Meshes().Fetch(p.quad)
-	noiseTex := p.app.Textures().Fetch(p.noise)
 	desc := p.desc[args.Frame]
-	desc.Noise.Set(noiseTex)
 	desc.Params.Set(AmbientOcclusionParams{
 		Projection: args.Camera.Proj,
 		Kernel:     p.kernel,

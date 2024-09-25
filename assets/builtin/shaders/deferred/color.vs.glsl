@@ -2,16 +2,25 @@
 
 #include "lib/common.glsl"
 #include "lib/objects.glsl"
-#include "lib/deferred_vertex.glsl"
 
 CAMERA(0, camera)
-OBJECT(1, object)
+OBJECT(1, object, gl_InstanceIndex)
 
 // Attributes
 IN(0, vec3, position)
 IN(1, vec3, normal)
 IN(2, vec2, tex)
 IN(3, vec4, color)
+
+// Varyings
+OUT(0, flat uint, object)
+OUT(1, vec3, normal)
+OUT(2, vec3, position)
+OUT(3, vec4, color)
+
+out gl_PerVertex {
+	vec4 gl_Position;   
+};
 
 void main() 
 {

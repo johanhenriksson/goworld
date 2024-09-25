@@ -1,21 +1,30 @@
 #version 450
 
 #include "lib/common.glsl"
+#include "lib/objects.glsl"
 #include "lib/lighting.glsl"
-#include "lib/forward_fragment.glsl"
+
+IN(0, flat uint, object)
+IN(1, vec4, color)
+IN(2, vec2, texcoord)
+IN(3, vec3, view_position)
+IN(4, vec3, world_normal)
+IN(5, vec3, world_position)
+
+// Return Output
+OUT(0, vec4, diffuse)
 
 CAMERA(0, camera)
-OBJECT(1, object)
+OBJECT(1, object, in_object)
 LIGHTS(2, lights)
 SAMPLER_ARRAY(3, textures)
 
 void main() 
 {
-	vec2 texcoord0 = in_color.xy;
-	uint texture0 = object.textures[0];
-	vec4 albedo = texture_array(textures, texture0, texcoord0);
+	uint texture0 = object.textures[TEX_SLOT_DIFFUSE];
+	vec4 albedo = texture_array(textures, texture0, in_texcoord) * in_color;
 
-	if (albedo.a < 0.5) { 
+	if (albedo.a < 0.1) { 
 		discard; 
 	}
 

@@ -2,10 +2,20 @@
 
 #include "lib/common.glsl"
 #include "lib/objects.glsl"
-#include "lib/forward_vertex.glsl"
+
+OUT(0, flat uint, object)
+OUT(1, vec4, color)
+OUT(2, vec2, texcoord)
+OUT(3, vec3, view_position)
+OUT(4, vec3, world_normal)
+OUT(5, vec3, world_position)
+
+out gl_PerVertex {
+	vec4 gl_Position;   
+};
 
 CAMERA(0, camera)
-OBJECT(1, object)
+OBJECT(1, object, gl_InstanceIndex)
 
 VERTEX_BUFFER(Vertex)
 INDEX_BUFFER(uint)

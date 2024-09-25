@@ -38,7 +38,7 @@ func StandardForward() *Def {
 func TransparentForward() *Def {
 	return &Def{
 		Pass:         Forward,
-		Shader:       "forward/textured",
+		Shader:       "forward/forward",
 		VertexFormat: vertex.Vertex{},
 		DepthTest:    true,
 		DepthWrite:   true,
@@ -51,7 +51,7 @@ func TransparentForward() *Def {
 
 func Lines() *Def {
 	return &Def{
-		Shader:       "lines",
+		Shader:       "pass/lines",
 		Pass:         "lines",
 		VertexFormat: vertex.Vertex{},
 		Primitive:    vertex.Lines,
