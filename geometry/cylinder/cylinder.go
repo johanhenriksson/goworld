@@ -60,7 +60,7 @@ type Args struct {
 
 func NewMesh(pool Pool, args Args) *Mesh {
 	if args.Mat == nil {
-		args.Mat = material.ColoredForward()
+		args.Mat = material.StandardForward()
 	}
 	cyllinder := NewComponent(pool, &Mesh{
 		Static:   mesh.New(pool, args.Mat),

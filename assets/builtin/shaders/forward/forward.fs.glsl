@@ -12,9 +12,13 @@ SAMPLER_ARRAY(3, textures)
 
 void main() 
 {
-	vec2 texcoord0 = in_color.xy;
-	uint texture0 = object.textures[0];
-	vec4 albedo = texture_array(textures, texture0, texcoord0);
+	uint texture0 = object.textures[TEX_SLOT_DIFFUSE];
+	vec4 albedo = texture_array(textures, texture0, in_texcoord) * in_color;
+
+	// discard low alpha fragments
+	if (albedo.a < 0.01) {
+		discard;
+	}
 
 	int lightCount = lights.settings.Count;
 	vec3 lightColor = ambientLight(lights.settings, 1);
@@ -24,5 +28,5 @@ void main()
 
     // gamma correct & write fragment
 	vec3 linearColor = pow(albedo.rgb, vec3(gamma));
-    out_diffuse = vec4(linearColor * lightColor, albedo.a);
+    out_diffuse = vec4(linearColor * lightColor, 1);
 }

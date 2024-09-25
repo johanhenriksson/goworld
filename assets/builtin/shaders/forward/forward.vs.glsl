@@ -14,10 +14,12 @@ void main()
 {
 	out_object = get_object_index();
 
-	Vertex v = get_vertex_indexed(object.vertexBuffer, object.indexBuffer);
+	// load vertex data
+	Vertex v = get_vertex_indexed(object.vertexPtr, object.indexPtr);
 
 	// texture coords
-	out_color.xy = v.tex;
+	out_texcoord = v.tex;
+	out_color = v.color;
 
 	// gbuffer view position
 	out_view_position = (camera.View * object.model * vec4(v.position, 1)).xyz;
