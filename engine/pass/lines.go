@@ -31,7 +31,7 @@ type LinePass struct {
 	layout      *pipeline.Layout
 	descLayout  *descriptor.Layout[*BasicDescriptors]
 	descriptors []*BasicDescriptors
-	objects     *ObjectBuffer
+	objects     *uniform.ObjectBuffer
 	plan        *RenderPlan
 	commands    []*command.IndirectDrawBuffer
 
@@ -90,7 +90,7 @@ func NewLinePass(app engine.App, target engine.Target, depth engine.Target) *Lin
 	descriptors := descLayout.InstantiateMany(app.Pool(), depth.Frames())
 	layout := pipeline.NewLayout(app.Device(), []descriptor.SetLayout{descLayout}, []pipeline.PushConstant{})
 
-	objects := NewObjectBuffer(maxObjects)
+	objects := uniform.NewObjectBuffer(maxObjects)
 	pipelines := cache.NewPipelineCache(app.Device(), app.Shaders(), pass, layout)
 
 	commands := make([]*command.IndirectDrawBuffer, depth.Frames())

@@ -45,7 +45,7 @@ type DeferredGeometryPass struct {
 	descLayout  *descriptor.Layout[*DeferredDescriptors]
 	descriptors []*DeferredDescriptors
 	textures    cache.SamplerCache
-	objects     *ObjectBuffer
+	objects     *uniform.ObjectBuffer
 	plan        *RenderPlan
 	commands    []*command.IndirectDrawBuffer
 
@@ -131,7 +131,7 @@ func NewDeferredGeometryPass(
 	layout := pipeline.NewLayout(app.Device(), []descriptor.SetLayout{descLayout}, nil)
 
 	textures := cache.NewSamplerCache(app.Textures(), maxTextures)
-	objects := NewObjectBuffer(maxObjects)
+	objects := uniform.NewObjectBuffer(maxObjects)
 	pipelines := cache.NewPipelineCache(app.Device(), app.Shaders(), pass, layout)
 
 	commands := make([]*command.IndirectDrawBuffer, gbuffer.Frames())
