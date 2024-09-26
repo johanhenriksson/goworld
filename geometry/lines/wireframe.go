@@ -5,6 +5,7 @@ import (
 	"github.com/johanhenriksson/goworld/core/mesh"
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/render/color"
+	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/vertex"
 )
 
@@ -19,7 +20,7 @@ type Wireframe struct {
 
 func NewWireframe(pool object.Pool, msh assets.Mesh, clr color.T) *Wireframe {
 	w := object.NewComponent(pool, &Wireframe{
-		Static: mesh.New(pool, nil),
+		Static: mesh.New(pool, material.Lines()),
 		Color:  object.NewProperty(clr),
 		Source: object.NewProperty(msh),
 	})
