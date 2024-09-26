@@ -23,6 +23,8 @@ import (
 	"github.com/vkngwrapper/core/v2/core1_0"
 )
 
+type ShadowmapLookupFn func(light.T, int) *texture.Texture
+
 type Shadowpass struct {
 	app    engine.App
 	target engine.Target
@@ -31,7 +33,7 @@ type Shadowpass struct {
 
 	layout     *pipeline.Layout
 	descLayout *descriptor.Layout[*BasicDescriptors]
-	objects    *ObjectBuffer
+	objects    *uniform.ObjectBuffer
 	plan       *RenderPlan
 	commands   []*command.IndirectDrawBuffer
 
@@ -127,7 +129,7 @@ func NewShadowPass(app engine.App, target engine.Target) *Shadowpass {
 	})
 	layout := pipeline.NewLayout(app.Device(), []descriptor.SetLayout{descLayout}, []pipeline.PushConstant{})
 
-	objects := NewObjectBuffer(maxObjects)
+	objects := uniform.NewObjectBuffer(maxObjects)
 	pipelines := cache.NewPipelineCache(app.Device(), app.Shaders(), pass, layout)
 
 	commands := make([]*command.IndirectDrawBuffer, target.Frames())

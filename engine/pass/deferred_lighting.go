@@ -30,7 +30,7 @@ type DeferredLightPass struct {
 	fbuf       framebuffer.Array
 	samplers   []cache.SamplerCache
 	shadows    []*ShadowCache
-	lightbufs  []*LightBuffer
+	lightbufs  []*uniform.LightBuffer
 	lightQuery *object.Query[light.T]
 }
 
@@ -99,12 +99,12 @@ func NewDeferredLightingPass(
 	maxLights := 256
 	maxShadowTextures := maxLights
 	samplers := make([]cache.SamplerCache, target.Frames())
-	lightbufs := make([]*LightBuffer, target.Frames())
+	lightbufs := make([]*uniform.LightBuffer, target.Frames())
 	shadowmaps := make([]*ShadowCache, target.Frames())
 	for i := range lightbufs {
 		samplers[i] = cache.NewSamplerCache(app.Textures(), maxShadowTextures)
 		shadowmaps[i] = NewShadowCache(samplers[i], shadows.Shadowmap)
-		lightbufs[i] = NewLightBuffer(maxLights)
+		lightbufs[i] = uniform.NewLightBuffer(maxLights)
 	}
 
 	return &DeferredLightPass{

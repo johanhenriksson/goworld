@@ -39,8 +39,8 @@ type ForwardPass struct {
 	descLayout  *descriptor.Layout[*ForwardDescriptors]
 	descriptors []*ForwardDescriptors
 	textures    cache.SamplerCache
-	objects     *ObjectBuffer
-	lights      *LightBuffer
+	objects     *uniform.ObjectBuffer
+	lights      *uniform.LightBuffer
 	shadows     *ShadowCache
 	plan        *RenderPlan
 	commands    []*command.IndirectDrawBuffer
@@ -125,8 +125,8 @@ func NewForwardPass(
 	layout := pipeline.NewLayout(app.Device(), []descriptor.SetLayout{descLayout}, nil)
 
 	textures := cache.NewSamplerCache(app.Textures(), maxTextures)
-	objects := NewObjectBuffer(maxObjects)
-	lights := NewLightBuffer(maxLights)
+	objects := uniform.NewObjectBuffer(maxObjects)
+	lights := uniform.NewLightBuffer(maxLights)
 	shadows := NewShadowCache(textures, shadowPass.Shadowmap)
 	pipelines := cache.NewPipelineCache(app.Device(), app.Shaders(), pass, layout)
 
