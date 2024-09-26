@@ -12,10 +12,9 @@ import (
 	"github.com/vkngwrapper/core/v2/common"
 	"github.com/vkngwrapper/core/v2/core1_0"
 	"github.com/vkngwrapper/core/v2/core1_1"
+	"github.com/vkngwrapper/core/v2/core1_2"
 	"github.com/vkngwrapper/core/v2/driver"
 	"github.com/vkngwrapper/extensions/v2/ext_debug_utils"
-	"github.com/vkngwrapper/extensions/v2/ext_descriptor_indexing"
-	"github.com/vkngwrapper/extensions/v2/ext_scalar_block_layout"
 	"github.com/vkngwrapper/extensions/v2/khr_buffer_device_address"
 )
 
@@ -72,17 +71,17 @@ func New(instance *instance.Instance, physDevice core1_0.PhysicalDevice) (*Devic
 	queue := mostSpecificQueue(core1_0.QueueGraphics | core1_0.QueueTransfer)
 	log.Println("worker queue:", queue)
 
-	scalarLayoutFeatures := ext_scalar_block_layout.PhysicalDeviceScalarBlockLayoutFeatures{
-		ScalarBlockLayout: true,
-	}
-
-	bufferAddressFeatures := khr_buffer_device_address.PhysicalDeviceBufferDeviceAddressFeatures{
+	core12Features := core1_2.PhysicalDeviceVulkan12Features{
 		BufferDeviceAddress: true,
 
-		NextOptions: common.NextOptions{Next: scalarLayoutFeatures},
-	}
+		ScalarBlockLayout: true,
 
-	indexingFeatures := ext_descriptor_indexing.PhysicalDeviceDescriptorIndexingFeatures{
+		ShaderInt8:                        true,
+		StorageBuffer8BitAccess:           true,
+		UniformAndStorageBuffer8BitAccess: true,
+		StoragePushConstant8:              true,
+
+		DescriptorIndexing:                                 true,
 		ShaderSampledImageArrayNonUniformIndexing:          true,
 		RuntimeDescriptorArray:                             true,
 		DescriptorBindingPartiallyBound:                    true,
@@ -92,8 +91,6 @@ func New(instance *instance.Instance, physDevice core1_0.PhysicalDevice) (*Devic
 		DescriptorBindingSampledImageUpdateAfterBind:       true,
 		DescriptorBindingStorageBufferUpdateAfterBind:      true,
 		DescriptorBindingStorageTexelBufferUpdateAfterBind: true,
-
-		NextOptions: common.NextOptions{Next: bufferAddressFeatures},
 	}
 
 	dev, _, err := physDevice.CreateDevice(nil, core1_0.DeviceCreateInfo{
@@ -108,12 +105,13 @@ func New(instance *instance.Instance, physDevice core1_0.PhysicalDevice) (*Devic
 			IndependentBlend: true,
 			DepthClamp:       true,
 
+			ShaderInt16: true,
 			ShaderInt64: true,
 
 			MultiDrawIndirect:         true,
 			DrawIndirectFirstInstance: true,
 		},
-		NextOptions: common.NextOptions{Next: indexingFeatures},
+		NextOptions: common.NextOptions{Next: core12Features},
 	})
 	if err != nil {
 		return nil, err
