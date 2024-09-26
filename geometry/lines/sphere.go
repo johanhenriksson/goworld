@@ -6,6 +6,7 @@ import (
 	"github.com/johanhenriksson/goworld/math"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render/color"
+	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/vertex"
 )
 
@@ -27,7 +28,7 @@ type SphereArgs struct {
 
 func NewSphere(pool object.Pool, args SphereArgs) *Sphere {
 	b := object.NewComponent(pool, &Sphere{
-		Static: mesh.New(pool, nil),
+		Static: mesh.New(pool, material.Lines()),
 		Radius: object.NewProperty(args.Radius),
 		Color:  object.NewProperty(args.Color),
 	})

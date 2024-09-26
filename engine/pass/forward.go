@@ -319,8 +319,10 @@ func (p *ForwardPass) Destroy() {
 }
 
 func isDrawForward(m mesh.Mesh) bool {
-	if mat := m.Material(); mat != nil {
-		return mat.Pass == material.Forward
+	if ref := m.Mesh(); ref != nil {
+		if mat := m.Material(); mat != nil {
+			return mat.Pass == material.Forward
+		}
 	}
 	return false
 }

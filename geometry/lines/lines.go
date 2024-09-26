@@ -5,6 +5,7 @@ import (
 	"github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render/color"
+	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/vertex"
 )
 
@@ -21,7 +22,7 @@ type Args struct {
 
 func New(pool object.Pool, args Args) *Lines {
 	b := object.NewComponent(pool, &Lines{
-		Static: mesh.New(pool, nil),
+		Static: mesh.New(pool, material.Lines()),
 		Args:   args,
 	})
 	b.lineMesh = vertex.NewLines(object.Key("lines", b), []vertex.Vertex{}, []uint32{})

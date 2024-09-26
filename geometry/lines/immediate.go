@@ -18,7 +18,6 @@ type DebugLines struct {
 func (li *DebugLines) Setup(frames int) {
 	li.meshes = make([]*Lines, frames)
 	for i := range li.meshes {
-		// todo: fix nil context
 		li.meshes[i] = New(object.GlobalPool, Args{})
 	}
 	li.enabled = true

@@ -5,6 +5,7 @@ import (
 	. "github.com/johanhenriksson/goworld/core/object"
 	"github.com/johanhenriksson/goworld/math/vec3"
 	"github.com/johanhenriksson/goworld/render/color"
+	"github.com/johanhenriksson/goworld/render/material"
 	"github.com/johanhenriksson/goworld/render/vertex"
 )
 
@@ -37,7 +38,7 @@ type BoxArgs struct {
 
 func NewBox(pool Pool, args BoxArgs) *Box {
 	b := NewComponent(pool, &Box{
-		Static:  mesh.New(pool, nil),
+		Static:  mesh.New(pool, material.Lines()),
 		Extents: NewProperty(args.Extents),
 		Color:   NewProperty(args.Color),
 	})
