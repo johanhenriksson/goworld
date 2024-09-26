@@ -1,14 +1,5 @@
 {
-  "Inputs": {
-    "position": {
-      "Index": 0,
-      "Type": "float"
-    },
-    "normal": {
-      "Index": 1,
-      "Type": "float"
-    }
-  },
+  "Inputs": {},
   "Bindings": {
     "Camera": 0,
     "Objects": 1,

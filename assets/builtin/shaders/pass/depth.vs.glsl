@@ -3,29 +3,30 @@
 #include "lib/common.glsl"
 #include "lib/objects.glsl"
 
-CAMERA(0, camera)
-STORAGE_BUFFER(1, Object, objects)
-Object object = objects.item[gl_InstanceIndex];
-
-// Attributes
-layout (location = 0) in vec3 position;
-
-// Varyings
-layout (location = 0) out vec3 position0;
+OUT(0, vec3, position)
 
 out gl_PerVertex 
 {
 	vec4 gl_Position;   
 };
 
+CAMERA(0, camera)
+OBJECT(1, object, gl_InstanceIndex)
+
+VERTEX_BUFFER(Vertex)
+INDEX_BUFFER(uint)
+
 void main() 
 {
-	mat4 m = object.model;
-	mat4 mv = camera.View * m;
+	// load vertex data
+	Vertex v = get_vertex_indexed(object.vertexPtr, object.indexPtr);
+
+	mat4 mv = camera.View * object.model;
 
 	// gbuffer view position
-	position0 = (mv * vec4(position.xyz, 1.0)).xyz;
+	// todo: can this be removed? probably just a waste of bandwidth
+	out_position = (mv * vec4(v.position, 1.0)).xyz;
 
 	// vertex clip space position
-	gl_Position = camera.Proj * vec4(position0, 1);
+	gl_Position = camera.Proj * vec4(out_position, 1);
 }
