@@ -78,8 +78,8 @@ func (c cache[K, V]) MaxAge() int { return c.maxAge }
 
 func (c *cache[K, V]) get(key K) (*line[V], bool) {
 	c.lock.RLock()
+	defer c.lock.RUnlock()
 	ln, hit := c.data[key.Key()]
-	c.lock.RUnlock()
 	return ln, hit
 }
 
@@ -89,8 +89,8 @@ func (c *cache[K, V]) init(key K) *line[V] {
 		wait:      make(chan struct{}),
 	}
 	c.lock.Lock()
+	defer c.lock.Unlock()
 	c.data[key.Key()] = ln
-	c.lock.Unlock()
 	return ln
 }
 
