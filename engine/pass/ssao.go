@@ -36,7 +36,7 @@ type AmbientOcclusionPass struct {
 	desc []*AmbientOcclusionDescriptors
 	quad vertex.Mesh
 
-	pipeline   *pipeline.Pipeline
+	pipeline   *pipeline.Graphics
 	pipeLayout *pipeline.Layout
 	descLayout *descriptor.Layout[*AmbientOcclusionDescriptors]
 

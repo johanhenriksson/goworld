@@ -44,7 +44,7 @@ type GuiPass struct {
 	pass   *renderpass.Renderpass
 	fbuf   framebuffer.Array
 
-	pipeline   *pipeline.Pipeline
+	pipeline   *pipeline.Graphics
 	pipeLayout *pipeline.Layout
 	descLayout *descriptor.Layout[*GuiDescriptors]
 
