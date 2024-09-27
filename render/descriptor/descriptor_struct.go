@@ -8,6 +8,8 @@ import (
 
 var ErrDescriptorType = errors.New("invalid descriptor struct")
 
+var setInterface = reflect.TypeOf((*Set)(nil)).Elem()
+
 type Resolver interface {
 	Descriptor(string) (int, bool)
 }
@@ -31,30 +33,36 @@ func ParseDescriptorStruct[S Set](template S) ([]Descriptor, error) {
 
 	descriptors := make([]Descriptor, 0, templateStruct.NumField())
 	for i := 0; i < templateStruct.NumField(); i++ {
-		fieldName := templateStruct.Type().Field(i).Name
+		field := templateStruct.Type().Field(i)
 		templateField := templateStruct.Field(i)
 
-		if fieldName == "Set" {
+		if field.Name == "Set" {
 			// Field named Set must be an embedding of descriptor.Set
 			if !templateField.IsNil() {
 				return nil, fmt.Errorf("%w: %s member called Set must be nil", ErrDescriptorType, structName)
 			}
+			if !templateField.Type().Implements(setInterface) {
+				return nil, fmt.Errorf("%w: %s member called Set must implement descriptor.Set", ErrDescriptorType, structName)
+			}
+			if !field.Anonymous {
+				return nil, fmt.Errorf("%w: %s member called Set must be an anonymous field", ErrDescriptorType, structName)
+			}
 		} else {
 			// template field must be a non-nil pointer
 			if templateField.Kind() != reflect.Pointer {
-				return nil, fmt.Errorf("%w: %s.%s is not a pointer, was %s", ErrDescriptorType, structName, fieldName, templateField.Kind())
+				return nil, fmt.Errorf("%w: %s.%s is not a pointer, was %s", ErrDescriptorType, structName, field.Name, templateField.Kind())
 			}
 			if templateField.IsNil() {
-				return nil, fmt.Errorf("%w: %s.%s is must not be nil", ErrDescriptorType, structName, fieldName)
+				return nil, fmt.Errorf("%w: %s.%s is must not be nil", ErrDescriptorType, structName, field.Name)
 			}
 
 			// ensure the value is a Descriptor interface
 			if !templateField.CanInterface() {
-				return nil, fmt.Errorf("%w: %s.%s is not an interface", ErrDescriptorType, structName, fieldName)
+				return nil, fmt.Errorf("%w: %s.%s is not an interface", ErrDescriptorType, structName, field.Name)
 			}
 			descriptor, isDescriptor := templateField.Interface().(Descriptor)
 			if !isDescriptor {
-				return nil, fmt.Errorf("%w: %s.%s is not a Descriptor", ErrDescriptorType, structName, fieldName)
+				return nil, fmt.Errorf("%w: %s.%s is not a Descriptor", ErrDescriptorType, structName, field.Name)
 			}
 
 			// ensure only the last descriptor element is of variable length
@@ -62,7 +70,7 @@ func ParseDescriptorStruct[S Set](template S) ([]Descriptor, error) {
 			if isVariableLength {
 				isLast := i == templateStruct.NumField()-1
 				if !isLast {
-					return nil, fmt.Errorf("%w: %s.%s is variable length, but not the last element", ErrDescriptorType, structName, fieldName)
+					return nil, fmt.Errorf("%w: %s.%s is variable length, but not the last element", ErrDescriptorType, structName, field.Name)
 				}
 			}
 
@@ -111,4 +119,16 @@ func CopyDescriptorStruct[S Set](template S, blank Set) (S, []Descriptor) {
 	// finally, cast to correct type
 	copy := copyPtr.Interface().(S)
 	return copy, descriptors
+}
+
+func InitDescriptorStruct[S Set](set S, blank Set) []Descriptor {
+	descriptors, err := ParseDescriptorStruct(set)
+	if err != nil {
+		panic(err)
+	}
+
+	v := reflect.ValueOf(set).Elem()
+	v.FieldByName("Set").Set(reflect.ValueOf(blank))
+
+	return descriptors
 }

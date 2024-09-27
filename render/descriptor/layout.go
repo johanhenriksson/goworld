@@ -128,6 +128,22 @@ func (d *Layout[S]) InstantiateMany(pool *Pool, count int) []S {
 	return structs
 }
 
+// InstantiateStruct creates a new descriptor set using the given set struct.
+// This is useful for creating descriptor sets using pre-existing buffers etc.
+// Returns the same set struct for convenience.
+func (d *Layout[S]) InstantiateStruct(pool *Pool, set S) S {
+	dset := pool.Allocate(d)
+	descriptors := InitDescriptorStruct(set, dset)
+
+	for binding, descriptor := range descriptors {
+		descriptor.Initialize(pool.device, dset, binding)
+		dset.adopt(descriptor)
+	}
+
+	// return the set for convenience
+	return set
+}
+
 func (d *Layout[S]) Destroy() {
 	// todo: allocated sets should probably clean up themselves
 	for _, desc := range d.allocated {
