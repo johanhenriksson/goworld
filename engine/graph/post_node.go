@@ -26,6 +26,12 @@ func (n *postNode) Present(worker command.Worker, context *swapchain.Context) {
 		Commands: command.Empty,
 		Wait:     n.waits(context.Index),
 		Signal:   []*sync.Semaphore{context.RenderComplete},
+		Callback: func() {
+			// release the context, allowing it to be reused
+			context.Release()
+
+			// todo: this is a reasonable place to release per-frame resources
+		},
 	})
 
 	// present
