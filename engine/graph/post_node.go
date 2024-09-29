@@ -30,6 +30,7 @@ func (n *postNode) Present(worker command.Worker, context *swapchain.Context) {
 			// release the context, allowing it to be reused
 			context.Release()
 
+			// todo: collect actual gpu timings here
 			// todo: this is a reasonable place to release per-frame resources
 		},
 	})

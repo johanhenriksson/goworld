@@ -38,7 +38,7 @@ type ForwardPass struct {
 	layout      *pipeline.Layout
 	descLayout  *descriptor.Layout[*ForwardDescriptors]
 	descriptors []*ForwardDescriptors
-	textures    cache.SamplerCache
+	textures    *cache.SamplerCache
 	objects     *uniform.ObjectBuffer
 	lights      *uniform.LightBuffer
 	shadows     *ShadowCache
@@ -304,7 +304,6 @@ func (p *ForwardPass) Name() string {
 }
 
 func (p *ForwardPass) Destroy() {
-	p.textures.Destroy()
 	p.fbuf.Destroy()
 	p.pass.Destroy()
 	for _, desc := range p.descriptors {

@@ -157,7 +157,7 @@ func (s *swapchain) Aquire(worker command.Worker) (*Context, error) {
 
 	// wait for the context to become ready (i.e. previous execution is completed)
 	// using the ImageAvailable semaphore before all commands finish executing is not valid
-	ctx.Aquire()
+	ctx.aquire()
 
 	available := make(chan bool)
 	worker.Invoke(func() {

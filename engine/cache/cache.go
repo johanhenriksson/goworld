@@ -2,6 +2,7 @@ package cache
 
 import (
 	"sync"
+	"time"
 
 	"github.com/johanhenriksson/goworld/util"
 )
@@ -17,7 +18,7 @@ type T[K Key, V Value] interface {
 	Fetch(K) V
 
 	// MaxAge returns the number of ticks until unused lines are evicted
-	MaxAge() int
+	MaxAge() time.Duration
 
 	// Tick increments the age of all cache lines, and evicts those
 	// that have not been accessed in maxAge ticks or more.
@@ -44,28 +45,33 @@ type Backend[K Key, V Value] interface {
 	Name() string
 }
 
-type line[V Value] struct {
-	value     V
-	age       int
+type line struct {
+	value     any
+	age       time.Duration
 	version   int
 	available bool
 	wait      chan struct{}
+	permanent bool
 }
 
 type cache[K Key, V Value] struct {
 	backend Backend[K, V]
-	data    map[string]*line[V]
+	data    map[string]*line
 	lock    *sync.RWMutex
-	maxAge  int
 	async   bool
+
+	maxAge   time.Duration
+	lastTick time.Time
 }
 
 func New[K Key, V Value](backend Backend[K, V]) T[K, V] {
 	c := &cache[K, V]{
 		backend: backend,
-		data:    map[string]*line[V]{},
+		data:    map[string]*line{},
 		lock:    &sync.RWMutex{},
-		maxAge:  60 * 100,
+
+		maxAge:   10 * time.Second,
+		lastTick: time.Now(),
 
 		// async caches should be a setting that can be disabled for testing purposes.
 		// with async enabled, its difficult to render a single frame deterministically
@@ -74,17 +80,17 @@ func New[K Key, V Value](backend Backend[K, V]) T[K, V] {
 	return c
 }
 
-func (c cache[K, V]) MaxAge() int { return c.maxAge }
+func (c cache[K, V]) MaxAge() time.Duration { return c.maxAge }
 
-func (c *cache[K, V]) get(key K) (*line[V], bool) {
+func (c *cache[K, V]) get(key K) (*line, bool) {
 	c.lock.RLock()
 	defer c.lock.RUnlock()
 	ln, hit := c.data[key.Key()]
 	return ln, hit
 }
 
-func (c *cache[K, V]) init(key K) *line[V] {
-	ln := &line[V]{
+func (c *cache[K, V]) init(key K) *line {
+	ln := &line{
 		available: false,
 		wait:      make(chan struct{}),
 	}
@@ -94,7 +100,7 @@ func (c *cache[K, V]) init(key K) *line[V] {
 	return ln
 }
 
-func (c *cache[K, V]) fetch(key K) *line[V] {
+func (c *cache[K, V]) fetch(key K) *line {
 	ln, hit := c.get(key)
 	if !hit {
 		ln = c.init(key)
@@ -113,7 +119,7 @@ func (c *cache[K, V]) fetch(key K) *line[V] {
 				// available implies that we have a previous value
 				// however, it is most likely in use rendering the in-flight frame!
 				// deleting it here may cause a segfault
-				c.deleteLater(ln.value)
+				c.deleteLater(ln.value.(V))
 			}
 			ln.value = value
 
@@ -140,12 +146,12 @@ func (c *cache[K, V]) TryFetch(key K) (V, bool) {
 	ln := c.fetch(key)
 
 	// not available yet - return nothing
+	var empty V
 	if !ln.available {
-		var empty V
 		return empty, false
 	}
 
-	return ln.value, true
+	return ln.value.(V), true
 }
 
 func (c *cache[K, V]) Fetch(key K) V {
@@ -156,7 +162,7 @@ func (c *cache[K, V]) Fetch(key K) V {
 		<-ln.wait
 	}
 
-	return ln.value
+	return ln.value.(V)
 }
 
 func (c *cache[K, V]) deleteLater(value V) {
@@ -165,10 +171,10 @@ func (c *cache[K, V]) deleteLater(value V) {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 	randomKey := "trash-" + util.NewUUID(8)
-	c.data[randomKey] = &line[V]{
+	c.data[randomKey] = &line{
 		value:     value,
 		available: true,
-		age:       c.maxAge - 10, // delete in 10 frames
+		age:       c.maxAge - time.Second, // delete in 1 second
 	}
 }
 
@@ -176,14 +182,22 @@ func (c *cache[K, V]) Tick() {
 	// eviction
 	c.lock.Lock()
 	defer c.lock.Unlock()
+
+	now := time.Now()
+	delta := now.Sub(c.lastTick)
+	c.lastTick = now
+
 	for key, line := range c.data {
-		line.age++
+		if line.permanent {
+			continue
+		}
+		line.age += delta
 		if line.age > c.maxAge {
 			delete(c.data, key)
 
 			// delete any instantiated object
 			if line.available {
-				c.backend.Delete(line.value)
+				c.backend.Delete(line.value.(V))
 			}
 		}
 	}
@@ -200,7 +214,7 @@ func (c *cache[K, V]) Destroy() {
 		if !line.available {
 			<-line.wait
 		}
-		c.backend.Delete(line.value)
+		c.backend.Delete(line.value.(V))
 	}
 
 	c.backend.Destroy()

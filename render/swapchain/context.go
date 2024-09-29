@@ -23,7 +23,7 @@ func NewContext(dev *device.Device, index int) *Context {
 	}
 }
 
-func (c *Context) Aquire() {
+func (c *Context) aquire() {
 	c.ready.Lock()
 }
 

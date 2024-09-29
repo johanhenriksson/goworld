@@ -7,13 +7,13 @@ import (
 )
 
 type ShadowCache struct {
-	samplers cache.SamplerCache
+	samplers *cache.SamplerCache
 	lookup   ShadowmapLookupFn
 }
 
 var _ light.ShadowmapStore = &ShadowCache{}
 
-func NewShadowCache(samplers cache.SamplerCache, lookup ShadowmapLookupFn) *ShadowCache {
+func NewShadowCache(samplers *cache.SamplerCache, lookup ShadowmapLookupFn) *ShadowCache {
 	return &ShadowCache{
 		samplers: samplers,
 		lookup:   lookup,

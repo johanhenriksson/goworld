@@ -48,7 +48,7 @@ type GuiPass struct {
 	pipeLayout *pipeline.Layout
 	descLayout *descriptor.Layout[*GuiDescriptors]
 
-	textures cache.SamplerCache
+	textures *cache.SamplerCache
 	quads    *widget.QuadBuffer
 	guiQuery *object.Query[gui.Manager]
 }
