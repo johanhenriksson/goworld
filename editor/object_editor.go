@@ -28,6 +28,7 @@ func NewObjectEditor(pool Pool, target Object) *ObjectEditor {
 
 		GUI: PropertyEditorFragment(pool, gui.FragmentLast, func() node.T {
 			clear(editors)
+			editors = editors[:0]
 
 			// builtin editors: enabled, transform
 			editors = append(editors, propedit.BoolField("enabled", "Enabled", propedit.BoolProps{
