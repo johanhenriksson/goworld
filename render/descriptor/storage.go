@@ -14,28 +14,36 @@ import (
 type Storage[K comparable] struct {
 	Stages core1_0.ShaderStageFlags
 	Size   int
+	Buffer *buffer.Array[K]
 
-	binding int
-	buffer  *buffer.Array[K]
-	set     Set
+	binding  int
+	set      Set
+	ownedbuf bool
 }
 
 var _ Descriptor = (*Storage[any])(nil)
 
 func (d *Storage[K]) Initialize(dev *device.Device, set Set, binding int) {
-	if d.Size == 0 {
-		panic("storage descriptor size must be non-zero")
-	}
-
 	d.set = set
 	d.binding = binding
 
-	d.buffer = buffer.NewArray[K](dev, buffer.Args{
-		Key:    d.String(),
-		Size:   d.Size,
-		Usage:  core1_0.BufferUsageStorageBuffer,
-		Memory: device.MemoryTypeShared,
-	})
+	if d.Buffer == nil {
+		if d.Size == 0 {
+			panic("storage descriptor size must be non-zero")
+		}
+		d.Buffer = buffer.NewArray[K](dev, buffer.Args{
+			Key:    d.String(),
+			Size:   d.Size,
+			Usage:  core1_0.BufferUsageStorageBuffer,
+			Memory: device.MemoryTypeShared,
+		})
+		d.ownedbuf = true
+	} else {
+		if d.Size > 0 && d.Size != d.Buffer.Size() {
+			panic("storage descriptor size mismatch")
+		}
+		d.Size = d.Buffer.Size()
+	}
 	d.write()
 }
 
@@ -46,18 +54,19 @@ func (d *Storage[K]) String() string {
 }
 
 func (d *Storage[K]) Destroy() {
-	if d.buffer != nil {
-		d.buffer.Destroy()
-		d.buffer = nil
+	if d.Buffer != nil && d.ownedbuf {
+		d.Buffer.Destroy()
+		d.Buffer = nil
+		d.ownedbuf = false
 	}
 }
 
 func (d *Storage[K]) Set(index int, data K) {
-	d.buffer.Set(index, data)
+	d.Buffer.Set(index, data)
 }
 
 func (d *Storage[K]) SetRange(offset int, data []K) {
-	d.buffer.SetRange(offset, data)
+	d.Buffer.SetRange(offset, data)
 }
 
 func (d *Storage[K]) LayoutBinding(binding int) core1_0.DescriptorSetLayoutBinding {
@@ -79,9 +88,9 @@ func (d *Storage[K]) write() {
 		DescriptorType:  core1_0.DescriptorTypeStorageBuffer,
 		BufferInfo: []core1_0.DescriptorBufferInfo{
 			{
-				Buffer: d.buffer.Ptr(),
+				Buffer: d.Buffer.Ptr(),
 				Offset: 0,
-				Range:  d.buffer.Size(),
+				Range:  d.Buffer.Size(),
 			},
 		},
 	})

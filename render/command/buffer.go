@@ -21,7 +21,6 @@ type Buffer struct {
 	device *device.Device
 
 	// cached bindings
-	pipeline *pipeline.Pipeline
 	vertex   bufferBinding
 	index    bufferBinding
 	scissor  core1_0.Rect2D
@@ -81,13 +80,20 @@ func (b *Buffer) CmdCopyBuffer(src, dst buffer.T, regions ...core1_0.BufferCopy)
 	b.ptr.CmdCopyBuffer(src.Ptr(), dst.Ptr(), regions)
 }
 
-func (b *Buffer) CmdBindGraphicsPipeline(pipe *pipeline.Pipeline) {
+func (b *Buffer) CmdBindGraphicsPipeline(pipe *pipeline.Graphics) {
 	b.ptr.CmdBindPipeline(core1_0.PipelineBindPointGraphics, pipe.Ptr())
-	b.pipeline = pipe
+}
+
+func (b *Buffer) CmdBindComputePipeline(pipe *pipeline.Compute) {
+	b.ptr.CmdBindPipeline(core1_0.PipelineBindPointCompute, pipe.Ptr())
 }
 
 func (b *Buffer) CmdBindGraphicsDescriptor(layout *pipeline.Layout, index int, set descriptor.Set) {
 	b.ptr.CmdBindDescriptorSets(core1_0.PipelineBindPointGraphics, layout.Ptr(), index, []core1_0.DescriptorSet{set.Ptr()}, nil)
+}
+
+func (b *Buffer) CmdBindComputeDescriptor(layout *pipeline.Layout, index int, set descriptor.Set) {
+	b.ptr.CmdBindDescriptorSets(core1_0.PipelineBindPointCompute, layout.Ptr(), index, []core1_0.DescriptorSet{set.Ptr()}, nil)
 }
 
 func (b *Buffer) CmdBindVertexBuffer(vtx buffer.T, offset int) {
@@ -196,10 +202,7 @@ func (b *Buffer) CmdSetScissor(x, y, w, h int) core1_0.Rect2D {
 	return prev
 }
 
-func (b *Buffer) CmdPushConstant(stages core1_0.ShaderStageFlags, offset int, value any) {
-	if b.pipeline == nil {
-		panic("bind graphics pipeline first")
-	}
+func (b *Buffer) CmdPushConstant(layout *pipeline.Layout, stages core1_0.ShaderStageFlags, offset int, value any) {
 	// this is awkward
 	// ptr := reflect.ValueOf(value).UnsafePointer()
 	size := reflect.ValueOf(value).Elem().Type().Size()
@@ -207,7 +210,7 @@ func (b *Buffer) CmdPushConstant(stages core1_0.ShaderStageFlags, offset int, va
 	valueBytes := make([]byte, size)
 
 	device.Memcpy(unsafe.Pointer(&valueBytes[0]), ptr, int(size))
-	b.ptr.CmdPushConstants(b.pipeline.Layout().Ptr(), stages, offset, valueBytes)
+	b.ptr.CmdPushConstants(layout.Ptr(), stages, offset, valueBytes)
 }
 
 func (b *Buffer) CmdImageBarrier(srcMask, dstMask core1_0.PipelineStageFlags, image *image.Image, oldLayout, newLayout core1_0.ImageLayout, aspects core1_0.ImageAspectFlags, mipLevel, levels int) {
@@ -311,4 +314,8 @@ func (b *Buffer) CmdCopyImage(src *image.Image, srcLayout core1_0.ImageLayout, d
 			},
 		},
 	})
+}
+
+func (b *Buffer) Dispatch(x, y, z int) {
+	b.ptr.CmdDispatch(x, y, z)
 }

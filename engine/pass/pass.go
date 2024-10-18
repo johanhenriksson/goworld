@@ -17,7 +17,7 @@ type BasicDescriptors struct {
 	Objects *descriptor.Storage[uniform.Object]
 }
 
-func AssignMeshTextures(samplers cache.SamplerCache, msh mesh.Mesh, slots []texture.Slot) uniform.TextureIds {
+func AssignMeshTextures(samplers *cache.SamplerCache, msh mesh.Mesh, slots []texture.Slot) uniform.TextureIds {
 	if len(slots) > uniform.MaxTextures {
 		panic("too many textures")
 	}

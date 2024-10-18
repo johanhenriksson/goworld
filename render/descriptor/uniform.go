@@ -13,10 +13,11 @@ import (
 
 type Uniform[K any] struct {
 	Stages core1_0.ShaderStageFlags
+	Buffer *buffer.Item[K]
 
-	binding int
-	buffer  *buffer.Item[K]
-	set     Set
+	binding  int
+	set      Set
+	ownedbuf bool
 }
 
 var _ Descriptor = (*Uniform[any])(nil)
@@ -24,10 +25,14 @@ var _ Descriptor = (*Uniform[any])(nil)
 func (d *Uniform[K]) Initialize(dev *device.Device, set Set, binding int) {
 	d.set = set
 	d.binding = binding
-	d.buffer = buffer.NewItem[K](dev, buffer.Args{
-		Usage:  core1_0.BufferUsageUniformBuffer,
-		Memory: device.MemoryTypeShared,
-	})
+
+	if d.Buffer == nil {
+		d.Buffer = buffer.NewItem[K](dev, buffer.Args{
+			Usage:  core1_0.BufferUsageUniformBuffer,
+			Memory: device.MemoryTypeShared,
+		})
+		d.ownedbuf = true
+	}
 	d.write()
 }
 
@@ -38,14 +43,15 @@ func (d *Uniform[K]) String() string {
 }
 
 func (d *Uniform[K]) Destroy() {
-	if d.buffer != nil {
-		d.buffer.Destroy()
-		d.buffer = nil
+	if d.Buffer != nil && d.ownedbuf {
+		d.Buffer.Destroy()
+		d.Buffer = nil
+		d.ownedbuf = false
 	}
 }
 
 func (d *Uniform[K]) Set(data K) {
-	d.buffer.Set(data)
+	d.Buffer.Set(data)
 }
 
 func (d *Uniform[K]) write() {
@@ -55,9 +61,9 @@ func (d *Uniform[K]) write() {
 		DescriptorType:  core1_0.DescriptorTypeUniformBuffer,
 		BufferInfo: []core1_0.DescriptorBufferInfo{
 			{
-				Buffer: d.buffer.Ptr(),
+				Buffer: d.Buffer.Ptr(),
 				Offset: 0,
-				Range:  d.buffer.Size(),
+				Range:  d.Buffer.Size(),
 			},
 		},
 	})

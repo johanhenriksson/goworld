@@ -28,9 +28,9 @@ type DeferredLightPass struct {
 	pass       *renderpass.Renderpass
 	light      *LightShader
 	fbuf       framebuffer.Array
-	samplers   []cache.SamplerCache
-	shadows    []*ShadowCache
-	lightbufs  []*uniform.LightBuffer
+	samplers   *cache.SamplerCache
+	shadows    *ShadowCache
+	lightbuf   *uniform.LightBuffer
 	lightQuery *object.Query[light.T]
 }
 
@@ -98,14 +98,9 @@ func NewDeferredLightingPass(
 
 	maxLights := 256
 	maxShadowTextures := maxLights
-	samplers := make([]cache.SamplerCache, target.Frames())
-	lightbufs := make([]*uniform.LightBuffer, target.Frames())
-	shadowmaps := make([]*ShadowCache, target.Frames())
-	for i := range lightbufs {
-		samplers[i] = cache.NewSamplerCache(app.Textures(), maxShadowTextures)
-		shadowmaps[i] = NewShadowCache(samplers[i], shadows.Shadowmap)
-		lightbufs[i] = uniform.NewLightBuffer(maxLights)
-	}
+	samplers := cache.NewSamplerCache(app.Textures(), maxShadowTextures)
+	shadowmaps := NewShadowCache(samplers, shadows.Shadowmap)
+	lightbufs := uniform.NewLightBuffer(maxLights)
 
 	return &DeferredLightPass{
 		target:     target,
@@ -116,7 +111,7 @@ func NewDeferredLightingPass(
 		pass:       pass,
 		fbuf:       fbuf,
 		shadows:    shadowmaps,
-		lightbufs:  lightbufs,
+		lightbuf:   lightbufs,
 		lightQuery: object.NewQuery[light.T](),
 	}
 }
@@ -127,18 +122,16 @@ func (p *DeferredLightPass) Record(cmds command.Recorder, args draw.Args, scene 
 	desc := p.light.Descriptors(args.Frame)
 	desc.Camera.Set(camera)
 
-	lightbuf := p.lightbufs[args.Frame]
-	shadows := p.shadows[args.Frame]
-	lightbuf.Reset()
+	p.lightbuf.Reset()
 
 	// todo: perform frustum culling on light volumes
 	lights := p.lightQuery.Reset().Collect(scene)
 	for _, lit := range lights {
-		lightbuf.Store(lit.LightData(shadows))
+		p.lightbuf.Store(lit.LightData(p.shadows))
 	}
 
-	lightbuf.Flush(desc.Lights)
-	shadows.Flush(desc.Shadow)
+	p.lightbuf.Flush(desc.Lights)
+	p.shadows.Flush(desc.Shadow)
 
 	quad := p.app.Meshes().Fetch(p.quad)
 	cmds.Record(func(cmd *command.Buffer) {
@@ -158,11 +151,8 @@ func (p *DeferredLightPass) Name() string {
 }
 
 func (p *DeferredLightPass) Destroy() {
-	for _, cache := range p.samplers {
-		cache.Destroy()
-	}
 	p.samplers = nil
-	p.lightbufs = nil
+	p.lightbuf = nil
 
 	p.fbuf.Destroy()
 	p.fbuf = nil

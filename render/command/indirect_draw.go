@@ -19,7 +19,7 @@ type DrawBuffer interface {
 }
 
 type IndirectDrawBuffer struct {
-	commands    *buffer.Array[Draw]
+	Commands    *buffer.Array[Draw]
 	nextIndex   int
 	batchOffset int
 }
@@ -35,8 +35,12 @@ func NewIndirectDrawBuffer(dev *device.Device, key string, size int) *IndirectDr
 		Memory: device.MemoryTypeShared,
 	})
 	return &IndirectDrawBuffer{
-		commands: cmds,
+		Commands: cmds,
 	}
+}
+
+func (i *IndirectDrawBuffer) Count() int {
+	return i.nextIndex
 }
 
 func (i *IndirectDrawBuffer) Reset() {
@@ -52,7 +56,7 @@ func (i *IndirectDrawBuffer) CmdDraw(cmd Draw) {
 	if cmd.InstanceCount == 0 {
 		return
 	}
-	i.commands.Set(i.nextIndex, cmd)
+	i.Commands.Set(i.nextIndex, cmd)
 	i.nextIndex++
 }
 
@@ -62,13 +66,13 @@ func (i *IndirectDrawBuffer) EndDrawIndirect(cmd *Buffer) {
 		return
 	}
 
-	cmd.CmdDrawIndirect(i.commands, i.batchOffset*i.commands.Stride(), batchCount, i.commands.Stride())
+	cmd.CmdDrawIndirect(i.Commands, i.batchOffset*i.Commands.Stride(), batchCount, i.Commands.Stride())
 }
 
 func (i *IndirectDrawBuffer) Flush() {
-	i.commands.Flush()
+	i.Commands.Flush()
 }
 
 func (i *IndirectDrawBuffer) Destroy() {
-	i.commands.Destroy()
+	i.Commands.Destroy()
 }

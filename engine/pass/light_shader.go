@@ -26,7 +26,7 @@ type LightDescriptors struct {
 }
 
 type LightShader struct {
-	pipeline    *pipeline.Pipeline
+	pipeline    *pipeline.Graphics
 	pipeLayout  *pipeline.Layout
 	descLayout  *descriptor.Layout[*LightDescriptors]
 	descriptors []*LightDescriptors
