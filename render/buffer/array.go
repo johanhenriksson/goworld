@@ -46,6 +46,7 @@ func (a *Array[K]) Set(index int, data K) {
 }
 
 func (a *Array[K]) SetRange(offset int, data []K) {
+	// todo: optimize this to a signle write
 	for i, el := range data {
 		a.Write((i+offset)*a.stride, &el)
 	}

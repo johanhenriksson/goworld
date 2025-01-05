@@ -15,7 +15,7 @@ type DrawArgs struct {
 	Time     float32
 	Delta    float32
 	Commands command.Recorder
-	Textures cache.SamplerCache
+	Textures *cache.SamplerCache
 	Viewport draw.Viewport
 	Position vec3.T
 }

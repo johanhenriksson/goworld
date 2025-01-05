@@ -14,7 +14,7 @@ import (
 type Pipeline struct {
 	ID       material.ID
 	Slots    []texture.Slot
-	pipeline *pipeline.Pipeline
+	pipeline *pipeline.Graphics
 }
 
 func (m *Pipeline) Bind(cmd *command.Buffer) {

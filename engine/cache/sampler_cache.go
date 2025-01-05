@@ -1,13 +1,15 @@
 package cache
 
 import (
+	"time"
+
 	"github.com/johanhenriksson/goworld/assets"
 	"github.com/johanhenriksson/goworld/render/color"
 	"github.com/johanhenriksson/goworld/render/descriptor"
 	"github.com/johanhenriksson/goworld/render/texture"
 )
 
-type samplers struct {
+type SamplerCache struct {
 	textures    TextureCache
 	reverse     map[string]*SamplerHandle
 	free        map[int]bool
@@ -16,10 +18,8 @@ type samplers struct {
 	size        int
 
 	// the max age must be shorter than the max life of the texture cache.
-	// if using a per-frame sampler cache, then the max life time should be
-	// at most (texture max life) / (number of swapchain frames) since the
-	// sampler cache will only be polled every N frames.
-	maxAge int
+	maxAge   time.Duration
+	lastTick time.Time
 
 	// blank keeps a reference to a blank (white) texture
 	blank *texture.Texture
@@ -28,31 +28,19 @@ type samplers struct {
 type SamplerHandle struct {
 	ID      int
 	Texture *texture.Texture
-	age     int
+	age     time.Duration
 }
 
-type SamplerCache interface {
-	T[assets.Texture, *SamplerHandle]
-
-	// Assign a handle to a texture directly
-	Assign(*texture.Texture) *SamplerHandle
-
-	// Writes descriptor values to the given Sampler Array.
-	Flush(*descriptor.SamplerArray)
-
-	// Size returns the maximum number of samplers in the cache.
-	Size() int
-}
-
-func NewSamplerCache(textures TextureCache, size int) SamplerCache {
-	samplers := &samplers{
+func NewSamplerCache(textures TextureCache, size int) *SamplerCache {
+	samplers := &SamplerCache{
 		textures:    textures,
 		reverse:     make(map[string]*SamplerHandle, size),
 		free:        make(map[int]bool, size),
 		descriptors: make(texture.Array, size),
 		next:        0,
 		size:        size,
-		maxAge:      textures.MaxAge() / 4,
+		maxAge:      textures.MaxAge(),
+		lastTick:    time.Now(),
 		blank:       textures.Fetch(color.White),
 	}
 
@@ -68,15 +56,15 @@ func NewSamplerCache(textures TextureCache, size int) SamplerCache {
 	return samplers
 }
 
-func (s *samplers) MaxAge() int {
+func (s *SamplerCache) MaxAge() time.Duration {
 	return s.maxAge
 }
 
-func (s *samplers) Size() int {
+func (s *SamplerCache) Size() int {
 	return s.size
 }
 
-func (s *samplers) nextID() int {
+func (s *SamplerCache) nextID() int {
 	// check free list
 	for handle := range s.free {
 		delete(s.free, handle)
@@ -96,7 +84,7 @@ type Keyed interface {
 	Key() string
 }
 
-func (s *samplers) assignHandle(ref Keyed) *SamplerHandle {
+func (s *SamplerCache) assignHandle(ref Keyed) *SamplerHandle {
 	if handle, exists := s.reverse[ref.Key()]; exists {
 		// reset the age of the existing handle, if we have one
 		handle.age = 0
@@ -110,7 +98,7 @@ func (s *samplers) assignHandle(ref Keyed) *SamplerHandle {
 	return handle
 }
 
-func (s *samplers) TryFetch(ref assets.Texture) (*SamplerHandle, bool) {
+func (s *SamplerCache) TryFetch(ref assets.Texture) (*SamplerHandle, bool) {
 	handle := s.assignHandle(ref)
 	var exists bool
 	handle.Texture, exists = s.textures.TryFetch(ref)
@@ -122,27 +110,31 @@ func (s *samplers) TryFetch(ref assets.Texture) (*SamplerHandle, bool) {
 	return handle, true
 }
 
-func (s *samplers) Fetch(ref assets.Texture) *SamplerHandle {
+func (s *SamplerCache) Fetch(ref assets.Texture) *SamplerHandle {
 	handle := s.assignHandle(ref)
 	handle.Texture = s.textures.Fetch(ref)
 	s.descriptors[handle.ID] = handle.Texture
 	return handle
 }
 
-func (s *samplers) Assign(tex *texture.Texture) *SamplerHandle {
+func (s *SamplerCache) Assign(tex *texture.Texture) *SamplerHandle {
 	handle := s.assignHandle(tex)
 	handle.Texture = tex
 	s.descriptors[handle.ID] = tex
 	return handle
 }
 
-func (s *samplers) Flush(samplers *descriptor.SamplerArray) {
+func (s *SamplerCache) Flush(samplers *descriptor.SamplerArray) {
 	s.Tick()
 
-	samplers.SetRange(0, s.descriptors)
+	samplers.SetRange(0, s.descriptors[:s.next])
 }
 
-func (s *samplers) Tick() {
+func (s *SamplerCache) Tick() {
+	now := time.Now()
+	delta := now.Sub(s.lastTick)
+	s.lastTick = now
+
 	for ref, handle := range s.reverse {
 		if handle.ID == 0 {
 			// never evict the blank texture
@@ -150,7 +142,7 @@ func (s *samplers) Tick() {
 		}
 
 		// increase the age of the handle and check for eviction
-		handle.age++
+		handle.age += delta
 		if handle.age > s.maxAge {
 			delete(s.reverse, ref)
 			s.free[handle.ID] = true
@@ -160,9 +152,4 @@ func (s *samplers) Tick() {
 			s.descriptors[handle.ID] = s.blank
 		}
 	}
-}
-
-func (s *samplers) Destroy() {
-	// todo: unclear if theres anything to do here
-	// the backing texture cache holds all resources and will release them if unused
 }

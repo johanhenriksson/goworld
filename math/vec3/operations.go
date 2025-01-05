@@ -55,6 +55,11 @@ func Distance(a, b T) float32 {
 	return a.Sub(b).Length()
 }
 
+// DistanceSqr returns the squared euclidian distance between two points.
+func DistanceSqr(a, b T) float32 {
+	return a.Sub(b).LengthSqr()
+}
+
 func Mid(a, b T) T {
 	return a.Add(b).Scaled(0.5)
 }

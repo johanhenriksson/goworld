@@ -197,7 +197,7 @@ func (v T) WithZ(z float32) T {
 
 func (v T) ApproxEqual(v2 T) bool {
 	epsilon := float32(0.0001)
-	return Distance(v, v2) < epsilon
+	return DistanceSqr(v, v2) < epsilon*epsilon
 }
 
 func (v T) String() string {

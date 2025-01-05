@@ -1,7 +1,7 @@
 package swapchain
 
 import (
-	"fmt"
+	"errors"
 	"log"
 
 	"github.com/johanhenriksson/goworld/render/command"
@@ -13,6 +13,8 @@ import (
 	"github.com/vkngwrapper/extensions/v2/khr_surface"
 	"github.com/vkngwrapper/extensions/v2/khr_swapchain"
 )
+
+var ErrOutOfDate = errors.New("swapchain out of date")
 
 type T interface {
 	device.Resource[khr_swapchain.Swapchain]
@@ -143,19 +145,23 @@ func (s *swapchain) create() {
 }
 
 func (s *swapchain) Aquire(worker command.Worker) (*Context, error) {
-	available := make(chan *Context)
+	// recreate if resized
+	if s.resized {
+		s.recreate()
+		return nil, ErrOutOfDate
+	}
+
+	// get the next available context & update ring buffer index
+	ctx := s.contexts[s.nextContext]
+	s.nextContext = (s.nextContext + 1) % s.frames
+
+	// wait for the context to become ready (i.e. previous execution is completed)
+	// using the ImageAvailable semaphore before all commands finish executing is not valid
+	ctx.aquire()
+
+	available := make(chan bool)
 	worker.Invoke(func() {
 		defer close(available)
-
-		// recreate if resized
-		if s.resized {
-			s.recreate()
-			return
-		}
-
-		// get the next available context & update ring buffer index
-		ctx := s.contexts[s.nextContext]
-		s.nextContext = (s.nextContext + 1) % s.frames
 
 		// aquiring the next frame
 		idx, r, err := s.ptr.AcquireNextImage(1e9, ctx.ImageAvailable.Ptr(), nil)
@@ -163,24 +169,26 @@ func (s *swapchain) Aquire(worker command.Worker) (*Context, error) {
 			panic(err)
 		}
 		if r == khr_swapchain.VKErrorOutOfDate {
-			s.recreate()
+			available <- false
 			return
 		}
 
 		// store frame index & return the context
 		ctx.Index = idx
-		available <- ctx
+		available <- true
 	})
 
 	// this will actually block both the worker and the render thread until:
 	//   - all pending work has been submitted
 	//   - the image is aquired
 	// is there any work for the render loop to do until the next frame is available?
-	ctx := <-available
-	if ctx == nil {
-		return nil, fmt.Errorf("swapchain out of date")
+	if <-available {
+		return ctx, nil
 	}
-	return ctx, nil
+
+	// if available is false, that means the aquire failed
+	s.recreate()
+	return nil, ErrOutOfDate
 }
 
 func (s *swapchain) Present(worker command.Worker, ctx *Context) {

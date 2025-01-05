@@ -46,7 +46,7 @@ func newCollider(pool object.Pool, impl colliderImpl, scaled bool) *Collider {
 	return col
 }
 
-func (c *Collider) OnChange() *events.Event[Shape] {
+func (c *Collider) onRefresh() *events.Event[Shape] {
 	return &c.changed
 }
 
@@ -83,9 +83,6 @@ func (c *Collider) transformRefresh(t transform.T) {
 
 	c.lastScale = newScale
 	shape_scaling_set(c.handle, newScale)
-
-	// raising OnChange is technically not required since we dont recreate the shape
-	c.OnChange().Emit(c.cmp)
 }
 
 func (c *Collider) refresh() {
@@ -93,7 +90,9 @@ func (c *Collider) refresh() {
 	c.handle = c.cmp.colliderCreate()
 	c.cmp.colliderRefresh()
 	shape_scaling_set(c.handle, c.scale())
-	c.OnChange().Emit(c.cmp)
+
+	// collider was recreated, emit refresh event
+	c.onRefresh().Emit(c.cmp)
 }
 
 func (c *Collider) destroy() {

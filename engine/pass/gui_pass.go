@@ -44,11 +44,11 @@ type GuiPass struct {
 	pass   *renderpass.Renderpass
 	fbuf   framebuffer.Array
 
-	pipeline   *pipeline.Pipeline
+	pipeline   *pipeline.Graphics
 	pipeLayout *pipeline.Layout
 	descLayout *descriptor.Layout[*GuiDescriptors]
 
-	textures cache.SamplerCache
+	textures *cache.SamplerCache
 	quads    *widget.QuadBuffer
 	guiQuery *object.Query[gui.Manager]
 }

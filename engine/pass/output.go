@@ -25,7 +25,7 @@ type OutputPass struct {
 	app    engine.App
 	source engine.Target
 
-	pipeline   *pipeline.Pipeline
+	pipeline   *pipeline.Graphics
 	pipeLayout *pipeline.Layout
 	descLayout *descriptor.Layout[*OutputDescriptors]
 

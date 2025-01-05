@@ -15,13 +15,13 @@ import (
 	"github.com/vkngwrapper/core/v2/driver"
 )
 
-type Pipeline struct {
+type Graphics struct {
 	ptr    core1_0.Pipeline
 	device *device.Device
 	args   Args
 }
 
-func New(device *device.Device, args Args) *Pipeline {
+func New(device *device.Device, args Args) *Graphics {
 	if device == nil {
 		panic("device is nil")
 	}
@@ -192,26 +192,26 @@ func New(device *device.Device, args Args) *Pipeline {
 		device.SetDebugObjectName(driver.VulkanHandle(ptrs[0].Handle()), core1_0.ObjectTypePipeline, key)
 	}
 
-	return &Pipeline{
+	return &Graphics{
 		ptr:    ptrs[0],
 		device: device,
 		args:   args,
 	}
 }
 
-func (p *Pipeline) Ptr() core1_0.Pipeline {
+func (p *Graphics) Ptr() core1_0.Pipeline {
 	return p.ptr
 }
 
-func (p *Pipeline) Shader() *shader.Shader {
+func (p *Graphics) Shader() *shader.Shader {
 	return p.args.Shader
 }
 
-func (p *Pipeline) Layout() *Layout {
+func (p *Graphics) Layout() *Layout {
 	return p.args.Layout
 }
 
-func (p *Pipeline) Destroy() {
+func (p *Graphics) Destroy() {
 	if p.ptr != nil {
 		p.ptr.Destroy(nil)
 		p.ptr = nil

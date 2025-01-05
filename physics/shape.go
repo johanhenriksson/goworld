@@ -12,7 +12,9 @@ import (
 type Shape interface {
 	object.Component
 
-	OnChange() *events.Event[Shape]
+	// onRefresh is triggered whenever the underlying shape object is recreated
+	// this allows rigidbodies to update their shapes
+	onRefresh() *events.Event[Shape]
 
 	shape() shapeHandle
 }

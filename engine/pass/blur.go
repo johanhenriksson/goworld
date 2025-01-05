@@ -29,7 +29,7 @@ type BlurPass struct {
 	fbufs framebuffer.Array
 	pass  *renderpass.Renderpass
 
-	pipeline   *pipeline.Pipeline
+	pipeline   *pipeline.Graphics
 	pipeLayout *pipeline.Layout
 	descLayout *descriptor.Layout[*BlurDescriptors]
 }

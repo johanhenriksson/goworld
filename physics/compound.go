@@ -74,7 +74,7 @@ func (c *Compound) colliderRefresh() {
 		compound_add_child(c.handle, shape.shape(), child.localPos, child.localRot)
 
 		// child shape changes should trigger a complete recreation of the compound shape
-		unsubShape := shape.OnChange().Subscribe(func(s Shape) {
+		unsubShape := shape.onRefresh().Subscribe(func(s Shape) {
 			c.refresh()
 		})
 
@@ -88,7 +88,6 @@ func (c *Compound) colliderRefresh() {
 				compound_update_child(c.handle, child.index, newPos, newRot)
 				child.localPos = newPos
 				child.localRot = newRot
-				c.OnChange().Emit(c)
 			}
 		})
 

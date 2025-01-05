@@ -26,6 +26,7 @@ func NewComponentEditor(pool Pool, target Component) *ComponentEditor {
 
 		GUI: PropertyEditorFragment(pool, gui.FragmentLast, func() node.T {
 			clear(editors)
+			editors = editors[:0]
 
 			for _, prop := range props {
 				if editor := propedit.ForType(prop.Type()); editor != nil {

@@ -175,3 +175,46 @@ func Snap(f, multiple float32) float32 {
 func Pow(f, x float32) float32 {
 	return float32(math.Pow(float64(f), float64(x)))
 }
+
+// NextPow2 returns the next power of 2 greater than n, or n if its a power of 2.
+func NextPow2(n uint) uint {
+	n--
+	n |= n >> 1
+	n |= n >> 2
+	n |= n >> 4
+	n |= n >> 8
+	n |= n >> 16
+	n++
+	return n
+}
+
+// Ilog2 returns the uint32 value that is log2(v).
+func Ilog2(v uint32) uint32 {
+	boolToUInt32 := func(b bool) uint32 {
+		if b {
+			return 1
+		}
+		return 0
+	}
+
+	var r, shift uint32
+	r = boolToUInt32(v > 0xffff) << 4
+	v >>= r
+	shift = boolToUInt32(v > 0xff) << 3
+	v >>= shift
+	r |= shift
+	shift = boolToUInt32(v > 0xf) << 2
+	v >>= shift
+	r |= shift
+	shift = boolToUInt32(v > 0x3) << 1
+	v >>= shift
+	r |= shift
+	r |= (v >> 1)
+	return r
+}
+
+func ApproxEqual[F constraints.Float](v, v2 F) bool {
+	epsilon := F(0.0001)
+	d := v - v2
+	return d*d < epsilon*epsilon
+}

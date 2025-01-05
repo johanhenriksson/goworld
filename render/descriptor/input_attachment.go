@@ -13,6 +13,7 @@ import (
 type InputAttachment struct {
 	Stages core1_0.ShaderStageFlags
 	Layout core1_0.ImageLayout
+	View   *image.View
 
 	binding int
 	view    core1_0.ImageView
@@ -27,6 +28,9 @@ func (d *InputAttachment) Initialize(device *device.Device, set Set, binding int
 	if d.Layout == 0 {
 		d.Layout = core1_0.ImageLayoutShaderReadOnlyOptimal
 	}
+	if d.View != nil {
+		d.Set(d.View)
+	}
 }
 
 func (d *InputAttachment) String() string {
@@ -35,7 +39,7 @@ func (d *InputAttachment) String() string {
 
 func (d *InputAttachment) Destroy() {}
 
-func (d *InputAttachment) Set(view image.View) {
+func (d *InputAttachment) Set(view *image.View) {
 	d.view = view.Ptr()
 	d.write()
 }

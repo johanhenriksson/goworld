@@ -44,7 +44,7 @@ type DeferredGeometryPass struct {
 	layout      *pipeline.Layout
 	descLayout  *descriptor.Layout[*DeferredDescriptors]
 	descriptors []*DeferredDescriptors
-	textures    cache.SamplerCache
+	textures    *cache.SamplerCache
 	objects     *uniform.ObjectBuffer
 	plan        *RenderPlan
 	commands    []*command.IndirectDrawBuffer
@@ -236,7 +236,6 @@ func (p *DeferredGeometryPass) Name() string {
 }
 
 func (p *DeferredGeometryPass) Destroy() {
-	p.textures.Destroy()
 	p.fbuf.Destroy()
 	p.pass.Destroy()
 	for _, desc := range p.descriptors {

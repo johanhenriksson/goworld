@@ -11,7 +11,8 @@ import (
 )
 
 type Sampler struct {
-	Stages core1_0.ShaderStageFlags
+	Stages  core1_0.ShaderStageFlags
+	Texture *texture.Texture
 
 	binding int
 	sampler core1_0.Sampler
@@ -24,6 +25,10 @@ var _ Descriptor = (*Sampler)(nil)
 func (d *Sampler) Initialize(device *device.Device, set Set, binding int) {
 	d.set = set
 	d.binding = binding
+
+	if d.Texture != nil {
+		d.Set(d.Texture)
+	}
 }
 
 func (d *Sampler) String() string {
@@ -33,6 +38,7 @@ func (d *Sampler) String() string {
 func (d *Sampler) Destroy() {}
 
 func (d *Sampler) Set(tex *texture.Texture) {
+	d.Texture = tex
 	d.sampler = tex.Ptr()
 	d.view = tex.View().Ptr()
 	d.write()
