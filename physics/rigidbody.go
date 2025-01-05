@@ -87,7 +87,7 @@ func (b *RigidBody) OnEnable() {
 	if b.shunsub != nil {
 		b.shunsub()
 	}
-	b.shunsub = b.shape.OnChange().Subscribe(func(s Shape) {
+	b.shunsub = b.shape.onRefresh().Subscribe(func(s Shape) {
 		if b.handle == nil {
 			panic("rigidbody is nil")
 		}
