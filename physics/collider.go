@@ -83,9 +83,6 @@ func (c *Collider) transformRefresh(t transform.T) {
 
 	c.lastScale = newScale
 	shape_scaling_set(c.handle, newScale)
-
-	// raising OnChange is technically not required since we dont recreate the shape
-	c.OnChange().Emit(c.cmp)
 }
 
 func (c *Collider) refresh() {
@@ -93,6 +90,8 @@ func (c *Collider) refresh() {
 	c.handle = c.cmp.colliderCreate()
 	c.cmp.colliderRefresh()
 	shape_scaling_set(c.handle, c.scale())
+
+	// collider was recreated, so we emit a change event.
 	c.OnChange().Emit(c.cmp)
 }
 

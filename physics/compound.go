@@ -88,7 +88,6 @@ func (c *Compound) colliderRefresh() {
 				compound_update_child(c.handle, child.index, newPos, newRot)
 				child.localPos = newPos
 				child.localRot = newRot
-				c.OnChange().Emit(c)
 			}
 		})
 

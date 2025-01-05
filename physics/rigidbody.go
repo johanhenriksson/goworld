@@ -83,12 +83,13 @@ func (b *RigidBody) OnEnable() {
 		}
 	}
 
+	// subscribe to re-creations of the bullet shape objects
 	if b.shunsub != nil {
 		b.shunsub()
 	}
 	b.shunsub = b.shape.OnChange().Subscribe(func(s Shape) {
 		if b.handle == nil {
-			panic("rigidbody shape set to nil")
+			panic("rigidbody is nil")
 		}
 		log.Println("Rigidbody", b.Parent().Name(), ": shape changed to", s.Name())
 		rigidbody_shape_set(b.handle, s.shape())
@@ -124,7 +125,6 @@ func (b *RigidBody) OnEnable() {
 
 func (b *RigidBody) OnDisable() {
 	b.detach()
-	// b.Shape.OnChange().Unsubscribe(b)
 	if b.tfparent != nil {
 		// re-attach transform to parent
 		wpos := b.Transform().WorldPosition()
@@ -149,9 +149,11 @@ func (b *RigidBody) destroy() {
 	if b.shape != nil {
 		b.shunsub()
 		b.shape = nil
+		b.shunsub = nil
 	}
 	if b.handle != nil {
 		rigidbody_delete(&b.handle)
+		b.handle = nil
 	}
 }
 
